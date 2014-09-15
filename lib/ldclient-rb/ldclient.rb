@@ -3,7 +3,7 @@ require 'json'
 require 'digest/sha1'
 
 module LaunchDarkly
-  class LdClient
+  class LDClient
 
     LONG_SCALE = Float(0xFFFFFFFFFFFFFFF) 
     

@@ -1,31 +1,25 @@
-# Launchdarkly
+LaunchDarkly SDK for Ruby
+===========================
 
-TODO: Write a gem description
+Quick setup
+-----------
 
-## Installation
+1. Install the Ruby SDK with `gem`
 
-Add this line to your application's Gemfile:
+        gem install ldclient-py
 
-```ruby
-gem 'launchdarkly'
-```
+2. Create a new LDClient with your API key:
 
-And then execute:
+        client = LDClient.new("your_api_key")
 
-    $ bundle
+Your first feature flag
+-----------------------
 
-Or install it yourself as:
+1. Create a new feature flag on your [dashboard](https://app.launchdarkly.com)
+2. In your application code, use the feature's key to check wthether the flag is on for each user:
 
-    $ gem install launchdarkly
-
-## Usage
-
-TODO: Write usage instructions here
-
-## Contributing
-
-1. Fork it ( https://github.com/[my-github-username]/launchdarkly/fork )
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
+        if client.get_flag?("your.flag.key", {"key": "user@test.com"}, false)
+            # application code to show the feature
+        else
+            # the code to run if the feature is off
+        end
