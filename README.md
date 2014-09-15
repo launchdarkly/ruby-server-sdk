@@ -6,7 +6,7 @@ Quick setup
 
 1. Install the Ruby SDK with `gem`
 
-        gem install ldclient-py
+        gem install ldclient-rb
 
 2. Create a new LDClient with your API key:
 
