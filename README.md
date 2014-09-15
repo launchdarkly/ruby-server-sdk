@@ -10,7 +10,7 @@ Quick setup
 
 2. Create a new LDClient with your API key:
 
-        client = LDClient.new("your_api_key")
+        client = LaunchDarkly::LDClient.new("your_api_key")
 
 Your first feature flag
 -----------------------
