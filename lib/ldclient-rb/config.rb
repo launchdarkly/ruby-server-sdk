@@ -1,4 +1,4 @@
-module Launchdarkly
+module LaunchDarkly
   class Config
     def initialize(base_uri)
       @base_uri = base_uri

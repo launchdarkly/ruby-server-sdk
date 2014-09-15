@@ -2,7 +2,7 @@ require 'faraday/http_cache'
 require 'json'
 require 'digest/sha1'
 
-module Launchdarkly
+module LaunchDarkly
   class LdClient
 
     LONG_SCALE = Float(0xFFFFFFFFFFFFFFF) 
@@ -27,7 +27,7 @@ module Launchdarkly
       res = 
       @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
         req.headers['Authorization'] = 'api_key ' + @api_key
-        req.headers['User-Agent'] = 'RubyClient/' + Launchdarkly::VERSION
+        req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
       end
 
       feature = JSON.parse(res.body)

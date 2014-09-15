@@ -1,6 +1,6 @@
 require 'thread_safe'
 
-module Launchdarkly
+module LaunchDarkly
   class ThreadSafeMemoryStore
     def initialize
       @cache = ThreadSafe::Cache.new

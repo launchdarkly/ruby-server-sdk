@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'launchdarkly/version'
+require 'ldclient-rb/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "launchdarkly"
-  spec.version       = Launchdarkly::VERSION
+  spec.name          = "ldclient-rb"
+  spec.version       = LaunchDarkly::VERSION
   spec.authors       = ["Catamorphic Co"]
   spec.email         = ["team@catamorphic.com"]
   spec.summary       = %q{LaunchDarkly SDK for Ruby}
