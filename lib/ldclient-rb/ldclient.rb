@@ -19,8 +19,18 @@ module LaunchDarkly
     end
 
     def get_flag?(key, user, default=false)
+      begin
+        get_flag_int(key, user, default)
+      rescue StandardError => error
+        @config.logger.error("Unhandled exception in get_flag: " + error.message)
+        default
+      end
+    end
+
+    def get_flag_int(key, user, default)
 
       unless user
+        @config.logger.error("Must specify user")
         return default
       end
 
@@ -29,6 +39,22 @@ module LaunchDarkly
         req.headers['Authorization'] = 'api_key ' + @api_key
         req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
       end
+
+      if res.status == 401
+        @config.logger.error("Invalid API key")
+        return default
+      end
+
+      if res.status == 404
+        @config.logger.error("Unknown feature key: " + key)
+        return default
+      end
+
+      if res.status != 200
+        @config.logger.error("Unexpected status code " + res.status)
+        return default
+      end
+
 
       feature = JSON.parse(res.body)
 
@@ -121,7 +147,7 @@ module LaunchDarkly
 
     end
 
-    private :param_for_user, :match_target?, :match_variation?, :evaluate
+    private :get_flag_int, :param_for_user, :match_target?, :match_variation?, :evaluate
 
 
   end
