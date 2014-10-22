@@ -114,12 +114,13 @@ module LaunchDarkly
       end
 
       hash_key = "%s.%s.%s" % [feature[:key], feature[:salt], id_hash]
+
       hash_val = (Digest::SHA1.hexdigest(hash_key))[0..14]
       return hash_val.to_i(16) / LONG_SCALE
     end
 
     def match_target?(target, user)
-      attrib = target[:attribute]
+      attrib = target[:attribute].to_sym
 
       if attrib == :key or attrib == :ip or attrib == :country
         if user[attrib]
