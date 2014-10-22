@@ -1,6 +1,7 @@
 require 'faraday/http_cache'
 require 'json'
 require 'digest/sha1'
+require 'thread'
 
 module LaunchDarkly
   class LDClient
@@ -9,6 +10,7 @@ module LaunchDarkly
     
     def initialize(api_key, config = Config.default)
       store = ThreadSafeMemoryStore.new
+      @queue = Queue.new
       @api_key = api_key
       @config = config
       @client = Faraday.new do |builder|
@@ -16,15 +18,52 @@ module LaunchDarkly
 
         builder.adapter Faraday.default_adapter
       end
+
+      Thread.new do
+        while true do
+          events = []
+          num_events = @queue.length()
+          num_events.times do 
+            events << @queue.pop()
+          end
+
+          if !events.empty?()
+            res =
+            @client.post (@config.base_uri + "/api/events/bulk") do |req|
+              req.headers['Authorization'] = 'api_key ' + @api_key
+              req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+              req.headers['Content-Type'] = 'application/json'
+              req.body = events.to_json
+            end
+            if res.status != 200
+              @config.logger.error("Unexpected status code while processing events: " + res.status)
+            end
+          end
+
+          sleep(30)
+        end
+      end
+
     end
 
     def get_flag?(key, user, default=false)
       begin
-        get_flag_int(key, user, default)
+        value = get_flag_int(key, user, default)
+        add_event({:kind => 'feature', :key => key, :user => user, :value => value})
+        return value
       rescue StandardError => error
         @config.logger.error("Unhandled exception in get_flag: " + error.message)
         default
       end
+    end
+
+    def add_event(event)
+      event[:creationDate] = (Time.now.to_f * 1000).to_i
+      @queue.push(event)
+    end
+
+    def send_event(event_name, user, data)
+      add_event({:kind => 'custom', :key => event_name, :user => user, :data => data })
     end
 
     def get_flag_int(key, user, default)
@@ -147,7 +186,7 @@ module LaunchDarkly
 
     end
 
-    private :get_flag_int, :param_for_user, :match_target?, :match_variation?, :evaluate
+    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_variation?, :evaluate
 
 
   end

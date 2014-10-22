@@ -5,6 +5,7 @@ module LaunchDarkly
     def initialize(opts = {})
       @logger = opts[:logger] || Config.default_logger
       @base_uri = opts[:base_uri] || Config.default_base_uri
+      @capacity = opts[:capacity] || Config.default_capacity
     end
 
     def base_uri
@@ -15,8 +16,16 @@ module LaunchDarkly
       @logger
     end
 
+    def capacity
+      @capacity
+    end
+
     def self.default
       Config.new({:base_uri => Config.default_base_uri, :logger => Config.default_logger})
+    end
+
+    def self.default_capacity
+      10000
     end
 
     def self.default_base_uri
