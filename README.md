@@ -4,9 +4,14 @@ LaunchDarkly SDK for Ruby
 Quick setup
 -----------
 
-1. Install the Ruby SDK with `gem`
+0. Install the Ruby SDK with `gem`
 
         gem install ldclient-rb
+
+1. Require the LaunchDarkly client:
+
+        require 'ldclient-rb'
+
 
 2. Create a new LDClient with your API key:
 
