@@ -5,17 +5,29 @@ require 'thread'
 require 'logger'
 
 module LaunchDarkly
+  # 
+  # A client for the LaunchDarkly API. Client instances are thread-safe. Users 
+  # should create a single client instance for the lifetime of the application.
+  # 
+  # 
   class LDClient
 
-    LONG_SCALE = Float(0xFFFFFFFFFFFFFFF) 
-    
+    # 
+    # Creates a new client instance that connects to LaunchDarkly. A custom
+    # configuration parameter can also supplied to specify advanced options,
+    # but for most use cases, the default configuration is appropriate.
+    # 
+    # 
+    # @param api_key [String] the API key for your LaunchDarkly account
+    # @param config [Config] an optional client configuration object
+    # 
+    # @return [LDClient] The LaunchDarkly client instance
     def initialize(api_key, config = Config.default)
-      store = LDClient.default_store
       @queue = Queue.new
       @api_key = api_key
       @config = config
       @client = Faraday.new do |builder|
-        builder.use :http_cache, store: store
+        builder.use :http_cache, store: @config.store
 
         builder.adapter Faraday.default_adapter
       end
@@ -41,16 +53,42 @@ module LaunchDarkly
             end
           end
 
-          sleep(30)
+          sleep(@config.flush_interval)
         end
       end
 
     end
 
-    def self.default_store
-      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : ThreadSafeMemoryStore.new
-    end    
-
+    # 
+    # Calculates the value of a feature flag for a given user. At a minimum, the user hash
+    # should contain a +:key+ .
+    # 
+    # @example Basic user hash
+    #      {:key => "user@example.com"}
+    # 
+    # For authenticated users, the +:key+ should be the unique identifier for your user. For anonymous users,
+    # the +:key+ should be a session identifier or cookie. In either case, the only requirement is that the key
+    # is unique to a user. 
+    # 
+    # You can also pass IP addresses and country codes in the user hash.
+    # 
+    # @example More complete user hash
+    #      {:key => "user@example.com", :ip => "127.0.0.1", :country => "US"}
+    # 
+    # Countries should be sent as ISO 3166-1 alpha-2 codes.
+    # 
+    # The user hash can contain arbitrary custom attributes stored in a +:custom+ sub-hash:
+    # 
+    # @example A user hash with custom attributes
+    #      {:key => "user@example.com", :custom => {:customer_rank => 1000, :groups => ["google", "microsoft"]}} 
+    # 
+    # Attribute values in the custom hash can be integers, booleans, strings, or lists of integers, booleans, or strings.
+    # 
+    # @param key [String] the unique feature key for the feature flag, as shown on the LaunchDarkly dashboard
+    # @param user [Hash] a hash containing parameters for the end user requesting the flag
+    # @param default=false [Boolean] the default value of the flag
+    # 
+    # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
     def get_flag?(key, user, default=false)
       begin
         value = get_flag_int(key, user, default)
@@ -71,6 +109,14 @@ module LaunchDarkly
       end
     end
 
+    # 
+    # Tracks that a user performed an event
+    # 
+    # @param event_name [String] The name of the event
+    # @param user [Hash] The user that performed the event. This should be the same user hash used in calls to {#get_flag?}
+    # @param data [Hash] A hash containing any additional data associated with the event
+    # 
+    # @return [void]
     def send_event(event_name, user, data)
       add_event({:kind => 'custom', :key => event_name, :user => user, :data => data })
     end
@@ -125,7 +171,7 @@ module LaunchDarkly
       hash_key = "%s.%s.%s" % [feature[:key], feature[:salt], id_hash]
 
       hash_val = (Digest::SHA1.hexdigest(hash_key))[0..14]
-      return hash_val.to_i(16) / LONG_SCALE
+      return hash_val.to_i(16) / Float(0xFFFFFFFFFFFFFFF)
     end
 
     def match_target?(target, user)
