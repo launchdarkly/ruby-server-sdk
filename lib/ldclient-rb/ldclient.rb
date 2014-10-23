@@ -2,6 +2,7 @@ require 'faraday/http_cache'
 require 'json'
 require 'digest/sha1'
 require 'thread'
+require 'logger'
 
 module LaunchDarkly
   class LDClient
@@ -9,7 +10,7 @@ module LaunchDarkly
     LONG_SCALE = Float(0xFFFFFFFFFFFFFFF) 
     
     def initialize(api_key, config = Config.default)
-      store = ThreadSafeMemoryStore.new
+      store = LDClient.default_store
       @queue = Queue.new
       @api_key = api_key
       @config = config
@@ -46,6 +47,10 @@ module LaunchDarkly
 
     end
 
+    def self.default_store
+      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : ThreadSafeMemoryStore.new
+    end    
+
     def get_flag?(key, user, default=false)
       begin
         value = get_flag_int(key, user, default)
@@ -58,8 +63,12 @@ module LaunchDarkly
     end
 
     def add_event(event)
-      event[:creationDate] = (Time.now.to_f * 1000).to_i
-      @queue.push(event)
+      if @queue.length() < @config.capacity
+        event[:creationDate] = (Time.now.to_f * 1000).to_i
+        @queue.push(event)
+      else
+        @config.logger.warn("Exceeded event queue capacity. Increase capacity to avoid dropping events.")
+      end
     end
 
     def send_event(event_name, user, data)
