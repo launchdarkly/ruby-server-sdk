@@ -158,13 +158,13 @@ module LaunchDarkly
     end
 
     def param_for_user(feature, user)
-      if user.has_key? :key 
+      if !! user[:key]
         id_hash = user[:key]
       else
         return nil
       end
 
-      if user.has_key? :secondary
+      if !! user[:secondary]
         id_hash += '.' + user[:secondary]
       end
 
@@ -185,7 +185,7 @@ module LaunchDarkly
           return false
         end
       else # custom attribute
-        unless user.has_key? :custom
+        unless !! user[:custom]
           return false
         end
         unless user[:custom].include? attrib
