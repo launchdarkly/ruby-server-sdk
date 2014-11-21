@@ -49,7 +49,7 @@ module LaunchDarkly
               req.body = events.to_json
             end
             if res.status != 200
-              @config.logger.error("Unexpected status code while processing events: " + res.status)
+              @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
             end
           end
 
@@ -95,7 +95,7 @@ module LaunchDarkly
         add_event({:kind => 'feature', :key => key, :user => user, :value => value})
         return value
       rescue StandardError => error
-        @config.logger.error("Unhandled exception in get_flag: " + error.message)
+        @config.logger.error("[LDClient] Unhandled exception in get_flag: #{error.message}")
         default
       end
     end
@@ -105,7 +105,7 @@ module LaunchDarkly
         event[:creationDate] = (Time.now.to_f * 1000).to_i
         @queue.push(event)
       else
-        @config.logger.warn("Exceeded event queue capacity. Increase capacity to avoid dropping events.")
+        @config.logger.warn("[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events.")
       end
     end
 
@@ -124,7 +124,7 @@ module LaunchDarkly
     def get_flag_int(key, user, default)
 
       unless user
-        @config.logger.error("Must specify user")
+        @config.logger.error("[LDClient] Must specify user")
         return default
       end
 
@@ -135,17 +135,17 @@ module LaunchDarkly
       end
 
       if res.status == 401
-        @config.logger.error("Invalid API key")
+        @config.logger.error("[LDClient] Invalid API key")
         return default
       end
 
       if res.status == 404
-        @config.logger.error("Unknown feature key: " + key)
+        @config.logger.error("[LDClient] Unknown feature key: #{key}")
         return default
       end
 
       if res.status != 200
-        @config.logger.error("Unexpected status code " + res.status)
+        @config.logger.error("[LDClient] Unexpected status code #{res.status}")
         return default
       end
 

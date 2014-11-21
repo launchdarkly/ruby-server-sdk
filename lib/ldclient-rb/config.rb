@@ -20,7 +20,7 @@ module LaunchDarkly
     # 
     # @return [type] [description]
     def initialize(opts = {})
-      @base_uri = opts[:base_uri] || Config.default_base_uri
+      @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
       @capacity = opts[:capacity] || Config.default_capacity
       @logger = opts[:logger] || Config.default_logger
       @store = opts[:store] || Config.default_store
