@@ -91,7 +91,7 @@ module LaunchDarkly
     end    
 
     def self.default_flush_interval
-      30
+      10
     end
 
     def self.default_logger

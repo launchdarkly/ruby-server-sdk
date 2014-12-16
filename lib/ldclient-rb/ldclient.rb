@@ -32,31 +32,38 @@ module LaunchDarkly
         builder.adapter Faraday.default_adapter
       end
 
+      @worker = create_worker()
+    end
+
+    def create_worker()
       Thread.new do
         while true do
-          events = []
-          num_events = @queue.length()
-          num_events.times do 
-            events << @queue.pop()
-          end
-
-          if !events.empty?()
-            res =
-            @client.post (@config.base_uri + "/api/events/bulk") do |req|
-              req.headers['Authorization'] = 'api_key ' + @api_key
-              req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
-              req.headers['Content-Type'] = 'application/json'
-              req.body = events.to_json
+          begin
+            events = []
+            num_events = @queue.length()
+            num_events.times do 
+              events << @queue.pop()
             end
-            if res.status != 200
-              @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
-            end
-          end
 
-          sleep(@config.flush_interval)
+            if !events.empty?()
+              res =
+              @client.post (@config.base_uri + "/api/events/bulk") do |req|
+                req.headers['Authorization'] = 'api_key ' + @api_key
+                req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+                req.headers['Content-Type'] = 'application/json'
+                req.body = events.to_json
+              end
+              if res.status != 200
+                @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
+              end
+            end
+
+            sleep(@config.flush_interval)
+          rescue Exception => exn
+            @config.logger.error("[LDClient] Unexpected exception in create_worker: #{exn.message}")
+          end
         end
       end
-
     end
 
     # 
@@ -104,6 +111,10 @@ module LaunchDarkly
       if @queue.length() < @config.capacity
         event[:creationDate] = (Time.now.to_f * 1000).to_i
         @queue.push(event)
+
+        if ! @worker.alive?
+          @worker = create_worker()
+        end
       else
         @config.logger.warn("[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events.")
       end
@@ -242,7 +253,7 @@ module LaunchDarkly
 
     end
 
-    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_variation?, :evaluate
+    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_variation?, :evaluate, :create_worker
 
 
   end
