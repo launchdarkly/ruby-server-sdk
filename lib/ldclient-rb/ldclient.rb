@@ -52,6 +52,8 @@ module LaunchDarkly
                 req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
                 req.headers['Content-Type'] = 'application/json'
                 req.body = events.to_json
+                req.options.timeout = @config.read_timeout          
+                req.options.open_timeout = @config.connect_timeout               
               end
               if res.status != 200
                 @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
@@ -143,6 +145,8 @@ module LaunchDarkly
       @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
         req.headers['Authorization'] = 'api_key ' + @api_key
         req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+        req.options.timeout = @config.read_timeout          
+        req.options.open_timeout = @config.connect_timeout            
       end
 
       if res.status == 401
