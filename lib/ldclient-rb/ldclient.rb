@@ -207,10 +207,10 @@ module LaunchDarkly
           return false
         end
         u_value = user[:custom][attrib]
-        if u_value.is_a? String or u_value.is_a? Numeric
+        if u_value.is_a? Array
+          return ! ((target[:values] & u_value).empty?)          
+        else
           return target[:values].include? u_value
-        elsif u_value.is_a? Array
-          return ! ((target[:values] & u_value).empty?)
         end
 
         return false     
