@@ -31,6 +31,7 @@ module LaunchDarkly
 
         builder.adapter Faraday.default_adapter
       end
+      @offline = false
 
       @worker = create_worker()
     end
@@ -100,6 +101,10 @@ module LaunchDarkly
     # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
     def get_flag?(key, user, default=false)
       begin
+        if @offline
+          return default
+        end
+
         value = get_flag_int(key, user, default)
         add_event({:kind => 'feature', :key => key, :user => user, :value => value})
         return value
@@ -110,6 +115,9 @@ module LaunchDarkly
     end
 
     def add_event(event)
+      if @offline
+        return
+      end
       if @queue.length() < @config.capacity
         event[:creationDate] = (Time.now.to_f * 1000).to_i
         @queue.push(event)
@@ -123,6 +131,27 @@ module LaunchDarkly
     end
 
     # 
+    # Registers the user
+    # 
+    # @param [Hash] The user to register
+    # 
+    def identify(user)
+      add_event({:kind => 'identify', :key => user.key, :user => user})
+    end
+
+    def set_offline()
+      @offline = true
+    end
+
+    def set_online()
+      @offline = false
+    end
+
+    def is_offline?()
+      return @offline
+    end
+
+    # 
     # Tracks that a user performed an event
     # 
     # @param event_name [String] The name of the event
@@ -130,7 +159,7 @@ module LaunchDarkly
     # @param data [Hash] A hash containing any additional data associated with the event
     # 
     # @return [void]
-    def send_event(event_name, user, data)
+    def track(event_name, user, data)
       add_event({:kind => 'custom', :key => event_name, :user => user, :data => data })
     end
 
