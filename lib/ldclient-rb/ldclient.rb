@@ -247,8 +247,19 @@ module LaunchDarkly
 
     end
 
+    def match_user?(variation, user)
+      if !!variation[:userTarget]
+        return match_target?(variation[:userTarget], user)
+      end
+      return false
+    end
+
     def match_variation?(variation, user)
       variation[:targets].each do |target|
+        if !!variation[:userTarget] and target[:attribute].to_sym == :key
+          next
+        end
+
         if match_target?(target, user)
           return true
         end
@@ -265,6 +276,12 @@ module LaunchDarkly
 
       if param == nil
         return nil
+      end
+
+      feature[:variations].each do |variation|
+        if match_user?(variation, user)
+          return variation[:value]
+        end
       end
 
       feature[:variations].each do |variation|
