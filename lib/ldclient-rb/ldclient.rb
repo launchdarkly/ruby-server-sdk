@@ -303,7 +303,7 @@ module LaunchDarkly
 
     end
 
-    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_variation?, :evaluate, :create_worker
+    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker
 
 
   end
