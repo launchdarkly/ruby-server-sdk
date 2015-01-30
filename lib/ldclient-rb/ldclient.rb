@@ -5,6 +5,9 @@ require 'thread'
 require 'logger'
 
 module LaunchDarkly
+
+  BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name]
+
   # 
   # A client for the LaunchDarkly API. Client instances are thread-safe. Users 
   # should create a single client instance for the lifetime of the application.
@@ -221,7 +224,7 @@ module LaunchDarkly
     def match_target?(target, user)
       attrib = target[:attribute].to_sym
 
-      if attrib == :key or attrib == :ip or attrib == :country
+      if BUILTINS.include?(attrib)
         if user[attrib]
           u_value = user[attrib]
           return target[:values].include? u_value
