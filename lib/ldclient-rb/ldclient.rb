@@ -139,7 +139,7 @@ module LaunchDarkly
     # @param [Hash] The user to register
     # 
     def identify(user)
-      add_event({:kind => 'identify', :key => user.key, :user => user})
+      add_event({:kind => 'identify', :key => user[:key], :user => user})
     end
 
     def set_offline()
