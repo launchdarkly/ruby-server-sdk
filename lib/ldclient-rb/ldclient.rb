@@ -42,9 +42,13 @@ module LaunchDarkly
     def flush()
       events = []
       num_events = @queue.length()
-      num_events.times do 
-        events << @queue.pop()
+      begin
+        num_events.times do 
+          events << @queue.pop(true)
+        end
+      rescue
       end
+
 
       if !events.empty?()
         res =
