@@ -75,7 +75,7 @@ module LaunchDarkly
 
             sleep(@config.flush_interval)
           rescue Exception => exn
-            @config.logger.error("[LDClient] Unexpected exception in create_worker: #{exn.inspect}")
+            @config.logger.error("[LDClient] Unexpected exception in create_worker: #{exn.inspect}\n\t#{e.backtrace.join("\n\t")}")
           end
         end
       end
@@ -121,7 +121,7 @@ module LaunchDarkly
         add_event({:kind => 'feature', :key => key, :user => user, :value => value})
         return value
       rescue StandardError => error
-        @config.logger.error("[LDClient] Unhandled exception in get_flag: #{error.inspect}")
+        @config.logger.error("[LDClient] Unhandled exception in get_flag: #{error.inspect}\n\t#{e.backtrace.join("\n\t")}")
         default
       end
     end
