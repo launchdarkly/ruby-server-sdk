@@ -64,7 +64,7 @@ module LaunchDarkly
             req.options.open_timeout = @config.connect_timeout               
           end
         }
-        @config.logger.debug("[LDClient] Flush events timing: #{bench}".chomp)
+        @config.logger.debug { "[LDClient] Flush events timing: #{bench}".chomp }
         if res.status != 200
           @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
         end
@@ -197,7 +197,7 @@ module LaunchDarkly
           req.options.open_timeout = @config.connect_timeout            
         end
       }
-      @config.logger.debug("[LDClient] Get feature timing: #{bench}".chomp)
+      @config.logger.debug { "[LDClient] Get feature timing: #{bench}".chomp }
 
       if res.status == 401
         @config.logger.error("[LDClient] Invalid API key")
