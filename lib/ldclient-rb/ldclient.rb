@@ -3,6 +3,7 @@ require 'json'
 require 'digest/sha1'
 require 'thread'
 require 'logger'
+require 'benchmark'
 
 module LaunchDarkly
 
@@ -51,15 +52,19 @@ module LaunchDarkly
 
 
       if !events.empty?()
-        res =
-        @client.post (@config.base_uri + "/api/events/bulk") do |req|
-          req.headers['Authorization'] = 'api_key ' + @api_key
-          req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
-          req.headers['Content-Type'] = 'application/json'
-          req.body = events.to_json
-          req.options.timeout = @config.read_timeout          
-          req.options.open_timeout = @config.connect_timeout               
-        end
+        res = nil
+        bench = Benchmark.measure {
+          res =
+          @client.post (@config.base_uri + "/api/events/bulk") do |req|
+            req.headers['Authorization'] = 'api_key ' + @api_key
+            req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+            req.headers['Content-Type'] = 'application/json'
+            req.body = events.to_json
+            req.options.timeout = @config.read_timeout          
+            req.options.open_timeout = @config.connect_timeout               
+          end
+        }
+        @config.logger.debug("[LDClient] Flush events timing: #{bench}")
         if res.status != 200
           @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
         end
@@ -182,13 +187,17 @@ module LaunchDarkly
         return default
       end
 
-      res = 
-      @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
-        req.headers['Authorization'] = 'api_key ' + @api_key
-        req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
-        req.options.timeout = @config.read_timeout          
-        req.options.open_timeout = @config.connect_timeout            
-      end
+      res = nil
+      bench = Benchmark.measure {
+        res = 
+        @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
+          req.headers['Authorization'] = 'api_key ' + @api_key
+          req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+          req.options.timeout = @config.read_timeout          
+          req.options.open_timeout = @config.connect_timeout            
+        end
+      }
+      @config.logger.debug("[LDClient] Get feature timing: #{bench}")
 
       if res.status == 401
         @config.logger.error("[LDClient] Invalid API key")
