@@ -53,7 +53,7 @@ module LaunchDarkly
 
       if !events.empty?()
         res = log_timings("Flush events") {
-          return @client.post (@config.base_uri + "/api/events/bulk") do |req|
+          next @client.post (@config.base_uri + "/api/events/bulk") do |req|
             req.headers['Authorization'] = 'api_key ' + @api_key
             req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
             req.headers['Content-Type'] = 'application/json'
@@ -185,7 +185,7 @@ module LaunchDarkly
       end
 
       res = log_timings("Flush events") {
-        return @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
+        next @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
           req.headers['Authorization'] = 'api_key ' + @api_key
           req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
           req.options.timeout = @config.read_timeout          
@@ -318,12 +318,12 @@ module LaunchDarkly
 
     end
 
-    def log_timings(label)
+    def log_timings(label, &block)
       res = nil
       exn = nil
       bench = Benchmark.measure {
         begin
-          yield
+          res = block.call
         rescue Exception => e
           exn = e
         end
