@@ -52,10 +52,8 @@ module LaunchDarkly
 
 
       if !events.empty?()
-        res = nil
-        bench = Benchmark.measure {
-          res =
-          @client.post (@config.base_uri + "/api/events/bulk") do |req|
+        res = log_timings("Flush events") {
+          return @client.post (@config.base_uri + "/api/events/bulk") do |req|
             req.headers['Authorization'] = 'api_key ' + @api_key
             req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
             req.headers['Content-Type'] = 'application/json'
@@ -64,7 +62,6 @@ module LaunchDarkly
             req.options.open_timeout = @config.connect_timeout               
           end
         }
-        @config.logger.debug { "[LDClient] Flush events timing: #{bench}".chomp }
         if res.status != 200
           @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
         end
@@ -187,17 +184,14 @@ module LaunchDarkly
         return default
       end
 
-      res = nil
-      bench = Benchmark.measure {
-        res = 
-        @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
+      res = log_timings("Flush events") {
+        return @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
           req.headers['Authorization'] = 'api_key ' + @api_key
           req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
           req.options.timeout = @config.read_timeout          
           req.options.open_timeout = @config.connect_timeout            
         end
       }
-      @config.logger.debug { "[LDClient] Get feature timing: #{bench}".chomp }
 
       if res.status == 401
         @config.logger.error("[LDClient] Invalid API key")
@@ -324,8 +318,24 @@ module LaunchDarkly
 
     end
 
-    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker
+    def log_timings(label)
+      res = nil
+      exn = nil
+      bench = Benchmark.measure {
+        begin
+          yield
+        rescue Exception => e
+          exn = e
+        end
+      }
+      @config.logger.debug { "[LDClient] #{label} timing: #{bench}".chomp }
+      if exn 
+        raise exn
+      end
+      return res
+    end
 
+    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
 
   end
 end
