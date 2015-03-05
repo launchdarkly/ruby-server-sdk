@@ -121,7 +121,7 @@ module LaunchDarkly
         add_event({:kind => 'feature', :key => key, :user => user, :value => value})
         return value
       rescue StandardError => error
-        @config.logger.error("[LDClient] Unhandled exception in get_flag: #{error.inspect} #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
+        @config.logger.error("[LDClient] Unhandled exception in get_flag: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
         default
       end
     end
