@@ -3,6 +3,7 @@ require 'json'
 require 'digest/sha1'
 require 'thread'
 require 'logger'
+require 'net/http/persistent'
 
 module LaunchDarkly
 
@@ -32,7 +33,7 @@ module LaunchDarkly
       @client = Faraday.new do |builder|
         builder.use :http_cache, store: @config.store
 
-        builder.adapter Faraday.default_adapter
+        builder.adapter :net_http_persistent
       end
       @offline = false
 

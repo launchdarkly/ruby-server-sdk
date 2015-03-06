@@ -25,4 +25,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "faraday", "~> 0.9"
   spec.add_runtime_dependency "faraday-http-cache", "~> 0.4"
   spec.add_runtime_dependency "thread_safe", "~> 0.3"
+  spec.add_runtime_dependency "net-http-persistent", "~> 2.9.4"
 end
