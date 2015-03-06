@@ -320,6 +320,9 @@ module LaunchDarkly
     end
 
     def log_timings(label, &block)
+      if !@config.logger.debug?
+        return block.call
+      end
       res = nil
       exn = nil
       bench = Benchmark.measure {
