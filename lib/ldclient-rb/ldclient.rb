@@ -85,7 +85,7 @@ module LaunchDarkly
     end
 
     def get_flag?(key, user, default=false)
-      toggle(key, user, default)
+      toggle?(key, user, default)
     end
 
     # 
