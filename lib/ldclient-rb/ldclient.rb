@@ -84,6 +84,10 @@ module LaunchDarkly
       end
     end
 
+    def get_flag?(key, user, default=false)
+      toggle(key, user, default)
+    end
+
     # 
     # Calculates the value of a feature flag for a given user. At a minimum, the user hash
     # should contain a +:key+ .
@@ -114,7 +118,7 @@ module LaunchDarkly
     # @param default=false [Boolean] the default value of the flag
     # 
     # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
-    def get_flag?(key, user, default=false)
+    def toggle?(key, user, default=false)
       begin
         if @offline
           return default
