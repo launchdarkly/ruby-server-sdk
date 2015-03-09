@@ -8,7 +8,7 @@ require 'benchmark'
 
 module LaunchDarkly
 
-  BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name]
+  BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
 
   # 
   # A client for the LaunchDarkly API. Client instances are thread-safe. Users 
