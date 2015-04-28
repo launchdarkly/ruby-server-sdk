@@ -29,6 +29,7 @@ module LaunchDarkly
       @flush_interval = opts[:flush_interval] || Config.default_flush_interval
       @connect_timeout = opts[:connect_timeout] || Config.default_connect_timeout
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
+      @log_timings = opts[:log_timings] || Config.default_log_timings
     end
 
     # 
@@ -90,6 +91,15 @@ module LaunchDarkly
       @connect_timeout
     end
 
+    #
+    # Whether timing information should be logged. If it is logged, it will be logged to the DEBUG 
+    # level on the configured logger.  This can be very verbose.
+    #
+    # @return [Boolean] True if timing information should be logged.
+    def log_timings?
+      @log_timings
+    end
+
     # 
     # The default LaunchDarkly client configuration. This configuration sets reasonable defaults for most users.
     # 
@@ -124,6 +134,10 @@ module LaunchDarkly
 
     def self.default_logger
       defined?(Rails) && Rails.respond_to?(:logger) ? Rails.logger : ::Logger.new($stdout)
+    end
+
+    def self.default_log_timings
+      false
     end
 
   end
