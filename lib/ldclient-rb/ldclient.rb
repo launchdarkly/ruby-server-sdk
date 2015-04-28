@@ -324,7 +324,7 @@ module LaunchDarkly
     end
 
     def log_timings(label, &block)
-      if !@config.logger.debug?
+      if !@config.log_timings? || !@config.logger.debug?
         return block.call
       end
       res = nil
