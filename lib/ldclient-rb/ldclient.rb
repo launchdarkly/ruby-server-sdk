@@ -126,6 +126,7 @@ module LaunchDarkly
 
         value = get_flag_int(key, user, default)
         add_event({:kind => 'feature', :key => key, :user => user, :value => value})
+        LDNewRelic.annotate_transaction(key, value)
         return value
       rescue StandardError => error
         @config.logger.error("[LDClient] Unhandled exception in get_flag: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
