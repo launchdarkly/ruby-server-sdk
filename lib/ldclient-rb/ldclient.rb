@@ -183,6 +183,31 @@ module LaunchDarkly
       add_event({:kind => 'custom', :key => event_name, :user => user, :data => data })
     end
 
+    #
+    # Returns the key of every feature
+    #
+    def feature_keys
+      get_features.map {|feature| feature[:key]}
+    end
+
+    #
+    # Returns all features
+    #
+    def get_features
+      res = @client.get (@config.base_uri + '/api/features') do |req|
+        req.headers['Authorization'] = 'api_key ' + @api_key
+        req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+        req.options.timeout = @config.read_timeout
+        req.options.open_timeout = @config.connect_timeout
+      end
+
+      if res.status == 200 then
+        return JSON.parse(res.body, symbolize_names: true)[:items]
+      else
+        @config.logger.error("[LDClient] Unexpected status code #{res.status}")
+      end
+    end
+
     def get_flag_int(key, user, default)
 
       unless user
