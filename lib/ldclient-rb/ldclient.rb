@@ -208,6 +208,40 @@ module LaunchDarkly
       end
     end
 
+    def get_user_toggles(user)
+      res = @client.get("#{@config.base_uri}/api/users/#{user[:key]}/features") do |req|
+        req.headers['Authorization'] = "api_key #{@api_key}"
+        req.headers['User-Agent'] = "RubyClient/#{LaunchDarkly::VERSION}"
+        req.options.timeout = @config.read_timeout
+        req.options.open_timeout = @config.connect_timeout
+      end
+
+      if res.status == 200 then
+        return JSON.parse(res.body, symbolize_names: true)
+      else
+        @config.logger.error("[LDClient] Unexpected status code #{res.status}")
+      end
+    end
+
+    def add_user_override(key, user, value)
+      res = @client.put("#{@config.base_uri}/api/users/#{user[:key]}/features/#{key}") do |req|
+        req.headers['Authorization'] = "api_key #{@api_key}"
+        req.headers['User-Agent'] = "RubyClient/#{LaunchDarkly::VERSION}"
+        req.headers['Content-Type'] = 'application/json'
+        req.body = {setting: value}.to_json
+        req.options.timeout = @config.read_timeout
+        req.options.open_timeout = @config.connect_timeout
+      end
+
+      if res.status == 401
+        @config.logger.error("[LDClient] Invalid API key")
+      end
+
+      if res.status != 200
+        @config.logger.error("[LDClient] Unexpected status code #{res.status}")
+      end
+    end
+
     def get_flag_int(key, user, default)
 
       unless user
