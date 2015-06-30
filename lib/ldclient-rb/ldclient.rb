@@ -239,7 +239,10 @@ module LaunchDarkly
 
       if res.status != 200
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
+        return false
       end
+
+      return true
     end
 
     def get_flag_int(key, user, default)
