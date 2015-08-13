@@ -38,6 +38,11 @@ module LaunchDarkly
       end
       @offline = false
 
+      if @config.stream?
+        @stream_processor = StreamProcessor.new(api_key, config)
+        @stream_processor.subscribe
+      end
+
       @worker = create_worker()
     end
 
@@ -124,12 +129,16 @@ module LaunchDarkly
           return default
         end
 
-        value = get_flag_int(key, user, default)
+        if @config.stream? and @stream_processor.initialized?
+          value = get_flag_stream(key, user, default)
+        else
+          value = get_flag_int(key, user, default)
+        end
         add_event({:kind => 'feature', :key => key, :user => user, :value => value})
         LDNewRelic.annotate_transaction(key, value)
         return value
       rescue StandardError => error
-        @config.logger.error("[LDClient] Unhandled exception in get_flag: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
+        @config.logger.error("[LDClient] Unhandled exception in toggle: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
         default
       end
     end
@@ -175,7 +184,7 @@ module LaunchDarkly
     # Tracks that a user performed an event
     # 
     # @param event_name [String] The name of the event
-    # @param user [Hash] The user that performed the event. This should be the same user hash used in calls to {#get_flag?}
+    # @param user [Hash] The user that performed the event. This should be the same user hash used in calls to {#toggle?}
     # @param data [Hash] A hash containing any additional data associated with the event
     # 
     # @return [void]
@@ -208,6 +217,14 @@ module LaunchDarkly
       end
     end
 
+    def get_flag_stream(key, user, default)
+      # TODO fallback update
+      feature = @stream_processor.get_feature(key)
+
+      val = evaluate(feature, user)
+      val == nil ? default : val
+    end
+
     def get_flag_int(key, user, default)
 
       unless user
@@ -215,7 +232,7 @@ module LaunchDarkly
         return default
       end
 
-      res = log_timings("Flush events") {
+      res = log_timings("Feature request") {
         next @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
           req.headers['Authorization'] = 'api_key ' + @api_key
           req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
@@ -369,7 +386,7 @@ module LaunchDarkly
       return res
     end
 
-    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
+    private :add_event, :get_flag_stream, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
 
   end
 end
