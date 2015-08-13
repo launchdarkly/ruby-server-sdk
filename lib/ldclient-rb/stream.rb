@@ -1,5 +1,4 @@
 require 'celluloid/eventsource'
-require 'thread_safe'
 require 'concurrent/atomics'
 require 'json'
 
@@ -11,33 +10,55 @@ module LaunchDarkly
 
   class InMemoryFeatureStore
     def initialize()
-      @features = ThreadSafe::Hash.new
+      @features = Hash.new
+      @lock = Concurrent::ReadWriteLock.new
       @initialized = Concurrent::AtomicBoolean.new(false)
     end
 
     def get(key)
-      @features[key.to_sym]
+      @lock.with_read_lock {
+        f = @features[key.to_sym]
+        f[:deleted] ? nil : f
+      }
     end
 
     def all()
-      @features.clone
+      @lock.with_read_lock {
+        @features.select {|k,f| not f[:deleted]}  
+      }
     end
 
-    def delete(key)
-      @features.delete(key.to_sym)
+    def delete(key, version)
+      @lock.with_write_lock {
+        old = @features[key.to_sym]
+
+        if old != nil and old[:version] < version
+          @features.delete(key.to_sym)
+        end
+      }
     end
 
     def init(fs)
-      @features.replace(fs)
-      @initialized.make_true
+      @lock.with_write_lock {
+        @features.replace(fs)
+        @initialized.make_true
+      }
     end
 
     def upsert(key, feature)
-      @features[key.to_sym] = feature
+      @lock.with_write_lock {
+        old = @features[key.to_sym]
+
+        if old == nil or old[:version] < feature[:version]
+          @features[key.to_sym] = feature
+        end
+      }
     end
 
     def initialized?()
-      @initialized.value
+      @lock.with_read_lock {
+        @initialized.value
+      }
     end    
   end
 
@@ -91,7 +112,7 @@ module LaunchDarkly
 
         conn.on(DELETE_FEATURE) do |event|
           json = JSON.parse(event.data, :symbolize_names => true)
-          @store.delete(json[:path][1..-1])
+          @store.delete(json[:path][1..-1], json[:version])
           set_connected
         end
       end
