@@ -60,9 +60,7 @@ module LaunchDarkly
     end
 
     def initialized?()
-      @lock.with_read_lock {
-        @initialized.value
-      }
+      @initialized.value
     end    
   end
 

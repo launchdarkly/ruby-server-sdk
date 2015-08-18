@@ -29,4 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "celluloid-eventsource", "~> 0.3"
   #spec.add_runtime_dependency "em-eventsource", "~> 0.2"
   spec.add_runtime_dependency "concurrent-ruby", "~> 0.9"
+  spec.add_runtime_dependency "hashdiff", "~> 0.2"
 end

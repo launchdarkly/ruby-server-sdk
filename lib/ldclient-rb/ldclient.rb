@@ -5,6 +5,7 @@ require 'thread'
 require 'logger'
 require 'net/http/persistent'
 require 'benchmark'
+require 'hashdiff'
 
 module LaunchDarkly
 
@@ -129,11 +130,26 @@ module LaunchDarkly
           return default
         end
 
-        if @config.stream? and @stream_processor.initialized?
-          value = get_flag_stream(key, user, default)
-        else
-          value = get_flag_int(key, user, default)
+        unless user
+          @config.logger.error("[LDClient] Must specify user")
+          return default
         end
+
+        if @config.stream? and @stream_processor.initialized?
+          feature = get_flag_stream(key, user, default)
+          if @config.debug_stream?
+            polled = get_flag_int(key, user,default)
+            diff = HashDiff.diff(feature, polled)
+            if not diff.empty?
+              @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
+            end
+          end
+        else
+          feature = get_flag_int(key, user, default)
+        end
+        value = evaluate(feature, user)
+        value == nil ? default : value
+
         add_event({:kind => 'feature', :key => key, :user => user, :value => value})
         LDNewRelic.annotate_transaction(key, value)
         return value
@@ -151,7 +167,7 @@ module LaunchDarkly
         event[:creationDate] = (Time.now.to_f * 1000).to_i
         @queue.push(event)
 
-        if ! @worker.alive?
+        if !@worker.alive?
           @worker = create_worker()
         end
       else
@@ -219,19 +235,10 @@ module LaunchDarkly
 
     def get_flag_stream(key, user, default)
       # TODO fallback update
-      feature = @stream_processor.get_feature(key)
-
-      val = evaluate(feature, user)
-      val == nil ? default : val
+      @stream_processor.get_feature(key)
     end
 
     def get_flag_int(key, user, default)
-
-      unless user
-        @config.logger.error("[LDClient] Must specify user")
-        return default
-      end
-
       res = log_timings("Feature request") {
         next @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
           req.headers['Authorization'] = 'api_key ' + @api_key
@@ -257,11 +264,7 @@ module LaunchDarkly
       end
 
 
-      feature = JSON.parse(res.body, :symbolize_names => true)
-
-      val = evaluate(feature, user)
-
-      val == nil ? default : val
+      JSON.parse(res.body, :symbolize_names => true)
     end
 
     def param_for_user(feature, user)

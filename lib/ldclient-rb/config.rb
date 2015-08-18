@@ -33,6 +33,7 @@ module LaunchDarkly
       @log_timings = opts[:log_timings] || Config.default_log_timings
       @stream = opts[:stream] || Config.default_stream
       @feature_store = opts[:feature_store] || Config.default_feature_store
+      @debug_stream = opts[:debug_stream] || false
     end
 
     # 
@@ -58,6 +59,15 @@ module LaunchDarkly
     # @return [Boolean] True if streaming mode should be enabled
     def stream?
       @stream
+    end
+
+    #
+    # Whether we should debug streaming mode. If set, the client will fetch features via polling
+    # and compare the retrieved feature with the value in the feature store
+    # 
+    # @return [Boolean] True if we should debug streaming mode
+    def debug_stream?
+      @debug_stream
     end
 
     # 
