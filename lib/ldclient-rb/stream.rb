@@ -33,7 +33,11 @@ module LaunchDarkly
         old = @features[key.to_sym]
 
         if old != nil and old[:version] < version
-          @features.delete(key.to_sym)
+          old[:deleted] = true
+          old[:version] = version
+          @features[key.to_sym] = old
+        elsif old == nil
+          @features[key.to_sym] = {:deleted => true, :version => version}
         end
       }
     end
