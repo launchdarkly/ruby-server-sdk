@@ -18,7 +18,7 @@ module LaunchDarkly
     def get(key)
       @lock.with_read_lock {
         f = @features[key.to_sym]
-        f[:deleted] ? nil : f
+        (f == nil || f[:deleted]) ? nil : f
       }
     end
 
@@ -96,6 +96,7 @@ module LaunchDarkly
         end
 
         conn.on_error do |message|
+          # TODO replace this with proper logging
           puts "Error message #{message[:status_code]}, Response body #{message[:body]}"
           set_disconnected
         end

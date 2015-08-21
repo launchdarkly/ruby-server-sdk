@@ -57,7 +57,6 @@ module LaunchDarkly
       rescue
       end
 
-
       if !events.empty?()
         res = log_timings("Flush events") {
           next @client.post (@config.base_uri + "/api/events/bulk") do |req|
@@ -136,7 +135,7 @@ module LaunchDarkly
         end
 
         if @config.stream? and @stream_processor.initialized?
-          feature = get_flag_stream(key, user, default)
+          feature = get_flag_stream(key)
           if @config.debug_stream?
             polled = get_flag_int(key, user,default)
             diff = HashDiff.diff(feature, polled)
@@ -145,7 +144,7 @@ module LaunchDarkly
             end
           end
         else
-          feature = get_flag_int(key, user, default)
+          feature = get_flag_int(key)
         end
         value = evaluate(feature, user)
         value == nil ? default : value
@@ -233,12 +232,12 @@ module LaunchDarkly
       end
     end
 
-    def get_flag_stream(key, user, default)
+    def get_flag_stream(key)
       # TODO fallback update
       @stream_processor.get_feature(key)
     end
 
-    def get_flag_int(key, user, default)
+    def get_flag_int(key)
       res = log_timings("Feature request") {
         next @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
           req.headers['Authorization'] = 'api_key ' + @api_key
@@ -250,17 +249,17 @@ module LaunchDarkly
 
       if res.status == 401
         @config.logger.error("[LDClient] Invalid API key")
-        return default
+        return nil
       end
 
       if res.status == 404
         @config.logger.error("[LDClient] Unknown feature key: #{key}")
-        return default
+        return nil
       end
 
       if res.status != 200
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
-        return default
+        return nil
       end
 
 
@@ -334,7 +333,7 @@ module LaunchDarkly
     end
 
     def evaluate(feature, user)
-      unless feature[:on]
+      if feature.nil? || !feature[:on]
         return nil
       end
 
@@ -389,7 +388,8 @@ module LaunchDarkly
       return res
     end
 
-    private :add_event, :get_flag_stream, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
+    # TODO put get_flag_stream back in the private methods list
+    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
 
   end
 end
