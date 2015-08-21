@@ -18,7 +18,7 @@ module LaunchDarkly
     def get(key)
       @lock.with_read_lock {
         f = @features[key.to_sym]
-        (f == nil || f[:deleted]) ? nil : f
+        (f.nil? || f[:deleted]) ? nil : f
       }
     end
 
@@ -36,7 +36,7 @@ module LaunchDarkly
           old[:deleted] = true
           old[:version] = version
           @features[key.to_sym] = old
-        elsif old == nil
+        elsif old.nil?
           @features[key.to_sym] = {:deleted => true, :version => version}
         end
       }
@@ -53,7 +53,7 @@ module LaunchDarkly
       @lock.with_write_lock {
         old = @features[key.to_sym]
 
-        if old == nil or old[:version] < feature[:version]
+        if old.nil? or old[:version] < feature[:version]
           @features[key.to_sym] = feature
         end
       }

@@ -137,7 +137,7 @@ module LaunchDarkly
         if @config.stream? and @stream_processor.initialized?
           feature = get_flag_stream(key)
           if @config.debug_stream?
-            polled = get_flag_int(key, user,default)
+            polled = get_flag_int(key)
             diff = HashDiff.diff(feature, polled)
             if not diff.empty?
               @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
@@ -147,7 +147,7 @@ module LaunchDarkly
           feature = get_flag_int(key)
         end
         value = evaluate(feature, user)
-        value == nil ? default : value
+        value.nil? ? default : value
 
         add_event({:kind => 'feature', :key => key, :user => user, :value => value})
         LDNewRelic.annotate_transaction(key, value)
@@ -339,7 +339,7 @@ module LaunchDarkly
 
       param = param_for_user(feature, user)
 
-      if param == nil
+      if param.nil?
         return nil
       end
 
