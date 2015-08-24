@@ -1,6 +1,6 @@
-require 'celluloid/eventsource'
 require 'concurrent/atomics'
 require 'json'
+require 'em-eventsource'
 
 module LaunchDarkly
 
@@ -84,39 +84,29 @@ module LaunchDarkly
     end
 
     def subscribe()
-      headers = 
-      {
-        'Authorization' => 'api_key ' + @api_key,
-        'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
-      }
-      opts = {:headers => headers, :with_credentials => true}
-      @es = Celluloid::EventSource.new(@config.stream_uri + "/", opts) do |conn|
-        conn.on_open do
-          set_connected
-        end
-
-        conn.on_error do |message|
-          # TODO replace this with proper logging
-          puts "Error message #{message[:status_code]}, Response body #{message[:body]}"
-          set_disconnected
-        end
-
-        conn.on(PUT_FEATURE) do |event|
-          features = JSON.parse(event.data, :symbolize_names => true)
-          @store.init(features)
-          set_connected
-        end
-
-        conn.on(PATCH_FEATURE) do |event|
-          json = JSON.parse(event.data, :symbolize_names => true)
-          @store.upsert(json[:path][1..-1], json[:data])
-          set_connected
-        end
-
-        conn.on(DELETE_FEATURE) do |event|
-          json = JSON.parse(event.data, :symbolize_names => true)
-          @store.delete(json[:path][1..-1], json[:version])
-          set_connected
+      Thread.new do
+        EM.run do
+          source = EM::EventSource.new(@config.stream_uri + "/",
+                                      {},
+                                      {'Accept' => 'text/event-stream',
+                                       'Authorization' => 'api_key ' + @api_key,
+                                       'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
+          source.on PUT_FEATURE do |message|
+            features = JSON.parse(message, :symbolize_names => true)
+            @store.init(features)
+            set_connected            
+          end
+          source.on PATCH_FEATURE do |message|
+            json = JSON.parse(message, :symbolize_names => true)
+            @store.upsert(json[:path][1..-1], json[:data])
+            set_connected
+          end
+          source.on DELETE_FEATURE do |message|
+            json = JSON.parse(message, :symbolize_names => true)
+            @store.delete(json[:path][1..-1], json[:version])
+            set_connected
+          end
+          source.start
         end
       end
     end
