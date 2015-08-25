@@ -125,6 +125,7 @@ module LaunchDarkly
           @config.logger.error("[LDClient] Error subscribing to stream API: #{error}")
           set_disconnected
         end
+        source.inactivity_timeout = 0
         source.start
       end
     end
