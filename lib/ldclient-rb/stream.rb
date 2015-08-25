@@ -83,34 +83,49 @@ module LaunchDarkly
       @store.get(key)
     end
 
+    def start_em()
+      if defined?(Thin)
+        @config.logger.debug("Running in a Thin environment-- not starting EventMachine")
+        return
+      else
+      end
+      if EM.reactor_running?
+        @config.logger.debug("EventMachine already running")
+      else
+        @config.logger.debug("Starting EventMachine")
+        Thread.new { EM.run {} }
+        Thread.pass until EM.reactor_running?
+      end
+    end
+
     def subscribe()
-      Thread.new do
-        EM.run do
-          source = EM::EventSource.new(@config.stream_uri + "/",
-                                      {},
-                                      {'Accept' => 'text/event-stream',
-                                       'Authorization' => 'api_key ' + @api_key,
-                                       'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
-          source.on PUT_FEATURE do |message|
-            features = JSON.parse(message, :symbolize_names => true)
-            @store.init(features)
-            set_connected            
-          end
-          source.on PATCH_FEATURE do |message|
-            json = JSON.parse(message, :symbolize_names => true)
-            @store.upsert(json[:path][1..-1], json[:data])
-            set_connected
-          end
-          source.on DELETE_FEATURE do |message|
-            json = JSON.parse(message, :symbolize_names => true)
-            @store.delete(json[:path][1..-1], json[:version])
-            set_connected
-          end
-#          source.error do |error|
-#            @config.logger.error("[LDClient] Error subscribing to stream API: #{error}")
-#          end
-          source.start
+      start_em()
+      EM.defer do
+        source = EM::EventSource.new(@config.stream_uri + "/",
+                                    {},
+                                    {'Accept' => 'text/event-stream',
+                                     'Authorization' => 'api_key ' + @api_key,
+                                     'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
+        source.on PUT_FEATURE do |message|
+          features = JSON.parse(message, :symbolize_names => true)
+          @store.init(features)
+          set_connected            
         end
+        source.on PATCH_FEATURE do |message|
+          json = JSON.parse(message, :symbolize_names => true)
+          @store.upsert(json[:path][1..-1], json[:data])
+          set_connected
+        end
+        source.on DELETE_FEATURE do |message|
+          json = JSON.parse(message, :symbolize_names => true)
+          @store.delete(json[:path][1..-1], json[:version])
+          set_connected
+        end
+        source.error do |error|
+          @config.logger.error("[LDClient] Error subscribing to stream API: #{error}")
+          set_disconnected
+        end
+        source.start
       end
     end
 
