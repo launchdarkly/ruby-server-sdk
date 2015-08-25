@@ -106,6 +106,9 @@ module LaunchDarkly
             @store.delete(json[:path][1..-1], json[:version])
             set_connected
           end
+          source.error do |error|
+            @config.logger.error("[LDClient] Error subscribing to stream API: #{error}")
+          end
           source.start
         end
       end
