@@ -1,6 +1,6 @@
 require 'concurrent/atomics'
 require 'json'
-require 'em-eventsource'
+require 'ld-em-eventsource'
 
 module LaunchDarkly
 
