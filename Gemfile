@@ -1,4 +1,5 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in ldclient-rb.gemspec
+gem "em-eventsource", :git => "git://github.com/launchdarkly/em-eventsource.git"
+
 gemspec
