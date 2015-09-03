@@ -28,4 +28,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "net-http-persistent", "~> 2.9"
   spec.add_runtime_dependency "concurrent-ruby", "~> 0.9"
   spec.add_runtime_dependency "hashdiff", "~> 0.2"
+  spec.add_runtime_dependency "ld-em-eventsource", "~> 0.2"
 end
