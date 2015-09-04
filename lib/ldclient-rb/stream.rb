@@ -70,10 +70,15 @@ module LaunchDarkly
       @config = config
       @store = config.feature_store ? config.feature_store : InMemoryFeatureStore.new
       @disconnected = Concurrent::AtomicReference.new(nil)
+      @started = Concurrent::AtomicBoolean.new(false)
     end
 
     def initialized?()
       @store.initialized?
+    end
+
+    def started?()
+      @started.value
     end
 
     def get_feature(key)
@@ -83,23 +88,33 @@ module LaunchDarkly
       @store.get(key)
     end
 
-    def start_em()
+    def start_reactor()
       if defined?(Thin)
-        @config.logger.debug("Running in a Thin environment-- not starting EventMachine")
-        return
-      else
-      end
-      if EM.reactor_running?
+        @config.logger.debug("Running in a Thin environment-- not starting EventMachine")        
+      elsif EM.reactor_running?
         @config.logger.debug("EventMachine already running")
       else
         @config.logger.debug("Starting EventMachine")
         Thread.new { EM.run {} }
         Thread.pass until EM.reactor_running?
       end
+      EM.reactor_running?
     end
 
-    def subscribe()
-      start_em()
+    def start()
+      # Try to start the reactor. If it's not started, we shouldn't start
+      # the stream processor
+      if not start_reactor
+        return
+      end
+
+      # If someone else booted the stream processor connection, just return
+      if not @started.make_true
+        return
+      end
+
+      # If we're the first and only thread to set started, boot
+      # the stream processor connection
       EM.defer do
         source = EM::EventSource.new(@config.stream_uri + "/",
                                     {},
@@ -144,6 +159,7 @@ module LaunchDarkly
     end
 
     # TODO mark private methods
+    private :set_connected :set_disconnected :start_reactor
 
   end
 

@@ -41,7 +41,6 @@ module LaunchDarkly
 
       if @config.stream?
         @stream_processor = StreamProcessor.new(api_key, config)
-        @stream_processor.subscribe
       end
 
       @worker = create_worker()
@@ -132,6 +131,10 @@ module LaunchDarkly
         unless user
           @config.logger.error("[LDClient] Must specify user")
           return default
+        end
+
+        if @config.stream? and not @stream_processor.started?
+          @stream_processor.start
         end
 
         if @config.stream? and @stream_processor.initialized?
