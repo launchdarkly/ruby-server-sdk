@@ -159,7 +159,7 @@ module LaunchDarkly
     end
 
     # TODO mark private methods
-    private :set_connected :set_disconnected :start_reactor
+    private :set_connected, :set_disconnected, :start_reactor
 
   end
 
