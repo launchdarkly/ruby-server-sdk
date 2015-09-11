@@ -236,7 +236,6 @@ module LaunchDarkly
     end
 
     def get_flag_stream(key)
-      # TODO fallback update
       @stream_processor.get_feature(key)
     end
 
@@ -391,8 +390,7 @@ module LaunchDarkly
       return res
     end
 
-    # TODO put get_flag_stream back in the private methods list
-    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
+    private :add_event, :get_flag_stream, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
 
   end
 end

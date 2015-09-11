@@ -33,7 +33,7 @@ module LaunchDarkly
       @log_timings = opts[:log_timings] || Config.default_log_timings
       @stream = opts[:stream] || Config.default_stream
       @feature_store = opts[:feature_store] || Config.default_feature_store
-      @debug_stream = opts[:debug_stream] || false
+      @debug_stream = opts[:debug_stream] || Config.default_debug_stream
     end
 
     # 
@@ -187,6 +187,10 @@ module LaunchDarkly
 
     def self.default_feature_store
       nil
+    end
+
+    def self.default_debug_stream
+      false
     end
 
   end
