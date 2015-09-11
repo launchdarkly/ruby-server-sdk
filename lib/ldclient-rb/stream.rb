@@ -4,9 +4,9 @@ require 'ld-em-eventsource'
 
 module LaunchDarkly
 
-  PUT_FEATURE = "put/features"
-  PATCH_FEATURE = "patch/features"
-  DELETE_FEATURE = "delete/features"
+  PUT = "put"
+  PATCH = "patch"
+  DELETE = "delete"
 
   class InMemoryFeatureStore
     def initialize()
@@ -116,22 +116,22 @@ module LaunchDarkly
       # If we're the first and only thread to set started, boot
       # the stream processor connection
       EM.defer do
-        source = EM::EventSource.new(@config.stream_uri + "/",
+        source = EM::EventSource.new(@config.stream_uri + "/features",
                                     {},
                                     {'Accept' => 'text/event-stream',
                                      'Authorization' => 'api_key ' + @api_key,
                                      'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
-        source.on PUT_FEATURE do |message|
+        source.on PUT do |message|
           features = JSON.parse(message, :symbolize_names => true)
           @store.init(features)
           set_connected            
         end
-        source.on PATCH_FEATURE do |message|
+        source.on PATCH do |message|
           json = JSON.parse(message, :symbolize_names => true)
           @store.upsert(json[:path][1..-1], json[:data])
           set_connected
         end
-        source.on DELETE_FEATURE do |message|
+        source.on DELETE do |message|
           json = JSON.parse(message, :symbolize_names => true)
           @store.delete(json[:path][1..-1], json[:version])
           set_connected
