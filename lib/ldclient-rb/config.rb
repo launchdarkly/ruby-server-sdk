@@ -23,6 +23,7 @@ module LaunchDarkly
     # @return [type] [description]
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
+      @stream_uri = (opts[:stream_uri] || Config.default_stream_uri).chomp("/")
       @capacity = opts[:capacity] || Config.default_capacity
       @logger = opts[:logger] || Config.default_logger
       @store = opts[:store] || Config.default_store
@@ -30,6 +31,9 @@ module LaunchDarkly
       @connect_timeout = opts[:connect_timeout] || Config.default_connect_timeout
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
       @log_timings = opts[:log_timings] || Config.default_log_timings
+      @stream = opts[:stream] || Config.default_stream
+      @feature_store = opts[:feature_store] || Config.default_feature_store
+      @debug_stream = opts[:debug_stream] || Config.default_debug_stream
     end
 
     # 
@@ -38,6 +42,32 @@ module LaunchDarkly
     # @return [String] The configured base URL for the LaunchDarkly server.
     def base_uri
       @base_uri
+    end
+
+    #
+    # The base URL for the LaunchDarkly streaming server.
+    # 
+    # @return [String] The configured base URL for the LaunchDarkly streaming server.
+    def stream_uri
+      @stream_uri
+    end
+
+    #
+    # Whether streaming mode should be enabled. Streaming mode asynchronously updates
+    # feature flags in real-time using server-sent events.
+    # 
+    # @return [Boolean] True if streaming mode should be enabled
+    def stream?
+      @stream
+    end
+
+    #
+    # Whether we should debug streaming mode. If set, the client will fetch features via polling
+    # and compare the retrieved feature with the value in the feature store
+    # 
+    # @return [Boolean] True if we should debug streaming mode
+    def debug_stream?
+      @debug_stream
     end
 
     # 
@@ -101,6 +131,13 @@ module LaunchDarkly
     end
 
     # 
+    # TODO docs
+    #
+    def feature_store
+      @feature_store
+    end
+
+    # 
     # The default LaunchDarkly client configuration. This configuration sets reasonable defaults for most users.
     # 
     # @return [Config] The default LaunchDarkly configuration.
@@ -114,6 +151,10 @@ module LaunchDarkly
 
     def self.default_base_uri
       "https://app.launchdarkly.com"
+    end
+
+    def self.default_stream_uri
+      "https://stream.launchdarkly.com"
     end
 
     def self.default_store
@@ -137,6 +178,18 @@ module LaunchDarkly
     end
 
     def self.default_log_timings
+      false
+    end
+
+    def self.default_stream
+      false
+    end
+
+    def self.default_feature_store
+      nil
+    end
+
+    def self.default_debug_stream
       false
     end
 

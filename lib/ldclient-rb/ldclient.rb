@@ -5,6 +5,7 @@ require 'thread'
 require 'logger'
 require 'net/http/persistent'
 require 'benchmark'
+require 'hashdiff'
 
 module LaunchDarkly
 
@@ -38,6 +39,10 @@ module LaunchDarkly
       end
       @offline = false
 
+      if @config.stream?
+        @stream_processor = StreamProcessor.new(api_key, config)
+      end
+
       @worker = create_worker()
     end
 
@@ -50,7 +55,6 @@ module LaunchDarkly
         end
       rescue
       end
-
 
       if !events.empty?()
         res = log_timings("Flush events") {
@@ -124,12 +128,35 @@ module LaunchDarkly
           return default
         end
 
-        value = get_flag_int(key, user, default)
+        unless user
+          @config.logger.error("[LDClient] Must specify user")
+          return default
+        end
+
+        if @config.stream? and not @stream_processor.started?
+          @stream_processor.start
+        end
+
+        if @config.stream? and @stream_processor.initialized?
+          feature = get_flag_stream(key)
+          if @config.debug_stream?
+            polled = get_flag_int(key)
+            diff = HashDiff.diff(feature, polled)
+            if not diff.empty?
+              @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
+            end
+          end
+        else
+          feature = get_flag_int(key)
+        end
+        value = evaluate(feature, user)
+        value.nil? ? default : value
+
         add_event({:kind => 'feature', :key => key, :user => user, :value => value})
         LDNewRelic.annotate_transaction(key, value)
         return value
       rescue StandardError => error
-        @config.logger.error("[LDClient] Unhandled exception in get_flag: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
+        @config.logger.error("[LDClient] Unhandled exception in toggle: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
         default
       end
     end
@@ -142,7 +169,7 @@ module LaunchDarkly
         event[:creationDate] = (Time.now.to_f * 1000).to_i
         @queue.push(event)
 
-        if ! @worker.alive?
+        if !@worker.alive?
           @worker = create_worker()
         end
       else
@@ -175,7 +202,7 @@ module LaunchDarkly
     # Tracks that a user performed an event
     # 
     # @param event_name [String] The name of the event
-    # @param user [Hash] The user that performed the event. This should be the same user hash used in calls to {#get_flag?}
+    # @param user [Hash] The user that performed the event. This should be the same user hash used in calls to {#toggle?}
     # @param data [Hash] A hash containing any additional data associated with the event
     # 
     # @return [void]
@@ -208,14 +235,12 @@ module LaunchDarkly
       end
     end
 
-    def get_flag_int(key, user, default)
+    def get_flag_stream(key)
+      @stream_processor.get_feature(key)
+    end
 
-      unless user
-        @config.logger.error("[LDClient] Must specify user")
-        return default
-      end
-
-      res = log_timings("Flush events") {
+    def get_flag_int(key)
+      res = log_timings("Feature request") {
         next @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
           req.headers['Authorization'] = 'api_key ' + @api_key
           req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
@@ -226,25 +251,21 @@ module LaunchDarkly
 
       if res.status == 401
         @config.logger.error("[LDClient] Invalid API key")
-        return default
+        return nil
       end
 
       if res.status == 404
         @config.logger.error("[LDClient] Unknown feature key: #{key}")
-        return default
+        return nil
       end
 
       if res.status != 200
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
-        return default
+        return nil
       end
 
 
-      feature = JSON.parse(res.body, :symbolize_names => true)
-
-      val = evaluate(feature, user)
-
-      val == nil ? default : val
+      JSON.parse(res.body, :symbolize_names => true)
     end
 
     def param_for_user(feature, user)
@@ -314,13 +335,13 @@ module LaunchDarkly
     end
 
     def evaluate(feature, user)
-      unless feature[:on]
+      if feature.nil? || !feature[:on]
         return nil
       end
 
       param = param_for_user(feature, user)
 
-      if param == nil
+      if param.nil?
         return nil
       end
 
@@ -369,7 +390,7 @@ module LaunchDarkly
       return res
     end
 
-    private :add_event, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
+    private :add_event, :get_flag_stream, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
 
   end
 end
