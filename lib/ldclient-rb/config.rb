@@ -182,7 +182,7 @@ module LaunchDarkly
     end
 
     def self.default_stream
-      false
+      true
     end
 
     def self.default_feature_store
