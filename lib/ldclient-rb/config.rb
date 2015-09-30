@@ -40,17 +40,13 @@ module LaunchDarkly
     # The base URL for the LaunchDarkly server.
     #
     # @return [String] The configured base URL for the LaunchDarkly server.
-    def base_uri
-      @base_uri
-    end
+    attr_reader :base_uri
 
     #
     # The base URL for the LaunchDarkly streaming server.
     #
     # @return [String] The configured base URL for the LaunchDarkly streaming server.
-    def stream_uri
-      @stream_uri
-    end
+    attr_reader :stream_uri
 
     #
     # Whether streaming mode should be enabled. Streaming mode asynchronously updates
@@ -75,51 +71,39 @@ module LaunchDarkly
     # that the event buffer is less likely to reach capacity.
     #
     # @return [Float] The configured number of seconds between flushes of the event buffer.
-    def flush_interval
-      @flush_interval
-    end
+    attr_reader :flush_interval
 
     #
     # The configured logger for the LaunchDarkly client. The client library uses the log to
     # print warning and error messages.
     #
     # @return [Logger] The configured logger
-    def logger
-      @logger
-    end
+    attr_reader :logger
 
     #
     # The capacity of the events buffer. The client buffers up to this many events in memory before flushing. If the capacity is exceeded before the buffer is flushed, events will be discarded.
     # Increasing the capacity means that events are less likely to be discarded, at the cost of consuming more memory.
     #
     # @return [Integer] The configured capacity of the event buffer
-    def capacity
-      @capacity
-    end
+    attr_reader :capacity
 
     #
     # The store for the Faraday HTTP caching library. Stores should respond to 'read' and 'write' requests.
     #
     # @return [Object] The configured store for the Faraday HTTP caching library.
-    def store
-      @store
-    end
+    attr_reader :store
 
     #
     # The read timeout for network connections in seconds.
     #
     # @return [Float] The read timeout in seconds.
-    def read_timeout
-      @read_timeout
-    end
+    attr_reader :read_timeout
 
     #
     # The connect timeout for network connections in seconds.
     #
     # @return [Float] The connect timeout in seconds.
-    def connect_timeout
-      @connect_timeout
-    end
+    attr_reader :connect_timeout
 
     #
     # Whether timing information should be logged. If it is logged, it will be logged to the DEBUG
@@ -133,9 +117,7 @@ module LaunchDarkly
     #
     # TODO docs
     #
-    def feature_store
-      @feature_store
-    end
+    attr_reader :feature_store
 
     #
     # The default LaunchDarkly client configuration. This configuration sets reasonable defaults for most users.
