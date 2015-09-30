@@ -11,22 +11,22 @@ module LaunchDarkly
 
   BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
 
-  # 
-  # A client for the LaunchDarkly API. Client instances are thread-safe. Users 
+  #
+  # A client for the LaunchDarkly API. Client instances are thread-safe. Users
   # should create a single client instance for the lifetime of the application.
-  # 
-  # 
+  #
+  #
   class LDClient
 
-    # 
+    #
     # Creates a new client instance that connects to LaunchDarkly. A custom
     # configuration parameter can also supplied to specify advanced options,
     # but for most use cases, the default configuration is appropriate.
-    # 
-    # 
+    #
+    #
     # @param api_key [String] the API key for your LaunchDarkly account
     # @param config [Config] an optional client configuration object
-    # 
+    #
     # @return [LDClient] The LaunchDarkly client instance
     def initialize(api_key, config = Config.default)
       @queue = Queue.new
@@ -50,7 +50,7 @@ module LaunchDarkly
       events = []
       num_events = @queue.length()
       begin
-        num_events.times do 
+        num_events.times do
           events << @queue.pop(true)
         end
       rescue
@@ -63,14 +63,14 @@ module LaunchDarkly
             req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
             req.headers['Content-Type'] = 'application/json'
             req.body = events.to_json
-            req.options.timeout = @config.read_timeout          
-            req.options.open_timeout = @config.connect_timeout               
+            req.options.timeout = @config.read_timeout
+            req.options.open_timeout = @config.connect_timeout
           end
         }
         if res.status != 200
           @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
         end
-      end      
+      end
     end
 
 
@@ -92,35 +92,35 @@ module LaunchDarkly
       toggle?(key, user, default)
     end
 
-    # 
+    #
     # Calculates the value of a feature flag for a given user. At a minimum, the user hash
     # should contain a +:key+ .
-    # 
+    #
     # @example Basic user hash
     #      {:key => "user@example.com"}
-    # 
+    #
     # For authenticated users, the +:key+ should be the unique identifier for your user. For anonymous users,
     # the +:key+ should be a session identifier or cookie. In either case, the only requirement is that the key
-    # is unique to a user. 
-    # 
+    # is unique to a user.
+    #
     # You can also pass IP addresses and country codes in the user hash.
-    # 
+    #
     # @example More complete user hash
     #      {:key => "user@example.com", :ip => "127.0.0.1", :country => "US"}
-    # 
+    #
     # Countries should be sent as ISO 3166-1 alpha-2 codes.
-    # 
+    #
     # The user hash can contain arbitrary custom attributes stored in a +:custom+ sub-hash:
-    # 
+    #
     # @example A user hash with custom attributes
-    #      {:key => "user@example.com", :custom => {:customer_rank => 1000, :groups => ["google", "microsoft"]}} 
-    # 
+    #      {:key => "user@example.com", :custom => {:customer_rank => 1000, :groups => ["google", "microsoft"]}}
+    #
     # Attribute values in the custom hash can be integers, booleans, strings, or lists of integers, booleans, or strings.
-    # 
+    #
     # @param key [String] the unique feature key for the feature flag, as shown on the LaunchDarkly dashboard
     # @param user [Hash] a hash containing parameters for the end user requesting the flag
     # @param default=false [Boolean] the default value of the flag
-    # 
+    #
     # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
     def toggle?(key, user, default=false)
       begin
@@ -177,11 +177,11 @@ module LaunchDarkly
       end
     end
 
-    # 
+    #
     # Registers the user
-    # 
+    #
     # @param [Hash] The user to register
-    # 
+    #
     def identify(user)
       add_event({:kind => 'identify', :key => user[:key], :user => user})
     end
@@ -198,13 +198,13 @@ module LaunchDarkly
       return @offline
     end
 
-    # 
+    #
     # Tracks that a user performed an event
-    # 
+    #
     # @param event_name [String] The name of the event
     # @param user [Hash] The user that performed the event. This should be the same user hash used in calls to {#toggle?}
     # @param data [Hash] A hash containing any additional data associated with the event
-    # 
+    #
     # @return [void]
     def track(event_name, user, data)
       add_event({:kind => 'custom', :key => event_name, :user => user, :data => data })
@@ -244,8 +244,8 @@ module LaunchDarkly
         next @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
           req.headers['Authorization'] = 'api_key ' + @api_key
           req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
-          req.options.timeout = @config.read_timeout          
-          req.options.open_timeout = @config.connect_timeout            
+          req.options.timeout = @config.read_timeout
+          req.options.open_timeout = @config.connect_timeout
         end
       }
 
@@ -304,13 +304,13 @@ module LaunchDarkly
         end
         u_value = user[:custom][attrib]
         if u_value.is_a? Array
-          return ! ((target[:values] & u_value).empty?)          
+          return ! ((target[:values] & u_value).empty?)
         else
           return target[:values].include? u_value
         end
 
-        return false     
-      end 
+        return false
+      end
 
     end
 
@@ -384,7 +384,7 @@ module LaunchDarkly
         end
       }
       @config.logger.debug { "[LDClient] #{label} timing: #{bench}".chomp }
-      if exn 
+      if exn
         raise exn
       end
       return res
