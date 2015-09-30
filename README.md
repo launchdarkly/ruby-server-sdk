@@ -1,6 +1,8 @@
 LaunchDarkly SDK for Ruby
 ===========================
 
+[![Circle CI](https://circleci.com/gh/launchdarkly/ruby-client/tree/master.svg?style=svg)](https://circleci.com/gh/launchdarkly/ruby-client/tree/master)
+
 Quick setup
 -----------
 
