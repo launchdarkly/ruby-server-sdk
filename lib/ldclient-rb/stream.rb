@@ -121,21 +121,9 @@ module LaunchDarkly
                                     {'Accept' => 'text/event-stream',
                                      'Authorization' => 'api_key ' + @api_key,
                                      'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
-        source.on PUT do |message|
-          features = JSON.parse(message, symbolize_names: true)
-          @store.init(features)
-          set_connected
-        end
-        source.on PATCH do |message|
-          json = JSON.parse(message, symbolize_names: true)
-          @store.upsert(json[:path][1..-1], json[:data])
-          set_connected
-        end
-        source.on DELETE do |message|
-          json = JSON.parse(message, symbolize_names: true)
-          @store.delete(json[:path][1..-1], json[:version])
-          set_connected
-        end
+        source.on PUT { |message| process_message(message, PUT) }
+        source.on PATCH { |message| process_message(message, PATCH) }
+        source.on DELETE { |message| process_message(message, DELETE) }
         source.error do |error|
           @config.logger.error("[LDClient] Error subscribing to stream API: #{error}")
           set_disconnected
@@ -143,6 +131,20 @@ module LaunchDarkly
         source.inactivity_timeout = 0
         source.start
       end
+    end
+
+    def process_message(message, method)
+      message = JSON.parse(message, symbolize_names: true)
+      if method == PUT
+        @store.init(message)
+      elsif method == PATCH
+        @store.upsert(message[:path][1..-1], message[:data])
+      elsif method == DELETE
+        @store.delete(message[:path][1..-1], message[:version])
+      else
+        @config.logger.error("[LDClient] Unknown message received: #{method}")
+      end
+      set_connected
     end
 
     def set_disconnected
@@ -159,7 +161,7 @@ module LaunchDarkly
     end
 
     # TODO mark private methods
-    private :set_connected, :set_disconnected, :start_reactor
+    private :process_message, :set_connected, :set_disconnected, :start_reactor
 
   end
 
