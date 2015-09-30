@@ -37,7 +37,7 @@ module LaunchDarkly
           old[:version] = version
           @features[key.to_sym] = old
         elsif old.nil?
-          @features[key.to_sym] = {:deleted => true, :version => version}
+          @features[key.to_sym] = {deleted: true, version: version}
         end
       }
     end
@@ -122,17 +122,17 @@ module LaunchDarkly
                                      'Authorization' => 'api_key ' + @api_key,
                                      'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
         source.on PUT do |message|
-          features = JSON.parse(message, :symbolize_names => true)
+          features = JSON.parse(message, symbolize_names: true)
           @store.init(features)
           set_connected
         end
         source.on PATCH do |message|
-          json = JSON.parse(message, :symbolize_names => true)
+          json = JSON.parse(message, symbolize_names: true)
           @store.upsert(json[:path][1..-1], json[:data])
           set_connected
         end
         source.on DELETE do |message|
-          json = JSON.parse(message, :symbolize_names => true)
+          json = JSON.parse(message, symbolize_names: true)
           @store.delete(json[:path][1..-1], json[:version])
           set_connected
         end

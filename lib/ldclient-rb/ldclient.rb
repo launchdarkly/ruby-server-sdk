@@ -97,7 +97,7 @@ module LaunchDarkly
     # should contain a +:key+ .
     #
     # @example Basic user hash
-    #      {:key => "user@example.com"}
+    #      {key: "user@example.com"}
     #
     # For authenticated users, the +:key+ should be the unique identifier for your user. For anonymous users,
     # the +:key+ should be a session identifier or cookie. In either case, the only requirement is that the key
@@ -106,14 +106,14 @@ module LaunchDarkly
     # You can also pass IP addresses and country codes in the user hash.
     #
     # @example More complete user hash
-    #      {:key => "user@example.com", :ip => "127.0.0.1", :country => "US"}
+    #      {key: "user@example.com", ip: "127.0.0.1", country: "US"}
     #
     # Countries should be sent as ISO 3166-1 alpha-2 codes.
     #
     # The user hash can contain arbitrary custom attributes stored in a +:custom+ sub-hash:
     #
     # @example A user hash with custom attributes
-    #      {:key => "user@example.com", :custom => {:customer_rank => 1000, :groups => ["google", "microsoft"]}}
+    #      {key: "user@example.com", custom: {customer_rank: 1000, groups: ["google", "microsoft"]}}
     #
     # Attribute values in the custom hash can be integers, booleans, strings, or lists of integers, booleans, or strings.
     #
@@ -152,7 +152,7 @@ module LaunchDarkly
         value = evaluate(feature, user)
         value.nil? ? default : value
 
-        add_event({:kind => 'feature', :key => key, :user => user, :value => value})
+        add_event({kind: 'feature', key: key, user: user, value: value})
         LDNewRelic.annotate_transaction(key, value)
         return value
       rescue StandardError => error
@@ -183,7 +183,7 @@ module LaunchDarkly
     # @param [Hash] The user to register
     #
     def identify(user)
-      add_event({:kind => 'identify', :key => user[:key], :user => user})
+      add_event({kind: 'identify', key: user[:key], user: user})
     end
 
     def set_offline()
@@ -207,7 +207,7 @@ module LaunchDarkly
     #
     # @return [void]
     def track(event_name, user, data)
-      add_event({:kind => 'custom', :key => event_name, :user => user, :data => data })
+      add_event({kind: 'custom', key: event_name, user: user, data: data })
     end
 
     #
@@ -265,7 +265,7 @@ module LaunchDarkly
       end
 
 
-      JSON.parse(res.body, :symbolize_names => true)
+      JSON.parse(res.body, symbolize_names: true)
     end
 
     def param_for_user(feature, user)
