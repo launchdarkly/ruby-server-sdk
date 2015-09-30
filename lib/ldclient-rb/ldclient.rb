@@ -122,42 +122,40 @@ module LaunchDarkly
     #
     # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
     def toggle?(key, user, default=false)
-      begin
-        if @offline
-          return default
-        end
-
-        unless user
-          @config.logger.error("[LDClient] Must specify user")
-          return default
-        end
-
-        if @config.stream? and not @stream_processor.started?
-          @stream_processor.start
-        end
-
-        if @config.stream? and @stream_processor.initialized?
-          feature = get_flag_stream(key)
-          if @config.debug_stream?
-            polled = get_flag_int(key)
-            diff = HashDiff.diff(feature, polled)
-            if not diff.empty?
-              @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
-            end
-          end
-        else
-          feature = get_flag_int(key)
-        end
-        value = evaluate(feature, user)
-        value.nil? ? default : value
-
-        add_event({kind: 'feature', key: key, user: user, value: value})
-        LDNewRelic.annotate_transaction(key, value)
-        return value
-      rescue StandardError => error
-        @config.logger.error("[LDClient] Unhandled exception in toggle: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
-        default
+      if @offline
+        return default
       end
+
+      unless user
+        @config.logger.error("[LDClient] Must specify user")
+        return default
+      end
+
+      if @config.stream? and not @stream_processor.started?
+        @stream_processor.start
+      end
+
+      if @config.stream? and @stream_processor.initialized?
+        feature = get_flag_stream(key)
+        if @config.debug_stream?
+          polled = get_flag_int(key)
+          diff = HashDiff.diff(feature, polled)
+          if not diff.empty?
+            @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
+          end
+        end
+      else
+        feature = get_flag_int(key)
+      end
+      value = evaluate(feature, user)
+      value.nil? ? default : value
+
+      add_event({kind: 'feature', key: key, user: user, value: value})
+      LDNewRelic.annotate_transaction(key, value)
+      return value
+    rescue StandardError => error
+      @config.logger.error("[LDClient] Unhandled exception in toggle: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
+      default
     end
 
     def add_event(event)

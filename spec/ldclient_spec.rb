@@ -32,6 +32,17 @@ describe LaunchDarkly::LDClient do
     end
   end
 
+  describe '#toggle?' do
+    let(:key) { 'ld-key' }
+    let(:user) { {user: 'user1'} }
+    it 'will not fail' do
+      expect(client.instance_variable_get(:@config)).to receive(:stream?).and_raise RuntimeError
+      expect(client.instance_variable_get(:@config).logger).to receive(:error)
+      result = client.toggle?(key, user, 'default')
+      expect(result).to eq 'default'
+    end
+  end
+
   describe '#get_features' do
     it 'will parse and return the features list' do
       result = double('Faraday::Response', status: 200, body: '{"items": ["asdf"]}')
