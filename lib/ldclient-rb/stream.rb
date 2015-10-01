@@ -24,7 +24,7 @@ module LaunchDarkly
 
     def all()
       @lock.with_read_lock {
-        @features.select {|k,f| not f[:deleted]}  
+        @features.select {|k,f| not f[:deleted]}
       }
     end
 
@@ -37,7 +37,7 @@ module LaunchDarkly
           old[:version] = version
           @features[key.to_sym] = old
         elsif old.nil?
-          @features[key.to_sym] = {:deleted => true, :version => version}
+          @features[key.to_sym] = {deleted: true, version: version}
         end
       }
     end
@@ -61,7 +61,7 @@ module LaunchDarkly
 
     def initialized?()
       @initialized.value
-    end    
+    end
   end
 
   class StreamProcessor
@@ -90,7 +90,7 @@ module LaunchDarkly
 
     def start_reactor()
       if defined?(Thin)
-        @config.logger.debug("Running in a Thin environment-- not starting EventMachine")        
+        @config.logger.debug("Running in a Thin environment-- not starting EventMachine")
       elsif EM.reactor_running?
         @config.logger.debug("EventMachine already running")
       else
@@ -122,17 +122,17 @@ module LaunchDarkly
                                      'Authorization' => 'api_key ' + @api_key,
                                      'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
         source.on PUT do |message|
-          features = JSON.parse(message, :symbolize_names => true)
+          features = JSON.parse(message, symbolize_names: true)
           @store.init(features)
-          set_connected            
+          set_connected
         end
         source.on PATCH do |message|
-          json = JSON.parse(message, :symbolize_names => true)
+          json = JSON.parse(message, symbolize_names: true)
           @store.upsert(json[:path][1..-1], json[:data])
           set_connected
         end
         source.on DELETE do |message|
-          json = JSON.parse(message, :symbolize_names => true)
+          json = JSON.parse(message, symbolize_names: true)
           @store.delete(json[:path][1..-1], json[:version])
           set_connected
         end
