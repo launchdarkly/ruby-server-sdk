@@ -142,7 +142,7 @@ module LaunchDarkly
     #
     # @return [Config] The default LaunchDarkly configuration.
     def self.default
-      Config.new()
+      Config.new
     end
 
     def self.default_capacity

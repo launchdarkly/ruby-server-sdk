@@ -9,7 +9,7 @@ module LaunchDarkly
   DELETE = "delete"
 
   class InMemoryFeatureStore
-    def initialize()
+    def initialize
       @features = Hash.new
       @lock = Concurrent::ReadWriteLock.new
       @initialized = Concurrent::AtomicBoolean.new(false)
@@ -22,7 +22,7 @@ module LaunchDarkly
       }
     end
 
-    def all()
+    def all
       @lock.with_read_lock {
         @features.select {|k,f| not f[:deleted]}
       }
@@ -59,7 +59,7 @@ module LaunchDarkly
       }
     end
 
-    def initialized?()
+    def initialized?
       @initialized.value
     end
   end
@@ -73,11 +73,11 @@ module LaunchDarkly
       @started = Concurrent::AtomicBoolean.new(false)
     end
 
-    def initialized?()
+    def initialized?
       @store.initialized?
     end
 
-    def started?()
+    def started?
       @started.value
     end
 
@@ -88,7 +88,7 @@ module LaunchDarkly
       @store.get(key)
     end
 
-    def start_reactor()
+    def start_reactor
       if defined?(Thin)
         @config.logger.debug("Running in a Thin environment-- not starting EventMachine")
       elsif EM.reactor_running?
@@ -101,7 +101,7 @@ module LaunchDarkly
       EM.reactor_running?
     end
 
-    def start()
+    def start
       # Try to start the reactor. If it's not started, we shouldn't start
       # the stream processor
       if not start_reactor
@@ -145,15 +145,15 @@ module LaunchDarkly
       end
     end
 
-    def set_disconnected()
+    def set_disconnected
       @disconnected.set(Time.now)
     end
 
-    def set_connected()
+    def set_connected
       @disconnected.set(nil)
     end
 
-    def should_fallback_update()
+    def should_fallback_update
       disc = @disconnected.get
       disc != nil and disc < (Time.now - 120)
     end

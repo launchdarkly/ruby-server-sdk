@@ -43,12 +43,12 @@ module LaunchDarkly
         @stream_processor = StreamProcessor.new(api_key, config)
       end
 
-      @worker = create_worker()
+      @worker = create_worker
     end
 
-    def flush()
+    def flush
       events = []
-      num_events = @queue.length()
+      num_events = @queue.length
       begin
         num_events.times do
           events << @queue.pop(true)
@@ -56,7 +56,7 @@ module LaunchDarkly
       rescue
       end
 
-      if !events.empty?()
+      if !events.empty?
         res = log_timings("Flush events") {
           next @client.post (@config.base_uri + "/api/events/bulk") do |req|
             req.headers['Authorization'] = 'api_key ' + @api_key
@@ -74,11 +74,11 @@ module LaunchDarkly
     end
 
 
-    def create_worker()
+    def create_worker
       Thread.new do
         while true do
           begin
-            flush()
+            flush
 
             sleep(@config.flush_interval)
           rescue Exception => exn
@@ -165,12 +165,12 @@ module LaunchDarkly
       if @offline
         return
       end
-      if @queue.length() < @config.capacity
+      if @queue.length < @config.capacity
         event[:creationDate] = (Time.now.to_f * 1000).to_i
         @queue.push(event)
 
         if !@worker.alive?
-          @worker = create_worker()
+          @worker = create_worker
         end
       else
         @config.logger.warn("[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events.")
@@ -186,15 +186,15 @@ module LaunchDarkly
       add_event({kind: 'identify', key: user[:key], user: user})
     end
 
-    def set_offline()
+    def set_offline
       @offline = true
     end
 
-    def set_online()
+    def set_online
       @offline = false
     end
 
-    def is_offline?()
+    def is_offline?
       return @offline
     end
 
