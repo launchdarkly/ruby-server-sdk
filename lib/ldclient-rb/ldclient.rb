@@ -48,12 +48,11 @@ module LaunchDarkly
 
     def flush
       events = []
-      num_events = @queue.length
       begin
-        num_events.times do
+        while true
           events << @queue.pop(true)
         end
-      rescue
+      rescue ThreadError
       end
 
       if !events.empty?
