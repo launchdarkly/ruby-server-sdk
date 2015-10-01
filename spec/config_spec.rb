@@ -17,6 +17,11 @@ describe LaunchDarkly::Config do
       expect(config.base_uri).to eq uri
     end
   end
+  describe '@base_uri' do
+    it 'can be read' do
+      expect(subject.new.base_uri).to eq subject.default_base_uri
+    end
+  end
   describe '.default_store' do
     it 'uses Rails cache if it is available' do
       rails = instance_double('Rails', cache: :cache)

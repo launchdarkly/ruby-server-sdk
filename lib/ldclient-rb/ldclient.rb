@@ -122,42 +122,40 @@ module LaunchDarkly
     #
     # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
     def toggle?(key, user, default=false)
-      begin
-        if @offline
-          return default
-        end
-
-        unless user
-          @config.logger.error("[LDClient] Must specify user")
-          return default
-        end
-
-        if @config.stream? and not @stream_processor.started?
-          @stream_processor.start
-        end
-
-        if @config.stream? and @stream_processor.initialized?
-          feature = get_flag_stream(key)
-          if @config.debug_stream?
-            polled = get_flag_int(key)
-            diff = HashDiff.diff(feature, polled)
-            if not diff.empty?
-              @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
-            end
-          end
-        else
-          feature = get_flag_int(key)
-        end
-        value = evaluate(feature, user)
-        value.nil? ? default : value
-
-        add_event({kind: 'feature', key: key, user: user, value: value})
-        LDNewRelic.annotate_transaction(key, value)
-        return value
-      rescue StandardError => error
-        @config.logger.error("[LDClient] Unhandled exception in toggle: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
-        default
+      if @offline
+        return default
       end
+
+      unless user
+        @config.logger.error("[LDClient] Must specify user")
+        return default
+      end
+
+      if @config.stream? and not @stream_processor.started?
+        @stream_processor.start
+      end
+
+      if @config.stream? and @stream_processor.initialized?
+        feature = get_flag_stream(key)
+        if @config.debug_stream?
+          polled = get_flag_int(key)
+          diff = HashDiff.diff(feature, polled)
+          if not diff.empty?
+            @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
+          end
+        end
+      else
+        feature = get_flag_int(key)
+      end
+      value = evaluate(feature, user)
+      value.nil? ? default : value
+
+      add_event({kind: 'feature', key: key, user: user, value: value})
+      LDNewRelic.annotate_transaction(key, value)
+      return value
+    rescue StandardError => error
+      @config.logger.error("[LDClient] Unhandled exception in toggle: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
+      default
     end
 
     def add_event(event)
@@ -220,12 +218,7 @@ module LaunchDarkly
     # Returns all features
     #
     def get_features
-      res = @client.get (@config.base_uri + '/api/features') do |req|
-        req.headers['Authorization'] = 'api_key ' + @api_key
-        req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
-        req.options.timeout = @config.read_timeout
-        req.options.open_timeout = @config.connect_timeout
-      end
+      res = make_request '/api/features'
 
       if res.status == 200 then
         return JSON.parse(res.body, symbolize_names: true)[:items]
@@ -240,12 +233,7 @@ module LaunchDarkly
 
     def get_flag_int(key)
       res = log_timings("Feature request") {
-        next @client.get (@config.base_uri + '/api/eval/features/' + key) do |req|
-          req.headers['Authorization'] = 'api_key ' + @api_key
-          req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
-          req.options.timeout = @config.read_timeout
-          req.options.open_timeout = @config.connect_timeout
-        end
+        next make_request '/api/eval/features/' + key
       }
 
       if res.status == 401
@@ -265,6 +253,15 @@ module LaunchDarkly
 
 
       JSON.parse(res.body, symbolize_names: true)
+    end
+
+    def make_request(path)
+      @client.get (@config.base_uri + path) do |req|
+        req.headers['Authorization'] = 'api_key ' + @api_key
+        req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+        req.options.timeout = @config.read_timeout
+        req.options.open_timeout = @config.connect_timeout
+      end
     end
 
     def param_for_user(feature, user)
@@ -389,7 +386,7 @@ module LaunchDarkly
       return res
     end
 
-    private :add_event, :get_flag_stream, :get_flag_int, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
+    private :add_event, :get_flag_stream, :get_flag_int, :make_request, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
 
   end
 end

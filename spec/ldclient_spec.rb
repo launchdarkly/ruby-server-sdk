@@ -31,4 +31,67 @@ describe LaunchDarkly::LDClient do
       client.flush
     end
   end
+
+  describe '#toggle?' do
+    let(:key) { 'ld-key' }
+    let(:user) { {user: 'user1'} }
+    it 'will not fail' do
+      expect(client.instance_variable_get(:@config)).to receive(:stream?).and_raise RuntimeError
+      expect(client.instance_variable_get(:@config).logger).to receive(:error)
+      result = client.toggle?(key, user, 'default')
+      expect(result).to eq 'default'
+    end
+  end
+
+  describe '#get_features' do
+    it 'will parse and return the features list' do
+      result = double('Faraday::Response', status: 200, body: '{"items": ["asdf"]}')
+      expect(client).to receive(:make_request).with('/api/features').and_return(result)
+      data = client.send(:get_features)
+      expect(data).to eq ['asdf']
+    end
+    it 'will log errors' do
+      result = double('Faraday::Response', status: 500)
+      expect(client).to receive(:make_request).with('/api/features').and_return(result)
+      expect(client.instance_variable_get(:@config).logger).to receive(:error)
+      client.send(:get_features)
+    end
+  end
+
+  describe '#get_flag_int' do
+    it 'will return the parsed flag' do
+      result = double('Faraday::Response', status: 200, body: '{"asdf":"qwer"}')
+      expect(client).to receive(:make_request).with('/api/eval/features/key').and_return(result)
+      data = client.send(:get_flag_int, 'key')
+      expect(data).to eq({asdf: 'qwer'})
+    end
+    it 'will accept 401 statuses' do
+      result = double('Faraday::Response', status: 401)
+      expect(client).to receive(:make_request).with('/api/eval/features/key').and_return(result)
+      expect(client.instance_variable_get(:@config).logger).to receive(:error)
+      data = client.send(:get_flag_int, 'key')
+      expect(data).to be_nil
+    end
+    it 'will accept 404 statuses' do
+      result = double('Faraday::Response', status: 404)
+      expect(client).to receive(:make_request).with('/api/eval/features/key').and_return(result)
+      expect(client.instance_variable_get(:@config).logger).to receive(:error)
+      data = client.send(:get_flag_int, 'key')
+      expect(data).to be_nil
+    end
+    it 'will accept non-standard statuses' do
+      result = double('Faraday::Response', status: 500)
+      expect(client).to receive(:make_request).with('/api/eval/features/key').and_return(result)
+      expect(client.instance_variable_get(:@config).logger).to receive(:error)
+      data = client.send(:get_flag_int, 'key')
+      expect(data).to be_nil
+    end
+  end
+
+  describe '#make_request' do
+    it 'will make a proper request' do
+      expect(client.instance_variable_get :@client).to receive(:get)
+      client.send(:make_request, '/asdf')
+    end
+  end
 end
