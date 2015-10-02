@@ -126,9 +126,7 @@ module LaunchDarkly
     #
     # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
     def toggle?(key, user, default=false)
-      if @offline
-        return default
-      end
+      return default if @offline
 
       unless user
         @config.logger.error("[LDClient] Must specify user")
@@ -156,9 +154,8 @@ module LaunchDarkly
     end
 
     def add_event(event)
-      if @offline
-        return
-      end
+      return if @offline
+
       if @queue.length < @config.capacity
         event[:creationDate] = (Time.now.to_f * 1000).to_i
         @queue.push(event)
@@ -274,12 +271,9 @@ module LaunchDarkly
     end
 
     def param_for_user(feature, user)
-      if user[:key]
-        id_hash = user[:key]
-      else
-        return nil
-      end
+      return nil unless user[:key]
 
+      id_hash = user[:key]
       if user[:secondary]
         id_hash += '.' + user[:secondary]
       end
@@ -294,19 +288,14 @@ module LaunchDarkly
       attrib = target[:attribute].to_sym
 
       if BUILTINS.include?(attrib)
-        if user[attrib]
-          u_value = user[attrib]
-          return target[:values].include? u_value
-        else
-          return false
-        end
+        return false unless user[attrib]
+
+        u_value = user[attrib]
+        return target[:values].include? u_value
       else # custom attribute
-        unless user[:custom]
-          return false
-        end
-        unless user[:custom].include? attrib
-          return false
-        end
+        return false unless user[:custom]
+        return false unless user[:custom].include? attrib
+
         u_value = user[:custom][attrib]
         if u_value.is_a? Array
           return ! ((target[:values] & u_value).empty?)
@@ -340,35 +329,26 @@ module LaunchDarkly
     end
 
     def evaluate(feature, user)
-      if feature.nil? || !feature[:on]
-        return nil
-      end
+      return nil if feature.nil?
+      return nil unless feature[:on]
 
       param = param_for_user(feature, user)
 
-      if param.nil?
-        return nil
+      return nil if param.nil?
+
+      feature[:variations].each do |variation|
+        return variation[:value] if match_user?(variation, user)
       end
 
       feature[:variations].each do |variation|
-        if match_user?(variation, user)
-          return variation[:value]
-        end
-      end
-
-      feature[:variations].each do |variation|
-        if match_variation?(variation, user)
-          return variation[:value]
-        end
+        return variation[:value] if match_variation?(variation, user)
       end
 
       total = 0.0
       feature[:variations].each do |variation|
         total += variation[:weight].to_f / 100.0
 
-        if param < total
-          return variation[:value]
-        end
+        return variation[:value] if param < total
       end
 
       return nil
@@ -376,9 +356,7 @@ module LaunchDarkly
     end
 
     def log_timings(label, &block)
-      if !@config.log_timings? || !@config.logger.debug?
-        return block.call
-      end
+      return block.call unless @config.log_timings? && @config.logger.debug?
       res = nil
       exn = nil
       bench = Benchmark.measure {
@@ -389,9 +367,7 @@ module LaunchDarkly
         end
       }
       @config.logger.debug { "[LDClient] #{label} timing: #{bench}".chomp }
-      if exn
-        raise exn
-      end
+      raise exn if exn
       return res
     end
 

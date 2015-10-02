@@ -104,14 +104,10 @@ module LaunchDarkly
     def start
       # Try to start the reactor. If it's not started, we shouldn't start
       # the stream processor
-      if not start_reactor
-        return
-      end
+      return if not start_reactor
 
       # If someone else booted the stream processor connection, just return
-      if not @started.make_true
-        return
-      end
+      return unless @started.make_true
 
       # If we're the first and only thread to set started, boot
       # the stream processor connection
