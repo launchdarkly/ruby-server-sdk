@@ -50,6 +50,23 @@ describe LaunchDarkly::LDClient do
     end
   end
 
+  describe '#get_streamed_flag' do
+    it 'will not check the polled flag normally' do
+      expect(client).to receive(:get_flag_stream).and_return true
+      expect(client).to_not receive(:get_flag_int)
+      expect(client.send(:get_streamed_flag, 'key')).to eq true
+    end
+    context 'debug stream' do
+      it 'will log an error if the streamed and polled flag do not match' do
+        expect(client.instance_variable_get(:@config)).to receive(:debug_stream?).and_return true
+        expect(client).to receive(:get_flag_stream).and_return true
+        expect(client).to receive(:get_flag_int).and_return false
+        expect(client.instance_variable_get(:@config).logger).to receive(:error)
+        expect(client.send(:get_streamed_flag, 'key')).to eq true
+      end
+    end
+  end
+
   describe '#get_features' do
     it 'will parse and return the features list' do
       result = double('Faraday::Response', status: 200, body: '{"items": ["asdf"]}')
