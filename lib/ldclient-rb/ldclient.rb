@@ -274,13 +274,13 @@ module LaunchDarkly
     end
 
     def param_for_user(feature, user)
-      if !! user[:key]
+      if user[:key]
         id_hash = user[:key]
       else
         return nil
       end
 
-      if !! user[:secondary]
+      if user[:secondary]
         id_hash += '.' + user[:secondary]
       end
 
@@ -301,7 +301,7 @@ module LaunchDarkly
           return false
         end
       else # custom attribute
-        unless !! user[:custom]
+        unless user[:custom]
           return false
         end
         unless user[:custom].include? attrib
@@ -320,7 +320,7 @@ module LaunchDarkly
     end
 
     def match_user?(variation, user)
-      if !!variation[:userTarget]
+      if variation[:userTarget]
         return match_target?(variation[:userTarget], user)
       end
       return false
