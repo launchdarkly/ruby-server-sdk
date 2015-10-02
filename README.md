@@ -13,16 +13,21 @@ Quick setup
 
 0. Install the Ruby SDK with `gem`
 
-        gem install ldclient-rb
+```shell
+gem install ldclient-rb
+```
 
 1. Require the LaunchDarkly client:
 
-        require 'ldclient-rb'
-
+```ruby
+require 'ldclient-rb'
+```
 
 2. Create a new LDClient with your API key:
 
-        client = LaunchDarkly::LDClient.new("your_api_key")
+```ruby
+client = LaunchDarkly::LDClient.new("your_api_key")
+```
 
 Your first feature flag
 -----------------------
@@ -30,11 +35,13 @@ Your first feature flag
 1. Create a new feature flag on your [dashboard](https://app.launchdarkly.com)
 2. In your application code, use the feature's key to check whether the flag is on for each user:
 
-        if client.toggle?("your.flag.key", {key: "user@test.com"}, false)
-            # application code to show the feature
-        else
-            # the code to run if the feature is off
-        end
+```ruby
+if client.toggle?("your.flag.key", {key: "user@test.com"}, false)
+  # application code to show the feature
+else
+  # the code to run if the feature is off
+end
+```
 
 Learn more
 -----------
