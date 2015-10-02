@@ -140,14 +140,7 @@ module LaunchDarkly
       end
 
       if @config.stream? and @stream_processor.initialized?
-        feature = get_flag_stream(key)
-        if @config.debug_stream?
-          polled = get_flag_int(key)
-          diff = HashDiff.diff(feature, polled)
-          if not diff.empty?
-            @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
-          end
-        end
+        feature = get_streamed_flag(key)
       else
         feature = get_flag_int(key)
       end
@@ -229,6 +222,18 @@ module LaunchDarkly
       else
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
       end
+    end
+
+    def get_streamed_flag(key)
+      feature = get_flag_stream(key)
+      if @config.debug_stream?
+        polled = get_flag_int(key)
+        diff = HashDiff.diff(feature, polled)
+        if not diff.empty?
+          @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
+        end
+      end
+      feature
     end
 
     def get_flag_stream(key)
@@ -390,7 +395,7 @@ module LaunchDarkly
       return res
     end
 
-    private :post_flushed_events, :add_event, :get_flag_stream, :get_flag_int, :make_request, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
+    private :post_flushed_events, :add_event, :get_streamed_flag, :get_flag_stream, :get_flag_int, :make_request, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
 
   end
 end
