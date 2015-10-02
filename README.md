@@ -29,6 +29,36 @@ require 'ldclient-rb'
 client = LaunchDarkly::LDClient.new("your_api_key")
 ```
 
+### Ruby on Rails
+
+0.  Add `gem 'ldclient-rb'` to your Gemfile and `bundle install`
+
+1.  Initialize the launchdarkly client in `config/initializers/launchdarkly.rb`:
+
+```ruby
+Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_api_key")
+```
+
+2.  You may want to include a function in your ApplicationController
+
+```ruby
+    def launchdarkly_settings
+      {
+        key: current_user.id,
+        email: current_user.email,
+        custom: { groups: current_user.groups.pluck(:name) },
+        # Any other fields you may have
+        # e.g. lastName: current_user.last_name,
+      }
+    end
+```
+
+3.  In your controllers, access the client using
+
+```ruby
+Rails.application.config.ld_client.toggle?('your.flag.key', launchdarkly_settings, false)
+```
+
 Your first feature flag
 -----------------------
 
