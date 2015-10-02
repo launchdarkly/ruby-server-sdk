@@ -94,4 +94,31 @@ describe LaunchDarkly::LDClient do
       client.send(:make_request, '/asdf')
     end
   end
+
+  describe '#log_timings' do
+    let(:block) { lambda { 'result' } }
+    let(:label) { 'label' }
+    it 'will not measure if not configured to do so' do
+      expect(Benchmark).to_not receive(:measure)
+      client.send(:log_timings, label, &block)
+    end
+    context 'logging enabled' do
+      before do
+        expect(client.instance_variable_get(:@config)).to receive(:log_timings?).and_return true
+        expect(client.instance_variable_get(:@config).logger).to receive(:debug?).and_return true
+      end
+      it 'will benchmark timings and return result' do
+        expect(Benchmark).to receive(:measure).and_call_original
+        expect(client.instance_variable_get(:@config).logger).to receive(:debug)
+        result = client.send(:log_timings, label, &block)
+        expect(result).to eq 'result'
+      end
+      it 'will raise exceptions if the block has them' do
+        block = lambda { raise RuntimeError }
+        expect(Benchmark).to receive(:measure).and_call_original
+        expect(client.instance_variable_get(:@config).logger).to receive(:debug)
+        expect{client.send(:log_timings, label, &block)}.to raise_error RuntimeError
+      end
+    end
+  end
 end
