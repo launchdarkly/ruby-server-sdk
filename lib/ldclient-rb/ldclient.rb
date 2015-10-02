@@ -56,19 +56,23 @@ module LaunchDarkly
       end
 
       if !events.empty?
-        res = log_timings("Flush events") {
-          next @client.post (@config.base_uri + "/api/events/bulk") do |req|
-            req.headers['Authorization'] = 'api_key ' + @api_key
-            req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
-            req.headers['Content-Type'] = 'application/json'
-            req.body = events.to_json
-            req.options.timeout = @config.read_timeout
-            req.options.open_timeout = @config.connect_timeout
-          end
-        }
-        if res.status != 200
-          @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
+        post_flushed_events(events)
+      end
+    end
+
+    def post_flushed_events(events)
+      res = log_timings("Flush events") {
+        next @client.post (@config.base_uri + "/api/events/bulk") do |req|
+          req.headers['Authorization'] = 'api_key ' + @api_key
+          req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+          req.headers['Content-Type'] = 'application/json'
+          req.body = events.to_json
+          req.options.timeout = @config.read_timeout
+          req.options.open_timeout = @config.connect_timeout
         end
+      }
+      if res.status != 200
+        @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
       end
     end
 
@@ -386,7 +390,7 @@ module LaunchDarkly
       return res
     end
 
-    private :add_event, :get_flag_stream, :get_flag_int, :make_request, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
+    private :post_flushed_events, :add_event, :get_flag_stream, :get_flag_int, :make_request, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
 
   end
 end
