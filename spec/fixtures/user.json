@@ -1,0 +1,9 @@
+{
+    "key":"user@test.com",
+    "custom":{
+        "groups":[
+            "microsoft",
+            "google"
+        ]
+    }
+}
