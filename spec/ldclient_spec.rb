@@ -54,6 +54,27 @@ describe LaunchDarkly::LDClient do
       result = client.toggle?(feature[:key], user, 'default')
       expect(result).to eq 'default'
     end
+    it 'requires user' do
+      expect(client.instance_variable_get(:@config).logger).to receive(:error)
+      result = client.toggle?(feature[:key], nil, 'default')
+      expect(result).to eq 'default'
+    end
+    it 'returns value from streamed flag if available' do
+      expect(client.instance_variable_get(:@config)).to receive(:stream?).and_return(true).twice
+      expect(client.instance_variable_get(:@stream_processor)).to receive(:started?).and_return true
+      expect(client.instance_variable_get(:@stream_processor)).to receive(:initialized?).and_return true
+      expect(client).to receive(:add_event)
+      expect(client).to receive(:get_streamed_flag).and_return feature
+      result = client.toggle?(feature[:key], user, 'default')
+      expect(result).to eq false
+    end
+    it 'returns value from normal request if streamed flag is not available' do
+      expect(client.instance_variable_get(:@config)).to receive(:stream?).and_return(false).twice
+      expect(client).to receive(:add_event)
+      expect(client).to receive(:get_flag_int).and_return feature
+      result = client.toggle?(feature[:key], user, 'default')
+      expect(result).to eq false
+    end
   end
 
   describe '#get_streamed_flag' do
