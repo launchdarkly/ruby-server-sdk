@@ -6,6 +6,14 @@ describe LaunchDarkly::LDClient do
     expect_any_instance_of(LaunchDarkly::LDClient).to receive :create_worker
     subject.new('api_key')
   end
+  let(:feature) do
+    data = File.read(File.join('spec', 'fixtures', 'feature.json'))
+    JSON.parse(data, symbolize_names: true)
+  end
+  let(:user) do
+    data = File.read(File.join('spec', 'fixtures', 'user.json'))
+    JSON.parse(data, symbolize_names: true)
+  end
 
   describe '#flush' do
     it 'will flush and post all events' do
@@ -40,12 +48,10 @@ describe LaunchDarkly::LDClient do
   end
 
   describe '#toggle?' do
-    let(:key) { 'ld-key' }
-    let(:user) { {user: 'user1'} }
     it 'will not fail' do
       expect(client.instance_variable_get(:@config)).to receive(:stream?).and_raise RuntimeError
       expect(client.instance_variable_get(:@config).logger).to receive(:error)
-      result = client.toggle?(key, user, 'default')
+      result = client.toggle?(feature[:key], user, 'default')
       expect(result).to eq 'default'
     end
   end
@@ -116,6 +122,39 @@ describe LaunchDarkly::LDClient do
     it 'will make a proper request' do
       expect(client.instance_variable_get :@client).to receive(:get)
       client.send(:make_request, '/asdf')
+    end
+  end
+
+  describe '#param_for_user' do
+    it 'will return a consistent hash of a user key, feature key, and feature salt' do
+      param = client.send(:param_for_user, feature, user)
+      expect(param).to be_between(0.0, 1.0).inclusive
+    end
+  end
+
+  describe '#evaluate' do
+    it 'will return nil if there is no feature' do
+      expect(client.send(:evaluate, nil, user)).to eq nil
+    end
+    it 'will return nil unless the feature is on' do
+      feature[:on] = false
+      expect(client.send(:evaluate, feature, user)).to eq nil
+    end
+    it 'will return value if it matches the user' do
+      user = {key: 'Alida.Caples@example.com'}
+      expect(client.send(:evaluate, feature, user)).to eq false
+      user = {key: 'foo@bar.com'}
+      expect(client.send(:evaluate, feature, user)).to eq true
+    end
+    it 'will return value if the target matches' do
+      user = {key: 'asdf@asdf.com', custom: {groups: 'Microsoft'}}
+      expect(client.send(:evaluate, feature, user)).to eq true
+    end
+    it 'will return value if the weight matches' do
+      expect(client).to receive(:param_for_user).and_return 0.1
+      expect(client.send(:evaluate, feature, user)).to eq true
+      expect(client).to receive(:param_for_user).and_return 0.9
+      expect(client.send(:evaluate, feature, user)).to eq false
     end
   end
 
