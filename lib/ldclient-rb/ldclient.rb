@@ -315,6 +315,13 @@ module LaunchDarkly
       return false
     end
 
+    def find_user_match(feature, user)
+      feature[:variations].each do |variation|
+        return variation[:value] if match_user?(variation, user)
+      end
+      return nil
+    end
+
     def match_variation?(variation, user)
       variation[:targets].each do |target|
         if !!variation[:userTarget] and target[:attribute].to_sym == :key
@@ -328,22 +335,14 @@ module LaunchDarkly
       return false
     end
 
-    def evaluate(feature, user)
-      return nil if feature.nil?
-      return nil unless feature[:on]
-
-      param = param_for_user(feature, user)
-
-      return nil if param.nil?
-
-      feature[:variations].each do |variation|
-        return variation[:value] if match_user?(variation, user)
-      end
-
+    def find_target_match(feature, user)
       feature[:variations].each do |variation|
         return variation[:value] if match_variation?(variation, user)
       end
+      return nil
+    end
 
+    def find_weight_match(feature, param)
       total = 0.0
       feature[:variations].each do |variation|
         total += variation[:weight].to_f / 100.0
@@ -352,7 +351,22 @@ module LaunchDarkly
       end
 
       return nil
+    end
 
+    def evaluate(feature, user)
+      return nil if feature.nil?
+      return nil unless feature[:on]
+
+      param = param_for_user(feature, user)
+      return nil if param.nil?
+
+      value = find_user_match(feature, user)
+      return value if !value.nil?
+
+      value = find_target_match(feature, user)
+      return value if !value.nil?
+
+      find_weight_match(feature, param)
     end
 
     def log_timings(label, &block)
