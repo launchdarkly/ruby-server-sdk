@@ -130,7 +130,7 @@ module LaunchDarkly
       source.on PATCH { |message| process_message(message, PATCH) }
       source.on DELETE { |message| process_message(message, DELETE) }
       source.error do |error|
-        @config.logger.error("[LDClient] Error subscribing to stream API: #{error}")
+        @config.logger.info("[LDClient] Error subscribing to stream API: #{error}")
         set_disconnected
       end
       source.inactivity_timeout = 0
