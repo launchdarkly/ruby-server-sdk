@@ -122,9 +122,9 @@ module LaunchDarkly
                                   {'Accept' => 'text/event-stream',
                                    'Authorization' => 'api_key ' + @api_key,
                                    'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
-      source.on PUT { |message| process_message(message, PUT) }
-      source.on PATCH { |message| process_message(message, PATCH) }
-      source.on DELETE { |message| process_message(message, DELETE) }
+      source.on(PUT) { |message| process_message(message, PUT) }
+      source.on(PATCH) { |message| process_message(message, PATCH) }
+      source.on(DELETE) { |message| process_message(message, DELETE) }
       source.error do |error|
         @config.logger.info("[LDClient] Error subscribing to stream API: #{error}")
         set_disconnected
