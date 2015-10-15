@@ -30,10 +30,10 @@ module LaunchDarkly
       @flush_interval = opts[:flush_interval] || Config.default_flush_interval
       @connect_timeout = opts[:connect_timeout] || Config.default_connect_timeout
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
-      @log_timings = opts[:log_timings] || Config.default_log_timings
-      @stream = opts[:stream] || Config.default_stream
       @feature_store = opts[:feature_store] || Config.default_feature_store
-      @debug_stream = opts[:debug_stream] || Config.default_debug_stream
+      @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
+      @log_timings = opts.has_key?(:log_timings) ? opts[:log_timings] : Config.default_log_timings
+      @debug_stream = opts.has_key?(:debug_stream) ? opts[:debug_stream] : Config.default_debug_stream
     end
 
     #
