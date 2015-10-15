@@ -71,7 +71,7 @@ module LaunchDarkly
           req.options.open_timeout = @config.connect_timeout
         end
       }
-      if res.status != 200
+      if res.status/100 != 2
         @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
       end
     end
@@ -214,7 +214,7 @@ module LaunchDarkly
     def get_features
       res = make_request '/api/features'
 
-      if res.status == 200 then
+      if res.status/100 == 2 then
         return JSON.parse(res.body, symbolize_names: true)[:items]
       else
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
@@ -252,7 +252,7 @@ module LaunchDarkly
         return nil
       end
 
-      if res.status != 200
+      if res.status/100 != 2
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
         return nil
       end
