@@ -46,7 +46,7 @@ describe LaunchDarkly::LDClient do
       client.send(:post_flushed_events, events)
     end
     it 'will work with unexpected post results' do
-      result = double('result', status: 500)
+      result = double('result', status: 418)
       expect(client.instance_variable_get(:@client)).to receive(:post).and_return result
       expect(client.instance_variable_get(:@config).logger).to receive :error
       client.send(:post_flushed_events, events)
@@ -109,7 +109,7 @@ describe LaunchDarkly::LDClient do
       expect(data).to eq ['asdf']
     end
     it 'will log errors' do
-      result = double('Faraday::Response', status: 500)
+      result = double('Faraday::Response', status: 418)
       expect(client).to receive(:make_request).with('/api/features').and_return(result)
       expect(client.instance_variable_get(:@config).logger).to receive(:error)
       client.send(:get_features)
@@ -138,7 +138,7 @@ describe LaunchDarkly::LDClient do
       expect(data).to be_nil
     end
     it 'will accept non-standard statuses' do
-      result = double('Faraday::Response', status: 500)
+      result = double('Faraday::Response', status: 418)
       expect(client).to receive(:make_request).with('/api/eval/features/key').and_return(result)
       expect(client.instance_variable_get(:@config).logger).to receive(:error)
       data = client.send(:get_flag_int, 'key')
