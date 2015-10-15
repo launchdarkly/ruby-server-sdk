@@ -35,8 +35,15 @@ describe LaunchDarkly::LDClient do
     it 'will flush and post all events' do
       result = double('result', status: 200)
       expect(client.instance_variable_get(:@client)).to receive(:post).and_return result
+      expect(client.instance_variable_get(:@config).logger).to_not receive :error
       client.send(:post_flushed_events, events)
       expect(client.instance_variable_get(:@queue).length).to eq 0
+    end
+    it 'will allow any 2XX response' do
+      result = double('result', status: 202)
+      expect(client.instance_variable_get(:@client)).to receive(:post).and_return result
+      expect(client.instance_variable_get(:@config).logger).to_not receive :error
+      client.send(:post_flushed_events, events)
     end
     it 'will work with unexpected post results' do
       result = double('result', status: 500)
