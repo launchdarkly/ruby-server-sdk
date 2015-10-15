@@ -214,7 +214,7 @@ module LaunchDarkly
     def get_features
       res = make_request '/api/features'
 
-      if res.status/100 == 2 then
+      if res.status/100 == 2
         return JSON.parse(res.body, symbolize_names: true)[:items]
       else
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
