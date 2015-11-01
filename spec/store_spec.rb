@@ -5,7 +5,6 @@ describe LaunchDarkly::ThreadSafeMemoryStore do
   let(:store) { subject.new }
   it "can read and write" do
     store.write("key", "value")
-    value = store.read "key"
     expect(store.read("key")).to eq "value"
   end
 end

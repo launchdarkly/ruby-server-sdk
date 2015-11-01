@@ -81,7 +81,7 @@ module LaunchDarkly
             flush
 
             sleep(@config.flush_interval)
-          rescue Exception => exn
+          rescue StandardError => exn
             @config.logger.error("[LDClient] Unexpected exception in create_worker: #{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}")
           end
         end
@@ -130,7 +130,7 @@ module LaunchDarkly
         return default
       end
 
-      if @config.stream? and not @stream_processor.started?
+      if @config.stream? && !@stream_processor.started?
         @stream_processor.start
       end
 
@@ -371,7 +371,7 @@ module LaunchDarkly
       bench = Benchmark.measure do
         begin
           res = block.call
-        rescue Exception => e
+        rescue StandardError => e
           exn = e
         end
       end
