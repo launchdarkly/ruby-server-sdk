@@ -1,7 +1,6 @@
-require 'logger'
+require "logger"
 
 module LaunchDarkly
-
   #
   # This class exposes advanced configuration options for the LaunchDarkly client library. Most users
   # will not need to use a custom configuration-- the default configuration sets sane defaults for most use cases.
@@ -174,6 +173,5 @@ module LaunchDarkly
     def self.default_debug_stream
       false
     end
-
   end
 end

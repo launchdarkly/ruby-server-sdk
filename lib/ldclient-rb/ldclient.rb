@@ -1,14 +1,13 @@
-require 'faraday/http_cache'
-require 'json'
-require 'digest/sha1'
-require 'thread'
-require 'logger'
-require 'net/http/persistent'
-require 'benchmark'
-require 'hashdiff'
+require "faraday/http_cache"
+require "json"
+require "digest/sha1"
+require "thread"
+require "logger"
+require "net/http/persistent"
+require "benchmark"
+require "hashdiff"
 
 module LaunchDarkly
-
   BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
 
   #
@@ -17,7 +16,6 @@ module LaunchDarkly
   #
   #
   class LDClient
-
     #
     # Creates a new client instance that connects to LaunchDarkly. A custom
     # configuration parameter can also supplied to specify advanced options,
@@ -49,7 +47,7 @@ module LaunchDarkly
     def flush
       events = []
       begin
-        while true
+        loop do
           events << @queue.pop(true)
         end
       rescue ThreadError
@@ -61,37 +59,36 @@ module LaunchDarkly
     end
 
     def post_flushed_events(events)
-      res = log_timings("Flush events") {
+      res = log_timings("Flush events") do
         next @client.post (@config.base_uri + "/api/events/bulk") do |req|
-          req.headers['Authorization'] = 'api_key ' + @api_key
-          req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
-          req.headers['Content-Type'] = 'application/json'
+          req.headers["Authorization"] = "api_key " + @api_key
+          req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
+          req.headers["Content-Type"] = "application/json"
           req.body = events.to_json
           req.options.timeout = @config.read_timeout
           req.options.open_timeout = @config.connect_timeout
         end
-      }
-      if res.status/100 != 2
+      end
+      if res.status / 100 != 2
         @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
       end
     end
 
-
     def create_worker
       Thread.new do
-        while true do
+        loop do
           begin
             flush
 
             sleep(@config.flush_interval)
           rescue Exception => exn
-            @config.logger.error("[LDClient] Unexpected exception in create_worker: #{exn.inspect} #{exn.to_s}\n\t#{exn.backtrace.join("\n\t")}")
+            @config.logger.error("[LDClient] Unexpected exception in create_worker: #{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}")
           end
         end
       end
     end
 
-    def get_flag?(key, user, default=false)
+    def get_flag?(key, user, default = false)
       toggle?(key, user, default)
     end
 
@@ -125,7 +122,7 @@ module LaunchDarkly
     # @param default=false [Boolean] the default value of the flag
     #
     # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
-    def toggle?(key, user, default=false)
+    def toggle?(key, user, default = false)
       return default if @offline
 
       unless user
@@ -137,7 +134,7 @@ module LaunchDarkly
         @stream_processor.start
       end
 
-      if @config.stream? and @stream_processor.initialized?
+      if @config.stream? && @stream_processor.initialized?
         feature = get_streamed_flag(key)
       else
         feature = get_flag_int(key)
@@ -145,11 +142,11 @@ module LaunchDarkly
       value = evaluate(feature, user)
       value.nil? ? default : value
 
-      add_event({kind: 'feature', key: key, user: user, value: value})
+      add_event(kind: "feature", key: key, user: user, value: value)
       LDNewRelic.annotate_transaction(key, value)
       return value
     rescue StandardError => error
-      @config.logger.error("[LDClient] Unhandled exception in toggle: (#{error.class.name}) #{error.to_s}\n\t#{error.backtrace.join("\n\t")}")
+      @config.logger.error("[LDClient] Unhandled exception in toggle: (#{error.class.name}) #{error}\n\t#{error.backtrace.join("\n\t")}")
       default
     end
 
@@ -174,7 +171,7 @@ module LaunchDarkly
     # @param [Hash] The user to register
     #
     def identify(user)
-      add_event({kind: 'identify', key: user[:key], user: user})
+      add_event(kind: "identify", key: user[:key], user: user)
     end
 
     def set_offline
@@ -186,7 +183,7 @@ module LaunchDarkly
     end
 
     def is_offline?
-      return @offline
+      @offline
     end
 
     #
@@ -198,23 +195,23 @@ module LaunchDarkly
     #
     # @return [void]
     def track(event_name, user, data)
-      add_event({kind: 'custom', key: event_name, user: user, data: data })
+      add_event(kind: "custom", key: event_name, user: user, data: data)
     end
 
     #
     # Returns the key of every feature
     #
     def feature_keys
-      get_features.map {|feature| feature[:key]}
+      get_features.map { |feature| feature[:key] }
     end
 
     #
     # Returns all features
     #
     def get_features
-      res = make_request '/api/features'
+      res = make_request "/api/features"
 
-      if res.status/100 == 2
+      if res.status / 100 == 2
         return JSON.parse(res.body, symbolize_names: true)[:items]
       else
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
@@ -238,9 +235,9 @@ module LaunchDarkly
     end
 
     def get_flag_int(key)
-      res = log_timings("Feature request") {
-        next make_request '/api/eval/features/' + key
-      }
+      res = log_timings("Feature request") do
+        next make_request "/api/eval/features/" + key
+      end
 
       if res.status == 401
         @config.logger.error("[LDClient] Invalid API key")
@@ -252,19 +249,18 @@ module LaunchDarkly
         return nil
       end
 
-      if res.status/100 != 2
+      if res.status / 100 != 2
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
         return nil
       end
-
 
       JSON.parse(res.body, symbolize_names: true)
     end
 
     def make_request(path)
       @client.get (@config.base_uri + path) do |req|
-        req.headers['Authorization'] = 'api_key ' + @api_key
-        req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+        req.headers["Authorization"] = "api_key " + @api_key
+        req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connect_timeout
       end
@@ -275,13 +271,13 @@ module LaunchDarkly
 
       id_hash = user[:key]
       if user[:secondary]
-        id_hash += '.' + user[:secondary]
+        id_hash += "." + user[:secondary]
       end
 
       hash_key = "%s.%s.%s" % [feature[:key], feature[:salt], id_hash]
 
       hash_val = (Digest::SHA1.hexdigest(hash_key))[0..14]
-      return hash_val.to_i(16) / Float(0xFFFFFFFFFFFFFFF)
+      hash_val.to_i(16) / Float(0xFFFFFFFFFFFFFFF)
     end
 
     def match_target?(target, user)
@@ -305,26 +301,25 @@ module LaunchDarkly
 
         return false
       end
-
     end
 
     def match_user?(variation, user)
       if variation[:userTarget]
         return match_target?(variation[:userTarget], user)
       end
-      return false
+      false
     end
 
     def find_user_match(feature, user)
       feature[:variations].each do |variation|
         return variation[:value] if match_user?(variation, user)
       end
-      return nil
+      nil
     end
 
     def match_variation?(variation, user)
       variation[:targets].each do |target|
-        if !!variation[:userTarget] and target[:attribute].to_sym == :key
+        if !!variation[:userTarget] && target[:attribute].to_sym == :key
           next
         end
 
@@ -332,14 +327,14 @@ module LaunchDarkly
           return true
         end
       end
-      return false
+      false
     end
 
     def find_target_match(feature, user)
       feature[:variations].each do |variation|
         return variation[:value] if match_variation?(variation, user)
       end
-      return nil
+      nil
     end
 
     def find_weight_match(feature, param)
@@ -350,7 +345,7 @@ module LaunchDarkly
         return variation[:value] if param < total
       end
 
-      return nil
+      nil
     end
 
     def evaluate(feature, user)
@@ -373,19 +368,18 @@ module LaunchDarkly
       return block.call unless @config.log_timings? && @config.logger.debug?
       res = nil
       exn = nil
-      bench = Benchmark.measure {
+      bench = Benchmark.measure do
         begin
           res = block.call
         rescue Exception => e
           exn = e
         end
-      }
+      end
       @config.logger.debug { "[LDClient] #{label} timing: #{bench}".chomp }
       raise exn if exn
-      return res
+      res
     end
 
     private :post_flushed_events, :add_event, :get_streamed_flag, :get_flag_stream, :get_flag_int, :make_request, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
-
   end
 end

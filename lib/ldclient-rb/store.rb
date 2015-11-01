@@ -1,7 +1,6 @@
-require 'thread_safe'
+require "thread_safe"
 
 module LaunchDarkly
-
   # A thread-safe in-memory store suitable for use
   # with the Faraday caching HTTP client. Uses the
   # Threadsafe gem as the underlying cache.
