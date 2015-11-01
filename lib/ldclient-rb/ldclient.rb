@@ -56,19 +56,23 @@ module LaunchDarkly
       end
 
       if !events.empty?
-        res = log_timings("Flush events") {
-          next @client.post (@config.base_uri + "/api/events/bulk") do |req|
-            req.headers['Authorization'] = 'api_key ' + @api_key
-            req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
-            req.headers['Content-Type'] = 'application/json'
-            req.body = events.to_json
-            req.options.timeout = @config.read_timeout
-            req.options.open_timeout = @config.connect_timeout
-          end
-        }
-        if res.status != 200
-          @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
+        post_flushed_events(events)
+      end
+    end
+
+    def post_flushed_events(events)
+      res = log_timings("Flush events") {
+        next @client.post (@config.base_uri + "/api/events/bulk") do |req|
+          req.headers['Authorization'] = 'api_key ' + @api_key
+          req.headers['User-Agent'] = 'RubyClient/' + LaunchDarkly::VERSION
+          req.headers['Content-Type'] = 'application/json'
+          req.body = events.to_json
+          req.options.timeout = @config.read_timeout
+          req.options.open_timeout = @config.connect_timeout
         end
+      }
+      if res.status/100 != 2
+        @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
       end
     end
 
@@ -122,9 +126,7 @@ module LaunchDarkly
     #
     # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
     def toggle?(key, user, default=false)
-      if @offline
-        return default
-      end
+      return default if @offline
 
       unless user
         @config.logger.error("[LDClient] Must specify user")
@@ -136,14 +138,7 @@ module LaunchDarkly
       end
 
       if @config.stream? and @stream_processor.initialized?
-        feature = get_flag_stream(key)
-        if @config.debug_stream?
-          polled = get_flag_int(key)
-          diff = HashDiff.diff(feature, polled)
-          if not diff.empty?
-            @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
-          end
-        end
+        feature = get_streamed_flag(key)
       else
         feature = get_flag_int(key)
       end
@@ -159,9 +154,8 @@ module LaunchDarkly
     end
 
     def add_event(event)
-      if @offline
-        return
-      end
+      return if @offline
+
       if @queue.length < @config.capacity
         event[:creationDate] = (Time.now.to_f * 1000).to_i
         @queue.push(event)
@@ -220,11 +214,23 @@ module LaunchDarkly
     def get_features
       res = make_request '/api/features'
 
-      if res.status == 200 then
+      if res.status/100 == 2
         return JSON.parse(res.body, symbolize_names: true)[:items]
       else
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
       end
+    end
+
+    def get_streamed_flag(key)
+      feature = get_flag_stream(key)
+      if @config.debug_stream?
+        polled = get_flag_int(key)
+        diff = HashDiff.diff(feature, polled)
+        if not diff.empty?
+          @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
+        end
+      end
+      feature
     end
 
     def get_flag_stream(key)
@@ -246,7 +252,7 @@ module LaunchDarkly
         return nil
       end
 
-      if res.status != 200
+      if res.status/100 != 2
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
         return nil
       end
@@ -265,13 +271,10 @@ module LaunchDarkly
     end
 
     def param_for_user(feature, user)
-      if !! user[:key]
-        id_hash = user[:key]
-      else
-        return nil
-      end
+      return nil unless user[:key]
 
-      if !! user[:secondary]
+      id_hash = user[:key]
+      if user[:secondary]
         id_hash += '.' + user[:secondary]
       end
 
@@ -285,19 +288,14 @@ module LaunchDarkly
       attrib = target[:attribute].to_sym
 
       if BUILTINS.include?(attrib)
-        if user[attrib]
-          u_value = user[attrib]
-          return target[:values].include? u_value
-        else
-          return false
-        end
+        return false unless user[attrib]
+
+        u_value = user[attrib]
+        return target[:values].include? u_value
       else # custom attribute
-        unless !! user[:custom]
-          return false
-        end
-        unless user[:custom].include? attrib
-          return false
-        end
+        return false unless user[:custom]
+        return false unless user[:custom].include? attrib
+
         u_value = user[:custom][attrib]
         if u_value.is_a? Array
           return ! ((target[:values] & u_value).empty?)
@@ -311,10 +309,17 @@ module LaunchDarkly
     end
 
     def match_user?(variation, user)
-      if !!variation[:userTarget]
+      if variation[:userTarget]
         return match_target?(variation[:userTarget], user)
       end
       return false
+    end
+
+    def find_user_match(feature, user)
+      feature[:variations].each do |variation|
+        return variation[:value] if match_user?(variation, user)
+      end
+      return nil
     end
 
     def match_variation?(variation, user)
@@ -330,46 +335,42 @@ module LaunchDarkly
       return false
     end
 
-    def evaluate(feature, user)
-      if feature.nil? || !feature[:on]
-        return nil
-      end
-
-      param = param_for_user(feature, user)
-
-      if param.nil?
-        return nil
-      end
-
+    def find_target_match(feature, user)
       feature[:variations].each do |variation|
-        if match_user?(variation, user)
-          return variation[:value]
-        end
+        return variation[:value] if match_variation?(variation, user)
       end
+      return nil
+    end
 
-      feature[:variations].each do |variation|
-        if match_variation?(variation, user)
-          return variation[:value]
-        end
-      end
-
+    def find_weight_match(feature, param)
       total = 0.0
       feature[:variations].each do |variation|
         total += variation[:weight].to_f / 100.0
 
-        if param < total
-          return variation[:value]
-        end
+        return variation[:value] if param < total
       end
 
       return nil
+    end
 
+    def evaluate(feature, user)
+      return nil if feature.nil?
+      return nil unless feature[:on]
+
+      param = param_for_user(feature, user)
+      return nil if param.nil?
+
+      value = find_user_match(feature, user)
+      return value if !value.nil?
+
+      value = find_target_match(feature, user)
+      return value if !value.nil?
+
+      find_weight_match(feature, param)
     end
 
     def log_timings(label, &block)
-      if !@config.log_timings? || !@config.logger.debug?
-        return block.call
-      end
+      return block.call unless @config.log_timings? && @config.logger.debug?
       res = nil
       exn = nil
       bench = Benchmark.measure {
@@ -380,13 +381,11 @@ module LaunchDarkly
         end
       }
       @config.logger.debug { "[LDClient] #{label} timing: #{bench}".chomp }
-      if exn
-        raise exn
-      end
+      raise exn if exn
       return res
     end
 
-    private :add_event, :get_flag_stream, :get_flag_int, :make_request, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
+    private :post_flushed_events, :add_event, :get_streamed_flag, :get_flag_stream, :get_flag_int, :make_request, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
 
   end
 end

@@ -104,14 +104,10 @@ module LaunchDarkly
     def start
       # Try to start the reactor. If it's not started, we shouldn't start
       # the stream processor
-      if not start_reactor
-        return
-      end
+      return if not start_reactor
 
       # If someone else booted the stream processor connection, just return
-      if not @started.make_true
-        return
-      end
+      return unless @started.make_true
 
       # If we're the first and only thread to set started, boot
       # the stream processor connection
@@ -126,9 +122,9 @@ module LaunchDarkly
                                   {'Accept' => 'text/event-stream',
                                    'Authorization' => 'api_key ' + @api_key,
                                    'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
-      source.on PUT { |message| process_message(message, PUT) }
-      source.on PATCH { |message| process_message(message, PATCH) }
-      source.on DELETE { |message| process_message(message, DELETE) }
+      source.on(PUT) { |message| process_message(message, PUT) }
+      source.on(PATCH) { |message| process_message(message, PATCH) }
+      source.on(DELETE) { |message| process_message(message, DELETE) }
       source.error do |error|
         @config.logger.info("[LDClient] Error subscribing to stream API: #{error}")
         set_disconnected
