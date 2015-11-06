@@ -130,6 +130,7 @@ module LaunchDarkly
       end
       source.inactivity_timeout = 0
       source.start
+      source
     end
 
     def process_message(message, method)
