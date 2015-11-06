@@ -2,6 +2,31 @@ require "spec_helper"
 
 describe LaunchDarkly::InMemoryFeatureStore do
   subject { LaunchDarkly::InMemoryFeatureStore }
+  let(:store) { subject.new }
+  let(:key) { :asdf }
+  let(:feature) { { value: "qwer", version: 0 } }
+
+  describe '#all' do
+    it "will get all keys" do
+      store.upsert(key, feature)
+      data = store.all
+      expect(data).to eq(key => feature)
+    end
+    it "will not get deleted keys" do
+      store.upsert(key, feature)
+      store.delete(key, 1)
+      data = store.all
+      expect(data).to eq({})
+    end
+  end
+
+  describe '#initialized?' do
+    it "will return whether the store has been initialized" do
+      expect(store.initialized?).to eq false
+      store.init(key => feature)
+      expect(store.initialized?).to eq true
+    end
+  end
 end
 
 describe LaunchDarkly::StreamProcessor do
