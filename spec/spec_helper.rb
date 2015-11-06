@@ -1,7 +1,7 @@
-require 'codeclimate-test-reporter'
+require "codeclimate-test-reporter"
 CodeClimate::TestReporter.start
 
-require 'ldclient-rb'
+require "ldclient-rb"
 
 RSpec.configure do |config|
   config.before(:each) do

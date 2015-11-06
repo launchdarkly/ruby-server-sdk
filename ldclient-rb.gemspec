@@ -1,15 +1,15 @@
 # coding: utf-8
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'ldclient-rb/version'
+require "ldclient-rb/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "ldclient-rb"
   spec.version       = LaunchDarkly::VERSION
   spec.authors       = ["LaunchDarkly"]
   spec.email         = ["team@launchdarkly.com"]
-  spec.summary       = %q{LaunchDarkly SDK for Ruby}
-  spec.description   = %q{Official LaunchDarkly SDK for Ruby}
+  spec.summary       = "LaunchDarkly SDK for Ruby"
+  spec.description   = "Official LaunchDarkly SDK for Ruby"
   spec.homepage      = "https://github.com/launchdarkly/ruby-client"
   spec.license       = "Apache 2.0"
 

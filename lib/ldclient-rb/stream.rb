@@ -1,9 +1,8 @@
-require 'concurrent/atomics'
-require 'json'
-require 'ld-em-eventsource'
+require "concurrent/atomics"
+require "json"
+require "ld-em-eventsource"
 
 module LaunchDarkly
-
   PUT = "put"
   PATCH = "patch"
   DELETE = "delete"
@@ -16,47 +15,47 @@ module LaunchDarkly
     end
 
     def get(key)
-      @lock.with_read_lock {
+      @lock.with_read_lock do
         f = @features[key.to_sym]
         (f.nil? || f[:deleted]) ? nil : f
-      }
+      end
     end
 
     def all
-      @lock.with_read_lock {
-        @features.select {|k,f| not f[:deleted]}
-      }
+      @lock.with_read_lock do
+        @features.select { |_k, f| not f[:deleted] }
+      end
     end
 
     def delete(key, version)
-      @lock.with_write_lock {
+      @lock.with_write_lock do
         old = @features[key.to_sym]
 
-        if old != nil and old[:version] < version
+        if !old.nil? && old[:version] < version
           old[:deleted] = true
           old[:version] = version
           @features[key.to_sym] = old
         elsif old.nil?
-          @features[key.to_sym] = {deleted: true, version: version}
+          @features[key.to_sym] = { deleted: true, version: version }
         end
-      }
+      end
     end
 
     def init(fs)
-      @lock.with_write_lock {
+      @lock.with_write_lock do
         @features.replace(fs)
         @initialized.make_true
-      }
+      end
     end
 
     def upsert(key, feature)
-      @lock.with_write_lock {
+      @lock.with_write_lock do
         old = @features[key.to_sym]
 
-        if old.nil? or old[:version] < feature[:version]
+        if old.nil? || old[:version] < feature[:version]
           @features[key.to_sym] = feature
         end
-      }
+      end
     end
 
     def initialized?
@@ -118,10 +117,10 @@ module LaunchDarkly
 
     def boot_event_manager
       source = EM::EventSource.new(@config.stream_uri + "/features",
-                                  {},
-                                  {'Accept' => 'text/event-stream',
-                                   'Authorization' => 'api_key ' + @api_key,
-                                   'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION})
+                                   {},
+                                   "Accept" => "text/event-stream",
+                                   "Authorization" => "api_key " + @api_key,
+                                   "User-Agent" => "RubyClient/" + LaunchDarkly::VERSION)
       source.on(PUT) { |message| process_message(message, PUT) }
       source.on(PATCH) { |message| process_message(message, PATCH) }
       source.on(DELETE) { |message| process_message(message, DELETE) }
@@ -157,12 +156,10 @@ module LaunchDarkly
 
     def should_fallback_update
       disc = @disconnected.get
-      disc != nil and disc < (Time.now - 120)
+      !disc.nil? && disc < (Time.now - 120)
     end
 
     # TODO mark private methods
     private :boot_event_manager, :process_message, :set_connected, :set_disconnected, :start_reactor
-
   end
-
 end
