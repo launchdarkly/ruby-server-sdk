@@ -43,13 +43,22 @@ Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_api_key")
 
 ```ruby
     def launchdarkly_settings
-      {
-        key: current_user.id,
-        email: current_user.email,
-        custom: { groups: current_user.groups.pluck(:name) },
-        # Any other fields you may have
-        # e.g. lastName: current_user.last_name,
-      }
+      if current_user.present?
+        {
+          key: current_user.id,
+          anonymous: false,
+          email: current_user.email,
+          custom: { groups: current_user.groups.pluck(:name) },
+          # Any other fields you may have
+          # e.g. lastName: current_user.last_name,
+        }
+      else
+        hash_key = UUIDTools::UUID.random_create.to_s
+        {
+          key: hash_key,
+          anonymous: true,
+        }
+      end
     end
 ```
 
