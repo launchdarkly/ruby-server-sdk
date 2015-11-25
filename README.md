@@ -6,6 +6,7 @@ LaunchDarkly SDK for Ruby
 [![Circle CI](https://circleci.com/gh/launchdarkly/ruby-client/tree/master.svg?style=svg)](https://circleci.com/gh/launchdarkly/ruby-client/tree/master)
 [![Code Climate](https://codeclimate.com/github/launchdarkly/ruby-client/badges/gpa.svg)](https://codeclimate.com/github/launchdarkly/ruby-client)
 [![Test Coverage](https://codeclimate.com/github/launchdarkly/ruby-client/badges/coverage.svg)](https://codeclimate.com/github/launchdarkly/ruby-client/coverage)
+[![security](https://hakiri.io/github/launchdarkly/ruby-client/master.svg)](https://hakiri.io/github/launchdarkly/ruby-client/master)
 
 Quick setup
 -----------
