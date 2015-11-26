@@ -212,4 +212,15 @@ describe LaunchDarkly::LDClient do
       end
     end
   end
+
+  describe '#log_exception' do
+    it "log error data" do
+      expect(client.instance_variable_get(:@config).logger).to receive(:error)
+      begin
+        raise StandardError.new 'asdf'
+      rescue StandardError => exn
+        client.send(:log_exception, 'caller', exn)
+      end
+    end
+  end
 end
