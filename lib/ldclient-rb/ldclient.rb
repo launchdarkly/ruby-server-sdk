@@ -82,7 +82,7 @@ module LaunchDarkly
 
             sleep(@config.flush_interval)
           rescue StandardError => exn
-            @config.logger.error("[LDClient] Unexpected exception in create_worker: #{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}")
+            log_exception(__method__.to_s, exn)
           end
         end
       end
@@ -150,7 +150,7 @@ module LaunchDarkly
       LDNewRelic.annotate_transaction(key, value)
       return value
     rescue StandardError => error
-      @config.logger.error("[LDClient] Unhandled exception in toggle: (#{error.class.name}) #{error}\n\t#{error.backtrace.join("\n\t")}")
+      log_exception(__method__.to_s, error)
       default
     end
 
@@ -384,6 +384,15 @@ module LaunchDarkly
       res
     end
 
-    private :post_flushed_events, :add_event, :get_streamed_flag, :get_flag_stream, :get_flag_int, :make_request, :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate, :create_worker, :log_timings
+    def log_exception(caller, exn)
+      error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
+      error = "[LDClient] Unexpected exception in #{caller}: #{error_traceback}"
+      @config.logger.error(error)
+    end
+
+    private :post_flushed_events, :add_event, :get_streamed_flag,
+            :get_flag_stream, :get_flag_int, :make_request, :param_for_user,
+            :match_target?, :match_user?, :match_variation?, :evaluate,
+            :create_worker, :log_timings, :log_exception
   end
 end
