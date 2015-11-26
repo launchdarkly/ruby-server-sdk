@@ -93,35 +93,39 @@ module LaunchDarkly
     end
 
     #
-    # Calculates the value of a feature flag for a given user. At a minimum, the user hash
-    # should contain a +:key+ .
+    # Calculates the value of a feature flag for a given user. At a minimum,
+    # the user hash should contain a +:key+ .
     #
     # @example Basic user hash
     #      {key: "user@example.com"}
     #
-    # For authenticated users, the +:key+ should be the unique identifier for your user. For anonymous users,
-    # the +:key+ should be a session identifier or cookie. In either case, the only requirement is that the key
+    # For authenticated users, the +:key+ should be the unique identifier for
+    # your user. For anonymous users, the +:key+ should be a session identifier
+    # or cookie. In either case, the only requirement is that the key
     # is unique to a user.
     #
     # You can also pass IP addresses and country codes in the user hash.
     #
     # @example More complete user hash
-    #      {key: "user@example.com", ip: "127.0.0.1", country: "US"}
+    #   {key: "user@example.com", ip: "127.0.0.1", country: "US"}
     #
     # Countries should be sent as ISO 3166-1 alpha-2 codes.
     #
     # The user hash can contain arbitrary custom attributes stored in a +:custom+ sub-hash:
     #
     # @example A user hash with custom attributes
-    #      {key: "user@example.com", custom: {customer_rank: 1000, groups: ["google", "microsoft"]}}
+    #   {key: "user@example.com", custom: {customer_rank: 1000, groups: ["google", "microsoft"]}}
     #
-    # Attribute values in the custom hash can be integers, booleans, strings, or lists of integers, booleans, or strings.
+    # Attribute values in the custom hash can be integers, booleans, strings, or
+    #   lists of integers, booleans, or strings.
     #
-    # @param key [String] the unique feature key for the feature flag, as shown on the LaunchDarkly dashboard
+    # @param key [String] the unique feature key for the feature flag, as shown
+    #   on the LaunchDarkly dashboard
     # @param user [Hash] a hash containing parameters for the end user requesting the flag
     # @param default=false [Boolean] the default value of the flag
     #
-    # @return [Boolean] whether or not the flag should be enabled, or the default value if the flag is disabled on the LaunchDarkly control panel
+    # @return [Boolean] whether or not the flag should be enabled, or the
+    #   default value if the flag is disabled on the LaunchDarkly control panel
     def toggle?(key, user, default = false)
       return default if @offline
 

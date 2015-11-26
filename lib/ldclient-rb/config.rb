@@ -2,8 +2,9 @@ require "logger"
 
 module LaunchDarkly
   #
-  # This class exposes advanced configuration options for the LaunchDarkly client library. Most users
-  # will not need to use a custom configuration-- the default configuration sets sane defaults for most use cases.
+  # This class exposes advanced configuration options for the LaunchDarkly
+  # client library. Most users will not need to use a custom configuration--
+  # the default configuration sets sane defaults for most use cases.
   #
   #
   class Config
@@ -11,13 +12,24 @@ module LaunchDarkly
     # Constructor for creating custom LaunchDarkly configurations.
     #
     # @param opts [Hash] the configuration options
-    # @option opts [Logger] :logger A logger to use for messages from the LaunchDarkly client. Defaults to the Rails logger in a Rails environment, or stdout otherwise.
-    # @option opts [String] :base_uri ("https://app.launchdarkly.com") The base URL for the LaunchDarkly server. Most users should use the default value.
-    # @option opts [Integer] :capacity (10000) The capacity of the events buffer. The client buffers up to this many events in memory before flushing. If the capacity is exceeded before the buffer is flushed, events will be discarded.
-    # @option opts [Float] :flush_interval (30) The number of seconds between flushes of the event buffer.
-    # @option opts [Float] :read_timeout (10) The read timeout for network connections in seconds.
-    # @option opts [Float] :connect_timeout (2) The connect timeout for network connections in seconds.
-    # @option opts [Object] :store A cache store for the Faraday HTTP caching library. Defaults to the Rails cache in a Rails environment, or a thread-safe in-memory store otherwise.
+    # @option opts [Logger] :logger A logger to use for messages from the
+    #   LaunchDarkly client. Defaults to the Rails logger in a Rails
+    #   environment, or stdout otherwise.
+    # @option opts [String] :base_uri ("https://app.launchdarkly.com") The base
+    #   URL for the LaunchDarkly server. Most users should use the default value.
+    # @option opts [Integer] :capacity (10000) The capacity of the events
+    #   buffer. The client buffers up to this many events in memory before
+    #   flushing. If the capacity is exceeded before the buffer is flushed,
+    #   events will be discarded.
+    # @option opts [Float] :flush_interval (30) The number of seconds between
+    #   flushes of the event buffer.
+    # @option opts [Float] :read_timeout (10) The read timeout for network
+    #   connections in seconds.
+    # @option opts [Float] :connect_timeout (2) The connect timeout for network
+    #   connections in seconds.
+    # @option opts [Object] :store A cache store for the Faraday HTTP caching
+    #   library. Defaults to the Rails cache in a Rails environment, or a
+    #   thread-safe in-memory store otherwise.
     #
     # @return [type] [description]
     def initialize(opts = {})
@@ -80,14 +92,18 @@ module LaunchDarkly
     attr_reader :logger
 
     #
-    # The capacity of the events buffer. The client buffers up to this many events in memory before flushing. If the capacity is exceeded before the buffer is flushed, events will be discarded.
-    # Increasing the capacity means that events are less likely to be discarded, at the cost of consuming more memory.
+    # The capacity of the events buffer. The client buffers up to this many
+    # events in memory before flushing. If the capacity is exceeded before
+    # the buffer is flushed, events will be discarded.
+    # Increasing the capacity means that events are less likely to be discarded,
+    # at the cost of consuming more memory.
     #
     # @return [Integer] The configured capacity of the event buffer
     attr_reader :capacity
 
     #
-    # The store for the Faraday HTTP caching library. Stores should respond to 'read' and 'write' requests.
+    # The store for the Faraday HTTP caching library. Stores should respond to
+    # 'read' and 'write' requests.
     #
     # @return [Object] The configured store for the Faraday HTTP caching library.
     attr_reader :store
@@ -119,7 +135,8 @@ module LaunchDarkly
     attr_reader :feature_store
 
     #
-    # The default LaunchDarkly client configuration. This configuration sets reasonable defaults for most users.
+    # The default LaunchDarkly client configuration. This configuration sets
+    # reasonable defaults for most users.
     #
     # @return [Config] The default LaunchDarkly configuration.
     def self.default
