@@ -74,6 +74,8 @@ Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_api_key")
 Rails.application.config.ld_client.toggle?('your.flag.key', launchdarkly_settings, false)
 ```
 
+Note that this gem will automatically switch to using the Rails logger it is detected.
+
 Your first feature flag
 -----------------------
 
