@@ -53,7 +53,13 @@ Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_api_key")
           # e.g. lastName: current_user.last_name,
         }
       else
-        hash_key = UUIDTools::UUID.random_create.to_s
+        if Rails::VERSION::MAJOR <= 3
+          hash_key = request.session_options[:id]
+        else
+          hash_key = session.id
+        end
+        # session ids should be private to prevent session hijacking
+        hash_key = Digest::SHA256.base64digest hash_key
         {
           key: hash_key,
           anonymous: true,
