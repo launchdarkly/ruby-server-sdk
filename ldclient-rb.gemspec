@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "faraday-http-cache", "~> 0.4"
   spec.add_runtime_dependency "thread_safe", "~> 0.3"
   spec.add_runtime_dependency "net-http-persistent", "~> 2.9"
-  spec.add_runtime_dependency "concurrent-ruby", "~> 0.9"
+  spec.add_runtime_dependency "concurrent-ruby", "~> 1.0.0"
   spec.add_runtime_dependency "hashdiff", "~> 0.2"
   spec.add_runtime_dependency "ld-em-eventsource", "~> 0.2"
 end
