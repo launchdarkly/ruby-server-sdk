@@ -247,7 +247,7 @@ module LaunchDarkly
         @config.logger.error("[LDClient] Invalid API key")
       end
 
-      if res.status != 200
+      if res.status / 100 != 2
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
         return false
       end
