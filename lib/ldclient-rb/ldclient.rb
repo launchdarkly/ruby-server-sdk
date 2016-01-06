@@ -223,7 +223,7 @@ module LaunchDarkly
     end
 
     def get_user_toggles(user)
-      res = make_request "api/users/#{user[:key]}/features"
+      res = make_request "/api/users/#{user[:key]}/features"
 
       if res.status / 100 == 2
         return JSON.parse(res.body, symbolize_names: true)
