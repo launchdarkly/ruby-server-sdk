@@ -223,17 +223,13 @@ module LaunchDarkly
     end
 
     def get_user_toggles(user)
-      res = @client.get("#{@config.base_uri}/api/users/#{user[:key]}/features") do |req|
-        req.headers['Authorization'] = "api_key #{@api_key}"
-        req.headers['User-Agent'] = "RubyClient/#{LaunchDarkly::VERSION}"
-        req.options.timeout = @config.read_timeout
-        req.options.open_timeout = @config.connect_timeout
-      end
+      res = make_request "#{@config.base_uri}/api/users/#{user[:key]}/features"
 
-      if res.status == 200 then
+      if res.status / 100 == 2
         return JSON.parse(res.body, symbolize_names: true)
       else
-        @config.logger.error("[LDClient] Unexpected status code #{res.status}")
+        @config.logger.error("[LDClient] Unexpected status code #{res.status}. Response body #{res.body}")
+        return { :items => [] }
       end
     end
 
