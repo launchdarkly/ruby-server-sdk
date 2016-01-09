@@ -144,7 +144,7 @@ module LaunchDarkly
         feature = get_flag_int(key)
       end
       value = evaluate(feature, user)
-      value.nil? ? default : value
+      value = value.nil? ? default : value
 
       add_event(kind: "feature", key: key, user: user, value: value)
       LDNewRelic.annotate_transaction(key, value)
