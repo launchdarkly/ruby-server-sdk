@@ -13,16 +13,68 @@ Quick setup
 
 0. Install the Ruby SDK with `gem`
 
-        gem install ldclient-rb
+```shell
+gem install ldclient-rb
+```
 
 1. Require the LaunchDarkly client:
 
-        require 'ldclient-rb'
-
+```ruby
+require 'ldclient-rb'
+```
 
 2. Create a new LDClient with your API key:
 
-        client = LaunchDarkly::LDClient.new("your_api_key")
+```ruby
+client = LaunchDarkly::LDClient.new("your_api_key")
+```
+
+### Ruby on Rails
+
+0.  Add `gem 'ldclient-rb'` to your Gemfile and `bundle install`
+
+1.  Initialize the launchdarkly client in `config/initializers/launchdarkly.rb`:
+
+```ruby
+Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_api_key")
+```
+
+2.  You may want to include a function in your ApplicationController
+
+```ruby
+    def launchdarkly_settings
+      if current_user.present?
+        {
+          key: current_user.id,
+          anonymous: false,
+          email: current_user.email,
+          custom: { groups: current_user.groups.pluck(:name) },
+          # Any other fields you may have
+          # e.g. lastName: current_user.last_name,
+        }
+      else
+        if Rails::VERSION::MAJOR <= 3
+          hash_key = request.session_options[:id]
+        else
+          hash_key = session.id
+        end
+        # session ids should be private to prevent session hijacking
+        hash_key = Digest::SHA256.base64digest hash_key
+        {
+          key: hash_key,
+          anonymous: true,
+        }
+      end
+    end
+```
+
+3.  In your controllers, access the client using
+
+```ruby
+Rails.application.config.ld_client.toggle?('your.flag.key', launchdarkly_settings, false)
+```
+
+Note that this gem will automatically switch to using the Rails logger it is detected.
 
 Your first feature flag
 -----------------------
@@ -30,11 +82,13 @@ Your first feature flag
 1. Create a new feature flag on your [dashboard](https://app.launchdarkly.com)
 2. In your application code, use the feature's key to check whether the flag is on for each user:
 
-        if client.toggle?("your.flag.key", {key: "user@test.com"}, false)
-            # application code to show the feature
-        else
-            # the code to run if the feature is off
-        end
+```ruby
+if client.toggle?("your.flag.key", {key: "user@test.com"}, false)
+  # application code to show the feature
+else
+  # the code to run if the feature is off
+end
+```
 
 Learn more
 -----------
