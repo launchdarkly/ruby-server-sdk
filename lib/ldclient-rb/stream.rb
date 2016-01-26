@@ -80,6 +80,13 @@ module LaunchDarkly
       @started.value
     end
 
+    def get_all_features
+      if not initialized?
+        throw :uninitialized
+      end
+      @store.all
+    end
+
     def get_feature(key)
       if not initialized?
         throw :uninitialized
@@ -125,7 +132,7 @@ module LaunchDarkly
       source.on(PATCH) { |message| process_message(message, PATCH) }
       source.on(DELETE) { |message| process_message(message, DELETE) }
       source.error do |error|
-        @config.logger.info("[LDClient] Error subscribing to stream API: #{error}")
+        @config.logger.info("[LDClient] Stream connection: #{error}")
         set_disconnected
       end
       source.inactivity_timeout = 0
