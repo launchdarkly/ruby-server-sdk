@@ -15,6 +15,21 @@ describe LaunchDarkly::LDClient do
     JSON.parse(data, symbolize_names: true)
   end
 
+  context 'user flag settings' do
+    describe '#update_user_flag_setting' do
+      it 'requires user' do
+        expect(client.instance_variable_get(:@config).logger).to receive(:error)
+        client.update_user_flag_setting(nil, feature[:key], true)
+      end
+
+      it 'puts the new setting' do
+        result = double('result', success?: true, status: 204)
+        expect(client.instance_variable_get(:@client)).to receive(:put).and_return(result)
+        client.update_user_flag_setting(user[:key], feature[:key], true)
+      end
+    end
+  end
+
   describe '#flush' do
     it "will flush and post all events" do
       client.instance_variable_get(:@queue).push "asdf"

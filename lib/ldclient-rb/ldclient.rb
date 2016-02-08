@@ -16,6 +16,7 @@ module LaunchDarkly
   #
   #
   class LDClient
+    include Settings
     #
     # Creates a new client instance that connects to LaunchDarkly. A custom
     # configuration parameter can also supplied to specify advanced options,
