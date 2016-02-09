@@ -61,7 +61,7 @@ module LaunchDarkly
 
     def post_flushed_events(events)
       res = log_timings("Flush events") do
-        next @client.post (@config.base_uri + "/api/events/bulk") do |req|
+        next @client.post (@config.events_uri + "/bulk") do |req|
           req.headers["Authorization"] = "api_key " + @api_key
           req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
           req.headers["Content-Type"] = "application/json"

@@ -22,6 +22,16 @@ describe LaunchDarkly::Config do
       expect(subject.new.base_uri).to eq subject.default_base_uri
     end
   end
+  describe "@events_uri" do
+    it "can be read" do
+      expect(subject.new.events_uri).to eq subject.default_events_uri
+    end
+  end
+  describe "@stream_uri" do
+    it "can be read" do
+      expect(subject.new.stream_uri).to eq subject.default_stream_uri
+    end
+  end
   describe ".default_store" do
     it "uses Rails cache if it is available" do
       rails = instance_double("Rails", cache: :cache)
