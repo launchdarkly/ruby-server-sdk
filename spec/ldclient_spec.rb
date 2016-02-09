@@ -76,6 +76,10 @@ describe LaunchDarkly::LDClient do
       result = client.toggle?(feature[:key], user, "default")
       expect(result).to eq "default"
     end
+    it "will specify the default value in the feature request event" do
+      expect(client).to receive(:add_event).with(hash_including(default: "default"))
+      result = client.toggle?(feature[:key], user, "default")
+    end
     it "requires user" do
       expect(client.instance_variable_get(:@config).logger).to receive(:error)
       result = client.toggle?(feature[:key], nil, "default")
