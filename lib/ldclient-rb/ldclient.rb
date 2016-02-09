@@ -147,7 +147,7 @@ module LaunchDarkly
       value = evaluate(feature, user)
       value = value.nil? ? default : value
 
-      add_event(kind: "feature", key: key, user: user, value: value)
+      add_event(kind: "feature", key: key, user: user, value: value, default: default)
       LDNewRelic.annotate_transaction(key, value)
       return value
     rescue StandardError => error
