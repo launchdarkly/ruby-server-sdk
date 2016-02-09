@@ -17,6 +17,10 @@ module LaunchDarkly
     #   environment, or stdout otherwise.
     # @option opts [String] :base_uri ("https://app.launchdarkly.com") The base
     #   URL for the LaunchDarkly server. Most users should use the default value.
+    # @option opts [String] :stream_uri ("https://stream.launchdarkly.com") The
+    #   URL for the LaunchDarkly streaming events server. Most users should use the default value.
+    # @option opts [String] :events_uri ("https://events.launchdarkly.com") The
+    #   URL for the LaunchDarkly events server. Most users should use the default value.
     # @option opts [Integer] :capacity (10000) The capacity of the events
     #   buffer. The client buffers up to this many events in memory before
     #   flushing. If the capacity is exceeded before the buffer is flushed,
@@ -35,6 +39,7 @@ module LaunchDarkly
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
       @stream_uri = (opts[:stream_uri] || Config.default_stream_uri).chomp("/")
+      @events_uri = (opts[:events_uri] || Config.default_events_uri).chomp("/")
       @capacity = opts[:capacity] || Config.default_capacity
       @logger = opts[:logger] || Config.default_logger
       @store = opts[:store] || Config.default_store
@@ -58,6 +63,12 @@ module LaunchDarkly
     #
     # @return [String] The configured base URL for the LaunchDarkly streaming server.
     attr_reader :stream_uri
+
+    #
+    # The base URL for the LaunchDarkly events server.
+    #
+    # @return [String] The configured base URL for the LaunchDarkly events server.
+    attr_reader :events_uri
 
     #
     # Whether streaming mode should be enabled. Streaming mode asynchronously updates
@@ -153,6 +164,10 @@ module LaunchDarkly
 
     def self.default_stream_uri
       "https://stream.launchdarkly.com"
+    end
+
+    def self.default_events_uri
+      "https://events.launchdarkly.com"
     end
 
     def self.default_store
