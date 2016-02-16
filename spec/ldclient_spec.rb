@@ -120,18 +120,18 @@ describe LaunchDarkly::LDClient do
     end
   end
 
-  describe '#get_features' do
+  describe '#all_flags' do
     it "will parse and return the features list" do
-      result = double("Faraday::Response", status: 200, body: '{"items": ["asdf"]}')
-      expect(client).to receive(:make_request).with("/api/features").and_return(result)
-      data = client.send(:get_features)
-      expect(data).to eq ["asdf"]
+      result = double("Faraday::Response", status: 200, body: '{"asdf":"qwer"}')
+      expect(client).to receive(:make_request).with("/api/eval/features").and_return(result)
+      data = client.send(:all_flags)
+      expect(data).to eq(asdf: "qwer")
     end
     it "will log errors" do
       result = double("Faraday::Response", status: 418)
-      expect(client).to receive(:make_request).with("/api/features").and_return(result)
+      expect(client).to receive(:make_request).with("/api/eval/features").and_return(result)
       expect(client.instance_variable_get(:@config).logger).to receive(:error)
-      client.send(:get_features)
+      client.send(:all_flags)
     end
   end
 

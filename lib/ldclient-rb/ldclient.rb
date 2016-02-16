@@ -204,23 +204,36 @@ module LaunchDarkly
     end
 
     #
-    # Returns the key of every feature
+    # Returns the key of every feature flag
     #
-    def feature_keys
-      get_features.map { |feature| feature[:key] }
+    def all_keys
+      all_flags.keys
     end
 
     #
-    # Returns all features
+    # Returns all feature flags
     #
-    def get_features
-      res = make_request "/api/features"
-
-      if res.status / 100 == 2
-        return JSON.parse(res.body, symbolize_names: true)[:items]
-      else
-        @config.logger.error("[LDClient] Unexpected status code #{res.status}")
+    def all_flags
+      if @config.stream? && !@stream_processor.started?
+        @stream_processor.start
       end
+
+      if @config.stream? && @stream_processor.initialized?
+        @stream_processor.get_all_features
+      else
+        res = make_request "/api/eval/features"
+
+        if res.status / 100 == 2
+          JSON.parse(res.body, symbolize_names: true)         
+        else
+          @config.logger.error("[LDClient] Unexpected status code #{res.status}")
+          Hash.new
+        end
+      end
+    end
+
+    def get_user_settings(user)
+      Hash[all_flags.map { |key, feature| [key, evaluate(feature, user)]}]
     end
 
     def get_streamed_flag(key)
