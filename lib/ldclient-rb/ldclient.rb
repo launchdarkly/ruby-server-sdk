@@ -214,6 +214,8 @@ module LaunchDarkly
     # Returns all feature flags
     #
     def all_flags
+      return Hash.new if @offline
+
       if @config.stream? && !@stream_processor.started?
         @stream_processor.start
       end
