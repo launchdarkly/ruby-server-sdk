@@ -14,6 +14,14 @@ describe LaunchDarkly::LDClient do
     data = File.read(File.join("spec", "fixtures", "user.json"))
     JSON.parse(data, symbolize_names: true)
   end
+  let(:numeric_key_user) do
+    data = File.read(File.join("spec", "fixtures", "numeric_key_user.json"))
+    JSON.parse(data, symbolize_names: true)
+  end
+  let(:sanitized_numeric_key_user) do
+    data = File.read(File.join("spec", "fixtures", "sanitized_numeric_key_user.json"))
+    JSON.parse(data, symbolize_names: true)
+  end
 
   context 'user flag settings' do
     describe '#update_user_flag_setting' do
@@ -85,6 +93,10 @@ describe LaunchDarkly::LDClient do
       result = client.toggle?(feature[:key], nil, "default")
       expect(result).to eq "default"
     end
+    it "sanitizes the user in the event" do
+      expect(client).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
+      client.toggle?(feature[:key], numeric_key_user, "default")
+    end
     it "returns value from streamed flag if available" do
       expect(client.instance_variable_get(:@config)).to receive(:stream?).and_return(true).twice
       expect(client.instance_variable_get(:@stream_processor)).to receive(:started?).and_return true
@@ -100,6 +112,28 @@ describe LaunchDarkly::LDClient do
       expect(client).to receive(:get_flag_int).and_return feature
       result = client.toggle?(feature[:key], user, "default")
       expect(result).to eq false
+    end
+  end
+
+  describe '#identify' do 
+    it "queues up an identify event" do
+      expect(client).to receive(:add_event).with(hash_including(kind: "identify", key: user[:key], user: user))
+      client.identify(user)
+    end
+    it "sanitizes the user in the event" do
+      expect(client).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
+      client.identify(numeric_key_user)
+    end
+  end
+
+  describe '#track' do 
+    it "queues up an custom event" do
+      expect(client).to receive(:add_event).with(hash_including(kind: "custom", key: "custom_event_name", user: user, data: 42))
+      client.track("custom_event_name", user, 42)
+    end
+    it "sanitizes the user in the event" do
+      expect(client).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
+      client.track("custom_event_name", numeric_key_user, nil)
     end
   end
 
