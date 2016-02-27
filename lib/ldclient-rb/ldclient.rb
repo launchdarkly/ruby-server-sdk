@@ -134,6 +134,7 @@ module LaunchDarkly
         @config.logger.error("[LDClient] Must specify user")
         return default
       end
+      sanitize_user(user)
 
       if @config.stream? && !@stream_processor.started?
         @stream_processor.start
@@ -176,6 +177,7 @@ module LaunchDarkly
     # @param [Hash] The user to register
     #
     def identify(user)
+      sanitize_user(user)
       add_event(kind: "identify", key: user[:key], user: user)
     end
 
@@ -200,6 +202,7 @@ module LaunchDarkly
     #
     # @return [void]
     def track(event_name, user, data)
+      sanitize_user(user)
       add_event(kind: "custom", key: event_name, user: user, data: data)
     end
 
@@ -406,9 +409,15 @@ module LaunchDarkly
       @config.logger.error(error)
     end
 
+    def sanitize_user(user)
+      if user[:key]
+        user[:key] = user[:key].to_s
+      end
+    end
+
     private :post_flushed_events, :add_event, :get_streamed_flag,
             :get_flag_stream, :get_flag_int, :make_request, :param_for_user,
             :match_target?, :match_user?, :match_variation?, :evaluate,
-            :create_worker, :log_timings, :log_exception
+            :create_worker, :log_timings, :log_exception, :sanitize_user
   end
 end
