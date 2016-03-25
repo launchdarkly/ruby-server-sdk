@@ -33,50 +33,6 @@ describe LaunchDarkly::StreamProcessor do
   subject { LaunchDarkly::StreamProcessor }
   let(:config) { LaunchDarkly::Config.new }
   let(:processor) { subject.new("api_key", config) }
-  describe '#start' do
-    it "will check if the reactor has started" do
-      expect(processor).to receive(:start_reactor).and_return false
-      expect(EM).to_not receive(:defer)
-      processor.start
-    end
-    it "will check if the stream processor has already started" do
-      expect(processor).to receive(:start_reactor).and_return true
-      processor.instance_variable_get(:@started).make_true
-      expect(EM).to_not receive(:defer)
-      processor.start
-    end
-    it "will boot the stream processor" do
-      expect(processor).to receive(:start_reactor).and_return true
-      expect(EM).to receive(:defer)
-      processor.start
-    end
-  end
-
-  describe '#boot_event_manager' do
-    let(:message) { "asdf" }
-    before do
-      processor.instance_variable_get(:@config).instance_variable_set(:@stream_uri, "http://example.com/streaming")
-      expect_any_instance_of(EM::EventSource).to receive(:start)
-      source = processor.send(:boot_event_manager)
-      @req = source.instance_variable_get "@req"
-      # It seems  testing EventManager is hard/impossible
-    end
-    it "will start" do
-    end
-    xit "will process put messages" do
-      expect(processor).to receive(:process_message).with(message, LaunchDarkly::PUT)
-      @req.stream_data("data: #{message}\nevent:#{LaunchDarkly::PUT}\n")
-    end
-    xit "will process patch messages" do
-      expect(processor).to receive(:process_message).with(message, LaunchDarkly::PATCH)
-    end
-    xit "will process delete messages" do
-      expect(processor).to receive(:process_message).with(message, LaunchDarkly::DELETE)
-    end
-    xit "will process errors" do
-      expect(processor).to receive(:set_disconnected)
-    end
-  end
 
   describe '#process_message' do
     let(:put_message) { '{"key": {"value": "asdf"}}' }
