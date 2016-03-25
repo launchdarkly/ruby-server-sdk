@@ -136,7 +136,7 @@ module LaunchDarkly
         set_disconnected
       end
       source.inactivity_timeout = 0
-      source.start
+      EM.schedule{ source.start }
       source
     end
 
