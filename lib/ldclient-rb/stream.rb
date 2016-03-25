@@ -1,6 +1,6 @@
 require "concurrent/atomics"
 require "json"
-require "ld-em-eventsource"
+require "celluloid/eventsource"
 
 module LaunchDarkly
   PUT = "put"
@@ -94,54 +94,32 @@ module LaunchDarkly
       @store.get(key)
     end
 
-    def start_reactor
-      if defined?(Thin)
-        @config.logger.debug("Running in a Thin environment-- not starting EventMachine")
-      elsif EM.reactor_running?
-        @config.logger.debug("EventMachine already running")
-      else
-        @config.logger.debug("Starting EventMachine")
-        Thread.new { EM.run {} }
-        Thread.pass until EM.reactor_running?
-      end
-      EM.reactor_running?
-    end
-
     def start
-      # Try to start the reactor. If it's not started, we shouldn't start
-      # the stream processor
-      return if not start_reactor
+      headers = 
+      {
+        'Authorization' => 'api_key ' + @api_key,
+        'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
+      }
+      opts = {:headers => headers, :with_credentials => true}
+      @es = Celluloid::EventSource.new(@config.stream_uri + "/features", opts) do |conn|
+        conn.on_open do
+          set_connected
+        end
 
-      # If someone else booted the stream processor connection, just return
-      return unless @started.make_true
+        conn.on(PUT) { |message| process_message(message, PUT) }
+        conn.on(PATCH) { |message| process_message(message, PATCH) }
+        conn.on(DELETE) { |message| process_message(message, DELETE) }
 
-      # If we're the first and only thread to set started, boot
-      # the stream processor connection
-      EM.defer do
-        boot_event_manager
+        conn.on_error do |message|
+          # TODO replace this with proper logging
+          @config.logger.error("[LDClient] Error message #{message[:status_code]}, Response body #{message[:body]}")
+          set_disconnected
+        end
       end
-    end
-
-    def boot_event_manager
-      source = EM::EventSource.new(@config.stream_uri + "/features",
-                                   {},
-                                   "Accept" => "text/event-stream",
-                                   "Authorization" => "api_key " + @api_key,
-                                   "User-Agent" => "RubyClient/" + LaunchDarkly::VERSION)
-      source.on(PUT) { |message| process_message(message, PUT) }
-      source.on(PATCH) { |message| process_message(message, PATCH) }
-      source.on(DELETE) { |message| process_message(message, DELETE) }
-      source.error do |error|
-        @config.logger.info("[LDClient] Stream connection: #{error}")
-        set_disconnected
-      end
-      source.inactivity_timeout = 0
-      source.start
-      source
     end
 
     def process_message(message, method)
-      message = JSON.parse(message, symbolize_names: true)
+      message = JSON.parse(message.data, symbolize_names: true)
       if method == PUT
         @store.init(message)
       elsif method == PATCH
@@ -168,6 +146,6 @@ module LaunchDarkly
     end
 
     # TODO mark private methods
-    private :boot_event_manager, :process_message, :set_connected, :set_disconnected, :start_reactor
+    private :process_message, :set_connected, :set_disconnected
   end
 end
