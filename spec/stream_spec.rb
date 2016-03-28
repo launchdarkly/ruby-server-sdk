@@ -1,4 +1,5 @@
 require "spec_helper"
+require 'ostruct'
 
 describe LaunchDarkly::InMemoryFeatureStore do
   subject { LaunchDarkly::InMemoryFeatureStore }
@@ -35,9 +36,9 @@ describe LaunchDarkly::StreamProcessor do
   let(:processor) { subject.new("api_key", config) }
 
   describe '#process_message' do
-    let(:put_message) { {data: '{"key": {"value": "asdf"}}'} }
-    let(:patch_message) { {data: '{"path": "akey", "data": {"value": "asdf", "version": 1}}'} }
-    let(:delete_message) { {data: '{"path": "akey", "version": 2}'} }
+    let(:put_message) { OpenStruct.new({data: '{"key": {"value": "asdf"}}'}) }
+    let(:patch_message) { OpenStruct.new({data: '{"path": "akey", "data": {"value": "asdf", "version": 1}}'}) }
+    let(:delete_message) { OpenStruct.new({data: '{"path": "akey", "version": 2}'}) }
     it "will accept PUT methods" do
       processor.send(:process_message, put_message, LaunchDarkly::PUT)
       expect(processor.instance_variable_get(:@store).get("key")).to eq(value: "asdf")
