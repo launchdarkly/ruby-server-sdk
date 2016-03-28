@@ -112,7 +112,7 @@ module LaunchDarkly
 
         conn.on_error do |message|
           # TODO replace this with proper logging
-          @config.logger.error("[LDClient] Error message #{message[:status_code]}, Response body #{message[:body]}")
+          @config.logger.error("[LDClient] Error connecting to stream. Status code: #{message[:status_code]}")
           set_disconnected
         end
       end
