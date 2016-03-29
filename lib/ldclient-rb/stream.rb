@@ -95,6 +95,8 @@ module LaunchDarkly
     end
 
     def start
+      return unless @started.make_true
+      
       headers = 
       {
         'Authorization' => 'api_key ' + @api_key,
