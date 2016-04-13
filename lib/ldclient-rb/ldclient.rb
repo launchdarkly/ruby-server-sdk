@@ -238,6 +238,9 @@ module LaunchDarkly
     end
 
     def get_user_settings(user)
+      # Auto-register the user similar to "toggle?"
+      identify(user)
+
       Hash[all_flags.map { |key, feature| [key, evaluate(feature, user)]}]
     end
 

@@ -126,6 +126,13 @@ describe LaunchDarkly::LDClient do
     end
   end
 
+  describe '#get_user_settings' do
+    it "calls identify to register the user" do
+      expect(client).to receive(:identify).with(user)
+      client.get_user_settings(user)
+    end
+  end
+
   describe '#track' do 
     it "queues up an custom event" do
       expect(client).to receive(:add_event).with(hash_including(kind: "custom", key: "custom_event_name", user: user, data: 42))
