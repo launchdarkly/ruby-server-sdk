@@ -35,5 +35,12 @@ module LaunchDarkly
     def write(key, value)
       @cache[key] = value
     end
+
+    #
+    # Delete a value in the cache
+    # @param key [Object] the cache key
+    def delete(key)
+      @cache.delete(key)
+    end
   end
 end
