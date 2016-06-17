@@ -20,9 +20,11 @@ module LaunchDarkly
         @config.logger.error("[LDClient] Must specify user")
         return
       end      
-      
+
+      user_setting_endpoint = "#{@config.base_uri}/api/users/#{user_key}/features/#{flag_key}"
+      @config.logger.debug "[LDClient] Setting: #{user_setting_endpoint}"
       res = log_timings('update_user_flag_setting') do
-        @client.put("#{@config.base_uri}/api/users/#{user_key}/features/#{flag_key}") do |req|
+        @client.put(user_setting_endpoint) do |req|
           req.headers['Authorization'] = "api_key #{@api_key}"
           req.headers['User-Agent'] = "RubyClient/#{LaunchDarkly::VERSION}"
           req.headers['Content-Type'] = 'application/json'
@@ -34,6 +36,7 @@ module LaunchDarkly
 
       unless res.success?
         @config.logger.error("[LDClient] Failed to change setting, status: #{res.status}")
+        return nil
       end
     end
   end

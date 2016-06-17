@@ -24,15 +24,19 @@ describe LaunchDarkly::LDClient do
   end
 
   context 'user flag settings' do
+    let(:config) { client.instance_variable_get :@config }
+    let(:http_client) { client.instance_variable_get :@client }
+    let(:setting_endpoint) { "#{config.base_uri}/api/users/#{user[:key]}/features/#{feature[:key]}" }
+
     describe '#update_user_flag_setting' do
       it 'requires user' do
-        expect(client.instance_variable_get(:@config).logger).to receive(:error)
+        expect(config.logger).to receive(:error)
         client.update_user_flag_setting(nil, feature[:key], true)
       end
 
       it 'puts the new setting' do
         result = double('result', success?: true, status: 204)
-        expect(client.instance_variable_get(:@client)).to receive(:put).and_return(result)
+        expect(http_client).to receive(:put).with(setting_endpoint).and_return(result)
         client.update_user_flag_setting(user[:key], feature[:key], true)
       end
     end
