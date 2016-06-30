@@ -27,20 +27,23 @@ module LaunchDarkly
     # @param config [Config] an optional client configuration object
     #
     # @return [LDClient] The LaunchDarkly client instance
-    def initialize(api_key, config = Config.default)
+    def initialize(api_key, config = Config.default, wait_for = 0)
       @queue = Queue.new
       @api_key = api_key
       @config = config
-      @client = Faraday.new do |builder|
-        builder.use :http_cache, store: @config.store
-
-        builder.adapter :net_http_persistent
       end
-      @offline = false
+
+      @store = config.feature_store
+
+      requestor = Requestor.new(api_key, config)
 
       if @config.stream?
-        @stream_processor = StreamProcessor.new(api_key, config)
+        @update_processor = StreamProcessor.new(api_key, config, requestor)
+      else 
+        @update_processor = PollingProcessor.new(config, requestor)
       end
+
+      @event_processor = EventProcessor.new(api_key, config)
 
       @worker = create_worker
     end
@@ -60,15 +63,13 @@ module LaunchDarkly
     end
 
     def post_flushed_events(events)
-      res = log_timings("Flush events") do
-        next @client.post (@config.events_uri + "/bulk") do |req|
-          req.headers["Authorization"] = "api_key " + @api_key
-          req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
-          req.headers["Content-Type"] = "application/json"
-          req.body = events.to_json
-          req.options.timeout = @config.read_timeout
-          req.options.open_timeout = @config.connect_timeout
-        end
+      @client.post (@config.events_uri + "/bulk") do |req|
+        req.headers["Authorization"] = "api_key " + @api_key
+        req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
+        req.headers["Content-Type"] = "application/json"
+        req.body = events.to_json
+        req.options.timeout = @config.read_timeout
+        req.options.open_timeout = @config.connect_timeout
       end
       if res.status / 100 != 2
         @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
@@ -136,11 +137,11 @@ module LaunchDarkly
       end
       sanitize_user(user)
 
-      if @config.stream? && !@stream_processor.started?
-        @stream_processor.start
+      if @config.stream? && !@update_processor.started?
+        @update_processor.start
       end
 
-      if @config.stream? && @stream_processor.initialized?
+      if @config.stream? && @update_processor.initialized?
         feature = get_streamed_flag(key)
       else
         feature = get_flag_int(key)
@@ -181,18 +182,6 @@ module LaunchDarkly
       add_event(kind: "identify", key: user[:key], user: user)
     end
 
-    def set_offline
-      @offline = true
-    end
-
-    def set_online
-      @offline = false
-    end
-
-    def is_offline?
-      @offline
-    end
-
     #
     # Tracks that a user performed an event
     #
@@ -219,12 +208,12 @@ module LaunchDarkly
     def all_flags
       return Hash.new if @offline
 
-      if @config.stream? && !@stream_processor.started?
-        @stream_processor.start
+      if @config.stream? && !@update_processor.started?
+        @update_processor.start
       end
 
-      if @config.stream? && @stream_processor.initialized?
-        @stream_processor.get_all_features
+      if @config.stream? && @update_processor.initialized?
+        @update_processor.get_all_features
       else
         res = make_request "/api/eval/features"
 
@@ -254,13 +243,11 @@ module LaunchDarkly
     end
 
     def get_flag_stream(key)
-      @stream_processor.get_feature(key)
+      @update_processor.get_feature(key)
     end
 
     def get_flag_int(key)
-      res = log_timings("Feature request") do
-        next make_request "/api/eval/features/" + key
-      end
+      res = make_request "/api/eval/features/" + key
 
       if res.status == 401
         @config.logger.error("[LDClient] Invalid API key")
@@ -278,15 +265,6 @@ module LaunchDarkly
       end
 
       JSON.parse(res.body, symbolize_names: true)
-    end
-
-    def make_request(path)
-      @client.get (@config.base_uri + path) do |req|
-        req.headers["Authorization"] = "api_key " + @api_key
-        req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
-        req.options.timeout = @config.read_timeout
-        req.options.open_timeout = @config.connect_timeout
-      end
     end
 
     def param_for_user(feature, user)
@@ -387,22 +365,6 @@ module LaunchDarkly
       find_weight_match(feature, param)
     end
 
-    def log_timings(label, &block)
-      return block.call unless @config.log_timings? && @config.logger.debug?
-      res = nil
-      exn = nil
-      bench = Benchmark.measure do
-        begin
-          res = block.call
-        rescue StandardError => e
-          exn = e
-        end
-      end
-      @config.logger.debug { "[LDClient] #{label} timing: #{bench}".chomp }
-      raise exn if exn
-      res
-    end
-
     def log_exception(caller, exn)
       error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
       error = "[LDClient] Unexpected exception in #{caller}: #{error_traceback}"
@@ -418,6 +380,6 @@ module LaunchDarkly
     private :post_flushed_events, :add_event, :get_streamed_flag,
             :get_flag_stream, :get_flag_int, :make_request, :param_for_user,
             :match_target?, :match_user?, :match_variation?, :evaluate,
-            :create_worker, :log_timings, :log_exception, :sanitize_user
+            :create_worker, :log_exception, :sanitize_user
   end
 end

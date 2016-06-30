@@ -31,9 +31,14 @@ module LaunchDarkly
     #   connections in seconds.
     # @option opts [Float] :connect_timeout (2) The connect timeout for network
     #   connections in seconds.
-    # @option opts [Object] :store A cache store for the Faraday HTTP caching
+    # @option opts [Object] :cache_store A cache store for the Faraday HTTP caching
     #   library. Defaults to the Rails cache in a Rails environment, or a
     #   thread-safe in-memory store otherwise.
+    # @option opts [Boolean] :offline (false) Whether the client should be initialized in 
+    #   offline mode. In offline mode, default values are returned for all flags and no 
+    #   remote network requests are made.
+    # @option opts [Float] :poll_interval (30) The number of seconds between polls for flag updates
+    #   if streaming is off.
     #
     # @return [type] [description]
     def initialize(opts = {})
@@ -42,14 +47,14 @@ module LaunchDarkly
       @events_uri = (opts[:events_uri] || Config.default_events_uri).chomp("/")
       @capacity = opts[:capacity] || Config.default_capacity
       @logger = opts[:logger] || Config.default_logger
-      @store = opts[:store] || Config.default_store
+      @cache_store = opts[:cache_store] || Config.default_cache_store
       @flush_interval = opts[:flush_interval] || Config.default_flush_interval
       @connect_timeout = opts[:connect_timeout] || Config.default_connect_timeout
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
       @feature_store = opts[:feature_store] || Config.default_feature_store
       @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
-      @log_timings = opts.has_key?(:log_timings) ? opts[:log_timings] : Config.default_log_timings
-      @debug_stream = opts.has_key?(:debug_stream) ? opts[:debug_stream] : Config.default_debug_stream
+      @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
+      @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > 1 ? opts[:poll_interval] : Config.default_poll_interval
     end
 
     #
@@ -70,6 +75,11 @@ module LaunchDarkly
     # @return [String] The configured base URL for the LaunchDarkly events server.
     attr_reader :events_uri
 
+
+    # TODO docs
+    attr_reader :poll_interval
+
+
     #
     # Whether streaming mode should be enabled. Streaming mode asynchronously updates
     # feature flags in real-time using server-sent events.
@@ -79,13 +89,9 @@ module LaunchDarkly
       @stream
     end
 
-    #
-    # Whether we should debug streaming mode. If set, the client will fetch features via polling
-    # and compare the retrieved feature with the value in the feature store
-    #
-    # @return [Boolean] True if we should debug streaming mode
-    def debug_stream?
-      @debug_stream
+    # TODO docs
+    def offline?
+      @offline
     end
 
     #
@@ -117,7 +123,7 @@ module LaunchDarkly
     # 'read' and 'write' requests.
     #
     # @return [Object] The configured store for the Faraday HTTP caching library.
-    attr_reader :store
+    attr_reader :cache_store
 
     #
     # The read timeout for network connections in seconds.
@@ -132,16 +138,7 @@ module LaunchDarkly
     attr_reader :connect_timeout
 
     #
-    # Whether timing information should be logged. If it is logged, it will be logged to the DEBUG
-    # level on the configured logger.  This can be very verbose.
-    #
-    # @return [Boolean] True if timing information should be logged.
-    def log_timings?
-      @log_timings
-    end
-
-    #
-    # TODO docs
+    # A store for feature flag configuration rules.
     #
     attr_reader :feature_store
 
@@ -170,7 +167,7 @@ module LaunchDarkly
       "https://events.launchdarkly.com"
     end
 
-    def self.default_store
+    def self.default_cache_store
       defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : ThreadSafeMemoryStore.new
     end
 
@@ -190,20 +187,20 @@ module LaunchDarkly
       defined?(Rails) && Rails.respond_to?(:logger) ? Rails.logger : ::Logger.new($stdout)
     end
 
-    def self.default_log_timings
-      false
-    end
-
     def self.default_stream
       true
     end
 
     def self.default_feature_store
-      nil
+      InMemoryFeatureStore.new
     end
 
-    def self.default_debug_stream
+    def self.default_offline
       false
+    end
+
+    def self.default_poll_interval
+      1
     end
   end
 end
