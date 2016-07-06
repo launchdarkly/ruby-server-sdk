@@ -43,9 +43,11 @@ module LaunchDarkly
             poll
             delta = @config.poll_interval - (Time.now - started_at)
             if delta > 0
+              @config.logger.debug("[LDClient] Polling processor sleeping for #{delta} milliseconds")
               sleep(delta)
             end
           rescue StandardError => exn
+            @config.logger.error("[LDClient] Exception while polling: #{exn.inspect}")
            # TODO: log_exception(__method__.to_s, exn)
           end
         end
