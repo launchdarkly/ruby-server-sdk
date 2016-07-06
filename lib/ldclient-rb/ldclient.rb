@@ -2,6 +2,7 @@ require "digest/sha1"
 require "logger"
 require "benchmark"
 require "waitutil"
+require "json"
 
 module LaunchDarkly
   BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
@@ -231,6 +232,8 @@ module LaunchDarkly
         @config.logger.debug("[LDClient] Nil feature in evaluate")
         return nil
       end
+
+      @config.logger.debug("[LDClient] Evaluating feature: #{feature.to_json}")
 
       if !feature[:on]
         @config.logger.debug("[LDClient] Feature #{feature[:key]} is off")

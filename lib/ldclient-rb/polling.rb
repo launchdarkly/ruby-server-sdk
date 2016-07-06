@@ -18,7 +18,6 @@ module LaunchDarkly
     def start
       return unless @started.make_true
       @config.logger.info("[LDClient] Initializing polling connection")
-
       create_worker
     end
 
@@ -28,8 +27,6 @@ module LaunchDarkly
         @config.feature_store.init(flags)
         if @initialized.make_true
           @config.logger.info("[LDClient] Polling connection initialized")
-        else
-          @config.logger.debug("[LDClient] Received polling update")
         end
       end
     end
@@ -43,7 +40,6 @@ module LaunchDarkly
             poll
             delta = @config.poll_interval - (Time.now - started_at)
             if delta > 0
-              @config.logger.debug("[LDClient] Polling processor sleeping for #{delta} seconds")
               sleep(delta)
             end
           rescue StandardError => exn
