@@ -1,4 +1,5 @@
 require "concurrent/atomics"
+require "thread"
 
 module LaunchDarkly
   class PollingProcessor
