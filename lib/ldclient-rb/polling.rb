@@ -3,8 +3,7 @@ require "concurrent/atomics"
 module LaunchDarkly
   class PollingProcessor
     
-    def initialize(api_key, config, requestor)
-      @api_key = api_key
+    def initialize(config, requestor)
       @config = config
       @requestor = requestor
       @initalized = Concurrent::AtomicBoolean.new(false)
