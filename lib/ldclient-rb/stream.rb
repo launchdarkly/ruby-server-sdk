@@ -39,7 +39,6 @@ module LaunchDarkly
         conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
         conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
         conn.on_error do |message|
-          # TODO replace this with proper logging
           @config.logger.error("[LDClient] Error connecting to stream. Status code: #{message[:status_code]}")
         end
       end
@@ -47,9 +46,11 @@ module LaunchDarkly
 
     def process_message(message, method)
       message = JSON.parse(message.data, symbolize_names: true)
+      @config.logger.debug("[LDClient] Stream received #{method} message")
       if method == PUT
         @store.init(message)
         @initialized.make_true
+        @config.logger.debug("[LDClient] Stream initialized")
       elsif method == PATCH
         @store.upsert(message[:path][1..-1], message[:data])
       elsif method == DELETE
@@ -57,6 +58,7 @@ module LaunchDarkly
       elsif method == INDIRECT_PUT
         @store.init(@requestor.request_all_flags)
         @initialized.make_true
+        @config.logger.debug("[LDClient] Stream initialized (via indirect message)")
       elsif method == INDIRECT_PATCH
         @store.upsert(@requestor.request_flag(message[:data]))        
       else
