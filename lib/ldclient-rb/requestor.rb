@@ -24,6 +24,7 @@ module LaunchDarkly
     end
 
     def make_request(path)
+      @config.logger.debug("[LDClient] Making remote request to #{@config.base_uri + path}")
       res = @client.get (@config.base_uri + path) do |req|
         req.headers["Authorization"] = "api_key " + @api_key
         req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
