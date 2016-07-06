@@ -28,7 +28,6 @@ module LaunchDarkly
     #
     # @return [LDClient] The LaunchDarkly client instance
     def initialize(api_key, config = Config.default, wait_for = 0)
-      @queue = Queue.new
       @api_key = api_key
       @config = config
       end
@@ -42,56 +41,13 @@ module LaunchDarkly
       else 
         @update_processor = PollingProcessor.new(config, requestor)
       end
+      @update_processor.start
 
       @event_processor = EventProcessor.new(api_key, config)
-
-      @worker = create_worker
     end
 
     def flush
-      events = []
-      begin
-        loop do
-          events << @queue.pop(true)
-        end
-      rescue ThreadError
-      end
-
-      if !events.empty?
-        post_flushed_events(events)
-      end
-    end
-
-    def post_flushed_events(events)
-      @client.post (@config.events_uri + "/bulk") do |req|
-        req.headers["Authorization"] = "api_key " + @api_key
-        req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
-        req.headers["Content-Type"] = "application/json"
-        req.body = events.to_json
-        req.options.timeout = @config.read_timeout
-        req.options.open_timeout = @config.connect_timeout
-      end
-      if res.status / 100 != 2
-        @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
-      end
-    end
-
-    def create_worker
-      Thread.new do
-        loop do
-          begin
-            flush
-
-            sleep(@config.flush_interval)
-          rescue StandardError => exn
-            log_exception(__method__.to_s, exn)
-          end
-        end
-      end
-    end
-
-    def get_flag?(key, user, default = false)
-      toggle?(key, user, default)
+      @event_processor.flush
     end
 
     #
@@ -149,27 +105,12 @@ module LaunchDarkly
       value = evaluate(feature, user)
       value = value.nil? ? default : value
 
-      add_event(kind: "feature", key: key, user: user, value: value, default: default)
+      @event_processor.add_event(kind: "feature", key: key, user: user, value: value, default: default)
       LDNewRelic.annotate_transaction(key, value)
       return value
     rescue StandardError => error
       log_exception(__method__.to_s, error)
       default
-    end
-
-    def add_event(event)
-      return if @offline
-
-      if @queue.length < @config.capacity
-        event[:creationDate] = (Time.now.to_f * 1000).to_i
-        @queue.push(event)
-
-        if !@worker.alive?
-          @worker = create_worker
-        end
-      else
-        @config.logger.warn("[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events.")
-      end
     end
 
     #
@@ -179,7 +120,7 @@ module LaunchDarkly
     #
     def identify(user)
       sanitize_user(user)
-      add_event(kind: "identify", key: user[:key], user: user)
+      @event_processor.add_event(kind: "identify", key: user[:key], user: user)
     end
 
     #
@@ -192,7 +133,7 @@ module LaunchDarkly
     # @return [void]
     def track(event_name, user, data)
       sanitize_user(user)
-      add_event(kind: "custom", key: event_name, user: user, data: data)
+      @event_processor.add_event(kind: "custom", key: event_name, user: user, data: data)
     end
 
     #
@@ -224,47 +165,6 @@ module LaunchDarkly
           Hash.new
         end
       end
-    end
-
-    def get_user_settings(user)
-      Hash[all_flags.map { |key, feature| [key, evaluate(feature, user)]}]
-    end
-
-    def get_streamed_flag(key)
-      feature = get_flag_stream(key)
-      if @config.debug_stream?
-        polled = get_flag_int(key)
-        diff = HashDiff.diff(feature, polled)
-        if not diff.empty?
-          @config.logger.error("Streamed flag differs from polled flag " + diff.to_s)
-        end
-      end
-      feature
-    end
-
-    def get_flag_stream(key)
-      @update_processor.get_feature(key)
-    end
-
-    def get_flag_int(key)
-      res = make_request "/api/eval/features/" + key
-
-      if res.status == 401
-        @config.logger.error("[LDClient] Invalid API key")
-        return nil
-      end
-
-      if res.status == 404
-        @config.logger.error("[LDClient] Unknown feature key: #{key}")
-        return nil
-      end
-
-      if res.status / 100 != 2
-        @config.logger.error("[LDClient] Unexpected status code #{res.status}")
-        return nil
-      end
-
-      JSON.parse(res.body, symbolize_names: true)
     end
 
     def param_for_user(feature, user)
@@ -377,9 +277,7 @@ module LaunchDarkly
       end
     end
 
-    private :post_flushed_events, :add_event, :get_streamed_flag,
-            :get_flag_stream, :get_flag_int, :make_request, :param_for_user,
-            :match_target?, :match_user?, :match_variation?, :evaluate,
-            :create_worker, :log_exception, :sanitize_user
+    private :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate,
+            :log_exception, :sanitize_user
   end
 end

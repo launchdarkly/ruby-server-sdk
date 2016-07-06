@@ -6,36 +6,21 @@ module LaunchDarkly
   PUT = "put"
   PATCH = "patch"
   DELETE = "delete"
+  INDIRECT_PUT = "indirect/put"
+  INDIRECT_PATCH = "indirect/patch"
 
   class StreamProcessor
-    def initialize(api_key, config)
+    def initialize(api_key, config, requestor)
       @api_key = api_key
       @config = config
       @store = config.feature_store ? config.feature_store : InMemoryFeatureStore.new
-      @disconnected = Concurrent::AtomicReference.new(nil)
+      @requestor = requestor
+      @initalized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
     end
 
     def initialized?
-      @store.initialized?
-    end
-
-    def started?
-      @started.value
-    end
-
-    def get_all_features
-      if not initialized?
-        throw :uninitialized
-      end
-      @store.all
-    end
-
-    def get_feature(key)
-      if not initialized?
-        throw :uninitialized
-      end
-      @store.get(key)
+      @initialized.value
     end
 
     def start
@@ -48,18 +33,14 @@ module LaunchDarkly
       }
       opts = {:headers => headers, :with_credentials => true}
       @es = Celluloid::EventSource.new(@config.stream_uri + "/features", opts) do |conn|
-        conn.on_open do
-          set_connected
-        end
-
         conn.on(PUT) { |message| process_message(message, PUT) }
         conn.on(PATCH) { |message| process_message(message, PATCH) }
         conn.on(DELETE) { |message| process_message(message, DELETE) }
-
+        conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
+        conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
         conn.on_error do |message|
           # TODO replace this with proper logging
           @config.logger.error("[LDClient] Error connecting to stream. Status code: #{message[:status_code]}")
-          set_disconnected
         end
       end
     end
@@ -68,30 +49,22 @@ module LaunchDarkly
       message = JSON.parse(message.data, symbolize_names: true)
       if method == PUT
         @store.init(message)
+        @initialized.make_true
       elsif method == PATCH
         @store.upsert(message[:path][1..-1], message[:data])
       elsif method == DELETE
         @store.delete(message[:path][1..-1], message[:version])
+      elsif method == INDIRECT_PUT
+        @store.init(@requestor.request_all_flags)
+        @initialized.make_true
+      elsif method == INDIRECT_PATCH
+        @store.upsert(@requestor.request_flag(message[:data]))        
       else
         @config.logger.error("[LDClient] Unknown message received: #{method}")
       end
-      set_connected
-    end
-
-    def set_disconnected
-      @disconnected.set(Time.now)
-    end
-
-    def set_connected
-      @disconnected.set(nil)
-    end
-
-    def should_fallback_update
-      disc = @disconnected.get
-      !disc.nil? && disc < (Time.now - 120)
     end
 
     # TODO mark private methods
-    private :process_message, :set_connected, :set_disconnected
+    private :process_message
   end
 end

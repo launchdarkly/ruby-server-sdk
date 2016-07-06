@@ -75,11 +75,6 @@ module LaunchDarkly
     # @return [String] The configured base URL for the LaunchDarkly events server.
     attr_reader :events_uri
 
-
-    # TODO docs
-    attr_reader :poll_interval
-
-
     #
     # Whether streaming mode should be enabled. Streaming mode asynchronously updates
     # feature flags in real-time using server-sent events.
@@ -100,6 +95,11 @@ module LaunchDarkly
     #
     # @return [Float] The configured number of seconds between flushes of the event buffer.
     attr_reader :flush_interval
+
+    #
+    # The number of seconds to wait before polling for feature flag updates. This option has no
+    # effect unless streaming is disabled
+    attr_reader :poll_interval
 
     #
     # The configured logger for the LaunchDarkly client. The client library uses the log to
