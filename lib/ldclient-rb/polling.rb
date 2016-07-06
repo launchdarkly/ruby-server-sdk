@@ -16,6 +16,8 @@ module LaunchDarkly
 
     def start
       return unless @started.make_true
+      @config.logger.info("[LDClient] Initializing polling connection")
+
       create_worker
     end
 
@@ -23,7 +25,11 @@ module LaunchDarkly
       flags = @requestor.request_all_flags
       if flags
         @config.store.init(flags)
-        @initialized.make_true
+        if @initialized.make_true
+          @config.logger.info("[LDClient] Polling connection initialized")
+        else
+          @config.logger.debug("[LDClient] Received polling updated")
+        end
       end
     end
 
