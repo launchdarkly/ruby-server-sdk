@@ -30,10 +30,7 @@ module LaunchDarkly
     def initialize(api_key, config = Config.default, wait_for = 0)
       @api_key = api_key
       @config = config
-      end
-
       @store = config.feature_store
-
       requestor = Requestor.new(api_key, config)
 
       if @config.stream?
