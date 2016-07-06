@@ -41,7 +41,7 @@ module LaunchDarkly
       @event_processor = EventProcessor.new(api_key, config)
 
       if !@config.offline && wait_for_sec
-        WaitUtil.wait_for_condition("LaunchDarkly client initialization", :timeout_sec => wait_for_sec, :delay_sec: => .1, :verbose => true) do
+        WaitUtil.wait_for_condition("LaunchDarkly client initialization", :timeout_sec => wait_for_sec, :delay_sec => .1, :verbose => true) do
           @update_processor.initialized?
         end
       end
