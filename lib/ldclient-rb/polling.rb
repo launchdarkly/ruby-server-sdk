@@ -36,6 +36,7 @@ module LaunchDarkly
 
     def create_worker
       Thread.new do
+        @config.logger.debug("[LDClient] Starting polling worker")
         loop do
           begin
             started_at = Time.now
