@@ -15,7 +15,7 @@ module LaunchDarkly
       @config = config
       @store = config.feature_store ? config.feature_store : InMemoryFeatureStore.new
       @requestor = requestor
-      @initalized = Concurrent::AtomicBoolean.new(false)
+      @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
     end
 
