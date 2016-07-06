@@ -13,7 +13,7 @@ module LaunchDarkly
     def initialize(api_key, config, requestor)
       @api_key = api_key
       @config = config
-      @store = config.feature_store ? config.feature_store : InMemoryFeatureStore.new
+      @store = config.feature_store
       @requestor = requestor
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
