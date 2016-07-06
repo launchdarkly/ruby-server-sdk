@@ -64,7 +64,6 @@ module LaunchDarkly
       end
     end
 
-    # TODO mark private methods
     private :process_message
   end
 end

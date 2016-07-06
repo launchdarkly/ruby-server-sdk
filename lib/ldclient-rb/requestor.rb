@@ -1,4 +1,6 @@
 require "json"
+require "net/http/persistent"
+require "faraday/http_cache"
 
 module LaunchDarkly
 

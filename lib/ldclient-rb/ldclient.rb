@@ -1,11 +1,6 @@
-require "faraday/http_cache"
-require "json"
 require "digest/sha1"
-require "thread"
 require "logger"
-require "net/http/persistent"
 require "benchmark"
-require "hashdiff"
 
 module LaunchDarkly
   BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
@@ -90,15 +85,7 @@ module LaunchDarkly
       end
       sanitize_user(user)
 
-      if @config.stream? && !@update_processor.started?
-        @update_processor.start
-      end
-
-      if @config.stream? && @update_processor.initialized?
-        feature = get_streamed_flag(key)
-      else
-        feature = get_flag_int(key)
-      end
+      feature = @store.get(key)
       value = evaluate(feature, user)
       value = value.nil? ? default : value
 
@@ -134,34 +121,14 @@ module LaunchDarkly
     end
 
     #
-    # Returns the key of every feature flag
-    #
-    def all_keys
-      all_flags.keys
-    end
-
-    #
     # Returns all feature flags
     #
-    def all_flags
+    def all_flags(user)
       return Hash.new if @offline
 
-      if @config.stream? && !@update_processor.started?
-        @update_processor.start
-      end
+      features = @store.all
 
-      if @config.stream? && @update_processor.initialized?
-        @update_processor.get_all_features
-      else
-        res = make_request "/api/eval/features"
-
-        if res.status / 100 == 2
-          JSON.parse(res.body, symbolize_names: true)         
-        else
-          @config.logger.error("[LDClient] Unexpected status code #{res.status}")
-          Hash.new
-        end
-      end
+      Hash[features{|k,f| [k, evaluate(f, user)] }]
     end
 
     def param_for_user(feature, user)
@@ -275,6 +242,6 @@ module LaunchDarkly
     end
 
     private :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate,
-            :log_exception, :sanitize_user
+            :log_exception, :sanitize_user, :find_weight_match, :find_target_match, :find_user_match
   end
 end
