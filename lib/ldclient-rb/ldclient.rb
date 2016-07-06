@@ -227,19 +227,34 @@ module LaunchDarkly
     end
 
     def evaluate(feature, user)
-      return nil if feature.nil?
-      return nil unless feature[:on]
+      if feature.nil?
+        @config.logger.debug("[LDClient] Nil feature in evaluate")
+        return nil
+      end
+
+      if !feature[:on]
+        @config.logger.debug("[LDClient] Feature #{feature[:key]} is off")
+        return nil
+      end
 
       param = param_for_user(feature, user)
       return nil if param.nil?
 
       value = find_user_match(feature, user)
-      return value if !value.nil?
+      if !value.nil?
+        @config.logger.debug("[LDClient] Evaluated feature #{feature[:key]} to #{value} from user targeting match")
+        return value
+      end
 
       value = find_target_match(feature, user)
-      return value if !value.nil?
+      if !value.nil?
+        @config.logger.debug("[LDClient] Evaluated feature #{feature[:key]} to #{value} from rule match")
+        return value
+      end
 
-      find_weight_match(feature, param)
+      value = find_weight_match(feature, param)
+      @config.logger.debug("[LDClient] Evaluated feature #{feature[:key]} to #{value} from percentage rollout")
+      value
     end
 
     def log_exception(caller, exn)
