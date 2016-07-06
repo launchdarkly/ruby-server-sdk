@@ -25,6 +25,8 @@ module LaunchDarkly
 
     def start
       return unless @started.make_true
+
+      @config.logger.info("[LDClient] Initializing stream connection")
       
       headers = 
       {
@@ -50,7 +52,7 @@ module LaunchDarkly
       if method == PUT
         @store.init(message)
         @initialized.make_true
-        @config.logger.debug("[LDClient] Stream initialized")
+        @config.logger.info("[LDClient] Stream initialized")
       elsif method == PATCH
         @store.upsert(message[:path][1..-1], message[:data])
       elsif method == DELETE
@@ -58,7 +60,7 @@ module LaunchDarkly
       elsif method == INDIRECT_PUT
         @store.init(@requestor.request_all_flags)
         @initialized.make_true
-        @config.logger.debug("[LDClient] Stream initialized (via indirect message)")
+        @config.logger.info("[LDClient] Stream initialized (via indirect message)")
       elsif method == INDIRECT_PATCH
         @store.upsert(@requestor.request_flag(message[:data]))        
       else
