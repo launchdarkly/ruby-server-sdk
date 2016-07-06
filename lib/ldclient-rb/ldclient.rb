@@ -1,6 +1,7 @@
 require "digest/sha1"
 require "logger"
 require "benchmark"
+require "waitutil"
 
 module LaunchDarkly
   BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
@@ -22,20 +23,28 @@ module LaunchDarkly
     # @param config [Config] an optional client configuration object
     #
     # @return [LDClient] The LaunchDarkly client instance
-    def initialize(api_key, config = Config.default, wait_for = 0)
+    def initialize(api_key, config = Config.default, wait_for_sec = 0)
       @api_key = api_key
       @config = config
       @store = config.feature_store
       requestor = Requestor.new(api_key, config)
 
-      if @config.stream?
-        @update_processor = StreamProcessor.new(api_key, config, requestor)
-      else 
-        @update_processor = PollingProcessor.new(config, requestor)
+      if !@config.offline
+        if @config.stream?
+          @update_processor = StreamProcessor.new(api_key, config, requestor)
+        else 
+          @update_processor = PollingProcessor.new(config, requestor)
+        end
+        @update_processor.start
       end
-      @update_processor.start
 
       @event_processor = EventProcessor.new(api_key, config)
+
+      if !@config.offline && wait_for_sec
+        WaitUtil.wait_for_condition("LaunchDarkly client initialization", :timeout_sec => wait_for_sec, :delay_sec: => .1, :verbose => true) do
+          @update_processor.initialized?
+        end
+      end
     end
 
     def flush
@@ -77,7 +86,7 @@ module LaunchDarkly
     # @return [Boolean] whether or not the flag should be enabled, or the
     #   default value if the flag is disabled on the LaunchDarkly control panel
     def toggle?(key, user, default = false)
-      return default if @offline
+      return default if @config.offline
 
       unless user
         @config.logger.error("[LDClient] Must specify user")
@@ -124,7 +133,7 @@ module LaunchDarkly
     # Returns all feature flags
     #
     def all_flags(user)
-      return Hash.new if @offline
+      return Hash.new if @config.offline
 
       features = @store.all
 
