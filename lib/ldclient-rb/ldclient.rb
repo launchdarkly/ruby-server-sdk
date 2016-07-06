@@ -29,7 +29,7 @@ module LaunchDarkly
       @store = config.feature_store
       requestor = Requestor.new(api_key, config)
 
-      if !@config.offline
+      if !@config.offline?
         if @config.stream?
           @update_processor = StreamProcessor.new(api_key, config, requestor)
         else 
@@ -40,7 +40,7 @@ module LaunchDarkly
 
       @event_processor = EventProcessor.new(api_key, config)
 
-      if !@config.offline && wait_for_sec
+      if !@config.offline? && wait_for_sec
         WaitUtil.wait_for_condition("LaunchDarkly client initialization", :timeout_sec => wait_for_sec, :delay_sec => 0.1, :verbose => true) do
           @update_processor.initialized?
         end
@@ -86,7 +86,7 @@ module LaunchDarkly
     # @return [Boolean] whether or not the flag should be enabled, or the
     #   default value if the flag is disabled on the LaunchDarkly control panel
     def toggle?(key, user, default = false)
-      return default if @config.offline
+      return default if @config.offline?
 
       unless user
         @config.logger.error("[LDClient] Must specify user")
@@ -133,7 +133,7 @@ module LaunchDarkly
     # Returns all feature flags
     #
     def all_flags(user)
-      return Hash.new if @config.offline
+      return Hash.new if @config.offline?
 
       features = @store.all
 
