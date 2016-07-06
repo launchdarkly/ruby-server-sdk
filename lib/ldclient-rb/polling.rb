@@ -6,7 +6,7 @@ module LaunchDarkly
     def initialize(config, requestor)
       @config = config
       @requestor = requestor
-      @initalized = Concurrent::AtomicBoolean.new(false)
+      @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
     end
 
