@@ -62,6 +62,7 @@ module LaunchDarkly
 
       if @queue.length < @config.capacity
         event[:creationDate] = (Time.now.to_f * 1000).to_i
+        @config.logger.debug("[LDClient] Enqueueing event: #{event.to_json}")
         @queue.push(event)
 
         if !@worker.alive?
