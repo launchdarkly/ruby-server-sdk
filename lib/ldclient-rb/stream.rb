@@ -3,11 +3,11 @@ require "json"
 require "celluloid/eventsource"
 
 module LaunchDarkly
-  PUT = "put"
-  PATCH = "patch"
-  DELETE = "delete"
-  INDIRECT_PUT = "indirect/put"
-  INDIRECT_PATCH = "indirect/patch"
+  PUT = :put
+  PATCH = :patch
+  DELETE = :delete
+  INDIRECT_PUT = :'indirect/put'
+  INDIRECT_PATCH = :'indirect/patch'
 
   class StreamProcessor
     def initialize(api_key, config, requestor)
