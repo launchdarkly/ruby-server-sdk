@@ -108,7 +108,7 @@ module LaunchDarkly
       feature = @store.get(key)
 
         begin
-          res = evaluate(feature, user, @config.store)
+          res = evaluate(feature, user, @store)
           if !res[:events].nil?
             res[:events].each do |event|
               @event_processor.add_event(event)
@@ -160,7 +160,7 @@ module LaunchDarkly
 
       features = @store.all
 
-      Hash[features{|k,f| [k, evaluate(f, user, @config.store)[:value]] }]
+      Hash[features{|k,f| [k, evaluate(f, user, @store)[:value]] }]
     end
 
     def log_exception(caller, exn)
