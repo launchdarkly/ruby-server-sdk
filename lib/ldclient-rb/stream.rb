@@ -34,7 +34,7 @@ module LaunchDarkly
         'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
       }
       opts = {:headers => headers, :with_credentials => true}
-      @es = Celluloid::EventSource.new(@config.stream_uri + "/features", opts) do |conn|
+      @es = Celluloid::EventSource.new(@config.stream_uri + "/flags", opts) do |conn|
         conn.on(PUT) { |message| process_message(message, PUT) }
         conn.on(PATCH) { |message| process_message(message, PATCH) }
         conn.on(DELETE) { |message| process_message(message, DELETE) }

@@ -94,20 +94,39 @@ module LaunchDarkly
 
       unless user
         @config.logger.error("[LDClient] Must specify user")
+        @event_processor.add_event(kind: "feature", key: key, value: default, default: default)        
         return default
       end
+
+      if !@update_processor.initialized?
+        @config.logger.error("[LDClient] Client has not finished initializing. Returning default value")
+        @event_processor.add_event(kind: "feature", key: key, value: default, default: default)        
+        return default
+      end
+
       sanitize_user(user)
-
       feature = @store.get(key)
-      value = evaluate(feature, user)
-      value = value.nil? ? default : value
 
-      @event_processor.add_event(kind: "feature", key: key, user: user, value: value, default: default)
-      LDNewRelic.annotate_transaction(key, value)
-      return value
-    rescue StandardError => error
-      log_exception(__method__.to_s, error)
-      default
+        begin
+          res = evaluate(feature, user, @config.store)
+          if !res[:events].nil?
+            res[:events] do |event|
+              @event_processor.add_event(event)
+            end
+          end
+          if !res[:value].nil?
+            @event_processor.add_event(kind: "feature", key: key, user: user, value: res[:value], default: default)
+            return res[:value]
+          else
+            @config.logger.debug("[LDClient] Result value is null in toggle")
+            @event_processor.add_event(kind: "feature", key: key, value: default, default: default)        
+            return default            
+          end
+        rescue => exn
+          @config.logger.warn("[LDClient] Error evaluating feature flag: #{exn.inspect}")
+          @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default)
+          return default
+        end
     end
 
     #
@@ -134,14 +153,14 @@ module LaunchDarkly
     end
 
     #
-    # Returns all feature flags
+    # Returns all feature flag values for the given user
     #
     def all_flags(user)
       return Hash.new if @config.offline?
 
       features = @store.all
 
-      Hash[features{|k,f| [k, evaluate(f, user)] }]
+      Hash[features{|k,f| [k, evaluate(f, user, @config.store)[:value]] }]
     end
 
     def log_exception(caller, exn)

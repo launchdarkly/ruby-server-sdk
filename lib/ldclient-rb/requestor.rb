@@ -16,11 +16,11 @@ module LaunchDarkly
     end
 
     def request_all_flags()
-      make_request("/api/eval/latest-features")
+      make_request("/sdk/latest-features")
     end
 
     def request_flag(key)
-      make_request("/api/eval/latest-features/" + key)
+      make_request("/sdk/latest-features/" + key)
     end
 
     def make_request(path)
