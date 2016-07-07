@@ -123,7 +123,7 @@ module LaunchDarkly
             return default            
           end
         rescue => exn
-          @config.logger.warn("[LDClient] Error evaluating feature flag: #{exn.inspect}")
+          @config.logger.warn("[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}")
           @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default)
           return default
         end
