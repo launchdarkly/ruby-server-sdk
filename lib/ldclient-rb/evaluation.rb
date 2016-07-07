@@ -22,15 +22,15 @@ module LaunchDarkly
 
       events = []
 
-      if feature[:on]
+      if flag[:on]
         res = eval_internal(flag, user, store, events)
 
         return res if !res[:value].nil?
       end
 
 
-      if !feature[:off_variation].nil? && feature[:off_variation] < feature[:variations].length
-        value = feature[:variations][:off_variation]
+      if !flag[:off_variation].nil? && flag[:off_variation] < flag[:variations].length
+        value = flag[:variations][:off_variation]
         @event_processor.add_event(kind: "feature", key: key, user: user, value: value, default: default)
         return {value: value, events: events}
       end
