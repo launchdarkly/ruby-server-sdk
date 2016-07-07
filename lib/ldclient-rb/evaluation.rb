@@ -110,7 +110,7 @@ module LaunchDarkly
     end
 
     def rule_match_user(rule, user)
-      return false if !r[:clauses]
+      return false if !rule[:clauses]
 
       rule[:clauses].each do |clause|
         return false if !clause_match_user(clause, user)
