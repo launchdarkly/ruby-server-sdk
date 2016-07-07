@@ -95,7 +95,7 @@ module LaunchDarkly
 
       # Check the fallthrough rule
       if !flag[:fallthrough].nil?
-        return variation_for_user(flag[:fallthrough], user, flag])
+        return variation_for_user(flag[:fallthrough], user, flag)
       end
 
       # Not even the fallthrough matched-- return the off variation or default
