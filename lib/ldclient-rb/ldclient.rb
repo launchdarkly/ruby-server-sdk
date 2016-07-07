@@ -175,7 +175,6 @@ module LaunchDarkly
       end
     end
 
-    private :param_for_user, :match_target?, :match_user?, :match_variation?, :evaluate,
-            :log_exception, :sanitize_user, :find_weight_match, :find_target_match, :find_user_match
+    private :evaluate, :log_exception, :sanitize_user
   end
 end
