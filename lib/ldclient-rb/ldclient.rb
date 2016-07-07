@@ -110,7 +110,7 @@ module LaunchDarkly
         begin
           res = evaluate(feature, user, @config.store)
           if !res[:events].nil?
-            res[:events] do |event|
+            res[:events].each do |event|
               @event_processor.add_event(event)
             end
           end
