@@ -1,6 +1,5 @@
 require "ldclient-rb/version"
 require "ldclient-rb/settings"
-require "ldclient-rb/operators"
 require "ldclient-rb/evaluation"
 require "ldclient-rb/ldclient"
 require "ldclient-rb/cache_store"

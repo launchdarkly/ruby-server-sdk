@@ -124,8 +124,6 @@ module LaunchDarkly
 
     def eval_rules(flag, user)
       # Check user target matches
-      @config.logger.debug("Checking user target matches for #{flag[:targets]}")
-
       if !flag[:targets].nil?
         flag[:targets].each do |target|
           if !target[:values].nil?
@@ -136,17 +134,12 @@ module LaunchDarkly
         end
       end  
 
-      @config.logger.debug("Checking custom rule matches for #{flag[:rules]}")
-
       # Check custom rules
       if !flag[:rules].nil?
         flag[:rules].each do |rule|
           return variation_for_user(rule, user, flag) if rule_match_user(rule, user)
         end
       end
-
-      @config.logger.debug("Checking fallthrough rule for #{flag[:fallthrough]}")
-
 
       # Check the fallthrough rule
       if !flag[:fallthrough].nil?
@@ -167,10 +160,7 @@ module LaunchDarkly
     def rule_match_user(rule, user)
       return false if !rule[:clauses]
 
-      @config.logger.debug("Checking clauses for #{rule[:clauses]}")
-
       rule[:clauses].each do |clause|
-        @config.logger.debug("Checking claus for #{clause}")
         return false if !clause_match_user(clause, user)
       end
 
@@ -181,8 +171,6 @@ module LaunchDarkly
       val = user_value(user, clause[:attribute])
       return false if val.nil?
 
-      @config.logger.debug("Got user value #{val} for #{clause[:attribute]} and user #{user}")
-
       op = OPERATORS[clause[:op].to_sym]
 
       if op.nil?
@@ -190,14 +178,12 @@ module LaunchDarkly
       end
 
       if val.is_a? Enumerable
-        @config.logger.debug("User value #{val} is enumerable")
         val.each do |v|
           return maybe_negate(clause, true) if match_any(op, v, clause[:values])
         end
         return maybe_negate(clause, false)
       end
 
-      @config.logger.debug("Checking whether #{val} matches #{clause[:values]}")
       maybe_negate(clause, match_any(op, val, clause[:values]))
     end    
 
@@ -236,7 +222,6 @@ module LaunchDarkly
 
     def user_value(user, attribute)
       attribute = attribute.to_sym
-      @config.logger.debug("Checking user value for user #{user} and attribute #{attribute}")
 
       if BUILTINS.include? attribute
         user[attribute]
