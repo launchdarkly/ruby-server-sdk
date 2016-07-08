@@ -18,7 +18,7 @@ module LaunchDarkly
         end,
       matches:
         lambda do |a, b|
-          (a.is_a? String) && !(Regexp.new a).match(b).nil?
+          (b.is_a? String) && !(Regexp.new b).match(a).nil?
         end,
       contains:
         lambda do |a, b|
@@ -238,7 +238,6 @@ module LaunchDarkly
 
     def match_any(op, value, values)
       values.each do |v|
-        @config.logger.debug("Calling operator #{value} #{v}")
         return true if op.call(value, v)
       end
       return false
