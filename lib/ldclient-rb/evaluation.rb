@@ -116,22 +116,21 @@ module LaunchDarkly
 
           prereq_flag = store.get(prerequisite[:key])
 
-          if !prereq_flag[:on]
+          if prereq_flag.nil? || !prereq_flag[:on]
             failed_prereq = true
-          end
-
-          begin
-            prereq_res = eval_internal(prereq_flag, user, store, events)
-            variation = get_variation(prereq_flag, prerequisite[:variation])
-            events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res)
-            if prereq_res.nil? || prereq_res!= variation
+          else
+            begin
+              prereq_res = eval_internal(prereq_flag, user, store, events)
+              variation = get_variation(prereq_flag, prerequisite[:variation])
+              events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res)
+              if prereq_res.nil? || prereq_res!= variation
+                failed_prereq = true
+              end
+            rescue => exn
+              @config.logger.error("[LDClient] Error evaluating prerequisite: #{exn.inspect}")
               failed_prereq = true
             end
-          rescue => exn
-            @config.logger.error("[LDClient] Error evaluating prerequisite: #{exn.inspect}")
-            failed_prereq = true
           end
-
         end
 
         if failed_prereq
