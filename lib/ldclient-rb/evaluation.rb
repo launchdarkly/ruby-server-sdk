@@ -123,7 +123,7 @@ module LaunchDarkly
           begin
             prereq_res = eval_internal(prereq_flag, user, store, events)
             variation = get_variation(prereq_flag, prerequisite[:variation])
-            events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res, default: default)
+            events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res)
             if prereq_res.nil? || prereq_res!= variation
               failed_prereq = true
             end
