@@ -28,6 +28,7 @@ module LaunchDarkly
         return res if !res[:value].nil?
       end
 
+      @config.logger.debug("Off variation is #{flag[:off_variation]} and flag has #{flag[:variations]} variations")
 
       if !flag[:off_variation].nil? && flag[:off_variation] < flag[:variations].length
         value = flag[:variations][flag[:off_variation]]
