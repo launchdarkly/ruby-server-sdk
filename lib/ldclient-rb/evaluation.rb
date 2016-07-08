@@ -117,7 +117,10 @@ module LaunchDarkly
     def rule_match_user(rule, user)
       return false if !rule[:clauses]
 
+      @config.logger.debug("Checking clauses for #{rule[:clauses]}")
+
       rule[:clauses].each do |clause|
+        @config.logger.debug("Checking claus for #{clause}")
         return false if !clause_match_user(clause, user)
       end
 
