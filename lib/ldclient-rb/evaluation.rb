@@ -133,7 +133,7 @@ module LaunchDarkly
 
       @config.logger.debug("Got user value #{val} for #{clause[:attribute]} and user #{user}")
 
-      op = operators[clause[:op]]
+      op = Operators::operators[clause[:op]]
 
       if val.is_a? Enumerable
         @config.logger.debug("User value #{val} is enumerable")

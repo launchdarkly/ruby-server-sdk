@@ -160,6 +160,7 @@ module LaunchDarkly
 
       features = @store.all
 
+      # TODO rescue if necessary
       Hash[features{|k,f| [k, evaluate(f, user, @store)[:value]] }]
     end
 
