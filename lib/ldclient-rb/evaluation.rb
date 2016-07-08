@@ -121,15 +121,19 @@ module LaunchDarkly
       val = user_value(user, clause[:attribute])
       return false if val.nil?
 
+      @config.logger.debug("Got user value #{val} for #{clause[:attribute]} and user #{user}")
+
       op = operators[clause[:op]]
 
       if val.is_a? Enumerable
+        @config.logger.debug("User value #{val} is enumerable")
         val.each do |v|
           return maybe_negate(clause, true) if match_any(op, v, clause[:values])
         end
         return maybe_negate(clause, false)
       end
 
+      @config.logger.debug("Checking whether #{val} matches #{clause[:values]}")
       maybe_negate(clause, match_any(op, val, clause[:values]))
     end    
 
