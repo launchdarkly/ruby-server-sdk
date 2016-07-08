@@ -181,6 +181,8 @@ module LaunchDarkly
     end
 
     def user_value(user, attribute)
+      @config.logger.debug("Checking user value for user #{user} and attribute #{attribute}")
+
       if BUILTINS.include? attribute
         user[attribute]
       elsif !user[:custom].nil?
