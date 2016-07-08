@@ -30,7 +30,6 @@ module LaunchDarkly
 
       if !flag[:offVariation].nil? && flag[:offVariation] < flag[:variations].length
         value = flag[:variations][flag[:offVariation]]
-        @event_processor.add_event(kind: "feature", key: flag[:key], user: user, value: value, default: default)
         return {value: value, events: events}
       end
 
