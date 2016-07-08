@@ -1,5 +1,5 @@
 require "thread"
-require "faraday/http_cache"
+require "faraday"
 
 module LaunchDarkly
 
@@ -8,10 +8,7 @@ module LaunchDarkly
       @queue = Queue.new
       @api_key = api_key
       @config = config
-      @client = Faraday.new do |builder|
-        builder.use :http_cache, store: @config.cache_store
-      end
-
+      @client = Faraday.new
       @worker = create_worker
     end
 
