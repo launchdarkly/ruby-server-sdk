@@ -74,6 +74,8 @@ module LaunchDarkly
 
     def eval_rules(flag, user)
       # Check user target matches
+      @config.logger.debug("Checking user target matches for #{flag[:targets]}")
+
       if !flag[:targets].nil?
         flag[:targets].each do |target|
           if !target[:values].nil?
@@ -84,12 +86,17 @@ module LaunchDarkly
         end
       end  
 
+      @config.logger.debug("Checking custom rule matches for #{flag[:rules]}")
+
       # Check custom rules
       if !flag[:rules].nil?
         flag[:rules].each do |rule|
           return variation_for_user(rule, user, flag) if rule_match_user(rule, user)
         end
       end
+
+      @config.logger.debug("Checking fallthrough rule for #{flag[:fallthrough]}")
+
 
       # Check the fallthrough rule
       if !flag[:fallthrough].nil?
