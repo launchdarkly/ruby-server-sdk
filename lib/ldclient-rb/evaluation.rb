@@ -1,3 +1,5 @@
+require "date"
+
 module LaunchDarkly
 
   module Evaluation
@@ -46,11 +48,23 @@ module LaunchDarkly
         end,
       before:
         lambda do |a, b|
-          ((a.is_a? Numeric) && (a < b)) || ((a.is_a? String) && (DateTime.rfc3339(a).to_time.utc < DateTime.rfc3339(b).to_time.utc))
+          if a.is_a? String
+            a = DateTime.rfc3339(a).to_time.utc.to_i
+          end
+          if b.is_a? String
+            b = DateTime.rfc3339(b).to_time.utc.to_i
+          end          
+          (a.is_a? Numeric) ? a < b : false
         end,
       after:
         lambda do |a, b|
-          ((a.is_a? Numeric) && (a > b)) || ((a.is_a? String) && (DateTime.rfc3339(a).to_time.utc > DateTime.rfc3339(b).to_time.utc))
+          if a.is_a? String
+            a = DateTime.rfc3339(a).to_time.utc.to_i
+          end
+          if b.is_a? String
+            b = DateTime.rfc3339(b).to_time.utc.to_i
+          end          
+          (a.is_a? Numeric) ? a > b : false
         end
     }
 
