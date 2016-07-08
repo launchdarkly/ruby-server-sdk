@@ -52,7 +52,7 @@ module LaunchDarkly
 
           begin
             prereq_res = eval_internal(prereq_flag, user, store, events)
-            events.push(kind: "feature", key: key, value: default, default: default)
+            events.push(kind: "feature", key: prereq_flag[:key], value: default, default: default)
             variation = get_variation(prereq_flag, prerequisite[:variation])
             if prereq_res.nil? || prereq_res != variation
               failed_prereq = true
@@ -171,7 +171,7 @@ module LaunchDarkly
     def user_value(user, attribute)
       if BUILTINS.include? attribute
         user[attribute]
-      elsif !user[:custom].is_nil?
+      elsif !user[:custom].nil?
         user[:custom][attribute]
       else
         nil
