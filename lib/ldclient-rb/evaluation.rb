@@ -97,7 +97,7 @@ module LaunchDarkly
       if flag[:on]
         res = eval_internal(flag, user, store, events)
 
-        return res if !res[:value].nil?
+        return {value: res, events: events} if !res.nil?
       end
 
       if !flag[:offVariation].nil? && flag[:offVariation] < flag[:variations].length
@@ -122,9 +122,9 @@ module LaunchDarkly
 
           begin
             prereq_res = eval_internal(prereq_flag, user, store, events)
-            events.push(kind: "feature", key: prereq_flag[:key], value: default, default: default)
             variation = get_variation(prereq_flag, prerequisite[:variation])
-            if prereq_res.nil? || prereq_res != variation
+            events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res, default: default)
+            if prereq_res.nil? || prereq_res!= variation
               failed_prereq = true
             end
           rescue => exn
@@ -135,13 +135,13 @@ module LaunchDarkly
         end
 
         if failed_prereq
-          return {value: nil, events: events} 
+          return nil
         end
       end
       # The prerequisites were satisfied.
       # Now walk through the evaluation steps and get the correct
       # variation index
-      {value: eval_rules(flag, user), events: events}
+      eval_rules(flag, user)
     end
 
     def eval_rules(flag, user)
