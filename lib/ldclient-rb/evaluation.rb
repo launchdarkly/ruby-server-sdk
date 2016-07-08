@@ -238,6 +238,7 @@ module LaunchDarkly
 
     def match_any(op, value, values)
       values.each do |v|
+        @config.logger.debug("Calling operator #{value} #{v}")
         return true if op.call(value, v)
       end
       return false
