@@ -169,7 +169,7 @@ module LaunchDarkly
     end
 
     def user_value(user, attribute)
-      if BUILTINS[attribute]
+      if BUILTINS.include? attribute
         user[attribute]
       elsif !user[:custom].is_nil?
         user[:custom][attribute]
