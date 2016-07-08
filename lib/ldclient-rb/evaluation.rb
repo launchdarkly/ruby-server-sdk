@@ -50,10 +50,10 @@ module LaunchDarkly
         lambda do |a, b|
           begin
             if a.is_a? String
-              a = DateTime.rfc3339(a).to_time.utc.to_i * 1000
+              a = DateTime.rfc3339(a).strftime('%Q').to_i 
             end
             if b.is_a? String
-              b = DateTime.rfc3339(b).to_time.utc.to_i * 1000
+              b = DateTime.rfc3339(b).strftime('%Q').to_i
             end          
             (a.is_a? Numeric) ? a < b : false
           rescue => e
@@ -64,10 +64,10 @@ module LaunchDarkly
         lambda do |a, b|
           begin
             if a.is_a? String
-              a = DateTime.rfc3339(a).to_time.utc.to_i * 1000
+              a = DateTime.rfc3339(a).strftime('%Q').to_i 
             end
             if b.is_a? String
-              b = DateTime.rfc3339(b).to_time.utc.to_i * 1000
+              b = DateTime.rfc3339(b).strftime('%Q').to_i 
             end          
             (a.is_a? Numeric) ? a > b : false
           rescue => e
