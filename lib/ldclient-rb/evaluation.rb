@@ -49,10 +49,10 @@ module LaunchDarkly
       before:
         lambda do |a, b|
           if a.is_a? String
-            a = DateTime.rfc3339(a).to_time.utc.to_i
+            a = DateTime.rfc3339(a).to_time.utc.to_i * 1000
           end
           if b.is_a? String
-            b = DateTime.rfc3339(b).to_time.utc.to_i
+            b = DateTime.rfc3339(b).to_time.utc.to_i * 1000
           end          
           (a.is_a? Numeric) ? a < b : false
         end,
