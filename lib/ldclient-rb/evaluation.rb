@@ -183,7 +183,11 @@ module LaunchDarkly
 
       @config.logger.debug("Got user value #{val} for #{clause[:attribute]} and user #{user}")
 
-      op = OPERATORS[clause[:op]]
+      op = OPERATORS[clause[:op].to_sym]
+
+      if op.nil?
+        raise EvaluationError, "Unsupported operator #{clause[:op]} in evaluation"
+      end
 
       if val.is_a? Enumerable
         @config.logger.debug("User value #{val} is enumerable")
