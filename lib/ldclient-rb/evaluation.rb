@@ -48,23 +48,31 @@ module LaunchDarkly
         end,
       before:
         lambda do |a, b|
-          if a.is_a? String
-            a = DateTime.rfc3339(a).to_time.utc.to_i * 1000
+          begin
+            if a.is_a? String
+              a = DateTime.rfc3339(a).to_time.utc.to_i * 1000
+            end
+            if b.is_a? String
+              b = DateTime.rfc3339(b).to_time.utc.to_i * 1000
+            end          
+            (a.is_a? Numeric) ? a < b : false
+          rescue => e
+            false
           end
-          if b.is_a? String
-            b = DateTime.rfc3339(b).to_time.utc.to_i * 1000
-          end          
-          (a.is_a? Numeric) ? a < b : false
         end,
       after:
         lambda do |a, b|
-          if a.is_a? String
-            a = DateTime.rfc3339(a).to_time.utc.to_i
+          begin
+            if a.is_a? String
+              a = DateTime.rfc3339(a).to_time.utc.to_i * 1000
+            end
+            if b.is_a? String
+              b = DateTime.rfc3339(b).to_time.utc.to_i * 1000
+            end          
+            (a.is_a? Numeric) ? a > b : false
+          rescue => e
+            false
           end
-          if b.is_a? String
-            b = DateTime.rfc3339(b).to_time.utc.to_i
-          end          
-          (a.is_a? Numeric) ? a > b : false
         end
     }
 
