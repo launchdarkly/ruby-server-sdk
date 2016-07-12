@@ -119,7 +119,7 @@ module LaunchDarkly
             return res[:value]
           else
             @config.logger.debug("[LDClient] Result value is null in toggle")
-            @event_processor.add_event(kind: "feature", key: key, value: default, default: default)        
+            @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default)        
             return default            
           end
         rescue => exn
