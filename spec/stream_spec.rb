@@ -33,7 +33,8 @@ end
 describe LaunchDarkly::StreamProcessor do
   subject { LaunchDarkly::StreamProcessor }
   let(:config) { LaunchDarkly::Config.new }
-  let(:processor) { subject.new("api_key", config) }
+  let(:requestor) { LaunchDarkly::Requestor.new("api_key", config)}
+  let(:processor) { subject.new("api_key", config, requestor) }
 
   describe '#process_message' do
     let(:put_message) { OpenStruct.new({data: '{"key": {"value": "asdf"}}'}) }
@@ -57,19 +58,5 @@ describe LaunchDarkly::StreamProcessor do
       processor.send(:process_message, put_message, "get")
     end
   end
-
-  describe '#should_fallback_update' do
-    it "will return true if the stream is disconnected for more than 120 seconds" do
-      processor.send(:set_disconnected)
-      future_time = Time.now + 200
-      expect(Time).to receive(:now).and_return(future_time)
-      value = processor.send(:should_fallback_update)
-      expect(value).to eq true
-    end
-    it "will return false otherwise" do
-      processor.send(:set_connected)
-      value = processor.send(:should_fallback_update)
-      expect(value).to eq false
-    end
-  end
 end
+

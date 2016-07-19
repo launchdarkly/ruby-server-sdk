@@ -11,7 +11,6 @@ module LaunchDarkly
   #
   #
   class LDClient
-    include Settings
     include Evaluation
     #
     # Creates a new client instance that connects to LaunchDarkly. A custom
@@ -23,7 +22,7 @@ module LaunchDarkly
     # @param config [Config] an optional client configuration object
     #
     # @return [LDClient] The LaunchDarkly client instance
-    def initialize(api_key, config = Config.default, wait_for_sec = 0)
+    def initialize(api_key, config = Config.default, wait_for_sec = 5)
       @api_key = api_key
       @config = config
       @store = config.feature_store
