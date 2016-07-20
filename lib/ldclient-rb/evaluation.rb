@@ -42,10 +42,6 @@ module LaunchDarkly
         lambda do |a, b|
           (a.is_a? Numeric) && (a >= b)
         end,
-      greaterThanOrEqual:
-        lambda do |a, b|
-          (a.is_a? Numeric) && (a >= b)
-        end,
       before:
         lambda do |a, b|
           begin
