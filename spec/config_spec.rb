@@ -32,14 +32,14 @@ describe LaunchDarkly::Config do
       expect(subject.new.stream_uri).to eq subject.default_stream_uri
     end
   end
-  describe ".default_store" do
+  describe ".default_cache_store" do
     it "uses Rails cache if it is available" do
       rails = instance_double("Rails", cache: :cache)
       stub_const("Rails", rails)
-      expect(subject.default_store).to eq :cache
+      expect(subject.default_cache_store).to eq :cache
     end
     it "uses memory store if Rails is not available" do
-      expect(subject.default_store).to be_an_instance_of LaunchDarkly::ThreadSafeMemoryStore
+      expect(subject.default_cache_store).to be_an_instance_of LaunchDarkly::ThreadSafeMemoryStore
     end
   end
   describe ".default_logger" do
