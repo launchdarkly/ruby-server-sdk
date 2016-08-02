@@ -39,6 +39,7 @@ module LaunchDarkly
     #   remote network requests are made.
     # @option opts [Float] :poll_interval (30) The number of seconds between polls for flag updates
     #   if streaming is off.
+    # @option opts [Boolean] :stream (true) Whether or not the streaming API should be used to receive flag updates.
     #
     # @return [type] [description]
     def initialize(opts = {})
