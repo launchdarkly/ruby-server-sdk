@@ -3,6 +3,7 @@ require "logger"
 require "benchmark"
 require "waitutil"
 require "json"
+require "openssl"
 
 module LaunchDarkly
   #
@@ -54,8 +55,18 @@ module LaunchDarkly
       @event_processor.flush
     end
 
+    def toggle?(key, user, default = False)
+      @config.logger.warn("[LDClient] toggle? is deprecated. Use variation instead")
+      variation(key, user, default)
+    end
+
+    def secure_mode_hash(user)
+      puts @api_key
+      OpenSSL::HMAC.hexdigest('sha256', @api_key, user[:key].to_s)
+    end
+
     #
-    # Calculates the value of a feature flag for a given user. At a minimum,
+    # Determines the variation of a feature flag to present to a user. At a minimum,
     # the user hash should contain a +:key+ .
     #
     # @example Basic user hash
@@ -71,8 +82,6 @@ module LaunchDarkly
     # @example More complete user hash
     #   {key: "user@example.com", ip: "127.0.0.1", country: "US"}
     #
-    # Countries should be sent as ISO 3166-1 alpha-2 codes.
-    #
     # The user hash can contain arbitrary custom attributes stored in a +:custom+ sub-hash:
     #
     # @example A user hash with custom attributes
@@ -84,11 +93,11 @@ module LaunchDarkly
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
     # @param user [Hash] a hash containing parameters for the end user requesting the flag
-    # @param default=false [Boolean] the default value of the flag
+    # @param default=false the default value of the flag
     #
-    # @return [Boolean] whether or not the flag should be enabled, or the
-    #   default value if the flag is disabled on the LaunchDarkly control panel
-    def toggle?(key, user, default = false)
+    # @return the variation to show the user, or the
+    #   default value if there's an an error
+    def variation(key, user, default)
       return default if @config.offline?
 
       unless user
@@ -133,6 +142,7 @@ module LaunchDarkly
     #
     # @param [Hash] The user to register
     #
+    # @return [void]
     def identify(user)
       sanitize_user(user)
       @event_processor.add_event(kind: "identify", key: user[:key], user: user)
