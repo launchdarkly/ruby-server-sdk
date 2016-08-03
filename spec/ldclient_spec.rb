@@ -5,7 +5,7 @@ describe LaunchDarkly::LDClient do
   subject { LaunchDarkly::LDClient }
   let(:config) { LaunchDarkly::Config.new({:offline => true}) }  
   let(:client) do
-    subject.new("api_key", config)
+    subject.new("secret", config)
   end
   let(:feature) do
     data = File.read(File.join("spec", "fixtures", "feature.json"))
@@ -24,10 +24,17 @@ describe LaunchDarkly::LDClient do
     JSON.parse(data, symbolize_names: true)
   end
 
-  describe '#toggle?' do
+  describe '#variation' do
     it "will return the default value if the client is offline" do
-      result = client.toggle?(feature[:key], user, "default")
+      result = client.variation(feature[:key], user, "default")
       expect(result).to eq "default"
+    end
+  end
+
+  describe '#secure_mode_hash' do
+    it "will return the expected value for a known message and secret" do
+      result = client.secure_mode_hash({:key => :Message})
+      expect(result).to eq "aa747c502a898200f9e4fa21bac68136f886a0e27aec70ba06daf2e2a5cb5597"
     end
   end
 
