@@ -114,7 +114,7 @@ module LaunchDarkly
       sanitize_user(user)
       feature = @store.get(key)
 
-      if !feature.nil?
+      if feature.nil?
         @config.logger.error("[LDClient] Unknown feature flag #{key}. Returning default value")
         @event_processor.add_event(kind: "feature", key: key, value: default, default: default)
         return default
