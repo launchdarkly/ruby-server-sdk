@@ -23,10 +23,10 @@ gem install ldclient-rb
 require 'ldclient-rb'
 ```
 
-2. Create a new LDClient with your API key:
+2. Create a new LDClient with your SDK key:
 
 ```ruby
-client = LaunchDarkly::LDClient.new("your_api_key")
+client = LaunchDarkly::LDClient.new("your_sdk_key")
 ```
 
 ### Ruby on Rails
@@ -36,7 +36,7 @@ client = LaunchDarkly::LDClient.new("your_api_key")
 1.  Initialize the launchdarkly client in `config/initializers/launchdarkly.rb`:
 
 ```ruby
-Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_api_key")
+Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_sdk_key")
 ```
 
 2.  You may want to include a function in your ApplicationController

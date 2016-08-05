@@ -114,26 +114,32 @@ module LaunchDarkly
       sanitize_user(user)
       feature = @store.get(key)
 
-        begin
-          res = evaluate(feature, user, @store)
-          if !res[:events].nil?
-            res[:events].each do |event|
-              @event_processor.add_event(event)
-            end
+      if feature.nil?
+        @config.logger.error("[LDClient] Unknown feature flag #{key}. Returning default value")
+        @event_processor.add_event(kind: "feature", key: key, value: default, default: default)
+        return default
+      end
+
+      begin
+        res = evaluate(feature, user, @store)
+        if !res[:events].nil?
+          res[:events].each do |event|
+            @event_processor.add_event(event)
           end
-          if !res[:value].nil?
-            @event_processor.add_event(kind: "feature", key: key, user: user, value: res[:value], default: default)
-            return res[:value]
-          else
-            @config.logger.debug("[LDClient] Result value is null in toggle")
-            @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default)        
-            return default            
-          end
-        rescue => exn
-          @config.logger.warn("[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}")
-          @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default)
-          return default
         end
+        if !res[:value].nil?
+          @event_processor.add_event(kind: "feature", key: key, user: user, value: res[:value], default: default, version: feature[:version])
+          return res[:value]
+        else
+          @config.logger.debug("[LDClient] Result value is null in toggle")
+          @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version])        
+          return default            
+        end
+      rescue => exn
+        @config.logger.warn("[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}")
+        @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version])
+        return default
+      end
     end
 
     #
