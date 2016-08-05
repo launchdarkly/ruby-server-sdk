@@ -32,7 +32,7 @@ module LaunchDarkly
       end
 
       if res.status == 401
-        @config.logger.error("[LDClient] Invalid API key")
+        @config.logger.error("[LDClient] Invalid SDK key")
         return nil
       end
 
