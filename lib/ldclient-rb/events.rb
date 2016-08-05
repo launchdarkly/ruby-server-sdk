@@ -4,9 +4,9 @@ require "faraday"
 module LaunchDarkly
 
   class EventProcessor
-    def initialize(api_key, config)
+    def initialize(sdk_key, config)
       @queue = Queue.new
-      @api_key = api_key
+      @sdk_key = sdk_key
       @config = config
       @client = Faraday.new
       @worker = create_worker
@@ -27,7 +27,7 @@ module LaunchDarkly
 
     def post_flushed_events(events)
       res = @client.post (@config.events_uri + "/bulk") do |req|
-        req.headers["Authorization"] = "api_key " + @api_key
+        req.headers["Authorization"] = @sdk_key
         req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
         req.headers["Content-Type"] = "application/json"
         req.body = events.to_json

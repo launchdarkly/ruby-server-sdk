@@ -10,8 +10,8 @@ module LaunchDarkly
   INDIRECT_PATCH = :'indirect/patch'
 
   class StreamProcessor
-    def initialize(api_key, config, requestor)
-      @api_key = api_key
+    def initialize(sdk_key, config, requestor)
+      @sdk_key = sdk_key
       @config = config
       @store = config.feature_store
       @requestor = requestor
@@ -30,7 +30,7 @@ module LaunchDarkly
       
       headers = 
       {
-        'Authorization' => 'api_key ' + @api_key,
+        'Authorization' => @sdk_key,
         'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
       }
       opts = {:headers => headers, :with_credentials => true}

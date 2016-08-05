@@ -5,8 +5,8 @@ require "faraday/http_cache"
 module LaunchDarkly
 
   class Requestor
-    def initialize(api_key, config)
-      @api_key = api_key
+    def initialize(sdk_key, config)
+      @sdk_key = sdk_key
       @config = config
       @client = Faraday.new do |builder|
         builder.use :http_cache, store: @config.cache_store
@@ -25,14 +25,14 @@ module LaunchDarkly
 
     def make_request(path)
       res = @client.get (@config.base_uri + path) do |req|
-        req.headers["Authorization"] = "api_key " + @api_key
+        req.headers["Authorization"] = @sdk_key
         req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connect_timeout
       end
 
       if res.status == 401
-        @config.logger.error("[LDClient] Invalid API key")
+        @config.logger.error("[LDClient] Invalid SDK key")
         return nil
       end
 

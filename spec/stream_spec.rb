@@ -33,8 +33,8 @@ end
 describe LaunchDarkly::StreamProcessor do
   subject { LaunchDarkly::StreamProcessor }
   let(:config) { LaunchDarkly::Config.new }
-  let(:requestor) { LaunchDarkly::Requestor.new("api_key", config)}
-  let(:processor) { subject.new("api_key", config, requestor) }
+  let(:requestor) { LaunchDarkly::Requestor.new("sdk_key", config)}
+  let(:processor) { subject.new("sdk_key", config, requestor) }
 
   describe '#process_message' do
     let(:put_message) { OpenStruct.new({data: '{"key": {"value": "asdf"}}'}) }
