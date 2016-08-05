@@ -64,6 +64,12 @@ module LaunchDarkly
       OpenSSL::HMAC.hexdigest('sha256', @sdk_key, user[:key].to_s)
     end
 
+    # Returns whether the client has been initialized and is ready to serve feature flag requests
+    # @return [Boolean] true if the client has been initialized
+    def initialized?
+      @update_processor.initialized?
+    end
+
     #
     # Determines the variation of a feature flag to present to a user. At a minimum,
     # the user hash should contain a +:key+ .
