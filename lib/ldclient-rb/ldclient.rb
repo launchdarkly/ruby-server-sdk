@@ -7,7 +7,7 @@ require "openssl"
 
 module LaunchDarkly
   #
-  # A client for the LaunchDarkly API. Client instances are thread-safe. Users
+  # A client for LaunchDarkly. Client instances are thread-safe. Users
   # should create a single client instance for the lifetime of the application.
   #
   #
@@ -19,26 +19,26 @@ module LaunchDarkly
     # but for most use cases, the default configuration is appropriate.
     #
     #
-    # @param api_key [String] the API key for your LaunchDarkly account
+    # @param sdk_key [String] the SDK key for your LaunchDarkly account
     # @param config [Config] an optional client configuration object
     #
     # @return [LDClient] The LaunchDarkly client instance
-    def initialize(api_key, config = Config.default, wait_for_sec = 5)
-      @api_key = api_key
+    def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
+      @sdk_key = sdk_key
       @config = config
       @store = config.feature_store
-      requestor = Requestor.new(api_key, config)
+      requestor = Requestor.new(sdk_key, config)
 
       if !@config.offline?
         if @config.stream?
-          @update_processor = StreamProcessor.new(api_key, config, requestor)
+          @update_processor = StreamProcessor.new(sdk_key, config, requestor)
         else 
           @update_processor = PollingProcessor.new(config, requestor)
         end
         @update_processor.start
       end
 
-      @event_processor = EventProcessor.new(api_key, config)
+      @event_processor = EventProcessor.new(sdk_key, config)
 
       if !@config.offline? && wait_for_sec > 0
         begin
@@ -61,8 +61,7 @@ module LaunchDarkly
     end
 
     def secure_mode_hash(user)
-      puts @api_key
-      OpenSSL::HMAC.hexdigest('sha256', @api_key, user[:key].to_s)
+      OpenSSL::HMAC.hexdigest('sha256', @sdk_key, user[:key].to_s)
     end
 
     #
