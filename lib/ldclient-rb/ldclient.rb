@@ -181,7 +181,7 @@ module LaunchDarkly
       features = @store.all
 
       # TODO rescue if necessary
-      Hash[features{|k,f| [k, evaluate(f, user, @store)[:value]] }]
+      Hash[features.map{|k,f| [k, evaluate(f, user, @store)[:value]] }]
     end
 
     def log_exception(caller, exn)
