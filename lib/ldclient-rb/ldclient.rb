@@ -179,6 +179,11 @@ module LaunchDarkly
       sanitize_user(user)
       return Hash.new if @config.offline?
 
+      unless user
+        @config.logger.error("[LDClient] Must specify user in all_flags")
+        return Hash.new
+      end
+
       begin
         features = @store.all
 
