@@ -176,12 +176,18 @@ module LaunchDarkly
     # Returns all feature flag values for the given user
     #
     def all_flags(user)
+      sanitize_user(user)
       return Hash.new if @config.offline?
 
-      features = @store.all
+      begin
+        features = @store.all
 
-      # TODO rescue if necessary
-      Hash[features.map{|k,f| [k, evaluate(f, user, @store)[:value]] }]
+        # TODO rescue if necessary
+        Hash[features.map{|k,f| [k, evaluate(f, user, @store)[:value]] }]
+      rescue => exn
+        @config.logger.warn("[LDClient] Error evaluating all flags: #{exn.inspect}. \nTrace: #{exn.backtrace}")
+        return Hash.new
+      end
     end
 
     def log_exception(caller, exn)
