@@ -107,13 +107,13 @@ module LaunchDarkly
 
       unless user
         @config.logger.error("[LDClient] Must specify user")
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default)        
+        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)        
         return default
       end
 
       if !@update_processor.initialized?
         @config.logger.error("[LDClient] Client has not finished initializing. Returning default value")
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default)        
+        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)        
         return default
       end
 
@@ -122,7 +122,7 @@ module LaunchDarkly
 
       if feature.nil?
         @config.logger.error("[LDClient] Unknown feature flag #{key}. Returning default value")
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default)
+        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
         return default
       end
 
