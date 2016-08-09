@@ -12,6 +12,8 @@ every second for updates. The poll interval is configurable via `poll_interval`.
 - Support for extremely large feature flags. When a large feature flag changes, the stream will include a directive to fetch the updated flag.
 
 ### Changed
+- You can now initialize the LaunchDarkly client with an optional timeout (specified in seconds). This will block initialization until the client has finished bootstrapping and is able to serve feature flags.
+- The streaming implementation (`StreamProcessor`) uses [Celluloid](https://github.com/celluloid/celluloid) under the hood instead of [EventMachine](https://github.com/eventmachine/eventmachine). The dependency on EventMachine has been removed.
 - The `store` option has been renamed to `cache_store`.
 - Offline mode can no longer be set dynamically. Instead, at configuration time, the `offline` parameter can be set to put the client in offline mode. It is no longer possible to dynamically change whether the client is online and offline (via `set_online` and `set_offline`). Call `offline?` to determine whether or not the client is offline.
 - The `debug_stream` configuration option has been removed.
