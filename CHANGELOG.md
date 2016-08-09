@@ -6,8 +6,7 @@ All notable changes to the LaunchDarkly Ruby SDK will be documented in this file
 ### Added
 - Support for multivariate feature flags. In addition to booleans, feature flags can now return numbers, strings, dictionaries, or arrays via the `variation` method.
 - New `all_flags` method returns all flag values for a specified user.
-- If streaming is disabled, the client polls for feature flag changes. By default, the client will poll LaunchDarkly 
-every second for updates. The poll interval is configurable via `poll_interval`.
+- If streaming is disabled, the client polls for feature flag changes. If streaming is disabled, the client will default to polling LaunchDarkly every second for updates. The poll interval is configurable via `poll_interval`.
 - New `secure_mode_hash` function computes a hash suitable for the new LaunchDarkly JavaScript client's secure mode feature.
 - Support for extremely large feature flags. When a large feature flag changes, the stream will include a directive to fetch the updated flag.
 
