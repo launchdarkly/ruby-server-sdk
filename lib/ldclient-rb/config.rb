@@ -185,7 +185,12 @@ module LaunchDarkly
     end
 
     def self.default_logger
-      defined?(Rails) && Rails.respond_to?(:logger) ? Rails.logger : ::Logger.new($stdout)
+      if defined?(Rails) && Rails.respond_to?(:logger)
+        Rails.logger 
+      else 
+        log = ::Logger.new($stdout)
+        log.level = ::Logger::WARN
+      end
     end
 
     def self.default_stream
