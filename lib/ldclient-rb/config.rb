@@ -190,6 +190,7 @@ module LaunchDarkly
       else 
         log = ::Logger.new($stdout)
         log.level = ::Logger::WARN
+        log
       end
     end
 
