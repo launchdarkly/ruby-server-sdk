@@ -71,7 +71,7 @@ Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_sdk_key")
 3.  In your controllers, access the client using
 
 ```ruby
-Rails.application.config.ld_client.toggle?('your.flag.key', launchdarkly_settings, false)
+Rails.application.config.ld_client.variation('your.flag.key', launchdarkly_settings, false)
 ```
 
 Note that this gem will automatically switch to using the Rails logger it is detected.
@@ -83,7 +83,7 @@ Your first feature flag
 2. In your application code, use the feature's key to check whether the flag is on for each user:
 
 ```ruby
-if client.toggle?("your.flag.key", {key: "user@test.com"}, false)
+if client.variation("your.flag.key", {key: "user@test.com"}, false)
   # application code to show the feature
 else
   # the code to run if the feature is off
