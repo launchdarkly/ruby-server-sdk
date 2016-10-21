@@ -53,8 +53,8 @@ describe LaunchDarkly::StreamProcessor do
       processor.send(:process_message, delete_message, LaunchDarkly::DELETE)
       expect(processor.instance_variable_get(:@store).get("key")).to eq(nil)
     end
-    it "will log an error if the method is not recognized" do
-      expect(processor.instance_variable_get(:@config).logger).to receive :error
+    it "will log a warning if the method is not recognized" do
+      expect(processor.instance_variable_get(:@config).logger).to receive :warn
       processor.send(:process_message, put_message, "get")
     end
   end
