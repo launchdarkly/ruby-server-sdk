@@ -64,7 +64,7 @@ module LaunchDarkly
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized (via indirect message)")
       elsif method == INDIRECT_PATCH
-        @store.upsert(@requestor.request_flag(message.data))        
+        @store.upsert(message.data, @requestor.request_flag(message.data))        
       else
         @config.logger.warn("[LDClient] Unknown message received: #{method}")
       end
