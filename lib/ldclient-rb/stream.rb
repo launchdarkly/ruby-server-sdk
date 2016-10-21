@@ -47,24 +47,26 @@ module LaunchDarkly
     end
 
     def process_message(message, method)
-      message = JSON.parse(message.data, symbolize_names: true)
       @config.logger.debug("[LDClient] Stream received #{method} message")
       if method == PUT
+        message = JSON.parse(message.data, symbolize_names: true)
         @store.init(message)
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized")
       elsif method == PATCH
+        message = JSON.parse(message.data, symbolize_names: true)
         @store.upsert(message[:path][1..-1], message[:data])
       elsif method == DELETE
+        message = JSON.parse(message.data, symbolize_names: true)
         @store.delete(message[:path][1..-1], message[:version])
       elsif method == INDIRECT_PUT
         @store.init(@requestor.request_all_flags)
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized (via indirect message)")
       elsif method == INDIRECT_PATCH
-        @store.upsert(@requestor.request_flag(message[:data]))        
+        @store.upsert(@requestor.request_flag(message.data))        
       else
-        @config.logger.error("[LDClient] Unknown message received: #{method}")
+        @config.logger.warn("[LDClient] Unknown message received: #{method}")
       end
     end
 
