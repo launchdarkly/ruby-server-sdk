@@ -1,6 +1,6 @@
 require "concurrent/atomics"
 require "json"
-require "celluloid/eventsource"
+require "ld_celluloid_eventsource/eventsource"
 
 module LaunchDarkly
   PUT = :put
