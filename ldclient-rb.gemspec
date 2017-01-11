@@ -32,5 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0.4"
   spec.add_runtime_dependency "hashdiff", "~> 0.2"
   spec.add_runtime_dependency "ld-celluloid-eventsource", "~> 0.8"
+  spec.add_runtime_dependency "nio4r", "~> 1.1"
+
   spec.add_runtime_dependency "waitutil", "0.2"
 end
