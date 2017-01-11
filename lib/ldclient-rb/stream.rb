@@ -40,9 +40,6 @@ module LaunchDarkly
         conn.on(DELETE) { |message| process_message(message, DELETE) }
         conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
         conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
-        conn.on_error do |message|
-          @config.logger.error("[LDClient] Error connecting to stream. Status code: #{message[:status_code]}")
-        end
       end
     end
 
