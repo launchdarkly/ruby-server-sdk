@@ -44,7 +44,7 @@ module LaunchDarkly
     end
 
     def process_message(message, method)
-      @config.logger.debug("[LDClient] Stream received #{method} message")
+      @config.logger.debug("[LDClient] Stream received #{method} message: #{message}")
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
         @store.init(message)
