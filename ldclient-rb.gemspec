@@ -29,8 +29,10 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "faraday-http-cache", "~> 1.3.0"
   spec.add_runtime_dependency "thread_safe", "~> 0.3"
   spec.add_runtime_dependency "net-http-persistent", "~> 2.9"
-  spec.add_runtime_dependency "concurrent-ruby", "~> 1.0.0"
+  spec.add_runtime_dependency "concurrent-ruby", "~> 1.0.4"
   spec.add_runtime_dependency "hashdiff", "~> 0.2"
-  spec.add_runtime_dependency "ld-celluloid-eventsource", "~> 0.5"
+  spec.add_runtime_dependency "ld-celluloid-eventsource", "~> 0.8.1"
+  spec.add_runtime_dependency "nio4r", "~> 1.1" # for maximum ruby version compatibility.
+
   spec.add_runtime_dependency "waitutil", "0.2"
 end

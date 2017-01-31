@@ -24,12 +24,15 @@ module LaunchDarkly
     end
 
     def make_request(path)
-      res = @client.get (@config.base_uri + path) do |req|
+      uri = @config.base_uri + path
+      res = @client.get (uri) do |req|
         req.headers["Authorization"] = @sdk_key
         req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connect_timeout
       end
+
+      @config.logger.debug("[LDClient] Got response from uri: #{uri}\n\tstatus code: #{res.status}\n\theaders: #{res.headers}\n\tbody: #{res.body}")
 
       if res.status == 401
         @config.logger.error("[LDClient] Invalid SDK key")

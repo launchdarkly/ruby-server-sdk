@@ -1,6 +1,6 @@
 require "concurrent/atomics"
 require "json"
-require "celluloid/eventsource"
+require "ld_celluloid_eventsource/eventsource"
 
 module LaunchDarkly
   PUT = :put
@@ -40,14 +40,11 @@ module LaunchDarkly
         conn.on(DELETE) { |message| process_message(message, DELETE) }
         conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
         conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
-        conn.on_error do |message|
-          @config.logger.error("[LDClient] Error connecting to stream. Status code: #{message[:status_code]}")
-        end
       end
     end
 
     def process_message(message, method)
-      @config.logger.debug("[LDClient] Stream received #{method} message")
+      @config.logger.debug("[LDClient] Stream received #{method} message: #{message.data}")
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
         @store.init(message)
