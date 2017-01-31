@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [2.0.4] - 2017-01-31
+## Changed
+- Improved error handling when connected to flag update stream.
+
 ## [2.0.3] - 2016-10-21
 ## Fixed
 - Indirect stream events are now correctly processed
