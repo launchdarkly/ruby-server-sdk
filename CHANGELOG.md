@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [2.0.6] - 2017-02-10
+## Changed
+- Improved handling of http status codes that may not be integers.
+
 ## [2.0.5] - 2017-01-31
 ## Changed
 - Improved error handling when connected to flag update stream.
