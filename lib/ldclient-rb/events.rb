@@ -34,7 +34,7 @@ module LaunchDarkly
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connect_timeout
       end
-      if res.status / 100 != 2
+      if res.status < 200 || res.status >= 300
         @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
       end
     end

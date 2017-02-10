@@ -44,7 +44,7 @@ module LaunchDarkly
         return nil
       end
 
-      if res.status / 100 != 2
+      if res.status < 200 || res.status >= 300
         @config.logger.error("[LDClient] Unexpected status code #{res.status}")
         return nil
       end
