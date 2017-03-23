@@ -1,6 +1,6 @@
 machine:
   environment:
-    RUBIES: "ruby-2.2.3;ruby-2.1.7;ruby-2.0.0;ruby-1.9.3;jruby-1.7.22"
+    RUBIES: "ruby-2.4.1;ruby-2.2.2;jruby-9.0.0.0"
 
 dependencies:
   cache_directories:
