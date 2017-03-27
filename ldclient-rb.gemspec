@@ -18,6 +18,8 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
   spec.extensions    = 'ext/mkrf_conf.rb'
+  
+  spec.required_ruby_version = '>= 2.2.2'
 
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
@@ -33,7 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "hashdiff", "~> 0.2"
   spec.add_runtime_dependency "ld-celluloid-eventsource", "~> 0.9.0"
   spec.add_runtime_dependency "celluloid", "~> 0.18.0.pre" # transitive dep; specified here for more control
-  spec.add_runtime_dependency "nio4r", "~> 1.1" # for maximum ruby version compatibility.
+  spec.add_runtime_dependency "nio4r", "~> 2.0" # for rails 5.1 compatibility
 
   spec.add_runtime_dependency "waitutil", "0.2"
 end
