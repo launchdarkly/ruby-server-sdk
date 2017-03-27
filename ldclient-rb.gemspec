@@ -35,7 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "hashdiff", "~> 0.2"
   spec.add_runtime_dependency "ld-celluloid-eventsource", "~> 0.9.0"
   spec.add_runtime_dependency "celluloid", "~> 0.18.0.pre" # transitive dep; specified here for more control
-  spec.add_runtime_dependency "nio4r", "~> 2.0" # for rails 5.1 compatibility.
+  spec.add_runtime_dependency "nio4r", "~> 2.0" # for rails 5.1 compatibility
 
   spec.add_runtime_dependency "waitutil", "0.2"
 end
