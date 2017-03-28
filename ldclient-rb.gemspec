@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "hashdiff", "~> 0.2"
   spec.add_runtime_dependency "ld-celluloid-eventsource", "~> 0.9.0"
   spec.add_runtime_dependency "celluloid", "~> 0.18.0.pre" # transitive dep; specified here for more control
-  
+
   if RUBY_VERSION >= '2.2.2'
     spec.add_runtime_dependency "nio4r", "< 3" # for maximum ruby version compatibility.
   else
