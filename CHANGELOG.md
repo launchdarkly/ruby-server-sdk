@@ -2,7 +2,7 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
-## [2.1.1] - 2017-03-22
+## [2.1.1] - 2017-03-28
 ## Changed
 - Bumped nio4r to 2.0
 
