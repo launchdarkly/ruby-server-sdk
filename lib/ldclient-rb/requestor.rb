@@ -30,6 +30,9 @@ module LaunchDarkly
         req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connect_timeout
+        if @config.proxy
+          req.options.proxy = Faraday::ProxyOptions.from @config.proxy
+        end
       end
 
       @config.logger.debug("[LDClient] Got response from uri: #{uri}\n\tstatus code: #{res.status}\n\theaders: #{res.headers}\n\tbody: #{res.body}")
