@@ -56,6 +56,7 @@ module LaunchDarkly
       @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > 1 ? opts[:poll_interval] : Config.default_poll_interval
+      @proxy = opts[:proxy] || Config.default_proxy
     end
 
     #
@@ -143,6 +144,11 @@ module LaunchDarkly
     #
     attr_reader :feature_store
 
+    
+    # The proxy configuration
+    #
+    attr_reader :proxy
+
     #
     # The default LaunchDarkly client configuration. This configuration sets
     # reasonable defaults for most users.
@@ -182,6 +188,10 @@ module LaunchDarkly
 
     def self.default_connect_timeout
       2
+    end
+
+    def self.default_proxy
+      nil
     end
 
     def self.default_logger
