@@ -33,7 +33,7 @@ module LaunchDarkly
         'Authorization' => @sdk_key,
         'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
       }
-      opts = {:headers => headers, :with_credentials => true}
+      opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy}
       @es = Celluloid::EventSource.new(@config.stream_uri + "/flags", opts) do |conn|
         conn.on(PUT) { |message| process_message(message, PUT) }
         conn.on(PATCH) { |message| process_message(message, PATCH) }
