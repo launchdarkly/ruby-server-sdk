@@ -145,7 +145,7 @@ module LaunchDarkly
     attr_reader :feature_store
 
     
-    # The proxy configuration
+    # The proxy configuration string
     #
     attr_reader :proxy
 
