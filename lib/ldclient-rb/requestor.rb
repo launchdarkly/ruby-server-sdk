@@ -9,7 +9,7 @@ module LaunchDarkly
       @sdk_key = sdk_key
       @config = config
       @client = Faraday.new do |builder|
-        builder.use :http_cache, store: @config.cache_store, serializer: Marshal
+        builder.use :http_cache, store: @config.cache_store
 
         builder.adapter :net_http_persistent
       end
