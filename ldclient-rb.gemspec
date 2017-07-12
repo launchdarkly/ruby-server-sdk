@@ -1,8 +1,10 @@
 # coding: utf-8
+
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "ldclient-rb/version"
 
+# rubocop:disable Metrics/BlockLength
 Gem::Specification.new do |spec|
   spec.name          = "ldclient-rb"
   spec.version       = LaunchDarkly::VERSION
@@ -34,7 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "ld-celluloid-eventsource", "~> 0.10.0"
   spec.add_runtime_dependency "celluloid", "~> 0.18.0.pre" # transitive dep; specified here for more control
 
-  if RUBY_VERSION >= '2.2.2'
+  if RUBY_VERSION >= "2.2.2"
     spec.add_runtime_dependency "nio4r", "< 3" # for maximum ruby version compatibility.
   else
     spec.add_runtime_dependency "nio4r", "~> 1.1" # for maximum ruby version compatibility.

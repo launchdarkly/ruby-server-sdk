@@ -32,7 +32,7 @@ module LaunchDarkly
       if !@config.offline?
         if @config.stream?
           @update_processor = StreamProcessor.new(sdk_key, config, requestor)
-        else 
+        else
           @update_processor = PollingProcessor.new(config, requestor)
         end
         @update_processor.start
@@ -42,7 +42,7 @@ module LaunchDarkly
 
       if !@config.offline? && wait_for_sec > 0
         begin
-          WaitUtil.wait_for_condition("LaunchDarkly client initialization", :timeout_sec => wait_for_sec, :delay_sec => 0.1) do
+          WaitUtil.wait_for_condition("LaunchDarkly client initialization", timeout_sec: wait_for_sec, delay_sec: 0.1) do
             @update_processor.initialized?
           end
         rescue WaitUtil::TimeoutError
@@ -61,7 +61,7 @@ module LaunchDarkly
     end
 
     def secure_mode_hash(user)
-      OpenSSL::HMAC.hexdigest('sha256', @sdk_key, user[:key].to_s)
+      OpenSSL::HMAC.hexdigest("sha256", @sdk_key, user[:key].to_s)
     end
 
     # Returns whether the client has been initialized and is ready to serve feature flag requests
@@ -107,13 +107,13 @@ module LaunchDarkly
 
       unless user
         @config.logger.error("[LDClient] Must specify user")
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)        
+        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
         return default
       end
 
       if !@update_processor.initialized?
         @config.logger.error("[LDClient] Client has not finished initializing. Returning default value")
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)        
+        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
         return default
       end
 
@@ -138,8 +138,8 @@ module LaunchDarkly
           return res[:value]
         else
           @config.logger.debug("[LDClient] Result value is null in toggle")
-          @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version])        
-          return default            
+          @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version])
+          return default
         end
       rescue => exn
         @config.logger.warn("[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}")
@@ -188,7 +188,7 @@ module LaunchDarkly
         features = @store.all
 
         # TODO rescue if necessary
-        Hash[features.map{|k,f| [k, evaluate(f, user, @store)[:value]] }]
+        Hash[features.map{ |k, f| [k, evaluate(f, user, @store)[:value]] }]
       rescue => exn
         @config.logger.warn("[LDClient] Error evaluating all flags: #{exn.inspect}. \nTrace: #{exn.backtrace}")
         return Hash.new

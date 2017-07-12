@@ -8,8 +8,8 @@ describe LaunchDarkly::Requestor do
         LaunchDarkly::Requestor.new(
           "key",
           LaunchDarkly::Config.new({
-            :proxy => "http://proxy.com",
-            :base_uri => "http://ld.com"
+            proxy: "http://proxy.com",
+            base_uri: "http://ld.com"
           })
         )
       }
@@ -17,7 +17,7 @@ describe LaunchDarkly::Requestor do
         faraday = Faraday.new
         requestor.instance_variable_set(:@client, faraday)
         allow(faraday).to receive(:get) do |*args, &block|
-          req = double(Faraday::Request, :headers => {}, :options => Faraday::RequestOptions.new)
+          req = double(Faraday::Request, headers: {}, options: Faraday::RequestOptions.new)
           block.call(req)
           expect(args).to eq ['http://ld.com/sdk/latest-flags']
           expect(req.options.proxy[:uri]).to eq URI("http://proxy.com")
@@ -32,7 +32,7 @@ describe LaunchDarkly::Requestor do
         LaunchDarkly::Requestor.new(
           "key",
           LaunchDarkly::Config.new({
-            :base_uri => "http://ld.com"
+            base_uri: "http://ld.com"
           })
         )
       }
@@ -40,7 +40,7 @@ describe LaunchDarkly::Requestor do
         faraday = Faraday.new
         requestor.instance_variable_set(:@client, faraday)
         allow(faraday).to receive(:get) do |*args, &block|
-          req = double(Faraday::Request, :headers => {}, :options => Faraday::RequestOptions.new)
+          req = double(Faraday::Request, headers: {}, options: Faraday::RequestOptions.new)
           block.call(req)
           expect(args).to eq ['http://ld.com/sdk/latest-flags']
           expect(req.options.proxy).to eq nil

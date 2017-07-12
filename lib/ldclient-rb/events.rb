@@ -2,7 +2,6 @@ require "thread"
 require "faraday"
 
 module LaunchDarkly
-
   class EventProcessor
     def initialize(sdk_key, config)
       @queue = Queue.new
@@ -67,9 +66,8 @@ module LaunchDarkly
       else
         @config.logger.warn("[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events.")
       end
-    end  
+    end
 
     private :create_worker, :post_flushed_events
-  
   end
 end

@@ -27,13 +27,12 @@ module LaunchDarkly
       return unless @started.make_true
 
       @config.logger.info("[LDClient] Initializing stream connection")
-      
-      headers = 
-      {
-        'Authorization' => @sdk_key,
-        'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
-      }
-      opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy}
+      headers =
+        {
+          "Authorization" => @sdk_key,
+          "User-Agent" => "RubyClient/" + LaunchDarkly::VERSION
+        }
+      opts = { headers: headers, with_credentials: true, proxy: @config.proxy }
       @es = Celluloid::EventSource.new(@config.stream_uri + "/flags", opts) do |conn|
         conn.on(PUT) { |message| process_message(message, PUT) }
         conn.on(PATCH) { |message| process_message(message, PATCH) }
@@ -61,7 +60,7 @@ module LaunchDarkly
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized (via indirect message)")
       elsif method == INDIRECT_PATCH
-        @store.upsert(message.data, @requestor.request_flag(message.data))        
+        @store.upsert(message.data, @requestor.request_flag(message.data))
       else
         @config.logger.warn("[LDClient] Unknown message received: #{method}")
       end

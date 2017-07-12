@@ -1,20 +1,19 @@
 require "date"
 
 module LaunchDarkly
-
   module Evaluation
     BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
 
     OPERATORS = {
-      in: 
+      in:
         lambda do |a, b|
           a == b
         end,
-      endsWith: 
+      endsWith:
         lambda do |a, b|
           (a.is_a? String) && (a.end_with? b)
         end,
-      startsWith: 
+      startsWith:
         lambda do |a, b|
           (a.is_a? String) && (a.start_with? b)
         end,
@@ -50,7 +49,7 @@ module LaunchDarkly
             end
             if b.is_a? String
               b = DateTime.rfc3339(b).strftime('%Q').to_i
-            end          
+            end
             (a.is_a? Numeric) ? a < b : false
           rescue => e
             false
@@ -60,11 +59,11 @@ module LaunchDarkly
         lambda do |a, b|
           begin
             if a.is_a? String
-              a = DateTime.rfc3339(a).strftime('%Q').to_i 
+              a = DateTime.rfc3339(a).strftime("%Q").to_i
             end
             if b.is_a? String
-              b = DateTime.rfc3339(b).strftime('%Q').to_i 
-            end          
+              b = DateTime.rfc3339(b).strftime("%Q").to_i
+            end
             (a.is_a? Numeric) ? a > b : false
           rescue => e
             false
@@ -93,15 +92,15 @@ module LaunchDarkly
       if flag[:on]
         res = eval_internal(flag, user, store, events)
 
-        return {value: res, events: events} if !res.nil?
+        return { value: res, events: events } if !res.nil?
       end
 
       if !flag[:offVariation].nil? && flag[:offVariation] < flag[:variations].length
         value = flag[:variations][flag[:offVariation]]
-        return {value: value, events: events}
+        return { value: value, events: events }
       end
 
-      {value: nil, events: events}
+      { value: nil, events: events }
     end
 
     def eval_internal(flag, user, store, events)
@@ -109,7 +108,6 @@ module LaunchDarkly
       # Evaluate prerequisites, if any
       if !flag[:prerequisites].nil?
         flag[:prerequisites].each do |prerequisite|
-
           prereq_flag = store.get(prerequisite[:key])
 
           if prereq_flag.nil? || !prereq_flag[:on]
@@ -119,7 +117,7 @@ module LaunchDarkly
               prereq_res = eval_internal(prereq_flag, user, store, events)
               variation = get_variation(prereq_flag, prerequisite[:variation])
               events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res, version: prereq_flag[:version], prereqOf: flag[:key])
-              if prereq_res.nil? || prereq_res!= variation
+              if prereq_res.nil? || prereq_res != variation
                 failed_prereq = true
               end
             rescue => exn
@@ -149,7 +147,7 @@ module LaunchDarkly
             end
           end
         end
-      end  
+      end
 
       # Check custom rules
       if !flag[:rules].nil?
@@ -202,7 +200,7 @@ module LaunchDarkly
       end
 
       maybe_negate(clause, match_any(op, val, clause[:values]))
-    end    
+    end
 
     def variation_for_user(rule, user, flag)
       if !rule[:variation].nil? # fixed variation
@@ -234,7 +232,7 @@ module LaunchDarkly
       hash_key = "%s.%s.%s" % [key, salt, id_hash]
 
       hash_val = (Digest::SHA1.hexdigest(hash_key))[0..14]
-      hash_val.to_i(16) / Float(0xFFFFFFFFFFFFFFF)      
+      hash_val.to_i(16) / Float(0xFFFFFFFFFFFFFFF)
     end
 
     def user_value(user, attribute)
@@ -260,6 +258,4 @@ module LaunchDarkly
       return false
     end
   end
-
 end
-

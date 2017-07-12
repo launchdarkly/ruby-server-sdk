@@ -3,7 +3,7 @@ require "spec_helper"
 
 describe LaunchDarkly::LDClient do
   subject { LaunchDarkly::LDClient }
-  let(:config) { LaunchDarkly::Config.new({:offline => true}) }  
+  let(:config) { LaunchDarkly::Config.new({offline: true}) }  
   let(:client) do
     subject.new("secret", config)
   end
@@ -33,7 +33,7 @@ describe LaunchDarkly::LDClient do
 
   describe '#secure_mode_hash' do
     it "will return the expected value for a known message and secret" do
-      result = client.secure_mode_hash({:key => :Message})
+      result = client.secure_mode_hash({key: :Message})
       expect(result).to eq "aa747c502a898200f9e4fa21bac68136f886a0e27aec70ba06daf2e2a5cb5597"
     end
   end
