@@ -1,6 +1,11 @@
 # Change log
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
+
+## [2.2.7] - 2017-07-26
+## Changed
+- Update Readme to fix instructions on installing gem using command line
+- Cleaned up formatting on various files (Rubocop)
 ## [2.2.5] - 2017-05-08
 ## Changed
 - Added proxy support to streaming and http connections. Respects `HTTP_PROXY` and `http_proxy` environment variables as well as the `:proxy => protocol://user:pass@host` configuration parameter.
