@@ -42,6 +42,7 @@ module LaunchDarkly
     # @option opts [Boolean] :stream (true) Whether or not the streaming API should be used to receive flag updates.
     #
     # @return [type] [description]
+    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
       @stream_uri = (opts[:stream_uri] || Config.default_stream_uri).chomp("/")
