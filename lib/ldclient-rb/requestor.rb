@@ -56,7 +56,5 @@ module LaunchDarkly
     end
 
     private :make_request
-
   end
-
 end

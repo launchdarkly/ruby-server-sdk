@@ -3,7 +3,6 @@ require "thread"
 
 module LaunchDarkly
   class PollingProcessor
-    
     def initialize(config, requestor)
       @config = config
       @requestor = requestor
@@ -44,12 +43,11 @@ module LaunchDarkly
             end
           rescue StandardError => exn
             @config.logger.error("[LDClient] Exception while polling: #{exn.inspect}")
-           # TODO: log_exception(__method__.to_s, exn)
+            # TODO: log_exception(__method__.to_s, exn)
           end
         end
       end
     end
-
 
     private :poll, :create_worker
   end

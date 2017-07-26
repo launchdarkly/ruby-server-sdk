@@ -14,8 +14,9 @@ Quick setup
 0. Install the Ruby SDK with `gem`
 
 ```shell
-gem install ldclient-rb
+gem install ldclient-rb --prerelease
 ```
+Note: The `--prerelease` flag is there to satisfy the dependency of celluloid 0.18pre which we have tested extensively and have found stable in our use case.  Unfortunately, the upstream provider has not promoted this version to stable yet.   See [here](https://github.com/celluloid/celluloid/issues/762)  This is not required for use in a Gemfile.
 
 1. Require the LaunchDarkly client:
 
