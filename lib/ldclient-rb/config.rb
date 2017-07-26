@@ -145,10 +145,7 @@ module LaunchDarkly
     #
     attr_reader :feature_store
 
-<<<<<<< HEAD
-=======
     
->>>>>>> ba355ed1fc08c6162e2335f60480c0d658b04964
     # The proxy configuration string
     #
     attr_reader :proxy

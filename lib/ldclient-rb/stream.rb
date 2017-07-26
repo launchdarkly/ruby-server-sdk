@@ -27,14 +27,6 @@ module LaunchDarkly
       return unless @started.make_true
 
       @config.logger.info("[LDClient] Initializing stream connection")
-<<<<<<< HEAD
-      headers =
-        {
-          "Authorization" => @sdk_key,
-          "User-Agent" => "RubyClient/" + LaunchDarkly::VERSION
-        }
-      opts = { headers: headers, with_credentials: true, proxy: @config.proxy }
-=======
       
       headers = 
       {
@@ -42,7 +34,6 @@ module LaunchDarkly
         'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
       }
       opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy}
->>>>>>> ba355ed1fc08c6162e2335f60480c0d658b04964
       @es = Celluloid::EventSource.new(@config.stream_uri + "/flags", opts) do |conn|
         conn.on(PUT) { |message| process_message(message, PUT) }
         conn.on(PATCH) { |message| process_message(message, PATCH) }
