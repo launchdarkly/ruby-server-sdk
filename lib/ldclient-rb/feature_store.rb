@@ -1,7 +1,6 @@
 require "concurrent/atomics"
 
 module LaunchDarkly
-  
   class InMemoryFeatureStore
     def initialize
       @features = Hash.new
