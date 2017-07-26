@@ -1,6 +1,9 @@
 # Change log
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
+## [2.2.5] - 2017-05-08
+## Changed
+- Added proxy support to streaming and http connections. Respects `HTTP_PROXY` and `http_proxy` environment variables as well as the `:proxy => protocol://user:pass@host` configuration parameter.
 
 ## [2.1.5] - 2017-03-28
 ## Changed
