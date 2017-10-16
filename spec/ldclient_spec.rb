@@ -70,4 +70,26 @@ describe LaunchDarkly::LDClient do
       end
     end
   end
+
+  describe 'with send_events: false' do
+    let(:config) { LaunchDarkly::Config.new({offline: true, send_events: false}) }
+    let(:client) { subject.new("secret", config) }
+
+    let(:queue) { client.instance_variable_get(:@event_processor).instance_variable_get(:@queue) }
+
+    it "does not enqueue a feature event" do
+      client.variation(feature[:key], user, "default")
+      expect(queue.empty?).to be true
+    end
+
+    it "does not enqueue a custom event" do
+      client.track("custom_event_name", user, 42)
+      expect(queue.empty?).to be true
+    end
+
+    it "does not enqueue an identify event" do
+      client.identify(user)
+      expect(queue.empty?).to be true
+    end
+  end
 end

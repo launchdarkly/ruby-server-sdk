@@ -8,7 +8,7 @@ module LaunchDarkly
       @sdk_key = sdk_key
       @config = config
       @client = Faraday.new
-      @worker = create_worker
+      @worker = create_worker if @config.send_events
     end
 
     def create_worker
@@ -39,6 +39,7 @@ module LaunchDarkly
     end
 
     def flush
+      return if @offline || !@config.send_events
       events = []
       begin
         loop do
@@ -53,7 +54,7 @@ module LaunchDarkly
     end
 
     def add_event(event)
-      return if @offline
+      return if @offline || !@config.send_events
 
       if @queue.length < @config.capacity
         event[:creationDate] = (Time.now.to_f * 1000).to_i

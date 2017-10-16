@@ -40,6 +40,9 @@ module LaunchDarkly
     # @option opts [Float] :poll_interval (1) The number of seconds between polls for flag updates
     #   if streaming is off.
     # @option opts [Boolean] :stream (true) Whether or not the streaming API should be used to receive flag updates.
+    # @option opts [Boolean] :send_events (true) Whether or not to send events back to LaunchDarkly.
+    #   This differs from `offline` in that it affects only the sending of client-side events, not
+    #   streaming or polling for events from the server.
     #
     # @return [type] [description]
     # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
@@ -58,6 +61,7 @@ module LaunchDarkly
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > 1 ? opts[:poll_interval] : Config.default_poll_interval
       @proxy = opts[:proxy] || Config.default_proxy
+      @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
     end
 
     #
@@ -151,6 +155,11 @@ module LaunchDarkly
     attr_reader :proxy
 
     #
+    # Whether to send events back to LaunchDarkly.
+    #
+    attr_reader :send_events
+
+    #
     # The default LaunchDarkly client configuration. This configuration sets
     # reasonable defaults for most users.
     #
@@ -219,6 +228,10 @@ module LaunchDarkly
 
     def self.default_poll_interval
       1
+    end
+
+    def self.default_send_events
+      true
     end
   end
 end
