@@ -7,6 +7,7 @@ module LaunchDarkly
       @queue = Queue.new
       @sdk_key = sdk_key
       @config = config
+      @serializer = EventSerializer.new(config)
       @client = Faraday.new
       @worker = create_worker if @config.send_events
     end
@@ -29,7 +30,7 @@ module LaunchDarkly
         req.headers["Authorization"] = @sdk_key
         req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
         req.headers["Content-Type"] = "application/json"
-        req.body = events.to_json
+        req.body = serializer.serialize_events(events)
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connect_timeout
       end
