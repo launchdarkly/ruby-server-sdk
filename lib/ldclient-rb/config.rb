@@ -34,6 +34,10 @@ module LaunchDarkly
     # @option opts [Object] :cache_store A cache store for the Faraday HTTP caching
     #   library. Defaults to the Rails cache in a Rails environment, or a
     #   thread-safe in-memory store otherwise.
+    # @option opts [Boolean] :use_ldd (false) Whether you are using the LaunchDarkly relay proxy in
+    #   daemon mode. In this configuration, the client will not use a streaming connection to listen
+    #   for updates, but instead will get feature state from a Redis instance. The `stream` and
+    #   `poll_interval` options will be ignored if this option is set to true.
     # @option opts [Boolean] :offline (false) Whether the client should be initialized in 
     #   offline mode. In offline mode, default values are returned for all flags and no 
     #   remote network requests are made.
@@ -62,6 +66,7 @@ module LaunchDarkly
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
       @feature_store = opts[:feature_store] || Config.default_feature_store
       @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
+      @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > 1 ? opts[:poll_interval] : Config.default_poll_interval
       @proxy = opts[:proxy] || Config.default_proxy
@@ -97,6 +102,16 @@ module LaunchDarkly
       @stream
     end
 
+    #
+    # Whether to use the LaunchDarkly relay proxy in daemon mode. In this mode, we do
+    # not use polling or streaming to get feature flag updates from the server, but instead
+    # read them from a Redis instance that is updated by the proxy.
+    #
+    # @return [Boolean] True if using the LaunchDarkly relay proxy in daemon mode
+    def use_ldd?
+      @use_ldd
+    end
+    
     # TODO docs
     def offline?
       @offline
@@ -226,6 +241,10 @@ module LaunchDarkly
 
     def self.default_stream
       true
+    end
+
+    def self.default_use_ldd
+      false
     end
 
     def self.default_feature_store
