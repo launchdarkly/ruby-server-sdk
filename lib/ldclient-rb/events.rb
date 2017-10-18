@@ -30,7 +30,7 @@ module LaunchDarkly
         req.headers["Authorization"] = @sdk_key
         req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
         req.headers["Content-Type"] = "application/json"
-        req.body = serializer.serialize_events(events)
+        req.body = @serializer.serialize_events(events)
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connect_timeout
       end
