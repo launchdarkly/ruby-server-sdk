@@ -44,9 +44,9 @@ module LaunchDarkly
     # @option opts [Float] :poll_interval (1) The number of seconds between polls for flag updates
     #   if streaming is off.
     # @option opts [Boolean] :stream (true) Whether or not the streaming API should be used to receive flag updates.
-    # @option opts [Boolean] all_attrs_private (false) If true, all user attributes (other than the key)
-    #   will be private, not just the attributes specified in `private_attr_names`.
-    # @option opts [Array] :private_attr_names  Marks a set of attribute names private. Any users sent to
+    # @option opts [Boolean] all_attributes_private (false) If true, all user attributes (other than the key)
+    #   will be private, not just the attributes specified in `private_attribute_names`.
+    # @option opts [Array] :private_attribute_names  Marks a set of attribute names private. Any users sent to
     #  LaunchDarkly with this configuration active will have attributes with these names removed.
     # @option opts [Boolean] :send_events (true) Whether or not to send events back to LaunchDarkly.
     #   This differs from `offline` in that it affects only the sending of client-side events, not
@@ -70,8 +70,8 @@ module LaunchDarkly
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > 1 ? opts[:poll_interval] : Config.default_poll_interval
       @proxy = opts[:proxy] || Config.default_proxy
-      @all_attrs_private = opts[:all_attrs_private] || false
-      @private_attr_names = opts[:private_attr_names] || []
+      @all_attributes_private = opts[:all_attributes_private] || false
+      @private_attribute_names = opts[:private_attribute_names] || []
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
     end
 
@@ -175,9 +175,9 @@ module LaunchDarkly
     #
     attr_reader :proxy
 
-    attr_reader :all_attrs_private
+    attr_reader :all_attributes_private
 
-    attr_reader :private_attr_names
+    attr_reader :private_attribute_names
     
     #
     # Whether to send events back to LaunchDarkly.

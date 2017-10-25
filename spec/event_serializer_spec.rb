@@ -4,8 +4,8 @@ describe LaunchDarkly::EventSerializer do
   subject { LaunchDarkly::EventSerializer }
 
   let(:base_config) { LaunchDarkly::Config.new }
-  let(:config_with_all_attrs_private) { LaunchDarkly::Config.new({ all_attrs_private: true })}
-  let(:config_with_some_attrs_private) { LaunchDarkly::Config.new({ private_attr_names: ['firstName', 'bizzle'] })}
+  let(:config_with_all_attrs_private) { LaunchDarkly::Config.new({ all_attributes_private: true })}
+  let(:config_with_some_attrs_private) { LaunchDarkly::Config.new({ private_attribute_names: ['firstName', 'bizzle'] })}
 
   # users to serialize
 
@@ -15,7 +15,7 @@ describe LaunchDarkly::EventSerializer do
 
   let(:user_specifying_own_private_attr) {
     u = user.clone
-    u[:privateAttrs] = [ 'dizzle', 'unused' ]
+    u[:privateAttributeNames] = [ 'dizzle', 'unused' ]
     u
   }
 
@@ -55,14 +55,14 @@ describe LaunchDarkly::EventSerializer do
       expect(parse_results(j)).to eq [event]
     end
 
-    it "hides all except key if all_attrs_private is true" do
+    it "hides all except key if all_attributes_private is true" do
       es = LaunchDarkly::EventSerializer.new(config_with_all_attrs_private)
       event = make_event(user)
       j = es.serialize_events([event])
       expect(parse_results(j)).to eq [make_event(user_with_all_attrs_hidden)]
     end
 
-    it "hides some attributes if private_attr_names is set" do
+    it "hides some attributes if private_attribute_names is set" do
       es = LaunchDarkly::EventSerializer.new(config_with_some_attrs_private)
       event = make_event(user)
       j = es.serialize_events([event])
