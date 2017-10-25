@@ -17,6 +17,7 @@ module LaunchDarkly
       @requestor = requestor
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
+      @stopped = Concurrent::AtomicBoolean.new(false)
     end
 
     def initialized?
@@ -40,6 +41,13 @@ module LaunchDarkly
         conn.on(DELETE) { |message| process_message(message, DELETE) }
         conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
         conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
+      end
+    end
+
+    def stop
+      if @stopped.make_true
+        @es.close
+        @config.logger.info("[LDClient] Stream connection stopped")
       end
     end
 

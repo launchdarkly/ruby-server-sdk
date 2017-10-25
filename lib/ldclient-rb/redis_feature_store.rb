@@ -67,6 +67,8 @@ module LaunchDarkly
         @cache = Moneta.new(:Null)  # a stub that caches nothing
       end
 
+      @stopped = Concurrent::AtomicBoolean.new(false)
+
       with_connection do |redis|
         @logger.info("RedisFeatureStore: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} \
 and prefix: #{@prefix}")
@@ -188,10 +190,19 @@ and prefix: #{@prefix}")
       end
     end
 
+    def stop
+      if @stopped.make_true
+        @pool.shutdown { |redis| redis.close }
+        @cache.clear
+      end
+    end
+
     # exposed for testing
     def clear_local_cache()
       @cache.clear
     end
+
+    private
 
     def with_connection
       @pool.with { |redis| yield(redis) }
@@ -219,7 +230,5 @@ and prefix: #{@prefix}")
       end
       put_cache(key.to_sym, feature)
     end
-
-    private :with_connection, :get_redis, :put_cache, :put_redis_and_cache
   end
 end

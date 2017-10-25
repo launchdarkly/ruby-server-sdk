@@ -3,6 +3,7 @@ require "json"
 require "spec_helper"
 
 
+
 $my_prefix = 'testprefix'
 $null_log = ::Logger.new($stdout)
 $null_log.level = ::Logger::FATAL

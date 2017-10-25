@@ -1,0 +1,36 @@
+{
+   "key":"test-feature-flag1",
+   "version":5,
+   "on":false,
+   "prerequisites":[
+
+   ],
+   "salt":"718ea30a918a4eba8734b57ab1a93227",
+   "sel":"fe1244e5378c4f99976c9634e33667c6",
+   "targets":[
+      {
+         "values":[
+            "alice"
+         ],
+         "variation":0
+      },
+      {
+         "values":[
+            "bob"
+         ],
+         "variation":1
+      }
+   ],
+   "rules":[
+
+   ],
+   "fallthrough":{
+      "variation":0
+   },
+   "offVariation":1,
+   "variations":[
+      true,
+      false
+   ],
+   "deleted":false
+}

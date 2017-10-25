@@ -55,5 +55,9 @@ module LaunchDarkly
     def initialized?
       @initialized.value
     end
+
+    def stop
+      # nothing to do
+    end
   end
 end

@@ -1,3 +1,4 @@
+require "concurrent/atomics"
 require "thread"
 require "faraday"
 
@@ -9,12 +10,26 @@ module LaunchDarkly
       @config = config
       @serializer = EventSerializer.new(config)
       @client = Faraday.new
+      @stopped = Concurrent::AtomicBoolean.new(false)
       @worker = create_worker if @config.send_events
+    end
+
+    def alive?
+      !@stopped.value
+    end
+
+    def stop
+      if @stopped.make_true
+        # There seems to be no such thing as "close" in Faraday: https://github.com/lostisland/faraday/issues/241
+        if !@worker.nil? && @worker.alive?
+          @worker.raise "shutting down client"
+        end
+      end
     end
 
     def create_worker
       Thread.new do
-        loop do
+        while !@stopped.value do
           begin
             flush
             sleep(@config.flush_interval)
@@ -49,7 +64,7 @@ module LaunchDarkly
       rescue ThreadError
       end
 
-      if !events.empty?
+      if !events.empty? && !@stopped.value
         post_flushed_events(events)
       end
     end

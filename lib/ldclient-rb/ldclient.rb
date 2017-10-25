@@ -201,6 +201,19 @@ module LaunchDarkly
       end
     end
 
+    #
+    # Releases all network connections and other resources held by the client, making it no longer usable
+    #
+    # @return [void]
+    def close
+      @config.logger.info("[LDClient] Closing LaunchDarkly client...")
+      if not @config.offline?
+        @update_processor.stop
+      end
+      @event_processor.stop
+      @store.stop
+    end
+
     def log_exception(caller, exn)
       error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
       error = "[LDClient] Unexpected exception in #{caller}: #{error_traceback}"
