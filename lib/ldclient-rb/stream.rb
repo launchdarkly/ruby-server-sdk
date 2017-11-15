@@ -8,6 +8,7 @@ module LaunchDarkly
   DELETE = :delete
   INDIRECT_PUT = :'indirect/put'
   INDIRECT_PATCH = :'indirect/patch'
+  READ_TIMEOUT_SECONDS = 300  # 5 minutes; the stream should send a ping every 3 minutes
 
   class StreamProcessor
     def initialize(sdk_key, config, requestor)
@@ -34,7 +35,7 @@ module LaunchDarkly
         'Authorization' => @sdk_key,
         'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
       }
-      opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy}
+      opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy, :read_timeout => READ_TIMEOUT_SECONDS}
       @es = Celluloid::EventSource.new(@config.stream_uri + "/flags", opts) do |conn|
         conn.on(PUT) { |message| process_message(message, PUT) }
         conn.on(PATCH) { |message| process_message(message, PATCH) }
