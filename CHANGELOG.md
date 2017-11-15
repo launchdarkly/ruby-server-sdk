@@ -2,28 +2,38 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [2.3.0] - 2017-11-14
+### Added
+- Add `close` method to Ruby client to stop processing events
+- Add support for Redis feature store
+- Add support for LDD mode
+- Allow user to disable outgoing event stream.
+
+### Changed
+- Stop retrying on 401 responses (due to bad sdk keys)  
+    
 ## [2.2.7] - 2017-07-26
-## Changed
+### Changed
 - Update Readme to fix instructions on installing gem using command line
 - Cleaned up formatting on various files (Rubocop)
 ## [2.2.5] - 2017-05-08
-## Changed
+### Changed
 - Added proxy support to streaming and http connections. Respects `HTTP_PROXY` and `http_proxy` environment variables as well as the `:proxy => protocol://user:pass@host` configuration parameter.
 
 ## [2.1.5] - 2017-03-28
-## Changed
+### Changed
 - Updated changelog 
 
 ## [2.1.1] - 2017-03-28
-## Changed
+### Changed
 - Bumped nio4r to 2.0
 
 ## [2.0.6] - 2017-02-10
-## Changed
+### Changed
 - Improved handling of http status codes that may not be integers.
 
 ## [2.0.5] - 2017-01-31
-## Changed
+### Changed
 - Improved error handling when connected to flag update stream.
 
 ## [2.0.3] - 2016-10-21
@@ -31,7 +41,7 @@ All notable changes to the LaunchDarkly Ruby SDK will be documented in this file
 - Indirect stream events are now correctly processed
 
 ## [2.0.2] - 2016-08-08
-## Changed
+### Changed
 - The default logger now logs at `info` level
 
 ## [2.0.0] - 2016-08-08
