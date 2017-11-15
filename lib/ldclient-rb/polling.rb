@@ -51,6 +51,9 @@ module LaunchDarkly
             if delta > 0
               sleep(delta)
             end
+          rescue InvalidSDKKeyError
+            @config.logger.error("[LDClient] Received 401 error, no further polling requests will be made since SDK key is invalid");
+            stop
           rescue StandardError => exn
             @config.logger.error("[LDClient] Exception while polling: #{exn.inspect}")
             # TODO: log_exception(__method__.to_s, exn)

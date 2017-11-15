@@ -51,6 +51,10 @@ module LaunchDarkly
       end
       if res.status < 200 || res.status >= 300
         @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
+        if res.status == 401
+          @config.logger.error("[LDClient] Received 401 error, no further events will be posted since SDK key is invalid")
+          stop
+        end
       end
     end
 
@@ -70,7 +74,7 @@ module LaunchDarkly
     end
 
     def add_event(event)
-      return if @offline || !@config.send_events
+      return if @offline || !@config.send_events || @stopped.value
 
       if @queue.length < @config.capacity
         event[:creationDate] = (Time.now.to_f * 1000).to_i

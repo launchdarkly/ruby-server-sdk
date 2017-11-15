@@ -4,6 +4,9 @@ require "faraday/http_cache"
 
 module LaunchDarkly
 
+  class InvalidSDKKeyError < StandardError
+  end
+
   class Requestor
     def initialize(sdk_key, config)
       @sdk_key = sdk_key
@@ -39,7 +42,7 @@ module LaunchDarkly
 
       if res.status == 401
         @config.logger.error("[LDClient] Invalid SDK key")
-        return nil
+        raise InvalidSDKKeyError
       end
 
       if res.status == 404

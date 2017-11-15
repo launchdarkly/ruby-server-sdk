@@ -42,6 +42,20 @@ module LaunchDarkly
         conn.on(DELETE) { |message| process_message(message, DELETE) }
         conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
         conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
+        conn.on_error { |err|
+          @config.logger.error("[LDClient] Unexpected status code #{err[:status_code]} from streaming connection")
+          if err[:status_code] == 401
+            @config.logger.error("[LDClient] Received 401 error, no further streaming connection will be made since SDK key is invalid")
+            stop
+          end
+        }
+      end
+    end
+
+    def stop
+      if @stopped.make_true
+        @es.close
+        @config.logger.info("[LDClient] Stream connection stopped")
       end
     end
 
