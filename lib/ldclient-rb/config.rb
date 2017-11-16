@@ -34,12 +34,23 @@ module LaunchDarkly
     # @option opts [Object] :cache_store A cache store for the Faraday HTTP caching
     #   library. Defaults to the Rails cache in a Rails environment, or a
     #   thread-safe in-memory store otherwise.
+    # @option opts [Boolean] :use_ldd (false) Whether you are using the LaunchDarkly relay proxy in
+    #   daemon mode. In this configuration, the client will not use a streaming connection to listen
+    #   for updates, but instead will get feature state from a Redis instance. The `stream` and
+    #   `poll_interval` options will be ignored if this option is set to true.
     # @option opts [Boolean] :offline (false) Whether the client should be initialized in 
     #   offline mode. In offline mode, default values are returned for all flags and no 
     #   remote network requests are made.
     # @option opts [Float] :poll_interval (1) The number of seconds between polls for flag updates
     #   if streaming is off.
     # @option opts [Boolean] :stream (true) Whether or not the streaming API should be used to receive flag updates.
+    # @option opts [Boolean] all_attributes_private (false) If true, all user attributes (other than the key)
+    #   will be private, not just the attributes specified in `private_attribute_names`.
+    # @option opts [Array] :private_attribute_names  Marks a set of attribute names private. Any users sent to
+    #  LaunchDarkly with this configuration active will have attributes with these names removed.
+    # @option opts [Boolean] :send_events (true) Whether or not to send events back to LaunchDarkly.
+    #   This differs from `offline` in that it affects only the sending of client-side events, not
+    #   streaming or polling for events from the server.
     #
     # @return [type] [description]
     # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
@@ -55,9 +66,13 @@ module LaunchDarkly
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
       @feature_store = opts[:feature_store] || Config.default_feature_store
       @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
+      @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > 1 ? opts[:poll_interval] : Config.default_poll_interval
       @proxy = opts[:proxy] || Config.default_proxy
+      @all_attributes_private = opts[:all_attributes_private] || false
+      @private_attribute_names = opts[:private_attribute_names] || []
+      @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
     end
 
     #
@@ -87,6 +102,16 @@ module LaunchDarkly
       @stream
     end
 
+    #
+    # Whether to use the LaunchDarkly relay proxy in daemon mode. In this mode, we do
+    # not use polling or streaming to get feature flag updates from the server, but instead
+    # read them from a Redis instance that is updated by the proxy.
+    #
+    # @return [Boolean] True if using the LaunchDarkly relay proxy in daemon mode
+    def use_ldd?
+      @use_ldd
+    end
+    
     # TODO docs
     def offline?
       @offline
@@ -150,6 +175,15 @@ module LaunchDarkly
     #
     attr_reader :proxy
 
+    attr_reader :all_attributes_private
+
+    attr_reader :private_attribute_names
+    
+    #
+    # Whether to send events back to LaunchDarkly.
+    #
+    attr_reader :send_events
+
     #
     # The default LaunchDarkly client configuration. This configuration sets
     # reasonable defaults for most users.
@@ -209,6 +243,10 @@ module LaunchDarkly
       true
     end
 
+    def self.default_use_ldd
+      false
+    end
+
     def self.default_feature_store
       InMemoryFeatureStore.new
     end
@@ -219,6 +257,10 @@ module LaunchDarkly
 
     def self.default_poll_interval
       1
+    end
+
+    def self.default_send_events
+      true
     end
   end
 end

@@ -27,6 +27,14 @@ module LaunchDarkly
       @sdk_key = sdk_key
       @config = config
       @store = config.feature_store
+
+      @event_processor = EventProcessor.new(sdk_key, config)
+
+      if @config.use_ldd?
+        @config.logger.info("[LDClient] Started LaunchDarkly Client in LDD mode")
+        return  # requestor and update processor are not used in this mode
+      end
+
       requestor = Requestor.new(sdk_key, config)
 
       if !@config.offline?
@@ -37,8 +45,6 @@ module LaunchDarkly
         end
         @update_processor.start
       end
-
-      @event_processor = EventProcessor.new(sdk_key, config)
 
       if !@config.offline? && wait_for_sec > 0
         begin
@@ -67,7 +73,7 @@ module LaunchDarkly
     # Returns whether the client has been initialized and is ready to serve feature flag requests
     # @return [Boolean] true if the client has been initialized
     def initialized?
-      @update_processor.initialized?
+      @config.offline? || @config.use_ldd? || @update_processor.initialized?
     end
 
     #
@@ -111,7 +117,7 @@ module LaunchDarkly
         return default
       end
 
-      if !@update_processor.initialized?
+      if !@update_processor.nil? && !@update_processor.initialized?
         @config.logger.error("[LDClient] Client has not finished initializing. Returning default value")
         @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
         return default
@@ -193,6 +199,19 @@ module LaunchDarkly
         @config.logger.warn("[LDClient] Error evaluating all flags: #{exn.inspect}. \nTrace: #{exn.backtrace}")
         return Hash.new
       end
+    end
+
+    #
+    # Releases all network connections and other resources held by the client, making it no longer usable
+    #
+    # @return [void]
+    def close
+      @config.logger.info("[LDClient] Closing LaunchDarkly client...")
+      if not @config.offline?
+        @update_processor.stop
+      end
+      @event_processor.stop
+      @store.stop
     end
 
     def log_exception(caller, exn)

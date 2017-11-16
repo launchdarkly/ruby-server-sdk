@@ -8,6 +8,7 @@ module LaunchDarkly
   DELETE = :delete
   INDIRECT_PUT = :'indirect/put'
   INDIRECT_PATCH = :'indirect/patch'
+  READ_TIMEOUT_SECONDS = 300  # 5 minutes; the stream should send a ping every 3 minutes
 
   class StreamProcessor
     def initialize(sdk_key, config, requestor)
@@ -17,6 +18,7 @@ module LaunchDarkly
       @requestor = requestor
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
+      @stopped = Concurrent::AtomicBoolean.new(false)
     end
 
     def initialized?
@@ -33,13 +35,34 @@ module LaunchDarkly
         'Authorization' => @sdk_key,
         'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
       }
-      opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy}
+      opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy, :read_timeout => READ_TIMEOUT_SECONDS}
       @es = Celluloid::EventSource.new(@config.stream_uri + "/flags", opts) do |conn|
         conn.on(PUT) { |message| process_message(message, PUT) }
         conn.on(PATCH) { |message| process_message(message, PATCH) }
         conn.on(DELETE) { |message| process_message(message, DELETE) }
         conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
         conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
+        conn.on_error { |err|
+          @config.logger.error("[LDClient] Unexpected status code #{err[:status_code]} from streaming connection")
+          if err[:status_code] == 401
+            @config.logger.error("[LDClient] Received 401 error, no further streaming connection will be made since SDK key is invalid")
+            stop
+          end
+        }
+      end
+    end
+
+    def stop
+      if @stopped.make_true
+        @es.close
+        @config.logger.info("[LDClient] Stream connection stopped")
+      end
+    end
+
+    def stop
+      if @stopped.make_true
+        @es.close
+        @config.logger.info("[LDClient] Stream connection stopped")
       end
     end
 
