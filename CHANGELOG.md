@@ -2,6 +2,12 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [2.3.1] - 2017-11-16
+
+### Changed
+- Include source code for changes described in 2.3.0
+
+
 ## [2.3.0] - 2017-11-16
 ## Added
 - Add `close` method to Ruby client to stop processing events
