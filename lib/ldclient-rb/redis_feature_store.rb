@@ -158,8 +158,10 @@ and prefix: #{@prefix}")
     def init(fs)
       @cache.clear
       with_connection do |redis|
-        redis.del(@features_key)
-        fs.each { |k, f| put_redis_and_cache(redis, k, f) }
+        redis.multi do |multi|
+          redis.del(@features_key)
+          fs.each { |k, f| put_redis_and_cache(multi, k, f) }
+        end
       end
       put_cache(INIT_KEY, true)
       @logger.info("RedisFeatureStore: initialized with #{fs.count} feature flags")
