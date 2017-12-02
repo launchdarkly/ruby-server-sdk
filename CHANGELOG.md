@@ -2,6 +2,12 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## 2.3.2 - 2017-12-02
+
+### Fixed
+- Make sure redis store initializations are atomic
+
+
 ## [2.3.1] - 2017-11-16
 
 ### Changed
