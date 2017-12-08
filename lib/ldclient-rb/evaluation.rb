@@ -1,8 +1,43 @@
 require "date"
+require "sem_version"
 
 module LaunchDarkly
   module Evaluation
     BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
+
+    DATE_OPERAND = lambda do |v|
+      if v.is_a? String
+        begin
+          DateTime.rfc3339(v).strftime("%Q").to_i
+        rescue => e
+          nil
+        end
+      elsif v.is_a? Numeric
+        v
+      else
+        nil
+      end
+    end
+
+    SEMVER_OPERAND = lambda do |v|
+      if v.is_a? String
+        begin
+          SemVersion.from_loose_version(v)
+        rescue ArgumentError
+          nil
+        end
+      else
+        nil
+      end
+    end
+
+    def self.comparator(converter, condition)
+      lambda do |a, b|
+        av = converter.call(a)
+        bv = converter.call(b)
+        !av.nil? && !bv.nil? && condition.call(av <=> bv)
+      end
+    end
 
     OPERATORS = {
       in:
@@ -42,33 +77,15 @@ module LaunchDarkly
           (a.is_a? Numeric) && (a >= b)
         end,
       before:
-        lambda do |a, b|
-          begin
-            if a.is_a? String
-              a = DateTime.rfc3339(a).strftime('%Q').to_i 
-            end
-            if b.is_a? String
-              b = DateTime.rfc3339(b).strftime('%Q').to_i
-            end
-            (a.is_a? Numeric) ? a < b : false
-          rescue => e
-            false
-          end
-        end,
+        comparator(DATE_OPERAND, -> n { n < 0 }),
       after:
-        lambda do |a, b|
-          begin
-            if a.is_a? String
-              a = DateTime.rfc3339(a).strftime("%Q").to_i
-            end
-            if b.is_a? String
-              b = DateTime.rfc3339(b).strftime("%Q").to_i
-            end
-            (a.is_a? Numeric) ? a > b : false
-          rescue => e
-            false
-          end
-        end
+        comparator(DATE_OPERAND, -> n { n > 0 }),
+      semVerEqual:
+        comparator(SEMVER_OPERAND, -> n { n == 0 }),
+      semVerLessThan:
+        comparator(SEMVER_OPERAND, -> n { n < 0 }),
+      semVerGreaterThan:
+        comparator(SEMVER_OPERAND, -> n { n > 0 })
     }
 
     class EvaluationError < StandardError
@@ -256,6 +273,10 @@ module LaunchDarkly
         return true if op.call(value, v)
       end
       return false
+    end
+
+    def operator(op)
+      OPERATORS[op.to_sym]
     end
   end
 end
