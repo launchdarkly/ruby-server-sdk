@@ -110,6 +110,9 @@ describe LaunchDarkly::Evaluation do
 
       # semver
       [ :semVerEqual, v2_0_1, v2_0_1, true ],
+      [ :semVerEqual, v2_0, v2_0_0, true ],
+          # Note on the above: the sem_version library returns exactly the same object for "2.0" and "2.0.0",
+          # which happens to be the behavior we want.
       [ :semVerLessThan, v2_0_0, v2_0_1, true ],
       [ :semVerLessThan, v2_0, v2_0_1, true ],
       [ :semVerLessThan, v2_0_1, v2_0_0, false ],
