@@ -274,9 +274,5 @@ module LaunchDarkly
       end
       return false
     end
-
-    def operator(op)
-      OPERATORS[op.to_sym]
-    end
   end
 end

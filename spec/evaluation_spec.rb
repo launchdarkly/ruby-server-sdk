@@ -131,7 +131,9 @@ describe LaunchDarkly::Evaluation do
       value2 = params[2]
       shouldBe = params[3]
       it "should return #{shouldBe} for #{value1} #{op} #{value2}" do
-        expect(operator(op).call(value1, value2)).to be shouldBe
+        user = { key: 'x', custom: { foo: value1 } }
+        clause = { attribute: 'foo', op: op, values: [value2] }
+        expect(clause_match_user(clause, user)).to be shouldBe
       end
     end
   end
