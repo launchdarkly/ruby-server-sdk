@@ -26,103 +26,91 @@ describe LaunchDarkly::Evaluation do
   end
 
   describe "operators" do
-    n99 = 99
-    n99_0001 = 99.0001
-    sX = "x"
-    sY = "y"
-    sZ = "z"
-    sXyz = "xyz"
-    s99 = "99"
-    sHelloWorld = "hello world"
     dateStr1 = "2017-12-06T00:00:00.000-07:00"
     dateStr2 = "2017-12-06T00:01:01.000-07:00"
     dateMs1 = 10000000
     dateMs2 = 10000001
     invalidDate = "hey what's this?"
-    v2_0 = "2.0"
-    v2_0_0 = "2.0.0"
-    v2_0_1 = "2.0.1"
-    vInvalid = "xbad%ver"
 
     operatorTests = [
       # numeric comparisons
-      [ :in, n99, n99, true ],
-      [ :in, n99_0001, n99_0001, true ],
-      [ :in, n99, n99_0001, false ],
-      [ :in, n99_0001, n99, false ],
-      [ :lessThan, n99, n99_0001, true ],
-      [ :lessThan, n99_0001, n99, false ],
-      [ :lessThan, n99, n99, false ],
-      [ :lessThanOrEqual, n99, n99_0001, true ],
-      [ :lessThanOrEqual, n99_0001, n99, false ],
-      [ :lessThanOrEqual, n99, n99, true ],
-      [ :greaterThan, n99_0001, n99, true ],
-      [ :greaterThan, n99, n99_0001, false ],
-      [ :greaterThan, n99, n99, false ],
-      [ :greaterThanOrEqual, n99_0001, n99, true ],
-      [ :greaterThanOrEqual, n99, n99_0001, false ],
-      [ :greaterThanOrEqual, n99, n99, true ],
+      [ :in,                 99,      99,      true ],
+      [ :in,                 99.0001, 99.0001, true ],
+      [ :in,                 99,      99.0001, false ],
+      [ :in,                 99.0001, 99,      false ],
+      [ :lessThan,           99,      99.0001, true ],
+      [ :lessThan,           99.0001, 99,      false ],
+      [ :lessThan,           99,      99,      false ],
+      [ :lessThanOrEqual,    99,      99.0001, true ],
+      [ :lessThanOrEqual,    99.0001, 99,      false ],
+      [ :lessThanOrEqual,    99,      99,      true ],
+      [ :greaterThan,        99.0001, 99,      true ],
+      [ :greaterThan,        99,      99.0001, false ],
+      [ :greaterThan,        99,      99,      false ],
+      [ :greaterThanOrEqual, 99.0001, 99,      true ],
+      [ :greaterThanOrEqual, 99,      99.0001, false ],
+      [ :greaterThanOrEqual, 99,      99,      true ],
 
       # string comparisons
-      [ :in, sX, sX, true ],
-      [ :in, sX, sXyz, false ],
-      [ :startsWith, sXyz, sX, true ],
-      [ :startsWith, sX, sXyz, false ],
-      [ :endsWith, sXyz, sZ, true ],
-      [ :endsWith, sZ, sXyz, false ],
-      [ :contains, sXyz, sY, true ],
-      [ :contains, sY, sXyz, false ],
+      [ :in,         "x",   "x",   true ],
+      [ :in,         "x",   "xyz", false ],
+      [ :startsWith, "xyz", "x",   true ],
+      [ :startsWith, "x",   "xyz", false ],
+      [ :endsWith,   "xyz", "z",   true ],
+      [ :endsWith,   "z",   "xyz", false ],
+      [ :contains,   "xyz", "y",   true ],
+      [ :contains,   "y",   "xyz", false ],
 
       # mixed strings and numbers
-      [ :in, s99, n99, false ],
-      [ :in, n99, s99, false ],
-      #[ :contains, s99, n99, false ],    # currently throws exception - would return false in Java SDK
-      #[ :startsWith, s99, n99, false ],  # currently throws exception - would return false in Java SDK
-      #[ :endsWith, s99, n99, false ]     # currently throws exception - would return false in Java SDK
-      [ :lessThanOrEqual, s99, n99, false ],
-      #[ :lessThanOrEqual, n99, s99, false ],    # currently throws exception - would return false in Java SDK
-      [ :greaterThanOrEqual, s99, n99, false ],
-      #[ :greaterThanOrEqual, n99, s99, false ], # currently throws exception - would return false in Java SDK
+      [ :in,                 "99", 99, false ],
+      [ :in,                  99, "99", false ],
+      #[ :contains,           "99", 99, false ],    # currently throws exception - would return false in Java SDK
+      #[ :startsWith,         "99", 99, false ],  # currently throws exception - would return false in Java SDK
+      #[ :endsWith,           "99", 99, false ]     # currently throws exception - would return false in Java SDK
+      [ :lessThanOrEqual,    "99", 99, false ],
+      #[ :lessThanOrEqual,    99, "99", false ],    # currently throws exception - would return false in Java SDK
+      [ :greaterThanOrEqual, "99", 99, false ],
+      #[ :greaterThanOrEqual, 99, "99", false ], # currently throws exception - would return false in Java SDK
       
       # regex
-      [ :matches, sHelloWorld, "hello.*rld", true ],
-      [ :matches, sHelloWorld, "hello.*orl", true ],
-      [ :matches, sHelloWorld, "l+", true ],
-      [ :matches, sHelloWorld, "(world|planet)", true ],
-      [ :matches, sHelloWorld, "aloha", false ],
-      #[ :matches, sHelloWorld, new JsonPrimitive("***not a regex"), false ]   # currently throws exception - same as Java SDK
+      [ :matches, "hello world", "hello.*rld",     true ],
+      [ :matches, "hello world", "hello.*orl",     true ],
+      [ :matches, "hello world", "l+",             true ],
+      [ :matches, "hello world", "(world|planet)", true ],
+      [ :matches, "hello world", "aloha",          false ],
+      #[ :matches, "hello world", "***not a regex", false ]   # currently throws exception - same as Java SDK
 
       # dates
-      [ :before, dateStr1, dateStr2, true ],
-      [ :before, dateMs1, dateMs2, true ],
-      [ :before, dateStr2, dateStr1, false ],
-      [ :before, dateMs2, dateMs1, false ],
-      [ :before, dateStr1, dateStr1, false ],
-      [ :before, dateMs1, dateMs1, false ],
+      [ :before, dateStr1, dateStr2,    true ],
+      [ :before, dateMs1,  dateMs2,     true ],
+      [ :before, dateStr2, dateStr1,    false ],
+      [ :before, dateMs2,  dateMs1,     false ],
+      [ :before, dateStr1, dateStr1,    false ],
+      [ :before, dateMs1,  dateMs1,     false ],
       [ :before, dateStr1, invalidDate, false ],
-      [ :after, dateStr1, dateStr2, false ],
-      [ :after, dateMs1, dateMs2, false ],
-      [ :after, dateStr2, dateStr1, true ],
-      [ :after, dateMs2, dateMs1, true ],
-      [ :after, dateStr1, dateStr1, false ],
-      [ :after, dateMs1, dateMs1, false ],
-      [ :after, dateStr1, invalidDate, false ],
+      [ :after,  dateStr1, dateStr2,    false ],
+      [ :after,  dateMs1,  dateMs2,     false ],
+      [ :after,  dateStr2, dateStr1,    true ],
+      [ :after,  dateMs2,  dateMs1,     true ],
+      [ :after,  dateStr1, dateStr1,    false ],
+      [ :after,  dateMs1,  dateMs1,     false ],
+      [ :after,  dateStr1, invalidDate, false ],
 
       # semver
-      [ :semVerEqual, v2_0_1, v2_0_1, true ],
-      [ :semVerEqual, v2_0, v2_0_0, true ],
+      [ :semVerEqual,       "2.0.1", "2.0.1", true ],
+      [ :semVerEqual,       "2.0",   "2.0.0", true ],
           # Note on the above: the sem_version library returns exactly the same object for "2.0" and "2.0.0",
           # which happens to be the behavior we want.
-      [ :semVerLessThan, v2_0_0, v2_0_1, true ],
-      [ :semVerLessThan, v2_0, v2_0_1, true ],
-      [ :semVerLessThan, v2_0_1, v2_0_0, false ],
-      [ :semVerLessThan, v2_0_1, v2_0, false ],
-      [ :semVerGreaterThan, v2_0_1, v2_0_0, true ],
-      [ :semVerGreaterThan, v2_0_1, v2_0, true ],
-      [ :semVerGreaterThan, v2_0_0, v2_0_1, false ],
-      [ :semVerGreaterThan, v2_0, v2_0_1, false ],
-      [ :semVerLessThan, v2_0_1, vInvalid, false ],
-      [ :semVerGreaterThan, v2_0_1, vInvalid, false ]
+      [ :semVerLessThan,    "2.0.0", "2.0.1", true ],
+      [ :semVerLessThan,    "2.0",   "2.0.1", true ],
+      [ :semVerLessThan,    "2.0.1", "2.0.0", false ],
+      [ :semVerLessThan,    "2.0.1", "2.0",   false ],
+      [ :semVerGreaterThan, "2.0.1", "2.0.0", true ],
+      [ :semVerGreaterThan, "2.0.1", "2.0",   true ],
+      [ :semVerGreaterThan, "2.0.0", "2.0.1", false ],
+      [ :semVerGreaterThan, "2.0",   "2.0.1", false ],
+      [ :semVerLessThan,    "2.0.1", "xbad%ver", false ],
+      [ :semVerGreaterThan, "2.0.1", "xbad%ver", false ]
     ]
 
     operatorTests.each do |params|
