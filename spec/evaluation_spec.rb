@@ -76,13 +76,13 @@ describe LaunchDarkly::Evaluation do
       # mixed strings and numbers
       [ :in, s99, n99, false ],
       [ :in, n99, s99, false ],
-      #[ :contains, s99, n99, false ],    # currently throws exception
-      #[ :startsWith, s99, n99, false ],  # currently throws exception
-      #[ :endsWith, s99, n99, false ]     # currently throws exception
+      #[ :contains, s99, n99, false ],    # currently throws exception - would return false in Java SDK
+      #[ :startsWith, s99, n99, false ],  # currently throws exception - would return false in Java SDK
+      #[ :endsWith, s99, n99, false ]     # currently throws exception - would return false in Java SDK
       [ :lessThanOrEqual, s99, n99, false ],
-      #[ :lessThanOrEqual, n99, s99, false ],    # currently throws exception
+      #[ :lessThanOrEqual, n99, s99, false ],    # currently throws exception - would return false in Java SDK
       [ :greaterThanOrEqual, s99, n99, false ],
-      #[ :greaterThanOrEqual, n99, s99, false ], # currently throws exception
+      #[ :greaterThanOrEqual, n99, s99, false ], # currently throws exception - would return false in Java SDK
       
       # regex
       [ :matches, sHelloWorld, "hello.*rld", true ],
@@ -90,7 +90,7 @@ describe LaunchDarkly::Evaluation do
       [ :matches, sHelloWorld, "l+", true ],
       [ :matches, sHelloWorld, "(world|planet)", true ],
       [ :matches, sHelloWorld, "aloha", false ],
-      #[ :matches, sHelloWorld, new JsonPrimitive("***not a regex"), false ]   # currently throws exception
+      #[ :matches, sHelloWorld, new JsonPrimitive("***not a regex"), false ]   # currently throws exception - same as Java SDK
 
       # dates
       [ :before, dateStr1, dateStr2, true ],
