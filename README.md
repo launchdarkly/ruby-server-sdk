@@ -77,6 +77,23 @@ Rails.application.config.ld_client.variation('your.flag.key', launchdarkly_setti
 
 Note that this gem will automatically switch to using the Rails logger it is detected.
 
+
+HTTPS proxy
+------------
+The Ruby SDK uses Faraday to handle all of its network traffic. Faraday provides a built-in HTTPS proxy. If the HTTPS_PROXY environment variable is present then the SDK will proxy all network requests through the URL provided.
+
+How to set the HTTPS_PROXY environment variable on Mac/Linux systems:
+```
+export HTTPS_PROXY=https://web-proxy.domain.com:8080
+```
+
+
+How to set the HTTPS_PROXY environment variable on Windows systems:
+```
+set HTTPS_PROXY=https://web-proxy.domain.com:8080
+```
+
+
 Your first feature flag
 -----------------------
 
