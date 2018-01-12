@@ -13,8 +13,6 @@ module LaunchDarkly
   # property of your client configuration.
   #
   class RedisFeatureStore
-    INIT_KEY = :"$initialized"
-
     begin
       require "redis"
       require "connection_pool"
@@ -68,6 +66,9 @@ module LaunchDarkly
       end
 
       @stopped = Concurrent::AtomicBoolean.new(false)
+      @inited = MemoizedValue.new {
+        query_inited
+      }
 
       with_connection do |redis|
         @logger.info("RedisFeatureStore: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} \
@@ -163,7 +164,7 @@ and prefix: #{@prefix}")
           fs.each { |k, f| put_redis_and_cache(multi, k, f) }
         end
       end
-      put_cache(INIT_KEY, true)
+      @inited.set(true)
       @logger.info("RedisFeatureStore: initialized with #{fs.count} feature flags")
     end
 
@@ -180,16 +181,7 @@ and prefix: #{@prefix}")
     end
 
     def initialized?
-      if @cache[INIT_KEY].nil?
-        if with_connection { |redis| redis.exists(@features_key) }
-          put_cache(INIT_KEY, true)
-          true
-        else
-          false
-        end
-      else
-        put_cache(INIT_KEY, true)  # reset TTL
-      end
+      @inited.get
     end
 
     def stop
@@ -231,6 +223,10 @@ and prefix: #{@prefix}")
         @logger.error("RedisFeatureStore: could not store #{key} in Redis, error: #{e}")
       end
       put_cache(key.to_sym, feature)
+    end
+
+    def query_inited
+      with_connection { |redis| redis.exists(@features_key) }
     end
   end
 end

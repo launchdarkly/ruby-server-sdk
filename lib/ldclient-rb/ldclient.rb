@@ -49,7 +49,7 @@ module LaunchDarkly
       if !@config.offline? && wait_for_sec > 0
         begin
           WaitUtil.wait_for_condition("LaunchDarkly client initialization", timeout_sec: wait_for_sec, delay_sec: 0.1) do
-            @update_processor.initialized?
+            initialized?
           end
         rescue WaitUtil::TimeoutError
           @config.logger.error("[LDClient] Timeout encountered waiting for LaunchDarkly client initialization")
@@ -117,10 +117,14 @@ module LaunchDarkly
         return default
       end
 
-      if !@update_processor.nil? && !@update_processor.initialized?
-        @config.logger.error("[LDClient] Client has not finished initializing. Returning default value")
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
-        return default
+      if !initialized?
+        if @store.initialized?
+          @config.logger.warn("[LDClient] Client has not finished initializing; using last known values from feature store")
+        else
+          @config.logger.error("[LDClient] Client has not finished initializing; feature store unavailable, returning default value")
+          @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
+          return default
+        end
       end
 
       sanitize_user(user)
