@@ -2,6 +2,12 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [2.4.0] - 2018-01-12
+## Changed
+- Will use feature store if already initialized even if connection to service could not be established.  This is useful when flags have been initialized in redis.
+- Increase default and  minimum polling interval to 30s
+- Strip out unknown top-level attributes
+
 ## [2.3.2] - 2017-12-02
 
 ### Fixed
