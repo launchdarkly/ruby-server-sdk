@@ -1,9 +1,11 @@
 require "date"
-require "sem_version"
+require "semantic"
 
 module LaunchDarkly
   module Evaluation
     BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
+
+    NUMERIC_VERSION_COMPONENTS_REGEX = Regexp.new("^[0-9.]*")
 
     DATE_OPERAND = lambda do |v|
       if v.is_a? String
@@ -21,14 +23,33 @@ module LaunchDarkly
 
     SEMVER_OPERAND = lambda do |v|
       if v.is_a? String
-        begin
-          SemVersion.from_loose_version(v)
-        rescue ArgumentError
-          nil
+        ret = tryParseSemver(v)
+        if ret.nil?
+          v = addZeroVersionComponent(v)
+          ret = tryParseSemver(v)
+          if ret.nil?
+            v = addZeroVersionComponent(v)
+            ret = tryParseSemver(v)
+          end
         end
+        ret
       else
         nil
       end
+    end
+
+    def self.tryParseSemver(v)
+      begin
+        Semantic::Version.new(v)
+      rescue ArgumentError
+        nil
+      end
+    end
+    
+    def self.addZeroVersionComponent(v)
+      NUMERIC_VERSION_COMPONENTS_REGEX.match(v) { |m|
+        m[0] + ".0" + v[m[0].length..-1]
+      }
     end
 
     def self.comparator(converter, condition)
