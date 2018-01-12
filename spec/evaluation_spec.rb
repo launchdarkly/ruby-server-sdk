@@ -100,14 +100,17 @@ describe LaunchDarkly::Evaluation do
       [ :semVerEqual,       "2.0.1", "2.0.1", true ],
       [ :semVerEqual,       "2.0",   "2.0.0", true ],
       [ :semVerEqual,       "2-rc1", "2.0.0-rc1", true ],
+      [ :semVerEqual,       "2+build2", "2.0.0+build2", true ],
       [ :semVerLessThan,    "2.0.0", "2.0.1", true ],
       [ :semVerLessThan,    "2.0",   "2.0.1", true ],
       [ :semVerLessThan,    "2.0.1", "2.0.0", false ],
       [ :semVerLessThan,    "2.0.1", "2.0",   false ],
+      [ :semVerLessThan,    "2.0.0-rc", "2.0.0-rc.beta", true ],
       [ :semVerGreaterThan, "2.0.1", "2.0.0", true ],
       [ :semVerGreaterThan, "2.0.1", "2.0",   true ],
       [ :semVerGreaterThan, "2.0.0", "2.0.1", false ],
       [ :semVerGreaterThan, "2.0",   "2.0.1", false ],
+      [ :semVerGreaterThan, "2.0.0-rc.1", "2.0.0-rc.0", true ],
       [ :semVerLessThan,    "2.0.1", "xbad%ver", false ],
       [ :semVerGreaterThan, "2.0.1", "xbad%ver", false ]
     ]
