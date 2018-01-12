@@ -41,6 +41,8 @@ module LaunchDarkly
         if @config.stream?
           @update_processor = StreamProcessor.new(sdk_key, config, requestor)
         else
+          @config.logger.info("Disabling streaming API")
+          @config.logger.warn("You should only disable the streaming API if instructed to do so by LaunchDarkly support")
           @update_processor = PollingProcessor.new(config, requestor)
         end
         @update_processor.start

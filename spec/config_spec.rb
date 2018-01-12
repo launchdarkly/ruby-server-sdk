@@ -52,4 +52,12 @@ describe LaunchDarkly::Config do
       expect(subject.default_logger).to be_an_instance_of Logger
     end
   end
+  describe ".poll_interval" do
+    it "can be set to greater than the default" do
+      expect(subject.new(poll_interval: 31).poll_interval).to eq 31
+    end
+    it "cannot be set to less than the default" do
+      expect(subject.new(poll_interval: 29).poll_interval).to eq 30
+    end
+  end
 end
