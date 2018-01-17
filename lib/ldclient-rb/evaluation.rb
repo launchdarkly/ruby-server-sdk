@@ -196,6 +196,7 @@ module LaunchDarkly
             return maybe_negate(clause, true) if segment_match_user(segment, user)
           end
         end
+        return maybe_negate(clause, false)
       end
       clause_match_user_no_segments(clause, user)
     end
@@ -243,7 +244,7 @@ module LaunchDarkly
 
       return true if segment[:included].include?(user[:key])
       return false if segment[:excluded].include?(user[:key])
-      
+
       segment[:rules].each do |r|
         return true if segment_rule_match_user(r, user, segment[:key], segment[:salt])
       end
@@ -257,10 +258,10 @@ module LaunchDarkly
       end
 
       # If the weight is absent, this rule matches
-      return true if !rule.weight
+      return true if !rule[:weight]
       
       # All of the clauses are met. See if the user buckets in
-      bucket = bucket_user(user, segment_key, rule[:bucketBy].nil ? "key" : rule[:bucketBy], salt)
+      bucket = bucket_user(user, segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt)
       weight = rule[:weight].to_f / 100000.0
       return bucket < weight
     end
