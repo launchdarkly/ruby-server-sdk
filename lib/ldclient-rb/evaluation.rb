@@ -68,6 +68,10 @@ module LaunchDarkly
           rescue => e
             false
           end
+        end,
+      segmentMatch:
+        lambda do |a, b|
+          false   # we should never reach this - instead we special-case this operator in clause_match_user
         end
     }
 
@@ -78,7 +82,7 @@ module LaunchDarkly
     # generated during prerequisite evaluation. Raises EvaluationError if the flag is not well-formed
     # Will return nil, but not raise an exception, indicating that the rules (including fallthrough) did not match
     # In that case, the caller should return the default value.
-    def evaluate(flag, user, store)
+    def evaluate(flag, user, feature_store, segment_store)
       if flag.nil?
         raise EvaluationError, "Flag does not exist"
       end
@@ -90,7 +94,7 @@ module LaunchDarkly
       events = []
 
       if flag[:on]
-        res = eval_internal(flag, user, store, events)
+        res = eval_internal(flag, user, feature_store, segment_store, events)
 
         return { value: res, events: events } if !res.nil?
       end
@@ -103,18 +107,18 @@ module LaunchDarkly
       { value: nil, events: events }
     end
 
-    def eval_internal(flag, user, store, events)
+    def eval_internal(flag, user, feature_store, segment_store, events)
       failed_prereq = false
       # Evaluate prerequisites, if any
       if !flag[:prerequisites].nil?
         flag[:prerequisites].each do |prerequisite|
-          prereq_flag = store.get(prerequisite[:key])
+          prereq_flag = feature_store.get(prerequisite[:key])
 
           if prereq_flag.nil? || !prereq_flag[:on]
             failed_prereq = true
           else
             begin
-              prereq_res = eval_internal(prereq_flag, user, store, events)
+              prereq_res = eval_internal(prereq_flag, user, feature_store, segment_store, events)
               variation = get_variation(prereq_flag, prerequisite[:variation])
               events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res, version: prereq_flag[:version], prereqOf: flag[:key])
               if prereq_res.nil? || prereq_res != variation
@@ -134,10 +138,10 @@ module LaunchDarkly
       # The prerequisites were satisfied.
       # Now walk through the evaluation steps and get the correct
       # variation index
-      eval_rules(flag, user)
+      eval_rules(flag, user, segment_store)
     end
 
-    def eval_rules(flag, user)
+    def eval_rules(flag, user, segment_store)
       # Check user target matches
       if !flag[:targets].nil?
         flag[:targets].each do |target|
@@ -152,7 +156,7 @@ module LaunchDarkly
       # Check custom rules
       if !flag[:rules].nil?
         flag[:rules].each do |rule|
-          return variation_for_user(rule, user, flag) if rule_match_user(rule, user)
+          return variation_for_user(rule, user, flag) if rule_match_user(rule, user, segment_store)
         end
       end
 
@@ -172,17 +176,31 @@ module LaunchDarkly
       flag[:variations][index]
     end
 
-    def rule_match_user(rule, user)
+    def rule_match_user(rule, user, segment_store)
       return false if !rule[:clauses]
 
       rule[:clauses].each do |clause|
-        return false if !clause_match_user(clause, user)
+        return false if !clause_match_user(clause, user, segment_store)
       end
 
       return true
     end
 
-    def clause_match_user(clause, user)
+    def clause_match_user(clause, user, segment_store)
+      # In the case of a segment match operator, we check if the user is in any of the segments,
+      # and possibly negate
+      if (clause[:op] == :segmentMatch)
+        clause[:values].each do |v|
+          segment = segment_store.get(v)
+          if !segment.nil?
+            return maybe_negate(clause, true) if segment_match_user(segment, user)
+          end
+        end
+      end
+      clause_match_user_no_segments(clause, user)
+    end
+
+    def clause_match_user_no_segments(clause, user)
       val = user_value(user, clause[:attribute])
       return false if val.nil?
 
@@ -218,6 +236,33 @@ module LaunchDarkly
       else # the rule isn't well-formed
         raise EvaluationError, "Rule does not define a variation or rollout"
       end
+    end
+
+    def segment_match_user(segment, user)
+      return false unless user[:key]
+
+      return true if segment[:included].include?(user[:key])
+      return false if segment[:excluded].include?(user[:key])
+      
+      segment[:rules].each do |r|
+        return true if segment_rule_match_user(r, user, segment[:key], segment[:salt])
+      end
+
+      return false
+    end
+
+    def segment_rule_match_user(rule, user, segment_key, salt)
+      rule[:clauses].each do |c|
+        return false unless clause_match_user_no_segments(c, user)
+      end
+
+      # If the weight is absent, this rule matches
+      return true if !rule.weight
+      
+      # All of the clauses are met. See if the user buckets in
+      bucket = bucket_user(user, segment_key, rule[:bucketBy].nil ? "key" : rule[:bucketBy], salt)
+      weight = rule[:weight].to_f / 100000.0
+      return bucket < weight
     end
 
     def bucket_user(user, key, bucket_by, salt)

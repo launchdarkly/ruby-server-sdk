@@ -66,6 +66,7 @@ module LaunchDarkly
       @connect_timeout = opts[:connect_timeout] || Config.default_connect_timeout
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
       @feature_store = opts[:feature_store] || Config.default_feature_store
+      @segment_store = opts[:segment_store] || Config.default_segment_store
       @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
       @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
@@ -171,7 +172,11 @@ module LaunchDarkly
     #
     attr_reader :feature_store
 
-    
+    #
+    # A store for segment configuration rules.
+    #
+    attr_reader :segment_store
+
     # The proxy configuration string
     #
     attr_reader :proxy
@@ -250,6 +255,10 @@ module LaunchDarkly
 
     def self.default_feature_store
       InMemoryFeatureStore.new
+    end
+
+    def self.default_segment_store
+      InMemorySegmentStore.new
     end
 
     def self.default_offline

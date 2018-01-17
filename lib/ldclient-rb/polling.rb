@@ -31,9 +31,10 @@ module LaunchDarkly
     end
 
     def poll
-      flags = @requestor.request_all_flags
-      if flags
-        @config.feature_store.init(flags)
+      allData = @requestor.request_all_data
+      if allData
+        @config.feature_store.init(allData.flags)
+        @config.segment_store.init(allData.segments)
         if @initialized.make_true
           @config.logger.info("[LDClient] Polling connection initialized")
         end

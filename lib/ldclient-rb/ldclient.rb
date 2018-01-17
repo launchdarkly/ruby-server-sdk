@@ -27,6 +27,7 @@ module LaunchDarkly
       @sdk_key = sdk_key
       @config = config
       @store = config.feature_store
+      @segment_store = config.segment_store
 
       @event_processor = EventProcessor.new(sdk_key, config)
 
@@ -139,7 +140,7 @@ module LaunchDarkly
       end
 
       begin
-        res = evaluate(feature, user, @store)
+        res = evaluate(feature, user, @store, @segment_store)
         if !res[:events].nil?
           res[:events].each do |event|
             @event_processor.add_event(event)
@@ -200,7 +201,7 @@ module LaunchDarkly
         features = @store.all
 
         # TODO rescue if necessary
-        Hash[features.map{ |k, f| [k, evaluate(f, user, @store)[:value]] }]
+        Hash[features.map{ |k, f| [k, evaluate(f, user, @store, @segment_store)[:value]] }]
       rescue => exn
         @config.logger.warn("[LDClient] Error evaluating all flags: #{exn.inspect}. \nTrace: #{exn.backtrace}")
         return Hash.new

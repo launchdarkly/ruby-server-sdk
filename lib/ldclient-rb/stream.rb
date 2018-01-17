@@ -14,7 +14,8 @@ module LaunchDarkly
     def initialize(sdk_key, config, requestor)
       @sdk_key = sdk_key
       @config = config
-      @store = config.feature_store
+      @feature_store = config.feature_store
+      @segment_store = config.segment_store
       @requestor = requestor
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
@@ -66,30 +67,69 @@ module LaunchDarkly
       end
     end
 
+    private
+
     def process_message(message, method)
       @config.logger.debug("[LDClient] Stream received #{method} message: #{message.data}")
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
-        @store.init(message)
+        @feature_store.init(message[:flags])
+        @segment_store.init(message[:segments])
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized")
       elsif method == PATCH
         message = JSON.parse(message.data, symbolize_names: true)
-        @store.upsert(message[:path][1..-1], message[:data])
+        key = feature_key_for_path(message[:path])
+        if key
+          @feature_store.upsert(key, message[:data])
+        else
+          key = segment_key_for_path(message[:path])
+          if key
+            @segment_store.upsert(key, message[:data])
+          end
+        end
       elsif method == DELETE
         message = JSON.parse(message.data, symbolize_names: true)
-        @store.delete(message[:path][1..-1], message[:version])
+        key = feature_key_for_path(message[:path])
+        if key
+          @feature_store.delete(key, message[:version])
+        else
+          key = segment_key_for_path(message[:path])
+          if key
+            @segment_store.delete(key, message[:version])
+          end
+        end
       elsif method == INDIRECT_PUT
-        @store.init(@requestor.request_all_flags)
+        allData = @requestor.request_all_data
+        @feature_store.init(allData[:flags])
+        @segment_store.init(allData[:segments])
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized (via indirect message)")
       elsif method == INDIRECT_PATCH
-        @store.upsert(message.data, @requestor.request_flag(message.data))
+        key = feature_key_for_path(message[:path])
+        if key
+          @feature_store.upsert(key, @requestor.request_flag(key))
+        else
+          key = segment_key_for_path(message[:path])
+          if key
+            @segment_store.upsert(key, @requestor.request_segment(key))
+          end
+        end
       else
         @config.logger.warn("[LDClient] Unknown message received: #{method}")
       end
     end
 
-    private :process_message
+    def feature_key_for_path(path)
+      key_for_path(path, '/flags/')
+    end
+
+    def segment_key_for_path(path)
+      key_for_path(path, '/segments/')
+    end
+
+    def key_for_path(path, prefix)
+      path.start_with?(prefix) ? path[prefix.length..-1] : nil
+    end
   end
 end
