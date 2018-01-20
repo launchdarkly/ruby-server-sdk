@@ -106,6 +106,7 @@ module LaunchDarkly
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized (via indirect message)")
       elsif method == INDIRECT_PATCH
+        message = JSON.parse(message.data, symbolize_names: true)
         key = feature_key_for_path(message[:path])
         if key
           @feature_store.upsert(key, @requestor.request_flag(key))
