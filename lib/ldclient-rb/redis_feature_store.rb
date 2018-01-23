@@ -160,7 +160,7 @@ and prefix: #{@prefix}")
       @cache.clear
       with_connection do |redis|
         redis.multi do |multi|
-          redis.del(@features_key)
+          multi.del(@features_key)
           fs.each { |k, f| put_redis_and_cache(multi, k, f) }
         end
       end
