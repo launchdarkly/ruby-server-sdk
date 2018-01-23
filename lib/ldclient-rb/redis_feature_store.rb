@@ -108,10 +108,10 @@ and prefix: #{@prefix}")
         end
       end
       if f.nil?
-        @logger.warn("RedisFeatureStore: feature #{key} not found")
+        @logger.debug("RedisFeatureStore: feature #{key} not found")
         nil
       elsif f[:deleted]
-        @logger.warn("RedisFeatureStore: feature #{key} was deleted, returning nil")
+        @logger.debug("RedisFeatureStore: feature #{key} was deleted, returning nil")
         nil
       else
         f
