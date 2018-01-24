@@ -34,14 +34,6 @@ module LaunchDarkly
       nil
     end
 
-    def self.tryParseSemver(v)
-      begin
-        Semantic::Version.new(v)
-      rescue ArgumentError
-        nil
-      end
-    end
-    
     def self.addZeroVersionComponent(v)
       NUMERIC_VERSION_COMPONENTS_REGEX.match(v) { |m|
         m[0] + ".0" + v[m[0].length..-1]
