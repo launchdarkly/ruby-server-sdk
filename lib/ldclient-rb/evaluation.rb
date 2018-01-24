@@ -23,19 +23,15 @@ module LaunchDarkly
 
     SEMVER_OPERAND = lambda do |v|
       if v.is_a? String
-        ret = tryParseSemver(v)
-        if ret.nil?
-          v = addZeroVersionComponent(v)
-          ret = tryParseSemver(v)
-          if ret.nil?
+        for _ in 0..2 do
+          begin
+            return Semantic::Version.new(v)
+          rescue ArgumentError
             v = addZeroVersionComponent(v)
-            ret = tryParseSemver(v)
           end
         end
-        ret
-      else
-        nil
       end
+      nil
     end
 
     def self.tryParseSemver(v)
