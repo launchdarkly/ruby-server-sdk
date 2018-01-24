@@ -52,11 +52,15 @@ module LaunchDarkly
       }
     end
 
-    def self.comparator(converter, condition)
+    def self.comparator(converter)
       lambda do |a, b|
         av = converter.call(a)
         bv = converter.call(b)
-        !av.nil? && !bv.nil? && condition.call(av <=> bv)
+        if !av.nil? && !bv.nil?
+          yield av <=> bv
+        else
+          return false
+        end
       end
     end
 
@@ -98,15 +102,15 @@ module LaunchDarkly
           (a.is_a? Numeric) && (a >= b)
         end,
       before:
-        comparator(DATE_OPERAND, -> n { n < 0 }),
+        comparator(DATE_OPERAND) { |n| n < 0 },
       after:
-        comparator(DATE_OPERAND, -> n { n > 0 }),
+        comparator(DATE_OPERAND) { |n| n > 0 },
       semVerEqual:
-        comparator(SEMVER_OPERAND, -> n { n == 0 }),
+        comparator(SEMVER_OPERAND) { |n| n == 0 },
       semVerLessThan:
-        comparator(SEMVER_OPERAND, -> n { n < 0 }),
+        comparator(SEMVER_OPERAND) { |n| n < 0 },
       semVerGreaterThan:
-        comparator(SEMVER_OPERAND, -> n { n > 0 })
+        comparator(SEMVER_OPERAND) { |n| n > 0 }
     }
 
     class EvaluationError < StandardError
