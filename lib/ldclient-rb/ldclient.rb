@@ -41,6 +41,8 @@ module LaunchDarkly
         if @config.stream?
           @update_processor = StreamProcessor.new(sdk_key, config, requestor)
         else
+          @config.logger.info("Disabling streaming API")
+          @config.logger.warn("You should only disable the streaming API if instructed to do so by LaunchDarkly support")
           @update_processor = PollingProcessor.new(config, requestor)
         end
         @update_processor.start
@@ -49,7 +51,7 @@ module LaunchDarkly
       if !@config.offline? && wait_for_sec > 0
         begin
           WaitUtil.wait_for_condition("LaunchDarkly client initialization", timeout_sec: wait_for_sec, delay_sec: 0.1) do
-            @update_processor.initialized?
+            initialized?
           end
         rescue WaitUtil::TimeoutError
           @config.logger.error("[LDClient] Timeout encountered waiting for LaunchDarkly client initialization")
@@ -117,17 +119,21 @@ module LaunchDarkly
         return default
       end
 
-      if !@update_processor.nil? && !@update_processor.initialized?
-        @config.logger.error("[LDClient] Client has not finished initializing. Returning default value")
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
-        return default
+      if !initialized?
+        if @store.initialized?
+          @config.logger.warn("[LDClient] Client has not finished initializing; using last known values from feature store")
+        else
+          @config.logger.error("[LDClient] Client has not finished initializing; feature store unavailable, returning default value")
+          @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
+          return default
+        end
       end
 
       sanitize_user(user)
       feature = @store.get(key)
 
       if feature.nil?
-        @config.logger.error("[LDClient] Unknown feature flag #{key}. Returning default value")
+        @config.logger.info("[LDClient] Unknown feature flag #{key}. Returning default value")
         @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
         return default
       end

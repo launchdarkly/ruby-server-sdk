@@ -41,9 +41,10 @@ module LaunchDarkly
     # @option opts [Boolean] :offline (false) Whether the client should be initialized in 
     #   offline mode. In offline mode, default values are returned for all flags and no 
     #   remote network requests are made.
-    # @option opts [Float] :poll_interval (1) The number of seconds between polls for flag updates
+    # @option opts [Float] :poll_interval (30) The number of seconds between polls for flag updates
     #   if streaming is off.
     # @option opts [Boolean] :stream (true) Whether or not the streaming API should be used to receive flag updates.
+    #   Streaming should only be disabled on the advice of LaunchDarkly support.
     # @option opts [Boolean] all_attributes_private (false) If true, all user attributes (other than the key)
     #   will be private, not just the attributes specified in `private_attribute_names`.
     # @option opts [Array] :private_attribute_names  Marks a set of attribute names private. Any users sent to
@@ -68,7 +69,7 @@ module LaunchDarkly
       @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
       @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
-      @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > 1 ? opts[:poll_interval] : Config.default_poll_interval
+      @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > Config.default_poll_interval ? opts[:poll_interval] : Config.default_poll_interval
       @proxy = opts[:proxy] || Config.default_proxy
       @all_attributes_private = opts[:all_attributes_private] || false
       @private_attribute_names = opts[:private_attribute_names] || []
@@ -256,7 +257,7 @@ module LaunchDarkly
     end
 
     def self.default_poll_interval
-      1
+      30
     end
 
     def self.default_send_events
