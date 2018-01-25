@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [3.0.0]
+## Added
+- Add support for user segments
+
+## Changed
+- Changed interface of feature store classes to support segments
+
 ## [2.4.1] - 2018-01-23
 ## Changed
 - Reduce logging level for missing flags
