@@ -1,8 +1,56 @@
 require "date"
+require "semantic"
 
 module LaunchDarkly
   module Evaluation
     BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
+
+    NUMERIC_VERSION_COMPONENTS_REGEX = Regexp.new("^[0-9.]*")
+
+    DATE_OPERAND = lambda do |v|
+      if v.is_a? String
+        begin
+          DateTime.rfc3339(v).strftime("%Q").to_i
+        rescue => e
+          nil
+        end
+      elsif v.is_a? Numeric
+        v
+      else
+        nil
+      end
+    end
+
+    SEMVER_OPERAND = lambda do |v|
+      if v.is_a? String
+        for _ in 0..2 do
+          begin
+            return Semantic::Version.new(v)
+          rescue ArgumentError
+            v = addZeroVersionComponent(v)
+          end
+        end
+      end
+      nil
+    end
+
+    def self.addZeroVersionComponent(v)
+      NUMERIC_VERSION_COMPONENTS_REGEX.match(v) { |m|
+        m[0] + ".0" + v[m[0].length..-1]
+      }
+    end
+
+    def self.comparator(converter)
+      lambda do |a, b|
+        av = converter.call(a)
+        bv = converter.call(b)
+        if !av.nil? && !bv.nil?
+          yield av <=> bv
+        else
+          return false
+        end
+      end
+    end
 
     OPERATORS = {
       in:
@@ -42,33 +90,15 @@ module LaunchDarkly
           (a.is_a? Numeric) && (a >= b)
         end,
       before:
-        lambda do |a, b|
-          begin
-            if a.is_a? String
-              a = DateTime.rfc3339(a).strftime('%Q').to_i 
-            end
-            if b.is_a? String
-              b = DateTime.rfc3339(b).strftime('%Q').to_i
-            end
-            (a.is_a? Numeric) ? a < b : false
-          rescue => e
-            false
-          end
-        end,
+        comparator(DATE_OPERAND) { |n| n < 0 },
       after:
-        lambda do |a, b|
-          begin
-            if a.is_a? String
-              a = DateTime.rfc3339(a).strftime("%Q").to_i
-            end
-            if b.is_a? String
-              b = DateTime.rfc3339(b).strftime("%Q").to_i
-            end
-            (a.is_a? Numeric) ? a > b : false
-          rescue => e
-            false
-          end
-        end,
+        comparator(DATE_OPERAND) { |n| n > 0 },
+      semVerEqual:
+        comparator(SEMVER_OPERAND) { |n| n == 0 },
+      semVerLessThan:
+        comparator(SEMVER_OPERAND) { |n| n < 0 },
+      semVerGreaterThan:
+        comparator(SEMVER_OPERAND) { |n| n > 0 },
       segmentMatch:
         lambda do |a, b|
           false   # we should never reach this - instead we special-case this operator in clause_match_user
