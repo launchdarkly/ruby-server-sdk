@@ -5,7 +5,8 @@ require "thread_safe"
 module LaunchDarkly
   #
   # An implementation of the LaunchDarkly client's feature store that uses a Redis
-  # instance.  Feature data can also be further cached in memory to reduce overhead
+  # instance.  This object holds feature flags and related data received from the
+  # streaming API.  Feature data can also be further cached in memory to reduce overhead
   # of calls to Redis.
   #
   # To use this class, you must first have the `redis`, `connection-pool`, and `moneta`
@@ -32,7 +33,7 @@ module LaunchDarkly
     # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
     # @option opts [Integer] :max_connections  size of the Redis connection pool
     # @option opts [Integer] :expiration  expiration time for the in-memory cache, in seconds; 0 for no local caching
-    # @option opts [Integer] :capacity  maximum number of feature flags to cache locally
+    # @option opts [Integer] :capacity  maximum number of feature flags (or related objects) to cache locally
     # @option opts [Object] :pool  custom connection pool, used for testing only
     #
     def initialize(opts = {})

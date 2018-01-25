@@ -1,6 +1,11 @@
 require "concurrent/atomics"
 
 module LaunchDarkly
+
+  # These constants denote the types of data that can be stored in the feature store.  If
+  # we add another storable data type in the future, as long as it follows the same pattern
+  # (having "key", "version", and "deleted" properties), we only need to add a corresponding
+  # constant here and the existing store should be able to handle it.
   FEATURES = {
     namespace: "features"
   }
@@ -9,6 +14,11 @@ module LaunchDarkly
     namespace: "segments"
   }
 
+  #
+  # Default implementation of the LaunchDarkly client's feature store, using an in-memory
+  # cache.  This object holds feature flags and related data received from the
+  # streaming API.
+  #
   class InMemoryFeatureStore
     def initialize
       @items = Hash.new
