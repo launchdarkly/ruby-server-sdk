@@ -40,7 +40,7 @@ describe LaunchDarkly::StreamProcessor do
   let(:processor) { subject.new("sdk_key", config, requestor) }
 
   describe '#process_message' do
-    let(:put_message) { OpenStruct.new({data: '{"flags":{"asdf": {"key": "asdf"}},"segments":{"segkey": {"key": "segkey"}}}'}) }
+    let(:put_message) { OpenStruct.new({data: '{"data":{"flags":{"asdf": {"key": "asdf"}},"segments":{"segkey": {"key": "segkey"}}}}'}) }
     let(:patch_flag_message) { OpenStruct.new({data: '{"path": "/flags/key", "data": {"key": "asdf", "version": 1}}'}) }
     let(:patch_seg_message) { OpenStruct.new({data: '{"path": "/segments/key", "data": {"key": "asdf", "version": 1}}'}) }
     let(:delete_flag_message) { OpenStruct.new({data: '{"path": "/flags/key", "version": 2}'}) }
