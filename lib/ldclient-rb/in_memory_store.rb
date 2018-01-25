@@ -1,53 +1,69 @@
 require "concurrent/atomics"
 
 module LaunchDarkly
-  class InMemoryVersionedStore
+  FEATURES = {
+    namespace: "features"
+  }
+
+  SEGMENTS = {
+    namespace: "segments"
+  }
+
+  class InMemoryFeatureStore
     def initialize
       @items = Hash.new
       @lock = Concurrent::ReadWriteLock.new
       @initialized = Concurrent::AtomicBoolean.new(false)
     end
 
-    def get(key)
+    def get(kind, key)
       @lock.with_read_lock do
-        f = @items[key.to_sym]
+        coll = @items[kind]
+        f = coll.nil? ? nil : coll[key.to_sym]
         (f.nil? || f[:deleted]) ? nil : f
       end
     end
 
-    def all
+    def all(kind)
       @lock.with_read_lock do
-        @items.select { |_k, f| not f[:deleted] }
+        coll = @items[kind]
+        (coll.nil? ? Hash.new : coll).select { |_k, f| not f[:deleted] }
       end
     end
 
-    def delete(key, version)
+    def delete(kind, key, version)
       @lock.with_write_lock do
-        old = @items[key.to_sym]
+        coll = @items[kind]
+        if coll.nil?
+          coll = Hash.new
+          @items[kind] = coll
+        end
+        old = coll[key.to_sym]
 
-        if !old.nil? && old[:version] < version
-          old[:deleted] = true
-          old[:version] = version
-          @items[key.to_sym] = old
-        elsif old.nil?
-          @items[key.to_sym] = { deleted: true, version: version }
+        if old.nil? || old[:version] < version
+          coll[key.to_sym] = { deleted: true, version: version }
         end
       end
     end
 
-    def init(fs)
+    def init(allData)
       @lock.with_write_lock do
-        @items.replace(fs)
+        @items.replace(allData)
         @initialized.make_true
       end
     end
 
-    def upsert(key, feature)
+    def upsert(kind, item)
       @lock.with_write_lock do
-        old = @items[key.to_sym]
+        coll = @items[kind]
+        if coll.nil?
+          coll = Hash.new
+          @items[kind] = coll
+        end
+        old = coll[item[:key].to_sym]
 
-        if old.nil? || old[:version] < feature[:version]
-          @items[key.to_sym] = feature
+        if old.nil? || old[:version] < item[:version]
+          coll[item[:key].to_sym] = item
         end
       end
     end
@@ -59,11 +75,5 @@ module LaunchDarkly
     def stop
       # nothing to do
     end
-  end
-
-  class InMemoryFeatureStore < InMemoryVersionedStore
-  end
-  
-  class InMemorySegmentStore < InMemoryVersionedStore
   end
 end

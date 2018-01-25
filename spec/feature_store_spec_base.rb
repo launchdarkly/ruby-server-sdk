@@ -31,7 +31,7 @@ RSpec.shared_examples "feature_store" do |create_store_method|
 
   let!(:store) do
     s = create_store_method.call()
-    s.init({ key0 => feature0 })
+    s.init(LaunchDarkly::FEATURES => { key0 => feature0 })
     s
   end
 
@@ -48,15 +48,15 @@ RSpec.shared_examples "feature_store" do |create_store_method|
   end
 
   it "can get existing feature with symbol key" do
-    expect(store.get(key0)).to eq feature0
+    expect(store.get(LaunchDarkly::FEATURES, key0)).to eq feature0
   end
 
   it "can get existing feature with string key" do
-    expect(store.get(key0.to_s)).to eq feature0
+    expect(store.get(LaunchDarkly::FEATURES, key0.to_s)).to eq feature0
   end
 
   it "gets nil for nonexisting feature" do
-    expect(store.get('nope')).to be_nil
+    expect(store.get(LaunchDarkly::FEATURES, 'nope')).to be_nil
   end
 
   it "can get all features" do
@@ -64,8 +64,8 @@ RSpec.shared_examples "feature_store" do |create_store_method|
     feature1[:key] = "test-feature-flag1"
     feature1[:version] = 5
     feature1[:on] = false
-    store.upsert(:"test-feature-flag1", feature1)
-    expect(store.all).to eq ({ key0 => feature0, :"test-feature-flag1" => feature1 })
+    store.upsert(LaunchDarkly::FEATURES, feature1)
+    expect(store.all(LaunchDarkly::FEATURES)).to eq ({ key0 => feature0, :"test-feature-flag1" => feature1 })
   end
 
   it "can add new feature" do
@@ -73,40 +73,40 @@ RSpec.shared_examples "feature_store" do |create_store_method|
     feature1[:key] = "test-feature-flag1"
     feature1[:version] = 5
     feature1[:on] = false
-    store.upsert(:"test-feature-flag1", feature1)
-    expect(store.get(:"test-feature-flag1")).to eq feature1
+    store.upsert(LaunchDarkly::FEATURES, feature1)
+    expect(store.get(LaunchDarkly::FEATURES, :"test-feature-flag1")).to eq feature1
   end
 
   it "can update feature with newer version" do
     f1 = new_version_plus(feature0, 1, { on: !feature0[:on] })
-    store.upsert(key0, f1)
-    expect(store.get(key0)).to eq f1
+    store.upsert(LaunchDarkly::FEATURES, f1)
+    expect(store.get(LaunchDarkly::FEATURES, key0)).to eq f1
   end
 
   it "cannot update feature with same version" do
     f1 = new_version_plus(feature0, 0, { on: !feature0[:on] })
-    store.upsert(key0, f1)
-    expect(store.get(key0)).to eq feature0
+    store.upsert(LaunchDarkly::FEATURES, f1)
+    expect(store.get(LaunchDarkly::FEATURES, key0)).to eq feature0
   end
 
   it "cannot update feature with older version" do
     f1 = new_version_plus(feature0, -1, { on: !feature0[:on] })
-    store.upsert(key0, f1)
-    expect(store.get(key0)).to eq feature0
+    store.upsert(LaunchDarkly::FEATURES, f1)
+    expect(store.get(LaunchDarkly::FEATURES, key0)).to eq feature0
   end
 
   it "can delete feature with newer version" do
-    store.delete(key0, feature0[:version] + 1)
-    expect(store.get(key0)).to be_nil
+    store.delete(LaunchDarkly::FEATURES, key0, feature0[:version] + 1)
+    expect(store.get(LaunchDarkly::FEATURES, key0)).to be_nil
   end
 
   it "cannot delete feature with same version" do
-    store.delete(key0, feature0[:version])
-    expect(store.get(key0)).to eq feature0
+    store.delete(LaunchDarkly::FEATURES, key0, feature0[:version])
+    expect(store.get(LaunchDarkly::FEATURES, key0)).to eq feature0
   end
 
   it "cannot delete feature with older version" do
-    store.delete(key0, feature0[:version] - 1)
-    expect(store.get(key0)).to eq feature0
+    store.delete(LaunchDarkly::FEATURES, key0, feature0[:version] - 1)
+    expect(store.get(LaunchDarkly::FEATURES, key0)).to eq feature0
   end
 end

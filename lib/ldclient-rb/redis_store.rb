@@ -4,9 +4,15 @@ require "thread_safe"
 
 module LaunchDarkly
   #
-  # Base class for all Redis versioned object stores.
+  # An implementation of the LaunchDarkly client's feature store that uses a Redis
+  # instance.  Feature data can also be further cached in memory to reduce overhead
+  # of calls to Redis.
   #
-  class RedisVersionedStore
+  # To use this class, you must first have the `redis`, `connection-pool`, and `moneta`
+  # gems installed.  Then, create an instance and store it in the `feature_store`
+  # property of your client configuration.
+  #
+  class RedisFeatureStore
     begin
       require "redis"
       require "connection_pool"
@@ -31,22 +37,21 @@ module LaunchDarkly
     #
     def initialize(opts = {})
       if !REDIS_ENABLED
-        raise RuntimeError.new("can't use #{storeName} because one of these gems is missing: redis, connection_pool, moneta")
+        raise RuntimeError.new("can't use RedisFeatureStore because one of these gems is missing: redis, connection_pool, moneta")
       end
       @redis_opts = opts[:redis_opts] || Hash.new
       if opts[:redis_url]
         @redis_opts[:url] = opts[:redis_url]
       end
       if !@redis_opts.include?(:url)
-        @redis_opts[:url] = RedisVersionedStore.default_redis_url
+        @redis_opts[:url] = RedisFeatureStore.default_redis_url
       end
       max_connections = opts[:max_connections] || 16
       @pool = opts[:pool] || ConnectionPool.new(size: max_connections) do
         Redis.new(@redis_opts)
       end
-      @prefix = opts[:prefix] || RedisVersionedStore.default_prefix
+      @prefix = opts[:prefix] || RedisFeatureStore.default_prefix
       @logger = opts[:logger] || Config.default_logger
-      @items_key = @prefix + baseKeySuffix
 
       @expiration_seconds = opts[:expiration] || 15
       @capacity = opts[:capacity] || 1000
@@ -65,15 +70,9 @@ module LaunchDarkly
       }
 
       with_connection do |redis|
-        @logger.info("#{storeName}: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} \
+        @logger.info("RedisFeatureStore: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} \
 and prefix: #{@prefix}")
       end
-    end
-
-    def baseKeySuffix
-    end
-
-    def storeName
     end
 
     #
@@ -91,40 +90,40 @@ and prefix: #{@prefix}")
       'launchdarkly'
     end
 
-    def get(key)
-      f = @cache[key.to_sym]
+    def get(kind, key)
+      f = @cache[cache_key(kind, key)]
       if f.nil?
-        @logger.debug("#{storeName}: no cache hit for #{key}, requesting from Redis")
+        @logger.debug("RedisFeatureStore: no cache hit for #{key} in \"#{kind[:namespace]}\", requesting from Redis")
         f = with_connection do |redis|
           begin
-            get_redis(redis,key.to_sym)
+            get_redis(kind, redis, key.to_sym)
           rescue => e
-            @logger.error("#{storeName}: could not retrieve #{key} from Redis, with error: #{e}")
+            @logger.error("RedisFeatureStore: could not retrieve #{key} from Redis in \"#{kind[:namespace]}\", with error: #{e}")
             nil
           end
         end
         if !f.nil?
-          put_cache(key.to_sym, f)
+          put_cache(kind, key, f)
         end
       end
       if f.nil?
-        @logger.debug("#{storeName}: #{key} not found")
+        @logger.debug("RedisFeatureStore: #{key} not found in \"#{kind[:namespace]}\"")
         nil
       elsif f[:deleted]
-        @logger.debug("#{storeName}: #{key} was deleted, returning nil")
+        @logger.debug("RedisFeatureStore: #{key} was deleted in \"#{kind[:namespace]}\", returning nil")
         nil
       else
         f
       end
     end
 
-    def all
+    def all(kind)
       fs = {}
       with_connection do |redis|
         begin
-          hashfs = redis.hgetall(@items_key)
+          hashfs = redis.hgetall(items_key(kind))
         rescue => e
-          @logger.error("#{storeName}: could not retrieve all items from Redis with error: #{e}; returning none")
+          @logger.error("RedisFeatureStore: could not retrieve all \"#{kind[:namespace]}\" items from Redis with error: #{e}; returning none")
           hashfs = {}
         end
         hashfs.each do |k, jsonItem|
@@ -137,43 +136,47 @@ and prefix: #{@prefix}")
       fs
     end
 
-    def delete(key, version)
+    def delete(kind, key, version)
       with_connection do |redis|
-        f = get_redis(redis, key)
+        f = get_redis(kind, redis, key)
         if f.nil?
-          put_redis_and_cache(redis, key, { deleted: true, version: version })
+          put_redis_and_cache(kind, redis, key, { deleted: true, version: version })
         else
           if f[:version] < version
             f1 = f.clone
             f1[:deleted] = true
             f1[:version] = version
-            put_redis_and_cache(redis, key, f1)
+            put_redis_and_cache(kind, redis, key, f1)
           else
-            @logger.warn("#{storeName}: attempted to delete #{key} version: #{f[:version]} \
-  with a version that is the same or older: #{version}")
+            @logger.warn("RedisFeatureStore: attempted to delete #{key} version: #{f[:version]} \
+  in \"#{kind[:namespace]}\" with a version that is the same or older: #{version}")
           end
         end
       end
     end
 
-    def init(fs)
+    def init(allData)
       @cache.clear
+      count = 0
       with_connection do |redis|
-        redis.multi do |multi|
-          multi.del(@items_key)
-          fs.each { |k, f| put_redis_and_cache(multi, k, f) }
-        end
+        allData.each { |kind, items|
+          redis.multi do |multi|
+            multi.del(items_key(kind))
+            count = count + items.count
+            items.each { |k, v| put_redis_and_cache(kind, multi, k, v) }
+          end
+        }
       end
       @inited.set(true)
-      @logger.info("#{storeName}: initialized with #{fs.count} items")
+      @logger.info("RedisFeatureStore: initialized with #{count} items")
     end
 
-    def upsert(key, item)
+    def upsert(kind, item)
       with_connection do |redis|
-        redis.watch(@items_key) do
-          old = get_redis(redis, key)
+        redis.watch(items_key(kind)) do
+          old = get_redis(kind, redis, item[:key])
           if old.nil? || (old[:version] < item[:version])
-            put_redis_and_cache(redis, key, item)
+            put_redis_and_cache(kind, redis, item[:key], item)
           end
           redis.unwatch
         end
@@ -198,73 +201,43 @@ and prefix: #{@prefix}")
 
     private
 
+    def items_key(kind)
+      @prefix + ":" + kind[:namespace]
+    end
+
+    def cache_key(kind, key)
+      kind[:namespace] + ":" + key.to_s
+    end
+
     def with_connection
       @pool.with { |redis| yield(redis) }
     end
 
-    def get_redis(redis, key)
+    def get_redis(kind, redis, key)
       begin
-        json_item = redis.hget(@items_key, key)
+        json_item = redis.hget(items_key(kind), key)
         JSON.parse(json_item, symbolize_names: true) if json_item
       rescue => e
-        @logger.error("#{storeName}: could not retrieve #{key} from Redis, error: #{e}")
+        @logger.error("RedisFeatureStore: could not retrieve #{key} from Redis, error: #{e}")
         nil
       end
     end
 
-    def put_cache(key, value)
-      @cache.store(key, value, expires: @expiration_seconds)
+    def put_cache(kind, key, value)
+      @cache.store(cache_key(kind, key), value, expires: @expiration_seconds)
     end
 
-    def put_redis_and_cache(redis, key, item)
+    def put_redis_and_cache(kind, redis, key, item)
       begin
-        redis.hset(@items_key, key, item.to_json)
+        redis.hset(items_key(kind), key, item.to_json)
       rescue => e
-        @logger.error("#{storeName}: could not store #{key} in Redis, error: #{e}")
+        @logger.error("RedisFeatureStore: could not store #{key} in Redis, error: #{e}")
       end
-      put_cache(key.to_sym, item)
+      put_cache(kind, key.to_sym, item)
     end
 
     def query_inited
-      with_connection { |redis| redis.exists(@items_key) }
-    end
-  end
-
-  #
-  # An implementation of the LaunchDarkly client's feature store that uses a Redis
-  # instance.  Feature data can also be further cached in memory to reduce overhead
-  # of calls to Redis.
-  #
-  # To use this class, you must first have the `redis`, `connection-pool`, and `moneta`
-  # gems installed.  Then, create an instance and store it in the `feature_store`
-  # property of your client configuration.
-  #
-  class RedisFeatureStore < RedisVersionedStore
-    def baseKeySuffix
-      ':features'
-    end
-
-    def storeName
-      'RedisFeatureStore'
-    end
-  end
-
-  #
-  # An implementation of the LaunchDarkly client's segment store that uses a Redis
-  # instance.  Segment data can also be further cached in memory to reduce overhead
-  # of calls to Redis.
-  #
-  # To use this class, you must first have the `redis`, `connection-pool`, and `moneta`
-  # gems installed.  Then, create an instance and store it in the `segment_store`
-  # property of your client configuration.
-  #
-  class RedisSegmentStore < RedisVersionedStore
-    def baseKeySuffix
-      ':segments'
-    end
-
-    def storeName
-      'RedisSegmentStore'
+      with_connection { |redis| redis.exists(items_key(FEATURES)) }
     end
   end
 end

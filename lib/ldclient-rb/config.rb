@@ -34,10 +34,8 @@ module LaunchDarkly
     # @option opts [Object] :cache_store A cache store for the Faraday HTTP caching
     #   library. Defaults to the Rails cache in a Rails environment, or a
     #   thread-safe in-memory store otherwise.
-    # @option opts [Object] :feature_store A store for feature flag data. Defaults to an in-memory
+    # @option opts [Object] :feature_store A store for feature flags and related data. Defaults to an in-memory
     #   cache, or you can use RedisFeatureStore.
-    # @option opts [Object] :segment_store A store for segment data. Defaults to an in-memory
-    #   cache, or you can use RedisSegmentStore.
     # @option opts [Boolean] :use_ldd (false) Whether you are using the LaunchDarkly relay proxy in
     #   daemon mode. In this configuration, the client will not use a streaming connection to listen
     #   for updates, but instead will get feature state from a Redis instance. The `stream` and
@@ -70,7 +68,6 @@ module LaunchDarkly
       @connect_timeout = opts[:connect_timeout] || Config.default_connect_timeout
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
       @feature_store = opts[:feature_store] || Config.default_feature_store
-      @segment_store = opts[:segment_store] || Config.default_segment_store
       @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
       @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
@@ -176,11 +173,6 @@ module LaunchDarkly
     #
     attr_reader :feature_store
 
-    #
-    # A store for segment configuration rules.
-    #
-    attr_reader :segment_store
-
     # The proxy configuration string
     #
     attr_reader :proxy
@@ -259,10 +251,6 @@ module LaunchDarkly
 
     def self.default_feature_store
       InMemoryFeatureStore.new
-    end
-
-    def self.default_segment_store
-      InMemorySegmentStore.new
     end
 
     def self.default_offline

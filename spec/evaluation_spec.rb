@@ -3,7 +3,6 @@ require "spec_helper"
 describe LaunchDarkly::Evaluation do
   subject { LaunchDarkly::Evaluation }
   let(:features) { LaunchDarkly::InMemoryFeatureStore.new }
-  let(:segments) { LaunchDarkly::InMemorySegmentStore.new }
   let(:user) {
     {
       key: "userkey",
@@ -18,19 +17,19 @@ describe LaunchDarkly::Evaluation do
     it "can match built-in attribute" do
       user = { key: 'x', name: 'Bob' }
       clause = { attribute: 'name', op: 'in', values: ['Bob'] }
-      expect(clause_match_user(clause, user, segments)).to be true
+      expect(clause_match_user(clause, user, features)).to be true
     end
 
     it "can match custom attribute" do
       user = { key: 'x', name: 'Bob', custom: { legs: 4 } }
       clause = { attribute: 'legs', op: 'in', values: [4] }
-      expect(clause_match_user(clause, user, segments)).to be true
+      expect(clause_match_user(clause, user, features)).to be true
     end
 
     it "returns false for missing attribute" do
       user = { key: 'x', name: 'Bob' }
       clause = { attribute: 'legs', op: 'in', values: [4] }
-      expect(clause_match_user(clause, user, segments)).to be false
+      expect(clause_match_user(clause, user, features)).to be false
     end
   end
 
@@ -132,7 +131,7 @@ describe LaunchDarkly::Evaluation do
       it "should return #{shouldBe} for #{value1} #{op} #{value2}" do
         user = { key: 'x', custom: { foo: value1 } }
         clause = { attribute: 'foo', op: op, values: [value2] }
-        expect(clause_match_user(clause, user, segments)).to be shouldBe
+        expect(clause_match_user(clause, user, features)).to be shouldBe
       end
     end
   end
@@ -181,20 +180,20 @@ describe LaunchDarkly::Evaluation do
     it 'explicitly includes user' do
       segment = make_segment('segkey')
       segment[:included] = [ user[:key] ]
-      segments.upsert('segkey', segment)
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
       clause = make_segment_match_clause(segment)
 
-      result = clause_match_user(clause, user, segments)
+      result = clause_match_user(clause, user, features)
       expect(result).to be true
     end
 
     it 'explicitly excludes user' do
       segment = make_segment('segkey')
       segment[:excluded] = [ user[:key] ]
-      segments.upsert('segkey', segment)
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
       clause = make_segment_match_clause(segment)
 
-      result = clause_match_user(clause, user, segments)
+      result = clause_match_user(clause, user, features)
       expect(result).to be false
     end
 
@@ -202,10 +201,10 @@ describe LaunchDarkly::Evaluation do
       segment = make_segment('segkey')
       segment[:included] = [ user[:key] ]
       segment[:excluded] = [ user[:key] ]
-      segments.upsert('segkey', segment)
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
       clause = make_segment_match_clause(segment)
 
-      result = clause_match_user(clause, user, segments)
+      result = clause_match_user(clause, user, features)
       expect(result).to be true
     end
 
@@ -217,10 +216,10 @@ describe LaunchDarkly::Evaluation do
       }
       segment = make_segment('segkey')
       segment[:rules] = [ segRule ]
-      segments.upsert('segkey', segment)
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
       clause = make_segment_match_clause(segment)
 
-      result = clause_match_user(clause, user, segments)
+      result = clause_match_user(clause, user, features)
       expect(result).to be true
     end
 
@@ -232,10 +231,10 @@ describe LaunchDarkly::Evaluation do
       }
       segment = make_segment('segkey')
       segment[:rules] = [ segRule ]
-      segments.upsert('segkey', segment)
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
       clause = make_segment_match_clause(segment)
 
-      result = clause_match_user(clause, user, segments)
+      result = clause_match_user(clause, user, features)
       expect(result).to be false
     end
 
@@ -247,10 +246,10 @@ describe LaunchDarkly::Evaluation do
       }
       segment = make_segment('segkey')
       segment[:rules] = [ segRule ]
-      segments.upsert('segkey', segment)
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
       clause = make_segment_match_clause(segment)
 
-      result = clause_match_user(clause, user, segments)
+      result = clause_match_user(clause, user, features)
       expect(result).to be true
     end
 
@@ -263,10 +262,10 @@ describe LaunchDarkly::Evaluation do
       }
       segment = make_segment('segkey')
       segment[:rules] = [ segRule ]
-      segments.upsert('segkey', segment)
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
       clause = make_segment_match_clause(segment)
 
-      result = clause_match_user(clause, user, segments)
+      result = clause_match_user(clause, user, features)
       expect(result).to be false
     end
   end
