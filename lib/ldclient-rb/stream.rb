@@ -41,7 +41,7 @@ module LaunchDarkly
         'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
       }
       opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy, :read_timeout => READ_TIMEOUT_SECONDS}
-      @es = Celluloid::EventSource.new(@config.stream_uri + "/flags", opts) do |conn|
+      @es = Celluloid::EventSource.new(@config.stream_uri + "/all", opts) do |conn|
         conn.on(PUT) { |message| process_message(message, PUT) }
         conn.on(PATCH) { |message| process_message(message, PATCH) }
         conn.on(DELETE) { |message| process_message(message, DELETE) }
@@ -78,8 +78,8 @@ module LaunchDarkly
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
         @feature_store.init({
-          FEATURES => message[:flags],
-          SEGMENTS => message[:segments]
+          FEATURES => message[:data][:flags],
+          SEGMENTS => message[:data][:segments]
         })
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized")

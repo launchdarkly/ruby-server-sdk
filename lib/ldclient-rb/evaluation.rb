@@ -219,7 +219,7 @@ module LaunchDarkly
     def clause_match_user(clause, user, feature_store)
       # In the case of a segment match operator, we check if the user is in any of the segments,
       # and possibly negate
-      if (clause[:op] == :segmentMatch)
+      if (clause[:op].to_sym == :segmentMatch)
         clause[:values].each do |v|
           segment = feature_store.get(SEGMENTS, v)
           if !segment.nil?
