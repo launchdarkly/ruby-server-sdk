@@ -35,7 +35,7 @@ module LaunchDarkly
     end
 
     def request_all_data()
-      make_requesT("/sdk/latest-all")
+      make_request("/sdk/latest-all")
     end
     
     def make_request(path)
