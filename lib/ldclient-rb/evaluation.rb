@@ -142,7 +142,7 @@ module LaunchDarkly
       # Evaluate prerequisites, if any
       if !flag[:prerequisites].nil?
         flag[:prerequisites].each do |prerequisite|
-          prereq_flag = feature_store.get(prerequisite[:key])
+          prereq_flag = feature_store.get(FEATURES, prerequisite[:key])
 
           if prereq_flag.nil? || !prereq_flag[:on]
             failed_prereq = true
