@@ -108,10 +108,10 @@ and prefix: #{@prefix}")
         end
       end
       if f.nil?
-        @logger.warn("RedisFeatureStore: feature #{key} not found")
+        @logger.debug("RedisFeatureStore: feature #{key} not found")
         nil
       elsif f[:deleted]
-        @logger.warn("RedisFeatureStore: feature #{key} was deleted, returning nil")
+        @logger.debug("RedisFeatureStore: feature #{key} was deleted, returning nil")
         nil
       else
         f
@@ -160,7 +160,7 @@ and prefix: #{@prefix}")
       @cache.clear
       with_connection do |redis|
         redis.multi do |multi|
-          redis.del(@features_key)
+          multi.del(@features_key)
           fs.each { |k, f| put_redis_and_cache(multi, k, f) }
         end
       end
