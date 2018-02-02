@@ -129,6 +129,20 @@ describe LaunchDarkly::Evaluation do
   end
 
   describe "bucket_user" do
+    it "gets expected bucket values for specific keys" do
+      user = { key: "userKeyA" }
+      bucket = bucket_user(user, "hashKey", "key", "saltyA")
+      expect(bucket).to be_within(0.0000001).of(0.42157587);
+
+      user = { key: "userKeyB" }
+      bucket = bucket_user(user, "hashKey", "key", "saltyA")
+      expect(bucket).to be_within(0.0000001).of(0.6708485);
+
+      user = { key: "userKeyC" }
+      bucket = bucket_user(user, "hashKey", "key", "saltyA")
+      expect(bucket).to be_within(0.0000001).of(0.10343106);
+    end
+
     it "can bucket by int value (equivalent to string)" do
       user = {
         key: "userkey",
@@ -137,8 +151,10 @@ describe LaunchDarkly::Evaluation do
           intAttr: 33333
         }
       }
-      stringResult = bucket_user(user, "key", "stringAttr", "salt")
-      intResult = bucket_user(user, "key", "intAttr", "salt")
+      stringResult = bucket_user(user, "hashKey", "stringAttr", "saltyA")
+      intResult = bucket_user(user, "hashKey", "intAttr", "saltyA")
+
+      expect(intResult).to be_within(0.0000001).of(0.54771423)
       expect(intResult).to eq(stringResult)
     end
 
@@ -149,7 +165,7 @@ describe LaunchDarkly::Evaluation do
           floatAttr: 33.5
         }
       }
-      result = bucket_user(user, "key", "floatAttr", "salt")
+      result = bucket_user(user, "hashKey", "floatAttr", "saltyA")
       expect(result).to eq(0.0)
     end
 
@@ -161,7 +177,7 @@ describe LaunchDarkly::Evaluation do
           boolAttr: true
         }
       }
-      result = bucket_user(user, "key", "boolAttr", "salt")
+      result = bucket_user(user, "hashKey", "boolAttr", "saltyA")
       expect(result).to eq(0.0)
     end
   end
