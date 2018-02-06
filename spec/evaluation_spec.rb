@@ -31,6 +31,28 @@ describe LaunchDarkly::Evaluation do
       clause = { attribute: 'legs', op: 'in', values: [4] }
       expect(clause_match_user(clause, user, features)).to be false
     end
+
+    it "retrieves segment from segment store for segmentMatch operator" do
+      segment = {
+        key: 'segkey',
+        included: [ 'userkey' ],
+        version: 1,
+        deleted: false
+      }
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
+
+      user = { key: 'userkey' }
+      clause = { attribute: '', op: 'segmentMatch', values: ['segkey'] }
+
+      expect(clause_match_user(clause, user, features)).to be true
+    end
+
+    it "falls through with no errors if referenced segment is not found" do
+      user = { key: 'userkey' }
+      clause = { attribute: '', op: 'segmentMatch', values: ['segkey'] }
+
+      expect(clause_match_user(clause, user, features)).to be false
+    end
   end
 
   describe "operators" do
@@ -174,8 +196,6 @@ describe LaunchDarkly::Evaluation do
     }
   end
 
-  include LaunchDarkly::Evaluation
-
   describe 'segment matching' do
     it 'explicitly includes user' do
       segment = make_segment('segkey')
@@ -223,7 +243,7 @@ describe LaunchDarkly::Evaluation do
       expect(result).to be true
     end
 
-    it 'doesn''t match user with zero rollout' do
+    it "doesn't match user with zero rollout" do
       segClause = make_user_matching_clause(user, :email)
       segRule = {
         clauses: [ segClause ],
@@ -238,7 +258,7 @@ describe LaunchDarkly::Evaluation do
       expect(result).to be false
     end
 
-    it 'matches user with multiple clauses' do
+    it "matches user with multiple clauses" do
       segClause1 = make_user_matching_clause(user, :email)
       segClause2 = make_user_matching_clause(user, :name)
       segRule = {
@@ -253,7 +273,7 @@ describe LaunchDarkly::Evaluation do
       expect(result).to be true
     end
 
-    it 'doesn''t match user with multiple clauses' do
+    it "doesn't match user with multiple clauses if a clause doesn't match" do
       segClause1 = make_user_matching_clause(user, :email)
       segClause2 = make_user_matching_clause(user, :name)
       segClause2[:values] = [ 'wrong' ]
