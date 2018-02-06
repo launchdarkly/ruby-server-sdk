@@ -160,13 +160,13 @@ and prefix: #{@prefix}")
       @cache.clear
       count = 0
       with_connection do |redis|
-        all_data.each { |kind, items|
+        all_data.each do |kind, items|
           redis.multi do |multi|
             multi.del(items_key(kind))
             count = count + items.count
             items.each { |k, v| put_redis_and_cache(kind, multi, k, v) }
           end
-        }
+        end
       end
       @inited.set(true)
       @logger.info("RedisFeatureStore: initialized with #{count} items")
