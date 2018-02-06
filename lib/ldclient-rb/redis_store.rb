@@ -156,11 +156,11 @@ and prefix: #{@prefix}")
       end
     end
 
-    def init(allData)
+    def init(all_data)
       @cache.clear
       count = 0
       with_connection do |redis|
-        allData.each { |kind, items|
+        all_data.each { |kind, items|
           redis.multi do |multi|
             multi.del(items_key(kind))
             count = count + items.count

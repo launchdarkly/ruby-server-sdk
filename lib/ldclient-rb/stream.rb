@@ -102,10 +102,10 @@ module LaunchDarkly
           end
         end
       elsif method == INDIRECT_PUT
-        allData = @requestor.request_all_data
-        ({
-          FEATURES => allData[:flags],
-          SEGMENTS => allData[:segments]
+        all_data = @requestor.request_all_data
+        @feature_store.init({
+          FEATURES => all_data[:flags],
+          SEGMENTS => all_data[:segments]
         })
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized (via indirect message)")
