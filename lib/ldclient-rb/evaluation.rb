@@ -299,7 +299,10 @@ module LaunchDarkly
     def bucket_user(user, key, bucket_by, salt)
       return nil unless user[:key]
 
-      id_hash = user_value(user, bucket_by)
+      id_hash = bucketable_string_value(user_value(user, bucket_by))
+      if id_hash.nil?
+        return 0.0
+      end
 
       if user[:secondary]
         id_hash += "." + user[:secondary]
@@ -309,6 +312,12 @@ module LaunchDarkly
 
       hash_val = (Digest::SHA1.hexdigest(hash_key))[0..14]
       hash_val.to_i(16) / Float(0xFFFFFFFFFFFFFFF)
+    end
+
+    def bucketable_string_value(value)
+      return value if value.is_a? String
+      return value.to_s if value.is_a? Integer
+      nil
     end
 
     def user_value(user, attribute)
