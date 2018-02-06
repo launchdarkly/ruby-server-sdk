@@ -112,7 +112,7 @@ module LaunchDarkly
     # generated during prerequisite evaluation. Raises EvaluationError if the flag is not well-formed
     # Will return nil, but not raise an exception, indicating that the rules (including fallthrough) did not match
     # In that case, the caller should return the default value.
-    def evaluate(flag, user, feature_store)
+    def evaluate(flag, user, store)
       if flag.nil?
         raise EvaluationError, "Flag does not exist"
       end
@@ -124,7 +124,7 @@ module LaunchDarkly
       events = []
 
       if flag[:on]
-        res = eval_internal(flag, user, feature_store, events)
+        res = eval_internal(flag, user, store, events)
 
         return { value: res, events: events } if !res.nil?
       end
@@ -137,18 +137,18 @@ module LaunchDarkly
       { value: nil, events: events }
     end
 
-    def eval_internal(flag, user, feature_store, events)
+    def eval_internal(flag, user, store, events)
       failed_prereq = false
       # Evaluate prerequisites, if any
       if !flag[:prerequisites].nil?
         flag[:prerequisites].each do |prerequisite|
-          prereq_flag = feature_store.get(FEATURES, prerequisite[:key])
+          prereq_flag = store.get(FEATURES, prerequisite[:key])
 
           if prereq_flag.nil? || !prereq_flag[:on]
             failed_prereq = true
           else
             begin
-              prereq_res = eval_internal(prereq_flag, user, feature_store, events)
+              prereq_res = eval_internal(prereq_flag, user, store, events)
               variation = get_variation(prereq_flag, prerequisite[:variation])
               events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res, version: prereq_flag[:version], prereqOf: flag[:key])
               if prereq_res.nil? || prereq_res != variation
@@ -168,10 +168,10 @@ module LaunchDarkly
       # The prerequisites were satisfied.
       # Now walk through the evaluation steps and get the correct
       # variation index
-      eval_rules(flag, user, feature_store)
+      eval_rules(flag, user, store)
     end
 
-    def eval_rules(flag, user, feature_store)
+    def eval_rules(flag, user, store)
       # Check user target matches
       if !flag[:targets].nil?
         flag[:targets].each do |target|
@@ -186,7 +186,7 @@ module LaunchDarkly
       # Check custom rules
       if !flag[:rules].nil?
         flag[:rules].each do |rule|
-          return variation_for_user(rule, user, flag) if rule_match_user(rule, user, feature_store)
+          return variation_for_user(rule, user, flag) if rule_match_user(rule, user, store)
         end
       end
 
@@ -206,25 +206,23 @@ module LaunchDarkly
       flag[:variations][index]
     end
 
-    def rule_match_user(rule, user, feature_store)
+    def rule_match_user(rule, user, store)
       return false if !rule[:clauses]
 
       rule[:clauses].each do |clause|
-        return false if !clause_match_user(clause, user, feature_store)
+        return false if !clause_match_user(clause, user, store)
       end
 
       return true
     end
 
-    def clause_match_user(clause, user, feature_store)
+    def clause_match_user(clause, user, store)
       # In the case of a segment match operator, we check if the user is in any of the segments,
       # and possibly negate
-      if (clause[:op].to_sym == :segmentMatch)
+      if clause[:op].to_sym == :segmentMatch
         clause[:values].each do |v|
-          segment = feature_store.get(SEGMENTS, v)
-          if !segment.nil?
-            return maybe_negate(clause, true) if segment_match_user(segment, user)
-          end
+          segment = store.get(SEGMENTS, v)
+          return maybe_negate(clause, true) if !segment.nil? && segment_match_user(segment, user)
         end
         return maybe_negate(clause, false)
       end
