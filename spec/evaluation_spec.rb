@@ -2,8 +2,132 @@ require "spec_helper"
 
 describe LaunchDarkly::Evaluation do
   subject { LaunchDarkly::Evaluation }
+  let(:features) { LaunchDarkly::InMemoryFeatureStore.new }
 
   include LaunchDarkly::Evaluation
+
+  describe "evaluate" do
+    it "returns off variation if flag is off" do
+      flag = {
+        key: 'feature',
+        on: false,
+        offVariation: 1,
+        fallthrough: { variation: 0 },
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'x' }
+      expect(evaluate(flag, user, features)).to eq({value: 'b', events: []})
+    end
+
+    it "returns nil if flag is off and off variation is unspecified" do
+      flag = {
+        key: 'feature',
+        on: false,
+        fallthrough: { variation: 0 },
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'x' }
+      expect(evaluate(flag, user, features)).to eq({value: nil, events: []})
+    end
+
+    it "returns off variation if prerequisite is not found" do
+      flag = {
+        key: 'feature0',
+        on: true,
+        prerequisites: [{key: 'badfeature', variation: 1}],
+        fallthrough: { variation: 0 },
+        offVariation: 1,
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'x' }
+      expect(evaluate(flag, user, features)).to eq({value: 'b', events: []})
+    end
+
+    it "returns off variation and event if prerequisite is not met" do
+      flag = {
+        key: 'feature0',
+        on: true,
+        prerequisites: [{key: 'feature1', variation: 1}],
+        fallthrough: { variation: 0 },
+        offVariation: 1,
+        variations: ['a', 'b', 'c'],
+        version: 1
+      }
+      flag1 = {
+        key: 'feature1',
+        on: true,
+        fallthrough: { variation: 0 },
+        variations: ['d', 'e'],
+        version: 2
+      }
+      features.upsert('feature1', flag1)
+      user = { key: 'x' }
+      events_should_be = [{kind: 'feature', key: 'feature1', value: 'd', version: 2, prereqOf: 'feature0'}]
+      expect(evaluate(flag, user, features)).to eq({value: 'b', events: events_should_be})
+    end
+
+    it "returns fallthrough variation and event if prerequisite is met and there are no rules" do
+      flag = {
+        key: 'feature0',
+        on: true,
+        prerequisites: [{key: 'feature1', variation: 1}],
+        fallthrough: { variation: 0 },
+        offVariation: 1,
+        variations: ['a', 'b', 'c'],
+        version: 1
+      }
+      flag1 = {
+        key: 'feature1',
+        on: true,
+        fallthrough: { variation: 1 },
+        variations: ['d', 'e'],
+        version: 2
+      }
+      features.upsert('feature1', flag1)
+      user = { key: 'x' }
+      events_should_be = [{kind: 'feature', key: 'feature1', value: 'e', version: 2, prereqOf: 'feature0'}]
+      expect(evaluate(flag, user, features)).to eq({value: 'a', events: events_should_be})
+    end
+
+    it "matches user from targets" do
+      flag = {
+        key: 'feature0',
+        on: true,
+        targets: [
+          { values: [ 'whoever', 'userkey' ], variation: 2 }
+        ],
+        fallthrough: { variation: 0 },
+        offVariation: 1,
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'userkey' }
+      expect(evaluate(flag, user, features)).to eq({value: 'c', events: []})
+    end
+
+    it "matches user from rules" do
+      flag = {
+        key: 'feature0',
+        on: true,
+        rules: [
+          {
+            clauses: [
+              {
+                attribute: 'key',
+                op: 'in',
+                values: [ 'userkey' ]
+              }
+            ],
+            variation: 2
+          }
+        ],
+        fallthrough: { variation: 0 },
+        offVariation: 1,
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'userkey' }
+      expect(evaluate(flag, user, features)).to eq({value: 'c', events: []})
+    end
+  end
 
   describe "clause_match_user" do
     it "can match built-in attribute" do
@@ -21,6 +145,12 @@ describe LaunchDarkly::Evaluation do
     it "returns false for missing attribute" do
       user = { key: 'x', name: 'Bob' }
       clause = { attribute: 'legs', op: 'in', values: [4] }
+      expect(clause_match_user(clause, user)).to be false
+    end
+
+    it "can be negated" do
+      user = { key: 'x', name: 'Bob' }
+      clause = { attribute: 'name', op: 'in', values: ['Bob'], negate: true }
       expect(clause_match_user(clause, user)).to be false
     end
   end
