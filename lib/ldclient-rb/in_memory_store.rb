@@ -56,9 +56,9 @@ module LaunchDarkly
       end
     end
 
-    def init(allData)
+    def init(all_data)
       @lock.with_write_lock do
-        @items.replace(allData)
+        @items.replace(all_data)
         @initialized.make_true
       end
     end
