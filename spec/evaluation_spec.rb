@@ -150,8 +150,10 @@ describe LaunchDarkly::Evaluation do
 
     it "can be negated" do
       user = { key: 'x', name: 'Bob' }
-      clause = { attribute: 'name', op: 'in', values: ['Bob'], negate: true }
-      expect(clause_match_user(clause, user)).to be false
+      clause = { attribute: 'name', op: 'in', values: ['Bob'] }
+      expect {
+         clause[:negate] = true
+      }.to change {clause_match_user(clause, user)}.from(true).to(false)
     end
   end
 
