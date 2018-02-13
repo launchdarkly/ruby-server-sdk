@@ -1,8 +1,56 @@
 require "date"
+require "semantic"
 
 module LaunchDarkly
   module Evaluation
     BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
+
+    NUMERIC_VERSION_COMPONENTS_REGEX = Regexp.new("^[0-9.]*")
+
+    DATE_OPERAND = lambda do |v|
+      if v.is_a? String
+        begin
+          DateTime.rfc3339(v).strftime("%Q").to_i
+        rescue => e
+          nil
+        end
+      elsif v.is_a? Numeric
+        v
+      else
+        nil
+      end
+    end
+
+    SEMVER_OPERAND = lambda do |v|
+      if v.is_a? String
+        for _ in 0..2 do
+          begin
+            return Semantic::Version.new(v)
+          rescue ArgumentError
+            v = addZeroVersionComponent(v)
+          end
+        end
+      end
+      nil
+    end
+
+    def self.addZeroVersionComponent(v)
+      NUMERIC_VERSION_COMPONENTS_REGEX.match(v) { |m|
+        m[0] + ".0" + v[m[0].length..-1]
+      }
+    end
+
+    def self.comparator(converter)
+      lambda do |a, b|
+        av = converter.call(a)
+        bv = converter.call(b)
+        if !av.nil? && !bv.nil?
+          yield av <=> bv
+        else
+          return false
+        end
+      end
+    end
 
     OPERATORS = {
       in:
@@ -42,33 +90,15 @@ module LaunchDarkly
           (a.is_a? Numeric) && (a >= b)
         end,
       before:
-        lambda do |a, b|
-          begin
-            if a.is_a? String
-              a = DateTime.rfc3339(a).strftime('%Q').to_i 
-            end
-            if b.is_a? String
-              b = DateTime.rfc3339(b).strftime('%Q').to_i
-            end
-            (a.is_a? Numeric) ? a < b : false
-          rescue => e
-            false
-          end
-        end,
+        comparator(DATE_OPERAND) { |n| n < 0 },
       after:
-        lambda do |a, b|
-          begin
-            if a.is_a? String
-              a = DateTime.rfc3339(a).strftime("%Q").to_i
-            end
-            if b.is_a? String
-              b = DateTime.rfc3339(b).strftime("%Q").to_i
-            end
-            (a.is_a? Numeric) ? a > b : false
-          rescue => e
-            false
-          end
-        end
+        comparator(DATE_OPERAND) { |n| n > 0 },
+      semVerEqual:
+        comparator(SEMVER_OPERAND) { |n| n == 0 },
+      semVerLessThan:
+        comparator(SEMVER_OPERAND) { |n| n < 0 },
+      semVerGreaterThan:
+        comparator(SEMVER_OPERAND) { |n| n > 0 }
     }
 
     class EvaluationError < StandardError
@@ -223,7 +253,10 @@ module LaunchDarkly
     def bucket_user(user, key, bucket_by, salt)
       return nil unless user[:key]
 
-      id_hash = user_value(user, bucket_by)
+      id_hash = bucketable_string_value(user_value(user, bucket_by))
+      if id_hash.nil?
+        return 0.0
+      end
 
       if user[:secondary]
         id_hash += "." + user[:secondary]
@@ -233,6 +266,12 @@ module LaunchDarkly
 
       hash_val = (Digest::SHA1.hexdigest(hash_key))[0..14]
       hash_val.to_i(16) / Float(0xFFFFFFFFFFFFFFF)
+    end
+
+    def bucketable_string_value(value)
+      return value if value.is_a? String
+      return value.to_s if value.is_a? Integer
+      nil
     end
 
     def user_value(user, attribute)
