@@ -411,6 +411,35 @@ describe LaunchDarkly::Evaluation do
       expect(result).to be true
     end
 
+    it 'matches user by rule when weight is absent' do
+      segClause = make_user_matching_clause(user, :email)
+      segRule = {
+        clauses: [ segClause ]
+      }
+      segment = make_segment('segkey')
+      segment[:rules] = [ segRule ]
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
+      clause = make_segment_match_clause(segment)
+
+      result = clause_match_user(clause, user, features)
+      expect(result).to be true
+    end
+
+    it 'matches user by rule when weight is nil' do
+      segClause = make_user_matching_clause(user, :email)
+      segRule = {
+        clauses: [ segClause ],
+        weight: nil
+      }
+      segment = make_segment('segkey')
+      segment[:rules] = [ segRule ]
+      features.upsert(LaunchDarkly::SEGMENTS, segment)
+      clause = make_segment_match_clause(segment)
+
+      result = clause_match_user(clause, user, features)
+      expect(result).to be true
+    end
+
     it 'matches user with full rollout' do
       segClause = make_user_matching_clause(user, :email)
       segRule = {
