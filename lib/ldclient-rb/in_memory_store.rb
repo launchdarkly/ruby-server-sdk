@@ -8,14 +8,11 @@ module LaunchDarkly
   # constant here and the existing store should be able to handle it.
   FEATURES = {
     namespace: "features"
-  }
+  }.freeze
 
   SEGMENTS = {
     namespace: "segments"
-  }
-
-  FEATURES.freeze
-  SEGMENTS.freeze
+  }.freeze
 
   #
   # Default implementation of the LaunchDarkly client's feature store, using an in-memory
