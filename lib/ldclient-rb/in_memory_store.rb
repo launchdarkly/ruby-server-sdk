@@ -14,6 +14,9 @@ module LaunchDarkly
     namespace: "segments"
   }
 
+  FEATURES.freeze
+  SEGMENTS.freeze
+
   #
   # Default implementation of the LaunchDarkly client's feature store, using an in-memory
   # cache.  This object holds feature flags and related data received from the
