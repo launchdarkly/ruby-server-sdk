@@ -2,6 +2,15 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+2.5.0 (2018-02-12)
+
+## Added
+- Adds support for a future LaunchDarkly feature, coming soon: semantic version user attributes.
+
+## Changed
+- It is now possible to compute rollouts based on an integer attribute of a user, not just a string attribute.
+
+
 ## [2.4.1] - 2018-01-23
 ## Changed
 - Reduce logging level for missing flags
