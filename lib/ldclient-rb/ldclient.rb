@@ -130,7 +130,7 @@ module LaunchDarkly
       end
 
       sanitize_user(user)
-      feature = @store.get(key)
+      feature = @store.get(FEATURES, key)
 
       if feature.nil?
         @config.logger.info("[LDClient] Unknown feature flag #{key}. Returning default value")
@@ -197,7 +197,7 @@ module LaunchDarkly
       end
 
       begin
-        features = @store.all
+        features = @store.all(FEATURES)
 
         # TODO rescue if necessary
         Hash[features.map{ |k, f| [k, evaluate(f, user, @store)[:value]] }]

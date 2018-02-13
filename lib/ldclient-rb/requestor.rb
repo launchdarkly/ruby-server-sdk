@@ -26,6 +26,18 @@ module LaunchDarkly
       make_request("/sdk/latest-flags/" + key)
     end
 
+    def request_all_segments()
+      make_request("/sdk/latest-segments")
+    end
+
+    def request_segment(key)
+      make_request("/sdk/latest-segments/" + key)
+    end
+
+    def request_all_data()
+      make_request("/sdk/latest-all")
+    end
+    
     def make_request(path)
       uri = @config.base_uri + path
       res = @client.get (uri) do |req|
