@@ -1,21 +1,23 @@
 machine:
   environment:
-    RUBIES: "ruby-2.4.1;ruby-2.2.3;ruby-2.1.7;ruby-2.0.0;ruby-1.9.3;jruby-1.7.22"
+    RUBIES: "ruby-2.4.2 ruby-2.2.7 ruby-2.1.9 ruby-2.0.0 ruby-1.9.3 jruby-1.7.22 jruby-9.0.5.0 jruby-9.1.13.0"
   services:
     - redis
 
 dependencies:
   cache_directories:
-    - '../.rvm/rubies'
+    - '/opt/circleci/.rvm/rubies'
 
   override:
-    - >
-      rubiesArray=(${RUBIES//;/ });
-      for i in "${rubiesArray[@]}";
+    - |
+      set -e
+      for i in $RUBIES;
       do
         rvm install $i;
         rvm use $i;
-        gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
+        if [[ $i == jruby* ]]; then
+          gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
+        fi
         gem install bundler;
         bundle install;
         mv Gemfile.lock "Gemfile.lock.$i"
@@ -23,9 +25,9 @@ dependencies:
 
 test:
   override:
-    - >
-      rubiesArray=(${RUBIES//;/ });
-      for i in "${rubiesArray[@]}";
+    - |
+      set -e
+      for i in $RUBIES;
       do
         rvm use $i;
         cp "Gemfile.lock.$i" Gemfile.lock;

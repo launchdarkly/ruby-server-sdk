@@ -22,16 +22,18 @@ module LaunchDarkly
     end
 
     SEMVER_OPERAND = lambda do |v|
+      semver = nil
       if v.is_a? String
         for _ in 0..2 do
           begin
-            return Semantic::Version.new(v)
+            semver = Semantic::Version.new(v)
+            break  # Some versions of jruby cannot properly handle a return here and return from the method that calls this lambda
           rescue ArgumentError
             v = addZeroVersionComponent(v)
           end
         end
       end
-      nil
+      semver
     end
 
     def self.addZeroVersionComponent(v)
@@ -98,7 +100,11 @@ module LaunchDarkly
       semVerLessThan:
         comparator(SEMVER_OPERAND) { |n| n < 0 },
       semVerGreaterThan:
-        comparator(SEMVER_OPERAND) { |n| n > 0 }
+        comparator(SEMVER_OPERAND) { |n| n > 0 },
+      segmentMatch:
+        lambda do |a, b|
+          false   # we should never reach this - instead we special-case this operator in clause_match_user
+        end
     }
 
     class EvaluationError < StandardError
@@ -136,54 +142,46 @@ module LaunchDarkly
     def eval_internal(flag, user, store, events)
       failed_prereq = false
       # Evaluate prerequisites, if any
-      if !flag[:prerequisites].nil?
-        flag[:prerequisites].each do |prerequisite|
-          prereq_flag = store.get(prerequisite[:key])
+      (flag[:prerequisites] || []).each do |prerequisite|
+        prereq_flag = store.get(FEATURES, prerequisite[:key])
 
-          if prereq_flag.nil? || !prereq_flag[:on]
-            failed_prereq = true
-          else
-            begin
-              prereq_res = eval_internal(prereq_flag, user, store, events)
-              variation = get_variation(prereq_flag, prerequisite[:variation])
-              events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res, version: prereq_flag[:version], prereqOf: flag[:key])
-              if prereq_res.nil? || prereq_res != variation
-                failed_prereq = true
-              end
-            rescue => exn
-              @config.logger.error("[LDClient] Error evaluating prerequisite: #{exn.inspect}")
+        if prereq_flag.nil? || !prereq_flag[:on]
+          failed_prereq = true
+        else
+          begin
+            prereq_res = eval_internal(prereq_flag, user, store, events)
+            variation = get_variation(prereq_flag, prerequisite[:variation])
+            events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res, version: prereq_flag[:version], prereqOf: flag[:key])
+            if prereq_res.nil? || prereq_res != variation
               failed_prereq = true
             end
+          rescue => exn
+            @config.logger.error("[LDClient] Error evaluating prerequisite: #{exn.inspect}")
+            failed_prereq = true
           end
         end
+      end
 
-        if failed_prereq
-          return nil
-        end
+      if failed_prereq
+        return nil
       end
       # The prerequisites were satisfied.
       # Now walk through the evaluation steps and get the correct
       # variation index
-      eval_rules(flag, user)
+      eval_rules(flag, user, store)
     end
 
-    def eval_rules(flag, user)
+    def eval_rules(flag, user, store)
       # Check user target matches
-      if !flag[:targets].nil?
-        flag[:targets].each do |target|
-          if !target[:values].nil?
-            target[:values].each do |value|
-              return get_variation(flag, target[:variation]) if value == user[:key]
-            end
-          end
+      (flag[:targets] || []).each do |target|
+        (target[:values] || []).each do |value|
+          return get_variation(flag, target[:variation]) if value == user[:key]
         end
       end
-
+    
       # Check custom rules
-      if !flag[:rules].nil?
-        flag[:rules].each do |rule|
-          return variation_for_user(rule, user, flag) if rule_match_user(rule, user)
-        end
+      (flag[:rules] || []).each do |rule|
+        return variation_for_user(rule, user, flag) if rule_match_user(rule, user, store)
       end
 
       # Check the fallthrough rule
@@ -202,17 +200,30 @@ module LaunchDarkly
       flag[:variations][index]
     end
 
-    def rule_match_user(rule, user)
+    def rule_match_user(rule, user, store)
       return false if !rule[:clauses]
 
-      rule[:clauses].each do |clause|
-        return false if !clause_match_user(clause, user)
+      (rule[:clauses] || []).each do |clause|
+        return false if !clause_match_user(clause, user, store)
       end
 
       return true
     end
 
-    def clause_match_user(clause, user)
+    def clause_match_user(clause, user, store)
+      # In the case of a segment match operator, we check if the user is in any of the segments,
+      # and possibly negate
+      if clause[:op].to_sym == :segmentMatch
+        (clause[:values] || []).each do |v|
+          segment = store.get(SEGMENTS, v)
+          return maybe_negate(clause, true) if !segment.nil? && segment_match_user(segment, user)
+        end
+        return maybe_negate(clause, false)
+      end
+      clause_match_user_no_segments(clause, user)
+    end
+
+    def clause_match_user_no_segments(clause, user)
       val = user_value(user, clause[:attribute])
       return false if val.nil?
 
@@ -248,6 +259,33 @@ module LaunchDarkly
       else # the rule isn't well-formed
         raise EvaluationError, "Rule does not define a variation or rollout"
       end
+    end
+
+    def segment_match_user(segment, user)
+      return false unless user[:key]
+
+      return true if segment[:included].include?(user[:key])
+      return false if segment[:excluded].include?(user[:key])
+
+      (segment[:rules] || []).each do |r|
+        return true if segment_rule_match_user(r, user, segment[:key], segment[:salt])
+      end
+
+      return false
+    end
+
+    def segment_rule_match_user(rule, user, segment_key, salt)
+      (rule[:clauses] || []).each do |c|
+        return false unless clause_match_user_no_segments(c, user)
+      end
+
+      # If the weight is absent, this rule matches
+      return true if !rule[:weight]
+      
+      # All of the clauses are met. See if the user buckets in
+      bucket = bucket_user(user, segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt)
+      weight = rule[:weight].to_f / 100000.0
+      return bucket < weight
     end
 
     def bucket_user(user, key, bucket_by, salt)

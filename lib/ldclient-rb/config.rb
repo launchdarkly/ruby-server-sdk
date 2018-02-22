@@ -34,6 +34,8 @@ module LaunchDarkly
     # @option opts [Object] :cache_store A cache store for the Faraday HTTP caching
     #   library. Defaults to the Rails cache in a Rails environment, or a
     #   thread-safe in-memory store otherwise.
+    # @option opts [Object] :feature_store A store for feature flags and related data. Defaults to an in-memory
+    #   cache, or you can use RedisFeatureStore.
     # @option opts [Boolean] :use_ldd (false) Whether you are using the LaunchDarkly relay proxy in
     #   daemon mode. In this configuration, the client will not use a streaming connection to listen
     #   for updates, but instead will get feature state from a Redis instance. The `stream` and
@@ -171,7 +173,6 @@ module LaunchDarkly
     #
     attr_reader :feature_store
 
-    
     # The proxy configuration string
     #
     attr_reader :proxy
