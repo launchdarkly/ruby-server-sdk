@@ -22,16 +22,18 @@ module LaunchDarkly
     end
 
     SEMVER_OPERAND = lambda do |v|
+      semver = nil
       if v.is_a? String
         for _ in 0..2 do
           begin
-            return Semantic::Version.new(v)
+            semver = Semantic::Version.new(v)
+            break  # Some versions of jruby cannot properly handle a return here and return from the method that calls this lambda
           rescue ArgumentError
             v = addZeroVersionComponent(v)
           end
         end
       end
-      nil
+      semver
     end
 
     def self.addZeroVersionComponent(v)
