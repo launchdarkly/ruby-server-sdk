@@ -110,13 +110,13 @@ module LaunchDarkly
         @initialized.make_true
         @config.logger.info("[LDClient] Stream initialized (via indirect message)")
       elsif method == INDIRECT_PATCH
-        key = feature_key_for_path(message.data)
+        key = key_for_path(FEATURES, message.data)
         if key
           @feature_store.upsert(FEATURES, @requestor.request_flag(key))
         else
-          key = segment_key_for_path(message.data)
+          key = key_for_path(SEGMENTS, message.data)
           if key
-            @feature_store.upsert(SEGMENTS, key, @requestor.request_segment(key))
+            @feature_store.upsert(SEGMENTS, @requestor.request_segment(key))
           end
         end
       else
