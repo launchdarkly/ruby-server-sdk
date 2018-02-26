@@ -18,16 +18,8 @@ module LaunchDarkly
       end
     end
 
-    def request_all_flags()
-      make_request("/sdk/latest-flags")
-    end
-
     def request_flag(key)
       make_request("/sdk/latest-flags/" + key)
-    end
-
-    def request_all_segments()
-      make_request("/sdk/latest-segments")
     end
 
     def request_segment(key)
