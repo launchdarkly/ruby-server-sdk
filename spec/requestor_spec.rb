@@ -19,12 +19,12 @@ describe LaunchDarkly::Requestor do
         allow(faraday).to receive(:get) do |*args, &block|
           req = double(Faraday::Request, :headers => {}, :options => Faraday::RequestOptions.new)
           block.call(req)
-          expect(args).to eq ['http://ld.com/sdk/latest-flags']
+          expect(args).to eq ['http://ld.com/sdk/latest-all']
           expect(req.options.proxy[:uri]).to eq URI("http://proxy.com")
           double(body: '{"foo": "bar"}', status: 200, headers: {})
         end
 
-        requestor.request_all_flags()
+        requestor.request_all_data()
       end
     end
     describe "without a proxy" do
@@ -42,11 +42,11 @@ describe LaunchDarkly::Requestor do
         allow(faraday).to receive(:get) do |*args, &block|
           req = double(Faraday::Request, :headers => {}, :options => Faraday::RequestOptions.new)
           block.call(req)
-          expect(args).to eq ['http://ld.com/sdk/latest-flags']
+          expect(args).to eq ['http://ld.com/sdk/latest-all']
           expect(req.options.proxy).to eq nil
           double(body: '{"foo": "bar"}', status: 200, headers: {})
         end
-        requestor.request_all_flags()
+        requestor.request_all_data()
       end
     end
   end
