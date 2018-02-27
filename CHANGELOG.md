@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [3.0.1] - 2018-02-26
+### Fixed
+- Fixed a bug that could prevent very large feature flags from being updated in streaming mode.
+
+
 ## [3.0.0] - 2018-02-22
 ### Added
 - Support for a new LaunchDarkly feature: reusable user segments.
