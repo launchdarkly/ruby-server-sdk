@@ -1,14 +1,15 @@
 require "concurrent/atomics"
+require "concurrent/timer_task"
+
 require "json"
-require "celluloid/eventsource"
 
 module LaunchDarkly
-  PUT = :put
-  PATCH = :patch
-  DELETE = :delete
-  INDIRECT_PUT = :'indirect/put'
-  INDIRECT_PATCH = :'indirect/patch'
-  READ_TIMEOUT_SECONDS = 300  # 5 minutes; the stream should send a ping every 3 minutes
+  PUT = 'put'
+  PATCH = 'patch'
+  DELETE = 'delete'
+  INDIRECT_PUT = 'indirect/put'
+  INDIRECT_PATCH = 'indirect/patch'
+  READ_TIMEOUT_SECONDS = 50 * 6  # 5 minutes; the stream should send a ping every 3 minutes
 
   KEY_PATHS = {
     FEATURES => "/flags/",
@@ -33,40 +34,33 @@ module LaunchDarkly
     def start
       return unless @started.make_true
 
-      @config.logger.info { "[LDClient] Initializing stream connection" }
-      
-      headers = 
-      {
-        'Authorization' => @sdk_key,
-        'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
-      }
-      opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy, :read_timeout => READ_TIMEOUT_SECONDS}
-      @es = Celluloid::EventSource.new(@config.stream_uri + "/all", opts) do |conn|
-        conn.on(PUT) { |message| process_message(message, PUT) }
-        conn.on(PATCH) { |message| process_message(message, PATCH) }
-        conn.on(DELETE) { |message| process_message(message, DELETE) }
-        conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
-        conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
-        conn.on_error { |err|
+      # The TimerTask has a nice property - it will not spool up a subsequent execution of a task if a previous one hasn't completed
+      @task = Concurrent::TimerTask.execute(execution_interval: READ_TIMEOUT_SECONDS) do |task|
+        @config.logger.info { "[LDClient] Initializing stream connection withih a TimerTask" }
+        headers = {
+          'Authorization' => @sdk_key,
+          'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
+        }
+        listener = LaunchDarkly::EventSourceListener.new(@config.stream_uri + "/all", headers: headers, via: @config.proxy, read_timeout: READ_TIMEOUT_SECONDS)
+        listener.on(PUT) { |message| process_message(message, PUT) }
+        listener.on(PATCH) { |message| process_message(message, PATCH) }
+        listener.on(DELETE) { |message| process_message(message, DELETE) }
+        listener.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
+        listener.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
+        listener.on_error do |err|
           @config.logger.error { "[LDClient] Unexpected status code #{err[:status_code]} from streaming connection" }
           if err[:status_code] == 401
             @config.logger.error { "[LDClient] Received 401 error, no further streaming connection will be made since SDK key is invalid" }
             stop
           end
-        }
+        end
+        listener.start
       end
     end
 
     def stop
       if @stopped.make_true
-        @es.close
-        @config.logger.info { "[LDClient] Stream connection stopped" }
-      end
-    end
-
-    def stop
-      if @stopped.make_true
-        @es.close
+        @task.shutdown
         @config.logger.info { "[LDClient] Stream connection stopped" }
       end
     end
@@ -74,7 +68,7 @@ module LaunchDarkly
     private
 
     def process_message(message, method)
-      @config.logger.debug { "[LDClient] Stream received #{method} message: #{message.data}" }
+      @config.logger.debug("[LDClient] Stream received #{method} message: #{message.data}")
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
         @feature_store.init({
@@ -82,7 +76,7 @@ module LaunchDarkly
           SEGMENTS => message[:data][:segments]
         })
         @initialized.make_true
-        @config.logger.info { "[LDClient] Stream initialized" }
+        @config.logger.info("[LDClient] Stream initialized")
       elsif method == PATCH
         message = JSON.parse(message.data, symbolize_names: true)
         for kind in [FEATURES, SEGMENTS]
@@ -108,7 +102,7 @@ module LaunchDarkly
           SEGMENTS => all_data[:segments]
         })
         @initialized.make_true
-        @config.logger.info { "[LDClient] Stream initialized (via indirect message)" }
+        @config.logger.info("[LDClient] Stream initialized (via indirect message)")
       elsif method == INDIRECT_PATCH
         key = key_for_path(FEATURES, message.data)
         if key
@@ -120,7 +114,7 @@ module LaunchDarkly
           end
         end
       else
-        @config.logger.warn { "[LDClient] Unknown message received: #{method}" }
+        @config.logger.warn("[LDClient] Unknown message received: #{method}")
       end
     end
 
