@@ -31,7 +31,7 @@ module LaunchDarkly
       @event_processor = EventProcessor.new(sdk_key, config)
 
       if @config.use_ldd?
-        @config.logger.info("[LDClient] Started LaunchDarkly Client in LDD mode")
+        @config.logger.info { "[LDClient] Started LaunchDarkly Client in LDD mode" }
         return  # requestor and update processor are not used in this mode
       end
 
@@ -41,8 +41,8 @@ module LaunchDarkly
         if @config.stream?
           @update_processor = StreamProcessor.new(sdk_key, config, requestor)
         else
-          @config.logger.info("Disabling streaming API")
-          @config.logger.warn("You should only disable the streaming API if instructed to do so by LaunchDarkly support")
+          @config.logger.info { "Disabling streaming API" }
+          @config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
           @update_processor = PollingProcessor.new(config, requestor)
         end
         @update_processor.start
@@ -54,7 +54,7 @@ module LaunchDarkly
             initialized?
           end
         rescue WaitUtil::TimeoutError
-          @config.logger.error("[LDClient] Timeout encountered waiting for LaunchDarkly client initialization")
+          @config.logger.error { "[LDClient] Timeout encountered waiting for LaunchDarkly client initialization" }
         end
       end
     end
@@ -64,7 +64,7 @@ module LaunchDarkly
     end
 
     def toggle?(key, user, default = False)
-      @config.logger.warn("[LDClient] toggle? is deprecated. Use variation instead")
+      @config.logger.warn { "[LDClient] toggle? is deprecated. Use variation instead" }
       variation(key, user, default)
     end
 
@@ -114,16 +114,16 @@ module LaunchDarkly
       return default if @config.offline?
 
       unless user
-        @config.logger.error("[LDClient] Must specify user")
+        @config.logger.error { "[LDClient] Must specify user" }
         @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
         return default
       end
 
       if !initialized?
         if @store.initialized?
-          @config.logger.warn("[LDClient] Client has not finished initializing; using last known values from feature store")
+          @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
         else
-          @config.logger.error("[LDClient] Client has not finished initializing; feature store unavailable, returning default value")
+          @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
           @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
           return default
         end
@@ -133,7 +133,7 @@ module LaunchDarkly
       feature = @store.get(FEATURES, key)
 
       if feature.nil?
-        @config.logger.info("[LDClient] Unknown feature flag #{key}. Returning default value")
+        @config.logger.info { "[LDClient] Unknown feature flag #{key}. Returning default value" }
         @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
         return default
       end
@@ -149,12 +149,12 @@ module LaunchDarkly
           @event_processor.add_event(kind: "feature", key: key, user: user, value: res[:value], default: default, version: feature[:version])
           return res[:value]
         else
-          @config.logger.debug("[LDClient] Result value is null in toggle")
+          @config.logger.debug { "[LDClient] Result value is null in toggle" }
           @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version])
           return default
         end
       rescue => exn
-        @config.logger.warn("[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}")
+        @config.logger.warn { "[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
         @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version])
         return default
       end
@@ -192,7 +192,7 @@ module LaunchDarkly
       return Hash.new if @config.offline?
 
       unless user
-        @config.logger.error("[LDClient] Must specify user in all_flags")
+        @config.logger.error { "[LDClient] Must specify user in all_flags" }
         return Hash.new
       end
 
@@ -202,7 +202,7 @@ module LaunchDarkly
         # TODO rescue if necessary
         Hash[features.map{ |k, f| [k, evaluate(f, user, @store)[:value]] }]
       rescue => exn
-        @config.logger.warn("[LDClient] Error evaluating all flags: #{exn.inspect}. \nTrace: #{exn.backtrace}")
+        @config.logger.warn { "[LDClient] Error evaluating all flags: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
         return Hash.new
       end
     end
@@ -212,7 +212,7 @@ module LaunchDarkly
     #
     # @return [void]
     def close
-      @config.logger.info("[LDClient] Closing LaunchDarkly client...")
+      @config.logger.info { "[LDClient] Closing LaunchDarkly client..." }
       if not @config.offline?
         @update_processor.stop
       end
@@ -223,7 +223,7 @@ module LaunchDarkly
     def log_exception(caller, exn)
       error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
       error = "[LDClient] Unexpected exception in #{caller}: #{error_traceback}"
-      @config.logger.error(error)
+      @config.logger.error { error }
     end
 
     def sanitize_user(user)

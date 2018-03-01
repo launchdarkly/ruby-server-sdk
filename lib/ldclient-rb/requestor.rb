@@ -42,20 +42,20 @@ module LaunchDarkly
         end
       end
 
-      @config.logger.debug("[LDClient] Got response from uri: #{uri}\n\tstatus code: #{res.status}\n\theaders: #{res.headers}\n\tbody: #{res.body}")
+      @config.logger.debug { "[LDClient] Got response from uri: #{uri}\n\tstatus code: #{res.status}\n\theaders: #{res.headers}\n\tbody: #{res.body}" }
 
       if res.status == 401
-        @config.logger.error("[LDClient] Invalid SDK key")
+        @config.logger.error { "[LDClient] Invalid SDK key" }
         raise InvalidSDKKeyError
       end
 
       if res.status == 404
-        @config.logger.error("[LDClient] Resource not found")
+        @config.logger.error { "[LDClient] Resource not found" }
         return nil
       end
 
       if res.status < 200 || res.status >= 300
-        @config.logger.error("[LDClient] Unexpected status code #{res.status}")
+        @config.logger.error { "[LDClient] Unexpected status code #{res.status}" }
         return nil
       end
 

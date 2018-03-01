@@ -50,9 +50,9 @@ module LaunchDarkly
         req.options.open_timeout = @config.connect_timeout
       end
       if res.status < 200 || res.status >= 300
-        @config.logger.error("[LDClient] Unexpected status code while processing events: #{res.status}")
+        @config.logger.error { "[LDClient] Unexpected status code while processing events: #{res.status}" }
         if res.status == 401
-          @config.logger.error("[LDClient] Received 401 error, no further events will be posted since SDK key is invalid")
+          @config.logger.error { "[LDClient] Received 401 error, no further events will be posted since SDK key is invalid" }
           stop
         end
       end
@@ -78,14 +78,14 @@ module LaunchDarkly
 
       if @queue.length < @config.capacity
         event[:creationDate] = (Time.now.to_f * 1000).to_i
-        @config.logger.debug("[LDClient] Enqueueing event: #{event.to_json}")
+        @config.logger.debug { "[LDClient] Enqueueing event: #{event.to_json}" }
         @queue.push(event)
 
         if !@worker.alive?
           @worker = create_worker
         end
       else
-        @config.logger.warn("[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events.")
+        @config.logger.warn { "[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events." }
       end
     end
 
