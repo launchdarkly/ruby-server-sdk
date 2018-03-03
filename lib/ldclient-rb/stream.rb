@@ -33,7 +33,7 @@ module LaunchDarkly
     def start
       return unless @started.make_true
 
-      @config.logger.info("[LDClient] Initializing stream connection")
+      @config.logger.info { "[LDClient] Initializing stream connection" }
       
       headers = 
       {
@@ -48,9 +48,9 @@ module LaunchDarkly
         conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
         conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
         conn.on_error { |err|
-          @config.logger.error("[LDClient] Unexpected status code #{err[:status_code]} from streaming connection")
+          @config.logger.error { "[LDClient] Unexpected status code #{err[:status_code]} from streaming connection" }
           if err[:status_code] == 401
-            @config.logger.error("[LDClient] Received 401 error, no further streaming connection will be made since SDK key is invalid")
+            @config.logger.error { "[LDClient] Received 401 error, no further streaming connection will be made since SDK key is invalid" }
             stop
           end
         }
@@ -60,21 +60,21 @@ module LaunchDarkly
     def stop
       if @stopped.make_true
         @es.close
-        @config.logger.info("[LDClient] Stream connection stopped")
+        @config.logger.info { "[LDClient] Stream connection stopped" }
       end
     end
 
     def stop
       if @stopped.make_true
         @es.close
-        @config.logger.info("[LDClient] Stream connection stopped")
+        @config.logger.info { "[LDClient] Stream connection stopped" }
       end
     end
 
     private
 
     def process_message(message, method)
-      @config.logger.debug("[LDClient] Stream received #{method} message: #{message.data}")
+      @config.logger.debug { "[LDClient] Stream received #{method} message: #{message.data}" }
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
         @feature_store.init({
@@ -82,7 +82,7 @@ module LaunchDarkly
           SEGMENTS => message[:data][:segments]
         })
         @initialized.make_true
-        @config.logger.info("[LDClient] Stream initialized")
+        @config.logger.info { "[LDClient] Stream initialized" }
       elsif method == PATCH
         message = JSON.parse(message.data, symbolize_names: true)
         for kind in [FEATURES, SEGMENTS]
@@ -108,7 +108,7 @@ module LaunchDarkly
           SEGMENTS => all_data[:segments]
         })
         @initialized.make_true
-        @config.logger.info("[LDClient] Stream initialized (via indirect message)")
+        @config.logger.info { "[LDClient] Stream initialized (via indirect message)" }
       elsif method == INDIRECT_PATCH
         key = key_for_path(FEATURES, message.data)
         if key
@@ -120,7 +120,7 @@ module LaunchDarkly
           end
         end
       else
-        @config.logger.warn("[LDClient] Unknown message received: #{method}")
+        @config.logger.warn { "[LDClient] Unknown message received: #{method}" }
       end
     end
 

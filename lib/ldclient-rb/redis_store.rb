@@ -94,12 +94,12 @@ and prefix: #{@prefix}")
     def get(kind, key)
       f = @cache[cache_key(kind, key)]
       if f.nil?
-        @logger.debug("RedisFeatureStore: no cache hit for #{key} in '#{kind[:namespace]}', requesting from Redis")
+        @logger.debug { "RedisFeatureStore: no cache hit for #{key} in '#{kind[:namespace]}', requesting from Redis" }
         f = with_connection do |redis|
           begin
             get_redis(kind, redis, key.to_sym)
           rescue => e
-            @logger.error("RedisFeatureStore: could not retrieve #{key} from Redis in '#{kind[:namespace]}', with error: #{e}")
+            @logger.error { "RedisFeatureStore: could not retrieve #{key} from Redis in '#{kind[:namespace]}', with error: #{e}" }
             nil
           end
         end
@@ -108,10 +108,10 @@ and prefix: #{@prefix}")
         end
       end
       if f.nil?
-        @logger.debug("RedisFeatureStore: #{key} not found in '#{kind[:namespace]}'")
+        @logger.debug { "RedisFeatureStore: #{key} not found in '#{kind[:namespace]}'" }
         nil
       elsif f[:deleted]
-        @logger.debug("RedisFeatureStore: #{key} was deleted in '#{kind[:namespace]}', returning nil")
+        @logger.debug { "RedisFeatureStore: #{key} was deleted in '#{kind[:namespace]}', returning nil" }
         nil
       else
         f
@@ -124,7 +124,7 @@ and prefix: #{@prefix}")
         begin
           hashfs = redis.hgetall(items_key(kind))
         rescue => e
-          @logger.error("RedisFeatureStore: could not retrieve all '#{kind[:namespace]}' items from Redis with error: #{e}; returning none")
+          @logger.error { "RedisFeatureStore: could not retrieve all '#{kind[:namespace]}' items from Redis with error: #{e}; returning none" }
           hashfs = {}
         end
         hashfs.each do |k, jsonItem|
@@ -169,7 +169,7 @@ and prefix: #{@prefix}")
         end
       end
       @inited.set(true)
-      @logger.info("RedisFeatureStore: initialized with #{count} items")
+      @logger.info { "RedisFeatureStore: initialized with #{count} items" }
     end
 
     def upsert(kind, item)
@@ -219,7 +219,7 @@ and prefix: #{@prefix}")
         json_item = redis.hget(items_key(kind), key)
         JSON.parse(json_item, symbolize_names: true) if json_item
       rescue => e
-        @logger.error("RedisFeatureStore: could not retrieve #{key} from Redis, error: #{e}")
+        @logger.error { "RedisFeatureStore: could not retrieve #{key} from Redis, error: #{e}" }
         nil
       end
     end
@@ -232,7 +232,7 @@ and prefix: #{@prefix}")
       begin
         redis.hset(items_key(kind), key, item.to_json)
       rescue => e
-        @logger.error("RedisFeatureStore: could not store #{key} in Redis, error: #{e}")
+        @logger.error { "RedisFeatureStore: could not store #{key} in Redis, error: #{e}" }
       end
       put_cache(kind, key.to_sym, item)
     end

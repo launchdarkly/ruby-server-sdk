@@ -17,7 +17,7 @@ module LaunchDarkly
 
     def start
       return unless @started.make_true
-      @config.logger.info("[LDClient] Initializing polling connection")
+      @config.logger.info { "[LDClient] Initializing polling connection" }
       create_worker
     end
 
@@ -26,7 +26,7 @@ module LaunchDarkly
         if @worker && @worker.alive?
           @worker.raise "shutting down client"
         end
-        @config.logger.info("[LDClient] Polling connection stopped")
+        @config.logger.info { "[LDClient] Polling connection stopped" }
       end
     end
 
@@ -38,14 +38,14 @@ module LaunchDarkly
           SEGMENTS => all_data[:segments]
         })
         if @initialized.make_true
-          @config.logger.info("[LDClient] Polling connection initialized")
+          @config.logger.info { "[LDClient] Polling connection initialized" }
         end
       end
     end
 
     def create_worker
       @worker = Thread.new do
-        @config.logger.debug("[LDClient] Starting polling worker")
+        @config.logger.debug { "[LDClient] Starting polling worker" }
         while !@stopped.value do
           begin
             started_at = Time.now
@@ -55,10 +55,10 @@ module LaunchDarkly
               sleep(delta)
             end
           rescue InvalidSDKKeyError
-            @config.logger.error("[LDClient] Received 401 error, no further polling requests will be made since SDK key is invalid");
+            @config.logger.error { "[LDClient] Received 401 error, no further polling requests will be made since SDK key is invalid" };
             stop
           rescue StandardError => exn
-            @config.logger.error("[LDClient] Exception while polling: #{exn.inspect}")
+            @config.logger.error { "[LDClient] Exception while polling: #{exn.inspect}" }
             # TODO: log_exception(__method__.to_s, exn)
           end
         end

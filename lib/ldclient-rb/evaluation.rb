@@ -156,7 +156,7 @@ module LaunchDarkly
               failed_prereq = true
             end
           rescue => exn
-            @config.logger.error("[LDClient] Error evaluating prerequisite: #{exn.inspect}")
+            @config.logger.error { "[LDClient] Error evaluating prerequisite: #{exn.inspect}" }
             failed_prereq = true
           end
         end
