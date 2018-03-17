@@ -54,7 +54,15 @@ module LaunchDarkly
     # @option opts [Boolean] :send_events (true) Whether or not to send events back to LaunchDarkly.
     #   This differs from `offline` in that it affects only the sending of client-side events, not
     #   streaming or polling for events from the server.
-    #
+    # @option opts [Integer] :user_keys_capacity (1000) The number of user keys that the event processor
+    #   can remember at any one time, so that duplicate user details will not be sent in analytics events.
+    # @option opts [Float] :user_keys_flush_interval (300) The interval in seconds at which the event
+    #   processor will reset its set of known user keys.
+    # @option opts [Boolean] :inline_users_in_events (false) Whether to include full user details in every
+    #   analytics event. By default, events will only include the user key, except for one "index" event
+    #   that provides the full details for the user.
+    # @option opts [Object] :update_processor An object that will receive feature flag data from LaunchDarkly.
+    #   Defaults to either the streaming or the polling processor, can be customized for tests.
     # @return [type] [description]
     # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
     def initialize(opts = {})
@@ -76,6 +84,10 @@ module LaunchDarkly
       @all_attributes_private = opts[:all_attributes_private] || false
       @private_attribute_names = opts[:private_attribute_names] || []
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
+      @user_keys_capacity = opts[:user_keys_capacity] || Config.default_user_keys_capacity
+      @user_keys_flush_interval = opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
+      @inline_users_in_events = opts[:inline_users_in_events] || false
+      @update_processor = opts[:update_processor]
     end
 
     #
@@ -187,6 +199,26 @@ module LaunchDarkly
     attr_reader :send_events
 
     #
+    # The number of user keys that the event processor can remember at any one time, so that
+    # duplicate user details will not be sent in analytics events.
+    #
+    attr_reader :user_keys_capacity
+
+    #
+    # The interval in seconds at which the event processor will reset its set of known user keys.
+    #
+    attr_reader :user_keys_flush_interval
+
+    #
+    # Whether to include full user details in every
+    # analytics event. By default, events will only include the user key, except for one "index" event
+    # that provides the full details for the user.
+    #
+    attr_reader :inline_users_in_events
+
+    attr_reader :update_processor
+    
+    #
     # The default LaunchDarkly client configuration. This configuration sets
     # reasonable defaults for most users.
     #
@@ -263,6 +295,14 @@ module LaunchDarkly
 
     def self.default_send_events
       true
+    end
+
+    def self.default_user_keys_capacity
+      1000
+    end
+
+    def self.default_user_keys_flush_interval
+      300
     end
   end
 end
