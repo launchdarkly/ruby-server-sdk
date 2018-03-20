@@ -94,6 +94,74 @@ describe LaunchDarkly::EventProcessor do
     )
   end
 
+  it "ends debug mode based on client time if client time is later than server time" do
+    @ep = subject.new("sdk_key", default_config, hc)
+
+    # Pick a server time that is somewhat behind the client time
+    server_time = (Time.now.to_f * 1000).to_i - 20000
+
+    # Send and flush an event we don't care about, just to set the last server time
+    hc.set_server_time(server_time)
+    @ep.add_event({ kind: "identify", user: { key: "otherUser" }})
+    flush_and_get_events
+
+    # Now send an event with debug mode on, with a "debug until" time that is further in
+    # the future than the server time, but in the past compared to the client.
+    flag = { key: "flagkey", version: 11 }
+    debug_until = server_time + 1000
+    fe = {
+      kind: "feature",
+      key: "flagkey",
+      version: 11,
+      user: user,
+      variation: 1,
+      value: "value",
+      debugEventsUntilDate: debug_until
+    }
+    @ep.add_event(fe)
+
+    # Should get a summary event only, not a full feature event
+    output = flush_and_get_events
+    expect(output).to contain_exactly(
+      eq(index_event(fe)),
+      include(:kind => "summary")
+    )
+  end
+
+  it "ends debug mode based on server time if server time is later than client time" do
+    @ep = subject.new("sdk_key", default_config, hc)
+
+    # Pick a server time that is somewhat ahead of the client time
+    server_time = (Time.now.to_f * 1000).to_i + 20000
+
+    # Send and flush an event we don't care about, just to set the last server time
+    hc.set_server_time(server_time)
+    @ep.add_event({ kind: "identify", user: { key: "otherUser" }})
+    flush_and_get_events
+
+    # Now send an event with debug mode on, with a "debug until" time that is further in
+    # the future than the server time, but in the past compared to the client.
+    flag = { key: "flagkey", version: 11 }
+    debug_until = server_time - 1000
+    fe = {
+      kind: "feature",
+      key: "flagkey",
+      version: 11,
+      user: user,
+      variation: 1,
+      value: "value",
+      debugEventsUntilDate: debug_until
+    }
+    @ep.add_event(fe)
+
+    # Should get a summary event only, not a full feature event
+    output = flush_and_get_events
+    expect(output).to contain_exactly(
+      eq(index_event(fe)),
+      include(:kind => "summary")
+    )
+  end
+
   it "generates only one index event for multiple events with same user" do
     @ep = subject.new("sdk_key", default_config, hc)
     flag1 = { key: "flagkey1", version: 11 }
@@ -278,6 +346,10 @@ describe LaunchDarkly::EventProcessor do
   end
 
   class FakeHttpClient
+    def set_server_time(time_millis)
+      @server_time = Time.at(time_millis.to_f / 1000)
+    end
+
     def post(uri)
       req = Faraday::Request.create("POST")
       req.headers = {}
@@ -285,11 +357,13 @@ describe LaunchDarkly::EventProcessor do
       yield req
       @request_received = req
       resp = Faraday::Response.new
+      headers = {}
+      if @server_time
+        headers["Date"] = @server_time.httpdate
+      end
       resp.finish({
         status: 200,
-        response_headers: {
-          Date: Time.now.httpdate
-        }
+        response_headers: headers
       })
       resp
     end
