@@ -87,9 +87,9 @@ module LaunchDarkly
           true
         else
           if event.has_key?(:debugEventsUntilDate)
+            debugUntil = event[:debugEventsUntilDate]
             last_past = @last_known_past_time.value
-            (last_past != 0 && event[:debugEventsUntilDate] > last_past) ||
-              (event[:debugEventsUntilDate] > now_millis)
+            debugUntil > last_past && debugUntil > now_millis
           else
             false
           end
