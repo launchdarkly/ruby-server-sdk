@@ -103,9 +103,6 @@ and prefix: #{@prefix}")
             nil
           end
         end
-        if !f.nil?
-          put_cache(kind, key, f)
-        end
       end
       if f.nil?
         @logger.debug { "RedisFeatureStore: #{key} not found in '#{kind[:namespace]}'" }
@@ -138,22 +135,7 @@ and prefix: #{@prefix}")
     end
 
     def delete(kind, key, version)
-      with_connection do |redis|
-        f = get_redis(kind, redis, key)
-        if f.nil?
-          put_redis_and_cache(kind, redis, key, { deleted: true, version: version })
-        else
-          if f[:version] < version
-            f1 = f.clone
-            f1[:deleted] = true
-            f1[:version] = version
-            put_redis_and_cache(kind, redis, key, f1)
-          else
-            @logger.warn("RedisFeatureStore: attempted to delete #{key} version: #{f[:version]} \
-  in '#{kind[:namespace]}' with a version that is the same or older: #{version}")
-          end
-        end
-      end
+      update_with_versioning(kind, { key: key, version: version, deleted: true })
     end
 
     def init(all_data)
@@ -161,11 +143,20 @@ and prefix: #{@prefix}")
       count = 0
       with_connection do |redis|
         all_data.each do |kind, items|
-          redis.multi do |multi|
-            multi.del(items_key(kind))
-            count = count + items.count
-            items.each { |k, v| put_redis_and_cache(kind, multi, k, v) }
-          end
+          begin
+            redis.multi do |multi|
+              multi.del(items_key(kind))
+              count = count + items.count
+              items.each { |key, item|
+                redis.hset(items_key(kind), key, item.to_json)
+              }
+            end
+            items.each { |key, item|
+              put_cache(kind, key.to_sym, item)
+            }
+          rescue => e
+            @logger.error { "RedisFeatureStore: could not initialize '#{kind[:namespace]}' in Redis, error: #{e}" }
+          end    
         end
       end
       @inited.set(true)
@@ -173,15 +164,7 @@ and prefix: #{@prefix}")
     end
 
     def upsert(kind, item)
-      with_connection do |redis|
-        redis.watch(items_key(kind)) do
-          old = get_redis(kind, redis, item[:key])
-          if old.nil? || (old[:version] < item[:version])
-            put_redis_and_cache(kind, redis, item[:key], item)
-          end
-          redis.unwatch
-        end
-      end
+      update_with_versioning(kind, item)
     end
 
     def initialized?
@@ -198,6 +181,11 @@ and prefix: #{@prefix}")
     # exposed for testing
     def clear_local_cache()
       @cache.clear
+    end
+
+    # exposed for testing
+    def set_transaction_hook(proc)
+      @transaction_hook = proc
     end
 
     private
@@ -217,7 +205,13 @@ and prefix: #{@prefix}")
     def get_redis(kind, redis, key)
       begin
         json_item = redis.hget(items_key(kind), key)
-        JSON.parse(json_item, symbolize_names: true) if json_item
+        if json_item
+          item = JSON.parse(json_item, symbolize_names: true)
+          put_cache(kind, key, item)
+          item
+        else
+          nil
+        end
       rescue => e
         @logger.error { "RedisFeatureStore: could not retrieve #{key} from Redis, error: #{e}" }
         nil
@@ -228,13 +222,41 @@ and prefix: #{@prefix}")
       @cache.store(cache_key(kind, key), value, expires: @expiration_seconds)
     end
 
-    def put_redis_and_cache(kind, redis, key, item)
-      begin
-        redis.hset(items_key(kind), key, item.to_json)
-      rescue => e
-        @logger.error { "RedisFeatureStore: could not store #{key} in Redis, error: #{e}" }
+    def update_with_versioning(kind, new_item)
+      base_key = items_key(kind)
+      key = new_item[:key]
+      try_again = true
+      while try_again
+        try_again = false
+        with_connection do |redis|
+          redis.watch(base_key) do
+            old_item = get_redis(kind, redis, key)
+            if @transaction_hook
+              @transaction_hook.call(base_key, key)
+            end
+            if old_item.nil? || old_item[:version] < new_item[:version]
+              begin
+                result = redis.multi do |multi|
+                  multi.hset(base_key, key, new_item.to_json)
+                end
+                if result.nil?
+                  @logger.debug { "RedisFeatureStore: concurrent modification detected, retrying" }
+                  try_again = true
+                else
+                  put_cache(kind, key.to_sym, new_item)
+                end
+              rescue => e
+                @logger.error { "RedisFeatureStore: could not store #{key} in Redis, error: #{e}" }
+              end
+            else
+              action = new_item[:deleted] ? "delete" : "update"
+              @logger.warn { "RedisFeatureStore: attempted to #{action} #{key} version: #{old_item[:version]} \
+      in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:version]}" }
+            end
+            redis.unwatch
+          end
+        end
       end
-      put_cache(kind, key.to_sym, item)
     end
 
     def query_inited
