@@ -178,17 +178,11 @@ and prefix: #{@prefix}")
       end
     end
 
-    # exposed for testing
-    def clear_local_cache()
-      @cache.clear
-    end
-
-    # exposed for testing
-    def set_transaction_hook(proc)
-      @transaction_hook = proc
-    end
-
     private
+
+    # exposed for testing
+    def before_update_transaction(base_key, key)
+    end
 
     def items_key(kind)
       @prefix + ":" + kind[:namespace]
@@ -231,9 +225,7 @@ and prefix: #{@prefix}")
         with_connection do |redis|
           redis.watch(base_key) do
             old_item = get_redis(kind, redis, key)
-            if @transaction_hook
-              @transaction_hook.call(base_key, key)
-            end
+            before_update_transaction(base_key, key)
             if old_item.nil? || old_item[:version] < new_item[:version]
               begin
                 result = redis.multi do |multi|

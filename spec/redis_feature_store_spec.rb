@@ -32,16 +32,16 @@ describe LaunchDarkly::RedisFeatureStore do
     include_examples "feature_store", method(:create_redis_store_uncached)
   end
 
-  def make_concurrent_modifier(other_client, flag, start_version, end_version)
+  def add_concurrent_modifier(store, other_client, flag, start_version, end_version)
     version_counter = start_version
-    Proc.new do |base_key, key|
+    expect(store).to receive(:before_update_transaction) { |base_key, key|
       if version_counter <= end_version
         new_flag = flag.clone
         new_flag[:version] = version_counter
         other_client.hset(base_key, key, new_flag.to_json)
         version_counter = version_counter + 1
       end
-    end
+    }.at_least(:once)
   end
 
   it "handles upsert race condition against external client with lower version" do
@@ -52,7 +52,7 @@ describe LaunchDarkly::RedisFeatureStore do
       flag = { key: "foo", version: 1 }
       store.init(LaunchDarkly::FEATURES => { flag[:key] => flag })
 
-      store.set_transaction_hook(make_concurrent_modifier(other_client, flag, 2, 4))
+      add_concurrent_modifier(store, other_client, flag, 2, 4)
 
       my_ver = { key: "foo", version: 10 }
       store.upsert(LaunchDarkly::FEATURES, my_ver)
@@ -71,7 +71,7 @@ describe LaunchDarkly::RedisFeatureStore do
       flag = { key: "foo", version: 1 }
       store.init(LaunchDarkly::FEATURES => { flag[:key] => flag })
 
-      store.set_transaction_hook(make_concurrent_modifier(other_client, flag, 3, 3))
+      add_concurrent_modifier(store, other_client, flag, 3, 3)
 
       my_ver = { key: "foo", version: 2 }
       store.upsert(LaunchDarkly::FEATURES, my_ver)
