@@ -18,7 +18,7 @@ module LaunchDarkly
 
   class EventProcessor
     def initialize(sdk_key, config, client)
-      @lock = Mutex.new
+      @queue = Queue.new
       @events = []
       @summarizer = EventSummarizer.new(config)
       @sdk_key = sdk_key
@@ -26,62 +26,91 @@ module LaunchDarkly
       @user_filter = UserFilter.new(config)
       @client = client ? client : Faraday.new
       @stopped = Concurrent::AtomicBoolean.new(false)
+      @capacity_exceeded = false
       @last_known_past_time = Concurrent::AtomicFixnum.new(0)
       @flush_task = Concurrent::TimerTask.new(execution_interval: @config.flush_interval) do
-        flush_async
+        @queue << [:flush, nil]
       end
       @users_flush_task = Concurrent::TimerTask.new(execution_interval: @config.user_keys_flush_interval) do
-        @summarizer.reset_users
+        @queue << [:flush_users, nil]
       end
+      Thread.new { main_loop }
     end
 
     def stop
+      flush
       if @stopped.make_true
         # There seems to be no such thing as "close" in Faraday: https://github.com/lostisland/faraday/issues/241
         @flush_task.shutdown
         @users_flush_task.shutdown
+        # Tell the worker thread to stop
+        @queue << [:stop]
       end
     end
 
     def add_event(event)
       return if @stopped.value
-
-      now_millis = (Time.now.to_f * 1000).to_i
       event[:creationDate] = now_millis
-
-      @lock.synchronize {
-        # For each user we haven't seen before, we add an index event - unless this is already
-        # an identify event for that user.
-        if !@config.inline_users_in_events && event.has_key?(:user) && !@summarizer.notice_user(event[:user])
-          if event[:kind] != "identify"
-            queue_event({
-              kind: "index",
-              creationDate: event[:creationDate],
-              user: event[:user]
-            })
-          end
-        end
-
-        # Always record the event in the summary.
-        @summarizer.summarize_event(event)
-
-        if should_track_full_event(event, now_millis)
-          # Queue the event as-is; we'll transform it into an output event when we're flushing.
-          queue_event(event)
-        end
-      }
+      @queue << [:event, event]
     end
 
     def flush
+      return if @stopped.value
       # An explicit flush should be synchronous, so we use a semaphore to wait for the result
       semaphore = Concurrent::Semaphore.new(0)
-      flush_internal(semaphore)
+      @queue << [:flush, semaphore]
       semaphore.acquire
     end
 
     private
 
-    def should_track_full_event(event, now_millis)
+    def now_millis()
+      (Time.now.to_f * 1000).to_i
+    end
+
+    def main_loop()
+      loop do
+        begin
+          message = @queue.pop
+          case message[0]
+          when :event
+            dispatch_event(message[1])
+          when :flush
+            flush_internal(message[1])
+          when :flush_users
+            @summarizer.reset_users
+          when :stop
+            break
+          end
+        rescue => e
+          @config.logger.warn { "[LDClient] Unexpected error in event processor: #{e.inspect}. \nTrace: #{e.backtrace}" }
+        end
+      end
+    end
+
+    def dispatch_event(event)
+      # For each user we haven't seen before, we add an index event - unless this is already
+      # an identify event for that user.
+      if !@config.inline_users_in_events && event.has_key?(:user) && !@summarizer.notice_user(event[:user])
+        if event[:kind] != "identify"
+          queue_event({
+            kind: "index",
+            creationDate: event[:creationDate],
+            user: @user_filter.transform_user_props(event[:user])
+          })
+        end
+      end
+
+      # Always record the event in the summary.
+      @summarizer.summarize_event(event)
+
+      if should_track_full_event(event)
+        # Queue the event as-is; we'll transform it into an output event when we're flushing.
+        queue_event(event)
+      end
+    end
+
+    def should_track_full_event(event)
       if event[:kind] == "feature"
         if event[:trackEvents]
           true
@@ -103,23 +132,21 @@ module LaunchDarkly
       if @events.length < @config.capacity
         @config.logger.debug { "[LDClient] Enqueueing event: #{event.to_json}" }
         @events.push(event)
+        @capacity_exceeded = false
       else
-        @config.logger.warn { "[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events." }
+        if !@capacity_exceeded
+          @capacity_exceeded = true
+          @config.logger.warn { "[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events." }
+        end
       end
     end
 
-    def flush_async
-      flush_internal(nil)
-    end
-
     def flush_internal(reply_semaphore)
-      old_events, snapshot = @lock.synchronize {
-        old_events = @events
-        @events = []
-        snapshot = @summarizer.snapshot
-        [old_events, snapshot]
-      }
-      if !old_events.empty? || !snapshot[:counters].empty?
+      old_events = @events
+      @events = []
+      snapshot = @summarizer.snapshot
+  
+      if !@stopped.value && (!old_events.empty? || !snapshot[:counters].empty?)
         Thread.new do
           begin
             post_flushed_events(old_events, snapshot)
