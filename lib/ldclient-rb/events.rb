@@ -16,6 +16,26 @@ module LaunchDarkly
     end
   end
 
+  class EventMessage
+    def initialize(event)
+      @event = event
+    end
+    attr_reader :event
+  end
+
+  class FlushMessage
+    def initialize(reply)
+      @reply = reply
+    end
+    attr_reader :reply
+  end
+
+  class FlushUsersMessage
+  end
+
+  class StopMessage
+  end
+
   class EventProcessor
     def initialize(sdk_key, config, client)
       @queue = Queue.new
@@ -29,10 +49,10 @@ module LaunchDarkly
       @capacity_exceeded = false
       @last_known_past_time = Concurrent::AtomicFixnum.new(0)
       @flush_task = Concurrent::TimerTask.new(execution_interval: @config.flush_interval) do
-        @queue << [:flush, nil]
+        @queue << FlushMessage.new(nil)
       end
       @users_flush_task = Concurrent::TimerTask.new(execution_interval: @config.user_keys_flush_interval) do
-        @queue << [:flush_users, nil]
+        @queue << FlushUsersMessage.new
       end
       Thread.new { main_loop }
     end
@@ -44,21 +64,21 @@ module LaunchDarkly
         @flush_task.shutdown
         @users_flush_task.shutdown
         # Tell the worker thread to stop
-        @queue << [:stop]
+        @queue << StopMessage.new
       end
     end
 
     def add_event(event)
       return if @stopped.value
       event[:creationDate] = now_millis
-      @queue << [:event, event]
+      @queue << EventMessage.new(event)
     end
 
     def flush
       return if @stopped.value
       # An explicit flush should be synchronous, so we use a semaphore to wait for the result
       semaphore = Concurrent::Semaphore.new(0)
-      @queue << [:flush, semaphore]
+      @queue << FlushMessage.new(semaphore)
       semaphore.acquire
     end
 
@@ -72,14 +92,14 @@ module LaunchDarkly
       loop do
         begin
           message = @queue.pop
-          case message[0]
-          when :event
-            dispatch_event(message[1])
-          when :flush
-            flush_internal(message[1])
-          when :flush_users
+          case message
+          when EventMessage
+            dispatch_event(message.event)
+          when FlushMessage
+            flush_internal(message.reply)
+          when FlushUsersMessage
             @summarizer.reset_users
-          when :stop
+          when StopMessage
             break
           end
         rescue => e
