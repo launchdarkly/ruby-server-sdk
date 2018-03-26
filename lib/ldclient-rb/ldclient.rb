@@ -28,7 +28,11 @@ module LaunchDarkly
       @config = config
       @store = config.feature_store
 
-      @event_processor = EventProcessor.new(sdk_key, config)
+      if @config.offline? || !@config.send_events
+        @event_processor = NullEventProcessor.new
+      else
+        @event_processor = EventProcessor.new(sdk_key, config)
+      end
 
       if @config.use_ldd?
         @config.logger.info { "[LDClient] Started LaunchDarkly Client in LDD mode" }
@@ -38,12 +42,16 @@ module LaunchDarkly
       requestor = Requestor.new(sdk_key, config)
 
       if !@config.offline?
-        if @config.stream?
-          @update_processor = StreamProcessor.new(sdk_key, config, requestor)
+        if @config.update_processor.nil?
+          if @config.stream?
+            @update_processor = StreamProcessor.new(sdk_key, config, requestor)
+          else
+            @config.logger.info { "Disabling streaming API" }
+            @config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
+            @update_processor = PollingProcessor.new(config, requestor)
+          end
         else
-          @config.logger.info { "Disabling streaming API" }
-          @config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
-          @update_processor = PollingProcessor.new(config, requestor)
+          @update_processor = @config.update_processor
         end
         @update_processor.start
       end
@@ -145,17 +153,18 @@ module LaunchDarkly
             @event_processor.add_event(event)
           end
         end
-        if !res[:value].nil?
-          @event_processor.add_event(kind: "feature", key: key, user: user, value: res[:value], default: default, version: feature[:version])
-          return res[:value]
-        else
+        value = res[:value]
+        if value.nil?
           @config.logger.debug { "[LDClient] Result value is null in toggle" }
-          @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version])
-          return default
+          value = default
         end
+        @event_processor.add_event(kind: "feature", key: key, user: user, value: res[:value], default: default, version: feature[:version],
+          trackEvents: feature[:trackEvents], debugEventsUntilDate: feature[:debugEventsUntilDate])
+        return value
       rescue => exn
         @config.logger.warn { "[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
-        @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version])
+        @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version],
+          trackEvents: feature[:trackEvents], debugEventsUntilDate: feature[:debugEventsUntilDate])
         return default
       end
     end

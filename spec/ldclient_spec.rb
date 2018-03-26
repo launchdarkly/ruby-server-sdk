@@ -3,7 +3,12 @@ require "spec_helper"
 
 describe LaunchDarkly::LDClient do
   subject { LaunchDarkly::LDClient }
-  let(:config) { LaunchDarkly::Config.new({offline: true}) }  
+  let(:offline_config) { LaunchDarkly::Config.new({offline: true}) }
+  let(:offline_client) do
+    subject.new("secret", offline_config)
+  end
+  let(:update_processor) { NullUpdateProcessor.new }
+  let(:config) { LaunchDarkly::Config.new({send_events: false, update_processor: update_processor}) }
   let(:client) do
     subject.new("secret", config)
   end
@@ -24,10 +29,31 @@ describe LaunchDarkly::LDClient do
     JSON.parse(data, symbolize_names: true)
   end
 
+  def event_processor
+    client.instance_variable_get(:@event_processor)
+  end
+
   describe '#variation' do
     it "will return the default value if the client is offline" do
-      result = client.variation(feature[:key], user, "default")
+      result = offline_client.variation("doesntmatter", user, "default")
       expect(result).to eq "default"
+    end
+
+    it "queues a feature request event for an unknown feature" do
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "feature", key: "badkey", user: user, value: "default", default: "default"
+      ))
+      client.variation("badkey", user, "default")
+    end
+
+    it "queues a feature request event for an existing feature" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature)
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "feature", key: feature[:key], version: feature[:version], user: user,
+        value: true, default: "default", trackEvents: false, debugEventsUntilDate: nil
+      ))
+      client.variation(feature[:key], user, "default")
     end
   end
 
@@ -40,22 +66,24 @@ describe LaunchDarkly::LDClient do
 
   describe '#track' do 
     it "queues up an custom event" do
-      expect(client.instance_variable_get(:@event_processor)).to receive(:add_event).with(hash_including(kind: "custom", key: "custom_event_name", user: user, data: 42))
+      expect(event_processor).to receive(:add_event).with(hash_including(kind: "custom", key: "custom_event_name", user: user, data: 42))
       client.track("custom_event_name", user, 42)
     end
+
     it "sanitizes the user in the event" do
-      expect(client.instance_variable_get(:@event_processor)).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
+      expect(event_processor).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
       client.track("custom_event_name", numeric_key_user, nil)
     end
   end
 
   describe '#identify' do 
     it "queues up an identify event" do
-      expect(client.instance_variable_get(:@event_processor)).to receive(:add_event).with(hash_including(kind: "identify", key: user[:key], user: user))
+      expect(event_processor).to receive(:add_event).with(hash_including(kind: "identify", key: user[:key], user: user))
       client.identify(user)
     end
+
     it "sanitizes the user in the event" do
-      expect(client.instance_variable_get(:@event_processor)).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
+      expect(event_processor).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
       client.identify(numeric_key_user)
     end
   end
@@ -75,21 +103,17 @@ describe LaunchDarkly::LDClient do
     let(:config) { LaunchDarkly::Config.new({offline: true, send_events: false}) }
     let(:client) { subject.new("secret", config) }
 
-    let(:queue) { client.instance_variable_get(:@event_processor).instance_variable_get(:@queue) }
+    it "uses a NullEventProcessor" do
+      expect(event_processor).to be_a(LaunchDarkly::NullEventProcessor)
+    end
+  end
 
-    it "does not enqueue a feature event" do
-      client.variation(feature[:key], user, "default")
-      expect(queue.empty?).to be true
+  class NullUpdateProcessor
+    def start
     end
 
-    it "does not enqueue a custom event" do
-      client.track("custom_event_name", user, 42)
-      expect(queue.empty?).to be true
-    end
-
-    it "does not enqueue an identify event" do
-      client.identify(user)
-      expect(queue.empty?).to be true
+    def initialized?
+      true
     end
   end
 end

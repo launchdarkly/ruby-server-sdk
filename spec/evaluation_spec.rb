@@ -24,7 +24,7 @@ describe LaunchDarkly::Evaluation do
         variations: ['a', 'b', 'c']
       }
       user = { key: 'x' }
-      expect(evaluate(flag, user, features)).to eq({value: 'b', events: []})
+      expect(evaluate(flag, user, features)).to eq({variation: 1, value: 'b', events: []})
     end
 
     it "returns nil if flag is off and off variation is unspecified" do
@@ -35,7 +35,7 @@ describe LaunchDarkly::Evaluation do
         variations: ['a', 'b', 'c']
       }
       user = { key: 'x' }
-      expect(evaluate(flag, user, features)).to eq({value: nil, events: []})
+      expect(evaluate(flag, user, features)).to eq({variation: nil, value: nil, events: []})
     end
 
     it "returns off variation if prerequisite is not found" do
@@ -48,7 +48,7 @@ describe LaunchDarkly::Evaluation do
         variations: ['a', 'b', 'c']
       }
       user = { key: 'x' }
-      expect(evaluate(flag, user, features)).to eq({value: 'b', events: []})
+      expect(evaluate(flag, user, features)).to eq({variation: 1, value: 'b', events: []})
     end
 
     it "returns off variation and event if prerequisite is not met" do
@@ -70,8 +70,11 @@ describe LaunchDarkly::Evaluation do
       }
       features.upsert(LaunchDarkly::FEATURES, flag1)
       user = { key: 'x' }
-      events_should_be = [{kind: 'feature', key: 'feature1', value: 'd', version: 2, prereqOf: 'feature0'}]
-      expect(evaluate(flag, user, features)).to eq({value: 'b', events: events_should_be})
+      events_should_be = [{
+        kind: 'feature', key: 'feature1', variation: 0, value: 'd', version: 2, prereqOf: 'feature0',
+        trackEvents: nil, debugEventsUntilDate: nil
+      }]
+      expect(evaluate(flag, user, features)).to eq({variation: 1, value: 'b', events: events_should_be})
     end
 
     it "returns fallthrough variation and event if prerequisite is met and there are no rules" do
@@ -93,8 +96,11 @@ describe LaunchDarkly::Evaluation do
       }
       features.upsert(LaunchDarkly::FEATURES, flag1)
       user = { key: 'x' }
-      events_should_be = [{kind: 'feature', key: 'feature1', value: 'e', version: 2, prereqOf: 'feature0'}]
-      expect(evaluate(flag, user, features)).to eq({value: 'a', events: events_should_be})
+      events_should_be = [{
+        kind: 'feature', key: 'feature1', variation: 1, value: 'e', version: 2, prereqOf: 'feature0',
+        trackEvents: nil, debugEventsUntilDate: nil
+      }]
+      expect(evaluate(flag, user, features)).to eq({variation: 0, value: 'a', events: events_should_be})
     end
 
     it "matches user from targets" do
@@ -109,7 +115,7 @@ describe LaunchDarkly::Evaluation do
         variations: ['a', 'b', 'c']
       }
       user = { key: 'userkey' }
-      expect(evaluate(flag, user, features)).to eq({value: 'c', events: []})
+      expect(evaluate(flag, user, features)).to eq({variation: 2, value: 'c', events: []})
     end
 
     it "matches user from rules" do
@@ -133,7 +139,7 @@ describe LaunchDarkly::Evaluation do
         variations: ['a', 'b', 'c']
       }
       user = { key: 'userkey' }
-      expect(evaluate(flag, user, features)).to eq({value: 'c', events: []})
+      expect(evaluate(flag, user, features)).to eq({variation: 2, value: 'c', events: []})
     end
   end
 
