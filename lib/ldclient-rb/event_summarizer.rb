@@ -1,30 +1,14 @@
 
 module LaunchDarkly
-  EventSummarySnapshot = Struct.new(:start_date, :end_date, :counters)
+  EventSummary = Struct.new(:start_date, :end_date, :counters)
 
   # Manages the state of summarizable information for the EventProcessor, including the
   # event counters and user deduplication. Note that the methods of this class are
   # deliberately not thread-safe; the EventProcessor is responsible for enforcing
   # synchronization across both the summarizer and the event queue.
   class EventSummarizer
-    def initialize(config)
-      @config = config
-      @users = SimpleLRUCacheSet.new(@config.user_keys_capacity)
+    def initialize
       reset_state
-    end
-
-    # Adds to the set of users we've noticed, and return true if the user was already known to us.
-    def notice_user(user)
-      if user.nil? || !user.has_key?(:key)
-        true
-      else
-        @users.add(user[:key])
-      end
-    end
-
-    # Resets the set of users we've seen.
-    def reset_users
-      @users.reset
     end
 
     # Adds this event to our counters, if it is a type of event we need to count.
@@ -55,43 +39,9 @@ module LaunchDarkly
 
     # Returns a snapshot of the current summarized event data, and resets this state.
     def snapshot
-      ret = {
-        start_date: @start_date,
-        end_date: @end_date,
-        counters: @counters
-      }
+      ret = EventSummary.new(@start_date, @end_date, @counters)
       reset_state
       ret
-    end
-
-    # Transforms the summary data into the format used for event sending.
-    def output(snapshot)
-      flags = {}
-      snapshot[:counters].each { |ckey, cval|
-        flag = flags[ckey[:key]]
-        if flag.nil?
-          flag = {
-            default: cval[:default],
-            counters: []
-          }
-          flags[ckey[:key]] = flag
-        end
-        c = {
-          value: cval[:value],
-          count: cval[:count]
-        }
-        if ckey[:version].nil?
-          c[:unknown] = true
-        else
-          c[:version] = ckey[:version]
-        end
-        flag[:counters].push(c)
-      }
-      {
-        startDate: snapshot[:start_date],
-        endDate: snapshot[:end_date],
-        features: flags
-      }
     end
 
     private
