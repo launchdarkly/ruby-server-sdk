@@ -226,7 +226,7 @@ module LaunchDarkly
           begin
             res_time = (Time.httpdate(res.headers["Date"]).to_f * 1000).to_i
             @last_known_past_time.value = res_time
-          rescue
+          rescue ArgumentError
           end
         end
       end
