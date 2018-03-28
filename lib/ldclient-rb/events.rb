@@ -1,10 +1,13 @@
 require "concurrent"
 require "concurrent/atomics"
+require "concurrent/executors"
 require "thread"
 require "time"
 require "faraday"
 
 module LaunchDarkly
+  MAX_FLUSH_WORKERS = 5
+
   class NullEventProcessor
     def add_event(event)
     end
@@ -24,25 +27,29 @@ module LaunchDarkly
   end
 
   class FlushMessage
-    def initialize(synchronous)
-      @reply = synchronous ? Concurrent::Semaphore.new(0) : nil
-    end
-    
-    attr_reader :reply
-
-    def completed
-      @reply.release if !@reply.nil?
-    end
-
-    def wait_for_completion
-      @reply.acquire if !@reply.nil?
-    end
   end
 
   class FlushUsersMessage
   end
 
-  class StopMessage
+  class SynchronousMessage
+    def initialize
+      @reply = Concurrent::Semaphore.new(0)
+    end
+    
+    def completed
+      @reply.release
+    end
+
+    def wait_for_completion
+      @reply.acquire
+    end
+  end
+
+  class TestSyncMessage < SynchronousMessage
+  end
+
+  class StopMessage < SynchronousMessage
   end
 
   class EventProcessor
@@ -54,15 +61,9 @@ module LaunchDarkly
       @users_flush_task = Concurrent::TimerTask.new(execution_interval: config.user_keys_flush_interval) do
         @queue << FlushUsersMessage.new
       end
+      @stopped = Concurrent::AtomicBoolean.new(false)
       @consumer = EventConsumer.new(@queue, sdk_key, config, client)
       @consumer.start
-    end
-
-    def stop
-      @flush_task.shutdown
-      @users_flush_task.shutdown
-      flush
-      @consumer.stop
     end
 
     def add_event(event)
@@ -71,10 +72,27 @@ module LaunchDarkly
     end
 
     def flush
-      # An explicit flush should be synchronous, so we use a semaphore to wait for the result
-      message = FlushMessage.new(true)
-      @queue << message
-      message.wait_for_completion
+      # flush is done asynchronously
+      @queue << FlushMessage.new
+    end
+
+    def stop
+      # final shutdown, which includes a final flush, is done synchronously
+      if @stopped.make_true
+        @flush_task.shutdown
+        @users_flush_task.shutdown
+        @queue << FlushMessage.new
+        stop_msg = StopMessage.new
+        @queue << stop_msg
+        stop_msg.wait_for_completion
+      end
+    end
+
+    # exposed only for testing
+    def wait_until_inactive
+      sync_msg = TestSyncMessage.new
+      @queue << sync_msg
+      sync_msg.wait_for_completion
     end
   end
 
@@ -87,7 +105,7 @@ module LaunchDarkly
       @events = []
       @summarizer = EventSummarizer.new
       @user_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
-      @stopped = Concurrent::AtomicBoolean.new(false)
+      @flush_workers = Concurrent::FixedThreadPool.new(MAX_FLUSH_WORKERS)
       @disabled = Concurrent::AtomicBoolean.new(false)
       @capacity_exceeded = false
       @last_known_past_time = Concurrent::AtomicFixnum.new(0)
@@ -97,14 +115,6 @@ module LaunchDarkly
       Thread.new { main_loop }
     end
 
-    def stop
-      if @stopped.make_true
-        # There seems to be no such thing as "close" in Faraday: https://github.com/lostisland/faraday/issues/241
-        # Tell the worker thread to stop
-        @queue << StopMessage.new
-      end
-    end
-
     private
 
     def now_millis()
@@ -112,23 +122,42 @@ module LaunchDarkly
     end
 
     def main_loop()
-      loop do
+      running = true
+      while running do
         begin
           message = @queue.pop
           case message
           when EventMessage
             dispatch_event(message.event)
           when FlushMessage
-            flush_internal(message)
+            start_flush
           when FlushUsersMessage
             @user_keys.reset
+          when TestSyncMessage
+            synchronize_for_testing
+            message.completed
           when StopMessage
-            break
+            do_shutdown
+            running = false
+            message.completed
           end
         rescue => e
           @config.logger.warn { "[LDClient] Unexpected error in event processor: #{e.inspect}. \nTrace: #{e.backtrace}" }
         end
       end
+    end
+
+    def do_shutdown
+      @flush_workers.shutdown
+      @flush_workers.wait_for_termination
+      # There seems to be no such thing as "close" in Faraday: https://github.com/lostisland/faraday/issues/241
+    end
+
+    def synchronize_for_testing
+      # used only by unit tests
+      @flush_workers.shutdown
+      @flush_workers.wait_for_termination
+      @flush_workers = Concurrent::FixedThreadPool.new(MAX_FLUSH_WORKERS)
     end
 
     def dispatch_event(event)
@@ -195,9 +224,8 @@ module LaunchDarkly
       end
     end
 
-    def flush_internal(message)
+    def start_flush()
       if @disabled.value
-        message.completed
         return
       end
 
@@ -207,10 +235,10 @@ module LaunchDarkly
   
       if !old_events.empty? || !snapshot[:counters].empty?
         task = EventPayloadSendTask.new(@sdk_key, @config, @client, old_events, snapshot,
-          message, method(:on_event_response))
-        task.start
-      else
-        message.completed
+          method(:on_event_response))
+        @flush_workers.post do
+          task.run
+        end
       end
     end
 
@@ -234,25 +262,21 @@ module LaunchDarkly
   end
 
   class EventPayloadSendTask
-    def initialize(sdk_key, config, client, events, summary, message, response_callback)
+    def initialize(sdk_key, config, client, events, summary, response_callback)
       @sdk_key = sdk_key
       @config = config
       @client = client
       @events = events
       @summary = summary
-      @message = message
       @response_callback = response_callback
       @user_filter = UserFilter.new(config)
     end
 
-    def start
-      Thread.new do
-        begin
-          post_flushed_events
-        rescue StandardError => exn
-          @config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
-        end
-        @message.completed
+    def run
+      begin
+        post_flushed_events
+      rescue StandardError => exn
+        @config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
       end
     end
 

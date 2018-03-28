@@ -286,6 +286,17 @@ describe LaunchDarkly::EventProcessor do
     )
   end
 
+  it "does a final flush when shutting down" do
+    @ep = subject.new("sdk_key", default_config, hc)
+    e = { kind: "identify", user: user }
+    @ep.add_event(e)
+    
+    @ep.stop
+
+    output = get_events_from_last_request
+    expect(output).to contain_exactly(e)
+  end
+
   it "sends nothing if there are no events" do
     @ep = subject.new("sdk_key", default_config, hc)
     @ep.flush
@@ -356,6 +367,11 @@ describe LaunchDarkly::EventProcessor do
 
   def flush_and_get_events
     @ep.flush
+    @ep.wait_until_inactive
+    get_events_from_last_request
+  end
+
+  def get_events_from_last_request
     req = hc.request_received
     JSON.parse(req.body, symbolize_names: true)
   end
