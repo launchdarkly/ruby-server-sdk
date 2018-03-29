@@ -8,6 +8,7 @@ workflows:
       - test-2.2
       - test-2.3
       - test-2.4
+      - test-jruby-9
 
 ruby-docker-template: &ruby-docker-template
   steps:
