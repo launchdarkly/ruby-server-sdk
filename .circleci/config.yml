@@ -8,7 +8,7 @@ workflows:
       - test-2.2
       - test-2.3
       - test-2.4
-      - test-jruby-9
+      - test-jruby-9.1
 
 ruby-docker-template: &ruby-docker-template
   steps:
@@ -42,17 +42,19 @@ jobs:
     docker:
       - image: circleci/ruby:2.4.3-jessie
       - image: redis
-  test-jruby-9:
+  test-jruby-9.1:
     <<: *ruby-docker-template
     docker:
       - image: circleci/jruby:9-jdk
       - image: redis
 
+  # The following very slow job uses an Ubuntu container to run the Ruby versions that
+  # CircleCI doesn't provide Docker images for.
   test-misc-rubies:
     machine:
       image: circleci/classic:latest
     environment:
-      - RUBIES: "ruby-2.1.9 ruby-2.0.0 ruby-1.9.3 jruby-1.7.22 jruby-9.0.5.0 jruby-9.1.13.0"
+      - RUBIES: "ruby-2.1.9 ruby-2.0.0 ruby-1.9.3 jruby-1.7.22 jruby-9.0.5.0"
     steps:
       - run: sudo apt-get -q update
       - run: sudo apt-get -qy install redis-server
