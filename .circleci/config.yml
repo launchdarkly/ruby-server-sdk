@@ -1,30 +1,66 @@
 version: 2
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-misc-rubies
+      - test-2.2
+      - test-2.3
+      - test-2.4
+ruby-docker-template: &ruby-docker-template
+  steps:
+    - checkout
+    - run: gem install bundler
+    - run: bundle install
+    - run: mkdir ./rspec
+    - run: bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
+    - store_test_results:
+        path: ./rspec
+    - store_artifacts:
+        path: ./rspec
 jobs:
-  build:
-    machine:
-      image: circleci/classic:latest
-    environment:
-      - RUBIES: "ruby-2.4.2 ruby-2.2.7 ruby-2.1.9 ruby-2.0.0 ruby-1.9.3 jruby-1.7.22 jruby-9.0.5.0 jruby-9.1.13.0"
-    steps:
-      - checkout
-      - run: |
-          set -e
-          for i in $RUBIES;
-          do
-            rvm install $i;
-            rvm use $i;
-            if [[ $i == jruby* ]]; then
-              gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
-            fi
-            gem install bundler;
-            bundle install;
-            mv Gemfile.lock "Gemfile.lock.$i"
-          done
-      - run: |
-          set -e
-          for i in $RUBIES;
-          do
-            rvm use $i;
-            cp "Gemfile.lock.$i" Gemfile.lock;
-            bundle exec rspec spec;
-          done
+  test-2.2:
+    <<: *ruby-docker-template
+    docker:
+      - image: circleci/ruby:2.2.9-jessie
+      - image: redis
+  test-2.3:
+    <<: *ruby-docker-template
+    docker:
+      - image: circleci/ruby:2.3.6-jessie
+      - image: redis
+  test-2.4:
+    <<: *ruby-docker-template
+    docker:
+      - image: circleci/ruby:2.4.3-jessie
+      - image: redis
+  # test-misc-rubies:
+  #   machine:
+  #     image: circleci/classic:latest
+  #   environment:
+  #     - RUBIES: "ruby-2.4.2 ruby-2.2.7 ruby-2.1.9 ruby-2.0.0 ruby-1.9.3 jruby-1.7.22 jruby-9.0.5.0 jruby-9.1.13.0"
+  #   steps:
+  #     - run: apt-get install redis
+  #     - run: redis-server &
+  #     - checkout
+  #     - run: |
+  #         set -e
+  #         for i in $RUBIES;
+  #         do
+  #           rvm install $i;
+  #           rvm use $i;
+  #           if [[ $i == jruby* ]]; then
+  #             gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
+  #           fi
+  #           gem install bundler;
+  #           bundle install;
+  #           mv Gemfile.lock "Gemfile.lock.$i"
+  #         done
+  #     - run: |
+  #         set -e
+  #         for i in $RUBIES;
+  #         do
+  #           rvm use $i;
+  #           cp "Gemfile.lock.$i" Gemfile.lock;
+  #           bundle exec rspec spec;
+  #         done
