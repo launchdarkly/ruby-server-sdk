@@ -28,8 +28,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "redis", "~> 3.3.5"
   spec.add_development_dependency "connection_pool", ">= 2.1.2"
   spec.add_development_dependency "moneta", "~> 1.0.0"
-  spec.add_development_dependency "rspec_junit_formatter", "~> 0.3.0"
-  
+  if RUBY_VERSION >= "2.0.0"
+    spec.add_development_dependency "rspec_junit_formatter", "~> 0.3.0"
+  end
+
   spec.add_runtime_dependency "json", [">= 1.8", "< 3"]
   if RUBY_VERSION >= "2.1.0"
     spec.add_runtime_dependency "faraday", [">= 0.9", "< 2"]
