@@ -47,6 +47,7 @@ jobs:
     docker:
       - image: circleci/jruby:9-jdk
       - image: redis
+
   test-misc-rubies:
     machine:
       image: circleci/classic:latest
@@ -58,7 +59,7 @@ jobs:
       - checkout
       - run:
           name: install all Ruby versions
-          command: for i in $RUBIES; do rvm install $i; done
+          command: "parallel rvm install ::: $RUBIES"
       - run:
           name: bundle install for all versions
           shell: /bin/bash -leo pipefail # need -l in order for "rvm use" to work
