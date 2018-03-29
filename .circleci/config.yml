@@ -40,7 +40,7 @@ jobs:
     environment:
       - RUBIES: "ruby-2.1.9 ruby-2.0.0 ruby-1.9.3 jruby-1.7.22 jruby-9.0.5.0 jruby-9.1.13.0"
     steps:
-      - run: apt-get install redis
+      - run: sudo apt-get install redis
       - run: redis-server &
       - checkout
       - run: |
