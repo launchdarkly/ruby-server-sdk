@@ -153,9 +153,7 @@ module LaunchDarkly
 
     def synchronize_for_testing(flush_workers_semaphore)
       # Used only by unit tests. Wait until all active flush workers have finished.
-      puts "syncing"
       flush_workers_semaphore.acquire(MAX_FLUSH_WORKERS)
-      puts "synced"
       flush_workers_semaphore.release(MAX_FLUSH_WORKERS)
     end
 
@@ -210,7 +208,7 @@ module LaunchDarkly
       end
     end
 
-    def trigger_flush(buffer)
+    def trigger_flush(buffer, flush_workers, flush_workers_semaphore)
       if @disabled.value
         return
       end
@@ -221,18 +219,13 @@ module LaunchDarkly
         # should just keep the events in our buffer.  Unfortunately, FixedThreadPool doesn't
         # give us a way to only conditionally add a task, so we use this semaphore to keep
         # track of how many threads are available.
-        puts "want a worker"
-        if !@flush_workers_semaphore.try_acquire(1)
-          puts "can't start flush worker - full"
+        if !flush_workers_semaphore.try_acquire(1)
           return
         end
-        puts "got one - available is now #{@flush_workers_semaphore.available_permits}"
         buffer.clear  # Reset our internal state, these events now belong to the flush worker
-        @flush_workers.post do
-          puts "starting flush worker"
+        flush_workers.post do
           resp = EventPayloadSendTask.new.run(@sdk_key, @config, @client, payload, @formatter)
-          puts "releasing worker"
-          @flush_workers_semaphore.release(1)
+          flush_workers_semaphore.release(1)
           handle_response(resp) if !resp.nil?
         end
       end
@@ -243,7 +236,6 @@ module LaunchDarkly
         @config.logger.error { "[LDClient] Unexpected status code while processing events: #{res.status}" }
         if res.status == 401
           @config.logger.error { "[LDClient] Received 401 error, no further events will be posted since SDK key is invalid" }
-          puts "disabling"
           @disabled.value = true
         end
       else
