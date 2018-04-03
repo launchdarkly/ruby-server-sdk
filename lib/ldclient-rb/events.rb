@@ -62,8 +62,8 @@ module LaunchDarkly
         @queue << FlushUsersMessage.new
       end
       @stopped = Concurrent::AtomicBoolean.new(false)
-      @consumer = EventConsumer.new(@queue, sdk_key, config, client)
-      @consumer.start
+      
+      EventDispatcher.new(@queue, sdk_key, config, client)
     end
 
     def add_event(event)
@@ -96,23 +96,19 @@ module LaunchDarkly
     end
   end
 
-  class EventConsumer
+  class EventDispatcher
     def initialize(queue, sdk_key, config, client)
-      @queue = queue
       @sdk_key = sdk_key
       @config = config
       @client = client ? client : Faraday.new
-      @events = []
-      @summarizer = EventSummarizer.new
       @user_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
       @flush_workers = Concurrent::FixedThreadPool.new(MAX_FLUSH_WORKERS)
       @disabled = Concurrent::AtomicBoolean.new(false)
-      @capacity_exceeded = false
       @last_known_past_time = Concurrent::AtomicFixnum.new(0)
-    end
 
-    def start
-      Thread.new { main_loop }
+      buffer = EventBuffer.new(config.capacity, config.logger)
+
+      Thread.new { main_loop(queue, buffer) }
     end
 
     private
@@ -121,16 +117,16 @@ module LaunchDarkly
       (Time.now.to_f * 1000).to_i
     end
 
-    def main_loop()
+    def main_loop(queue, buffer)
       running = true
       while running do
         begin
-          message = @queue.pop
+          message = queue.pop
           case message
           when EventMessage
-            dispatch_event(message.event)
+            dispatch_event(message.event, buffer)
           when FlushMessage
-            start_flush
+            trigger_flush(buffer)
           when FlushUsersMessage
             @user_keys.reset
           when TestSyncMessage
@@ -160,14 +156,14 @@ module LaunchDarkly
       @flush_workers = Concurrent::FixedThreadPool.new(MAX_FLUSH_WORKERS)
     end
 
-    def dispatch_event(event)
+    def dispatch_event(event, buffer)
       return if @disabled.value
 
       # For each user we haven't seen before, we add an index event - unless this is already
       # an identify event for that user.
       if !@config.inline_users_in_events && event.has_key?(:user) && !notice_user(event[:user])
         if event[:kind] != "identify"
-          queue_event({
+          buffer.add_event({
             kind: "index",
             creationDate: event[:creationDate],
             user: event[:user]
@@ -176,11 +172,11 @@ module LaunchDarkly
       end
 
       # Always record the event in the summary.
-      @summarizer.summarize_event(event)
+      buffer.add_to_summary(event)
 
       if should_track_full_event(event)
         # Queue the event as-is; we'll transform it into an output event when we're flushing.
-        queue_event(event)
+        buffer.add_event(event)
       end
     end
 
@@ -198,8 +194,8 @@ module LaunchDarkly
         if event[:trackEvents]
           true
         else
-          if event.has_key?(:debugEventsUntilDate)
-            debugUntil = event[:debugEventsUntilDate]
+          debugUntil = event[:debugEventsUntilDate]
+          if !debugUntil.nil?
             last_past = @last_known_past_time.value
             debugUntil > last_past && debugUntil > now_millis
           else
@@ -211,30 +207,16 @@ module LaunchDarkly
       end
     end
 
-    def queue_event(event)
-      if @events.length < @config.capacity
-        @config.logger.debug { "[LDClient] Enqueueing event: #{event.to_json}" }
-        @events.push(event)
-        @capacity_exceeded = false
-      else
-        if !@capacity_exceeded
-          @capacity_exceeded = true
-          @config.logger.warn { "[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events." }
-        end
-      end
-    end
-
-    def start_flush()
+    def trigger_flush(buffer)
       if @disabled.value
         return
       end
 
-      old_events = @events
-      @events = []
-      snapshot = @summarizer.snapshot
+      payload = buffer.get_payload
+      buffer.clear
   
-      if !old_events.empty? || !snapshot[:counters].empty?
-        task = EventPayloadSendTask.new(@sdk_key, @config, @client, old_events, snapshot,
+      if !payload.events.empty? || !payload.summary.counters.empty?
+        task = EventPayloadSendTask.new(@sdk_key, @config, @client, payload,
           method(:on_event_response))
         @flush_workers.post do
           task.run
@@ -261,13 +243,50 @@ module LaunchDarkly
     end
   end
 
+  FlushPayload = Struct.new(:events, :summary)
+
+  class EventBuffer
+    def initialize(capacity, logger)
+      @capacity = capacity
+      @logger = logger
+      @capacity_exceeded = false
+      @events = []
+      @summarizer = EventSummarizer.new
+    end
+
+    def add_event(event)
+      if @events.length < @capacity
+        @logger.debug { "[LDClient] Enqueueing event: #{event.to_json}" }
+        @events.push(event)
+        @capacity_exceeded = false
+      else
+        if !@capacity_exceeded
+          @capacity_exceeded = true
+          @logger.warn { "[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events." }
+        end
+      end
+    end
+
+    def add_to_summary(event)
+      @summarizer.summarize_event(event)
+    end
+
+    def get_payload
+      return FlushPayload.new(@events, @summarizer.snapshot)
+    end
+
+    def clear
+      @events = []
+      @summarizer.clear
+    end
+  end
+
   class EventPayloadSendTask
-    def initialize(sdk_key, config, client, events, summary, response_callback)
+    def initialize(sdk_key, config, client, payload, response_callback)
       @sdk_key = sdk_key
       @config = config
       @client = client
-      @events = events
-      @summary = summary
+      @payload = payload
       @response_callback = response_callback
       @user_filter = UserFilter.new(config)
     end
@@ -283,9 +302,9 @@ module LaunchDarkly
     private
 
     def post_flushed_events
-      events_out = @events.map { |e| make_output_event(e) }
-      if !@summary[:counters].empty?
-        events_out.push(make_summary_event(@summary))
+      events_out = @payload.events.map { |e| make_output_event(e) }
+      if !@payload.summary.counters.empty?
+        events_out.push(make_summary_event(@payload.summary))
       end
       res = @client.post (@config.events_uri + "/bulk") do |req|
         req.headers["Authorization"] = @sdk_key

@@ -8,7 +8,7 @@ module LaunchDarkly
   # synchronization across both the summarizer and the event queue.
   class EventSummarizer
     def initialize
-      reset_state
+      clear
     end
 
     # Adds this event to our counters, if it is a type of event we need to count.
@@ -40,13 +40,10 @@ module LaunchDarkly
     # Returns a snapshot of the current summarized event data, and resets this state.
     def snapshot
       ret = EventSummary.new(@start_date, @end_date, @counters)
-      reset_state
       ret
     end
 
-    private
-
-    def reset_state
+    def clear
       @start_date = 0
       @end_date = 0
       @counters = {}
