@@ -62,8 +62,8 @@ module LaunchDarkly
         @queue << FlushUsersMessage.new
       end
       @stopped = Concurrent::AtomicBoolean.new(false)
-      @consumer = EventConsumer.new(@queue, sdk_key, config, client)
-      @consumer.start
+      
+      EventDispatcher.new(@queue, sdk_key, config, client)
     end
 
     def add_event(event)
@@ -96,23 +96,20 @@ module LaunchDarkly
     end
   end
 
-  class EventConsumer
+  class EventDispatcher
     def initialize(queue, sdk_key, config, client)
-      @queue = queue
       @sdk_key = sdk_key
       @config = config
       @client = client ? client : Faraday.new
-      @events = []
-      @summarizer = EventSummarizer.new
       @user_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
-      @flush_workers = Concurrent::FixedThreadPool.new(MAX_FLUSH_WORKERS)
+      @formatter = EventOutputFormatter.new(config)
       @disabled = Concurrent::AtomicBoolean.new(false)
-      @capacity_exceeded = false
       @last_known_past_time = Concurrent::AtomicFixnum.new(0)
-    end
 
-    def start
-      Thread.new { main_loop }
+      buffer = EventBuffer.new(config.capacity, config.logger)
+      flush_workers = NonBlockingThreadPool.new(MAX_FLUSH_WORKERS)
+
+      Thread.new { main_loop(queue, buffer, flush_workers) }
     end
 
     private
@@ -121,23 +118,23 @@ module LaunchDarkly
       (Time.now.to_f * 1000).to_i
     end
 
-    def main_loop()
+    def main_loop(queue, buffer, flush_workers)
       running = true
       while running do
         begin
-          message = @queue.pop
+          message = queue.pop
           case message
           when EventMessage
-            dispatch_event(message.event)
+            dispatch_event(message.event, buffer)
           when FlushMessage
-            start_flush
+            trigger_flush(buffer, flush_workers)
           when FlushUsersMessage
             @user_keys.reset
           when TestSyncMessage
-            synchronize_for_testing
+            synchronize_for_testing(flush_workers)
             message.completed
           when StopMessage
-            do_shutdown
+            do_shutdown(flush_workers)
             running = false
             message.completed
           end
@@ -147,27 +144,25 @@ module LaunchDarkly
       end
     end
 
-    def do_shutdown
-      @flush_workers.shutdown
-      @flush_workers.wait_for_termination
+    def do_shutdown(flush_workers)
+      flush_workers.shutdown
+      flush_workers.wait_for_termination
       # There seems to be no such thing as "close" in Faraday: https://github.com/lostisland/faraday/issues/241
     end
 
-    def synchronize_for_testing
-      # used only by unit tests
-      @flush_workers.shutdown
-      @flush_workers.wait_for_termination
-      @flush_workers = Concurrent::FixedThreadPool.new(MAX_FLUSH_WORKERS)
+    def synchronize_for_testing(flush_workers)
+      # Used only by unit tests. Wait until all active flush workers have finished.
+      flush_workers.wait_all
     end
 
-    def dispatch_event(event)
+    def dispatch_event(event, buffer)
       return if @disabled.value
 
       # For each user we haven't seen before, we add an index event - unless this is already
       # an identify event for that user.
       if !@config.inline_users_in_events && event.has_key?(:user) && !notice_user(event[:user])
         if event[:kind] != "identify"
-          queue_event({
+          buffer.add_event({
             kind: "index",
             creationDate: event[:creationDate],
             user: event[:user]
@@ -176,11 +171,11 @@ module LaunchDarkly
       end
 
       # Always record the event in the summary.
-      @summarizer.summarize_event(event)
+      buffer.add_to_summary(event)
 
       if should_track_full_event(event)
         # Queue the event as-is; we'll transform it into an output event when we're flushing.
-        queue_event(event)
+        buffer.add_event(event)
       end
     end
 
@@ -198,8 +193,8 @@ module LaunchDarkly
         if event[:trackEvents]
           true
         else
-          if event.has_key?(:debugEventsUntilDate)
-            debugUntil = event[:debugEventsUntilDate]
+          debugUntil = event[:debugEventsUntilDate]
+          if !debugUntil.nil?
             last_past = @last_known_past_time.value
             debugUntil > last_past && debugUntil > now_millis
           else
@@ -211,38 +206,23 @@ module LaunchDarkly
       end
     end
 
-    def queue_event(event)
-      if @events.length < @config.capacity
-        @config.logger.debug { "[LDClient] Enqueueing event: #{event.to_json}" }
-        @events.push(event)
-        @capacity_exceeded = false
-      else
-        if !@capacity_exceeded
-          @capacity_exceeded = true
-          @config.logger.warn { "[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events." }
-        end
-      end
-    end
-
-    def start_flush()
+    def trigger_flush(buffer, flush_workers)
       if @disabled.value
         return
       end
 
-      old_events = @events
-      @events = []
-      snapshot = @summarizer.snapshot
-  
-      if !old_events.empty? || !snapshot[:counters].empty?
-        task = EventPayloadSendTask.new(@sdk_key, @config, @client, old_events, snapshot,
-          method(:on_event_response))
-        @flush_workers.post do
-          task.run
+      payload = buffer.get_payload  
+      if !payload.events.empty? || !payload.summary.counters.empty?
+        # If all available worker threads are busy, success will be false and no job will be queued.
+        success = flush_workers.post do
+          resp = EventPayloadSendTask.new.run(@sdk_key, @config, @client, payload, @formatter)
+          handle_response(resp) if !resp.nil?
         end
+        buffer.clear if success # Reset our internal state, these events now belong to the flush worker
       end
     end
 
-    def on_event_response(res)
+    def handle_response(res)
       if res.status < 200 || res.status >= 300
         @config.logger.error { "[LDClient] Unexpected status code while processing events: #{res.status}" }
         if res.status == 401
@@ -261,44 +241,81 @@ module LaunchDarkly
     end
   end
 
+  FlushPayload = Struct.new(:events, :summary)
+
+  class EventBuffer
+    def initialize(capacity, logger)
+      @capacity = capacity
+      @logger = logger
+      @capacity_exceeded = false
+      @events = []
+      @summarizer = EventSummarizer.new
+    end
+
+    def add_event(event)
+      if @events.length < @capacity
+        @logger.debug { "[LDClient] Enqueueing event: #{event.to_json}" }
+        @events.push(event)
+        @capacity_exceeded = false
+      else
+        if !@capacity_exceeded
+          @capacity_exceeded = true
+          @logger.warn { "[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events." }
+        end
+      end
+    end
+
+    def add_to_summary(event)
+      @summarizer.summarize_event(event)
+    end
+
+    def get_payload
+      return FlushPayload.new(@events, @summarizer.snapshot)
+    end
+
+    def clear
+      @events = []
+      @summarizer.clear
+    end
+  end
+
   class EventPayloadSendTask
-    def initialize(sdk_key, config, client, events, summary, response_callback)
-      @sdk_key = sdk_key
-      @config = config
-      @client = client
-      @events = events
-      @summary = summary
-      @response_callback = response_callback
+    def run(sdk_key, config, client, payload, formatter)
+      begin
+        events_out = formatter.make_output_events(payload.events, payload.summary)
+        res = client.post (config.events_uri + "/bulk") do |req|
+          req.headers["Authorization"] = sdk_key
+          req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
+          req.headers["Content-Type"] = "application/json"
+          req.body = events_out.to_json
+          req.options.timeout = config.read_timeout
+          req.options.open_timeout = config.connect_timeout
+        end
+        res
+      rescue StandardError => exn
+        @config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
+        nil
+      end
+    end
+  end
+
+  class EventOutputFormatter
+    def initialize(config)
+      @inline_users = config.inline_users_in_events
       @user_filter = UserFilter.new(config)
     end
 
-    def run
-      begin
-        post_flushed_events
-      rescue StandardError => exn
-        @config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
+    # Transforms events into the format used for event sending.
+    def make_output_events(events, summary)
+      events_out = events.map { |e| make_output_event(e) }
+      if !summary.counters.empty?
+        events_out.push(make_summary_event(summary))
       end
+      events_out
     end
 
     private
 
-    def post_flushed_events
-      events_out = @events.map { |e| make_output_event(e) }
-      if !@summary[:counters].empty?
-        events_out.push(make_summary_event(@summary))
-      end
-      res = @client.post (@config.events_uri + "/bulk") do |req|
-        req.headers["Authorization"] = @sdk_key
-        req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
-        req.headers["Content-Type"] = "application/json"
-        req.body = events_out.to_json
-        req.options.timeout = @config.read_timeout
-        req.options.open_timeout = @config.connect_timeout
-      end
-      @response_callback.call(res)
-    end
-
-    # Transforms events into the format used for event sending.
     def make_output_event(event)
       case event[:kind]
       when "feature"
@@ -312,7 +329,7 @@ module LaunchDarkly
         out[:default] = event[:default] if event.has_key?(:default)
         out[:version] = event[:version] if event.has_key?(:version)
         out[:prereqOf] = event[:prereqOf] if event.has_key?(:prereqOf)
-        if @config.inline_users_in_events
+        if @inline_users
           out[:user] = @user_filter.transform_user_props(event[:user])
         else
           out[:userKey] = event[:user][:key]
@@ -331,7 +348,7 @@ module LaunchDarkly
           key: event[:key]
         }
         out[:data] = event[:data] if event.has_key?(:data)
-        if @config.inline_users_in_events
+        if @inline_users
           out[:user] = @user_filter.transform_user_props(event[:user])
         else
           out[:userKey] = event[:user][:key]
