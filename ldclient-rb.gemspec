@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   spec.extensions    = 'ext/mkrf_conf.rb'
 
   spec.add_development_dependency "bundler", "~> 1.7"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "rake", "12.1.0"  # must use this version for JRuby 1.7 compatibility
   spec.add_development_dependency "rspec", "~> 3.2"
   spec.add_development_dependency "codeclimate-test-reporter", "~> 0"
   spec.add_development_dependency "redis", "~> 3.3.5"
