@@ -66,6 +66,7 @@ jobs:
           name: bundle install for all versions
           shell: /bin/bash -leo pipefail # need -l in order for "rvm use" to work
           command: |
+            set -e;
             for i in $RUBIES;
             do
               rvm use $i;
@@ -80,6 +81,7 @@ jobs:
           name: run tests for all versions
           shell: /bin/bash -leo pipefail
           command: |
+            set -e;
             for i in $RUBIES;
             do
               rvm use $i;
