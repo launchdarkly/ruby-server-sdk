@@ -107,10 +107,9 @@ module LaunchDarkly
       @last_known_past_time = Concurrent::AtomicFixnum.new(0)
 
       buffer = EventBuffer.new(config.capacity, config.logger)
-      flush_workers = Concurrent::FixedThreadPool.new(MAX_FLUSH_WORKERS)
-      flush_workers_semaphore = Concurrent::Semaphore.new(MAX_FLUSH_WORKERS)
+      flush_workers = NonBlockingThreadPool.new(MAX_FLUSH_WORKERS)
 
-      Thread.new { main_loop(queue, buffer, flush_workers, flush_workers_semaphore) }
+      Thread.new { main_loop(queue, buffer, flush_workers) }
     end
 
     private
@@ -119,7 +118,7 @@ module LaunchDarkly
       (Time.now.to_f * 1000).to_i
     end
 
-    def main_loop(queue, buffer, flush_workers, flush_workers_semaphore)
+    def main_loop(queue, buffer, flush_workers)
       running = true
       while running do
         begin
@@ -128,11 +127,11 @@ module LaunchDarkly
           when EventMessage
             dispatch_event(message.event, buffer)
           when FlushMessage
-            trigger_flush(buffer, flush_workers, flush_workers_semaphore)
+            trigger_flush(buffer, flush_workers)
           when FlushUsersMessage
             @user_keys.reset
           when TestSyncMessage
-            synchronize_for_testing(flush_workers_semaphore)
+            synchronize_for_testing(flush_workers)
             message.completed
           when StopMessage
             do_shutdown(flush_workers)
@@ -151,10 +150,9 @@ module LaunchDarkly
       # There seems to be no such thing as "close" in Faraday: https://github.com/lostisland/faraday/issues/241
     end
 
-    def synchronize_for_testing(flush_workers_semaphore)
+    def synchronize_for_testing(flush_workers)
       # Used only by unit tests. Wait until all active flush workers have finished.
-      flush_workers_semaphore.acquire(MAX_FLUSH_WORKERS)
-      flush_workers_semaphore.release(MAX_FLUSH_WORKERS)
+      flush_workers.wait_all
     end
 
     def dispatch_event(event, buffer)
@@ -208,26 +206,19 @@ module LaunchDarkly
       end
     end
 
-    def trigger_flush(buffer, flush_workers, flush_workers_semaphore)
+    def trigger_flush(buffer, flush_workers)
       if @disabled.value
         return
       end
 
       payload = buffer.get_payload  
       if !payload.events.empty? || !payload.summary.counters.empty?
-        # If all available worker threads are busy, we don't want to queue a flush task - we
-        # should just keep the events in our buffer.  Unfortunately, FixedThreadPool doesn't
-        # give us a way to only conditionally add a task, so we use this semaphore to keep
-        # track of how many threads are available.
-        if !flush_workers_semaphore.try_acquire(1)
-          return
-        end
-        buffer.clear  # Reset our internal state, these events now belong to the flush worker
-        flush_workers.post do
+        # If all available worker threads are busy, success will be false and no job will be queued.
+        success = flush_workers.post do
           resp = EventPayloadSendTask.new.run(@sdk_key, @config, @client, payload, @formatter)
-          flush_workers_semaphore.release(1)
           handle_response(resp) if !resp.nil?
         end
+        buffer.clear if success # Reset our internal state, these events now belong to the flush worker
       end
     end
 
