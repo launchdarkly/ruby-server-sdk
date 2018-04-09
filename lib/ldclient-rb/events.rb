@@ -158,10 +158,27 @@ module LaunchDarkly
     def dispatch_event(event, buffer)
       return if @disabled.value
 
+      # Always record the event in the summary.
+      buffer.add_to_summary(event)
+
+      # Decide whether to add the event to the payload. Feature events may be added twice, once for
+      # the event (if tracked) and once for debugging.
+      will_add_full_event = false
+      debug_event = nil
+      if event[:kind] == "feature"
+        will_add_full_event = event[:trackEvents]
+        if should_debug_event(event)
+          debug_event = event.clone
+          debug_event[:debug] = true
+        end
+      else
+        will_add_full_event = true
+      end
+
       # For each user we haven't seen before, we add an index event - unless this is already
       # an identify event for that user.
-      if !@config.inline_users_in_events && event.has_key?(:user) && !notice_user(event[:user])
-        if event[:kind] != "identify"
+      if !(will_add_full_event && @config.inline_users_in_events)
+        if event.has_key?(:user) && !notice_user(event[:user]) && event[:kind] != "identify"
           buffer.add_event({
             kind: "index",
             creationDate: event[:creationDate],
@@ -170,13 +187,8 @@ module LaunchDarkly
         end
       end
 
-      # Always record the event in the summary.
-      buffer.add_to_summary(event)
-
-      if should_track_full_event(event)
-        # Queue the event as-is; we'll transform it into an output event when we're flushing.
-        buffer.add_event(event)
-      end
+      buffer.add_event(event) if will_add_full_event
+      buffer.add_event(debug_event) if !debug_event.nil?
     end
 
     # Add to the set of users we've noticed, and return true if the user was already known to us.
@@ -188,21 +200,13 @@ module LaunchDarkly
       end
     end
 
-    def should_track_full_event(event)
-      if event[:kind] == "feature"
-        if event[:trackEvents]
-          true
-        else
-          debugUntil = event[:debugEventsUntilDate]
-          if !debugUntil.nil?
-            last_past = @last_known_past_time.value
-            debugUntil > last_past && debugUntil > now_millis
-          else
-            false
-          end
-        end
+    def should_debug_event(event)
+      debug_until = event[:debugEventsUntilDate]
+      if !debug_until.nil?
+        last_past = @last_known_past_time.value
+        debug_until > last_past && debug_until > now_millis
       else
-        true
+        false
       end
     end
 
@@ -319,7 +323,7 @@ module LaunchDarkly
     def make_output_event(event)
       case event[:kind]
       when "feature"
-        is_debug = !event[:trackEvents] && event.has_key?(:debugEventsUntilDate)
+        is_debug = event[:debug]
         out = {
           kind: is_debug ? "debug" : "feature",
           creationDate: event[:creationDate],
@@ -329,7 +333,7 @@ module LaunchDarkly
         out[:default] = event[:default] if event.has_key?(:default)
         out[:version] = event[:version] if event.has_key?(:version)
         out[:prereqOf] = event[:prereqOf] if event.has_key?(:prereqOf)
-        if @inline_users
+        if @inline_users || is_debug
           out[:user] = @user_filter.transform_user_props(event[:user])
         else
           out[:userKey] = event[:user][:key]
