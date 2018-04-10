@@ -298,14 +298,6 @@ module LaunchDarkly
             req.options.timeout = config.read_timeout
             req.options.open_timeout = config.connect_timeout
           end
-          if res.status < 200 || res.status >= 300
-            config.logger.error { "[LDClient] Unexpected status code while processing events: #{res.status}" }
-            if res.status >= 500 && !retried
-              retried = true
-              next
-            end
-          end
-          return res
         rescue StandardError => exn
           config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}." }
           if !retried
@@ -314,6 +306,14 @@ module LaunchDarkly
           end
           return nil
         end
+        if res.status < 200 || res.status >= 300
+          config.logger.error { "[LDClient] Unexpected status code while processing events: #{res.status}" }
+          if res.status >= 500 && !retried
+            retried = true
+            next
+          end
+        end
+        return res
       end
     end
   end
