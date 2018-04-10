@@ -108,6 +108,23 @@ describe LaunchDarkly::EventProcessor do
     )
   end
 
+  it "still generates index event if inline_users is true but feature event was not tracked" do
+    config = LaunchDarkly::Config.new(inline_users_in_events: true)
+    @ep = subject.new("sdk_key", config, hc)
+    flag = { key: "flagkey", version: 11 }
+    fe = {
+      kind: "feature", key: "flagkey", version: 11, user: user,
+      variation: 1, value: "value", trackEvents: false
+    }
+    @ep.add_event(fe)
+
+    output = flush_and_get_events
+    expect(output).to contain_exactly(
+      eq(index_event(fe, user)),
+      include(:kind => "summary")
+    )
+  end
+
   it "sets event kind to debug if flag is temporarily in debug mode" do
     @ep = subject.new("sdk_key", default_config, hc)
     flag = { key: "flagkey", version: 11 }
@@ -121,7 +138,26 @@ describe LaunchDarkly::EventProcessor do
     output = flush_and_get_events
     expect(output).to contain_exactly(
       eq(index_event(fe, user)),
-      eq(feature_event(fe, flag, true, nil)),
+      eq(feature_event(fe, flag, true, user)),
+      include(:kind => "summary")
+    )
+  end
+
+  it "can be both debugging and tracking an event" do
+    @ep = subject.new("sdk_key", default_config, hc)
+    flag = { key: "flagkey", version: 11 }
+    future_time = (Time.now.to_f * 1000).to_i + 1000000
+    fe = {
+      kind: "feature", key: "flagkey", version: 11, user: user,
+      variation: 1, value: "value", trackEvents: true, debugEventsUntilDate: future_time
+    }
+    @ep.add_event(fe)
+
+    output = flush_and_get_events
+    expect(output).to contain_exactly(
+      eq(index_event(fe, user)),
+      eq(feature_event(fe, flag, false, nil)),
+      eq(feature_event(fe, flag, true, user)),
       include(:kind => "summary")
     )
   end
