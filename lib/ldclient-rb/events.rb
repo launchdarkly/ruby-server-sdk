@@ -227,12 +227,9 @@ module LaunchDarkly
     end
 
     def handle_response(res)
-      if res.status < 200 || res.status >= 300
-        @config.logger.error { "[LDClient] Unexpected status code while processing events: #{res.status}" }
-        if res.status == 401
-          @config.logger.error { "[LDClient] Received 401 error, no further events will be posted since SDK key is invalid" }
-          @disabled.value = true
-        end
+      if res.status == 401
+        @config.logger.error { "[LDClient] Received 401 error, no further events will be posted since SDK key is invalid" }
+        @disabled.value = true
       else
         if !res.headers.nil? && res.headers.has_key?("Date")
           begin
@@ -285,20 +282,38 @@ module LaunchDarkly
 
   class EventPayloadSendTask
     def run(sdk_key, config, client, payload, formatter)
-      begin
-        events_out = formatter.make_output_events(payload.events, payload.summary)
-        res = client.post (config.events_uri + "/bulk") do |req|
-          req.headers["Authorization"] = sdk_key
-          req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
-          req.headers["Content-Type"] = "application/json"
-          req.body = events_out.to_json
-          req.options.timeout = config.read_timeout
-          req.options.open_timeout = config.connect_timeout
+      events_out = formatter.make_output_events(payload.events, payload.summary)
+      retried = false
+      loop do
+        if retried
+          config.logger.warn { "[LDClient] Will retry posting events after 1 second" }
+          sleep(1)
         end
-        res
-      rescue StandardError => exn
-        @config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
-        nil
+        begin
+          res = client.post (config.events_uri + "/bulk") do |req|
+            req.headers["Authorization"] = sdk_key
+            req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
+            req.headers["Content-Type"] = "application/json"
+            req.body = events_out.to_json
+            req.options.timeout = config.read_timeout
+            req.options.open_timeout = config.connect_timeout
+          end
+          if res.status < 200 || res.status >= 300
+            config.logger.error { "[LDClient] Unexpected status code while processing events: #{res.status}" }
+            if res.status >= 500 && !retried
+              retried = true
+              next
+            end
+          end
+          return res
+        rescue StandardError => exn
+          config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}." }
+          if !retried
+            retried = true
+            next
+          end
+          return nil
+        end
       end
     end
   end
