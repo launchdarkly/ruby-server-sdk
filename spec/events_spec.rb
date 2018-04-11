@@ -336,7 +336,7 @@ describe LaunchDarkly::EventProcessor do
   it "sends nothing if there are no events" do
     @ep = subject.new("sdk_key", default_config, hc)
     @ep.flush
-    expect(hc.request_received).to be nil
+    expect(hc.get_request).to be nil
   end
 
   it "sends SDK key" do
@@ -344,22 +344,55 @@ describe LaunchDarkly::EventProcessor do
     e = { kind: "identify", user: user }
     @ep.add_event(e)
 
-    flush_and_get_events
-    expect(hc.request_received.headers["Authorization"]).to eq "sdk_key"
+    @ep.flush
+    @ep.wait_until_inactive
+    
+    expect(hc.get_request.headers["Authorization"]).to eq "sdk_key"
   end
 
   it "stops posting events after getting a 401 error" do
     @ep = subject.new("sdk_key", default_config, hc)
     e = { kind: "identify", user: user }
     @ep.add_event(e)
+
     hc.set_response_status(401)
-    flush_and_get_events
-    expect(hc.request_received).not_to be_nil
+    @ep.flush
+    @ep.wait_until_inactive
+    expect(hc.get_request).not_to be_nil
     hc.reset
 
     @ep.add_event(e)
     @ep.flush
-    expect(hc.request_received).to be_nil
+    @ep.wait_until_inactive
+    expect(hc.get_request).to be_nil
+  end
+
+  it "retries flush once after 5xx error" do
+    @ep = subject.new("sdk_key", default_config, hc)
+    e = { kind: "identify", user: user }
+    @ep.add_event(e)
+
+    hc.set_response_status(503)
+    @ep.flush
+    @ep.wait_until_inactive
+
+    expect(hc.get_request).not_to be_nil
+    expect(hc.get_request).not_to be_nil
+    expect(hc.get_request).to be_nil  # no 3rd request
+  end
+
+  it "retries flush once after connection error" do
+    @ep = subject.new("sdk_key", default_config, hc)
+    e = { kind: "identify", user: user }
+    @ep.add_event(e)
+
+    hc.set_exception(Faraday::Error::ConnectionFailed.new("fail"))
+    @ep.flush
+    @ep.wait_until_inactive
+
+    expect(hc.get_request).not_to be_nil
+    expect(hc.get_request).not_to be_nil
+    expect(hc.get_request).to be_nil  # no 3rd request
   end
 
   def index_event(e, user)
@@ -408,11 +441,15 @@ describe LaunchDarkly::EventProcessor do
   end
 
   def get_events_from_last_request
-    req = hc.request_received
+    req = hc.get_request
     JSON.parse(req.body, symbolize_names: true)
   end
 
   class FakeHttpClient
+    def initialize
+      reset
+    end
+
     def set_response_status(status)
       @status = status
     end
@@ -421,8 +458,12 @@ describe LaunchDarkly::EventProcessor do
       @server_time = Time.at(time_millis.to_f / 1000)
     end
 
+    def set_exception(e)
+      @exception = e
+    end
+
     def reset
-      @request_received = nil
+      @requests = []
       @status = 200
     end
 
@@ -431,20 +472,26 @@ describe LaunchDarkly::EventProcessor do
       req.headers = {}
       req.options = Faraday::RequestOptions.new
       yield req
-      @request_received = req
-      resp = Faraday::Response.new
-      headers = {}
-      if @server_time
-        headers["Date"] = @server_time.httpdate
+      @requests.push(req)
+      if @exception
+        raise @exception
+      else
+        resp = Faraday::Response.new
+        headers = {}
+        if @server_time
+          headers["Date"] = @server_time.httpdate
+        end
+        resp.finish({
+          status: @status ? @status : 200,
+          response_headers: headers
+        })
+        resp
       end
-      resp.finish({
-        status: @status ? @status : 200,
-        response_headers: headers
-      })
-      resp
     end
 
-    attr_reader :request_received
+    def get_request
+      @requests.shift
+    end
   end
 
   class FakeResponse
