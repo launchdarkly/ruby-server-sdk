@@ -283,7 +283,6 @@ module LaunchDarkly
   class EventPayloadSendTask
     def run(sdk_key, config, client, payload, formatter)
       events_out = formatter.make_output_events(payload.events, payload.summary)
-      retried = false
       res = nil
       (0..1).each do |attempt|
         if attempt > 0
