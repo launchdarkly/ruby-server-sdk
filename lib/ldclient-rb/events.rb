@@ -284,8 +284,9 @@ module LaunchDarkly
     def run(sdk_key, config, client, payload, formatter)
       events_out = formatter.make_output_events(payload.events, payload.summary)
       retried = false
-      loop do
-        if retried
+      res = nil
+      (0..1).each do |attempt|
+        if attempt > 0
           config.logger.warn { "[LDClient] Will retry posting events after 1 second" }
           sleep(1)
         end
@@ -300,21 +301,18 @@ module LaunchDarkly
           end
         rescue StandardError => exn
           config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}." }
-          if !retried
-            retried = true
-            next
-          end
-          return nil
+          next
         end
         if res.status < 200 || res.status >= 300
           config.logger.error { "[LDClient] Unexpected status code while processing events: #{res.status}" }
-          if res.status >= 500 && !retried
-            retried = true
+          if res.status >= 500
             next
           end
         end
-        return res
+        break
       end
+      # used up our retries, return the last response if any
+      res
     end
   end
 
