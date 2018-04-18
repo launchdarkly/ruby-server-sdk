@@ -294,6 +294,7 @@ module LaunchDarkly
             req.headers["Authorization"] = sdk_key
             req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
             req.headers["Content-Type"] = "application/json"
+            req.headers["X-LaunchDarkly-Event-Schema"] = "2"
             req.body = events_out.to_json
             req.options.timeout = config.read_timeout
             req.options.open_timeout = config.connect_timeout
