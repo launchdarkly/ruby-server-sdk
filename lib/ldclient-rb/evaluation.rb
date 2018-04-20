@@ -114,7 +114,7 @@ module LaunchDarkly
     # generated during prerequisite evaluation. Raises EvaluationError if the flag is not well-formed
     # Will return nil, but not raise an exception, indicating that the rules (including fallthrough) did not match
     # In that case, the caller should return the default value.
-    def evaluate(flag, user, store)
+    def evaluate(flag, user, store, logger)
       if flag.nil?
         raise EvaluationError, "Flag does not exist"
       end
@@ -126,7 +126,7 @@ module LaunchDarkly
       events = []
 
       if flag[:on]
-        res = eval_internal(flag, user, store, events)
+        res = eval_internal(flag, user, store, events, logger)
         if !res.nil?
           res[:events] = events
           return res
@@ -142,7 +142,7 @@ module LaunchDarkly
       { variation: nil, value: nil, events: events }
     end
 
-    def eval_internal(flag, user, store, events)
+    def eval_internal(flag, user, store, events, logger)
       failed_prereq = false
       # Evaluate prerequisites, if any
       (flag[:prerequisites] || []).each do |prerequisite|
@@ -152,18 +152,23 @@ module LaunchDarkly
           failed_prereq = true
         else
           begin
-            prereq_res = eval_internal(prereq_flag, user, store, events)
+            prereq_res = eval_internal(prereq_flag, user, store, events, logger)
             event = {
-              kind: "feature", key: prereq_flag[:key], variation: prereq_res[:variation],
-              value: prereq_res[:value], version: prereq_flag[:version], prereqOf: flag[:key],
-              trackEvents: prereq_flag[:trackEvents], debugEventsUntilDate: prereq_flag[:debugEventsUntilDate]
+              kind: "feature",
+              key: prereq_flag[:key],
+              variation: prereq_res.nil? ? nil : prereq_res[:variation],
+              value: prereq_res.nil? ? nil : prereq_res[:value],
+              version: prereq_flag[:version],
+              prereqOf: flag[:key],
+              trackEvents: prereq_flag[:trackEvents],
+              debugEventsUntilDate: prereq_flag[:debugEventsUntilDate]
             }
             events.push(event)
             if prereq_res.nil? || prereq_res[:variation] != prerequisite[:variation]
               failed_prereq = true
             end
           rescue => exn
-            @config.logger.error { "[LDClient] Error evaluating prerequisite: #{exn.inspect}" }
+            logger.error { "[LDClient] Error evaluating prerequisite: #{exn.inspect}" }
             failed_prereq = true
           end
         end
