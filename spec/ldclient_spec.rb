@@ -100,11 +100,22 @@ describe LaunchDarkly::LDClient do
   end
 
   describe 'with send_events: false' do
-    let(:config) { LaunchDarkly::Config.new({offline: true, send_events: false}) }
+    let(:config) { LaunchDarkly::Config.new({offline: true, send_events: false, update_processor: update_processor}) }
     let(:client) { subject.new("secret", config) }
 
     it "uses a NullEventProcessor" do
-      expect(event_processor).to be_a(LaunchDarkly::NullEventProcessor)
+      ep = client.instance_variable_get(:@event_processor)
+      expect(ep).to be_a(LaunchDarkly::NullEventProcessor)
+    end
+  end
+
+  describe 'with send_events: true' do
+    let(:config_with_events) { LaunchDarkly::Config.new({offline: false, send_events: true, update_processor: update_processor}) }
+    let(:client_with_events) { subject.new("secret", config_with_events) }
+
+    it "does not use a NullEventProcessor" do
+      ep = client_with_events.instance_variable_get(:@event_processor)
+      expect(ep).not_to be_a(LaunchDarkly::NullEventProcessor)
     end
   end
 

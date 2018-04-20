@@ -53,7 +53,7 @@ module LaunchDarkly
   end
 
   class EventProcessor
-    def initialize(sdk_key, config, client)
+    def initialize(sdk_key, config, client = nil)
       @queue = Queue.new
       @flush_task = Concurrent::TimerTask.new(execution_interval: config.flush_interval) do
         @queue << FlushMessage.new(false)
