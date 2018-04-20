@@ -147,7 +147,7 @@ module LaunchDarkly
       end
 
       begin
-        res = evaluate(feature, user, @store)
+        res = evaluate(feature, user, @store, @config.logger)
         if !res[:events].nil?
           res[:events].each do |event|
             @event_processor.add_event(event)
@@ -209,7 +209,7 @@ module LaunchDarkly
         features = @store.all(FEATURES)
 
         # TODO rescue if necessary
-        Hash[features.map{ |k, f| [k, evaluate(f, user, @store)[:value]] }]
+        Hash[features.map{ |k, f| [k, evaluate(f, user, @store, @config.logger)[:value]] }]
       rescue => exn
         @config.logger.warn { "[LDClient] Error evaluating all flags: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
         return Hash.new
