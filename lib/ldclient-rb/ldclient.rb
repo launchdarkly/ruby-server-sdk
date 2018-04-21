@@ -158,13 +158,30 @@ module LaunchDarkly
           @config.logger.debug { "[LDClient] Result value is null in toggle" }
           value = default
         end
-        @event_processor.add_event(kind: "feature", key: key, user: user, value: res[:value], default: default, version: feature[:version],
-          trackEvents: feature[:trackEvents], debugEventsUntilDate: feature[:debugEventsUntilDate])
+        @event_processor.add_event(
+          kind: "feature",
+          key: key,
+          user: user,
+          variation: res[:variation],
+          value: res[:value],
+          default: default,
+          version: feature[:version],
+          trackEvents: feature[:trackEvents],
+          debugEventsUntilDate: feature[:debugEventsUntilDate]
+        )
         return value
       rescue => exn
         @config.logger.warn { "[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
-        @event_processor.add_event(kind: "feature", key: key, user: user, value: default, default: default, version: feature[:version],
-          trackEvents: feature[:trackEvents], debugEventsUntilDate: feature[:debugEventsUntilDate])
+        @event_processor.add_event(
+          kind: "feature",
+          key: key,
+          user: user,
+          value: default,
+          default: default,
+          version: feature[:version],
+          trackEvents: feature[:trackEvents],
+          debugEventsUntilDate: feature[:debugEventsUntilDate]
+        )
         return default
       end
     end
