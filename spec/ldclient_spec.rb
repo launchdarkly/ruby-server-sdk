@@ -50,8 +50,15 @@ describe LaunchDarkly::LDClient do
       config.feature_store.init({ LaunchDarkly::FEATURES => {} })
       config.feature_store.upsert(LaunchDarkly::FEATURES, feature)
       expect(event_processor).to receive(:add_event).with(hash_including(
-        kind: "feature", key: feature[:key], version: feature[:version], user: user,
-        value: true, default: "default", trackEvents: false, debugEventsUntilDate: nil
+        kind: "feature",
+        key: feature[:key],
+        version: feature[:version],
+        user: user,
+        variation: 0,
+        value: true,
+        default: "default",
+        trackEvents: false,
+        debugEventsUntilDate: nil
       ))
       client.variation(feature[:key], user, "default")
     end
