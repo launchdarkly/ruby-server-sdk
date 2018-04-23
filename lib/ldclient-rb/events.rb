@@ -349,14 +349,14 @@ module LaunchDarkly
         if @inline_users || is_debug
           out[:user] = @user_filter.transform_user_props(event[:user])
         else
-          out[:userKey] = event[:user][:key]
+          out[:userKey] = event[:user].nil? ? nil : event[:user][:key]
         end
         out
       when "identify"
         {
           kind: "identify",
           creationDate: event[:creationDate],
-          key: event[:user][:key],
+          key: event[:user].nil? ? nil : event[:user][:key],
           user: @user_filter.transform_user_props(event[:user])
         }
       when "custom"
@@ -369,7 +369,7 @@ module LaunchDarkly
         if @inline_users
           out[:user] = @user_filter.transform_user_props(event[:user])
         else
-          out[:userKey] = event[:user][:key]
+          out[:userKey] = event[:user].nil? ? nil : event[:user][:key]
         end
         out
       when "index"
