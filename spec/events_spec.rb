@@ -18,7 +18,7 @@ describe LaunchDarkly::EventProcessor do
 
   it "queues identify event" do
     @ep = subject.new("sdk_key", default_config, hc)
-    e = { kind: "identify", user: user }
+    e = { kind: "identify", key: user[:key], user: user }
     @ep.add_event(e)
 
     output = flush_and_get_events
@@ -28,12 +28,13 @@ describe LaunchDarkly::EventProcessor do
   it "filters user in identify event" do
     config = LaunchDarkly::Config.new(all_attributes_private: true)
     @ep = subject.new("sdk_key", config, hc)
-    e = { kind: "identify", user: user }
+    e = { kind: "identify", key: user[:key], user: user }
     @ep.add_event(e)
 
     output = flush_and_get_events
     expect(output).to contain_exactly({
       kind: "identify",
+      key: user[:key],
       creationDate: e[:creationDate],
       user: filtered_user
     })
@@ -324,7 +325,7 @@ describe LaunchDarkly::EventProcessor do
 
   it "does a final flush when shutting down" do
     @ep = subject.new("sdk_key", default_config, hc)
-    e = { kind: "identify", user: user }
+    e = { kind: "identify", key: user[:key], user: user }
     @ep.add_event(e)
     
     @ep.stop

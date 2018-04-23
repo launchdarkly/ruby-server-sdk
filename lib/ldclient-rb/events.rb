@@ -356,6 +356,7 @@ module LaunchDarkly
         {
           kind: "identify",
           creationDate: event[:creationDate],
+          key: event[:user][:key],
           user: @user_filter.transform_user_props(event[:user])
         }
       when "custom"
