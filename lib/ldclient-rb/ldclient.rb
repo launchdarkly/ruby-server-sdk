@@ -163,7 +163,7 @@ module LaunchDarkly
           key: key,
           user: user,
           variation: res[:variation],
-          value: res[:value],
+          value: value,
           default: default,
           version: feature[:version],
           trackEvents: feature[:trackEvents],
