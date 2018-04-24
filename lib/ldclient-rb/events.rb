@@ -131,7 +131,7 @@ module LaunchDarkly
           when FlushMessage
             trigger_flush(buffer, flush_workers)
           when FlushUsersMessage
-            @user_keys.reset
+            @user_keys.clear
           when TestSyncMessage
             synchronize_for_testing(flush_workers)
             message.completed
