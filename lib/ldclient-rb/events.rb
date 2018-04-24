@@ -56,11 +56,13 @@ module LaunchDarkly
     def initialize(sdk_key, config, client = nil)
       @queue = Queue.new
       @flush_task = Concurrent::TimerTask.new(execution_interval: config.flush_interval) do
-        @queue << FlushMessage.new(false)
+        @queue << FlushMessage.new
       end
+      @flush_task.execute
       @users_flush_task = Concurrent::TimerTask.new(execution_interval: config.user_keys_flush_interval) do
         @queue << FlushUsersMessage.new
       end
+      @users_flush_task.execute
       @stopped = Concurrent::AtomicBoolean.new(false)
       
       EventDispatcher.new(@queue, sdk_key, config, client)
@@ -129,7 +131,7 @@ module LaunchDarkly
           when FlushMessage
             trigger_flush(buffer, flush_workers)
           when FlushUsersMessage
-            @user_keys.reset
+            @user_keys.clear
           when TestSyncMessage
             synchronize_for_testing(flush_workers)
             message.completed
@@ -284,18 +286,20 @@ module LaunchDarkly
     def run(sdk_key, config, client, payload, formatter)
       events_out = formatter.make_output_events(payload.events, payload.summary)
       res = nil
+      body = events_out.to_json
       (0..1).each do |attempt|
         if attempt > 0
           config.logger.warn { "[LDClient] Will retry posting events after 1 second" }
           sleep(1)
         end
         begin
+          config.logger.debug { "[LDClient] sending #{events_out.length} events: #{body}" }
           res = client.post (config.events_uri + "/bulk") do |req|
             req.headers["Authorization"] = sdk_key
             req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
             req.headers["Content-Type"] = "application/json"
             req.headers["X-LaunchDarkly-Event-Schema"] = "2"
-            req.body = events_out.to_json
+            req.body = body
             req.options.timeout = config.read_timeout
             req.options.open_timeout = config.connect_timeout
           end
