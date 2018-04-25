@@ -32,6 +32,6 @@
       true,
       false
    ],
-   "trackEvents": false,
+   "trackEvents": true,
    "deleted":false
 }
