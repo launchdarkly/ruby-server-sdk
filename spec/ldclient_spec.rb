@@ -57,10 +57,45 @@ describe LaunchDarkly::LDClient do
         variation: 0,
         value: true,
         default: "default",
-        trackEvents: false,
+        trackEvents: true,
         debugEventsUntilDate: nil
       ))
       client.variation(feature[:key], user, "default")
+    end
+
+    it "queues a feature event for an existing feature when user is nil" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature)
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "feature",
+        key: feature[:key],
+        version: feature[:version],
+        user: nil,
+        variation: nil,
+        value: "default",
+        default: "default",
+        trackEvents: true,
+        debugEventsUntilDate: nil
+      ))
+      client.variation(feature[:key], nil, "default")
+    end
+
+    it "queues a feature event for an existing feature when user key is nil" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature)
+      bad_user = { name: "Bob" }
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "feature",
+        key: feature[:key],
+        version: feature[:version],
+        user: bad_user,
+        variation: nil,
+        value: "default",
+        default: "default",
+        trackEvents: true,
+        debugEventsUntilDate: nil
+      ))
+      client.variation(feature[:key], bad_user, "default")
     end
   end
 

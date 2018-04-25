@@ -121,12 +121,6 @@ module LaunchDarkly
     def variation(key, user, default)
       return default if @config.offline?
 
-      unless user
-        @config.logger.error { "[LDClient] Must specify user" }
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
-        return default
-      end
-
       if !initialized?
         if @store.initialized?
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
@@ -137,12 +131,18 @@ module LaunchDarkly
         end
       end
 
-      sanitize_user(user)
+      sanitize_user(user) if !user.nil?
       feature = @store.get(FEATURES, key)
 
       if feature.nil?
         @config.logger.info { "[LDClient] Unknown feature flag #{key}. Returning default value" }
         @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
+        return default
+      end
+
+      unless user
+        @config.logger.error { "[LDClient] Must specify user" }
+        @event_processor.add_event(make_feature_event(feature, user, nil, default, default))
         return default
       end
 
@@ -158,30 +158,11 @@ module LaunchDarkly
           @config.logger.debug { "[LDClient] Result value is null in toggle" }
           value = default
         end
-        @event_processor.add_event(
-          kind: "feature",
-          key: key,
-          user: user,
-          variation: res[:variation],
-          value: value,
-          default: default,
-          version: feature[:version],
-          trackEvents: feature[:trackEvents],
-          debugEventsUntilDate: feature[:debugEventsUntilDate]
-        )
+        @event_processor.add_event(make_feature_event(feature, user, res[:variation], value, default))
         return value
       rescue => exn
         @config.logger.warn { "[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
-        @event_processor.add_event(
-          kind: "feature",
-          key: key,
-          user: user,
-          value: default,
-          default: default,
-          version: feature[:version],
-          trackEvents: feature[:trackEvents],
-          debugEventsUntilDate: feature[:debugEventsUntilDate]
-        )
+        @event_processor.add_event(make_feature_event(feature, user, nil, default, default))
         return default
       end
     end
@@ -258,6 +239,20 @@ module LaunchDarkly
       end
     end
 
-    private :evaluate, :log_exception, :sanitize_user
+    def make_feature_event(flag, user, variation, value, default)
+      {
+        kind: "feature",
+        key: flag[:key],
+        user: user,
+        variation: variation,
+        value: value,
+        default: default,
+        version: flag[:version],
+        trackEvents: flag[:trackEvents],
+        debugEventsUntilDate: flag[:debugEventsUntilDate]
+      }
+    end
+
+    private :evaluate, :log_exception, :sanitize_user, :make_feature_event
   end
 end
