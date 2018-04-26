@@ -9,15 +9,14 @@ module LaunchDarkly
   # streaming API.  Feature data can also be further cached in memory to reduce overhead
   # of calls to Redis.
   #
-  # To use this class, you must first have the `redis`, `connection-pool`, and `moneta`
-  # gems installed.  Then, create an instance and store it in the `feature_store`
-  # property of your client configuration.
+  # To use this class, you must first have the `redis` and `connection-pool` gems
+  # installed.  Then, create an instance and store it in the `feature_store` property
+  # of your client configuration.
   #
   class RedisFeatureStore
     begin
       require "redis"
       require "connection_pool"
-      require "moneta"
       REDIS_ENABLED = true
     rescue ScriptError, StandardError
       REDIS_ENABLED = false
@@ -38,7 +37,7 @@ module LaunchDarkly
     #
     def initialize(opts = {})
       if !REDIS_ENABLED
-        raise RuntimeError.new("can't use RedisFeatureStore because one of these gems is missing: redis, connection_pool, moneta")
+        raise RuntimeError.new("can't use RedisFeatureStore because one of these gems is missing: redis, connection_pool")
       end
       @redis_opts = opts[:redis_opts] || Hash.new
       if opts[:redis_url]
@@ -60,9 +59,9 @@ module LaunchDarkly
       # Moneta can also be used as a wrapper for Redis, but it doesn't support the Redis
       # hash operations that we use.
       if @expiration_seconds > 0
-        @cache = Moneta.new(:LRUHash, expires: true, threadsafe: true, max_count: @capacity)
+        @cache = ExpiringCache.new(@capacity, @expiration_seconds)
       else
-        @cache = Moneta.new(:Null)  # a stub that caches nothing
+        @cache = nil
       end
 
       @stopped = Concurrent::AtomicBoolean.new(false)
@@ -92,7 +91,7 @@ and prefix: #{@prefix}")
     end
 
     def get(kind, key)
-      f = @cache[cache_key(kind, key)]
+      f = @cache.nil? ? nil : @cache[cache_key(kind, key)]
       if f.nil?
         @logger.debug { "RedisFeatureStore: no cache hit for #{key} in '#{kind[:namespace]}', requesting from Redis" }
         f = with_connection do |redis|
@@ -139,7 +138,7 @@ and prefix: #{@prefix}")
     end
 
     def init(all_data)
-      @cache.clear
+      @cache.clear if !@cache.nil?
       count = 0
       with_connection do |redis|
         all_data.each do |kind, items|
@@ -174,7 +173,7 @@ and prefix: #{@prefix}")
     def stop
       if @stopped.make_true
         @pool.shutdown { |redis| redis.close }
-        @cache.clear
+        @cache.clear if !@cache.nil?
       end
     end
 
@@ -213,7 +212,7 @@ and prefix: #{@prefix}")
     end
 
     def put_cache(kind, key, value)
-      @cache.store(cache_key(kind, key), value, expires: @expiration_seconds)
+      @cache[cache_key(kind, key)] = value if !@cache.nil?
     end
 
     def update_with_versioning(kind, new_item)
