@@ -53,13 +53,10 @@ module LaunchDarkly
       @prefix = opts[:prefix] || RedisFeatureStore.default_prefix
       @logger = opts[:logger] || Config.default_logger
 
-      @expiration_seconds = opts[:expiration] || 15
-      @capacity = opts[:capacity] || 1000
-      # We're using Moneta only to provide expiration behavior for the in-memory cache.
-      # Moneta can also be used as a wrapper for Redis, but it doesn't support the Redis
-      # hash operations that we use.
-      if @expiration_seconds > 0
-        @cache = ExpiringCache.new(@capacity, @expiration_seconds)
+      expiration_seconds = opts[:expiration] || 15
+      capacity = opts[:capacity] || 1000
+      if expiration_seconds > 0
+        @cache = ExpiringCache.new(capacity, expiration_seconds)
       else
         @cache = nil
       end
