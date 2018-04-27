@@ -26,7 +26,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "codeclimate-test-reporter", "~> 0"
   spec.add_development_dependency "redis", "~> 3.3.5"
   spec.add_development_dependency "connection_pool", ">= 2.1.2"
-  spec.add_development_dependency "moneta", "~> 1.0.0"
   if RUBY_VERSION >= "2.0.0"
     spec.add_development_dependency "rake", "~> 10.0"
     spec.add_development_dependency "rspec_junit_formatter", "~> 0.3.0"
@@ -34,6 +33,7 @@ Gem::Specification.new do |spec|
     spec.add_development_dependency "rake", "12.1.0"
     # higher versions of rake fail to install in JRuby 1.7
   end
+  spec.add_development_dependency "timecop", "~> 0.9.1"
 
   spec.add_runtime_dependency "json", [">= 1.8", "< 3"]
   if RUBY_VERSION >= "2.1.0"
