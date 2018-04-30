@@ -257,7 +257,7 @@ describe LaunchDarkly::EventProcessor do
     }
     fe2 = {
       kind: "feature", key: "flagkey2", version: 22, user: user,
-      variation: 1, value: "value2", default: "default2"
+      variation: 2, value: "value2", default: "default2"
     }
     @ep.add_event(fe1)
     @ep.add_event(fe2)
@@ -273,13 +273,13 @@ describe LaunchDarkly::EventProcessor do
           flagkey1: {
             default: "default1",
             counters: [
-              { version: 11, value: "value1", count: 1 }
+              { version: 11, variation: 1, value: "value1", count: 1 }
             ]
           },
           flagkey2: {
             default: "default2",
             counters: [
-              { version: 22, value: "value2", count: 1 }
+              { version: 22, variation: 2, value: "value2", count: 1 }
             ]
           }
         }
@@ -409,6 +409,7 @@ describe LaunchDarkly::EventProcessor do
       kind: debug ? "debug" : "feature",
       creationDate: e[:creationDate],
       key: flag[:key],
+      variation: e[:variation],
       version: flag[:version],
       value: e[:value]
     }
