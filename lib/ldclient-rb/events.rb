@@ -7,6 +7,7 @@ require "faraday"
 
 module LaunchDarkly
   MAX_FLUSH_WORKERS = 5
+  CURRENT_SCHEMA_VERSION = 3
 
   class NullEventProcessor
     def add_event(event)
@@ -298,7 +299,7 @@ module LaunchDarkly
             req.headers["Authorization"] = sdk_key
             req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
             req.headers["Content-Type"] = "application/json"
-            req.headers["X-LaunchDarkly-Event-Schema"] = "2"
+            req.headers["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
             req.body = body
             req.options.timeout = config.read_timeout
             req.options.open_timeout = config.connect_timeout
@@ -348,6 +349,7 @@ module LaunchDarkly
           value: event[:value]
         }
         out[:default] = event[:default] if event.has_key?(:default)
+        out[:variation] = event[:variation] if event.has_key?(:variation)
         out[:version] = event[:version] if event.has_key?(:version)
         out[:prereqOf] = event[:prereqOf] if event.has_key?(:prereqOf)
         if @inline_users || is_debug
@@ -403,6 +405,9 @@ module LaunchDarkly
           value: cval[:value],
           count: cval[:count]
         }
+        if !ckey[:variation].nil?
+          c[:variation] = ckey[:variation]
+        end
         if ckey[:version].nil?
           c[:unknown] = true
         else
