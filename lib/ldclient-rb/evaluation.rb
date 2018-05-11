@@ -114,7 +114,7 @@ module LaunchDarkly
     # generated during prerequisite evaluation. Raises EvaluationError if the flag is not well-formed
     # Will return nil, but not raise an exception, indicating that the rules (including fallthrough) did not match
     # In that case, the caller should return the default value.
-    def evaluate(flag, user, store)
+    def evaluate(flag, user, store, logger)
       if flag.nil?
         raise EvaluationError, "Flag does not exist"
       end
@@ -126,20 +126,23 @@ module LaunchDarkly
       events = []
 
       if flag[:on]
-        res = eval_internal(flag, user, store, events)
-
-        return { value: res, events: events } if !res.nil?
+        res = eval_internal(flag, user, store, events, logger)
+        if !res.nil?
+          res[:events] = events
+          return res
+        end
       end
 
-      if !flag[:offVariation].nil? && flag[:offVariation] < flag[:variations].length
-        value = flag[:variations][flag[:offVariation]]
-        return { value: value, events: events }
+      offVariation = flag[:offVariation]
+      if !offVariation.nil? && offVariation < flag[:variations].length
+        value = flag[:variations][offVariation]
+        return { variation: offVariation, value: value, events: events }
       end
 
-      { value: nil, events: events }
+      { variation: nil, value: nil, events: events }
     end
 
-    def eval_internal(flag, user, store, events)
+    def eval_internal(flag, user, store, events, logger)
       failed_prereq = false
       # Evaluate prerequisites, if any
       (flag[:prerequisites] || []).each do |prerequisite|
@@ -149,14 +152,23 @@ module LaunchDarkly
           failed_prereq = true
         else
           begin
-            prereq_res = eval_internal(prereq_flag, user, store, events)
-            variation = get_variation(prereq_flag, prerequisite[:variation])
-            events.push(kind: "feature", key: prereq_flag[:key], value: prereq_res, version: prereq_flag[:version], prereqOf: flag[:key])
-            if prereq_res.nil? || prereq_res != variation
+            prereq_res = eval_internal(prereq_flag, user, store, events, logger)
+            event = {
+              kind: "feature",
+              key: prereq_flag[:key],
+              variation: prereq_res.nil? ? nil : prereq_res[:variation],
+              value: prereq_res.nil? ? nil : prereq_res[:value],
+              version: prereq_flag[:version],
+              prereqOf: flag[:key],
+              trackEvents: prereq_flag[:trackEvents],
+              debugEventsUntilDate: prereq_flag[:debugEventsUntilDate]
+            }
+            events.push(event)
+            if prereq_res.nil? || prereq_res[:variation] != prerequisite[:variation]
               failed_prereq = true
             end
           rescue => exn
-            @config.logger.error { "[LDClient] Error evaluating prerequisite: #{exn.inspect}" }
+            logger.error { "[LDClient] Error evaluating prerequisite: #{exn.inspect}" }
             failed_prereq = true
           end
         end
@@ -175,7 +187,9 @@ module LaunchDarkly
       # Check user target matches
       (flag[:targets] || []).each do |target|
         (target[:values] || []).each do |value|
-          return get_variation(flag, target[:variation]) if value == user[:key]
+          if value == user[:key]
+            return { variation: target[:variation], value: get_variation(flag, target[:variation]) }
+          end
         end
       end
     
@@ -245,7 +259,7 @@ module LaunchDarkly
 
     def variation_for_user(rule, user, flag)
       if !rule[:variation].nil? # fixed variation
-        return get_variation(flag, rule[:variation])
+        return { variation: rule[:variation], value: get_variation(flag, rule[:variation]) }
       elsif !rule[:rollout].nil? # percentage rollout
         rollout = rule[:rollout]
         bucket_by = rollout[:bucketBy].nil? ? "key" : rollout[:bucketBy]
@@ -253,7 +267,9 @@ module LaunchDarkly
         sum = 0;
         rollout[:variations].each do |variate|
           sum += variate[:weight].to_f / 100000.0
-          return get_variation(flag, variate[:variation]) if bucket < sum
+          if bucket < sum
+            return { variation: variate[:variation], value: get_variation(flag, variate[:variation]) }
+          end
         end
         nil
       else # the rule isn't well-formed
