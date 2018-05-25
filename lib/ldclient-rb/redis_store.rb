@@ -67,8 +67,8 @@ module LaunchDarkly
       }
 
       with_connection do |redis|
-        @logger.info("RedisFeatureStore: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} \
-and prefix: #{@prefix}")
+        @logger.info { "RedisFeatureStore: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} \
+and prefix: #{@prefix}" }
       end
     end
 
