@@ -24,7 +24,6 @@ module LaunchDarkly
 
     def start
       # TODO: handle proxy config using via: (convert Faraday::ProxyOptions - Faraday::ProxyOptions.from @config.proxy)
-      # TODO: handle read timeout
 
       # Start receiving the response
       client = HTTP.timeout(read: @read_timeout.to_i)
