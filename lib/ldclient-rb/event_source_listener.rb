@@ -50,7 +50,7 @@ module LaunchDarkly
           @event_handlers[evt.type].call(evt) if @event_handlers[evt.type]
         end
         # See if we were asked to reconnect
-        maybe_last_retry_millis = events.map {|e| e.retry }.compact.last
+        maybe_last_retry_millis = events.map(&:retry).compact.last
         if maybe_last_retry_millis
           # and if we were - close the client, sleep and then reconnect.
           client.close
