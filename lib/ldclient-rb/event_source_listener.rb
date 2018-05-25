@@ -23,10 +23,12 @@ module LaunchDarkly
     end
 
     def start
-      # TODO: handle proxy config using via: (convert Faraday::ProxyOptions - Faraday::ProxyOptions.from @config.proxy)
-
-      # Start receiving the response
       client = HTTP.timeout(read: @read_timeout.to_i)
+      if @via
+        proxy_options = Faraday::ProxyOptions.from(@via)
+        client = client.via(proxy_options.host, proxy_options.port, proxy_options.user, proxy_options.password)
+      end
+
       response = client.get(@uri, headers: @headers)
 
       # Only accept 200 as a legal status
