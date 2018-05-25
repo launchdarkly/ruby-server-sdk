@@ -35,13 +35,13 @@ module LaunchDarkly
       return unless @started.make_true
 
       # The TimerTask has a nice property - it will not spool up a subsequent execution of a task if a previous one hasn't completed
-      @task = Concurrent::TimerTask.execute(execution_interval: READ_TIMEOUT_SECONDS) do |task|
+      @task = Concurrent::TimerTask.execute(:execution_interval => READ_TIMEOUT_SECONDS) do |task|
         @config.logger.info { "[LDClient] Initializing stream connection withih a TimerTask" }
         headers = {
           'Authorization' => @sdk_key,
           'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
         }
-        listener = LaunchDarkly::EventSourceListener.new(@config.stream_uri + "/all", headers: headers, via: @config.proxy, read_timeout: READ_TIMEOUT_SECONDS)
+        listener = LaunchDarkly::EventSourceListener.new(@config.stream_uri + "/all", :headers => headers, :via => @config.proxy, :read_timeout => READ_TIMEOUT_SECONDS)
         listener.on(PUT) { |message| process_message(message, PUT) }
         listener.on(PATCH) { |message| process_message(message, PATCH) }
         listener.on(DELETE) { |message| process_message(message, DELETE) }
@@ -70,7 +70,7 @@ module LaunchDarkly
     def process_message(message, method)
       @config.logger.debug {"[LDClient] Stream received #{method} message: #{message.data}" }
       if method == PUT
-        message = JSON.parse(message.data, symbolize_names: true)
+        message = JSON.parse(message.data, :symbolize_names => true)
         @feature_store.init({
           FEATURES => message[:data][:flags],
           SEGMENTS => message[:data][:segments]
@@ -78,7 +78,7 @@ module LaunchDarkly
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized" }
       elsif method == PATCH
-        message = JSON.parse(message.data, symbolize_names: true)
+        message = JSON.parse(message.data, :symbolize_names => true)
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, message[:path])
           if key
@@ -87,7 +87,7 @@ module LaunchDarkly
           end
         end
       elsif method == DELETE
-        message = JSON.parse(message.data, symbolize_names: true)
+        message = JSON.parse(message.data, :symbolize_names => true)
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, message[:path])
           if key

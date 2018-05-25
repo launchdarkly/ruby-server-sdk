@@ -5,11 +5,11 @@ module LaunchDarkly
     class Reconnect < RuntimeError
     end
 
-    def initialize(uri, headers:, via:, read_timeout:)
+    def initialize(uri, options = {})
       @uri = uri
-      @via = via
-      @headers = headers
-      @read_timeout = read_timeout
+      @via = options[:via]
+      @headers = options[:headers] || {}
+      @read_timeout = options[:read_timeout]
       @event_handlers = {}
       @error_handler = nil
     end
@@ -23,13 +23,13 @@ module LaunchDarkly
     end
 
     def start
-      client = HTTP.timeout(read: @read_timeout.to_i)
+      client = HTTP.timeout(:read => @read_timeout.to_i)
       if @via
         proxy_options = Faraday::ProxyOptions.from(@via)
         client = client.via(proxy_options.host, proxy_options.port, proxy_options.user, proxy_options.password)
       end
 
-      response = client.get(@uri, headers: @headers)
+      response = client.get(@uri, :headers => @headers)
 
       # Only accept 200 as a legal status
       if response.status.to_i != 200
