@@ -24,6 +24,7 @@ module LaunchDarkly
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
       @stopped = Concurrent::AtomicBoolean.new(false)
+      @ready = Concurrent::Event.new
     end
 
     def initialized?
@@ -31,7 +32,7 @@ module LaunchDarkly
     end
 
     def start
-      return unless @started.make_true
+      return @ready unless @started.make_true
 
       @config.logger.info { "[LDClient] Initializing stream connection" }
       
@@ -55,6 +56,8 @@ module LaunchDarkly
           end
         }
       end
+      
+      @ready
     end
 
     def stop
@@ -83,6 +86,7 @@ module LaunchDarkly
         })
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized" }
+        @ready.set
       elsif method == PATCH
         message = JSON.parse(message.data, symbolize_names: true)
         for kind in [FEATURES, SEGMENTS]

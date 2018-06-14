@@ -56,6 +56,4 @@ Gem::Specification.new do |spec|
   else
     spec.add_runtime_dependency "nio4r", "~> 1.1" # for maximum ruby version compatibility.
   end
-
-  spec.add_runtime_dependency "waitutil", "0.2"
 end

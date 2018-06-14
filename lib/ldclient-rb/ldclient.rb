@@ -1,7 +1,7 @@
+require "concurrent/atomics"
 require "digest/sha1"
 require "logger"
 require "benchmark"
-require "waitutil"
 require "json"
 require "openssl"
 
@@ -41,7 +41,9 @@ module LaunchDarkly
 
       requestor = Requestor.new(sdk_key, config)
 
-      if !@config.offline?
+      if @config.offline?
+        @update_processor = NullUpdateProcessor.new
+      else
         if @config.update_processor.nil?
           if @config.stream?
             @update_processor = StreamProcessor.new(sdk_key, config, requestor)
@@ -53,15 +55,12 @@ module LaunchDarkly
         else
           @update_processor = @config.update_processor
         end
-        @update_processor.start
       end
 
-      if !@config.offline? && wait_for_sec > 0
-        begin
-          WaitUtil.wait_for_condition("LaunchDarkly client initialization", timeout_sec: wait_for_sec, delay_sec: 0.1) do
-            initialized?
-          end
-        rescue WaitUtil::TimeoutError
+      ready = @update_processor.start
+      if wait_for_sec > 0
+        ok = ready.wait(wait_for_sec)
+        if !ok
           @config.logger.error { "[LDClient] Timeout encountered waiting for LaunchDarkly client initialization" }
         end
       end
@@ -220,9 +219,7 @@ module LaunchDarkly
     # @return [void]
     def close
       @config.logger.info { "[LDClient] Closing LaunchDarkly client..." }
-      if not @config.offline?
-        @update_processor.stop
-      end
+      @update_processor.stop
       @event_processor.stop
       @store.stop
     end
@@ -254,5 +251,23 @@ module LaunchDarkly
     end
 
     private :evaluate, :log_exception, :sanitize_user, :make_feature_event
+  end
+
+  #
+  # Used internally when the client is offline.
+  #
+  class NullUpdateProcessor
+    def start
+      e = Concurrent::Event.new
+      e.set
+      e
+    end
+
+    def initialized?
+      true
+    end
+
+    def stop
+    end
   end
 end
