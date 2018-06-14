@@ -59,6 +59,7 @@ module LaunchDarkly
             end
           rescue InvalidSDKKeyError
             @config.logger.error { "[LDClient] Received 401 error, no further polling requests will be made since SDK key is invalid" };
+            @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
             stop
           rescue StandardError => exn
             @config.logger.error { "[LDClient] Exception while polling: #{exn.inspect}" }

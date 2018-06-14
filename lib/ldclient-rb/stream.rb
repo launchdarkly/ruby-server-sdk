@@ -52,6 +52,7 @@ module LaunchDarkly
           @config.logger.error { "[LDClient] Unexpected status code #{err[:status_code]} from streaming connection" }
           if err[:status_code] == 401
             @config.logger.error { "[LDClient] Received 401 error, no further streaming connection will be made since SDK key is invalid" }
+            @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
             stop
           end
         }

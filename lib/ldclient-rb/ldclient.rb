@@ -62,6 +62,8 @@ module LaunchDarkly
         ok = ready.wait(wait_for_sec)
         if !ok
           @config.logger.error { "[LDClient] Timeout encountered waiting for LaunchDarkly client initialization" }
+        elsif !@update_processor.initialized?
+          @config.logger.error { "[LDClient] LaunchDarkly client initialization failed" }
         end
       end
     end
