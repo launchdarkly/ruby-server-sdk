@@ -9,6 +9,7 @@ module LaunchDarkly
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
       @stopped = Concurrent::AtomicBoolean.new(false)
+      @ready = Concurrent::Event.new
     end
 
     def initialized?
@@ -16,9 +17,10 @@ module LaunchDarkly
     end
 
     def start
-      return unless @started.make_true
+      return @ready unless @started.make_true
       @config.logger.info { "[LDClient] Initializing polling connection" }
       create_worker
+      @ready
     end
 
     def stop
@@ -39,6 +41,7 @@ module LaunchDarkly
         })
         if @initialized.make_true
           @config.logger.info { "[LDClient] Polling connection initialized" }
+          @ready.set
         end
       end
     end
@@ -56,6 +59,7 @@ module LaunchDarkly
             end
           rescue InvalidSDKKeyError
             @config.logger.error { "[LDClient] Received 401 error, no further polling requests will be made since SDK key is invalid" };
+            @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
             stop
           rescue StandardError => exn
             @config.logger.error { "[LDClient] Exception while polling: #{exn.inspect}" }

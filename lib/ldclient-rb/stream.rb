@@ -24,6 +24,7 @@ module LaunchDarkly
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
       @stopped = Concurrent::AtomicBoolean.new(false)
+      @ready = Concurrent::Event.new
     end
 
     def initialized?
@@ -31,7 +32,7 @@ module LaunchDarkly
     end
 
     def start
-      return unless @started.make_true
+      return @ready unless @started.make_true
 
       @config.logger.info { "[LDClient] Initializing stream connection" }
       
@@ -51,10 +52,13 @@ module LaunchDarkly
           @config.logger.error { "[LDClient] Unexpected status code #{err[:status_code]} from streaming connection" }
           if err[:status_code] == 401
             @config.logger.error { "[LDClient] Received 401 error, no further streaming connection will be made since SDK key is invalid" }
+            @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
             stop
           end
         }
       end
+      
+      @ready
     end
 
     def stop
@@ -83,6 +87,7 @@ module LaunchDarkly
         })
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized" }
+        @ready.set
       elsif method == PATCH
         message = JSON.parse(message.data, symbolize_names: true)
         for kind in [FEATURES, SEGMENTS]
