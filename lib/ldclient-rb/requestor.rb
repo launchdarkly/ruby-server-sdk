@@ -4,7 +4,14 @@ require "faraday/http_cache"
 
 module LaunchDarkly
 
-  class InvalidSDKKeyError < StandardError
+  class UnexpectedResponseError < StandardError
+    def initialize(status)
+      @status = status
+    end
+
+    def status
+      @status
+    end
   end
 
   class Requestor
@@ -13,7 +20,7 @@ module LaunchDarkly
       @config = config
       @client = Faraday.new do |builder|
         builder.use :http_cache, store: @config.cache_store
-
+        
         builder.adapter :net_http_persistent
       end
     end
@@ -44,19 +51,8 @@ module LaunchDarkly
 
       @config.logger.debug { "[LDClient] Got response from uri: #{uri}\n\tstatus code: #{res.status}\n\theaders: #{res.headers}\n\tbody: #{res.body}" }
 
-      if res.status == 401
-        @config.logger.error { "[LDClient] Invalid SDK key" }
-        raise InvalidSDKKeyError
-      end
-
-      if res.status == 404
-        @config.logger.error { "[LDClient] Resource not found" }
-        return nil
-      end
-
       if res.status < 200 || res.status >= 300
-        @config.logger.error { "[LDClient] Unexpected status code #{res.status}" }
-        return nil
+        raise UnexpectedResponseError.new(res.status)
       end
 
       JSON.parse(res.body, symbolize_names: true)

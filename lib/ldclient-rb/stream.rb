@@ -49,9 +49,10 @@ module LaunchDarkly
         conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
         conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
         conn.on_error { |err|
-          @config.logger.error { "[LDClient] Unexpected status code #{err[:status_code]} from streaming connection" }
-          if err[:status_code] == 401
-            @config.logger.error { "[LDClient] Received 401 error, no further streaming connection will be made since SDK key is invalid" }
+          status = err[:status_code]
+          message = Util.http_error_message(status, "streaming connection", "will retry")
+          @config.logger.error { "[LDClient] #{message}" }
+          if !Util.http_error_recoverable?(status)
             @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
             stop
           end
