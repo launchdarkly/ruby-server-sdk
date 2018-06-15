@@ -222,17 +222,24 @@ module LaunchDarkly
       if !payload.events.empty? || !payload.summary.counters.empty?
         # If all available worker threads are busy, success will be false and no job will be queued.
         success = flush_workers.post do
-          resp = EventPayloadSendTask.new.run(@sdk_key, @config, @client, payload, @formatter)
-          handle_response(resp) if !resp.nil?
+          begin
+            resp = EventPayloadSendTask.new.run(@sdk_key, @config, @client, payload, @formatter)
+            handle_response(resp) if !resp.nil?
+          rescue => e
+            @config.logger.warn { "[LDClient] Unexpected error in event processor: #{e.inspect}. \nTrace: #{e.backtrace}" }
+          end
         end
         buffer.clear if success # Reset our internal state, these events now belong to the flush worker
       end
     end
 
     def handle_response(res)
-      if res.status == 401
-        @config.logger.error { "[LDClient] Received 401 error, no further events will be posted since SDK key is invalid" }
-        @disabled.value = true
+      if res.status >= 400
+        message = Util.http_error_message(res.status, "event delivery", "some events were dropped")
+        @config.logger.error { "[LDClient] #{message}" }
+        if !Util.http_error_recoverable?(res.status)
+          @disabled.value = true
+        end
       else
         if !res.headers.nil? && res.headers.has_key?("Date")
           begin
@@ -309,8 +316,7 @@ module LaunchDarkly
           next
         end
         if res.status < 200 || res.status >= 300
-          config.logger.error { "[LDClient] Unexpected status code while processing events: #{res.status}" }
-          if res.status >= 500
+          if Util.http_error_recoverable?(res.status)
             next
           end
         end
