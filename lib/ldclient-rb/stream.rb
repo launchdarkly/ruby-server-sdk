@@ -4,12 +4,18 @@ require "concurrent/timer_task"
 require "json"
 
 module LaunchDarkly
-  PUT = 'put'
-  PATCH = 'patch'
-  DELETE = 'delete'
-  INDIRECT_PUT = 'indirect/put'
-  INDIRECT_PATCH = 'indirect/patch'
-  READ_TIMEOUT_SECONDS = 50 * 6  # 5 minutes; the stream should send a ping every 3 minutes
+  PUT = "put"
+  PATCH = "patch"
+  DELETE = "delete"
+  INDIRECT_PUT = "indirect/put"
+  INDIRECT_PATCH = "indirect/patch"
+  READ_TIMEOUT_SECONDS =  300 # 5 minutes; the stream should send a ping every 3 minutes
+  DEFAULT_RETRY_SECONDS = 3
+
+  HEADERS = {
+    "Authorization" => @sdk_key,
+    "User-Agent" => "RubyClient/" + LaunchDarkly::VERSION
+  }
 
   KEY_PATHS = {
     FEATURES => "/flags/",
@@ -34,41 +40,52 @@ module LaunchDarkly
     def start
       return unless @started.make_true
 
-      # The TimerTask has a nice property - it will not spool up a subsequent execution of a task if a previous one hasn't completed
-      @task = Concurrent::TimerTask.execute(execution_interval: READ_TIMEOUT_SECONDS) do |task|
-        @config.logger.info { "[LDClient] Initializing stream connection withih a TimerTask" }
-        headers = {
-          'Authorization' => @sdk_key,
-          'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
-        }
-        listener = LaunchDarkly::EventSourceListener.new(@config.stream_uri + "/all", headers: headers, via: @config.proxy, read_timeout: READ_TIMEOUT_SECONDS)
+      # The Concurrent::TimerTask does not spool up a subsequent execution of a task until the previous completed.
+      # Start a Concurrent::TimerTask right away.
+      # Start a LaunchDarkly::EventSourceListener for listening the event stream.
+      # Set the execution_interval either to the DEFAULT_RETRY_SECONDS or the retry timeout sent by the client.
+      @task = Concurrent::TimerTask.execute(run_now: true) do |task|
+        execution_interval = nil
+        @config.logger.info { "[LDClient] Initializing an EventSourceListener within a TimerTask" }
+        listener = LaunchDarkly::EventSourceListener.new(
+          @config.stream_uri + "/all",
+          headers: headers,
+          via: @config.proxy,
+          on_retry: ->(timeout) { execution_interval = timeout },
+          read_timeout: READ_TIMEOUT_SECONDS,
+          logger: @config.logger
+        )
         listener.on(PUT) { |message| process_message(message, PUT) }
         listener.on(PATCH) { |message| process_message(message, PATCH) }
         listener.on(DELETE) { |message| process_message(message, DELETE) }
         listener.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
         listener.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
         listener.on_error do |err|
-          @config.logger.error { "[LDClient] Unexpected status code #{err[:status_code]} from streaming connection" }
-          if err[:status_code] == 401
-            @config.logger.error { "[LDClient] Received 401 error, no further streaming connection will be made since SDK key is invalid" }
-            stop
-          end
+          @config.logger.error { "[LDClient] Error handler shutting down the TimerTask. No further streaming connection will be made." }
+          stop
         end
         listener.start
+        task.execution_interval = execution_interval.nil? ? DEFAULT_RETRY_SECONDS : execution_interval
       end
     end
 
     def stop
       if @stopped.make_true
         @task.shutdown
-        @config.logger.info { "[LDClient] Stream connection stopped" }
       end
     end
 
     private
 
+    def headers
+      {
+        "Authorization" => @sdk_key,
+        "User-Agent" => "RubyClient/" + LaunchDarkly::VERSION
+      }
+    end
+
     def process_message(message, method)
-      @config.logger.debug {"[LDClient] Stream received #{method} message: #{message.data}" }
+      @config.logger.debug { "[LDClient] Stream received #{method} message: #{message.data}" }
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
         @feature_store.init({
@@ -102,7 +119,7 @@ module LaunchDarkly
           SEGMENTS => all_data[:segments]
         })
         @initialized.make_true
-        @config.logger.info {"[LDClient] Stream initialized (via indirect message)" }
+        @config.logger.info { "[LDClient] Stream initialized (via indirect message)" }
       elsif method == INDIRECT_PATCH
         key = key_for_path(FEATURES, message.data)
         if key

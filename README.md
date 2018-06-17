@@ -13,14 +13,13 @@ Quick setup
 0. Install the Ruby SDK with `gem`
 
 ```shell
-gem install ldclient-rb --prerelease
+gem install ldclient-rb
 ```
-Note: The `--prerelease` flag is there to satisfy the dependency of celluloid 0.18pre which we have tested extensively and have found stable in our use case.  Unfortunately, the upstream provider has not promoted this version to stable yet.   See [here](https://github.com/celluloid/celluloid/issues/762)  This is not required for use in a Gemfile.
 
 1. Require the LaunchDarkly client:
 
 ```ruby
-require 'ldclient-rb'
+require "ldclient-rb"
 ```
 
 2. Create a new LDClient with your SDK key:
@@ -31,7 +30,7 @@ client = LaunchDarkly::LDClient.new("your_sdk_key")
 
 ### Ruby on Rails
 
-0.  Add `gem 'ldclient-rb'` to your Gemfile and `bundle install`
+0.  Add `gem "ldclient-rb"` to your Gemfile and `bundle install`
 
 1.  Initialize the launchdarkly client in `config/initializers/launchdarkly.rb`:
 
@@ -71,7 +70,7 @@ Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_sdk_key")
 3.  In your controllers, access the client using
 
 ```ruby
-Rails.application.config.ld_client.variation('your.flag.key', launchdarkly_settings, false)
+Rails.application.config.ld_client.variation("your.flag.key", launchdarkly_settings, false)
 ```
 
 Note that this gem will automatically switch to using the Rails logger it is detected.
