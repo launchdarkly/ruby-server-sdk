@@ -34,6 +34,8 @@ Gem::Specification.new do |spec|
     # higher versions of rake fail to install in JRuby 1.7
   end
   spec.add_development_dependency "timecop", "~> 0.9.1"
+  spec.add_development_dependency "rack", "~> 1"
+  spec.add_development_dependency "puma", "~> 3.11"
 
   spec.add_runtime_dependency "json", [">= 1.8", "< 3"]
   if RUBY_VERSION >= "2.1.0"
