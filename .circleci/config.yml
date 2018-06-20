@@ -54,7 +54,8 @@ jobs:
     machine:
       image: circleci/classic:latest
     environment:
-      - RUBIES: "ruby-2.1.9 ruby-2.0.0 ruby-1.9.3 jruby-9.0.5.0"
+      #- RUBIES: "ruby-2.1.9 ruby-2.0.0 ruby-1.9.3 jruby-9.0.5.0"
+      - RUBIES: "jruby-9.0.5.0"  # minimum Ruby version is 2.2.6
     steps:
       - run: sudo apt-get -q update
       - run: sudo apt-get -qy install redis-server
