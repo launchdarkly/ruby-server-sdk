@@ -1,4 +1,5 @@
 require "json"
+require "set"
 
 module LaunchDarkly
   class UserFilter
