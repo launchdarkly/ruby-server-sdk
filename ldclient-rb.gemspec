@@ -50,10 +50,4 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "hashdiff", "~> 0.2"
   spec.add_runtime_dependency "http_tools", '~> 0.4.5'
   spec.add_runtime_dependency "socketry", "~> 0.5.1"
-
-  if RUBY_VERSION >= "2.2.2"
-    spec.add_runtime_dependency "nio4r", "< 3" # for maximum ruby version compatibility.
-  else
-    spec.add_runtime_dependency "nio4r", "~> 1.1" # for maximum ruby version compatibility.
-  end
 end
