@@ -84,8 +84,8 @@ module LaunchDarkly
         rescue StandardError => e
           @logger.error { "Unexpected error from event source: #{e.inspect}" }
           @logger.debug { "Exception trace: #{e.backtrace}" }
-          cxn.close if !cxn.nil?
         end
+        cxn.close if !cxn.nil?
       end
     end
 
