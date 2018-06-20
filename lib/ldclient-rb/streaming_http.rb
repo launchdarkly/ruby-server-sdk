@@ -24,7 +24,8 @@ module LaunchDarkly
       @done = false
       @lock = Mutex.new
 
-      # Provide callbacks for the Parser to give us the headers and body
+      # Provide callbacks for the Parser to give us the headers and body. This has to be done
+      # before we start piping any data into the parser.
       have_headers = false
       @parser.on(:header) do
         have_headers = true
@@ -74,7 +75,7 @@ module LaunchDarkly
     def consume_body
       loop do
         @lock.synchronize { break if @done }
-        break if !read_chunk
+        break if !read_chunk_into_buffer
       end
       @buffer
     end
@@ -111,10 +112,13 @@ module LaunchDarkly
     end
 
     # Attempt to read some more data from the socket. Return true if successful, false if EOF.
-    def read_chunk
+    # A read timeout will result in an exception.
+    def read_chunk_into_buffer
       data = @socket.readpartial(DEFAULT_CHUNK_SIZE, timeout: @read_timeout)
       return false if data == :eof
       @parser << data
+      # We are piping the content through the parser so that it can handle things like chunked
+      # encoding for us. The content ends up being appended to @buffer via our callback.
       true
     end
 
@@ -129,7 +133,7 @@ module LaunchDarkly
             return @buffer.slice!(0, i + 1).force_encoding(Encoding::UTF_8)
           end
         end
-        return nil if !read_chunk
+        return nil if !read_chunk_into_buffer
       end
     end
   end
