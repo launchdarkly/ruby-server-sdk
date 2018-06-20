@@ -89,6 +89,7 @@ module LaunchDarkly
       end
     end
 
+    # Try to establish a streaming connection. Returns the StreamingHTTPConnection object if successful.
     def connect
       loop do
         interval = @backoff.next_interval
@@ -98,23 +99,24 @@ module LaunchDarkly
         end
         begin
           cxn = StreamingHTTPConnection.new(@uri, @proxy, build_headers, @connect_timeout, @read_timeout)
-          resp_status, resp_headers = cxn.read_headers
-          if resp_status != 200
-            body = cxn.consume_body
+          if cxn.status != 200
+            body = cxn.consume_body  # grab the whole response body in case it has error details
             cxn.close
-            @on[:error].call({status_code: resp_status, body: body})
-          elsif resp_headers["content-type"] && resp_headers["content-type"].start_with?("text/event-stream")
-            return cxn
+            @on[:error].call({status_code: cxn.status, body: body})
+          elsif cxn.headers["content-type"] && cxn.headers["content-type"].start_with?("text/event-stream")
+            return cxn  # we're good to proceed
           end
-          @logger.error { "Event source returned unexpected content type '#{resp_headers["content-type"]}'" }
+          @logger.error { "Event source returned unexpected content type '#{cxn.headers["content-type"]}'" }
         rescue StandardError => e
           @logger.error { "Unexpected error from event source: #{e.inspect}" }
           @logger.debug { "Exception trace: #{e.backtrace}" }
           cxn.close if !cxn.nil?
         end
+        # if unsuccessful, continue the loop to connect again
       end
     end
 
+    # Read lines one at a time from the StreamingHTTPConnection, and parse them into events.
     def read_stream(cxn)
       event_parser = EventParser.new
       event_parser.on(:event) do |event|
@@ -130,7 +132,12 @@ module LaunchDarkly
 
     def dispatch_event(event)
       @last_id = event.id
+
+      # Tell the Backoff object that as of the current time, we have succeeded in getting some data. It
+      # uses that information so it can automatically reset itself if enough time passes between failures.
       @backoff.mark_success
+
+      # Pass the event to the caller
       @on[:event].call(event)
     end
 
@@ -145,22 +152,36 @@ module LaunchDarkly
     end
   end
 
+  # Custom exception that we use to tell the worker thread to stop
   class ShutdownSignal < StandardError
   end
 
+  #
+  # Wrapper around a socket allowing us to read an HTTP response incrementally, line by line,
+  # or to consume the entire response body.
+  #
+  # The socket is managed by Socketry, which implements the read timeout.
+  #
+  # Incoming data is fed into an instance of HTTPTools::Parser, which gives us the header and
+  # chunks of the body via callbacks.
+  #
   class StreamingHTTPConnection
     DEFAULT_CHUNK_SIZE = 10000
 
+    attr_reader :status
+    attr_reader :headers
+
     def initialize(uri, proxy, headers, connect_timeout, read_timeout)
       @parser = HTTPTools::Parser.new
-      @headers = nil
       @buffer = ""
       @read_timeout = read_timeout
       @done = false
       @lock = Mutex.new
 
+      # Provide callbacks for the Parser to give us the headers and body
+      have_headers = false
       @parser.on(:header) do
-        @headers = Hash[@parser.header.map { |k,v| [k.downcase, v] }]
+        have_headers = true
       end
       @parser.on(:stream) do |data|
         @lock.synchronize { @buffer << data }
@@ -177,6 +198,12 @@ module LaunchDarkly
       end
 
       @socket.write(build_request(uri, headers))
+
+      # Block until the status code and headers have been successfully read.
+      while !have_headers && read_chunk
+      end
+      @headers = Hash[@parser.header.map { |k,v| [k.downcase, v] }]
+      @status = @parser.status_code
     end
 
     def close
@@ -184,15 +211,8 @@ module LaunchDarkly
       @socket = nil
     end
 
-    # Blocks until status code and headers have been read, and returns them.
-    def read_headers
-      while @headers.nil? && read_chunk
-      end
-      [@parser.status_code, @headers]
-    end
-
-    # Generator that returns one line at a time (delimited by \r, \n, or \r\n) until the
-    # response is fully consumed or the socket is closed.
+    # Generator that returns one line of the response body at a time (delimited by \r, \n,
+    # or \r\n) until the response is fully consumed or the socket is closed.
     def read_lines
       Enumerator.new do |gen|
         loop do
@@ -222,6 +242,7 @@ module LaunchDarkly
       end
     end
 
+    # Build an HTTP request line and headers.
     def build_request(uri, headers)
       ret = "GET #{uri.request_uri} HTTP/1.1\r\n"
       headers.each { |k, v|
@@ -230,6 +251,7 @@ module LaunchDarkly
       ret + "\r\n"
     end
 
+    # Build a proxy connection header.
     def build_proxy_request(uri, proxy)
       ret = "CONNECT #{uri.host}:#{uri.port} HTTP/1.1\r\n"
       ret << "Host: #{uri.host}:#{uri.port}\r\n"
@@ -241,6 +263,7 @@ module LaunchDarkly
       ret
     end
 
+    # Attempt to read some more data from the socket. Return true if successful, false if EOF.
     def read_chunk
       data = @socket.readpartial(DEFAULT_CHUNK_SIZE, timeout: @read_timeout)
       return false if data == :eof
@@ -248,6 +271,7 @@ module LaunchDarkly
       true
     end
 
+    # Extract the next line of text from the read buffer, refilling the buffer as needed.
     def read_line
       loop do
         @lock.synchronize do
@@ -265,6 +289,9 @@ module LaunchDarkly
 
   SSEEvent = Struct.new(:type, :data, :id)
   
+  #
+  # Accepts lines of text and parses them into SSE messages, which it emits via a callback.
+  #
   class EventParser
     def initialize
       @on = { event: ->(_) {}, retry: ->(_) {} }
