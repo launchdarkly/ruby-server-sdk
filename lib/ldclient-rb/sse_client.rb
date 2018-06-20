@@ -82,7 +82,7 @@ module LaunchDarkly
         rescue ShutdownSignal
           return
         rescue StandardError => e
-          @logger.error("Unexpected error from event source: #{e.inspect} #{e.backtrace}")
+          @logger.error("Unexpected error from event source: #{e.inspect}")
           cxn.close if !cxn.nil?
         end
       end
@@ -107,7 +107,7 @@ module LaunchDarkly
           end
           @logger.error("Event source returned unexpected content type '#{resp_headers["content-type"]}'")
         rescue StandardError => e
-          @logger.error("Unexpected error from event source: #{e.inspect} #{e.backtrace}")
+          @logger.error("Unexpected error from event source: #{e.inspect}")
           cxn.close if !cxn.nil?
         end
       end
