@@ -184,12 +184,15 @@ module LaunchDarkly
       @socket = nil
     end
 
+    # Blocks until status code and headers have been read, and returns them.
     def read_headers
       while @headers.nil? && read_chunk
       end
       [@parser.status_code, @headers]
     end
 
+    # Generator that returns one line at a time (delimited by \r, \n, or \r\n) until the
+    # response is fully consumed or the socket is closed.
     def read_lines
       Enumerator.new do |gen|
         loop do
@@ -200,6 +203,7 @@ module LaunchDarkly
       end
     end
 
+    # Consumes the entire response body and returns it.
     def consume_body
       loop do
         @lock.synchronize { break if @done }
