@@ -82,7 +82,8 @@ module LaunchDarkly
         rescue ShutdownSignal
           return
         rescue StandardError => e
-          @logger.error("Unexpected error from event source: #{e.inspect}")
+          @logger.error { "Unexpected error from event source: #{e.inspect}" }
+          @logger.debug { "Exception trace: #{e.backtrace}" }
           cxn.close if !cxn.nil?
         end
       end
@@ -92,7 +93,7 @@ module LaunchDarkly
       loop do
         interval = @backoff.next_interval
         if interval > 0
-          @logger.warn("Will retry connection after #{'%.3f' % interval} seconds")
+          @logger.warn { "Will retry connection after #{'%.3f' % interval} seconds" } 
           sleep(interval)
         end
         begin
@@ -105,9 +106,10 @@ module LaunchDarkly
           elsif resp_headers["content-type"] && resp_headers["content-type"].start_with?("text/event-stream")
             return cxn
           end
-          @logger.error("Event source returned unexpected content type '#{resp_headers["content-type"]}'")
+          @logger.error { "Event source returned unexpected content type '#{resp_headers["content-type"]}'" }
         rescue StandardError => e
-          @logger.error("Unexpected error from event source: #{e.inspect}")
+          @logger.error { "Unexpected error from event source: #{e.inspect}" }
+          @logger.debug { "Exception trace: #{e.backtrace}" }
           cxn.close if !cxn.nil?
         end
       end
