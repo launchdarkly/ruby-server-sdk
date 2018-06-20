@@ -46,7 +46,8 @@ module LaunchDarkly
       @socket.write(build_request(uri, headers))
 
       # Block until the status code and headers have been successfully read.
-      while !have_headers && read_chunk
+      while !have_headers
+        raise EOFError if !read_chunk_into_buffer
       end
       @headers = Hash[@parser.header.map { |k,v| [k.downcase, v] }]
       @status = @parser.status_code
