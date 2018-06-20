@@ -116,17 +116,17 @@ module LaunchDarkly
       end
     end
 
-    # Read lines one at a time from the StreamingHTTPConnection, and parse them into events.
+    # Pipe the output of the StreamingHTTPConnection into the EventParser, and dispatch events as
+    # they arrive.
     def read_stream(cxn)
-      event_parser = EventParser.new
-      event_parser.on(:event) do |event|
-        dispatch_event(event)
-      end
-      event_parser.on(:retry) do |interval|
-        @backoff.base_interval = interval / 1000
-      end
-      cxn.read_lines.each do |line|
-        event_parser << line
+      event_parser = EventParser.new(cxn.read_lines)
+      event_parser.items.each do |item|
+        case item
+          when SSEEvent
+            dispatch_event(item)
+          when SSESetRetryInterval
+            @backoff.base_interval = event.milliseconds.t-Of / 1000
+        end
       end
     end
 

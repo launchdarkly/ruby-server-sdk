@@ -2,39 +2,41 @@
 module LaunchDarkly
   # Server-Sent Event type used by SSEClient and EventParser.
   SSEEvent = Struct.new(:type, :data, :id)
-  
+
+  SSESetRetryInterval = Struct.new(:milliseconds)
+
   #
-  # Accepts lines of text and parses them into SSE messages, which it emits via a callback.
+  # Accepts lines of text via an iterator, and parses them into SSE messages.
   #
   class EventParser
-    def initialize
-      @on = { event: ->(_) {}, retry: ->(_) {} }
-      reset
+    def initialize(lines)
+      @lines = lines
+      reset_buffers
     end
 
-    def on(event_name, &action)
-      @on[event_name] = action
-    end
-
-    def <<(line)
-      line.chomp!
-      if line.empty?
-        return if @data.empty?
-        event = SSEEvent.new(@type || :message, @data, @id)
-        reset
-        @on[:event].call(event)
-      else
-        case line
-          when /^:.*$/
-          when /^(\w+): ?(.*)$/
-            process_field($1, $2)
+    # Generator that parses the input interator and returns instances of SSEEvent or SSERetryInterval.
+    def items
+      Enumerator.new do |gen|
+        @lines.each do |line|
+          line.chomp!
+          if line.empty?
+            event = maybe_create_event
+            reset_buffers
+            gen.yield event if !event.nil?
+          else
+            case line
+              when /^(\w+): ?(.*)$/
+                item = process_field($1, $2)
+                gen.yield item if !item.nil?
+            end
+          end
         end
       end
     end
 
     private
 
-    def reset
+    def reset_buffers
       @id = nil
       @type = nil
       @data = ""
@@ -51,9 +53,15 @@ module LaunchDarkly
           @id = field_value
         when "retry"
           if /^(?<num>\d+)$/ =~ value
-            @on_retry.call(num.to_i)
+            return SSESetRetryInterval(num.to_i)
           end
       end
+      nil
+    end
+
+    def maybe_create_event
+      return nil if @data.empty?
+      SSEEvent.new(@type || :message, @data, @id)
     end
   end
 end
