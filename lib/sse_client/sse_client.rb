@@ -98,7 +98,7 @@ module SSE
         begin
           cxn = open_connection(build_headers)
           if cxn.status != 200
-            body = cxn.consume_body  # grab the whole response body in case it has error details
+            body = cxn.read_all  # grab the whole response body in case it has error details
             cxn.close
             @on[:error].call({status_code: cxn.status, body: body})
           elsif cxn.headers["content-type"] && cxn.headers["content-type"].start_with?("text/event-stream")
