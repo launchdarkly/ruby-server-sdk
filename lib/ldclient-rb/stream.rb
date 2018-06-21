@@ -46,7 +46,7 @@ module LaunchDarkly
       # Set the execution_interval either to the DEFAULT_RETRY_SECONDS or the retry timeout sent by the client.
       @task = Concurrent::TimerTask.execute(run_now: true) do |task|
         execution_interval = nil
-        @config.logger.info { "[LDClient] Initializing an EventSourceListener within a TimerTask" }
+        @config.logger.error { "[LDClient] Initializing an EventSourceListener within a TimerTask" }
         listener = LaunchDarkly::EventSourceListener.new(
           @config.stream_uri + "/all",
           headers: headers,
@@ -85,7 +85,7 @@ module LaunchDarkly
     end
 
     def process_message(message, method)
-      @config.logger.debug { "[LDClient] Stream received #{method} message: #{message.data}" }
+      @config.logger.error { "[LDClient] Stream received #{method} message: #{message.data}" }
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
         @feature_store.init({
@@ -93,7 +93,7 @@ module LaunchDarkly
           SEGMENTS => message[:data][:segments]
         })
         @initialized.make_true
-        @config.logger.info { "[LDClient] Stream initialized" }
+        @config.logger.error { "[LDClient] Stream initialized" }
       elsif method == PATCH
         message = JSON.parse(message.data, symbolize_names: true)
         for kind in [FEATURES, SEGMENTS]
@@ -119,7 +119,7 @@ module LaunchDarkly
           SEGMENTS => all_data[:segments]
         })
         @initialized.make_true
-        @config.logger.info { "[LDClient] Stream initialized (via indirect message)" }
+        @config.logger.error { "[LDClient] Stream initialized (via indirect message)" }
       elsif method == INDIRECT_PATCH
         key = key_for_path(FEATURES, message.data)
         if key
@@ -131,7 +131,7 @@ module LaunchDarkly
           end
         end
       else
-        @config.logger.warn { "[LDClient] Unknown message received: #{method}" }
+        @config.logger.error { "[LDClient] Unknown message received: #{method}" }
       end
     end
 

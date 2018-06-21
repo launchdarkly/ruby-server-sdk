@@ -26,7 +26,7 @@ module LaunchDarkly
     end
 
     def start
-      @logger.info { "[LDClient] Opening a streaming connection" }
+      @logger.error { "[LDClient] Opening a streaming connection" }
       client = HTTP.timeout(read: @read_timeout.to_i)
       if @via
         proxy_options = Faraday::ProxyOptions.from(@via)
@@ -66,7 +66,7 @@ module LaunchDarkly
           @event_handlers[evt.type].call(evt) if @event_handlers[evt.type]
         end
 
-        @logger.info { "[LDClient] Events have been processed" }
+        @logger.error { "[LDClient] Events have been processed" }
 
         # If the @retry_timeout was set convert it from milliseconds to seconds.
         if @retry_timeout > 0
@@ -74,9 +74,9 @@ module LaunchDarkly
         end
       end
     rescue => e
-      @logger.info { "[LDClient] Reconnecting after exception: #{e}" }
+      @logger.error { "[LDClient] Reconnecting after exception: #{e}" }
     ensure
-      @logger.info { "[LDClient] Closing a streaming connection" }
+      @logger.error { "[LDClient] Closing a streaming connection" }
       client.close if client
     end
 
