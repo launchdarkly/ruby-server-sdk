@@ -1,5 +1,5 @@
 
-module LaunchDarkly
+module SSE
   #
   # A simple backoff algorithm that can be reset at any time, or reset itself after a given
   # interval has passed without errors.

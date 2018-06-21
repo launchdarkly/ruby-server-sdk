@@ -1,5 +1,6 @@
 require "concurrent/atomics"
 require "json"
+require "sse_client"
 
 module LaunchDarkly
   PUT = :put
@@ -45,7 +46,7 @@ module LaunchDarkly
         read_timeout: READ_TIMEOUT_SECONDS,
         logger: @config.logger
       }
-      @es = SSEClient.new(@config.stream_uri + "/all", opts) do |conn|
+      @es = SSE::SSEClient.new(@config.stream_uri + "/all", opts) do |conn|
         conn.on_event { |event| process_message(event, event.type) }
         conn.on_error { |err|
           status = err[:status_code]

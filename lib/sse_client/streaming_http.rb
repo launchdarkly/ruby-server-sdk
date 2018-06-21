@@ -1,7 +1,7 @@
 require "http_tools"
 require "socketry"
 
-module LaunchDarkly
+module SSE
   #
   # Wrapper around a socket allowing us to read an HTTP response incrementally, line by line,
   # or to consume the entire response body.

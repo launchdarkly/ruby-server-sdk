@@ -1,11 +1,9 @@
 require "concurrent/atomics"
-require "http_tools"
 require "logger"
-require "socketry"
 require "thread"
 require "uri"
 
-module LaunchDarkly
+module SSE
   #
   # A lightweight Server-Sent Events implementation, relying on two gems: socketry for sockets with
   # read timeouts, and http_tools for HTTP response parsing. The overall logic is based on

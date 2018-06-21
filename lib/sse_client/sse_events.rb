@@ -1,5 +1,5 @@
 
-module LaunchDarkly
+module SSE
   # Server-Sent Event type used by SSEClient and EventParser.
   SSEEvent = Struct.new(:type, :data, :id)
 
@@ -50,7 +50,7 @@ module LaunchDarkly
           @data << "\n" if !@data.empty?
           @data << value
         when "id"
-          @id = field_value
+          @id = value
         when "retry"
           if /^(?<num>\d+)$/ =~ value
             return SSESetRetryInterval(num.to_i)
