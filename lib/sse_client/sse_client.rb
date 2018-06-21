@@ -96,7 +96,7 @@ module SSE
           sleep(interval)
         end
         begin
-          cxn = StreamingHTTPConnection.new(@uri, @proxy, build_headers, @connect_timeout, @read_timeout)
+          cxn = open_connection(build_headers)
           if cxn.status != 200
             body = cxn.consume_body  # grab the whole response body in case it has error details
             cxn.close
@@ -112,6 +112,11 @@ module SSE
         end
         # if unsuccessful, continue the loop to connect again
       end
+    end
+
+    # Just calls the StreamingHTTPConnection constructor - factored out for test purposes
+    def open_connection(headers)
+      StreamingHTTPConnection.new(@uri, @proxy, headers, @connect_timeout, @read_timeout)
     end
 
     # Pipe the output of the StreamingHTTPConnection into the EventParser, and dispatch events as
