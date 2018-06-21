@@ -53,7 +53,7 @@ module SSE
           @id = value
         when "retry"
           if /^(?<num>\d+)$/ =~ value
-            return SSESetRetryInterval(num.to_i)
+            return SSESetRetryInterval.new(num.to_i)
           end
       end
       nil
