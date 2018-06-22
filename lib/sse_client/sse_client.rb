@@ -19,7 +19,7 @@ module SSE
       @uri = URI(uri)
       @stopped = Concurrent::AtomicBoolean.new(false)
 
-      @headers = options[:headers].clone || {}
+      @headers = options[:headers] ? options[:headers].clone : {}
       @connect_timeout = options[:connect_timeout] || DEFAULT_CONNECT_TIMEOUT
       @read_timeout = options[:read_timeout] || DEFAULT_READ_TIMEOUT
       @logger = options[:logger] || default_logger
@@ -101,10 +101,13 @@ module SSE
             body = cxn.read_all  # grab the whole response body in case it has error details
             cxn.close
             @on[:error].call({status_code: cxn.status, body: body})
+            next
           elsif cxn.headers["content-type"] && cxn.headers["content-type"].start_with?("text/event-stream")
             return cxn  # we're good to proceed
           end
           @logger.error { "Event source returned unexpected content type '#{cxn.headers["content-type"]}'" }
+        rescue ShutdownSignal
+          raise
         rescue StandardError => e
           @logger.error { "Unexpected error from event source: #{e.inspect}" }
           @logger.debug { "Exception trace: #{e.backtrace}" }

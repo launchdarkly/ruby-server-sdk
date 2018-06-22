@@ -1,6 +1,92 @@
 require "spec_helper"
 require "socketry"
+require "sse_client/sse_shared"
 
+#
+# End-to-end tests of HTTP requests against a real server
+#
+describe SSE::StreamingHTTPConnection do
+  subject { SSE::StreamingHTTPConnection }
+
+  def with_connection(cxn)
+    begin
+      yield cxn
+    ensure
+      cxn.close
+    end
+  end
+
+  it "makes HTTP connection and sends request" do
+    with_server do |server|
+      received_req = nil
+      server.setup_response("/foo") do |req,res|
+        received_req = req
+        res.status = 200
+      end
+      headers = {
+        "Accept" => "text/plain"
+      }
+      with_connection(subject.new(server.base_uri.merge("/foo?bar"), nil, headers, 30, 30)) do
+        expect(received_req).not_to be_nil
+        expect(received_req.unparsed_uri).to eq("/foo?bar")
+        expect(received_req.header).to eq({ "accept" => ["text/plain"] })
+      end
+    end
+  end
+
+  it "receives response status" do
+    with_server do |server|
+      server.setup_response("/foo") do |req,res|
+        res.status = 204
+      end
+      with_connection(subject.new(server.base_uri.merge("/foo"), nil, {}, 30, 30)) do |cxn|
+        expect(cxn.status).to eq(204)
+      end
+    end
+  end
+
+  it "receives response headers" do
+    with_server do |server|
+      server.setup_response("/foo") do |req,res|
+        res["Content-Type"] = "application/json"
+      end
+      with_connection(subject.new(server.base_uri.merge("/foo"), nil, {}, 30, 30)) do |cxn|
+        expect(cxn.headers["content-type"]).to eq("application/json")
+      end
+    end
+  end
+
+  it "can read response as lines" do
+    body = <<-EOT
+This is
+a response
+EOT
+    with_server do |server|
+      server.setup_response("/foo") do |req,res|
+        res.body = body
+      end
+      with_connection(subject.new(server.base_uri.merge("/foo"), nil, {}, 30, 30)) do |cxn|
+        lines = cxn.read_lines
+        expect(lines.next).to eq("This is\n")
+        expect(lines.next).to eq("a response\n")
+      end
+    end
+  end
+
+  it "enforces read timeout" do
+    with_server do |server|
+      server.setup_response("/") do |req,res|
+        sleep(2)
+        res.status = 200
+      end
+      expect { subject.new(server.base_uri, nil, {}, 30, 0.25) }.to raise_error(Socketry::TimeoutError)
+    end
+  end
+end
+
+#
+# Tests of response parsing functionality without a real HTTP request
+#
 describe SSE::HTTPResponseReader do
   subject { SSE::HTTPResponseReader }
 
