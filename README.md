@@ -7,6 +7,11 @@ LaunchDarkly SDK for Ruby
 [![Test Coverage](https://codeclimate.com/github/launchdarkly/ruby-client/badges/coverage.svg)](https://codeclimate.com/github/launchdarkly/ruby-client/coverage)
 [![security](https://hakiri.io/github/launchdarkly/ruby-client/master.svg)](https://hakiri.io/github/launchdarkly/ruby-client/master)
 
+Supported Ruby versions
+-----------------------
+
+This version of the LaunchDarkly SDK has a minimum Ruby version of 2.2.6, or 9.1.6 for JRuby.
+
 Quick setup
 -----------
 
