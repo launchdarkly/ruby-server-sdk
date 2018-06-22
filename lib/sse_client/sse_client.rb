@@ -19,7 +19,7 @@ module SSE
       @uri = URI(uri)
       @stopped = Concurrent::AtomicBoolean.new(false)
 
-      @headers = options[:headers].clone || {}
+      @headers = options[:headers] ? options[:headers].clone : {}
       @connect_timeout = options[:connect_timeout] || DEFAULT_CONNECT_TIMEOUT
       @read_timeout = options[:read_timeout] || DEFAULT_READ_TIMEOUT
       @logger = options[:logger] || default_logger
@@ -40,7 +40,7 @@ module SSE
 
       yield self if block_given?
 
-      @worker = Thread.new do
+      Thread.new do
         run_stream
       end
     end
@@ -59,7 +59,7 @@ module SSE
 
     def close
       if @stopped.make_true
-        @worker.raise ShutdownSignal.new
+        @cxn.close if !@cxn.nil?
       end
     end
 
@@ -73,23 +73,24 @@ module SSE
 
     def run_stream
       while !@stopped.value
-        cxn = nil
+        @cxn = nil
         begin
-          cxn = connect
-          read_stream(cxn)
-        rescue ShutdownSignal
-          return
+          @cxn = connect
+          read_stream(@cxn)
+        rescue Errno::EBADF
+          # don't log this - it probably means we closed our own connection deliberately
         rescue StandardError => e
           @logger.error { "Unexpected error from event source: #{e.inspect}" }
           @logger.debug { "Exception trace: #{e.backtrace}" }
         end
-        cxn.close if !cxn.nil?
+        @cxn.close if !cxn.nil?
       end
     end
 
     # Try to establish a streaming connection. Returns the StreamingHTTPConnection object if successful.
     def connect
       loop do
+        return if @stopped.value
         interval = @backoff.next_interval
         if interval > 0
           @logger.warn { "Will retry connection after #{'%.3f' % interval} seconds" } 
@@ -101,10 +102,13 @@ module SSE
             body = cxn.read_all  # grab the whole response body in case it has error details
             cxn.close
             @on[:error].call({status_code: cxn.status, body: body})
+            next
           elsif cxn.headers["content-type"] && cxn.headers["content-type"].start_with?("text/event-stream")
             return cxn  # we're good to proceed
           end
           @logger.error { "Event source returned unexpected content type '#{cxn.headers["content-type"]}'" }
+        rescue Errno::EBADF
+          raise
         rescue StandardError => e
           @logger.error { "Unexpected error from event source: #{e.inspect}" }
           @logger.debug { "Exception trace: #{e.backtrace}" }
@@ -124,6 +128,7 @@ module SSE
     def read_stream(cxn)
       event_parser = EventParser.new(cxn.read_lines)
       event_parser.items.each do |item|
+        return if @stopped.value
         case item
           when SSEEvent
             dispatch_event(item)
@@ -153,9 +158,5 @@ module SSE
       h['Last-Event-Id'] = @last_id if !@last_id.nil?
       h.merge(@headers)
     end
-  end
-
-  # Custom exception that we use to tell the worker thread to stop
-  class ShutdownSignal < StandardError
   end
 end

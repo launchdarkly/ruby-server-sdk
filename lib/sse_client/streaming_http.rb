@@ -91,6 +91,7 @@ module SSE
       @read_timeout = read_timeout
       @parser = HTTPTools::Parser.new
       @buffer = ""
+      @done = false
       @lock = Mutex.new
 
       # Provide callbacks for the Parser to give us the headers and body. This has to be done
@@ -101,6 +102,9 @@ module SSE
       end
       @parser.on(:stream) do |data|
         @lock.synchronize { @buffer << data }  # synchronize because we're called from another thread in Socketry
+      end
+      @parser.on(:finish) do
+        @lock.synchronize { @done = true }
       end
 
       # Block until the status code and headers have been successfully read.
@@ -132,6 +136,8 @@ module SSE
     # Attempt to read some more data from the socket. Return true if successful, false if EOF.
     # A read timeout will result in an exception from Socketry's readpartial method.
     def read_chunk_into_buffer
+      # If @done is set, it means the Parser has signaled end of response body
+      @lock.synchronize { return false if @done }
       data = @socket.readpartial(DEFAULT_CHUNK_SIZE, timeout: @read_timeout)
       return false if data == :eof
       @parser << data
