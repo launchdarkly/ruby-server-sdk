@@ -7,32 +7,41 @@ module SSE
   # The socket is created and managed by Socketry, which we use so that we can have a read timeout.
   #
   class StreamingHTTPConnection
+    attr_reader :status, :headers
+
     def initialize(uri, proxy, headers, connect_timeout, read_timeout)
       if proxy
         @socket = open_socket(proxy, connect_timeout)
-        @socket.write(build_proxy_request(uri, proxy))
+
+        write(build_proxy_request(uri, proxy))
+
+        # temporarily create a reader just for the proxy connect dialogue
+        proxy_reader = HTTPResponseReader.new(@socket, read_timeout)
+
+        # if proxy connect failed, return immediately with error status
+        if proxy_reader.status != 200
+          @status = proxy_reader.status
+          return
+        end
+
+        # start using TLS at this point if appropriate
+        switch_socket_to_ssl if uri.scheme.downcase == 'https'
       else
         @socket = open_socket(uri, connect_timeout)
       end
 
-      @socket.write(build_request(uri, headers))
+      write(build_request(uri, headers))
 
       @reader = HTTPResponseReader.new(@socket, read_timeout)
+      @status = @reader.status
+      @headers = @reader.headers
     end
 
     def close
       @socket.close if @socket
       @socket = nil
     end
-
-    def status
-      @reader.status
-    end
-
-    def headers
-      @reader.headers
-    end
-
+    
     # Generator that returns one line of the response body at a time (delimited by \r, \n,
     # or \r\n) until the response is fully consumed or the socket is closed.
     def read_lines
@@ -47,11 +56,22 @@ module SSE
     private
 
     def open_socket(uri, connect_timeout)
-      if uri.scheme == 'https'
+      if uri.scheme.downcase == 'https'
         Socketry::SSL::Socket.connect(uri.host, uri.port, timeout: connect_timeout)
       else
         Socketry::TCP::Socket.connect(uri.host, uri.port, timeout: connect_timeout)
       end
+    end
+
+    def write(data)
+      @socket.write(data)
+    end
+
+    def switch_socket_to_ssl
+      io = IO.try_convert(@socket)
+      ssl_sock = OpenSSL::SSL::SSLSocket.new(io, OpenSSL::SSL::SSLContext.new)
+      ssl_sock.connect
+      @socket = Socketry::SSL::Socket.new.from_socket(ssl_sock)
     end
 
     # Build an HTTP request line and headers.
