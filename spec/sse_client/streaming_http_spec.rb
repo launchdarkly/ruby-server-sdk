@@ -163,6 +163,24 @@ EOT
     ])
   end
 
+  it "handles chunked encoding" do
+    chunked_response = <<-EOT
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Transfer-Encoding: chunked
+
+6\r
+things\r
+A\r
+ and stuff\r
+0\r
+\r
+EOT
+    socket = mock_socket_without_timeout(make_chunks(chunked_response))
+    reader = subject.new(socket, 0)
+    expect(reader.read_all).to eq("things and stuff")
+  end
+
   it "raises error if response ends without complete headers" do
     socket = mock_socket_without_timeout(make_chunks(malformed_response))
     expect { subject.new(socket, 0) }.to raise_error(EOFError)
