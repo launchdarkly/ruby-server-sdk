@@ -29,7 +29,7 @@ describe SSE::SSEClient do
         "Authorization" => "secret"
       }
 
-      with_client(subject.new(server.base_uri, headers: headers, logger: NullLogger.new)) do |client|
+      with_client(subject.new(server.base_uri, headers: headers)) do |client|
         received_req = requests.pop
         expect(received_req.header).to eq({
           "accept" => ["text/event-stream"],
@@ -59,7 +59,7 @@ EOT
       end
 
       event_sink = Queue.new
-      client = subject.new(server.base_uri, logger: NullLogger.new) do |c|
+      client = subject.new(server.base_uri) do |c|
         c.on_event { |event| event_sink << event }
       end
 
@@ -93,8 +93,7 @@ EOT
 
       event_sink = Queue.new
       error_sink = Queue.new
-      client = subject.new(server.base_uri,
-          reconnect_time: 0.25, logger: NullLogger.new) do |c|
+      client = subject.new(server.base_uri, reconnect_time: 0.25) do |c|
         c.on_event { |event| event_sink << event }
         c.on_error { |error| error_sink << error }
       end
@@ -127,7 +126,7 @@ EOT
 
       event_sink = Queue.new
       client = subject.new(server.base_uri,
-          reconnect_time: 0.25, read_timeout: 0.25, logger: NullLogger.new) do |c|
+          reconnect_time: 0.25, read_timeout: 0.25) do |c|
         c.on_event { |event| event_sink << event }
       end
 
