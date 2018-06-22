@@ -50,7 +50,7 @@ module SSE
 
     # Consumes the entire response body and returns it.
     def read_all
-      @reader.read_all
+      @reader.read_all if !@reader.nil?
     end
 
     private
