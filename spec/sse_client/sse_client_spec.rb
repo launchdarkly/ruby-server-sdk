@@ -23,7 +23,6 @@ describe SSE::SSEClient do
         requests << req
         res.content_type = "text/event-stream"
         res.status = 200
-        connected.set
       end
       
       headers = {
