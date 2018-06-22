@@ -17,25 +17,6 @@ describe SSE::SSEClient do
     end
   end
 
-  class ObjectSink
-    def initialize(expected_count)
-      @expected_count = expected_count
-      @semaphore = Concurrent::Semaphore.new(expected_count)
-      @semaphore.acquire(expected_count)
-      @received = []
-    end
-
-    def <<(value)
-      @received << value
-      @semaphore.release(1)
-    end
-
-    def await_values
-      @semaphore.acquire(@expected_count)
-      @received
-    end
-  end
-
   it "sends expected headers" do
     with_server do |server|
       connected = Concurrent::Event.new
@@ -82,16 +63,14 @@ EOT
         res.body = events_body
       end
 
-      event_sink = ObjectSink.new(2)
+      event_sink = Queue.new
       client = subject.new(server.base_uri, logger: NullLogger.new) do |c|
         c.on_event { |event| event_sink << event }
       end
 
       with_client(client) do |client|
-        expect(event_sink.await_values).to eq([
-          SSE::SSEEvent.new(:go, "foo", "1"),
-          SSE::SSEEvent.new(:stop, "bar", nil)
-        ])
+        expect(event_sink.pop).to eq(SSE::SSEEvent.new(:go, "foo", "1"))
+        expect(event_sink.pop).to eq(SSE::SSEEvent.new(:stop, "bar", nil))
       end
     end
   end
@@ -118,8 +97,8 @@ EOT
         end
       end
 
-      event_sink = ObjectSink.new(1)
-      error_sink = ObjectSink.new(1)
+      event_sink = Queue.new
+      error_sink = Queue.new
       client = subject.new(server.base_uri,
           reconnect_time: 0.25, logger: NullLogger.new) do |c|
         c.on_event { |event| event_sink << event }
@@ -127,12 +106,8 @@ EOT
       end
 
       with_client(client) do |client|
-        expect(event_sink.await_values).to eq([
-          SSE::SSEEvent.new(:go, "foo", nil)
-        ])
-        expect(error_sink.await_values).to eq([
-          { status_code: 500, body: "sorry" }
-        ])
+        expect(event_sink.pop).to eq(SSE::SSEEvent.new(:go, "foo", nil))
+        expect(error_sink.pop).to eq({ status_code: 500, body: "sorry" })
         expect(attempt).to eq(2)
       end
     end
@@ -157,16 +132,14 @@ EOT
         res.body = events_body
       end
 
-      event_sink = ObjectSink.new(1)
+      event_sink = Queue.new
       client = subject.new(server.base_uri,
           reconnect_time: 0.25, read_timeout: 0.25, logger: NullLogger.new) do |c|
         c.on_event { |event| event_sink << event }
       end
 
       with_client(client) do |client|
-        expect(event_sink.await_values).to eq([
-          SSE::SSEEvent.new(:go, "foo", nil)
-        ])
+        expect(event_sink.pop).to eq(SSE::SSEEvent.new(:go, "foo", nil))
         expect(attempt).to eq(2)
       end
     end
