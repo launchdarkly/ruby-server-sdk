@@ -52,7 +52,6 @@ event: stop
 data: bar
 
 EOT
-
     with_server do |server|
       server.setup_response("/") do |req,res|
         res.content_type = "text/event-stream"
@@ -78,7 +77,6 @@ event: go
 data: foo
 
 EOT
-
     with_server do |server|
       attempt = 0
       server.setup_response("/") do |req,res|
@@ -116,7 +114,6 @@ event: go
 data: foo
 
 EOT
-
     with_server do |server|
       attempt = 0
       server.setup_response("/") do |req,res|

@@ -101,12 +101,6 @@ line2
 EOT
   }
 
-  let(:malformed_response) { <<-EOT
-HTTP/1.1 200 OK
-Cache-Control: no-cache
-EOT
-  }
-
   def make_chunks(str)
     # arbitrarily split content into 5-character blocks
     str.scan(/.{1,5}/m).to_enum
@@ -182,6 +176,10 @@ EOT
   end
 
   it "raises error if response ends without complete headers" do
+    malformed_response = <<-EOT
+HTTP/1.1 200 OK
+Cache-Control: no-cache
+EOT
     socket = mock_socket_without_timeout(make_chunks(malformed_response))
     expect { subject.new(socket, 0) }.to raise_error(EOFError)
   end
