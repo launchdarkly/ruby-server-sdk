@@ -73,6 +73,22 @@ EOT
     end
   end
 
+  it "can read entire response body" do
+    body = <<-EOT
+This is
+a response
+EOT
+    with_server do |server|
+      server.setup_response("/foo") do |req,res|
+        res.body = body
+      end
+      with_connection(subject.new(server.base_uri.merge("/foo"), nil, {}, 30, 30)) do |cxn|
+        read_body = cxn.read_all
+        expect(read_body).to eq("This is\na response\n")
+      end
+    end
+  end
+
   it "enforces read timeout" do
     with_server do |server|
       server.setup_response("/") do |req,res|
