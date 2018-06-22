@@ -4,11 +4,12 @@ workflows:
   version: 2
   test:
     jobs:
-      # - test-misc-rubies  # none of these older Ruby versions are supported on this branch
+      - test-misc-rubies
       - test-2.2
       - test-2.3
       - test-2.4
-      - test-jruby-9.1
+      - test-2.5
+      - test-jruby-9.2
 
 ruby-docker-template: &ruby-docker-template
   steps:
@@ -17,6 +18,7 @@ ruby-docker-template: &ruby-docker-template
         if [[ $CIRCLE_JOB == test-jruby* ]]; then
           gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
         fi
+    - run: ruby -v
     - run: gem install bundler
     - run: bundle install
     - run: mkdir ./rspec
@@ -40,9 +42,14 @@ jobs:
   test-2.4:
     <<: *ruby-docker-template
     docker:
-      - image: circleci/ruby:2.4.3-jessie
+      - image: circleci/ruby:2.4.4-stretch
       - image: redis
-  test-jruby-9.1:
+  test-2.5:
+    <<: *ruby-docker-template
+    docker:
+      - image: circleci/ruby:2.5.1-stretch
+      - image: redis
+  test-jruby-9.2:
     <<: *ruby-docker-template
     docker:
       - image: circleci/jruby:9-jdk
@@ -54,7 +61,7 @@ jobs:
     machine:
       image: circleci/classic:latest
     environment:
-      - RUBIES: "ruby-2.1.9 ruby-2.0.0 ruby-1.9.3 jruby-9.0.5.0"
+      - RUBIES: "jruby-9.1.17.0"
     steps:
       - run: sudo apt-get -q update
       - run: sudo apt-get -qy install redis-server
