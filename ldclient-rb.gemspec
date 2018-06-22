@@ -48,12 +48,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "net-http-persistent", "~> 2.9"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0.4"
   spec.add_runtime_dependency "hashdiff", "~> 0.2"
-  spec.add_runtime_dependency "ld-celluloid-eventsource", "~> 0.11.0"
-  spec.add_runtime_dependency "celluloid", "~> 0.18.0.pre" # transitive dep; specified here for more control
-
-  if RUBY_VERSION >= "2.2.2"
-    spec.add_runtime_dependency "nio4r", "< 3" # for maximum ruby version compatibility.
-  else
-    spec.add_runtime_dependency "nio4r", "~> 1.1" # for maximum ruby version compatibility.
-  end
+  spec.add_runtime_dependency "http_tools", '~> 0.4.5'
+  spec.add_runtime_dependency "socketry", "~> 0.5.1"
 end

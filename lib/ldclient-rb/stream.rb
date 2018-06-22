@@ -1,6 +1,6 @@
 require "concurrent/atomics"
 require "json"
-require "celluloid/eventsource"
+require "sse_client"
 
 module LaunchDarkly
   PUT = :put
@@ -36,18 +36,18 @@ module LaunchDarkly
 
       @config.logger.info { "[LDClient] Initializing stream connection" }
       
-      headers = 
-      {
+      headers = {
         'Authorization' => @sdk_key,
         'User-Agent' => 'RubyClient/' + LaunchDarkly::VERSION
       }
-      opts = {:headers => headers, :with_credentials => true, :proxy => @config.proxy, :read_timeout => READ_TIMEOUT_SECONDS}
-      @es = Celluloid::EventSource.new(@config.stream_uri + "/all", opts) do |conn|
-        conn.on(PUT) { |message| process_message(message, PUT) }
-        conn.on(PATCH) { |message| process_message(message, PATCH) }
-        conn.on(DELETE) { |message| process_message(message, DELETE) }
-        conn.on(INDIRECT_PUT) { |message| process_message(message, INDIRECT_PUT) }
-        conn.on(INDIRECT_PATCH) { |message| process_message(message, INDIRECT_PATCH) }
+      opts = {
+        headers: headers,
+        proxy: @config.proxy,
+        read_timeout: READ_TIMEOUT_SECONDS,
+        logger: @config.logger
+      }
+      @es = SSE::SSEClient.new(@config.stream_uri + "/all", opts) do |conn|
+        conn.on_event { |event| process_message(event, event.type) }
         conn.on_error { |err|
           status = err[:status_code]
           message = Util.http_error_message(status, "streaming connection", "will retry")
@@ -60,13 +60,6 @@ module LaunchDarkly
       end
       
       @ready
-    end
-
-    def stop
-      if @stopped.make_true
-        @es.close
-        @config.logger.info { "[LDClient] Stream connection stopped" }
-      end
     end
 
     def stop
@@ -90,20 +83,20 @@ module LaunchDarkly
         @config.logger.info { "[LDClient] Stream initialized" }
         @ready.set
       elsif method == PATCH
-        message = JSON.parse(message.data, symbolize_names: true)
+        data = JSON.parse(message.data, symbolize_names: true)
         for kind in [FEATURES, SEGMENTS]
-          key = key_for_path(kind, message[:path])
+          key = key_for_path(kind, data[:path])
           if key
-            @feature_store.upsert(kind, message[:data])
+            @feature_store.upsert(kind, data[:data])
             break
           end
         end
       elsif method == DELETE
-        message = JSON.parse(message.data, symbolize_names: true)
+        data = JSON.parse(message.data, symbolize_names: true)
         for kind in [FEATURES, SEGMENTS]
-          key = key_for_path(kind, message[:path])
+          key = key_for_path(kind, data[:path])
           if key
-            @feature_store.delete(kind, key, message[:version])
+            @feature_store.delete(kind, key, data[:version])
             break
           end
         end

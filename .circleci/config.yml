@@ -4,7 +4,7 @@ workflows:
   version: 2
   test:
     jobs:
-      - test-misc-rubies
+      # - test-misc-rubies  # none of these older Ruby versions are supported on this branch
       - test-2.2
       - test-2.3
       - test-2.4
