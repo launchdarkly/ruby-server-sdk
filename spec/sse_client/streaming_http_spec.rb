@@ -18,16 +18,16 @@ describe SSE::StreamingHTTPConnection do
 
   it "makes HTTP connection and sends request" do
     with_server do |server|
-      received_req = nil
+      requests = Queue.new
       server.setup_response("/foo") do |req,res|
-        received_req = req
+        requests << req
         res.status = 200
       end
       headers = {
         "Accept" => "text/plain"
       }
       with_connection(subject.new(server.base_uri.merge("/foo?bar"), nil, headers, 30, 30)) do
-        expect(received_req).not_to be_nil
+        received_req = requests.pop
         expect(received_req.unparsed_uri).to eq("/foo?bar")
         expect(received_req.header).to eq({ "accept" => ["text/plain"] })
       end
