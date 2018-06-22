@@ -76,7 +76,7 @@ module SSE
         @cxn = nil
         begin
           @cxn = connect
-          read_stream(@cxn)
+          read_stream(@cxn) if !@cxn.nil?
         rescue Errno::EBADF
           # don't log this - it probably means we closed our own connection deliberately
         rescue StandardError => e
