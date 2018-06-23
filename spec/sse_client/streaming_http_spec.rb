@@ -132,7 +132,6 @@ EOT
   it "connects to HTTPS server through proxy" do
     with_server(StubProxyServer.new) do |proxy|
       with_connection(subject.new(URI("https://app.launchdarkly.com"), proxy.base_uri, {}, 30, 30)) do |cxn|
-        read_body = cxn.read_all
         expect(cxn.status).to eq 200
         expect(proxy.request_count).to eq(1)
       end
