@@ -46,7 +46,7 @@ class StubSecureHTTPServer < StubHTTPServer
       BindAddress: '127.0.0.1',
       Port: port,
       SSLEnable: true,
-      SSLCertName: [['CN', 'localhost', OpenSSL::ASN1::PRINTABLESTRING]], # self-signed cert
+      SSLCertName: [['CN', '127.0.0.1', OpenSSL::ASN1::PRINTABLESTRING]], # self-signed cert
       AccessLog: [],
       Logger: NullLogger.new
     )

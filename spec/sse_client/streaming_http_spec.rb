@@ -99,14 +99,27 @@ EOT
     end
   end
 
+  it "connects to HTTPS server" do
+    body = "hi"
+    with_server(StubSecureHTTPServer.new) do |server|
+      server.setup_response("/") do |req,res|
+        res.body = body
+      end
+      with_connection(subject.new(server.base_uri, nil, {}, 30, 30)) do |cxn|
+        read_body = cxn.read_all
+        expect(read_body).to eq("hi")
+      end
+    end
+  end
+
   it "connects to HTTP server through proxy" do
     body = "hi"
     with_server do |server|
-      server.setup_response("/foo") do |req,res|
+      server.setup_response("/") do |req,res|
         res.body = body
       end
       with_server(StubProxyServer.new) do |proxy|
-        with_connection(subject.new(server.base_uri.merge("/foo"), proxy.base_uri, {}, 30, 30)) do |cxn|
+        with_connection(subject.new(server.base_uri, proxy.base_uri, {}, 30, 30)) do |cxn|
           read_body = cxn.read_all
           expect(read_body).to eq("hi")
           expect(proxy.request_count).to eq(1)
@@ -118,11 +131,11 @@ EOT
   it "connects to HTTPS server through proxy" do
     body = "hi"
     with_server(StubSecureHTTPServer.new) do |server|
-      server.setup_response("/foo") do |req,res|
+      server.setup_response("/") do |req,res|
         res.body = body
       end
       with_server(StubProxyServer.new) do |proxy|
-        with_connection(subject.new(server.base_uri.merge("/foo"), proxy.base_uri, {}, 30, 30)) do |cxn|
+        with_connection(subject.new(server.base_uri, proxy.base_uri, {}, 30, 30)) do |cxn|
           read_body = cxn.read_all
           expect(read_body).to eq("hi")
           expect(proxy.request_count).to eq(1)
