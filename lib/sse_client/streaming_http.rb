@@ -77,6 +77,7 @@ module SSE
     # Build an HTTP request line and headers.
     def build_request(uri, headers)
       ret = "GET #{uri.request_uri} HTTP/1.1\r\n"
+      ret << "Host: #{uri.host}\r\n"
       headers.each { |k, v|
         ret << "#{k}: #{v}\r\n"
       }
