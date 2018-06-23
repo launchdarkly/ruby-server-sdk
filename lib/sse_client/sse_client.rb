@@ -24,10 +24,11 @@ module SSE
       @read_timeout = options[:read_timeout] || DEFAULT_READ_TIMEOUT
       @logger = options[:logger] || default_logger
 
-      proxy = ENV['HTTP_PROXY'] || ENV['http_proxy'] || options[:proxy]
-      if proxy
-        proxyUri = URI(proxy)
-        if proxyUri.scheme == 'http' || proxyUri.scheme == 'https'
+      if options[:proxy]
+        @proxy = options[:proxy]
+      else
+        proxyUri = @uri.find_proxy
+        if !proxyUri.nil? && (proxyUri.scheme == 'http' || proxyUri.scheme == 'https')
           @proxy = proxyUri
         end
       end
