@@ -40,23 +40,6 @@ class StubHTTPServer
   end
 end
 
-class StubSecureHTTPServer < StubHTTPServer
-  def create_server(port)
-    WEBrick::HTTPServer.new(
-      BindAddress: '127.0.0.1',
-      Port: port,
-      SSLEnable: true,
-      SSLCertName: [['CN', '127.0.0.1', OpenSSL::ASN1::PRINTABLESTRING]], # self-signed cert
-      AccessLog: [],
-      Logger: NullLogger.new
-    )
-  end
-  
-  def base_uri
-    URI("https://127.0.0.1:#{@port}")
-  end
-end
-
 class StubProxyServer < StubHTTPServer
   attr_reader :request_count
 

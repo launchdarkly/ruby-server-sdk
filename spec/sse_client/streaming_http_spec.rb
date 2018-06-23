@@ -29,7 +29,10 @@ describe SSE::StreamingHTTPConnection do
       with_connection(subject.new(server.base_uri.merge("/foo?bar"), nil, headers, 30, 30)) do
         received_req = requests.pop
         expect(received_req.unparsed_uri).to eq("/foo?bar")
-        expect(received_req.header).to eq({ "accept" => ["text/plain"] })
+        expect(received_req.header).to eq({
+          "accept" => ["text/plain"],
+          "host" => [server.base_uri.host]
+        })
       end
     end
   end
@@ -99,19 +102,6 @@ EOT
     end
   end
 
-  it "connects to HTTPS server" do
-    body = "hi"
-    with_server(StubSecureHTTPServer.new) do |server|
-      server.setup_response("/") do |req,res|
-        res.body = body
-      end
-      with_connection(subject.new(server.base_uri, nil, {}, 30, 30)) do |cxn|
-        read_body = cxn.read_all
-        expect(read_body).to eq("hi")
-      end
-    end
-  end
-
   it "connects to HTTP server through proxy" do
     body = "hi"
     with_server do |server|
@@ -128,18 +118,23 @@ EOT
     end
   end
 
+  # The following 2 tests were originally written to connect to an embedded HTTPS server made with
+  # WEBrick. Unfortunately, some unknown problem prevents WEBrick's self-signed certificate feature
+  # from working in JRuby 9.1 (but not in any other Ruby version). Therefore these tests currently
+  # hit an external URL.
+
+  it "connects to HTTPS server" do
+    with_connection(subject.new(URI("https://app.launchdarkly.com"), nil, {}, 30, 30)) do |cxn|
+      expect(cxn.status).to eq 200
+    end
+  end
+  
   it "connects to HTTPS server through proxy" do
-    body = "hi"
-    with_server(StubSecureHTTPServer.new) do |server|
-      server.setup_response("/") do |req,res|
-        res.body = body
-      end
-      with_server(StubProxyServer.new) do |proxy|
-        with_connection(subject.new(server.base_uri, proxy.base_uri, {}, 30, 30)) do |cxn|
-          read_body = cxn.read_all
-          expect(read_body).to eq("hi")
-          expect(proxy.request_count).to eq(1)
-        end
+    with_server(StubProxyServer.new) do |proxy|
+      with_connection(subject.new(URI("https://app.launchdarkly.com"), proxy.base_uri, {}, 30, 30)) do |cxn|
+        read_body = cxn.read_all
+        expect(cxn.status).to eq 200
+        expect(proxy.request_count).to eq(1)
       end
     end
   end
