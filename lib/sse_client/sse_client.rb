@@ -152,8 +152,7 @@ module SSE
     def build_headers
       h = {
         'Accept' => 'text/event-stream',
-        'Cache-Control' => 'no-cache',
-        'Host' => @uri.host
+        'Cache-Control' => 'no-cache'
       }
       h['Last-Event-Id'] = @last_id if !@last_id.nil?
       h.merge(@headers)
