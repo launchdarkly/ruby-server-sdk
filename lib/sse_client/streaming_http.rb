@@ -61,7 +61,7 @@ module SSE
       # temporarily create a reader just for the proxy connect response
       proxy_reader = HTTPResponseReader.new(socket, read_timeout)
       if proxy_reader.status != 200
-        throw ProxyError, "proxy connection refused, status #{proxy_reader.status}"
+        raise ProxyError, "proxy connection refused, status #{proxy_reader.status}"
       end
 
       # start using TLS at this point if appropriate

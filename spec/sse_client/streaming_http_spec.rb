@@ -118,6 +118,18 @@ EOT
     end
   end
 
+  it "throws error if proxy responds with error status" do
+    with_server do |server|
+      server.setup_response("/") do |req,res|
+        res.body = body
+      end
+      with_server(StubProxyServer.new) do |proxy|
+        proxy.connect_status = 403
+        expect { subject.new(server.base_uri, proxy.base_uri, {}, 30, 30) }.to raise_error(SSE::ProxyError)
+      end
+    end
+  end
+
   # The following 2 tests were originally written to connect to an embedded HTTPS server made with
   # WEBrick. Unfortunately, some unknown problem prevents WEBrick's self-signed certificate feature
   # from working in JRuby 9.1 (but not in any other Ruby version). Therefore these tests currently

@@ -42,6 +42,7 @@ end
 
 class StubProxyServer < StubHTTPServer
   attr_reader :request_count
+  attr_accessor :connect_status
 
   def initialize
     super
@@ -55,6 +56,9 @@ class StubProxyServer < StubHTTPServer
       AccessLog: [],
       Logger: NullLogger.new,
       ProxyContentHandler: proc do |req,res|
+        if !@connect_status.nil?
+          res.status = @connect_status
+        end
         @request_count += 1
       end
     )
