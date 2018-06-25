@@ -11,12 +11,12 @@ module SSE
 
     def initialize(uri, proxy, headers, connect_timeout, read_timeout)
       if proxy
-        @socket = open_socket(proxy, connect_timeout)
+        socket = open_socket(proxy, connect_timeout)
 
-        write(build_proxy_request(uri, proxy))
+        socket.write(build_proxy_request(uri, proxy))
 
         # temporarily create a reader just for the proxy connect dialogue
-        proxy_reader = HTTPResponseReader.new(@socket, read_timeout)
+        proxy_reader = HTTPResponseReader.new(socket, read_timeout)
 
         # if proxy connect failed, return immediately with error status
         if proxy_reader.status != 200
@@ -25,12 +25,16 @@ module SSE
         end
 
         # start using TLS at this point if appropriate
-        switch_socket_to_ssl if uri.scheme.downcase == 'https'
+        if uri.scheme.downcase == 'https'
+          @socket = wrap_socket_in_ssl_socket(socket)
+        else
+          @socket = socket
+        end
       else
         @socket = open_socket(uri, connect_timeout)
       end
 
-      write(build_request(uri, headers))
+      @socket.write(build_request(uri, headers))
 
       @reader = HTTPResponseReader.new(@socket, read_timeout)
       @status = @reader.status
@@ -62,16 +66,12 @@ module SSE
         Socketry::TCP::Socket.connect(uri.host, uri.port, timeout: connect_timeout)
       end
     end
-
-    def write(data)
-      @socket.write(data)
-    end
-
-    def switch_socket_to_ssl
-      io = IO.try_convert(@socket)
+    
+    def wrap_socket_in_ssl_socket(socket)
+      io = IO.try_convert(socket)
       ssl_sock = OpenSSL::SSL::SSLSocket.new(io, OpenSSL::SSL::SSLContext.new)
       ssl_sock.connect
-      @socket = Socketry::SSL::Socket.new.from_socket(ssl_sock)
+      Socketry::SSL::Socket.new.from_socket(ssl_sock)
     end
 
     # Build an HTTP request line and headers.
