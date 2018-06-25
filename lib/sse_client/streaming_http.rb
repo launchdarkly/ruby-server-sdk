@@ -7,32 +7,21 @@ module SSE
   # The socket is created and managed by Socketry, which we use so that we can have a read timeout.
   #
   class StreamingHTTPConnection
+    attr_reader :status, :headers
+
     def initialize(uri, proxy, headers, connect_timeout, read_timeout)
-      if proxy
-        @socket = open_socket(proxy, connect_timeout)
-        @socket.write(build_proxy_request(uri, proxy))
-      else
-        @socket = open_socket(uri, connect_timeout)
-      end
-
+      @socket = HTTPConnectionFactory.connect(uri, proxy, connect_timeout, read_timeout)
       @socket.write(build_request(uri, headers))
-
       @reader = HTTPResponseReader.new(@socket, read_timeout)
+      @status = @reader.status
+      @headers = @reader.headers
     end
 
     def close
       @socket.close if @socket
       @socket = nil
     end
-
-    def status
-      @reader.status
-    end
-
-    def headers
-      @reader.headers
-    end
-
+    
     # Generator that returns one line of the response body at a time (delimited by \r, \n,
     # or \r\n) until the response is fully consumed or the socket is closed.
     def read_lines
@@ -46,25 +35,55 @@ module SSE
 
     private
 
-    def open_socket(uri, connect_timeout)
-      if uri.scheme == 'https'
+    # Build an HTTP request line and headers.
+    def build_request(uri, headers)
+      ret = "GET #{uri.request_uri} HTTP/1.1\r\n"
+      ret << "Host: #{uri.host}\r\n"
+      headers.each { |k, v|
+        ret << "#{k}: #{v}\r\n"
+      }
+      ret + "\r\n"
+    end
+  end
+
+  #
+  # Used internally to send the HTTP request, including the proxy dialogue if necessary.
+  #
+  class HTTPConnectionFactory
+    def self.connect(uri, proxy, connect_timeout, read_timeout)
+      if !proxy
+        return open_socket(uri, connect_timeout)
+      end
+
+      socket = open_socket(proxy, connect_timeout)
+      socket.write(build_proxy_request(uri, proxy))
+
+      # temporarily create a reader just for the proxy connect response
+      proxy_reader = HTTPResponseReader.new(socket, read_timeout)
+      if proxy_reader.status != 200
+        raise ProxyError, "proxy connection refused, status #{proxy_reader.status}"
+      end
+
+      # start using TLS at this point if appropriate
+      if uri.scheme.downcase == 'https'
+        wrap_socket_in_ssl_socket(socket)
+      else
+        socket
+      end
+    end
+
+    private
+
+    def self.open_socket(uri, connect_timeout)
+      if uri.scheme.downcase == 'https'
         Socketry::SSL::Socket.connect(uri.host, uri.port, timeout: connect_timeout)
       else
         Socketry::TCP::Socket.connect(uri.host, uri.port, timeout: connect_timeout)
       end
     end
 
-    # Build an HTTP request line and headers.
-    def build_request(uri, headers)
-      ret = "GET #{uri.request_uri} HTTP/1.1\r\n"
-      headers.each { |k, v|
-        ret << "#{k}: #{v}\r\n"
-      }
-      ret + "\r\n"
-    end
-
     # Build a proxy connection header.
-    def build_proxy_request(uri, proxy)
+    def self.build_proxy_request(uri, proxy)
       ret = "CONNECT #{uri.host}:#{uri.port} HTTP/1.1\r\n"
       ret << "Host: #{uri.host}:#{uri.port}\r\n"
       if proxy.user || proxy.password
@@ -73,6 +92,19 @@ module SSE
       end
       ret << "\r\n"
       ret
+    end
+
+    def self.wrap_socket_in_ssl_socket(socket)
+      io = IO.try_convert(socket)
+      ssl_sock = OpenSSL::SSL::SSLSocket.new(io, OpenSSL::SSL::SSLContext.new)
+      ssl_sock.connect
+      Socketry::SSL::Socket.new.from_socket(ssl_sock)
+    end
+  end
+
+  class ProxyError < StandardError
+    def initialize(message)
+      super
     end
   end
 

@@ -83,7 +83,7 @@ Note that this gem will automatically switch to using the Rails logger it is det
 
 HTTPS proxy
 ------------
-The Ruby SDK uses Faraday to handle all of its network traffic. Faraday provides built-in support for the use of an  HTTPS proxy. If the HTTPS_PROXY environment variable is present then the SDK will proxy all network requests through the URL provided.
+The Ruby SDK uses Faraday and Socketry to handle its network traffic. Both of these provide built-in support for the use of an  HTTPS proxy. If the HTTPS_PROXY environment variable is present then the SDK will proxy all network requests through the URL provided.
 
 How to set the HTTPS_PROXY environment variable on Mac/Linux systems:
 ```
