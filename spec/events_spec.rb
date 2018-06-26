@@ -351,12 +351,12 @@ describe LaunchDarkly::EventProcessor do
     expect(hc.get_request.headers["Authorization"]).to eq "sdk_key"
   end
 
-  it "stops posting events after getting a 401 error" do
+  def verify_unrecoverable_http_error(status)
     @ep = subject.new("sdk_key", default_config, hc)
     e = { kind: "identify", user: user }
     @ep.add_event(e)
 
-    hc.set_response_status(401)
+    hc.set_response_status(status)
     @ep.flush
     @ep.wait_until_inactive
     expect(hc.get_request).not_to be_nil
@@ -368,7 +368,7 @@ describe LaunchDarkly::EventProcessor do
     expect(hc.get_request).to be_nil
   end
 
-  it "retries flush once after 5xx error" do
+  def verify_recoverable_http_error(status)
     @ep = subject.new("sdk_key", default_config, hc)
     e = { kind: "identify", user: user }
     @ep.add_event(e)
@@ -380,6 +380,33 @@ describe LaunchDarkly::EventProcessor do
     expect(hc.get_request).not_to be_nil
     expect(hc.get_request).not_to be_nil
     expect(hc.get_request).to be_nil  # no 3rd request
+
+    # now verify that a subsequent flush still generates a request
+    hc.reset
+    @ep.add_event(e)
+    @ep.flush
+    @ep.wait_until_inactive
+    expect(hc.get_request).not_to be_nil
+  end
+
+  it "stops posting events after getting a 401 error" do
+    verify_unrecoverable_http_error(401)
+  end
+
+  it "stops posting events after getting a 403 error" do
+    verify_unrecoverable_http_error(403)
+  end
+
+  it "retries after 408 error" do
+    verify_recoverable_http_error(408)
+  end
+
+  it "retries after 429 error" do
+    verify_recoverable_http_error(429)
+  end
+
+  it "retries after 503 error" do
+    verify_recoverable_http_error(503)
   end
 
   it "retries flush once after connection error" do

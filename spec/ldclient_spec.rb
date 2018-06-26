@@ -7,7 +7,7 @@ describe LaunchDarkly::LDClient do
   let(:offline_client) do
     subject.new("secret", offline_config)
   end
-  let(:update_processor) { NullUpdateProcessor.new }
+  let(:update_processor) { LaunchDarkly::NullUpdateProcessor.new }
   let(:config) { LaunchDarkly::Config.new({send_events: false, update_processor: update_processor}) }
   let(:client) do
     subject.new("secret", config)
@@ -158,15 +158,6 @@ describe LaunchDarkly::LDClient do
     it "does not use a NullEventProcessor" do
       ep = client_with_events.instance_variable_get(:@event_processor)
       expect(ep).not_to be_a(LaunchDarkly::NullEventProcessor)
-    end
-  end
-
-  class NullUpdateProcessor
-    def start
-    end
-
-    def initialized?
-      true
     end
   end
 end

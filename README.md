@@ -7,15 +7,19 @@ LaunchDarkly SDK for Ruby
 [![Test Coverage](https://codeclimate.com/github/launchdarkly/ruby-client/badges/coverage.svg)](https://codeclimate.com/github/launchdarkly/ruby-client/coverage)
 [![security](https://hakiri.io/github/launchdarkly/ruby-client/master.svg)](https://hakiri.io/github/launchdarkly/ruby-client/master)
 
+Supported Ruby versions
+-----------------------
+
+This version of the LaunchDarkly SDK has a minimum Ruby version of 2.2.6, or 9.1.6 for JRuby.
+
 Quick setup
 -----------
 
 0. Install the Ruby SDK with `gem`
 
 ```shell
-gem install ldclient-rb --prerelease
+gem install ldclient-rb
 ```
-Note: The `--prerelease` flag is there to satisfy the dependency of celluloid 0.18pre which we have tested extensively and have found stable in our use case.  Unfortunately, the upstream provider has not promoted this version to stable yet.   See [here](https://github.com/celluloid/celluloid/issues/762)  This is not required for use in a Gemfile.
 
 1. Require the LaunchDarkly client:
 
@@ -79,7 +83,7 @@ Note that this gem will automatically switch to using the Rails logger it is det
 
 HTTPS proxy
 ------------
-The Ruby SDK uses Faraday to handle all of its network traffic. Faraday provides built-in support for the use of an  HTTPS proxy. If the HTTPS_PROXY environment variable is present then the SDK will proxy all network requests through the URL provided.
+The Ruby SDK uses Faraday and Socketry to handle its network traffic. Both of these provide built-in support for the use of an  HTTPS proxy. If the HTTPS_PROXY environment variable is present then the SDK will proxy all network requests through the URL provided.
 
 How to set the HTTPS_PROXY environment variable on Mac/Linux systems:
 ```
