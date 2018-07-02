@@ -78,6 +78,9 @@ module SSE
         @cxn = nil
         begin
           @cxn = connect
+          # There's a potential race if close was called in the middle of the previous line, i.e. after we
+          # connected but before @cxn was set. Checking the variable again is a bit clunky but avoids that.
+          return if @stopped.value
           read_stream(@cxn) if !@cxn.nil?
         rescue Errno::EBADF
           # don't log this - it probably means we closed our own connection deliberately
