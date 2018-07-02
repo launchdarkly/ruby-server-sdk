@@ -61,6 +61,7 @@ module SSE
     def close
       if @stopped.make_true
         @cxn.close if !@cxn.nil?
+        @cxn = nil
       end
     end
 
