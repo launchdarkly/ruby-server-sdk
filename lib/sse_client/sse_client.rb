@@ -85,7 +85,12 @@ module SSE
           @logger.error { "Unexpected error from event source: #{e.inspect}" }
           @logger.debug { "Exception trace: #{e.backtrace}" }
         end
-        @cxn.close if !@cxn.nil?
+        begin
+          @cxn.close if !@cxn.nil?
+        rescue StandardError => e
+          @logger.error { "Unexpected error while closing stream: #{e.inspect}" }
+          @logger.debug { "Exception trace: #{e.backtrace}" }
+        end
       end
     end
 
