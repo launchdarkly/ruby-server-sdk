@@ -84,7 +84,7 @@ module SSE
           @logger.error { "Unexpected error from event source: #{e.inspect}" }
           @logger.debug { "Exception trace: #{e.backtrace}" }
         end
-        @cxn.close if !cxn.nil?
+        @cxn.close if !@cxn.nil?
       end
     end
 
