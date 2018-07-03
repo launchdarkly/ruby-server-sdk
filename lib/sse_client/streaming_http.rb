@@ -1,3 +1,4 @@
+require "concurrent/atomics"
 require "http_tools"
 require "socketry"
 
@@ -15,11 +16,14 @@ module SSE
       @reader = HTTPResponseReader.new(@socket, read_timeout)
       @status = @reader.status
       @headers = @reader.headers
+      @closed = Concurrent::AtomicBoolean.new(false)
     end
 
     def close
-      @socket.close if @socket
-      @socket = nil
+      if @closed.make_true
+        @socket.close if @socket
+        @socket = nil
+      end
     end
     
     # Generator that returns one line of the response body at a time (delimited by \r, \n,
