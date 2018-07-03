@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.0.1] - 2018-07-02
+### Fixed:
+Fixed a regression in version 5.0.0 that could prevent the client from reconnecting if the stream connection was dropped by the server.
+
+
 ## [5.0.0] - 2018-06-26
 ### Changed:
 - The client no longer uses Celluloid for streaming I/O. Instead, it uses [socketry](https://github.com/socketry/socketry).
