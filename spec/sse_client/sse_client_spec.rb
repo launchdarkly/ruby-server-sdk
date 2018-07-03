@@ -136,4 +136,42 @@ EOT
       end
     end
   end
+
+  it "reconnects if stream returns EOF" do
+    events_body_1 = <<-EOT
+event: go
+data: foo
+
+EOT
+    events_body_2 = <<-EOT
+event: go
+data: bar
+
+EOT
+    with_server do |server|
+      attempt = 0
+      server.setup_response("/") do |req,res|
+        attempt += 1
+        if attempt == 1
+          res.body = events_body_1
+        else
+          res.body = events_body_2
+        end
+        res.content_type = "text/event-stream"
+        res.status = 200
+      end
+
+      event_sink = Queue.new
+      client = subject.new(server.base_uri,
+            reconnect_time: 0.25, read_timeout: 0.25) do |c|
+        c.on_event { |event| event_sink << event }
+      end
+
+      with_client(client) do |client|
+        expect(event_sink.pop).to eq(SSE::SSEEvent.new(:go, "foo", nil))
+        expect(event_sink.pop).to eq(SSE::SSEEvent.new(:go, "bar", nil))
+        expect(attempt).to be >= 2
+      end
+    end
+  end
 end
