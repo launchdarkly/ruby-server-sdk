@@ -2,7 +2,7 @@
 module LaunchDarkly
   module Util
     def self.log_exception(logger, message, exc)
-      logger.warn { "[LDClient] #{message}: #{exc.inspect}" }
+      logger.error { "[LDClient] #{message}: #{exc.inspect}" }
       logger.debug { "[LDClient] Exception trace: #{exc.backtrace}" }
     end
 

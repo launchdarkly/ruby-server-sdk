@@ -5,7 +5,7 @@ describe LaunchDarkly::Util do
     let(:logger) { double() }
 
     it "logs error data" do
-      expect(logger).to receive(:warn)
+      expect(logger).to receive(:error)
       expect(logger).to receive(:debug)
       begin
         raise StandardError.new 'asdf'
