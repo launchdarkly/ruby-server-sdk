@@ -162,7 +162,7 @@ module LaunchDarkly
         @event_processor.add_event(make_feature_event(feature, user, res[:variation], value, default))
         return value
       rescue => exn
-        @config.logger.warn { "[LDClient] Error evaluating feature flag: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
+        Util.log_exception(@config.logger, "Error evaluating feature flag", exn)
         @event_processor.add_event(make_feature_event(feature, user, nil, default, default))
         return default
       end
@@ -210,7 +210,7 @@ module LaunchDarkly
         # TODO rescue if necessary
         Hash[features.map{ |k, f| [k, evaluate(f, user, @store, @config.logger)[:value]] }]
       rescue => exn
-        @config.logger.warn { "[LDClient] Error evaluating all flags: #{exn.inspect}. \nTrace: #{exn.backtrace}" }
+        Util.log_exception(@config.logger, "Error evaluating all flags", exn)
         return Hash.new
       end
     end
@@ -224,12 +224,6 @@ module LaunchDarkly
       @update_processor.stop
       @event_processor.stop
       @store.stop
-    end
-
-    def log_exception(caller, exn)
-      error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
-      error = "[LDClient] Unexpected exception in #{caller}: #{error_traceback}"
-      @config.logger.error { error }
     end
 
     def sanitize_user(user)
@@ -252,7 +246,7 @@ module LaunchDarkly
       }
     end
 
-    private :evaluate, :log_exception, :sanitize_user, :make_feature_event
+    private :evaluate, :sanitize_user, :make_feature_event
   end
 
   #

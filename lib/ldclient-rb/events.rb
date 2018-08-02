@@ -142,7 +142,7 @@ module LaunchDarkly
             message.completed
           end
         rescue => e
-          @config.logger.warn { "[LDClient] Unexpected error in event processor: #{e.inspect}. \nTrace: #{e.backtrace}" }
+          Util.log_exception(@config.logger, "Unexpected error in event processor", e)
         end
       end
     end
@@ -226,7 +226,7 @@ module LaunchDarkly
             resp = EventPayloadSendTask.new.run(@sdk_key, @config, @client, payload, @formatter)
             handle_response(resp) if !resp.nil?
           rescue => e
-            @config.logger.warn { "[LDClient] Unexpected error in event processor: #{e.inspect}. \nTrace: #{e.backtrace}" }
+            Util.log_exception(@config.logger, "Unexpected error in event processor", e)
           end
         end
         buffer.clear if success # Reset our internal state, these events now belong to the flush worker
