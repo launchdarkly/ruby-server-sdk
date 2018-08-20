@@ -194,8 +194,8 @@ module LaunchDarkly
 
     #
     # Returns all feature flag values for the given user. This method is deprecated - please use
-    # all_flags_state instead. Current versions of the client-side SDK (2.0.0 and later) will not
-    # generate analytics events correctly if you pass the result of all_flags.
+    # all_flags_state instead. Current versions of the client-side SDK will not generate analytics
+    # events correctly if you pass the result of all_flags.
     #
     def all_flags(user)
       all_flags_state(user).values_map

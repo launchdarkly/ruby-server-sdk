@@ -145,21 +145,21 @@ describe LaunchDarkly::LDClient do
       values = state.values_map
       expect(values).to eq({ 'key1' => 'value1', 'key2' => 'value2' })
       
-      result = JSON.parse(state.json_string)
+      result = state.as_json
       expect(result).to eq({
         'key1' => 'value1',
         'key2' => 'value2',
         '$flagsState' => {
           'key1' => {
-            'variation' => 0,
-            'version' => 100,
-            'trackEvents' => false
+            :variation => 0,
+            :version => 100,
+            :trackEvents => false
           },
           'key2' => {
-            'variation' => 1,
-            'version' => 200,
-            'trackEvents' => true,
-            'debugEventsUntilDate' => 1000
+            :variation => 1,
+            :version => 200,
+            :trackEvents => true,
+            :debugEventsUntilDate => 1000
           }
         }
       })

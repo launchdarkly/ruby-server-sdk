@@ -1,3 +1,4 @@
+require 'json'
 
 module LaunchDarkly
   #
@@ -35,17 +36,28 @@ module LaunchDarkly
 
     # Returns a map of flag keys to flag values. If a flag would have evaluated to the default value,
     # its value will be nil.
+    #
+    # Do not use this method if you are passing data to the front end to "bootstrap" the JavaScript client.
+    # Instead, use as_json.
     def values_map
       @flag_values
     end
 
-    # Returns a JSON string representation of the entire state map, in the format used by the
-    # LaunchDarkly JavaScript SDK. Use this method if you are passing data to the front end that
-    # will be used to "bootstrap" the JavaScript client.
-    def json_string
+    # Returns a hash that can be used as a JSON representation of the entire state map, in the format
+    # used by the LaunchDarkly JavaScript SDK. Use this method if you are passing data to the front end
+    # in order to "bootstrap" the JavaScript client.
+    #
+    # Do not rely on the exact shape of this data, as it may change in future to support the needs of
+    # the JavaScript client.
+    def as_json(*) # parameter is unused, but may be passed if we're using the json gem
       ret = @flag_values.clone
       ret['$flagsState'] = @flag_metadata
-      ret.to_json
+      ret
+    end
+
+    # Same as as_json, but converts the JSON structure into a string.
+    def to_json(*a)
+      as_json.to_json(a)
     end
   end
 end
