@@ -161,7 +161,8 @@ describe LaunchDarkly::LDClient do
             :trackEvents => true,
             :debugEventsUntilDate => 1000
           }
-        }
+        },
+        '$valid' => true
       })
     end
 
