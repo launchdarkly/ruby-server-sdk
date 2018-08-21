@@ -99,6 +99,98 @@ describe LaunchDarkly::LDClient do
     end
   end
 
+  describe '#all_flags' do
+    let(:flag1) { { key: "key1", offVariation: 0, variations: [ 'value1' ] } }
+    let(:flag2) { { key: "key2", offVariation: 0, variations: [ 'value2' ] } }
+
+    it "returns flag values" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+
+      result = client.all_flags({ key: 'userkey' })
+      expect(result).to eq({ 'key1' => 'value1', 'key2' => 'value2' })
+    end
+
+    it "returns empty map for nil user" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+
+      result = client.all_flags(nil)
+      expect(result).to eq({})
+    end
+
+    it "returns empty map for nil user key" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+
+      result = client.all_flags({})
+      expect(result).to eq({})
+    end
+
+    it "returns empty map if offline" do
+      offline_config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+
+      result = offline_client.all_flags(nil)
+      expect(result).to eq({})
+    end
+  end
+
+  describe '#all_flags_state' do
+    let(:flag1) { { key: "key1", version: 100, offVariation: 0, variations: [ 'value1' ], trackEvents: false } }
+    let(:flag2) { { key: "key2", version: 200, offVariation: 1, variations: [ 'x', 'value2' ], trackEvents: true, debugEventsUntilDate: 1000 } }
+
+    it "returns flags state" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+
+      state = client.all_flags_state({ key: 'userkey' })
+      expect(state.valid?).to be true
+
+      values = state.values_map
+      expect(values).to eq({ 'key1' => 'value1', 'key2' => 'value2' })
+      
+      result = state.as_json
+      expect(result).to eq({
+        'key1' => 'value1',
+        'key2' => 'value2',
+        '$flagsState' => {
+          'key1' => {
+            :variation => 0,
+            :version => 100,
+            :trackEvents => false
+          },
+          'key2' => {
+            :variation => 1,
+            :version => 200,
+            :trackEvents => true,
+            :debugEventsUntilDate => 1000
+          }
+        },
+        '$valid' => true
+      })
+    end
+
+    it "returns empty state for nil user" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+
+      state = client.all_flags_state(nil)
+      expect(state.valid?).to be false
+      expect(state.values_map).to eq({})
+    end
+
+    it "returns empty state for nil user key" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+
+      state = client.all_flags_state({})
+      expect(state.valid?).to be false
+      expect(state.values_map).to eq({})
+    end
+
+    it "returns empty state if offline" do
+      offline_config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+
+      state = offline_client.all_flags_state({ key: 'userkey' })
+      expect(state.valid?).to be false
+      expect(state.values_map).to eq({})
+    end
+  end
+
   describe '#secure_mode_hash' do
     it "will return the expected value for a known message and secret" do
       result = client.secure_mode_hash({key: :Message})

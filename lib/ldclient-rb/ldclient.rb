@@ -193,26 +193,48 @@ module LaunchDarkly
     end
 
     #
-    # Returns all feature flag values for the given user
+    # Returns all feature flag values for the given user. This method is deprecated - please use
+    # all_flags_state instead. Current versions of the client-side SDK will not generate analytics
+    # events correctly if you pass the result of all_flags.
     #
     def all_flags(user)
-      sanitize_user(user)
-      return Hash.new if @config.offline?
+      all_flags_state(user).values_map
+    end
 
-      unless user
-        @config.logger.error { "[LDClient] Must specify user in all_flags" }
-        return Hash.new
+    #
+    # Returns a FeatureFlagsState object that encapsulates the state of all feature flags for a given user,
+    # including the flag values and also metadata that can be used on the front end. This method does not
+    # send analytics events back to LaunchDarkly.
+    #
+    def all_flags_state(user)
+      return FeatureFlagsState.new(false) if @config.offline?
+
+      unless user && !user[:key].nil?
+        @config.logger.error { "[LDClient] User and user key must be specified in all_flags_state" }
+        return FeatureFlagsState.new(false)
       end
+
+      sanitize_user(user)
 
       begin
         features = @store.all(FEATURES)
-
-        # TODO rescue if necessary
-        Hash[features.map{ |k, f| [k, evaluate(f, user, @store, @config.logger)[:value]] }]
       rescue => exn
-        Util.log_exception(@config.logger, "Error evaluating all flags", exn)
-        return Hash.new
+        Util.log_exception(@config.logger, "Unable to read flags for all_flags_state", exn)
+        return FeatureFlagsState.new(false)
       end
+
+      state = FeatureFlagsState.new(true)
+      features.each do |k, f|
+        begin
+          result = evaluate(f, user, @store, @config.logger)
+          state.add_flag(f, result[:value], result[:variation])
+        rescue => exn
+          Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
+          state.add_flag(f, nil, nil)
+        end
+      end
+
+      state
     end
 
     #
