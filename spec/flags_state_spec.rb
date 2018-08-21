@@ -1,4 +1,5 @@
 require "spec_helper"
+require "json"
 
 describe LaunchDarkly::FeatureFlagsState do
   subject { LaunchDarkly::FeatureFlagsState }
@@ -50,7 +51,8 @@ describe LaunchDarkly::FeatureFlagsState do
           :trackEvents => true,
           :debugEventsUntilDate => 1000
         }
-      }
+      },
+      '$valid' => true
     })
   end
 
@@ -64,5 +66,17 @@ describe LaunchDarkly::FeatureFlagsState do
     object = state.as_json
     str = state.to_json
     expect(object.to_json).to eq(str)
+  end
+
+  it "uses our custom serializer with JSON.generate" do
+    state = subject.new(true)
+    flag1 = { key: "key1", version: 100, offVariation: 0, variations: [ 'value1' ], trackEvents: false }
+    flag2 = { key: "key2", version: 200, offVariation: 1, variations: [ 'x', 'value2' ], trackEvents: true, debugEventsUntilDate: 1000 }
+    state.add_flag(flag1, 'value1', 0)
+    state.add_flag(flag2, 'value2', 1)
+    
+    stringFromToJson = state.to_json
+    stringFromGenerate = JSON.generate(state)
+    expect(stringFromGenerate).to eq(stringFromToJson)
   end
 end
