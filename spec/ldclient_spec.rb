@@ -166,6 +166,22 @@ describe LaunchDarkly::LDClient do
       })
     end
 
+    it "can be filtered for only client-side flags" do
+      flag1 = { key: "server-side-1", offVariation: 0, variations: [ 'a' ], clientSide: false }
+      flag2 = { key: "server-side-2", offVariation: 0, variations: [ 'b' ], clientSide: false }
+      flag3 = { key: "client-side-1", offVariation: 0, variations: [ 'value1' ], clientSide: true }
+      flag4 = { key: "client-side-2", offVariation: 0, variations: [ 'value2' ], clientSide: true }
+      config.feature_store.init({ LaunchDarkly::FEATURES => {
+        flag1[:key] => flag1, flag2[:key] => flag2, flag3[:key] => flag3, flag4[:key] => flag4
+      }})
+
+      state = client.all_flags_state({ key: 'userkey' }, client_side_only: true)
+      expect(state.valid?).to be true
+
+      values = state.values_map
+      expect(values).to eq({ 'client-side-1' => 'value1', 'client-side-2' => 'value2' })
+    end
+
     it "returns empty state for nil user" do
       config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
 
