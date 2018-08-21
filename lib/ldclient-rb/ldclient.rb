@@ -194,8 +194,11 @@ module LaunchDarkly
 
     #
     # Returns all feature flag values for the given user. This method is deprecated - please use
-    # all_flags_state instead. Current versions of the client-side SDK will not generate analytics
+    # {#all_flags_state} instead. Current versions of the client-side SDK will not generate analytics
     # events correctly if you pass the result of all_flags.
+    #
+    # @param user [Hash] The end user requesting the feature flags
+    # @return [Hash] a hash of feature flag keys to values
     #
     def all_flags(user)
       all_flags_state(user).values_map
@@ -206,7 +209,13 @@ module LaunchDarkly
     # including the flag values and also metadata that can be used on the front end. This method does not
     # send analytics events back to LaunchDarkly.
     #
-    def all_flags_state(user)
+    # @param user [Hash] The end user requesting the feature flags
+    # @param options={} [Hash] Optional parameters to control how the state is generated
+    # @option options [Boolean] :client_side_only (false) True if only flags marked for use with the
+    #   client-side SDK should be included in the state. By default, all flags are included.
+    # @return [FeatureFlagsState] a FeatureFlagsState object which can be serialized to JSON
+    #
+    def all_flags_state(user, options={})
       return FeatureFlagsState.new(false) if @config.offline?
 
       unless user && !user[:key].nil?
@@ -224,7 +233,11 @@ module LaunchDarkly
       end
 
       state = FeatureFlagsState.new(true)
+      client_only = options[:client_side_only] || false
       features.each do |k, f|
+        if client_only && !f[:clientSide]
+          next
+        end
         begin
           result = evaluate(f, user, @store, @config.logger)
           state.add_flag(f, result[:value], result[:variation])
