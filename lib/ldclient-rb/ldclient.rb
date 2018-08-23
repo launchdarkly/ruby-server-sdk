@@ -211,7 +211,7 @@ module LaunchDarkly
     # @option options [Boolean] :client_side_only (false) True if only flags marked for use with the
     #   client-side SDK should be included in the state. By default, all flags are included.
     # @option options [Boolean] :with_reasons (false) True if evaluation reasons should be included
-    #   in the state. By default, they are not included.
+    #   in the state (see `variation_detail`). By default, they are not included.
     # @return [FeatureFlagsState] a FeatureFlagsState object which can be serialized to JSON
     #
     def all_flags_state(user, options={})
