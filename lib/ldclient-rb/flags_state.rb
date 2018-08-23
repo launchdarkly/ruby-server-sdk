@@ -15,12 +15,13 @@ module LaunchDarkly
     end
 
     # Used internally to build the state map.
-    def add_flag(flag, value, variation)
+    def add_flag(flag, value, variation, reason = nil)
       key = flag[:key]
       @flag_values[key] = value
       meta = { version: flag[:version], trackEvents: flag[:trackEvents] }
       meta[:variation] = variation if !variation.nil?
       meta[:debugEventsUntilDate] = flag[:debugEventsUntilDate] if flag[:debugEventsUntilDate]
+      meta[:reason] = reason if !reason.nil?
       @flag_metadata[key] = meta
     end
 

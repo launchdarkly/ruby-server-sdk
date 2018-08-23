@@ -120,52 +120,11 @@ module LaunchDarkly
     # @return the variation to show the user, or the
     #   default value if there's an an error
     def variation(key, user, default)
-      return default if @config.offline?
+      evaluate_internal(key, user, default, false).value
+    end
 
-      if !initialized?
-        if @store.initialized?
-          @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
-        else
-          @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
-          @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
-          return default
-        end
-      end
-
-      sanitize_user(user) if !user.nil?
-      feature = @store.get(FEATURES, key)
-
-      if feature.nil?
-        @config.logger.info { "[LDClient] Unknown feature flag #{key}. Returning default value" }
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
-        return default
-      end
-
-      unless user
-        @config.logger.error { "[LDClient] Must specify user" }
-        @event_processor.add_event(make_feature_event(feature, user, nil, default, default))
-        return default
-      end
-
-      begin
-        res = evaluate(feature, user, @store, @config.logger)
-        if !res[:events].nil?
-          res[:events].each do |event|
-            @event_processor.add_event(event)
-          end
-        end
-        value = res[:value]
-        if value.nil?
-          @config.logger.debug { "[LDClient] Result value is null in toggle" }
-          value = default
-        end
-        @event_processor.add_event(make_feature_event(feature, user, res[:variation], value, default))
-        return value
-      rescue => exn
-        Util.log_exception(@config.logger, "Error evaluating feature flag", exn)
-        @event_processor.add_event(make_feature_event(feature, user, nil, default, default))
-        return default
-      end
+    def variation_detail(key, user, default)
+      evaluate_internal(key, user, default, true)
     end
 
     #
@@ -213,6 +172,8 @@ module LaunchDarkly
     # @param options={} [Hash] Optional parameters to control how the state is generated
     # @option options [Boolean] :client_side_only (false) True if only flags marked for use with the
     #   client-side SDK should be included in the state. By default, all flags are included.
+    # @option options [Boolean] :with_reasons (false) True if evaluation reasons should be included
+    #   in the state. By default, they are not included.
     # @return [FeatureFlagsState] a FeatureFlagsState object which can be serialized to JSON
     #
     def all_flags_state(user, options={})
@@ -234,16 +195,17 @@ module LaunchDarkly
 
       state = FeatureFlagsState.new(true)
       client_only = options[:client_side_only] || false
+      with_reasons = options[:with_reasons] || false
       features.each do |k, f|
         if client_only && !f[:clientSide]
           next
         end
         begin
           result = evaluate(f, user, @store, @config.logger)
-          state.add_flag(f, result[:value], result[:variation])
+          state.add_flag(f, result.detail.value, result.detail.variation, with_reasons ? result.detail.reason : nil)
         rescue => exn
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
-          state.add_flag(f, nil, nil)
+          state.add_flag(f, nil, nil, with_reasons ? { kind: 'ERROR', errorKind: 'EXCEPTION' } : nil)
         end
       end
 
@@ -261,27 +223,83 @@ module LaunchDarkly
       @store.stop
     end
 
+    :private
+
+    # @return [EvaluationDetail]
+    def evaluate_internal(key, user, default, include_reasons_in_events)
+      if @config.offline?
+        return error_result('CLIENT_NOT_READY', default)
+      end
+
+      if !initialized?
+        if @store.initialized?
+          @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
+        else
+          @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
+          @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
+          return error_result('CLIENT_NOT_READY', default)
+        end
+      end
+
+      sanitize_user(user) if !user.nil?
+      feature = @store.get(FEATURES, key)
+
+      if feature.nil?
+        @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
+        detail = error_result('FLAG_NOT_FOUND', default)
+        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user,
+          reason: include_reasons_in_events ? detail.reason : nil)
+        return detail
+      end
+
+      unless user
+        @config.logger.error { "[LDClient] Must specify user" }
+        detail = error_result('USER_NOT_SPECIFIED', default)
+        @event_processor.add_event(make_feature_event(feature, user, detail, default, include_reasons_in_events))
+        return detail
+      end
+
+      begin
+        res = evaluate(feature, user, @store, @config.logger)
+        if !res.events.nil?
+          res.events.each do |event|
+            @event_processor.add_event(event)
+          end
+        end
+        detail = res.detail
+        if detail.variation.nil?
+          detail = EvaluationDetail.new(default, nil, detail.reason)
+        end
+        @event_processor.add_event(make_feature_event(feature, user, detail, default, include_reasons_in_events))
+        return detail
+      rescue => exn
+        Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
+        detail = error_result('EXCEPTION', default)
+        @event_processor.add_event(make_feature_event(feature, user, detail, default, include_reasons_in_events))
+        return detail
+      end
+    end
+
     def sanitize_user(user)
       if user[:key]
         user[:key] = user[:key].to_s
       end
     end
 
-    def make_feature_event(flag, user, variation, value, default)
+    def make_feature_event(flag, user, detail, default, with_reasons)
       {
         kind: "feature",
         key: flag[:key],
         user: user,
-        variation: variation,
-        value: value,
+        variation: detail.variation,
+        value: detail.value,
         default: default,
         version: flag[:version],
         trackEvents: flag[:trackEvents],
-        debugEventsUntilDate: flag[:debugEventsUntilDate]
+        debugEventsUntilDate: flag[:debugEventsUntilDate],
+        reason: with_reasons ? detail.reason : nil
       }
     end
-
-    private :evaluate, :sanitize_user, :make_feature_event
   end
 
   #

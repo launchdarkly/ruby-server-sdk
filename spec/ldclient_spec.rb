@@ -34,9 +34,16 @@ describe LaunchDarkly::LDClient do
   end
 
   describe '#variation' do
-    it "will return the default value if the client is offline" do
+    feature_with_value = { key: "key", on: false, offVariation: 0, variations: ["value"], version: 100,
+      trackEvents: true, debugEventsUntilDate: 1000 }
+
+    it "returns the default value if the client is offline" do
       result = offline_client.variation("doesntmatter", user, "default")
       expect(result).to eq "default"
+    end
+
+    it "returns the default value for an unknown feature" do
+      expect(client.variation("badkey", user, "default")).to eq "default"
     end
 
     it "queues a feature request event for an unknown feature" do
@@ -46,56 +53,113 @@ describe LaunchDarkly::LDClient do
       client.variation("badkey", user, "default")
     end
 
+    it "returns the value for an existing feature" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      expect(client.variation("key", user, "default")).to eq "value"
+    end
+
     it "queues a feature request event for an existing feature" do
       config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, feature)
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: "feature",
-        key: feature[:key],
-        version: feature[:version],
+        key: "key",
+        version: 100,
         user: user,
         variation: 0,
-        value: true,
+        value: "value",
         default: "default",
         trackEvents: true,
-        debugEventsUntilDate: nil
+        debugEventsUntilDate: 1000
       ))
-      client.variation(feature[:key], user, "default")
+      client.variation("key", user, "default")
     end
 
     it "queues a feature event for an existing feature when user is nil" do
       config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, feature)
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: "feature",
-        key: feature[:key],
-        version: feature[:version],
+        key: "key",
+        version: 100,
         user: nil,
         variation: nil,
         value: "default",
         default: "default",
         trackEvents: true,
-        debugEventsUntilDate: nil
+        debugEventsUntilDate: 1000
       ))
-      client.variation(feature[:key], nil, "default")
+      client.variation("key", nil, "default")
     end
 
     it "queues a feature event for an existing feature when user key is nil" do
       config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, feature)
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       bad_user = { name: "Bob" }
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: "feature",
-        key: feature[:key],
-        version: feature[:version],
+        key: "key",
+        version: 100,
         user: bad_user,
         variation: nil,
         value: "default",
         default: "default",
         trackEvents: true,
-        debugEventsUntilDate: nil
+        debugEventsUntilDate: 1000
       ))
-      client.variation(feature[:key], bad_user, "default")
+      client.variation("key", bad_user, "default")
+    end
+  end
+
+  describe '#variation_detail' do
+    feature_with_value = { key: "key", on: false, offVariation: 0, variations: ["value"], version: 100,
+      trackEvents: true, debugEventsUntilDate: 1000 }
+
+    it "returns the default value if the client is offline" do
+      result = offline_client.variation_detail("doesntmatter", user, "default")
+      expected = LaunchDarkly::EvaluationDetail.new("default", nil, { kind: 'ERROR', errorKind: 'CLIENT_NOT_READY' })
+      expect(result).to eq expected
+    end
+
+    it "returns the default value for an unknown feature" do
+      result = client.variation_detail("badkey", user, "default")
+      expected = LaunchDarkly::EvaluationDetail.new("default", nil, { kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND'})
+      expect(result).to eq expected
+    end
+
+    it "queues a feature request event for an unknown feature" do
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "feature", key: "badkey", user: user, value: "default", default: "default",
+        reason: { kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND' }
+      ))
+      client.variation_detail("badkey", user, "default")
+    end
+
+    it "returns a value for an existing feature" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      result = client.variation_detail("key", user, "default")
+      expected = LaunchDarkly::EvaluationDetail.new("value", 0, { kind: 'OFF' })
+      expect(result).to eq expected
+    end
+
+    it "queues a feature request event for an existing feature" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "feature",
+        key: "key",
+        version: 100,
+        user: user,
+        variation: 0,
+        value: "value",
+        default: "default",
+        trackEvents: true,
+        debugEventsUntilDate: 1000,
+        reason: { kind: "OFF" }
+      ))
+      client.variation_detail("key", user, "default")
     end
   end
 
