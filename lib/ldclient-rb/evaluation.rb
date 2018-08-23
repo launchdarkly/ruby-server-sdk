@@ -156,21 +156,21 @@ module LaunchDarkly
         return EvalResult.new(detail, events)
       end
 
-      return EvalResult.new(get_off_value(flag, { kind: 'OFF' }), events)
+      return EvalResult.new(get_off_value(flag, { kind: 'OFF' }, logger), events)
     end
 
 
     def eval_internal(flag, user, store, events, logger)
       prereq_failure_reason = check_prerequisites(flag, user, store, events, logger)
       if !prereq_failure_reason.nil?
-        return get_off_value(flag, prereq_failure_reason)
+        return get_off_value(flag, prereq_failure_reason, logger)
       end
 
       # Check user target matches
       (flag[:targets] || []).each do |target|
         (target[:values] || []).each do |value|
           if value == user[:key]
-            return get_variation(flag, target[:variation], { kind: 'TARGET_MATCH' })
+            return get_variation(flag, target[:variation], { kind: 'TARGET_MATCH' }, logger)
           end
         end
       end
@@ -238,13 +238,6 @@ module LaunchDarkly
         return nil
       end
       { kind: 'PREREQUISITES_FAILED', prerequisiteKeys: failed_prereqs }
-    end
-
-    def get_variation(flag, index)
-      if index >= flag[:variations].length
-        raise EvaluationError, "Invalid variation index"
-      end
-      flag[:variations][index]
     end
 
     def rule_match_user(rule, user, store)
@@ -386,7 +379,7 @@ module LaunchDarkly
 
     :private
 
-    def get_variation(flag, index, reason)
+    def get_variation(flag, index, reason, logger)
       if index < 0 || index >= flag[:variations].length
         logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": invalid variation index")
         return error_result('MALFORMED_FLAG')
@@ -394,11 +387,11 @@ module LaunchDarkly
       EvaluationDetail.new(flag[:variations][index], index, reason)
     end
 
-    def get_off_value(flag, reason)
+    def get_off_value(flag, reason, logger)
       if flag[:offVariation].nil?  # off variation unspecified - return default value
         return EvaluationDetail.new(nil, nil, reason)
       end
-      get_variation(flag, flag[:offVariation], reason)
+      get_variation(flag, flag[:offVariation], reason, logger)
     end
 
     def get_value_for_variation_or_rollout(flag, vr, user, reason, logger)
@@ -407,7 +400,7 @@ module LaunchDarkly
         logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": variation/rollout object with no variation or rollout")
         return error_result('MALFORMED_FLAG')
       end
-      return get_variation(flag, index, reason)
+      return get_variation(flag, index, reason, logger)
     end
   end
 end
