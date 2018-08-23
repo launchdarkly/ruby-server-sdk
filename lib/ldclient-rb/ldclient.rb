@@ -115,7 +115,7 @@ module LaunchDarkly
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
     # @param user [Hash] a hash containing parameters for the end user requesting the flag
-    # @param default=false the default value of the flag
+    # @param default the default value of the flag
     #
     # @return the variation to show the user, or the
     #   default value if there's an an error
@@ -123,6 +123,44 @@ module LaunchDarkly
       evaluate_internal(key, user, default, false).value
     end
 
+    #
+    # Determines the variation of a feature flag for a user, like `variation`, but also
+    # provides additional information about how this value was calculated.
+    #
+    # The return value of `variation_detail` is an `EvaluationDetail` object, which has
+    # three properties:
+    #
+    # `value`: the value that was calculated for this user (same as the return value
+    # of `variation`)
+    #
+    # `variation`: the positional index of this value in the flag, e.g. 0 for the first
+    # variation - or `nil` if it is the default value
+    #
+    # `reason`: a hash describing the main reason why this value was selected. Its `:kind`
+    # property will be one of the following:
+    #
+    # * `'OFF'`: the flag was off and therefore returned its configured off value
+    # * `'FALLTHROUGH'`: the flag was on but the user did not match any targets or rules
+    # * `'TARGET_MATCH'`: the user key was specifically targeted for this flag
+    # * `'RULE_MATCH'`: the user matched one of the flag's rules; the `:ruleIndex` and
+    # `:ruleId` properties indicate the positional index and unique identifier of the rule
+    # * `'PREREQUISITE_FAILED`': the flag was considered off because it had at least one
+    # prerequisite flag that either was off or did not return the desired variation; the
+    # `:prerequisiteKey` property indicates the key of the prerequisite that failed
+    # * `'ERROR'`: the flag could not be evaluated, e.g. because it does not exist or due
+    # to an unexpected error, and therefore returned the default value; the `:errorKind`
+    # property describes the nature of the error, such as `'FLAG_NOT_FOUND'`
+    #
+    # The `reason` will also be included in analytics events, if you are capturing
+    # detailed event data for this flag.
+    #
+    # @param key [String] the unique feature key for the feature flag, as shown
+    #   on the LaunchDarkly dashboard
+    # @param user [Hash] a hash containing parameters for the end user requesting the flag
+    # @param default the default value of the flag
+    #
+    # @return an `EvaluationDetail` object describing the result
+    #
     def variation_detail(key, user, default)
       evaluate_internal(key, user, default, true)
     end
