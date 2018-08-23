@@ -133,8 +133,8 @@ module LaunchDarkly
     # `value`: the value that was calculated for this user (same as the return value
     # of `variation`)
     #
-    # `variation`: the positional index of this value in the flag, e.g. 0 for the first
-    # variation - or `nil` if it is the default value
+    # `variation_index`: the positional index of this value in the flag, e.g. 0 for the
+    # first variation - or `nil` if the default value was returned
     #
     # `reason`: a hash describing the main reason why this value was selected. Its `:kind`
     # property will be one of the following:
@@ -240,7 +240,7 @@ module LaunchDarkly
         end
         begin
           result = evaluate(f, user, @store, @config.logger)
-          state.add_flag(f, result.detail.value, result.detail.variation, with_reasons ? result.detail.reason : nil)
+          state.add_flag(f, result.detail.value, result.detail.variation_index, with_reasons ? result.detail.reason : nil)
         rescue => exn
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
           state.add_flag(f, nil, nil, with_reasons ? { kind: 'ERROR', errorKind: 'EXCEPTION' } : nil)
@@ -305,7 +305,7 @@ module LaunchDarkly
           end
         end
         detail = res.detail
-        if detail.variation.nil?
+        if detail.variation_index.nil?
           detail = EvaluationDetail.new(default, nil, detail.reason)
         end
         @event_processor.add_event(make_feature_event(feature, user, detail, default, include_reasons_in_events))
@@ -329,7 +329,7 @@ module LaunchDarkly
         kind: "feature",
         key: flag[:key],
         user: user,
-        variation: detail.variation,
+        variation: detail.variation_index,
         value: detail.value,
         default: default,
         version: flag[:version],

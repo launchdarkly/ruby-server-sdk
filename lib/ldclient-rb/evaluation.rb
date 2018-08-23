@@ -5,9 +5,9 @@ module LaunchDarkly
   # An object returned by `LDClient.variation_detail`, combining the result of a flag evaluation with
   # an explanation of how it was calculated.
   class EvaluationDetail
-    def initialize(value, variation, reason)
+    def initialize(value, variation_index, reason)
       @value = value
-      @variation = variation
+      @variation_index = variation_index
       @reason = reason
     end
 
@@ -17,13 +17,13 @@ module LaunchDarkly
 
     # @return [int|nil] The index of the returned value within the flag's list of variations, e.g.
     #   0 for the first variation - or `nil` if the default value was returned.
-    attr_reader :variation
+    attr_reader :variation_index
 
     # @return [Hash] An object describing the main factor that influenced the flag evaluation value.
     attr_reader :reason
 
     def ==(other)
-      @value == other.value && @variation == other.variation && @reason == other.reason
+      @value == other.value && @variation_index == other.variation_index && @reason == other.reason
     end
   end
 
@@ -208,7 +208,7 @@ module LaunchDarkly
             event = {
               kind: "feature",
               key: prereq_key,
-              variation: prereq_res.variation,
+              variation: prereq_res.variation_index,
               value: prereq_res.value,
               version: prereq_flag[:version],
               prereqOf: flag[:key],
@@ -216,7 +216,7 @@ module LaunchDarkly
               debugEventsUntilDate: prereq_flag[:debugEventsUntilDate]
             }
             events.push(event)
-            if prereq_res.variation != prerequisite[:variation]
+            if prereq_res.variation_index != prerequisite[:variation]
               prereq_ok = false
             end
           rescue => exn
