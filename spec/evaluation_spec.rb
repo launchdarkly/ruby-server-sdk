@@ -55,6 +55,38 @@ describe LaunchDarkly::Evaluation do
       expect(result.events).to eq([])
     end
 
+    it "returns an error if off variation is too high" do
+      flag = {
+        key: 'feature',
+        on: false,
+        offVariation: 999,
+        fallthrough: { variation: 0 },
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'x' }
+      detail = LaunchDarkly::EvaluationDetail.new(nil, nil,
+        { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+      result = evaluate(flag, user, features, logger)
+      expect(result.detail).to eq(detail)
+      expect(result.events).to eq([])
+    end
+
+    it "returns an error if off variation is negative" do
+      flag = {
+        key: 'feature',
+        on: false,
+        offVariation: -1,
+        fallthrough: { variation: 0 },
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'x' }
+      detail = LaunchDarkly::EvaluationDetail.new(nil, nil,
+        { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+      result = evaluate(flag, user, features, logger)
+      expect(result.detail).to eq(detail)
+      expect(result.events).to eq([])
+    end
+
     it "returns off variation if prerequisite is not found" do
       flag = {
         key: 'feature0',
@@ -162,9 +194,69 @@ describe LaunchDarkly::Evaluation do
       expect(result.events).to eq(events_should_be)
     end
 
+    it "returns an error if fallthrough variation is too high" do
+      flag = {
+        key: 'feature',
+        on: true,
+        fallthrough: { variation: 999 },
+        offVariation: 1,
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'userkey' }
+      detail = LaunchDarkly::EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+      result = evaluate(flag, user, features, logger)
+      expect(result.detail).to eq(detail)
+      expect(result.events).to eq([])
+    end
+
+    it "returns an error if fallthrough variation is negative" do
+      flag = {
+        key: 'feature',
+        on: true,
+        fallthrough: { variation: -1 },
+        offVariation: 1,
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'userkey' }
+      detail = LaunchDarkly::EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+      result = evaluate(flag, user, features, logger)
+      expect(result.detail).to eq(detail)
+      expect(result.events).to eq([])
+    end
+
+    it "returns an error if fallthrough has no variation or rollout" do
+      flag = {
+        key: 'feature',
+        on: true,
+        fallthrough: { },
+        offVariation: 1,
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'userkey' }
+      detail = LaunchDarkly::EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+      result = evaluate(flag, user, features, logger)
+      expect(result.detail).to eq(detail)
+      expect(result.events).to eq([])
+    end
+
+    it "returns an error if fallthrough has a rollout with no variations" do
+      flag = {
+        key: 'feature',
+        on: true,
+        fallthrough: { rollout: { variations: [] } },
+        offVariation: 1,
+        variations: ['a', 'b', 'c']
+      }
+      user = { key: 'userkey' }
+      detail = LaunchDarkly::EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+      result = evaluate(flag, user, features, logger)
+      expect(result.detail).to eq(detail)
+      expect(result.events).to eq([])
+    end
+
     it "matches user from targets" do
       flag = {
-        key: 'feature0',
+        key: 'feature',
         on: true,
         targets: [
           { values: [ 'whoever', 'userkey' ], variation: 2 }
@@ -257,6 +349,23 @@ describe LaunchDarkly::Evaluation do
       clause = { attribute: 'legs', op: 'in', values: [4] }
       flag = boolean_flag_with_clauses([clause])
       expect(evaluate(flag, user, features, logger).detail.value).to be false
+    end
+
+    it "returns false for unknown operator" do
+      user = { key: 'x', name: 'Bob' }
+      clause = { attribute: 'name', op: 'unknown', values: [4] }
+      flag = boolean_flag_with_clauses([clause])
+      expect(evaluate(flag, user, features, logger).detail.value).to be false
+    end
+
+    it "does not stop evaluating rules after clause with unknown operator" do
+      user = { key: 'x', name: 'Bob' }
+      clause0 = { attribute: 'name', op: 'unknown', values: [4] }
+      rule0 = { clauses: [ clause0 ], variation: 1 }
+      clause1 = { attribute: 'name', op: 'in', values: ['Bob'] }
+      rule1 = { clauses: [ clause1 ], variation: 1 }
+      flag = boolean_flag_with_rules([rule0, rule1])
+      expect(evaluate(flag, user, features, logger).detail.value).to be true
     end
 
     it "can be negated" do

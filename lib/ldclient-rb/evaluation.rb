@@ -132,9 +132,6 @@ module LaunchDarkly
         end
     }
 
-    class EvaluationError < StandardError
-    end
-
     # Used internally to hold an evaluation result and the events that were generated from prerequisites.
     EvalResult = Struct.new(:detail, :events)
 
@@ -268,9 +265,8 @@ module LaunchDarkly
       return false if val.nil?
 
       op = OPERATORS[clause[:op].to_sym]
-
       if op.nil?
-        raise EvaluationError, "Unsupported operator #{clause[:op]} in evaluation"
+        return false
       end
 
       if val.is_a? Enumerable
