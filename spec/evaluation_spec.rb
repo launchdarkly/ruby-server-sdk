@@ -98,7 +98,7 @@ describe LaunchDarkly::Evaluation do
       }
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
-        { kind: 'PREREQUISITES_FAILED', prerequisiteKeys: ['badfeature'] })
+        { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'badfeature' })
       result = evaluate(flag, user, features, logger)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
@@ -125,7 +125,7 @@ describe LaunchDarkly::Evaluation do
       features.upsert(LaunchDarkly::FEATURES, flag1)
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
-        { kind: 'PREREQUISITES_FAILED', prerequisiteKeys: ['feature1'] })
+        { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
       events_should_be = [{
         kind: 'feature', key: 'feature1', variation: nil, value: nil, version: 2, prereqOf: 'feature0',
         trackEvents: nil, debugEventsUntilDate: nil
@@ -155,7 +155,7 @@ describe LaunchDarkly::Evaluation do
       features.upsert(LaunchDarkly::FEATURES, flag1)
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
-        { kind: 'PREREQUISITES_FAILED', prerequisiteKeys: ['feature1'] })
+        { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
       events_should_be = [{
         kind: 'feature', key: 'feature1', variation: 0, value: 'd', version: 2, prereqOf: 'feature0',
         trackEvents: nil, debugEventsUntilDate: nil

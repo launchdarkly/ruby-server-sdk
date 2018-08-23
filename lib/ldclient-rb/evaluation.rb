@@ -192,8 +192,6 @@ module LaunchDarkly
     end
 
     def check_prerequisites(flag, user, store, events, logger)
-      failed_prereqs = []
-
       (flag[:prerequisites] || []).each do |prerequisite|
         prereq_ok = true
         prereq_key = prerequisite[:key]
@@ -227,14 +225,10 @@ module LaunchDarkly
           end
         end
         if !prereq_ok
-          failed_prereqs.push(prereq_key)
+          return { kind: 'PREREQUISITE_FAILED', prerequisiteKey: prereq_key }
         end
       end
-
-      if failed_prereqs.empty?
-        return nil
-      end
-      { kind: 'PREREQUISITES_FAILED', prerequisiteKeys: failed_prereqs }
+      nil
     end
 
     def rule_match_user(rule, user, store)
