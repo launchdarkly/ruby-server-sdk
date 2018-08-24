@@ -22,6 +22,12 @@ module LaunchDarkly
     # @return [Hash] An object describing the main factor that influenced the flag evaluation value.
     attr_reader :reason
 
+    # @return [boolean] True if the flag evaluated to the default value rather than to one of its
+    #   variations.
+    def default_value?
+      variation_index.nil?
+    end
+
     def ==(other)
       @value == other.value && @variation_index == other.variation_index && @reason == other.reason
     end

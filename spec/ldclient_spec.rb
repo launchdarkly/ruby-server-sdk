@@ -59,6 +59,13 @@ describe LaunchDarkly::LDClient do
       expect(client.variation("key", user, "default")).to eq "value"
     end
 
+    it "returns the default value if a feature evaluates to nil" do
+      empty_feature = { key: "key", on: false, offVariation: nil }
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, empty_feature)
+      expect(client.variation("key", user, "default")).to eq "default"
+    end
+
     it "queues a feature request event for an existing feature" do
       config.feature_store.init({ LaunchDarkly::FEATURES => {} })
       config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
@@ -142,6 +149,16 @@ describe LaunchDarkly::LDClient do
       result = client.variation_detail("key", user, "default")
       expected = LaunchDarkly::EvaluationDetail.new("value", 0, { kind: 'OFF' })
       expect(result).to eq expected
+    end
+
+    it "returns the default value if a feature evaluates to nil" do
+      empty_feature = { key: "key", on: false, offVariation: nil }
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, empty_feature)
+      result = client.variation_detail("key", user, "default")
+      expected = LaunchDarkly::EvaluationDetail.new("default", nil, { kind: 'OFF' })
+      expect(result).to eq expected
+      expect(result.default_value?).to be true
     end
 
     it "queues a feature request event for an existing feature" do

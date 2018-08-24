@@ -305,7 +305,7 @@ module LaunchDarkly
           end
         end
         detail = res.detail
-        if detail.variation_index.nil?
+        if detail.default_value?
           detail = EvaluationDetail.new(default, nil, detail.reason)
         end
         @event_processor.add_event(make_feature_event(feature, user, detail, default, include_reasons_in_events))
