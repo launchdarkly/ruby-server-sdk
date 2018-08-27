@@ -1,6 +1,11 @@
 
 module LaunchDarkly
   module Util
+    def self.log_exception(logger, message, exc)
+      logger.error { "[LDClient] #{message}: #{exc.inspect}" }
+      logger.debug { "[LDClient] Exception trace: #{exc.backtrace}" }
+    end
+
     def self.http_error_recoverable?(status)
       if status >= 400 && status < 500
         status == 400 || status == 408 || status == 429
