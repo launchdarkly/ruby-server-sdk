@@ -261,7 +261,7 @@ module LaunchDarkly
       @store.stop
     end
 
-    :private
+    private
 
     # @return [EvaluationDetail]
     def evaluate_internal(key, user, default, include_reasons_in_events)

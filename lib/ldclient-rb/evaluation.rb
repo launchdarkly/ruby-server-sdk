@@ -373,7 +373,7 @@ module LaunchDarkly
       return false
     end
 
-    :private
+    private
 
     def get_variation(flag, index, reason, logger)
       if index < 0 || index >= flag[:variations].length
