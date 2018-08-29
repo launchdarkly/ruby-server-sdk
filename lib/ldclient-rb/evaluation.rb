@@ -153,17 +153,15 @@ module LaunchDarkly
       end
 
       events = []
-
-      if flag[:on]
-        detail = eval_internal(flag, user, store, events, logger)
-        return EvalResult.new(detail, events)
-      end
-
-      return EvalResult.new(get_off_value(flag, { kind: 'OFF' }, logger), events)
+      detail = eval_internal(flag, user, store, events, logger)
+      return EvalResult.new(detail, events)
     end
 
-
     def eval_internal(flag, user, store, events, logger)
+      if !flag[:on]
+        return get_off_value(flag, { kind: 'OFF' }, logger)
+      end
+
       prereq_failure_reason = check_prerequisites(flag, user, store, events, logger)
       if !prereq_failure_reason.nil?
         return get_off_value(flag, prereq_failure_reason, logger)
@@ -203,14 +201,17 @@ module LaunchDarkly
         prereq_key = prerequisite[:key]
         prereq_flag = store.get(FEATURES, prereq_key)
 
-        if prereq_flag.nil? || !prereq_flag[:on]
+        if prereq_flag.nil?
           logger.error { "[LDClient] Could not retrieve prerequisite flag \"#{prereq_key}\" when evaluating \"#{flag[:key]}\"" }
-          prereq_ok = false
-        elsif !prereq_flag[:on]
           prereq_ok = false
         else
           begin
             prereq_res = eval_internal(prereq_flag, user, store, events, logger)
+            # Note that if the prerequisite flag is off, we don't consider it a match no matter what its
+            # off variation was. But we still need to evaluate it in order to generate an event.
+            if !prereq_flag[:on] || prereq_res.variation_index != prerequisite[:variation]
+              prereq_ok = false
+            end
             event = {
               kind: "feature",
               key: prereq_key,
@@ -222,9 +223,6 @@ module LaunchDarkly
               debugEventsUntilDate: prereq_flag[:debugEventsUntilDate]
             }
             events.push(event)
-            if prereq_res.variation_index != prerequisite[:variation]
-              prereq_ok = false
-            end
           rescue => exn
             Util.log_exception(logger, "Error evaluating prerequisite flag \"#{prereq_key}\" for flag \"{flag[:key]}\"", exn)
             prereq_ok = false

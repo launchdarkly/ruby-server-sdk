@@ -135,6 +135,38 @@ describe LaunchDarkly::Evaluation do
       expect(result.events).to eq(events_should_be)
     end
 
+    it "returns off variation and event if prerequisite is off" do
+      flag = {
+        key: 'feature0',
+        on: true,
+        prerequisites: [{key: 'feature1', variation: 1}],
+        fallthrough: { variation: 0 },
+        offVariation: 1,
+        variations: ['a', 'b', 'c'],
+        version: 1
+      }
+      flag1 = {
+        key: 'feature1',
+        on: false,
+        # note that even though it returns the desired variation, it is still off and therefore not a match
+        offVariation: 1,
+        fallthrough: { variation: 0 },
+        variations: ['d', 'e'],
+        version: 2
+      }
+      features.upsert(LaunchDarkly::FEATURES, flag1)
+      user = { key: 'x' }
+      detail = LaunchDarkly::EvaluationDetail.new('b', 1,
+        { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
+      events_should_be = [{
+        kind: 'feature', key: 'feature1', variation: 1, value: 'e', version: 2, prereqOf: 'feature0',
+        trackEvents: nil, debugEventsUntilDate: nil
+      }]
+      result = evaluate(flag, user, features, logger)
+      expect(result.detail).to eq(detail)
+      expect(result.events).to eq(events_should_be)
+    end
+
     it "returns off variation and event if prerequisite is not met" do
       flag = {
         key: 'feature0',
