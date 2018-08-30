@@ -363,6 +363,7 @@ module LaunchDarkly
         else
           out[:userKey] = event[:user].nil? ? nil : event[:user][:key]
         end
+        out[:reason] = event[:reason] if !event[:reason].nil?
         out
       when "identify"
         {

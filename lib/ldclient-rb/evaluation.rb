@@ -2,6 +2,37 @@ require "date"
 require "semantic"
 
 module LaunchDarkly
+  # An object returned by `LDClient.variation_detail`, combining the result of a flag evaluation with
+  # an explanation of how it was calculated.
+  class EvaluationDetail
+    def initialize(value, variation_index, reason)
+      @value = value
+      @variation_index = variation_index
+      @reason = reason
+    end
+
+    # @return [Object] The result of the flag evaluation. This will be either one of the flag's
+    #   variations or the default value that was passed to the `variation` method.
+    attr_reader :value
+
+    # @return [int|nil] The index of the returned value within the flag's list of variations, e.g.
+    #   0 for the first variation - or `nil` if the default value was returned.
+    attr_reader :variation_index
+
+    # @return [Hash] An object describing the main factor that influenced the flag evaluation value.
+    attr_reader :reason
+
+    # @return [boolean] True if the flag evaluated to the default value rather than to one of its
+    #   variations.
+    def default_value?
+      variation_index.nil?
+    end
+
+    def ==(other)
+      @value == other.value && @variation_index == other.variation_index && @reason == other.reason
+    end
+  end
+
   module Evaluation
     BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
 
@@ -107,111 +138,101 @@ module LaunchDarkly
         end
     }
 
-    class EvaluationError < StandardError
+    # Used internally to hold an evaluation result and the events that were generated from prerequisites.
+    EvalResult = Struct.new(:detail, :events)
+
+    def error_result(errorKind, value = nil)
+      EvaluationDetail.new(value, nil, { kind: 'ERROR', errorKind: errorKind })
     end
 
-    # Evaluates a feature flag, returning a hash containing the evaluation result and any events
-    # generated during prerequisite evaluation. Raises EvaluationError if the flag is not well-formed
-    # Will return nil, but not raise an exception, indicating that the rules (including fallthrough) did not match
-    # In that case, the caller should return the default value.
+    # Evaluates a feature flag and returns an EvalResult. The result.value will be nil if the flag returns
+    # the default value. Error conditions produce a result with an error reason, not an exception.
     def evaluate(flag, user, store, logger)
-      if flag.nil?
-        raise EvaluationError, "Flag does not exist"
-      end
-
       if user.nil? || user[:key].nil?
-        raise EvaluationError, "Invalid user"
+        return EvalResult.new(error_result('USER_NOT_SPECIFIED'), [])
       end
 
       events = []
-
-      if flag[:on]
-        res = eval_internal(flag, user, store, events, logger)
-        if !res.nil?
-          res[:events] = events
-          return res
-        end
-      end
-
-      offVariation = flag[:offVariation]
-      if !offVariation.nil? && offVariation < flag[:variations].length
-        value = flag[:variations][offVariation]
-        return { variation: offVariation, value: value, events: events }
-      end
-
-      { variation: nil, value: nil, events: events }
+      detail = eval_internal(flag, user, store, events, logger)
+      return EvalResult.new(detail, events)
     end
 
     def eval_internal(flag, user, store, events, logger)
-      failed_prereq = false
-      # Evaluate prerequisites, if any
-      (flag[:prerequisites] || []).each do |prerequisite|
-        prereq_flag = store.get(FEATURES, prerequisite[:key])
+      if !flag[:on]
+        return get_off_value(flag, { kind: 'OFF' }, logger)
+      end
 
-        if prereq_flag.nil? || !prereq_flag[:on]
-          failed_prereq = true
+      prereq_failure_reason = check_prerequisites(flag, user, store, events, logger)
+      if !prereq_failure_reason.nil?
+        return get_off_value(flag, prereq_failure_reason, logger)
+      end
+
+      # Check user target matches
+      (flag[:targets] || []).each do |target|
+        (target[:values] || []).each do |value|
+          if value == user[:key]
+            return get_variation(flag, target[:variation], { kind: 'TARGET_MATCH' }, logger)
+          end
+        end
+      end
+    
+      # Check custom rules
+      rules = flag[:rules] || []
+      rules.each_index do |i|
+        rule = rules[i]
+        if rule_match_user(rule, user, store)
+          return get_value_for_variation_or_rollout(flag, rule, user,
+            { kind: 'RULE_MATCH', ruleIndex: i, ruleId: rule[:id] }, logger)
+        end
+      end
+
+      # Check the fallthrough rule
+      if !flag[:fallthrough].nil?
+        return get_value_for_variation_or_rollout(flag, flag[:fallthrough], user,
+          { kind: 'FALLTHROUGH' }, logger)
+      end
+
+      return EvaluationDetail.new(nil, nil, { kind: 'FALLTHROUGH' })
+    end
+
+    def check_prerequisites(flag, user, store, events, logger)
+      (flag[:prerequisites] || []).each do |prerequisite|
+        prereq_ok = true
+        prereq_key = prerequisite[:key]
+        prereq_flag = store.get(FEATURES, prereq_key)
+
+        if prereq_flag.nil?
+          logger.error { "[LDClient] Could not retrieve prerequisite flag \"#{prereq_key}\" when evaluating \"#{flag[:key]}\"" }
+          prereq_ok = false
         else
           begin
             prereq_res = eval_internal(prereq_flag, user, store, events, logger)
+            # Note that if the prerequisite flag is off, we don't consider it a match no matter what its
+            # off variation was. But we still need to evaluate it in order to generate an event.
+            if !prereq_flag[:on] || prereq_res.variation_index != prerequisite[:variation]
+              prereq_ok = false
+            end
             event = {
               kind: "feature",
-              key: prereq_flag[:key],
-              variation: prereq_res.nil? ? nil : prereq_res[:variation],
-              value: prereq_res.nil? ? nil : prereq_res[:value],
+              key: prereq_key,
+              variation: prereq_res.variation_index,
+              value: prereq_res.value,
               version: prereq_flag[:version],
               prereqOf: flag[:key],
               trackEvents: prereq_flag[:trackEvents],
               debugEventsUntilDate: prereq_flag[:debugEventsUntilDate]
             }
             events.push(event)
-            if prereq_res.nil? || prereq_res[:variation] != prerequisite[:variation]
-              failed_prereq = true
-            end
           rescue => exn
-            logger.error { "[LDClient] Error evaluating prerequisite: #{exn.inspect}" }
-            failed_prereq = true
+            Util.log_exception(logger, "Error evaluating prerequisite flag \"#{prereq_key}\" for flag \"{flag[:key]}\"", exn)
+            prereq_ok = false
           end
         end
-      end
-
-      if failed_prereq
-        return nil
-      end
-      # The prerequisites were satisfied.
-      # Now walk through the evaluation steps and get the correct
-      # variation index
-      eval_rules(flag, user, store)
-    end
-
-    def eval_rules(flag, user, store)
-      # Check user target matches
-      (flag[:targets] || []).each do |target|
-        (target[:values] || []).each do |value|
-          if value == user[:key]
-            return { variation: target[:variation], value: get_variation(flag, target[:variation]) }
-          end
+        if !prereq_ok
+          return { kind: 'PREREQUISITE_FAILED', prerequisiteKey: prereq_key }
         end
       end
-    
-      # Check custom rules
-      (flag[:rules] || []).each do |rule|
-        return variation_for_user(rule, user, flag) if rule_match_user(rule, user, store)
-      end
-
-      # Check the fallthrough rule
-      if !flag[:fallthrough].nil?
-        return variation_for_user(flag[:fallthrough], user, flag)
-      end
-
-      # Not even the fallthrough matched-- return the off variation or default
       nil
-    end
-
-    def get_variation(flag, index)
-      if index >= flag[:variations].length
-        raise EvaluationError, "Invalid variation index"
-      end
-      flag[:variations][index]
     end
 
     def rule_match_user(rule, user, store)
@@ -242,9 +263,8 @@ module LaunchDarkly
       return false if val.nil?
 
       op = OPERATORS[clause[:op].to_sym]
-
       if op.nil?
-        raise EvaluationError, "Unsupported operator #{clause[:op]} in evaluation"
+        return false
       end
 
       if val.is_a? Enumerable
@@ -257,9 +277,9 @@ module LaunchDarkly
       maybe_negate(clause, match_any(op, val, clause[:values]))
     end
 
-    def variation_for_user(rule, user, flag)
+    def variation_index_for_user(flag, rule, user)
       if !rule[:variation].nil? # fixed variation
-        return { variation: rule[:variation], value: get_variation(flag, rule[:variation]) }
+        return rule[:variation]
       elsif !rule[:rollout].nil? # percentage rollout
         rollout = rule[:rollout]
         bucket_by = rollout[:bucketBy].nil? ? "key" : rollout[:bucketBy]
@@ -268,12 +288,12 @@ module LaunchDarkly
         rollout[:variations].each do |variate|
           sum += variate[:weight].to_f / 100000.0
           if bucket < sum
-            return { variation: variate[:variation], value: get_variation(flag, variate[:variation]) }
+            return variate[:variation]
           end
         end
         nil
       else # the rule isn't well-formed
-        raise EvaluationError, "Rule does not define a variation or rollout"
+        nil
       end
     end
 
@@ -349,6 +369,32 @@ module LaunchDarkly
         return true if op.call(value, v)
       end
       return false
+    end
+
+    private
+
+    def get_variation(flag, index, reason, logger)
+      if index < 0 || index >= flag[:variations].length
+        logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": invalid variation index")
+        return error_result('MALFORMED_FLAG')
+      end
+      EvaluationDetail.new(flag[:variations][index], index, reason)
+    end
+
+    def get_off_value(flag, reason, logger)
+      if flag[:offVariation].nil?  # off variation unspecified - return default value
+        return EvaluationDetail.new(nil, nil, reason)
+      end
+      get_variation(flag, flag[:offVariation], reason, logger)
+    end
+
+    def get_value_for_variation_or_rollout(flag, vr, user, reason, logger)
+      index = variation_index_for_user(flag, vr, user)
+      if index.nil?
+        logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": variation/rollout object with no variation or rollout")
+        return error_result('MALFORMED_FLAG')
+      end
+      return get_variation(flag, index, reason, logger)
     end
   end
 end
