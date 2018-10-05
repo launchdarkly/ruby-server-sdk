@@ -233,8 +233,7 @@ describe LaunchDarkly::LDClient do
         '$flagsState' => {
           'key1' => {
             :variation => 0,
-            :version => 100,
-            :trackEvents => false
+            :version => 100
           },
           'key2' => {
             :variation => 1,
@@ -261,6 +260,44 @@ describe LaunchDarkly::LDClient do
 
       values = state.values_map
       expect(values).to eq({ 'client-side-1' => 'value1', 'client-side-2' => 'value2' })
+    end
+
+    it "can omit details for untracked flags" do
+      flag1 = { key: "key1", version: 100, offVariation: 0, variations: [ 'value1' ], trackEvents: false }
+      flag2 = { key: "key2", version: 200, offVariation: 1, variations: [ 'x', 'value2' ], trackEvents: true }
+      flag3 = { key: "key3", version: 300, offVariation: 1, variations: [ 'x', 'value3' ], debugEventsUntilDate: 1000 }
+
+      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2, 'key3' => flag3 } })
+
+      state = client.all_flags_state({ key: 'userkey' })
+      expect(state.valid?).to be true
+
+      values = state.values_map
+      expect(values).to eq({ 'key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3' })
+      
+      result = state.as_json
+      expect(result).to eq({
+        'key1' => 'value1',
+        'key2' => 'value2',
+        'key3' => 'value3',
+        '$flagsState' => {
+          'key1' => {
+            :variation => 0,
+            :version => 100
+          },
+          'key2' => {
+            :variation => 1,
+            :version => 200,
+            :trackEvents => true
+          },
+          'key3' => {
+            :variation => 1,
+            :version => 300,
+            :debugEventsUntilDate => 1000
+          }
+        },
+        '$valid' => true
+      })
     end
 
     it "returns empty state for nil user" do

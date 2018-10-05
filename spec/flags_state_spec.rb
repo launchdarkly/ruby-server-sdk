@@ -42,8 +42,7 @@ describe LaunchDarkly::FeatureFlagsState do
       '$flagsState' => {
         'key1' => {
           :variation => 0,
-          :version => 100,
-          :trackEvents => false
+          :version => 100
         },
         'key2' => {
           :variation => 1,
