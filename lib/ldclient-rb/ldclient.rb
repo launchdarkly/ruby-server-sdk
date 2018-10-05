@@ -212,6 +212,10 @@ module LaunchDarkly
     #   client-side SDK should be included in the state. By default, all flags are included.
     # @option options [Boolean] :with_reasons (false) True if evaluation reasons should be included
     #   in the state (see `variation_detail`). By default, they are not included.
+    # @option options [Boolean] :details_only_for_tracked_flags (false) True if any flag metadata that is
+    # normally only used for event generation - such as flag versions and evaluation reasons - should be
+    # omitted for any flag that does not have event tracking or debugging turned on. This reduces the size
+    # of the JSON data if you are passing the flag state to the front end.
     # @return [FeatureFlagsState] a FeatureFlagsState object which can be serialized to JSON
     #
     def all_flags_state(user, options={})
@@ -234,16 +238,18 @@ module LaunchDarkly
       state = FeatureFlagsState.new(true)
       client_only = options[:client_side_only] || false
       with_reasons = options[:with_reasons] || false
+      details_only_if_tracked = options[:details_only_for_tracked_flags] || false
       features.each do |k, f|
         if client_only && !f[:clientSide]
           next
         end
         begin
           result = evaluate(f, user, @store, @config.logger)
-          state.add_flag(f, result.detail.value, result.detail.variation_index, with_reasons ? result.detail.reason : nil)
+          state.add_flag(f, result.detail.value, result.detail.variation_index, with_reasons ? result.detail.reason : nil,
+            details_only_if_tracked)
         rescue => exn
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
-          state.add_flag(f, nil, nil, with_reasons ? { kind: 'ERROR', errorKind: 'EXCEPTION' } : nil)
+          state.add_flag(f, nil, nil, with_reasons ? { kind: 'ERROR', errorKind: 'EXCEPTION' } : nil, details_only_if_tracked)
         end
       end
 
