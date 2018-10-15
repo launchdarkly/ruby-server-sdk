@@ -263,13 +263,14 @@ describe LaunchDarkly::LDClient do
     end
 
     it "can omit details for untracked flags" do
+      future_time = (Time.now.to_f * 1000).to_i + 100000
       flag1 = { key: "key1", version: 100, offVariation: 0, variations: [ 'value1' ], trackEvents: false }
       flag2 = { key: "key2", version: 200, offVariation: 1, variations: [ 'x', 'value2' ], trackEvents: true }
-      flag3 = { key: "key3", version: 300, offVariation: 1, variations: [ 'x', 'value3' ], debugEventsUntilDate: 1000 }
+      flag3 = { key: "key3", version: 300, offVariation: 1, variations: [ 'x', 'value3' ], debugEventsUntilDate: future_time }
 
       config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2, 'key3' => flag3 } })
 
-      state = client.all_flags_state({ key: 'userkey' })
+      state = client.all_flags_state({ key: 'userkey' }, { details_only_for_tracked_flags: true })
       expect(state.valid?).to be true
 
       values = state.values_map
@@ -282,8 +283,7 @@ describe LaunchDarkly::LDClient do
         'key3' => 'value3',
         '$flagsState' => {
           'key1' => {
-            :variation => 0,
-            :version => 100
+            :variation => 0
           },
           'key2' => {
             :variation => 1,
@@ -293,7 +293,7 @@ describe LaunchDarkly::LDClient do
           'key3' => {
             :variation => 1,
             :version => 300,
-            :debugEventsUntilDate => 1000
+            :debugEventsUntilDate => future_time
           }
         },
         '$valid' => true

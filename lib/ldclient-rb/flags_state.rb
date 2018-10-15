@@ -19,7 +19,11 @@ module LaunchDarkly
       key = flag[:key]
       @flag_values[key] = value
       meta = {}
-      if !details_only_if_tracked || flag[:trackEvents] || flag[:debugEventsUntilDate]
+      with_details = !details_only_if_tracked || flag[:trackEvents]
+      if !with_details && flag[:debugEventsUntilDate]
+        with_details = flag[:debugEventsUntilDate] > (Time.now.to_f * 1000).to_i
+      end
+      if with_details
         meta[:version] = flag[:version]
         meta[:reason] = reason if !reason.nil?
       end
