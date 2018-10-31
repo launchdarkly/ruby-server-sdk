@@ -80,6 +80,20 @@ module LaunchDarkly
   # duplicate key-- it will not load flags from any of the files.      
   #
   class FileDataSource
+    #
+    # Returns a factory for the file data source component.
+    #
+    # @param options [Hash] the configuration options
+    # @option options [Array] :paths  The paths of the source files for loading flag data. These
+    #   may be absolute paths or relative to the current working directory.
+    # @option options [Boolean] :auto_update  True if the data source should watch for changes to
+    #   the source file(s) and reload flags whenever there is a change. Note that auto-updating
+    #   will only work if all of the files you specified have valid directory paths at startup time.
+    # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
+    #   file modifications - used only if auto_update is true. On Linux and Mac platforms, you do
+    #   not need to set this as there is a native OS mechanism for detecting file changes; on other
+    #   platforms, the default interval is one second.
+    #
     def self.factory(options={})
       return Proc.new do |sdk_key, config|
         FileDataSourceImpl.new(config.feature_store, config.logger, options)
@@ -92,7 +106,11 @@ module LaunchDarkly
       @feature_store = feature_store
       @logger = logger
       @paths = options[:paths] || []
+      if @paths.is_a? String
+        @paths = [ @paths ]
+      end
       @auto_update = options[:auto_update]
+      @poll_interval = options[:poll_interval]
       @initialized = Concurrent::AtomicBoolean.new(false)
       @ready = Concurrent::Event.new
     end
@@ -196,7 +214,11 @@ module LaunchDarkly
       resolved_paths = @paths.map { |p| Pathname.new(File.absolute_path(p)).realpath.to_s }
       path_set = resolved_paths.to_set
       dir_paths = resolved_paths.map{ |p| File.dirname(p) }.uniq
-      l = Listen.to(*dir_paths) do |modified, added, removed|
+      opts = {}
+      if !@poll_interval.nil?
+        opts[:latency] = @poll_interval
+      end
+      l = Listen.to(*dir_paths, opts) do |modified, added, removed|
         paths = modified + added + removed
         if paths.any? { |p| path_set.include?(p) }
           load_all
