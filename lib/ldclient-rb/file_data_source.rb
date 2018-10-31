@@ -215,7 +215,7 @@ module LaunchDarkly
       if !items[item[:key]].nil?
         raise ArgumentError, "#{kind[:namespace]} key \"#{item[:key]}\" was used more than once"
       end
-      items[item[:key]] = item
+      items[item[:key].to_sym] = item
     end
 
     def make_flag_with_value(key, value)

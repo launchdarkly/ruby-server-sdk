@@ -42,7 +42,7 @@ module LaunchDarkly
       if @config.update_processor
         @update_processor = @config.update_processor
       else
-        factory = @config.update_processor || self.method(:create_default_update_processor)
+        factory = @config.update_processor_factory || self.method(:create_default_update_processor)
         @update_processor = factory.call(sdk_key, config)
       end
 

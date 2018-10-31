@@ -3,17 +3,23 @@ require "tempfile"
 
 describe LaunchDarkly::FileDataSource do
   let(:full_flag_1_key) { "flag1" }
+  let(:full_flag_1_value) { "on" }
   let(:flag_value_1_key) { "flag2" }
-  let(:all_flag_keys) { [ full_flag_1_key, flag_value_1_key ] }
+  let(:flag_value_1) { "value2" }
+  let(:all_flag_keys) { [ full_flag_1_key.to_sym, flag_value_1_key.to_sym ] }
   let(:full_segment_1_key) { "seg1" }
-  let(:all_segment_keys) { [ full_segment_1_key ] }
+  let(:all_segment_keys) { [ full_segment_1_key.to_sym ] }
 
   let(:flag_only_json) { <<-EOF
   {
     "flags": {
       "flag1": {
         "key": "flag1",
-        "on": true
+        "on": true,
+        "fallthrough": {
+          "variation": 2
+        },
+        "variations": [ "fall", "off", "on" ]
       }
     }
   }
@@ -25,7 +31,11 @@ EOF
     "flags": {
       "flag1": {
         "key": "flag1",
-        "on": true
+        "on": true,
+        "fallthrough": {
+          "variation": 2
+        },
+        "variations": [ "fall", "off", "on" ]
       }
     },
     "flagValues": {
@@ -156,6 +166,34 @@ EOF
     end
   end
 
+  it "evaluates simplified flag with client as expected" do
+    file = make_temp_file(all_properties_json)
+    factory = LaunchDarkly::FileDataSource.factory({ paths: file.path })
+    config = LaunchDarkly::Config.new(send_events: false, update_processor_factory: factory)
+    client = LaunchDarkly::LDClient.new('sdkKey', config)
+
+    begin
+      value = client.variation(flag_value_1_key, { key: 'user' }, '')
+      expect(value).to eq(flag_value_1)
+    ensure
+      client.close
+    end
+  end
+
+  it "evaluates full flag with client as expected" do
+    file = make_temp_file(all_properties_json)
+    factory = LaunchDarkly::FileDataSource.factory({ paths: file.path })
+    config = LaunchDarkly::Config.new(send_events: false, update_processor_factory: factory)
+    client = LaunchDarkly::LDClient.new('sdkKey', config)
+
+    begin
+      value = client.variation(full_flag_1_key, { key: 'user' }, '')
+      expect(value).to eq(full_flag_1_value)
+    ensure
+      client.close
+    end
+  end
+  
   def wait_for_condition(max_time)
     deadline = Time.now + max_time
     while Time.now < deadline
