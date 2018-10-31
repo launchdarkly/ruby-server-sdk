@@ -1,10 +1,21 @@
 require 'concurrent/atomics'
 require 'json'
 require 'yaml'
-require 'listen'
 require 'pathname'
 
 module LaunchDarkly
+  # To avoid pulling in 'listen' and its transitive dependencies for people who aren't using the
+  # file data source or who don't need auto-updating, we only enable auto-update if the 'listen'
+  # gem has been provided by the host app.
+  @@have_listen = false
+  begin
+    require 'listen'
+    @@have_listen = true
+  rescue
+  end
+  def self.can_watch_files?
+    @@have_listen
+  end
 
   #
   # Provides a way to use local files as a source of feature flag state. This would typically be
@@ -87,8 +98,10 @@ module LaunchDarkly
     # @option options [Array] :paths  The paths of the source files for loading flag data. These
     #   may be absolute paths or relative to the current working directory.
     # @option options [Boolean] :auto_update  True if the data source should watch for changes to
-    #   the source file(s) and reload flags whenever there is a change. Note that auto-updating
-    #   will only work if all of the files you specified have valid directory paths at startup time.
+    #   the source file(s) and reload flags whenever there is a change. In order to use this
+    #   feature, you must install the 'listen' gem - it is not included by default to avoid adding
+    #   unwanted dependencies to the SDK. Note that auto-updating will only work if all of the files
+    #   you specified have valid directory paths at startup time.
     # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
     #   file modifications - used only if auto_update is true. On Linux and Mac platforms, you do
     #   not need to set this as there is a native OS mechanism for detecting file changes; on other
@@ -110,6 +123,10 @@ module LaunchDarkly
         @paths = [ @paths ]
       end
       @auto_update = options[:auto_update]
+      if @auto_update && !LaunchDarkly::can_watch_files?
+        @logger.error { "[LDClient] To use the auto_update option for FileDataSource, you must install the 'listen' gem." }
+        @auto_update = false
+      end
       @poll_interval = options[:poll_interval]
       @initialized = Concurrent::AtomicBoolean.new(false)
       @ready = Concurrent::Event.new
