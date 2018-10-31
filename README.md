@@ -121,6 +121,10 @@ else
 end
 ```
 
+Using flag data from a file
+---------------------------
+For testing purposes, the SDK can be made to read feature flag state from a file or files instead of connecting to LaunchDarkly. See [`file_data_source.rb`](https://github.com/launchdarkly/ruby-client/blob/master/lib/ldclient-rb/file_data_source.rb) for more details.
+
 Learn more
 -----------
 
