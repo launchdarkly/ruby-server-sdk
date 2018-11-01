@@ -22,7 +22,7 @@ ruby-docker-template: &ruby-docker-template
     - run: gem install bundler
     - run: bundle install
     - run: mkdir ./rspec
-    - run: LISTEN_GEM_DEBUGGING=2 bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
+    - run: bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
     - store_test_results:
         path: ./rspec
     - store_artifacts:
@@ -93,5 +93,5 @@ jobs:
             do
               rvm use $i;
               cp "Gemfile.lock.$i" Gemfile.lock;
-              bundle exec rspec spec;
+              LISTEN_GEM_DEBUGGING=2 bundle exec rspec spec;
             done
