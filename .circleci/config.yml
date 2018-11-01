@@ -22,7 +22,7 @@ ruby-docker-template: &ruby-docker-template
     - run: gem install bundler
     - run: bundle install
     - run: mkdir ./rspec
-    - run: bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
+    - run: LISTEN_GEM_DEBUGGING=2 bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
     - store_test_results:
         path: ./rspec
     - store_artifacts:
