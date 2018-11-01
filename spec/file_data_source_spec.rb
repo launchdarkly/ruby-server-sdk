@@ -71,10 +71,18 @@ EOF
   before do
     @config = LaunchDarkly::Config.new
     @store = @config.feature_store
+    @tmp_dir = Dir.mktmpdir
+  end
+
+  after do
+    FileUtils.remove_dir(@tmp_dir)
   end
 
   def make_temp_file(content)
-    file = Tempfile.new('flags')
+    # Note that we don't create our files in the default temp file directory, but rather in an empty directory
+    # that we made. That's because (depending on the platform) the temp file directory may contain huge numbers
+    # of files, which can make the file watcher perform poorly enough to break the tests.
+    file = Tempfile.new('flags', @tmp_dir)
     IO.write(file, content)
     file
   end
@@ -149,10 +157,11 @@ EOF
     end
   end
 
-  it "reloads modified file if auto-update is on" do
+  def test_auto_reload(options)
     file = make_temp_file(flag_only_json)
+    options[:paths] = [ file.path ]
 
-    with_data_source({ auto_update: true, paths: [ file.path ] }) do |ds|
+    with_data_source(options) do |ds|
       event = ds.start
       expect(event.set?).to eq(true)
       expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq([])
@@ -164,6 +173,14 @@ EOF
       ok = wait_for_condition(10) { @store.all(LaunchDarkly::SEGMENTS).keys == all_segment_keys }
       expect(ok).to eq(true), "Waited #{max_time}s after modifying file and it did not reload"
     end
+  end
+
+  it "reloads modified file if auto-update is on" do
+    test_auto_reload({ auto_update: true })
+  end
+
+  it "reloads modified file in polling mode" do
+    test_auto_reload({ auto_update: true, force_polling: true, poll_interval: 0.1 })
   end
 
   it "evaluates simplified flag with client as expected" do

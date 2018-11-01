@@ -13,7 +13,7 @@ module LaunchDarkly
     @@have_listen = true
   rescue
   end
-  def self.can_watch_files?
+  def self.have_listen?
     @@have_listen
   end
 
@@ -23,10 +23,10 @@ module LaunchDarkly
   # actual LaunchDarkly connection.
   #
   # To use this component, call `FileDataSource.factory`, and store its return value in the
-  # `update_processor_factory` property of your LaunchDarkly client configuration. In the options
+  # `update_processor_class` property of your LaunchDarkly client configuration. In the options
   # to `factory`, set `paths` to the file path(s) of your data file(s):
   #
-  #     config.update_processor_factory = FileDataSource.factory(paths: [ myFilePath ])
+  #     config.update_processor_class = FileDataSource.factory(paths: [ myFilePath ])
   #
   # This will cause the client not to connect to LaunchDarkly to get feature flags. The
   # client may still make network connections to send analytics events, unless you have disabled
@@ -98,14 +98,15 @@ module LaunchDarkly
     # @option options [Array] :paths  The paths of the source files for loading flag data. These
     #   may be absolute paths or relative to the current working directory.
     # @option options [Boolean] :auto_update  True if the data source should watch for changes to
-    #   the source file(s) and reload flags whenever there is a change. In order to use this
-    #   feature, you must install the 'listen' gem - it is not included by default to avoid adding
-    #   unwanted dependencies to the SDK. Note that auto-updating will only work if all of the files
-    #   you specified have valid directory paths at startup time.
+    #   the source file(s) and reload flags whenever there is a change. Note that the default
+    #   implementation of this feature is based on polling the filesystem, which may not perform
+    #   well. If you install the 'listen' gem (not included by default, to avoid adding unwanted
+    #   dependencies to the SDK), its native file watching mechanism will be used instead. Note
+    #   that auto-updating will only work if all of the files you specified have valid directory
+    #   paths at startup time.
     # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
-    #   file modifications - used only if auto_update is true. On Linux and Mac platforms, you do
-    #   not need to set this as there is a native OS mechanism for detecting file changes; on other
-    #   platforms, the default interval is one second.
+    #   file modifications - used only if auto_update is true, and if the native file-watching
+    #   mechanism from 'listen' is not being used.
     #
     def self.factory(options={})
       return Proc.new do |sdk_key, config|
@@ -123,11 +124,8 @@ module LaunchDarkly
         @paths = [ @paths ]
       end
       @auto_update = options[:auto_update]
-      if @auto_update && !LaunchDarkly::can_watch_files?
-        @logger.error { "[LDClient] To use the auto_update option for FileDataSource, you must install the 'listen' gem." }
-        @auto_update = false
-      end
-      @poll_interval = options[:poll_interval]
+      @use_listen = @auto_update && LaunchDarkly.have_listen? && !options[:force_polling] # force_polling is used only for tests
+      @poll_interval = options[:poll_interval] || 1
       @initialized = Concurrent::AtomicBoolean.new(false)
       @ready = Concurrent::Event.new
     end
@@ -229,12 +227,17 @@ module LaunchDarkly
 
     def start_listener
       resolved_paths = @paths.map { |p| Pathname.new(File.absolute_path(p)).realpath.to_s }
+      if @use_listen
+        start_listener_with_listen_gem(resolved_paths)
+      else
+        FileDataSourcePoller.new(resolved_paths, @poll_interval, self.method(:load_all))
+      end
+    end
+
+    def start_listener_with_listen_gem(resolved_paths)
       path_set = resolved_paths.to_set
       dir_paths = resolved_paths.map{ |p| File.dirname(p) }.uniq
-      opts = {}
-      if !@poll_interval.nil?
-        opts[:latency] = @poll_interval
-      end
+      opts = { latency: @poll_interval }
       l = Listen.to(*dir_paths, opts) do |modified, added, removed|
         paths = modified + added + removed
         if paths.any? { |p| path_set.include?(p) }
@@ -243,6 +246,50 @@ module LaunchDarkly
       end
       l.start
       l
+    end
+
+    #
+    # Used internally by FileDataSource to track data file changes if the 'listen' gem is not available.
+    #
+    class FileDataSourcePoller
+      def initialize(resolved_paths, interval, reloader)
+        @stopped = Concurrent::AtomicBoolean.new(false)
+        get_file_times = Proc.new do
+          ret = {}
+          resolved_paths.each do |path|
+            begin
+              ret[path] = File.mtime(path)
+            rescue
+              ret[path] = nil
+            end
+          end
+          ret
+        end
+        last_times = get_file_times.call
+        @thread = Thread.new do
+          while true
+            sleep interval
+            break if @stopped.value
+            new_times = get_file_times.call
+            changed = false
+            last_times.each do |path, old_time|
+              new_time = new_times[path]
+              if !new_time.nil? && new_time != old_time
+                changed = true
+                break
+              end
+            end
+            if changed
+              reloader.call
+            end
+          end
+        end
+      end
+
+      def stop
+        @stopped.make_true
+        @thread.run  # wakes it up if it's sleeping
+      end
     end
   end
 end
