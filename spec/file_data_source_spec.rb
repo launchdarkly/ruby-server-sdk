@@ -24,7 +24,19 @@ describe LaunchDarkly::FileDataSource do
     }
   }
 EOF
-}
+  }
+
+  let(:segment_only_json) { <<-EOF
+  {
+    "segments": {
+      "seg1": {
+        "key": "seg1",
+        "include": ["user1"]
+      }
+    }
+  }
+EOF
+  }
 
   let(:all_properties_json) { <<-EOF
   {
@@ -140,6 +152,16 @@ EOF
       event = ds.start
       expect(event.set?).to eq(true)
       expect(ds.initialized?).to eq(false)
+    end
+  end
+
+  it "can load multiple files" do
+    file1 = make_temp_file(flag_only_json)
+    file2 = make_temp_file(segment_only_json)
+    with_data_source({ paths: [ file1.path, file2.path ] }) do |ds|
+      ds.start
+      expect(@store.all(LaunchDarkly::FEATURES).keys).to eq([ full_flag_1_key.to_sym ])
+      expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq([ full_segment_1_key.to_sym ])
     end
   end
 
