@@ -241,7 +241,7 @@ module LaunchDarkly
       puts('*** starting listener')
       l = Listen.to(*dir_paths, opts) do |modified, added, removed|
         paths = modified + added + removed
-        puts('*** got listener notification: #{paths}')
+        puts("*** got listener notification: #{paths}")
         if paths.any? { |p| path_set.include?(p) }
           load_all
         end
