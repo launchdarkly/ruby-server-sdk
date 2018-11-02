@@ -68,8 +68,6 @@ EOF
 
   let(:bad_file_path) { "no-such-file" }
 
-  Thread.report_on_exception = true
-  
   before do
     @config = LaunchDarkly::Config.new
     @store = @config.feature_store

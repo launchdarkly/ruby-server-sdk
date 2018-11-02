@@ -93,5 +93,5 @@ jobs:
             do
               rvm use $i;
               cp "Gemfile.lock.$i" Gemfile.lock;
-              bundle exec rspec spec;
+              LISTEN_GEM_DEBUGGING=2 bundle exec rspec spec;
             done
