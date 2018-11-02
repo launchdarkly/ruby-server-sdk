@@ -160,8 +160,19 @@ EOF
     file2 = make_temp_file(segment_only_json)
     with_data_source({ paths: [ file1.path, file2.path ] }) do |ds|
       ds.start
+      expect(@store.initialized?).to eq(true)
       expect(@store.all(LaunchDarkly::FEATURES).keys).to eq([ full_flag_1_key.to_sym ])
       expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq([ full_segment_1_key.to_sym ])
+    end
+  end
+
+  it "does not allow duplicate keys" do
+    file1 = make_temp_file(flag_only_json)
+    file2 = make_temp_file(flag_only_json)
+    with_data_source({ paths: [ file1.path, file2.path ] }) do |ds|
+      ds.start
+      expect(@store.initialized?).to eq(false)
+      expect(@store.all(LaunchDarkly::FEATURES).keys).to eq([])
     end
   end
 
