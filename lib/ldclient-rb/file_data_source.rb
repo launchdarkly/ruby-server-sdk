@@ -240,7 +240,7 @@ module LaunchDarkly
       if @use_listen
         start_listener_with_listen_gem(resolved_paths)
       else
-        FileDataSourcePoller.new(resolved_paths, @poll_interval, self.method(:load_all))
+        FileDataSourcePoller.new(resolved_paths, @poll_interval, self.method(:load_all), @logger)
       end
     end
 
@@ -262,14 +262,14 @@ module LaunchDarkly
     # Used internally by FileDataSource to track data file changes if the 'listen' gem is not available.
     #
     class FileDataSourcePoller
-      def initialize(resolved_paths, interval, reloader)
+      def initialize(resolved_paths, interval, reloader, logger)
         @stopped = Concurrent::AtomicBoolean.new(false)
         get_file_times = Proc.new do
           ret = {}
           resolved_paths.each do |path|
             begin
               ret[path] = File.mtime(path)
-            rescue
+            rescue Errno::ENOENT
               ret[path] = nil
             end
           end
@@ -280,17 +280,19 @@ module LaunchDarkly
           while true
             sleep interval
             break if @stopped.value
-            new_times = get_file_times.call
-            changed = false
-            last_times.each do |path, old_time|
-              new_time = new_times[path]
-              if !new_time.nil? && new_time != old_time
-                changed = true
-                break
+            begin
+              new_times = get_file_times.call
+              changed = false
+              last_times.each do |path, old_time|
+                new_time = new_times[path]
+                if !new_time.nil? && new_time != old_time
+                  changed = true
+                  break
+                end
               end
-            end
-            if changed
-              reloader.call
+              reloader.call if changed
+            rescue => exn
+              Util.log_exception(logger, "Unexpected exception in FileDataSourcePoller", exn)
             end
           end
         end
