@@ -99,12 +99,12 @@ module LaunchDarkly
     # @option options [Array] :paths  The paths of the source files for loading flag data. These
     #   may be absolute paths or relative to the current working directory.
     # @option options [Boolean] :auto_update  True if the data source should watch for changes to
-    #   the source file(s) and reload flags whenever there is a change. Note that the default
-    #   implementation of this feature is based on polling the filesystem, which may not perform
-    #   well. If you install the 'listen' gem (not included by default, to avoid adding unwanted
-    #   dependencies to the SDK), its native file watching mechanism will be used instead. Note
-    #   that auto-updating will only work if all of the files you specified have valid directory
-    #   paths at startup time.
+    #   the source file(s) and reload flags whenever there is a change. Auto-updating will only
+    #   work if all of the files you specified have valid directory paths at startup time.
+    #   Note that the default implementation of this feature is based on polling the filesystem,
+    #   which may not perform well. If you install the 'listen' gem (not included by default, to
+    #   avoid adding unwanted dependencies to the SDK), its native file watching mechanism will be
+    #   used instead. However, 'listen' will not be used in JRuby 9.1 due to a known instability.
     # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
     #   file modifications - used only if auto_update is true, and if the native file-watching
     #   mechanism from 'listen' is not being used. The default value is 1 second.
@@ -125,7 +125,15 @@ module LaunchDarkly
         @paths = [ @paths ]
       end
       @auto_update = options[:auto_update]
-      @use_listen = @auto_update && LaunchDarkly.have_listen? && !options[:force_polling] # force_polling is used only for tests
+      if @auto_update && LaunchDarkly.have_listen? && !options[:force_polling] # force_polling is used only for tests
+        # We have seen unreliable behavior in the 'listen' gem in JRuby 9.1 (https://github.com/guard/listen/issues/449).
+        # Therefore, on that platform we'll fall back to file polling instead.
+        if defined?(JRUBY_VERSION) && JRUBY_VERSION.start_with?("9.1.")
+          @use_listen = false
+        else
+          @use_listen = true
+        end
+      end
       @poll_interval = options[:poll_interval] || 1
       @initialized = Concurrent::AtomicBoolean.new(false)
       @ready = Concurrent::Event.new
