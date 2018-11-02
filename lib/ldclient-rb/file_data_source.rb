@@ -107,7 +107,7 @@ module LaunchDarkly
     #   paths at startup time.
     # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
     #   file modifications - used only if auto_update is true, and if the native file-watching
-    #   mechanism from 'listen' is not being used.
+    #   mechanism from 'listen' is not being used. The default value is 1 second.
     #
     def self.factory(options={})
       return Proc.new do |sdk_key, config|
