@@ -248,10 +248,8 @@ module LaunchDarkly
       path_set = resolved_paths.to_set
       dir_paths = resolved_paths.map{ |p| File.dirname(p) }.uniq
       opts = { latency: @poll_interval }
-      puts('*** starting listener')
       l = Listen.to(*dir_paths, opts) do |modified, added, removed|
         paths = modified + added + removed
-        puts("*** got listener notification: #{paths}")
         if paths.any? { |p| path_set.include?(p) }
           load_all
         end
