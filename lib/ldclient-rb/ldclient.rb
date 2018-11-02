@@ -39,22 +39,11 @@ module LaunchDarkly
         return  # requestor and update processor are not used in this mode
       end
 
-      requestor = Requestor.new(sdk_key, config)
-
-      if @config.offline?
-        @update_processor = NullUpdateProcessor.new
+      if @config.update_processor
+        @update_processor = @config.update_processor
       else
-        if @config.update_processor.nil?
-          if @config.stream?
-            @update_processor = StreamProcessor.new(sdk_key, config, requestor)
-          else
-            @config.logger.info { "Disabling streaming API" }
-            @config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
-            @update_processor = PollingProcessor.new(config, requestor)
-          end
-        else
-          @update_processor = @config.update_processor
-        end
+        factory = @config.update_processor_factory || self.method(:create_default_update_processor)
+        @update_processor = factory.call(sdk_key, config)
       end
 
       ready = @update_processor.start
@@ -268,6 +257,20 @@ module LaunchDarkly
     end
 
     private
+
+    def create_default_update_processor(sdk_key, config)
+      if config.offline?
+        return NullUpdateProcessor.new
+      end
+      requestor = Requestor.new(sdk_key, config)
+      if config.stream?
+        StreamProcessor.new(sdk_key, config, requestor)
+      else
+        config.logger.info { "Disabling streaming API" }
+        config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
+        PollingProcessor.new(config, requestor)
+      end
+    end
 
     # @return [EvaluationDetail]
     def evaluate_internal(key, user, default, include_reasons_in_events)
