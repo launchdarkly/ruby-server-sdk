@@ -168,6 +168,7 @@ EOF
       
       sleep(1)
       IO.write(file, all_properties_json)
+      puts('*** modified the file')
       
       max_time = 10
       ok = wait_for_condition(10) { @store.all(LaunchDarkly::SEGMENTS).keys == all_segment_keys }
