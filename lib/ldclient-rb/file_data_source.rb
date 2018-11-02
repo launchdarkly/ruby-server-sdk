@@ -23,10 +23,11 @@ module LaunchDarkly
   # actual LaunchDarkly connection.
   #
   # To use this component, call `FileDataSource.factory`, and store its return value in the
-  # `update_processor_class` property of your LaunchDarkly client configuration. In the options
+  # `update_processor_factory` property of your LaunchDarkly client configuration. In the options
   # to `factory`, set `paths` to the file path(s) of your data file(s):
   #
-  #     config.update_processor_class = FileDataSource.factory(paths: [ myFilePath ])
+  #     factory = FileDataSource.factory(paths: [ myFilePath ])
+  #     config = LaunchDarkly::Config.new(update_processor_factory: factory)
   #
   # This will cause the client not to connect to LaunchDarkly to get feature flags. The
   # client may still make network connections to send analytics events, unless you have disabled
