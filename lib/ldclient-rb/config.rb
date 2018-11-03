@@ -61,8 +61,11 @@ module LaunchDarkly
     # @option opts [Boolean] :inline_users_in_events (false) Whether to include full user details in every
     #   analytics event. By default, events will only include the user key, except for one "index" event
     #   that provides the full details for the user.
-    # @option opts [Object] :update_processor An object that will receive feature flag data from LaunchDarkly.
-    #   Defaults to either the streaming or the polling processor, can be customized for tests.
+    # @option opts [Object] :update_processor (DEPRECATED) An object that will receive feature flag data from
+    #   LaunchDarkly. Defaults to either the streaming or the polling processor, can be customized for tests.
+    # @option opts [Object] :update_processor_factory A function that takes the SDK and configuration object
+    #   as parameters, and returns an object that can obtain feature flag data and put it into the feature
+    #   store. Defaults to creating either the streaming or the polling processor, can be customized for tests.
     # @return [type] [description]
     # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
     def initialize(opts = {})
@@ -88,6 +91,7 @@ module LaunchDarkly
       @user_keys_flush_interval = opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
       @inline_users_in_events = opts[:inline_users_in_events] || false
       @update_processor = opts[:update_processor]
+      @update_processor_factory = opts[:update_processor_factory]
     end
 
     #
@@ -217,6 +221,8 @@ module LaunchDarkly
     attr_reader :inline_users_in_events
 
     attr_reader :update_processor
+    
+    attr_reader :update_processor_factory
     
     #
     # The default LaunchDarkly client configuration. This configuration sets
