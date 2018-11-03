@@ -26,7 +26,8 @@ module LaunchDarkly
     def stop
       if @stopped.make_true
         if @worker && @worker.alive?
-          @worker.raise "shutting down client"
+          @worker.run  # causes the thread to wake up if it's currently in a sleep
+          @worker.join
         end
         @config.logger.info { "[LDClient] Polling connection stopped" }
       end
