@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.4.1] - 2018-11-05
+### Fixed:
+* Fixed a `LoadError` in `file_data_source.rb`, which was added in 5.4.0. (Thanks, [kbarrette](https://github.com/launchdarkly/ruby-client/pull/110)!)
+
+
 ## [5.4.0] - 2018-11-02
 ### Added:
 - It is now possible to inject feature flags into the client from local JSON or YAML files, replacing the normal LaunchDarkly connection. This would typically be for testing purposes. See `file_data_source.rb`.
