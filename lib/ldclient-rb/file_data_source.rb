@@ -11,7 +11,7 @@ module LaunchDarkly
   begin
     require 'listen'
     @@have_listen = true
-  rescue
+  rescue LoadError
   end
   def self.have_listen?
     @@have_listen
