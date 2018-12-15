@@ -1,4 +1,4 @@
-require "ldclient-rb/impl/integrations/redis_impl"
+require "ldclient-rb/redis_store"  # eventually we will just refer to impl/integrations/redis_impl directly
 
 module LaunchDarkly
   module Integrations

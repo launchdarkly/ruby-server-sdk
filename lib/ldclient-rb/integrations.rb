@@ -1,4 +1,5 @@
 require "ldclient-rb/integrations/redis"
+require "ldclient-rb/integrations/util/store_wrapper"
 
 module LaunchDarkly
   #

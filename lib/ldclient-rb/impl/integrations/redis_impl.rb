@@ -1,9 +1,6 @@
 require "concurrent/atomics"
 require "json"
 
-require "ldclient-rb/integrations/util/store_wrapper"
-require "ldclient-rb/redis_store"  # eventually that file should be moved inside this one
-
 module LaunchDarkly
   module Impl
     module Integrations
