@@ -240,6 +240,9 @@ module LaunchDarkly
         # parameter if the update succeeded, or the previously existing entity in the store if the
         # update failed; this is used for the caching logic).
         #
+        # Note that FeatureStoreCore does not have a `delete` method. This is because {CachingStoreWrapper}
+        # implements `delete` by simply calling `upsert` with an item whose `:deleted` property is true.
+        #
         # @param kind [Object]  the kind of entity to add or update
         # @param item [Hash]  the entity to add or update
         # @return [Hash]  the entity as it now exists in the store after the update
