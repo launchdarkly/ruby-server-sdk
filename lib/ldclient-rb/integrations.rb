@@ -10,6 +10,9 @@ module LaunchDarkly
     #
     # Integration with [DynamoDB](https://aws.amazon.com/dynamodb/).
     #
+    # Note that in order to use this integration, you must first install one of the AWS SDK gems: either
+    # `aws-sdk-dynamodb`, or the full `aws-sdk`.
+    #
     # @since 5.5.0
     #
     module DynamoDB
@@ -18,6 +21,9 @@ module LaunchDarkly
 
     #
     # Integration with [Redis](https://redis.io/).
+    #
+    # Note that in order to use this integration, you must first install the `redis` and `connection-pool`
+    # gems.
     #
     # @since 5.5.0
     #

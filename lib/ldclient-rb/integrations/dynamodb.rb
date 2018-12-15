@@ -7,9 +7,9 @@ module LaunchDarkly
       #
       # Creates a DynamoDB-backed persistent feature store.
       #
-      # To use this method, you must first have the `aws_sdk` gem installed. Then,
-      # put the object returned by this method into the `feature_store` property of your
-      # client configuration ({LaunchDarkly::Config}).
+      # To use this method, you must first install one of the AWS SDK gems: either `aws-sdk-dynamodb`, or
+      # the full `aws-sdk`. Then, put the object returned by this method into the `feature_store` property
+      # of your client configuration ({LaunchDarkly::Config}).
       #
       # @param opts [Hash] the configuration options
       # @option opts [String] :redis_url (default_redis_url)  URL of the Redis instance (shortcut for omitting `redis_opts`)
