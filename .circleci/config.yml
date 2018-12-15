@@ -34,26 +34,31 @@ jobs:
     docker:
       - image: circleci/ruby:2.2.9-jessie
       - image: redis
+      - image: amazon/dynamodb-local
   test-2.3:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.3.6-jessie
       - image: redis
+      - image: amazon/dynamodb-local
   test-2.4:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.4.4-stretch
       - image: redis
+      - image: amazon/dynamodb-local
   test-2.5:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.5.1-stretch
       - image: redis
+      - image: amazon/dynamodb-local
   test-jruby-9.2:
     <<: *ruby-docker-template
     docker:
       - image: circleci/jruby:9-jdk
       - image: redis
+      - image: amazon/dynamodb-local
 
   # The following very slow job uses an Ubuntu container to run the Ruby versions that
   # CircleCI doesn't provide Docker images for.
@@ -63,8 +68,11 @@ jobs:
     environment:
       - RUBIES: "jruby-9.1.17.0"
     steps:
+      - run: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
       - run: sudo apt-get -q update
       - run: sudo apt-get -qy install redis-server
+      - run: sudo apt-cache policy docker-ce
+      - run: sudo apt-get -qy install docker-ce      
       - checkout
       - run:
           name: install all Ruby versions
@@ -84,6 +92,9 @@ jobs:
               bundle install;
               mv Gemfile.lock "Gemfile.lock.$i"
             done
+      - run:
+          command: docker run -p 8000:8000 amazon/dynamodb-local
+          background: true
       - run:
           name: run tests for all versions
           shell: /bin/bash -leo pipefail

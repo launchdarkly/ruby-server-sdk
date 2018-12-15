@@ -1,3 +1,4 @@
+require "ldclient-rb/integrations/dynamodb"
 require "ldclient-rb/integrations/redis"
 require "ldclient-rb/integrations/util/store_wrapper"
 
@@ -6,6 +7,15 @@ module LaunchDarkly
   # Tools for connecting the LaunchDarkly client to other software.
   #
   module Integrations
+    #
+    # Integration with [DynamoDB](https://aws.amazon.com/dynamodb/).
+    #
+    # @since 5.5.0
+    #
+    module DynamoDB
+      # code is in ldclient-rb/impl/integrations/dynamodb_impl
+    end
+
     #
     # Integration with [Redis](https://redis.io/).
     #
