@@ -1,11 +1,14 @@
 
 module LaunchDarkly
+  # @private
   EventSummary = Struct.new(:start_date, :end_date, :counters)
 
   # Manages the state of summarizable information for the EventProcessor, including the
   # event counters and user deduplication. Note that the methods of this class are
   # deliberately not thread-safe; the EventProcessor is responsible for enforcing
   # synchronization across both the summarizer and the event queue.
+  #
+  # @private
   class EventSummarizer
     def initialize
       clear

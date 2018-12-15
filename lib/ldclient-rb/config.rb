@@ -8,66 +8,35 @@ module LaunchDarkly
   #
   #
   class Config
+    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
+
     #
     # Constructor for creating custom LaunchDarkly configurations.
     #
     # @param opts [Hash] the configuration options
-    # @option opts [Logger] :logger A logger to use for messages from the
-    #   LaunchDarkly client. Defaults to the Rails logger in a Rails
-    #   environment, or stdout otherwise.
-    # @option opts [String] :base_uri ("https://app.launchdarkly.com") The base
-    #   URL for the LaunchDarkly server. Most users should use the default value.
-    # @option opts [String] :stream_uri ("https://stream.launchdarkly.com") The
-    #   URL for the LaunchDarkly streaming events server. Most users should use the default value.
-    # @option opts [String] :events_uri ("https://events.launchdarkly.com") The
-    #   URL for the LaunchDarkly events server. Most users should use the default value.
-    # @option opts [Integer] :capacity (10000) The capacity of the events
-    #   buffer. The client buffers up to this many events in memory before
-    #   flushing. If the capacity is exceeded before the buffer is flushed,
-    #   events will be discarded.
-    # @option opts [Float] :flush_interval (30) The number of seconds between
-    #   flushes of the event buffer.
-    # @option opts [Float] :read_timeout (10) The read timeout for network
-    #   connections in seconds.
-    # @option opts [Float] :connect_timeout (2) The connect timeout for network
-    #   connections in seconds.
-    # @option opts [Object] :cache_store A cache store for the Faraday HTTP caching
-    #   library. Defaults to the Rails cache in a Rails environment, or a
-    #   thread-safe in-memory store otherwise.
-    # @option opts [Object] :feature_store A store for feature flags and related data. Defaults to an in-memory
-    #   cache, or you can use RedisFeatureStore.
-    # @option opts [Boolean] :use_ldd (false) Whether you are using the LaunchDarkly relay proxy in
-    #   daemon mode. In this configuration, the client will not use a streaming connection to listen
-    #   for updates, but instead will get feature state from a Redis instance. The `stream` and
-    #   `poll_interval` options will be ignored if this option is set to true.
-    # @option opts [Boolean] :offline (false) Whether the client should be initialized in 
-    #   offline mode. In offline mode, default values are returned for all flags and no 
-    #   remote network requests are made.
-    # @option opts [Float] :poll_interval (30) The number of seconds between polls for flag updates
-    #   if streaming is off.
-    # @option opts [Boolean] :stream (true) Whether or not the streaming API should be used to receive flag updates.
-    #   Streaming should only be disabled on the advice of LaunchDarkly support.
-    # @option opts [Boolean] all_attributes_private (false) If true, all user attributes (other than the key)
-    #   will be private, not just the attributes specified in `private_attribute_names`.
-    # @option opts [Array] :private_attribute_names  Marks a set of attribute names private. Any users sent to
-    #  LaunchDarkly with this configuration active will have attributes with these names removed.
-    # @option opts [Boolean] :send_events (true) Whether or not to send events back to LaunchDarkly.
-    #   This differs from `offline` in that it affects only the sending of client-side events, not
-    #   streaming or polling for events from the server.
-    # @option opts [Integer] :user_keys_capacity (1000) The number of user keys that the event processor
-    #   can remember at any one time, so that duplicate user details will not be sent in analytics events.
-    # @option opts [Float] :user_keys_flush_interval (300) The interval in seconds at which the event
-    #   processor will reset its set of known user keys.
-    # @option opts [Boolean] :inline_users_in_events (false) Whether to include full user details in every
-    #   analytics event. By default, events will only include the user key, except for one "index" event
-    #   that provides the full details for the user.
-    # @option opts [Object] :update_processor (DEPRECATED) An object that will receive feature flag data from
-    #   LaunchDarkly. Defaults to either the streaming or the polling processor, can be customized for tests.
-    # @option opts [Object] :update_processor_factory A function that takes the SDK and configuration object
-    #   as parameters, and returns an object that can obtain feature flag data and put it into the feature
-    #   store. Defaults to creating either the streaming or the polling processor, can be customized for tests.
-    # @return [type] [description]
-    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
+    # @option opts [Logger] :logger See {#logger}.
+    # @option opts [String] :base_uri ("https://app.launchdarkly.com") See {#base_uri}.
+    # @option opts [String] :stream_uri ("https://stream.launchdarkly.com") See {#stream_uri}.
+    # @option opts [String] :events_uri ("https://events.launchdarkly.com") See {#events_uri}.
+    # @option opts [Integer] :capacity (10000) See {#capacity}.
+    # @option opts [Float] :flush_interval (30) See {#flush_interval}.
+    # @option opts [Float] :read_timeout (10) See {#read_timeout}.
+    # @option opts [Float] :connect_timeout (2) See {#connect_timeout}.
+    # @option opts [Object] :cache_store See {#cache_store}.
+    # @option opts [Object] :feature_store See {#feature_store}.
+    # @option opts [Boolean] :use_ldd (false) See {#use_ldd?}.
+    # @option opts [Boolean] :offline (false) See {#offline?}.
+    # @option opts [Float] :poll_interval (30) See {#poll_interval}.
+    # @option opts [Boolean] :stream (true) See {#stream?}.
+    # @option opts [Boolean] all_attributes_private (false) See {#all_attributes_private}.
+    # @option opts [Array] :private_attribute_names See {#private_attribute_names}.
+    # @option opts [Boolean] :send_events (true) See {#send_events}.
+    # @option opts [Integer] :user_keys_capacity (1000) See {#user_keys_capacity}.
+    # @option opts [Float] :user_keys_flush_interval (300) See {#user_keys_flush_interval}.
+    # @option opts [Boolean] :inline_users_in_events (false) See {#inline_users_in_events}.
+    # @option opts [Object] :update_processor See {#update_processor}.
+    # @option opts [Object] :update_processor_factory See {#update_processor_factory}.
+    #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
       @stream_uri = (opts[:stream_uri] || Config.default_stream_uri).chomp("/")
@@ -95,43 +64,56 @@ module LaunchDarkly
     end
 
     #
-    # The base URL for the LaunchDarkly server.
+    # The base URL for the LaunchDarkly server. This is configurable mainly for testing
+    # purposes; most users should use the default value.
+    # @return [String]
     #
-    # @return [String] The configured base URL for the LaunchDarkly server.
     attr_reader :base_uri
 
     #
-    # The base URL for the LaunchDarkly streaming server.
+    # The base URL for the LaunchDarkly streaming server. This is configurable mainly for testing
+    # purposes; most users should use the default value.
+    # @return [String]
     #
-    # @return [String] The configured base URL for the LaunchDarkly streaming server.
     attr_reader :stream_uri
 
     #
-    # The base URL for the LaunchDarkly events server.
+    # The base URL for the LaunchDarkly events server. This is configurable mainly for testing
+    # purposes; most users should use the default value.
+    # @return [String]
     #
-    # @return [String] The configured base URL for the LaunchDarkly events server.
     attr_reader :events_uri
 
     #
     # Whether streaming mode should be enabled. Streaming mode asynchronously updates
-    # feature flags in real-time using server-sent events.
+    # feature flags in real-time using server-sent events. Streaming is enabled by default, and
+    # should only be disabled on the advice of LaunchDarkly support.
+    # @return [Boolean]
     #
-    # @return [Boolean] True if streaming mode should be enabled
     def stream?
       @stream
     end
 
     #
-    # Whether to use the LaunchDarkly relay proxy in daemon mode. In this mode, we do
-    # not use polling or streaming to get feature flag updates from the server, but instead
-    # read them from a Redis instance that is updated by the proxy.
+    # Whether to use the LaunchDarkly relay proxy in daemon mode. In this mode, the client does not
+    # use polling or streaming to get feature flag updates from the server, but instead reads them
+    # from the {#feature_store feature store}, which is assumed to be a database that is populated by
+    # a LaunchDarkly relay proxy. For more information, see ["The relay proxy"](https://docs.launchdarkly.com/v2.0/docs/the-relay-proxy)
+    # and ["Using a persistent feature store"](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
     #
-    # @return [Boolean] True if using the LaunchDarkly relay proxy in daemon mode
+    # All other properties related to streaming or polling are ignored if this option is set to true.
+    #
+    # @return [Boolean]
+    #
     def use_ldd?
       @use_ldd
     end
     
-    # TODO docs
+    #
+    # Whether the client should be initialized in offline mode. In offline mode, default values are
+    # returned for all flags and no remote network requests are made.
+    # @return [Boolean]
+    #
     def offline?
       @offline
     end
@@ -139,20 +121,23 @@ module LaunchDarkly
     #
     # The number of seconds between flushes of the event buffer. Decreasing the flush interval means
     # that the event buffer is less likely to reach capacity.
+    # @return [Float]
     #
-    # @return [Float] The configured number of seconds between flushes of the event buffer.
     attr_reader :flush_interval
 
     #
     # The number of seconds to wait before polling for feature flag updates. This option has no
-    # effect unless streaming is disabled
+    # effect unless streaming is disabled.
+    # @return [Float]
+    #
     attr_reader :poll_interval
 
     #
     # The configured logger for the LaunchDarkly client. The client library uses the log to
-    # print warning and error messages.
+    # print warning and error messages. If not specified, this defaults to the Rails logger
+    # in a Rails environment, or stdout otherwise.
+    # @return [Logger]
     #
-    # @return [Logger] The configured logger
     attr_reader :logger
 
     #
@@ -161,114 +146,208 @@ module LaunchDarkly
     # the buffer is flushed, events will be discarded.
     # Increasing the capacity means that events are less likely to be discarded,
     # at the cost of consuming more memory.
+    # @return [Integer]
     #
-    # @return [Integer] The configured capacity of the event buffer
     attr_reader :capacity
 
     #
-    # The store for the Faraday HTTP caching library. Stores should respond to
-    # 'read' and 'write' requests.
+    # A store for HTTP caching. This must support the semantics used by the
+    # [`faraday-http-cache`](https://github.com/plataformatec/faraday-http-cache) gem. Defaults
+    # to the Rails cache in a Rails environment, or a thread-safe in-memory store otherwise.
+    # @return [Object]
     #
-    # @return [Object] The configured store for the Faraday HTTP caching library.
     attr_reader :cache_store
 
     #
-    # The read timeout for network connections in seconds.
+    # The read timeout for network connections in seconds. This does not apply to the streaming
+    # connection, which uses a longer timeout since the server does not send data constantly.
+    # @return [Float]
     #
-    # @return [Float] The read timeout in seconds.
     attr_reader :read_timeout
 
     #
     # The connect timeout for network connections in seconds.
+    # @return [Float]
     #
-    # @return [Float] The connect timeout in seconds.
     attr_reader :connect_timeout
 
     #
-    # A store for feature flag configuration rules.
+    # A store for feature flags and related data. The client uses it to store all data received
+    # from LaunchDarkly, and uses the last stored data when evaluating flags. Defaults to
+    # {InMemoryFeatureStore}; for other implementations, see {LaunchDarkly::Integrations}.
+    #
+    # For more information, see ["Using a persistent feature store"](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+    #
+    # @return [LaunchDarkly::Interfaces::FeatureStore]
     #
     attr_reader :feature_store
 
-    # The proxy configuration string
+    #
+    # The proxy configuration string.
+    # @return [String]
     #
     attr_reader :proxy
 
+    #
+    # True if all user attributes (other than the key) should be considered private. This means
+    # that the attribute values will not be sent to LaunchDarkly in analytics events and will not
+    # appear on the LaunchDarkly dashboard.
+    # @return [Boolean]
+    # @see #private_attribute_names
+    #
     attr_reader :all_attributes_private
 
+    #
+    # A list of user attribute names that should always be considered private. This means that the
+    # attribute values will not be sent to LaunchDarkly in analytics events and will not appear on
+    # the LaunchDarkly dashboard.
+    #
+    # You can also specify the same behavior for an individual flag evaluation by storing an array
+    # of attribute names in the `:privateAttributeNames` property (note camelcase name) of the
+    # user object.
+    #
+    # @return [Array<String>]
+    # @see #all_attributes_private
+    #
     attr_reader :private_attribute_names
     
     #
-    # Whether to send events back to LaunchDarkly.
+    # Whether to send events back to LaunchDarkly. This differs from {#offline?} in that it affects
+    # only the sending of client-side events, not streaming or polling for events from the server.
+    # @return [Boolean]
     #
     attr_reader :send_events
 
     #
-    # The number of user keys that the event processor can remember at any one time, so that
-    # duplicate user details will not be sent in analytics events.
+    # The number of user keys that the event processor can remember at any one time. This reduces the
+    # amount of duplicate user details sent in analytics events.
+    # @return [Integer]
+    # @see #user_keys_flush_interval
     #
     attr_reader :user_keys_capacity
 
     #
     # The interval in seconds at which the event processor will reset its set of known user keys.
+    # @return [Float]
+    # @see #user_keys_capacity
     #
     attr_reader :user_keys_flush_interval
 
     #
-    # Whether to include full user details in every
-    # analytics event. By default, events will only include the user key, except for one "index" event
-    # that provides the full details for the user.
+    # Whether to include full user details in every analytics event. By default, events will only
+    # include the user key, except for one "index" event that provides the full details for the user.
+    # The only reason to change this is if you are using the Analytics Data Stream.
+    # @return [Boolean]
     #
     attr_reader :inline_users_in_events
 
+    #
+    # An object that is responsible for receiving feature flag data from LaunchDarkly. By default,
+    # the client uses its standard polling or streaming implementation; this is customizable for
+    # testing purposes.
+    # @return [LaunchDarkly::Interfaces::UpdateProcessor]
+    # @deprecated The preferred way to set this is now with {#update_processor_factory}.
+    #
     attr_reader :update_processor
     
+    #
+    # Factory for an object that is responsible for receiving feature flag data from LaunchDarkly
+    # By default, the client uses its standard polling or streaming implementation; this is
+    # customizable for testing purposes.
+    #
+    # The factory is a lambda or Proc that takes two parameters: the SDK key and the {Config}. It
+    # must return an object that conforms to {LaunchDarkly::Interfaces::UpdateProcessor}.
+    #
+    # @return [lambda]
+    # @see FileDataSource
+    #
     attr_reader :update_processor_factory
-    
+
     #
     # The default LaunchDarkly client configuration. This configuration sets
     # reasonable defaults for most users.
-    #
     # @return [Config] The default LaunchDarkly configuration.
+    #
     def self.default
       Config.new
     end
 
+    #
+    # The default value for {#capacity}.
+    # @return [Integer] 10000
+    #
     def self.default_capacity
       10000
     end
 
+    #
+    # The default value for {#base_uri}.
+    # @return [String] "https://app.launchdarkly.com"
+    #
     def self.default_base_uri
       "https://app.launchdarkly.com"
     end
 
+    #
+    # The default value for {#stream_uri}.
+    # @return [String] "https://stream.launchdarkly.com"
+    #
     def self.default_stream_uri
       "https://stream.launchdarkly.com"
     end
 
+    #
+    # The default value for {#events_uri}.
+    # @return [String] "https://events.launchdarkly.com"
+    #
     def self.default_events_uri
       "https://events.launchdarkly.com"
     end
 
+    #
+    # The default value for {#cache_store}.
+    # @return [Object] the Rails cache if in Rails, or a simple in-memory implementation otherwise
+    #
     def self.default_cache_store
       defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : ThreadSafeMemoryStore.new
     end
 
+    #
+    # The default value for {#flush_interval}.
+    # @return [Float] 10
+    #
     def self.default_flush_interval
       10
     end
 
+    #
+    # The default value for {#read_timeout}.
+    # @return [Float] 10
+    #
     def self.default_read_timeout
       10
     end
 
+    #
+    # The default value for {#connect_timeout}.
+    # @return [Float] 10
+    #
     def self.default_connect_timeout
       2
     end
 
+    #
+    # The default value for {#proxy}.
+    # @return [String] nil
+    #
     def self.default_proxy
       nil
     end
 
+    #
+    # The default value for {#logger}.
+    # @return [::Logger] the Rails logger if in Rails, or a default [::Logger] at WARN level otherwise
+    #
     def self.default_logger
       if defined?(Rails) && Rails.respond_to?(:logger)
         Rails.logger 
@@ -279,34 +358,66 @@ module LaunchDarkly
       end
     end
 
+    #
+    # The default value for {#stream?}.
+    # @return [Boolean] true
+    #
     def self.default_stream
       true
     end
 
+    #
+    # The default value for {#use_ldd?}.
+    # @return [Boolean] false
+    #
     def self.default_use_ldd
       false
     end
 
+    #
+    # The default value for {#feature_store}.
+    # @return [LaunchDarkly::Interfaces::FeatureStore] an {InMemoryFeatureStore}
+    #
     def self.default_feature_store
       InMemoryFeatureStore.new
     end
 
+    #
+    # The default value for {#offline?}.
+    # @return [Boolean] false
+    #
     def self.default_offline
       false
     end
 
+    #
+    # The default value for {#poll_interval}.
+    # @return [Float] 30
+    #
     def self.default_poll_interval
       30
     end
 
+    #
+    # The default value for {#send_events}.
+    # @return [Boolean] true
+    #
     def self.default_send_events
       true
     end
 
+    #
+    # The default value for {#user_keys_capacity}.
+    # @return [Integer] 1000
+    #
     def self.default_user_keys_capacity
       1000
     end
 
+    #
+    # The default value for {#user_keys_flush_interval}.
+    # @return [Float] 300
+    #
     def self.default_user_keys_flush_interval
       300
     end

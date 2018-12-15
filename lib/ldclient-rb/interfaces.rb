@@ -35,6 +35,7 @@ module LaunchDarkly
       #
       # @param all_data [Hash]  a hash where each key is one of the data kind objects, and each
       #   value is in turn a hash of string keys to entities
+      # @return [void]
       #
       def init(all_data)
       end
@@ -67,6 +68,7 @@ module LaunchDarkly
       #
       # @param kind [Object]  the kind of entity to add or update
       # @param item [Hash]  the entity to add or update
+      # @return [void]
       #
       def upsert(kind, item)
       end
@@ -79,6 +81,7 @@ module LaunchDarkly
       # @param kind [Object]  the kind of entity to delete
       # @param key [String]  the unique key of the entity
       # @param version [Integer]  the entity must have a lower version than this to be deleted
+      # @return [void]
       #
       def delete(kind, key, version)
       end
@@ -97,6 +100,45 @@ module LaunchDarkly
 
       #
       # Performs any necessary cleanup to shut down the store when the client is being shut down.
+      #
+      # @return [void]
+      #
+      def stop
+      end
+    end
+
+    #
+    # Mixin that defines the required methods of an update processor implementation. This is
+    # the component that delivers feature flag data from LaunchDarkly to the LDClient by putting
+    # the data in the {FeatureStore}. It is expected to run concurrently on its own thread.
+    #
+    # The client has its own standard implementation, which uses either a streaming connection or
+    # polling depending on your configuration. Normally you will not need to use another one
+    # except for testing purposes. {FileDataSource} provides one such test fixture.
+    #
+    module UpdateProcessor
+      #
+      # Checks whether the processor has finished initializing. Initialization is considered done
+      # once it has received one complete data set from LaunchDarkly.
+      #
+      # @return [Boolean]  true if initialization is complete
+      #
+      def initialized?
+      end
+
+      #
+      # Puts the processor into an active state. Normally this means it will make its first
+      # connection attempt to LaunchDarkly. If `start` has already been called, calling it again
+      # should simply return the same value as the first call.
+      #
+      # @return [Concurrent::Event]  an Event which will be set once initialization is complete
+      #
+      def start
+      end
+
+      #
+      # Puts the processor into an inactive state and releases all of its resources.
+      # This state should be considered permanent (`start` does not have to work after `stop`).
       #
       def stop
       end

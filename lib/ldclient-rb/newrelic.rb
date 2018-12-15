@@ -1,4 +1,5 @@
 module LaunchDarkly
+  # @private
   class LDNewRelic
     begin
       require "newrelic_rpm"

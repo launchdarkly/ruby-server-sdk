@@ -10,14 +10,12 @@ module LaunchDarkly
   # A client for LaunchDarkly. Client instances are thread-safe. Users
   # should create a single client instance for the lifetime of the application.
   #
-  #
   class LDClient
     include Evaluation
     #
     # Creates a new client instance that connects to LaunchDarkly. A custom
     # configuration parameter can also supplied to specify advanced options,
     # but for most use cases, the default configuration is appropriate.
-    #
     #
     # @param sdk_key [String] the SDK key for your LaunchDarkly account
     # @param config [Config] an optional client configuration object
@@ -57,15 +55,41 @@ module LaunchDarkly
       end
     end
 
+    #
+    # Tells the client that all pending analytics events should be delivered as soon as possible.
+    #
+    # When the LaunchDarkly client generates analytics events (from {#variation}, {#variation_detail},
+    # {#identify}, or {#track}), they are queued on a worker thread. The event thread normally
+    # sends all queued events to LaunchDarkly at regular intervals, controlled by the
+    # {Config#flush_interval} option. Calling `flush` triggers a send without waiting for the
+    # next interval.
+    #
+    # Flushing is asynchronous, so this method will return before it is complete. However, if you
+    # call {#close}, events are guaranteed to be sent before that method returns.
+    #
     def flush
       @event_processor.flush
     end
 
-    def toggle?(key, user, default = False)
+    #
+    # @param key [String] the feature flag key
+    # @param user [Hash] the user properties
+    # @param default [Boolean] (false) the value to use if the flag cannot be evaluated
+    # @return [Boolean] the flag value
+    # @deprecated Use {#variation} instead.
+    #
+    def toggle?(key, user, default = false)
       @config.logger.warn { "[LDClient] toggle? is deprecated. Use variation instead" }
       variation(key, user, default)
     end
 
+    #
+    # Creates a hash string that can be used by the JavaScript SDK to identify a user.
+    # For more information, see ["Secure mode"](https://docs.launchdarkly.com/docs/js-sdk-reference#section-secure-mode).
+    #
+    # @param user [Hash] the user properties
+    # @return [String] a hash string
+    #
     def secure_mode_hash(user)
       OpenSSL::HMAC.hexdigest("sha256", @sdk_key, user[:key].to_s)
     end
@@ -78,13 +102,13 @@ module LaunchDarkly
 
     #
     # Determines the variation of a feature flag to present to a user. At a minimum,
-    # the user hash should contain a +:key+ .
+    # the user hash should contain a `:key`.
     #
     # @example Basic user hash
     #      {key: "user@example.com"}
     #
-    # For authenticated users, the +:key+ should be the unique identifier for
-    # your user. For anonymous users, the +:key+ should be a session identifier
+    # For authenticated users, the `:key` should be the unique identifier for
+    # your user. For anonymous users, the `:key` should be a session identifier
     # or cookie. In either case, the only requirement is that the key
     # is unique to a user.
     #
@@ -93,7 +117,7 @@ module LaunchDarkly
     # @example More complete user hash
     #   {key: "user@example.com", ip: "127.0.0.1", country: "US"}
     #
-    # The user hash can contain arbitrary custom attributes stored in a +:custom+ sub-hash:
+    # The user hash can contain arbitrary custom attributes stored in a `:custom` sub-hash:
     #
     # @example A user hash with custom attributes
     #   {key: "user@example.com", custom: {customer_rank: 1000, groups: ["google", "microsoft"]}}
@@ -113,66 +137,61 @@ module LaunchDarkly
     end
 
     #
-    # Determines the variation of a feature flag for a user, like `variation`, but also
+    # Determines the variation of a feature flag for a user, like {#variation}, but also
     # provides additional information about how this value was calculated.
     #
-    # The return value of `variation_detail` is an `EvaluationDetail` object, which has
-    # three properties:
+    # The return value of `variation_detail` is an {EvaluationDetail} object, which has
+    # three properties: the result value, the positional index of this value in the flag's
+    # list of variations, and an object describing the main reason why this value was
+    # selected. See {EvaluationDetail} for more on these properties.
     #
-    # `value`: the value that was calculated for this user (same as the return value
-    # of `variation`)
-    #
-    # `variation_index`: the positional index of this value in the flag, e.g. 0 for the
-    # first variation - or `nil` if the default value was returned
-    #
-    # `reason`: a hash describing the main reason why this value was selected. Its `:kind`
-    # property will be one of the following:
-    #
-    # * `'OFF'`: the flag was off and therefore returned its configured off value
-    # * `'FALLTHROUGH'`: the flag was on but the user did not match any targets or rules
-    # * `'TARGET_MATCH'`: the user key was specifically targeted for this flag
-    # * `'RULE_MATCH'`: the user matched one of the flag's rules; the `:ruleIndex` and
-    # `:ruleId` properties indicate the positional index and unique identifier of the rule
-    # * `'PREREQUISITE_FAILED`': the flag was considered off because it had at least one
-    # prerequisite flag that either was off or did not return the desired variation; the
-    # `:prerequisiteKey` property indicates the key of the prerequisite that failed
-    # * `'ERROR'`: the flag could not be evaluated, e.g. because it does not exist or due
-    # to an unexpected error, and therefore returned the default value; the `:errorKind`
-    # property describes the nature of the error, such as `'FLAG_NOT_FOUND'`
-    #
-    # The `reason` will also be included in analytics events, if you are capturing
-    # detailed event data for this flag.
+    # Calling `variation_detail` instead of `variation` also causes the "reason" data to
+    # be included in analytics events, if you are capturing detailed event data for this flag.
     #
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
     # @param user [Hash] a hash containing parameters for the end user requesting the flag
     # @param default the default value of the flag
     #
-    # @return an `EvaluationDetail` object describing the result
+    # @return [EvaluationDetail] an object describing the result
     #
     def variation_detail(key, user, default)
       evaluate_internal(key, user, default, true)
     end
 
     #
-    # Registers the user
+    # Registers the user. This method simply creates an analytics event containing the user
+    # properties, so that LaunchDarkly will know about that user if it does not already.
     #
-    # @param [Hash] The user to register
+    # Calling {#variation} or {#variation_detail} also sends the user information to
+    # LaunchDarkly (if events are enabled), so you only need to use {#identify} if you
+    # want to identify the user without evaluating a flag.
     #
+    # Note that event delivery is asynchronous, so the event may not actually be sent
+    # until later; see {#flush}.
+    #
+    # @param user [Hash] The user to register; this can have all the same user properties
+    #   described in {#variation}
     # @return [void]
+    #
     def identify(user)
       sanitize_user(user)
       @event_processor.add_event(kind: "identify", key: user[:key], user: user)
     end
 
     #
-    # Tracks that a user performed an event
+    # Tracks that a user performed an event. This method creates a "custom" analytics event
+    # containing the specified event name (key), user properties, and optional data.
+    #
+    # Note that event delivery is asynchronous, so the event may not actually be sent
+    # until later; see {#flush}.
     #
     # @param event_name [String] The name of the event
-    # @param user [Hash] The user that performed the event. This should be the same user hash used in calls to {#toggle?}
+    # @param user [Hash] The user to register; this can have all the same user properties
+    #   described in {#variation}
     # @param data [Hash] A hash containing any additional data associated with the event
-    #
     # @return [void]
+    #
     def track(event_name, user, data)
       sanitize_user(user)
       @event_processor.add_event(kind: "custom", key: event_name, user: user, data: data)
@@ -181,7 +200,7 @@ module LaunchDarkly
     #
     # Returns all feature flag values for the given user. This method is deprecated - please use
     # {#all_flags_state} instead. Current versions of the client-side SDK will not generate analytics
-    # events correctly if you pass the result of all_flags.
+    # events correctly if you pass the result of `all_flags`.
     #
     # @param user [Hash] The end user requesting the feature flags
     # @return [Hash] a hash of feature flag keys to values
@@ -191,21 +210,21 @@ module LaunchDarkly
     end
 
     #
-    # Returns a FeatureFlagsState object that encapsulates the state of all feature flags for a given user,
+    # Returns a {FeatureFlagsState} object that encapsulates the state of all feature flags for a given user,
     # including the flag values and also metadata that can be used on the front end. This method does not
     # send analytics events back to LaunchDarkly.
     #
     # @param user [Hash] The end user requesting the feature flags
-    # @param options={} [Hash] Optional parameters to control how the state is generated
+    # @param options [Hash] Optional parameters to control how the state is generated
     # @option options [Boolean] :client_side_only (false) True if only flags marked for use with the
     #   client-side SDK should be included in the state. By default, all flags are included.
     # @option options [Boolean] :with_reasons (false) True if evaluation reasons should be included
-    #   in the state (see `variation_detail`). By default, they are not included.
+    #   in the state (see {#variation_detail}). By default, they are not included.
     # @option options [Boolean] :details_only_for_tracked_flags (false) True if any flag metadata that is
-    # normally only used for event generation - such as flag versions and evaluation reasons - should be
-    # omitted for any flag that does not have event tracking or debugging turned on. This reduces the size
-    # of the JSON data if you are passing the flag state to the front end.
-    # @return [FeatureFlagsState] a FeatureFlagsState object which can be serialized to JSON
+    #   normally only used for event generation - such as flag versions and evaluation reasons - should be
+    #   omitted for any flag that does not have event tracking or debugging turned on. This reduces the size
+    #   of the JSON data if you are passing the flag state to the front end.
+    # @return [FeatureFlagsState] a {FeatureFlagsState} object which can be serialized to JSON
     #
     def all_flags_state(user, options={})
       return FeatureFlagsState.new(false) if @config.offline?
@@ -246,7 +265,7 @@ module LaunchDarkly
     end
 
     #
-    # Releases all network connections and other resources held by the client, making it no longer usable
+    # Releases all network connections and other resources held by the client, making it no longer usable.
     #
     # @return [void]
     def close
@@ -351,6 +370,7 @@ module LaunchDarkly
 
   #
   # Used internally when the client is offline.
+  # @private
   #
   class NullUpdateProcessor
     def start

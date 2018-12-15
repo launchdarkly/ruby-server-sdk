@@ -2,6 +2,7 @@ require "concurrent/atomics"
 require "thread"
 
 module LaunchDarkly
+  # @private
   class PollingProcessor
     def initialize(config, requestor)
       @config = config

@@ -6,6 +6,7 @@ module LaunchDarkly
   #   * made thread-safe
   #   * removed many unused methods
   #   * reading a key does not reset its expiration time, only writing
+  # @private
   class ExpiringCache
     def initialize(max_size, ttl)
       @max_size = max_size

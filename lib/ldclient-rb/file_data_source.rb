@@ -7,12 +7,15 @@ module LaunchDarkly
   # To avoid pulling in 'listen' and its transitive dependencies for people who aren't using the
   # file data source or who don't need auto-updating, we only enable auto-update if the 'listen'
   # gem has been provided by the host app.
+  # @private
   @@have_listen = false
   begin
     require 'listen'
     @@have_listen = true
   rescue LoadError
   end
+
+  # @private
   def self.have_listen?
     @@have_listen
   end
@@ -45,7 +48,7 @@ module LaunchDarkly
   # to request existing flags directly from the LaunchDarkly server in JSON format, and use this
   # output as the starting point for your file. In Linux you would do this:
   #
-  #    curl -H "Authorization: {your sdk key}" https://app.launchdarkly.com/sdk/latest-all
+  #    curl -H "Authorization: YOUR_SDK_KEY" https://app.launchdarkly.com/sdk/latest-all
   #
   # The output will look something like this (but with many more properties):
   #
@@ -92,6 +95,8 @@ module LaunchDarkly
   # duplicate key-- it will not load flags from any of the files.      
   #
   class FileDataSource
+    include LaunchDarkly::Interfaces::UpdateProcessor
+    
     #
     # Returns a factory for the file data source component.
     #
@@ -116,6 +121,7 @@ module LaunchDarkly
     end
   end
 
+  # @private
   class FileDataSourceImpl
     def initialize(feature_store, logger, options={})
       @feature_store = feature_store

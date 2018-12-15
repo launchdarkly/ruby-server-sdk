@@ -3,6 +3,13 @@ require "logger"
 require "thread"
 require "uri"
 
+#
+# A lightweight Server-Sent Events implementation based on the `socketry` gem.
+#
+# This module will be moved to a separate gem in the future.
+#
+# @private
+#
 module SSE
   #
   # A lightweight Server-Sent Events implementation, relying on two gems: socketry for sockets with
