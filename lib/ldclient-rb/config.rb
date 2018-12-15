@@ -34,8 +34,9 @@ module LaunchDarkly
     # @option opts [Integer] :user_keys_capacity (1000) See {#user_keys_capacity}.
     # @option opts [Float] :user_keys_flush_interval (300) See {#user_keys_flush_interval}.
     # @option opts [Boolean] :inline_users_in_events (false) See {#inline_users_in_events}.
-    # @option opts [Object] :update_processor See {#update_processor}.
-    # @option opts [Object] :update_processor_factory See {#update_processor_factory}.
+    # @option opts [Object] :data_source See {#data_source}.
+    # @option opts [Object] :update_processor Obsolete synonym for `data_source`.
+    # @option opts [Object] :update_processor_factory Obsolete synonym for `data_source`.
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -59,6 +60,7 @@ module LaunchDarkly
       @user_keys_capacity = opts[:user_keys_capacity] || Config.default_user_keys_capacity
       @user_keys_flush_interval = opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
       @inline_users_in_events = opts[:inline_users_in_events] || false
+      @data_source = opts[:data_source] || opts[:update_processor] || opts[:update_processor_factory]
       @update_processor = opts[:update_processor]
       @update_processor_factory = opts[:update_processor_factory]
     end
@@ -245,22 +247,20 @@ module LaunchDarkly
     # An object that is responsible for receiving feature flag data from LaunchDarkly. By default,
     # the client uses its standard polling or streaming implementation; this is customizable for
     # testing purposes.
-    # @return [LaunchDarkly::Interfaces::UpdateProcessor]
-    # @deprecated The preferred way to set this is now with {#update_processor_factory}.
     #
-    attr_reader :update_processor
-    
+    # This may be set to either an object that conforms to {LaunchDarkly::Interfaces::DataSource},
+    # or a lambda (or Proc) that takes two parameters-- SDK key and {Config}-- and returns such an
+    # object.
     #
-    # Factory for an object that is responsible for receiving feature flag data from LaunchDarkly
-    # By default, the client uses its standard polling or streaming implementation; this is
-    # customizable for testing purposes.
-    #
-    # The factory is a lambda or Proc that takes two parameters: the SDK key and the {Config}. It
-    # must return an object that conforms to {LaunchDarkly::Interfaces::UpdateProcessor}.
-    #
-    # @return [lambda]
+    # @return [LaunchDarkly::Interfaces::DataSource|lambda]
     # @see FileDataSource
     #
+    attr_reader :data_source
+
+    # @deprecated This is replaced by {#data_source}.
+    attr_reader :update_processor
+    
+    # @deprecated This is replaced by {#data_source}.
     attr_reader :update_processor_factory
 
     #

@@ -7,8 +7,8 @@ describe LaunchDarkly::LDClient do
   let(:offline_client) do
     subject.new("secret", offline_config)
   end
-  let(:update_processor) { LaunchDarkly::NullUpdateProcessor.new }
-  let(:config) { LaunchDarkly::Config.new({send_events: false, update_processor: update_processor}) }
+  let(:null_data) { LaunchDarkly::NullUpdateProcessor.new }
+  let(:config) { LaunchDarkly::Config.new({send_events: false, data_source: null_data}) }
   let(:client) do
     subject.new("secret", config)
   end
@@ -357,7 +357,7 @@ describe LaunchDarkly::LDClient do
   end
 
   describe 'with send_events: false' do
-    let(:config) { LaunchDarkly::Config.new({offline: true, send_events: false, update_processor: update_processor}) }
+    let(:config) { LaunchDarkly::Config.new({offline: true, send_events: false, data_source: null_data}) }
     let(:client) { subject.new("secret", config) }
 
     it "uses a NullEventProcessor" do
@@ -367,7 +367,7 @@ describe LaunchDarkly::LDClient do
   end
 
   describe 'with send_events: true' do
-    let(:config_with_events) { LaunchDarkly::Config.new({offline: false, send_events: true, update_processor: update_processor}) }
+    let(:config_with_events) { LaunchDarkly::Config.new({offline: false, send_events: true, data_source: null_data}) }
     let(:client_with_events) { subject.new("secret", config_with_events) }
 
     it "does not use a NullEventProcessor" do

@@ -37,19 +37,19 @@ module LaunchDarkly
         return  # requestor and update processor are not used in this mode
       end
 
-      if @config.update_processor
-        @update_processor = @config.update_processor
+      data_source_or_factory = @config.data_source || self.method(:create_default_data_source)
+      if data_source_or_factory.respond_to? :call
+        @data_source = data_source_or_factory.call(sdk_key, config)
       else
-        factory = @config.update_processor_factory || self.method(:create_default_update_processor)
-        @update_processor = factory.call(sdk_key, config)
+        @data_source = data_source_or_factory
       end
 
-      ready = @update_processor.start
+      ready = @data_source.start
       if wait_for_sec > 0
         ok = ready.wait(wait_for_sec)
         if !ok
           @config.logger.error { "[LDClient] Timeout encountered waiting for LaunchDarkly client initialization" }
-        elsif !@update_processor.initialized?
+        elsif !@data_source.initialized?
           @config.logger.error { "[LDClient] LaunchDarkly client initialization failed" }
         end
       end
@@ -97,7 +97,7 @@ module LaunchDarkly
     # Returns whether the client has been initialized and is ready to serve feature flag requests
     # @return [Boolean] true if the client has been initialized
     def initialized?
-      @config.offline? || @config.use_ldd? || @update_processor.initialized?
+      @config.offline? || @config.use_ldd? || @data_source.initialized?
     end
 
     #
@@ -270,14 +270,14 @@ module LaunchDarkly
     # @return [void]
     def close
       @config.logger.info { "[LDClient] Closing LaunchDarkly client..." }
-      @update_processor.stop
+      @data_source.stop
       @event_processor.stop
       @store.stop
     end
 
     private
 
-    def create_default_update_processor(sdk_key, config)
+    def create_default_data_source(sdk_key, config)
       if config.offline?
         return NullUpdateProcessor.new
       end
