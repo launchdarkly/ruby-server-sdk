@@ -121,6 +121,11 @@ else
 end
 ```
 
+Database integrations
+---------------------
+
+Feature flag data can be kept in a persistent store using Redis or DynamoDB. These adapters are implemented in the `LaunchDarkly::Integrations::Redis` and `LaunchDarkly::Integrations::DynamoDB` modules; to use them, call the `new_feature_store` method in the module, and put the returned object in the `feature_store` property of your client configuration. See the [source code](https://github.com/launchdarkly/ruby-client-private/tree/master/lib/ldclient-rb/integrations) and the [SDK reference guide](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store) for more information.
+
 Using flag data from a file
 ---------------------------
 For testing purposes, the SDK can be made to read feature flag state from a file or files instead of connecting to LaunchDarkly. See [`file_data_source.rb`](https://github.com/launchdarkly/ruby-client/blob/master/lib/ldclient-rb/file_data_source.rb) for more details.
@@ -153,9 +158,9 @@ About LaunchDarkly
     * [JavaScript](http://docs.launchdarkly.com/docs/js-sdk-reference "LaunchDarkly JavaScript SDK")
     * [PHP](http://docs.launchdarkly.com/docs/php-sdk-reference "LaunchDarkly PHP SDK")
     * [Python](http://docs.launchdarkly.com/docs/python-sdk-reference "LaunchDarkly Python SDK")
-    * [Python Twisted](http://docs.launchdarkly.com/docs/python-twisted-sdk-reference "LaunchDarkly Python Twisted SDK")
     * [Go](http://docs.launchdarkly.com/docs/go-sdk-reference "LaunchDarkly Go SDK")
     * [Node.JS](http://docs.launchdarkly.com/docs/node-sdk-reference "LaunchDarkly Node SDK")
+    * [Electron](http://docs.launchdarkly.com/docs/electron-sdk-reference "LaunchDarkly Electron SDK")
     * [.NET](http://docs.launchdarkly.com/docs/dotnet-sdk-reference "LaunchDarkly .Net SDK")
     * [Ruby](http://docs.launchdarkly.com/docs/ruby-sdk-reference "LaunchDarkly Ruby SDK")
     * [iOS](http://docs.launchdarkly.com/docs/ios-sdk-reference "LaunchDarkly iOS SDK")
