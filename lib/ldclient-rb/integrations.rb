@@ -1,7 +1,13 @@
 require "concurrent/atomics"
 
 module LaunchDarkly
+  #
+  # Tools for connecting the LaunchDarkly client to other software.
+  #
   module Integrations
+    #
+    # Integration with [Redis](https://redis.io/).
+    #
     module Redis
       #
       # Default value for the `redis_url` option for {new_feature_store}. This points to an instance of
@@ -45,7 +51,10 @@ module LaunchDarkly
       end
     end
 
-    module Helpers
+    #
+    # Support code that may be useful for integrations.
+    #
+    module Util
       #
       # CachingStoreWrapper is a partial implementation of the {LaunchDarkly::Interfaces::FeatureStore}
       # pattern that delegates part of its behavior to another object, while providing optional caching
@@ -59,10 +68,6 @@ module LaunchDarkly
       class CachingStoreWrapper
         include LaunchDarkly::Interfaces::FeatureStore
         
-        INITED_CACHE_KEY = "$inited"
-
-        private_constant :INITED_CACHE_KEY
-
         #
         # Creates a new store wrapper instance.
         #
@@ -75,8 +80,8 @@ module LaunchDarkly
           @core = core
 
           expiration_seconds = opts[:expiration] || 15
-          capacity = opts[:capacity] || 1000
           if expiration_seconds > 0
+            capacity = opts[:capacity] || 1000
             @cache = ExpiringCache.new(capacity, expiration_seconds)
           else
             @cache = nil
@@ -146,10 +151,10 @@ module LaunchDarkly
           if @cache.nil?
             result = @core.initialized_internal?
           else
-            result = @cache[INITED_CACHE_KEY]
+            result = @cache[inited_cache_key]
             if result.nil?
               result = @core.initialized_internal?
-              @cache[INITED_CACHE_KEY] = result
+              @cache[inited_cache_key] = result
             end
           end
 
@@ -163,12 +168,19 @@ module LaunchDarkly
 
         private
 
+        # We use just one cache for 3 kinds of objects. Individual entities use a key like 'features:my-flag'.
+        def item_cache_key(kind, key)
+          kind[:namespace] + ":" + key.to_s
+        end
+
+        # The result of a call to get_all_internal is cached using the "kind" object as a key.
         def all_cache_key(kind)
           kind
         end
 
-        def item_cache_key(kind, key)
-          kind[:namespace] + ":" + key.to_s
+        # The result of initialized_internal? is cached using this key.
+        def inited_cache_key
+          "$inited"
         end
 
         def item_if_not_deleted(item)

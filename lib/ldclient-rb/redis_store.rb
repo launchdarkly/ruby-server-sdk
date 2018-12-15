@@ -12,7 +12,7 @@ module LaunchDarkly
   # installed.  Then, create an instance and store it in the `feature_store` property
   # of your client configuration.
   #
-  # @deprecated Use {LaunchDarkly::Integrations::Redis#new_feature_store} instead. This specific
+  # @deprecated Use the factory method in {LaunchDarkly::Integrations::Redis} instead. This specific
   #   implementation class may change in the future.
   #
   class RedisFeatureStore
@@ -176,7 +176,7 @@ in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:v
       end
 
       @core = RedisFeatureStoreCore.new(opts)
-      @wrapper = LaunchDarkly::Integrations::Helpers::CachingStoreWrapper.new(@core, opts)
+      @wrapper = LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(@core, opts)
     end
 
     #

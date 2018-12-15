@@ -20,7 +20,7 @@ module LaunchDarkly
     #
     # The default implementation is {LaunchDarkly::InMemoryFeatureStore}. Several implementations
     # that use databases can be found in {LaunchDarkly::Integrations}. If you want to write a new
-    # implementation, see {LaunchDarkly::Integrations::Helpers} for tools that can make this task
+    # implementation, see {LaunchDarkly::Integrations::Util} for tools that can make this task
     # simpler.
     #
     module FeatureStore
