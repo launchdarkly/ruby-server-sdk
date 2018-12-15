@@ -1,5 +1,8 @@
 
 module LaunchDarkly
+  #
+  # Mixins that define the required methods of various pluggable components used by the client.
+  #
   module Interfaces
     #
     # Mixin that defines the required methods of a feature store implementation. The LaunchDarkly
