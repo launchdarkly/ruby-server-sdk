@@ -9,7 +9,7 @@ module LaunchDarkly
       #
       # @return [String]  the default Redis URL
       #
-      def default_redis_url
+      def self.default_redis_url
         'redis://localhost:6379/0'
       end
 
@@ -18,7 +18,7 @@ module LaunchDarkly
       #
       # @return [String]  the default key prefix
       #
-      def default_prefix
+      def self.default_prefix
         'launchdarkly'
       end
 
@@ -40,7 +40,7 @@ module LaunchDarkly
       # @option opts [Object] :pool  custom connection pool, if desired
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
-      def new_feature_store(opts)
+      def self.new_feature_store(opts)
         return RedisFeatureStore.new(opts)
       end
     end

@@ -36,13 +36,13 @@ module LaunchDarkly
           @redis_opts[:url] = opts[:redis_url]
         end
         if !@redis_opts.include?(:url)
-          @redis_opts[:url] = LaunchDarkly::Integrations::Redis.default_redis_url
+          @redis_opts[:url] = LaunchDarkly::Integrations::Redis::default_redis_url
         end
         max_connections = opts[:max_connections] || 16
         @pool = opts[:pool] || ConnectionPool.new(size: max_connections) do
           Redis.new(@redis_opts)
         end
-        @prefix = opts[:prefix] || LaunchDarkly::Integrations::Redis.default_prefix
+        @prefix = opts[:prefix] || LaunchDarkly::Integrations::Redis::default_prefix
         @logger = opts[:logger] || Config.default_logger
         @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
 
@@ -184,14 +184,14 @@ in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:v
     # running at `localhost` with its default port.
     #
     def self.default_redis_url
-      LaunchDarkly::Integrations::Redis.default_redis_url
+      LaunchDarkly::Integrations::Redis::default_redis_url
     end
 
     #
     # Default value for the `prefix` constructor parameter.
     #
     def self.default_prefix
-      LaunchDarkly::Integrations::Redis.default_prefix
+      LaunchDarkly::Integrations::Redis::default_prefix
     end
 
     def get(kind, key)
