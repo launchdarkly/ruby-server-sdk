@@ -36,7 +36,7 @@ def create_table_if_necessary
   begin
     client.describe_table({ table_name: $table_name })
     return  # no error, table exists
-  rescue Blahbhbhba
+  rescue Aws::DynamoDB::Errors::ResourceNotFoundException
     # fall through to code below - we'll create the table
   end
 
