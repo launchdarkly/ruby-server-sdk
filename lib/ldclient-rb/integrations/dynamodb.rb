@@ -12,14 +12,12 @@ module LaunchDarkly
       # of your client configuration ({LaunchDarkly::Config}).
       #
       # @param opts [Hash] the configuration options
-      # @option opts [String] :redis_url (default_redis_url)  URL of the Redis instance (shortcut for omitting `redis_opts`)
-      # @option opts [Hash] :redis_opts  options to pass to the Redis constructor (if you want to specify more than just `redis_url`)
-      # @option opts [String] :prefix (default_prefix)  namespace prefix to add to all hash keys used by LaunchDarkly
+      # @option opts [Hash] :dynamodb_opts  options to pass to the DynamoDB client constructor (ignored if you specify `:existing_client`)
+      # @option opts [Object] :existing_client  an already-constructed DynamoDB client for the feature store to use
+      # @option opts [String] :prefix  namespace prefix to add to all keys used by LaunchDarkly
       # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
-      # @option opts [Integer] :max_connections  size of the Redis connection pool
       # @option opts [Integer] :expiration_seconds (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching
       # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
-      # @option opts [Object] :pool  custom connection pool, if desired
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
       def self.new_feature_store(table_name, opts)
