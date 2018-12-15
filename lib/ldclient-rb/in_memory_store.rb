@@ -20,6 +20,8 @@ module LaunchDarkly
   # streaming API.
   #
   class InMemoryFeatureStore
+    include LaunchDarkly::Interfaces::FeatureStore
+
     def initialize
       @items = Hash.new
       @lock = Concurrent::ReadWriteLock.new
