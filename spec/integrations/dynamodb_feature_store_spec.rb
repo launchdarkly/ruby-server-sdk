@@ -49,7 +49,11 @@ def create_table_if_necessary
     attribute_definitions: [
       { attribute_name: "namespace", attribute_type: "S" },
       { attribute_name: "key", attribute_type: "S" }
-    ]
+    ],
+    provisioned_throughput: {
+      read_capacity_units: 1,
+      write_capacity_units: 1
+    }
   }
   client.create_table(req)
 
