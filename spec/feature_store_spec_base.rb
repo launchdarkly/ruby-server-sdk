@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.shared_examples "feature_store" do |create_store_method|
+shared_examples "feature_store" do |create_store_method|
 
   let(:feature0) {
     {
