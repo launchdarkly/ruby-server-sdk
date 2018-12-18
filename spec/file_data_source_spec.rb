@@ -219,7 +219,7 @@ EOF
   it "evaluates simplified flag with client as expected" do
     file = make_temp_file(all_properties_json)
     factory = LaunchDarkly::FileDataSource.factory({ paths: file.path })
-    config = LaunchDarkly::Config.new(send_events: false, update_processor_factory: factory)
+    config = LaunchDarkly::Config.new(send_events: false, data_source: factory)
     client = LaunchDarkly::LDClient.new('sdkKey', config)
 
     begin
@@ -233,7 +233,7 @@ EOF
   it "evaluates full flag with client as expected" do
     file = make_temp_file(all_properties_json)
     factory = LaunchDarkly::FileDataSource.factory({ paths: file.path })
-    config = LaunchDarkly::Config.new(send_events: false, update_processor_factory: factory)
+    config = LaunchDarkly::Config.new(send_events: false, data_source: factory)
     client = LaunchDarkly::LDClient.new('sdkKey', config)
 
     begin

@@ -108,17 +108,17 @@ module LaunchDarkly
     end
 
     #
-    # Mixin that defines the required methods of an update processor implementation. This is
-    # the component that delivers feature flag data from LaunchDarkly to the LDClient by putting
+    # Mixin that defines the required methods of a data source implementation. This is the
+    # component that delivers feature flag data from LaunchDarkly to the LDClient by putting
     # the data in the {FeatureStore}. It is expected to run concurrently on its own thread.
     #
     # The client has its own standard implementation, which uses either a streaming connection or
     # polling depending on your configuration. Normally you will not need to use another one
     # except for testing purposes. {FileDataSource} provides one such test fixture.
     #
-    module UpdateProcessor
+    module DataSource
       #
-      # Checks whether the processor has finished initializing. Initialization is considered done
+      # Checks whether the data source has finished initializing. Initialization is considered done
       # once it has received one complete data set from LaunchDarkly.
       #
       # @return [Boolean]  true if initialization is complete
@@ -127,7 +127,7 @@ module LaunchDarkly
       end
 
       #
-      # Puts the processor into an active state. Normally this means it will make its first
+      # Puts the data source into an active state. Normally this means it will make its first
       # connection attempt to LaunchDarkly. If `start` has already been called, calling it again
       # should simply return the same value as the first call.
       #
@@ -137,7 +137,7 @@ module LaunchDarkly
       end
 
       #
-      # Puts the processor into an inactive state and releases all of its resources.
+      # Puts the data source into an inactive state and releases all of its resources.
       # This state should be considered permanent (`start` does not have to work after `stop`).
       #
       def stop

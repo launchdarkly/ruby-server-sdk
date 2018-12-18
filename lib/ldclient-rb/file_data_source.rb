@@ -26,11 +26,11 @@ module LaunchDarkly
   # actual LaunchDarkly connection.
   #
   # To use this component, call {FileDataSource#factory}, and store its return value in the
-  # {Config#update_processor_factory} property of your LaunchDarkly client configuration. In the options
+  # {Config#data_source} property of your LaunchDarkly client configuration. In the options
   # to `factory`, set `paths` to the file path(s) of your data file(s):
   #
-  #     factory = FileDataSource.factory(paths: [ myFilePath ])
-  #     config = LaunchDarkly::Config.new(update_processor_factory: factory)
+  #     file_source = FileDataSource.factory(paths: [ myFilePath ])
+  #     config = LaunchDarkly::Config.new(data_source: file_source)
   #
   # This will cause the client not to connect to LaunchDarkly to get feature flags. The
   # client may still make network connections to send analytics events, unless you have disabled
@@ -113,12 +113,10 @@ module LaunchDarkly
     # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
     #   file modifications - used only if auto_update is true, and if the native file-watching
     #   mechanism from 'listen' is not being used. The default value is 1 second.
-    # @return an object that can be stored in {Config#update_processor_factory}
+    # @return an object that can be stored in {Config#data_source}
     #
     def self.factory(options={})
-      return Proc.new do |sdk_key, config|
-        FileDataSourceImpl.new(config.feature_store, config.logger, options)
-      end
+      return lambda { |sdk_key, config| FileDataSourceImpl.new(config.feature_store, config.logger, options) }
     end
   end
 
