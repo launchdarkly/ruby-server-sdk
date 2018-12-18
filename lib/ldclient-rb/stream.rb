@@ -3,18 +3,26 @@ require "json"
 require "sse_client"
 
 module LaunchDarkly
+  # @private
   PUT = :put
+  # @private
   PATCH = :patch
+  # @private
   DELETE = :delete
+  # @private
   INDIRECT_PUT = :'indirect/put'
+  # @private
   INDIRECT_PATCH = :'indirect/patch'
+  # @private
   READ_TIMEOUT_SECONDS = 300  # 5 minutes; the stream should send a ping every 3 minutes
 
+  # @private
   KEY_PATHS = {
     FEATURES => "/flags/",
     SEGMENTS => "/segments/"
   }
 
+  # @private
   class StreamProcessor
     def initialize(sdk_key, config, requestor)
       @sdk_key = sdk_key

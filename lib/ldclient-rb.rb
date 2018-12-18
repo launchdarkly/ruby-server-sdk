@@ -1,3 +1,10 @@
+
+#
+# Namespace for the LaunchDarkly Ruby SDK.
+#
+module LaunchDarkly
+end
+
 require "ldclient-rb/version"
 require "ldclient-rb/interfaces"
 require "ldclient-rb/util"

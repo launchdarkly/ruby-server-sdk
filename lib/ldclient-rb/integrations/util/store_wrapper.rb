@@ -153,6 +153,7 @@ module LaunchDarkly
         #
         # @param all_data [Hash]  a hash where each key is one of the data kind objects, and each
         #   value is in turn a hash of string keys to entities
+        # @return [void]
         #
         def init_internal(all_data)
         end
@@ -213,6 +214,8 @@ module LaunchDarkly
 
         #
         # Performs any necessary cleanup to shut down the store when the client is being shut down.
+        #
+        # @return [void]
         #
         def stop
         end

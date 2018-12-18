@@ -9,6 +9,10 @@ module LaunchDarkly
   MAX_FLUSH_WORKERS = 5
   CURRENT_SCHEMA_VERSION = 3
 
+  private_constant :MAX_FLUSH_WORKERS
+  private_constant :CURRENT_SCHEMA_VERSION
+
+  # @private
   class NullEventProcessor
     def add_event(event)
     end
@@ -20,6 +24,7 @@ module LaunchDarkly
     end
   end
 
+  # @private
   class EventMessage
     def initialize(event)
       @event = event
@@ -27,12 +32,15 @@ module LaunchDarkly
     attr_reader :event
   end
 
+  # @private
   class FlushMessage
   end
 
+  # @private
   class FlushUsersMessage
   end
 
+  # @private
   class SynchronousMessage
     def initialize
       @reply = Concurrent::Semaphore.new(0)
@@ -47,12 +55,15 @@ module LaunchDarkly
     end
   end
 
+  # @private
   class TestSyncMessage < SynchronousMessage
   end
 
+  # @private
   class StopMessage < SynchronousMessage
   end
 
+  # @private
   class EventProcessor
     def initialize(sdk_key, config, client = nil)
       @queue = Queue.new
@@ -99,6 +110,7 @@ module LaunchDarkly
     end
   end
 
+  # @private
   class EventDispatcher
     def initialize(queue, sdk_key, config, client)
       @sdk_key = sdk_key
@@ -252,8 +264,10 @@ module LaunchDarkly
     end
   end
 
+  # @private
   FlushPayload = Struct.new(:events, :summary)
 
+  # @private
   class EventBuffer
     def initialize(capacity, logger)
       @capacity = capacity
@@ -290,6 +304,7 @@ module LaunchDarkly
     end
   end
 
+  # @private
   class EventPayloadSendTask
     def run(sdk_key, config, client, payload, formatter)
       events_out = formatter.make_output_events(payload.events, payload.summary)
@@ -327,6 +342,7 @@ module LaunchDarkly
     end
   end
 
+  # @private
   class EventOutputFormatter
     def initialize(config)
       @inline_users = config.inline_users_in_events

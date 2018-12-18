@@ -2,6 +2,7 @@ require "json"
 require "set"
 
 module LaunchDarkly
+  # @private
   class UserFilter
     def initialize(config)
       @all_attributes_private = config.all_attributes_private
