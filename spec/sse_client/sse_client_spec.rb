@@ -1,6 +1,6 @@
 require "spec_helper"
 require "socketry"
-require "sse_client/sse_shared"
+require "http_util"
 
 #
 # End-to-end tests of SSEClient against a real server
@@ -66,6 +66,28 @@ EOT
       with_client(client) do |client|
         expect(event_sink.pop).to eq(SSE::SSEEvent.new(:go, "foo", "1"))
         expect(event_sink.pop).to eq(SSE::SSEEvent.new(:stop, "bar", nil))
+      end
+    end
+  end
+
+  it "handles Unicode correctly (assuming UTF-8)" do
+    please = "proszę"
+    thank_you = "dziękuję"
+    events_body = <<-EOT
+event: #{please}
+data: #{thank_you}
+
+EOT
+    with_server do |server|
+      server.setup_ok_response("/", events_body, "text/event-stream")
+
+      event_sink = Queue.new
+      client = subject.new(server.base_uri) do |c|
+        c.on_event { |event| event_sink << event }
+      end
+
+      with_client(client) do |client|
+        expect(event_sink.pop).to eq(SSE::SSEEvent.new(please.to_sym, thank_you, nil))
       end
     end
   end

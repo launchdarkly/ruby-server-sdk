@@ -4,23 +4,28 @@ require "webrick/httpproxy"
 require "webrick/https"
 
 class StubHTTPServer
+  attr_reader :requests
+
   def initialize
     @port = 50000
     begin
-      @server = create_server(@port)
+      base_opts = {
+        BindAddress: '127.0.0.1',
+        Port: @port,
+        AccessLog: [],
+        Logger: NullLogger.new,
+        RequestCallback: method(:record_request)
+      }
+      @server = create_server(@port, base_opts)
     rescue Errno::EADDRINUSE
       @port += 1
       retry
     end
+    @requests = []
   end
 
-  def create_server(port)
-    WEBrick::HTTPServer.new(
-      BindAddress: '127.0.0.1',
-      Port: port,
-      AccessLog: [],
-      Logger: NullLogger.new
-    )
+  def create_server(port, base_opts)
+    WEBrick::HTTPServer.new(base_opts)
   end
 
   def start
@@ -38,6 +43,19 @@ class StubHTTPServer
   def setup_response(uri_path, &action)
     @server.mount_proc(uri_path, action)
   end
+
+  def setup_ok_response(uri_path, body, content_type=nil, headers={})
+    setup_response(uri_path) do |req, res|
+      res.status = 200
+      res.content_type = content_type if !content_type.nil?
+      res.body = body
+      headers.each { |n, v| res[n] = v }
+    end
+  end
+
+  def record_request(req, res)
+    @requests.push(req)
+  end
 end
 
 class StubProxyServer < StubHTTPServer
@@ -49,19 +67,15 @@ class StubProxyServer < StubHTTPServer
     @request_count = 0
   end
 
-  def create_server(port)
-    WEBrick::HTTPProxyServer.new(
-      BindAddress: '127.0.0.1',
-      Port: port,
-      AccessLog: [],
-      Logger: NullLogger.new,
+  def create_server(port, base_opts)
+    WEBrick::HTTPProxyServer.new(base_opts.merge({
       ProxyContentHandler: proc do |req,res|
         if !@connect_status.nil?
           res.status = @connect_status
         end
         @request_count += 1
       end
-    )
+    }))
   end
 end
 

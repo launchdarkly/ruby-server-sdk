@@ -1,6 +1,6 @@
 require "spec_helper"
 require "socketry"
-require "sse_client/sse_shared"
+require "http_util"
 
 #
 # End-to-end tests of HTTP requests against a real server
@@ -119,6 +119,7 @@ EOT
   end
 
   it "throws error if proxy responds with error status" do
+    body = "hi"
     with_server do |server|
       server.setup_response("/") do |req,res|
         res.body = body
