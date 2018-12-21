@@ -41,7 +41,7 @@ module LaunchDarkly
             if !opts[:existing_client].nil?
               @client = opts[:existing_client]
             else
-              @client = Aws::DynamoDB::Client.new(opts[:dynamodb_opts])
+              @client = Aws::DynamoDB::Client.new(opts[:dynamodb_opts] || {})
             end
 
             @logger.info("DynamoDBFeatureStore: using DynamoDB table \"#{table_name}\"")
