@@ -80,7 +80,7 @@ jobs:
               if [[ $i == jruby* ]]; then
                 gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
               fi
-              gem install bundler -v 1.17.3;
+              gem install bundler;
               bundle install;
               mv Gemfile.lock "Gemfile.lock.$i"
             done
