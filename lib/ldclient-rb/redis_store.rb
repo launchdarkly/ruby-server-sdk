@@ -16,7 +16,7 @@ module LaunchDarkly
   # of your client configuration.
   #
   # @deprecated Use the factory method in {LaunchDarkly::Integrations::Redis} instead. This specific
-  #   implementation class may change in the future.
+  #   implementation class may be changed or removed in the future.
   #
   class RedisFeatureStore
     include LaunchDarkly::Interfaces::FeatureStore

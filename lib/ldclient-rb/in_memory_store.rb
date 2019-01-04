@@ -6,18 +6,21 @@ module LaunchDarkly
   # we add another storable data type in the future, as long as it follows the same pattern
   # (having "key", "version", and "deleted" properties), we only need to add a corresponding
   # constant here and the existing store should be able to handle it.
+
+  # @private
   FEATURES = {
     namespace: "features"
   }.freeze
 
+  # @private
   SEGMENTS = {
     namespace: "segments"
   }.freeze
 
   #
   # Default implementation of the LaunchDarkly client's feature store, using an in-memory
-  # cache.  This object holds feature flags and related data received from the
-  # streaming API.
+  # cache.  This object holds feature flags and related data received from LaunchDarkly.
+  # Database-backed implementations are available in {LaunchDarkly::Integrations}.
   #
   class InMemoryFeatureStore
     include LaunchDarkly::Interfaces::FeatureStore
