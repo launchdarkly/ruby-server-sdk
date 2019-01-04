@@ -19,8 +19,8 @@ ruby-docker-template: &ruby-docker-template
           gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
         fi
     - run: ruby -v
-    - run: gem install bundler
-    - run: bundle install -v 1.17.3
+    - run: gem install bundler -v 1.17.3
+    - run: bundle install
     - run: mkdir ./rspec
     - run: bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
     - store_test_results:
