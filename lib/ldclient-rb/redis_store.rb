@@ -1,6 +1,5 @@
 require "concurrent/atomics"
 require "json"
-require "thread_safe"
 
 module LaunchDarkly
   #
