@@ -1,6 +1,3 @@
-require "concurrent/atomics"
-require "json"
-
 require "ldclient-rb/interfaces"
 require "ldclient-rb/impl/integrations/redis_impl"
 
