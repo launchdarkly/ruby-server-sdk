@@ -8,13 +8,13 @@ describe LaunchDarkly::StreamProcessor do
   let(:processor) { subject.new("sdk_key", config, requestor) }
 
   describe '#process_message' do
-    let(:put_message) { LaunchDarklySSE::StreamEvent.new(type: :put, data: '{"data":{"flags":{"asdf": {"key": "asdf"}},"segments":{"segkey": {"key": "segkey"}}}}') }
-    let(:patch_flag_message) { LaunchDarklySSE::StreamEvent.new(type: :patch, data: '{"path": "/flags/key", "data": {"key": "asdf", "version": 1}}') }
-    let(:patch_seg_message) { LaunchDarklySSE::StreamEvent.new(type: :patch, data: '{"path": "/segments/key", "data": {"key": "asdf", "version": 1}}') }
-    let(:delete_flag_message) { LaunchDarklySSE::StreamEvent.new(type: :delete, data: '{"path": "/flags/key", "version": 2}') }
-    let(:delete_seg_message) { LaunchDarklySSE::StreamEvent.new(type: :delete, data: '{"path": "/segments/key", "version": 2}') }
-    let(:indirect_patch_flag_message) { LaunchDarklySSE::StreamEvent.new(type: :'indirect/put', data: "/flags/key") }
-    let(:indirect_patch_segment_message) { LaunchDarklySSE::StreamEvent.new(type: :'indirect/patch', data: "/segments/key") }
+    let(:put_message) { SSE::StreamEvent.new(:put, '{"data":{"flags":{"asdf": {"key": "asdf"}},"segments":{"segkey": {"key": "segkey"}}}}') }
+    let(:patch_flag_message) { SSE::StreamEvent.new(:patch, '{"path": "/flags/key", "data": {"key": "asdf", "version": 1}}') }
+    let(:patch_seg_message) { SSE::StreamEvent.new(:patch, '{"path": "/segments/key", "data": {"key": "asdf", "version": 1}}') }
+    let(:delete_flag_message) { SSE::StreamEvent.new(:delete, '{"path": "/flags/key", "version": 2}') }
+    let(:delete_seg_message) { SSE::StreamEvent.new(:delete, '{"path": "/segments/key", "version": 2}') }
+    let(:indirect_patch_flag_message) { SSE::StreamEvent.new(:'indirect/patch', "/flags/key") }
+    let(:indirect_patch_segment_message) { SSE::StreamEvent.new(:'indirect/patch', "/segments/key") }
 
     it "will accept PUT methods" do
       processor.send(:process_message, put_message)
@@ -53,7 +53,7 @@ describe LaunchDarkly::StreamProcessor do
     end
     it "will log a warning if the method is not recognized" do
       expect(processor.instance_variable_get(:@config).logger).to receive :warn
-      processor.send(:process_message, LaunchDarklySSE::StreamEvent.new(type: :get, data: "", id: nil))
+      processor.send(:process_message, SSE::StreamEvent.new(type: :get, data: "", id: nil))
     end
   end
 end

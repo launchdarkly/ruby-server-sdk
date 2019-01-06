@@ -54,11 +54,11 @@ module LaunchDarkly
         read_timeout: READ_TIMEOUT_SECONDS,
         logger: @config.logger
       }
-      @es = LaunchDarklySSE::SSEClient.new(@config.stream_uri + "/all", **opts) do |conn|
+      @es = SSE::Client.new(@config.stream_uri + "/all", **opts) do |conn|
         conn.on_event { |event| process_message(event) }
         conn.on_error { |err|
           case err
-          when LaunchDarklySSE::HTTPError
+          when SSE::Errors::HTTPError
             status = err.status
             message = Util.http_error_message(status, "streaming connection", "will retry")
             @config.logger.error { "[LDClient] #{message}" }
