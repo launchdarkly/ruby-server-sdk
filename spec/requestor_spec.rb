@@ -125,6 +125,29 @@ describe LaunchDarkly::Requestor do
       end
     end
 
+    it "uses UTF-8 encoding by default" do
+      content = '{"flags": {"flagkey": {"key": "flagkey", "variations": ["blue", "grėeń"]}}}'
+      with_server do |server|
+        server.setup_ok_response("/sdk/latest-all", content, "application/json")
+        with_requestor(server.base_uri.to_s) do |requestor|
+          data = requestor.request_all_data
+          expect(data).to eq(JSON.parse(content, symbolize_names: true))
+        end
+      end
+    end
+
+    it "detects other encodings from Content-Type" do
+      content = '{"flags": {"flagkey": {"key": "flagkey", "variations": ["proszę", "dziękuję"]}}}'
+      with_server do |server|
+        server.setup_ok_response("/sdk/latest-all", content.encode(Encoding::ISO_8859_2),
+          "text/plain; charset=ISO-8859-2")
+        with_requestor(server.base_uri.to_s) do |requestor|
+          data = requestor.request_all_data
+          expect(data).to eq(JSON.parse(content, symbolize_names: true))
+        end
+      end
+    end
+
     it "throws exception for error status" do
       with_server do |server|
         with_requestor(server.base_uri.to_s) do |requestor|

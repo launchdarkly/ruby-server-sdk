@@ -39,6 +39,12 @@ module LaunchDarkly
       make_request("/sdk/latest-all")
     end
     
+    def stop
+      @client.shutdown
+    end
+
+    private
+
     def make_request(path)
       uri = URI(@config.base_uri + path)
       req = Net::HTTP::Get.new(uri)
@@ -63,17 +69,33 @@ module LaunchDarkly
         if status < 200 || status >= 300
           raise UnexpectedResponseError.new(status)
         end
-        body = res.body
+        body = fix_encoding(res.body, res["content-type"])
         etag = res["etag"]
         @cache.write(uri, CacheEntry.new(etag, body)) if !etag.nil?
       end
       JSON.parse(body, symbolize_names: true)
     end
 
-    def stop
-      @client.shutdown
+    def fix_encoding(body, content_type)
+      return body if content_type.nil?
+      media_type, charset = parse_content_type(content_type)
+      return body if charset.nil?
+      body.force_encoding(Encoding::find(charset)).encode(Encoding::UTF_8)
     end
 
-    private :make_request
+    def parse_content_type(value)
+      return [nil, nil] if value.nil? || value == ''
+      parts = value.split(/; */)
+      return [value, nil] if parts.count < 2
+      charset = nil
+      parts.each do |part|
+        fields = part.split('=')
+        if fields.count >= 2 && fields[0] == 'charset'
+          charset = fields[1]
+          break
+        end
+      end
+      return [parts[0], charset]
+    end
   end
 end
