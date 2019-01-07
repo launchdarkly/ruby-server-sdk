@@ -1,6 +1,6 @@
 require "spec_helper"
 require "socketry"
-require "sse_client/sse_shared"
+require "http_util"
 
 #
 # End-to-end tests of SSEClient against a real server
