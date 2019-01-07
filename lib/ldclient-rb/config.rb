@@ -53,7 +53,6 @@ module LaunchDarkly
       @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > Config.default_poll_interval ? opts[:poll_interval] : Config.default_poll_interval
-      @proxy = opts[:proxy] || Config.default_proxy
       @all_attributes_private = opts[:all_attributes_private] || false
       @private_attribute_names = opts[:private_attribute_names] || []
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
@@ -183,12 +182,6 @@ module LaunchDarkly
     # @return [LaunchDarkly::Interfaces::FeatureStore]
     #
     attr_reader :feature_store
-
-    #
-    # The proxy configuration string.
-    # @return [String]
-    #
-    attr_reader :proxy
 
     #
     # True if all user attributes (other than the key) should be considered private. This means
@@ -334,14 +327,6 @@ module LaunchDarkly
     #
     def self.default_connect_timeout
       2
-    end
-
-    #
-    # The default value for {#proxy}.
-    # @return [String] nil
-    #
-    def self.default_proxy
-      nil
     end
 
     #

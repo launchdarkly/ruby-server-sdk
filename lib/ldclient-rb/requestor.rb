@@ -7,6 +7,7 @@ module LaunchDarkly
   class UnexpectedResponseError < StandardError
     def initialize(status)
       @status = status
+      super("HTTP error #{status}")
     end
 
     def status
@@ -54,10 +55,6 @@ module LaunchDarkly
       if !cached.nil?
         req["If-None-Match"] = cached.etag
       end
-        # if @config.proxy
-        #   req.options.proxy = Faraday::ProxyOptions.from @config.proxy
-        # end
-
       res = @client.request(uri, req)
       status = res.code.to_i
       @config.logger.debug { "[LDClient] Got response from uri: #{uri}\n\tstatus code: #{status}\n\theaders: #{res.to_hash}\n\tbody: #{res.body}" }
