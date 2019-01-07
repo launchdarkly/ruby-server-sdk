@@ -1,4 +1,3 @@
-require "spec_helper"
 require "webrick"
 require "webrick/httpproxy"
 require "webrick/https"
@@ -6,8 +5,10 @@ require "webrick/https"
 class StubHTTPServer
   attr_reader :requests
 
+  @@next_port = 50000
+
   def initialize
-    @port = 50000
+    @port = StubHTTPServer.next_port
     begin
       base_opts = {
         BindAddress: '127.0.0.1',
@@ -18,10 +19,16 @@ class StubHTTPServer
       }
       @server = create_server(@port, base_opts)
     rescue Errno::EADDRINUSE
-      @port += 1
+      @port = StubHTTPServer.next_port
       retry
     end
     @requests = []
+  end
+
+  def self.next_port
+    p = @@next_port
+    @@next_port = (p + 1 < 60000) ? p + 1 : 50000
+    p
   end
 
   def create_server(port, base_opts)
