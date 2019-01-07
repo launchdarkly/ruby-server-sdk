@@ -19,7 +19,7 @@ ruby-docker-template: &ruby-docker-template
           gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
         fi
     - run: ruby -v
-    - run: gem install bundler
+    - run: gem install bundler -v "~> 1.7"
     - run: bundle install
     - run: mkdir ./rspec
     - run: bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
@@ -88,7 +88,9 @@ jobs:
               if [[ $i == jruby* ]]; then
                 gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
               fi
-              gem install bundler;
+              # bundler 2.0 may be preinstalled, we need to remove it if so
+              yes | gem uninstall bundler --version '>=2.0' || true;
+              gem install bundler -v "~> 1.7";
               bundle install;
               mv Gemfile.lock "Gemfile.lock.$i"
             done

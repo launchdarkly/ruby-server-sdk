@@ -35,11 +35,9 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "json", [">= 1.8", "< 3"]
   spec.add_runtime_dependency "faraday", [">= 0.9", "< 2"]
   spec.add_runtime_dependency "faraday-http-cache", [">= 1.3.0", "< 3"]
-  spec.add_runtime_dependency "semantic", "~> 1.6.0"
-  spec.add_runtime_dependency "thread_safe", "~> 0.3"
+  spec.add_runtime_dependency "semantic", "~> 1.6"
   spec.add_runtime_dependency "net-http-persistent", "~> 2.9"
-  spec.add_runtime_dependency "concurrent-ruby", "~> 1.0.4"
-  spec.add_runtime_dependency "hashdiff", "~> 0.2"
+  spec.add_runtime_dependency "concurrent-ruby", "~> 1.0"
   spec.add_runtime_dependency "http_tools", '~> 0.4.5'
   spec.add_runtime_dependency "socketry", "~> 0.5.1"
 end

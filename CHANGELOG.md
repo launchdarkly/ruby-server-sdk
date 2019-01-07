@@ -2,9 +2,14 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.4.2] - 2019-01-04
+### Fixed:
+- Fixed overly specific dependency versions of `concurrent-ruby` and `semantic`. ([#115](https://github.com/launchdarkly/ruby-client/issues/115))
+- Removed obsolete dependencies on `hashdiff` and `thread_safe`.
+
 ## [5.4.1] - 2018-11-05
 ### Fixed:
-* Fixed a `LoadError` in `file_data_source.rb`, which was added in 5.4.0. (Thanks, [kbarrette](https://github.com/launchdarkly/ruby-client/pull/110)!)
+- Fixed a `LoadError` in `file_data_source.rb`, which was added in 5.4.0. (Thanks, [kbarrette](https://github.com/launchdarkly/ruby-client/pull/110)!)
 
 
 ## [5.4.0] - 2018-11-02
