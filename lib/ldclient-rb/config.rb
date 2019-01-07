@@ -152,9 +152,10 @@ module LaunchDarkly
     attr_reader :capacity
 
     #
-    # A store for HTTP caching. This must support the semantics used by the
-    # [`faraday-http-cache`](https://github.com/plataformatec/faraday-http-cache) gem. Defaults
-    # to the Rails cache in a Rails environment, or a thread-safe in-memory store otherwise.
+    # A store for HTTP caching (used only in polling mode). This must support the semantics used by
+    # the [`faraday-http-cache`](https://github.com/plataformatec/faraday-http-cache) gem, although
+    # the SDK no longer uses Faraday. Defaults to the Rails cache in a Rails environment, or a
+    # thread-safe in-memory store otherwise.
     # @return [Object]
     #
     attr_reader :cache_store
