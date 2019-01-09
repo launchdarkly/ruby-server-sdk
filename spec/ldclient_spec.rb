@@ -375,4 +375,68 @@ describe LaunchDarkly::LDClient do
       expect(ep).not_to be_a(LaunchDarkly::NullEventProcessor)
     end
   end
+
+  describe "feature store data ordering" do
+    let(:dependency_ordering_test_data) {
+      {
+        LaunchDarkly::FEATURES => {
+          a: { key: "a", prerequisites: [ { key: "b" }, { key: "c" } ] },
+          b: { key: "b", prerequisites: [ { key: "c" }, { key: "e" } ] },
+          c: { key: "c" },
+          d: { key: "d" },
+          e: { key: "e" },
+          f: { key: "f" }
+        },
+        LaunchDarkly::SEGMENTS => {
+          o: { key: "o" }
+        }
+      }
+    }
+
+    class FakeFeatureStore
+      attr_reader :received_data
+
+      def init(all_data)
+        @received_data = all_data
+      end
+    end
+
+    class FakeUpdateProcessor
+      def initialize(store, data)
+        @store = store
+        @data = data
+      end
+
+      def start
+        @store.init(@data)
+        ev = Concurrent::Event.new
+        ev.set
+        ev
+      end
+
+      def stop
+      end
+
+      def initialized?
+        true
+      end
+    end
+
+    it "passes data set to feature store in correct order on init" do
+      store = FakeFeatureStore.new
+      data_source_factory = lambda { |sdk_key, config| FakeUpdateProcessor.new(config.feature_store,
+        dependency_ordering_test_data) }
+      config = LaunchDarkly::Config.new(send_events: false, feature_store: store, data_source: data_source_factory)
+      client = subject.new("secret", config)
+
+      data = store.received_data
+      expect(data).not_to be_nil
+      expect(data.count).to eq(2)
+
+      puts(data)
+      
+      # Segments should always come first
+      expect(data.keys[0]).to be(LaunchDarkly::SEGMENTS)
+    end
+  end
 end
