@@ -432,11 +432,26 @@ describe LaunchDarkly::LDClient do
       data = store.received_data
       expect(data).not_to be_nil
       expect(data.count).to eq(2)
-
-      puts(data)
       
       # Segments should always come first
       expect(data.keys[0]).to be(LaunchDarkly::SEGMENTS)
+      expect(data.values[0].count).to eq(dependency_ordering_test_data[LaunchDarkly::SEGMENTS].count)
+
+      # Features should be ordered so that a flag always appears after its prerequisites, if any
+      expect(data.keys[1]).to be(LaunchDarkly::FEATURES)
+      flags_map = data.values[1]
+      flags_list = flags_map.values
+      expect(flags_list.count).to eq(dependency_ordering_test_data[LaunchDarkly::FEATURES].count)
+      flags_list.each_with_index do |item, item_index|
+        (item[:prerequisites] || []).each do |prereq|
+          prereq = flags_map[prereq[:key].to_sym]
+          prereq_index = flags_list.index(prereq)
+          if prereq_index > item_index
+            all_keys = (flags_list.map { |f| f[:key] }).join(", ")
+            raise "#{item[:key]} depends on #{prereq[:key]}, but #{item[:key]} was listed first; keys in order are [#{all_keys}]"
+          end
+        end
+      end
     end
   end
 end
