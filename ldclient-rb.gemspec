@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.summary       = "LaunchDarkly SDK for Ruby"
   spec.description   = "Official LaunchDarkly SDK for Ruby"
   spec.homepage      = "https://github.com/launchdarkly/ruby-client"
-  spec.license       = "Apache 2.0"
+  spec.license       = "Apache-2.0"
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
@@ -34,8 +34,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "json", [">= 1.8", "< 3"]
   spec.add_runtime_dependency "semantic", "~> 1.6"
-  spec.add_runtime_dependency "net-http-persistent", "~> 2.9"
+  spec.add_runtime_dependency "net-http-persistent", [">= 2.9", "< 4.0"]
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0"
-  spec.add_runtime_dependency "http_tools", '~> 0.4.5'
-  spec.add_runtime_dependency "socketry", "~> 0.5.1"
+  spec.add_runtime_dependency "ld-eventsource", '~> 1.0'
 end
