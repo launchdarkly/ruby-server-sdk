@@ -1,6 +1,6 @@
 require "concurrent/atomics"
 require "json"
-require "sse_client"
+require "ld-eventsource"
 
 module LaunchDarkly
   # @private
@@ -54,15 +54,18 @@ module LaunchDarkly
         read_timeout: READ_TIMEOUT_SECONDS,
         logger: @config.logger
       }
-      @es = SSE::SSEClient.new(@config.stream_uri + "/all", opts) do |conn|
-        conn.on_event { |event| process_message(event, event.type) }
+      @es = SSE::Client.new(@config.stream_uri + "/all", **opts) do |conn|
+        conn.on_event { |event| process_message(event) }
         conn.on_error { |err|
-          status = err[:status_code]
-          message = Util.http_error_message(status, "streaming connection", "will retry")
-          @config.logger.error { "[LDClient] #{message}" }
-          if !Util.http_error_recoverable?(status)
-            @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
-            stop
+          case err
+          when SSE::Errors::HTTPError
+            status = err.status
+            message = Util.http_error_message(status, "streaming connection", "will retry")
+            @config.logger.error { "[LDClient] #{message}" }
+            if !Util.http_error_recoverable?(status)
+              @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
+              stop
+            end
           end
         }
       end
@@ -79,7 +82,8 @@ module LaunchDarkly
 
     private
 
-    def process_message(message, method)
+    def process_message(message)
+      method = message.type
       @config.logger.debug { "[LDClient] Stream received #{method} message: #{message.data}" }
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
