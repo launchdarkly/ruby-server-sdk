@@ -21,7 +21,7 @@ module LaunchDarkly
       #
       # @param opts [Hash] the configuration options
       # @option opts [Hash] :consul_config  an instance of `Diplomat::Configuration` to replace the default
-      #   Consul client configuration
+      #   Consul client configuration (note that this is exactly the same as modifying `Diplomat.configuration`)
       # @option opts [String] :prefix  namespace prefix to add to all keys used by LaunchDarkly
       # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
       # @option opts [Integer] :expiration_seconds (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching
