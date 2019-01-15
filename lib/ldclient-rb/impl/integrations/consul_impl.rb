@@ -22,15 +22,15 @@ module LaunchDarkly
 
             @prefix = (opts[:prefix] || LaunchDarkly::Integrations::Consul.default_prefix) + '/'
             @logger = opts[:logger] || Config.default_logger
-            @client = Diplomat::Kv.new(configuration: opts[:consul_config])
-            
+            Diplomat.configuration = opts[:consul_config] if !opts[:consul_config].nil?
             @logger.info("ConsulFeatureStore: using Consul host at #{Diplomat.configuration.url}")
           end
 
           def init_internal(all_data)
             # Start by reading the existing keys; we will later delete any of these that weren't in all_data.
-            unused_old_keys = set()
-            unused_old_keys.merge(@client.get(@prefix, keys: true, recurse: true))
+            unused_old_keys = Set.new
+            keys = Diplomat::Kv.get(@prefix, { keys: true, recurse: true }, :return)
+            unused_old_keys.merge(keys) if keys != ""
 
             ops = []
             num_items = 0
@@ -47,12 +47,12 @@ module LaunchDarkly
             end
 
             # Now delete any previously existing items whose keys were not in the current data
-            unused_old_keys.each do |tuple|
+            unused_old_keys.each do |key|
               ops.push({ 'KV' => { 'Verb' => 'delete', 'Key' => key } })
             end
     
             # Now set the special key that we check in initialized_internal?
-            ops.push({ 'KV' => { 'Verb' => 'set', 'Key' => key, 'Value' => '' } })
+            ops.push({ 'KV' => { 'Verb' => 'set', 'Key' => inited_key, 'Value' => '' } })
             
             ConsulUtil.batch_operations(ops)
 
@@ -60,55 +60,75 @@ module LaunchDarkly
           end
 
           def get_internal(kind, key)
-
-            resp = get_item_by_keys(namespace_for_kind(kind), key)
-            unmarshal_item(resp.item)
+            value = Diplomat::Kv.get(item_key(kind, key), {}, :return)  # :return means "don't throw an error if not found"
+            (value.nil? || value == "") ? nil : JSON.parse(value, symbolize_names: true)
           end
 
           def get_all_internal(kind)
             items_out = {}
-            
+            results = Diplomat::Kv.get(kind_key(kind), { recurse: true }, :return)
+            (results == "" ? [] : results).each do |result|
+              value = result[:value]
+              if !value.nil?
+                item = JSON.parse(value, symbolize_names: true)
+                items_out[item[:key].to_sym] = item
+              end
+            end
             items_out
           end
 
           def upsert_internal(kind, new_item)
-            
+            key = item_key(kind, new_item[:key])
+            json = new_item.to_json
+
+            # We will potentially keep retrying indefinitely until someone's write succeeds
+            while true
+              old_value = Diplomat::Kv.get(key, { decode_values: true }, :return)
+              if old_value.nil? || old_value == ""
+                mod_index = 0
+              else
+                puts("old_value = #{old_value}")
+                old_item = JSON.parse(old_value[0]["Value"], symbolize_names: true)
+                # Check whether the item is stale. If so, don't do the update (and return the existing item to
+                # FeatureStoreWrapper so it can be cached)
+                if old_item[:version] >= new_item[:version]
+                  return old_item
+                end
+                mod_index = old_value[0]["ModifyIndex"]
+              end
+
+              # Otherwise, try to write. We will do a compare-and-set operation, so the write will only succeed if
+              # the key's ModifyIndex is still equal to the previous value. If the previous ModifyIndex was zero,
+              # it means the key did not previously exist and the write will only succeed if it still doesn't exist.
+              success = Diplomat::Kv.put(key, json, cas: mod_index)
+              return new_item if success
+
+              # If we failed, retry the whole shebang
+              @logger.debug { "Concurrent modification detected, retrying" }
+            end
           end
 
           def initialized_internal?
-            
+            value = Diplomat::Kv.get(inited_key, {}, :return)
+            !value.nil? && value != ""
           end
 
           def stop
-            # There's no way to close the Consul client
+            # There's no Consul client instance to dispose of
           end
 
           private
 
           def item_key(kind, key)
-            kind_key(kind) + '/' + key
+            kind_key(kind) + key.to_s
           end
 
           def kind_key(kind)
-            @prefix + kind[:namespace]
+            @prefix + kind[:namespace] + '/'
           end
           
           def inited_key
             @prefix + '$inited'
-          end
-
-          def marshal_item(kind, item)
-            make_keys_hash(namespace_for_kind(kind), item[:key]).merge({
-              VERSION_ATTRIBUTE => item[:version],
-              ITEM_JSON_ATTRIBUTE => item.to_json
-            })
-          end
-
-          def unmarshal_item(item)
-            return nil if item.nil? || item.length == 0
-            json_attr = item[ITEM_JSON_ATTRIBUTE]
-            raise RuntimeError.new("DynamoDB map did not contain expected item string") if json_attr.nil?
-            JSON.parse(json_attr, symbolize_names: true)
           end
         end
 
@@ -117,10 +137,10 @@ module LaunchDarkly
           # Submits as many transactions as necessary to submit all of the given operations.
           # The ops array is consumed.
           #
-          def self.batch_write_requests(ops)
-            batch_size = 64 # Consul can only do this many at a time
+          def self.batch_operations(ops)
+            batch_size = 64  # Consul can only do this many at a time
             while true
-              chunk = requests.shift(batch_size)
+              chunk = ops.shift(batch_size)
               break if chunk.empty?
               Diplomat::Kv.txn(chunk)
             end
