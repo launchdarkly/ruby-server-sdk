@@ -87,7 +87,6 @@ module LaunchDarkly
               if old_value.nil? || old_value == ""
                 mod_index = 0
               else
-                puts("old_value = #{old_value}")
                 old_item = JSON.parse(old_value[0]["Value"], symbolize_names: true)
                 # Check whether the item is stale. If so, don't do the update (and return the existing item to
                 # FeatureStoreWrapper so it can be cached)
