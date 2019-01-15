@@ -108,8 +108,14 @@ module LaunchDarkly
           end
 
           def initialized_internal?
-            value = Diplomat::Kv.get(inited_key, {}, :return)
-            !value.nil? && value != ""
+            # Unfortunately we need to use exceptions here, instead of the :return parameter, because with
+            # :return there's no way to distinguish between a missing value and an empty string.
+            begin
+              Diplomat::Kv.get(inited_key, {})
+              true
+            rescue Diplomat::KeyNotFound
+              false
+            end
           end
 
           def stop
