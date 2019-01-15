@@ -1,7 +1,7 @@
 require "feature_store_spec_base"
 require "spec_helper"
 
-def create_in_memory_store()
+def create_in_memory_store(opts = {})
   LaunchDarkly::InMemoryFeatureStore.new
 end
 
