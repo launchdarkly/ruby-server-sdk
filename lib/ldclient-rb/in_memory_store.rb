@@ -25,8 +25,8 @@ module LaunchDarkly
 
   #
   # Default implementation of the LaunchDarkly client's feature store, using an in-memory
-  # cache.  This object holds feature flags and related data received from the
-  # streaming API.
+  # cache.  This object holds feature flags and related data received from LaunchDarkly.
+  # Database-backed implementations are available in {LaunchDarkly::Integrations}.
   #
   class InMemoryFeatureStore
     include LaunchDarkly::Interfaces::FeatureStore
