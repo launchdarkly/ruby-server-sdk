@@ -1,4 +1,3 @@
-require "concurrent/atomics"
 require "json"
 
 module LaunchDarkly
@@ -35,8 +34,6 @@ module LaunchDarkly
             @table_name = table_name
             @prefix = opts[:prefix]
             @logger = opts[:logger] || Config.default_logger
-
-            @stopped = Concurrent::AtomicBoolean.new(false)
 
             if !opts[:existing_client].nil?
               @client = opts[:existing_client]

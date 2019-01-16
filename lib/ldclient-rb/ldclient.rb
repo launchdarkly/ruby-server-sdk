@@ -18,10 +18,17 @@ module LaunchDarkly
     # configuration parameter can also supplied to specify advanced options,
     # but for most use cases, the default configuration is appropriate.
     #
+    # The client will immediately attempt to connect to LaunchDarkly and retrieve
+    # your feature flag data. If it cannot successfully do so within the time limit
+    # specified by `wait_for_sec`, the constructor will return a client that is in
+    # an uninitialized state. See {#initialized?} for more details.
+    #
     # @param sdk_key [String] the SDK key for your LaunchDarkly account
     # @param config [Config] an optional client configuration object
+    # @param wait_for_sec [Float] maximum time (in seconds) to wait for initialization
     #
     # @return [LDClient] The LaunchDarkly client instance
+    #
     def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
       @sdk_key = sdk_key
 
@@ -93,7 +100,7 @@ module LaunchDarkly
 
     #
     # Creates a hash string that can be used by the JavaScript SDK to identify a user.
-    # For more information, see ["Secure mode"](https://docs.launchdarkly.com/docs/js-sdk-reference#section-secure-mode).
+    # For more information, see [Secure mode](https://docs.launchdarkly.com/docs/js-sdk-reference#section-secure-mode).
     #
     # @param user [Hash] the user properties
     # @return [String] a hash string
@@ -102,44 +109,61 @@ module LaunchDarkly
       OpenSSL::HMAC.hexdigest("sha256", @sdk_key, user[:key].to_s)
     end
 
-    # Returns whether the client has been initialized and is ready to serve feature flag requests
+    #
+    # Returns whether the client has been initialized and is ready to serve feature flag requests.
+    #
+    # If this returns false, it means that the client did not succeed in connecting to
+    # LaunchDarkly within the time limit that you specified in the constructor. It could
+    # still succeed in connecting at a later time (on another thread), or it could have
+    # given up permanently (for instance, if your SDK key is invalid). In the meantime,
+    # any call to {#variation} or {#variation_detail} will behave as follows:
+    #
+    # 1. It will check whether the feature store already contains data (that is, you
+    # are using a database-backed store and it was populated by a previous run of this
+    # application). If so, it will use the last known feature flag data.
+    #
+    # 2. Failing that, it will return the value that you specified for the `default`
+    # parameter of {#variation} or {#variation_detail}.
+    #
     # @return [Boolean] true if the client has been initialized
+    #
     def initialized?
       @config.offline? || @config.use_ldd? || @data_source.initialized?
     end
 
     #
-    # Determines the variation of a feature flag to present to a user. At a minimum,
-    # the user hash should contain a `:key`.
+    # Determines the variation of a feature flag to present to a user.
+    #
+    # At a minimum, the user hash should contain a `:key`, which should be the unique
+    # identifier for your user (or, for an anonymous user, a session identifier or
+    # cookie).
+    #
+    # Other supported user attributes include IP address, country code, and an arbitrary hash of
+    # custom attributes. For more about the supported user properties and how they work in
+    # LaunchDarkly, see [Targeting users](https://docs.launchdarkly.com/docs/targeting-users).
+    # 
+    # The optional `:privateAttributeNames` user property allows you to specify a list of
+    # attribute names that should not be sent back to LaunchDarkly.
+    # [Private attributes](https://docs.launchdarkly.com/docs/private-user-attributes)
+    # can also be configured globally in {Config}.
     #
     # @example Basic user hash
-    #      {key: "user@example.com"}
-    #
-    # For authenticated users, the `:key` should be the unique identifier for
-    # your user. For anonymous users, the `:key` should be a session identifier
-    # or cookie. In either case, the only requirement is that the key
-    # is unique to a user.
-    #
-    # You can also pass IP addresses and country codes in the user hash.
+    #   {key: "my-user-id"}
     #
     # @example More complete user hash
-    #   {key: "user@example.com", ip: "127.0.0.1", country: "US"}
+    #   {key: "my-user-id", ip: "127.0.0.1", country: "US", custom: {customer_rank: 1000}}
     #
-    # The user hash can contain arbitrary custom attributes stored in a `:custom` sub-hash:
-    #
-    # @example A user hash with custom attributes
-    #   {key: "user@example.com", custom: {customer_rank: 1000, groups: ["google", "microsoft"]}}
-    #
-    # Attribute values in the custom hash can be integers, booleans, strings, or
-    #   lists of integers, booleans, or strings.
+    # @example User with a private attribute
+    #   {key: "my-user-id", email: "email@example.com", privateAttributeNames: ["email"]}
     #
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
     # @param user [Hash] a hash containing parameters for the end user requesting the flag
-    # @param default the default value of the flag
+    # @param default the default value of the flag; this is used if there is an error
+    #   condition making it impossible to find or evaluate the flag
     #
-    # @return the variation to show the user, or the
-    #   default value if there's an an error
+    # @return the variation to show the user, or the default value if there's an an error
+    #
     def variation(key, user, default)
       evaluate_internal(key, user, default, false).value
     end
@@ -156,10 +180,14 @@ module LaunchDarkly
     # Calling `variation_detail` instead of `variation` also causes the "reason" data to
     # be included in analytics events, if you are capturing detailed event data for this flag.
     #
+    # For more information, see the reference guide on
+    # [Evaluation reasons](https://docs.launchdarkly.com/v2.0/docs/evaluation-reasons).
+    #
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
     # @param user [Hash] a hash containing parameters for the end user requesting the flag
-    # @param default the default value of the flag
+    # @param default the default value of the flag; this is used if there is an error
+    #   condition making it impossible to find or evaluate the flag
     #
     # @return [EvaluationDetail] an object describing the result
     #
@@ -206,9 +234,11 @@ module LaunchDarkly
     end
 
     #
-    # Returns all feature flag values for the given user. This method is deprecated - please use
-    # {#all_flags_state} instead. Current versions of the client-side SDK will not generate analytics
-    # events correctly if you pass the result of `all_flags`.
+    # Returns all feature flag values for the given user.
+    #
+    # @deprecated Please use {#all_flags_state} instead. Current versions of the
+    #   client-side SDK will not generate analytics events correctly if you pass the
+    #   result of `all_flags`.
     #
     # @param user [Hash] The end user requesting the feature flags
     # @return [Hash] a hash of feature flag keys to values

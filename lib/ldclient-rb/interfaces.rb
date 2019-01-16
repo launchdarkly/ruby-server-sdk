@@ -17,9 +17,10 @@ module LaunchDarkly
     # `:deleted`, a boolean (optional, defaults to false) that if true means this is a
     # placeholder for a deleted entity.
     #
-    # Examples of a "kind" are feature flags and segments; each of these is associated with an
-    # object such as {LaunchDarkly::FEATURES} and {LaunchDarkly::SEGMENTS}. The "kind" objects are
-    # hashes with a single property, `:namespace`, which is a short string unique to that kind.
+    # To represent the different kinds of objects that can be stored, such as feature flags and
+    # segments, the SDK will provide a "kind" object; this is a hash with a single property,
+    # `:namespace`, which is a short string unique to that kind. This string can be used as a
+    # collection name or a key prefix.
     #
     # The default implementation is {LaunchDarkly::InMemoryFeatureStore}. Several implementations
     # that use databases can be found in {LaunchDarkly::Integrations}. If you want to write a new
