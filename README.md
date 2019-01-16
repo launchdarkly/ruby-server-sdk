@@ -82,7 +82,8 @@ Note that this gem will automatically switch to using the Rails logger it is det
 
 
 HTTPS proxy
-------------
+-----------
+
 The Ruby SDK uses Faraday and Socketry to handle its network traffic. Both of these provide built-in support for the use of an  HTTPS proxy. If the HTTPS_PROXY environment variable is present then the SDK will proxy all network requests through the URL provided.
 
 How to set the HTTPS_PROXY environment variable on Mac/Linux systems:
@@ -124,10 +125,11 @@ end
 Database integrations
 ---------------------
 
-Feature flag data can be kept in a persistent store using Redis or DynamoDB. These adapters are implemented in the `LaunchDarkly::Integrations::Redis` and `LaunchDarkly::Integrations::DynamoDB` modules; to use them, call the `new_feature_store` method in the module, and put the returned object in the `feature_store` property of your client configuration. See the [source code](https://github.com/launchdarkly/ruby-client-private/tree/master/lib/ldclient-rb/integrations) and the [SDK reference guide](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store) for more information.
+Feature flag data can be kept in a persistent store using Redis, DynamoDB, or Consul. These adapters are implemented in the `LaunchDarkly::Integrations::Redis`, `LaunchDarkly::Integrations::DynamoDB`, and `LaunchDarkly::Integrations::Consul` modules; to use them, call the `new_feature_store` method in the module, and put the returned object in the `feature_store` property of your client configuration. See the [API documentation](https://www.rubydoc.info/gems/ldclient-rb/LaunchDarkly/Integrations) and the [SDK reference guide](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store) for more information.
 
 Using flag data from a file
 ---------------------------
+
 For testing purposes, the SDK can be made to read feature flag state from a file or files instead of connecting to LaunchDarkly. See [`file_data_source.rb`](https://github.com/launchdarkly/ruby-client/blob/master/lib/ldclient-rb/file_data_source.rb) for more details.
 
 Learn more
@@ -146,7 +148,7 @@ Contributing
 See [Contributing](https://github.com/launchdarkly/ruby-client/blob/master/CONTRIBUTING.md)
 
 About LaunchDarkly
------------
+------------------
 
 * LaunchDarkly is a continuous delivery platform that provides feature flags as a service and allows developers to iterate quickly and safely. We allow you to easily flag your features and manage them from the LaunchDarkly dashboard.  With LaunchDarkly, you can:
     * Roll out a new feature to a subset of your users (like a group of users who opt-in to a beta tester group), gathering feedback and bug reports from real-world use cases.
