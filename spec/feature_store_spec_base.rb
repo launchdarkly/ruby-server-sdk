@@ -112,7 +112,8 @@ shared_examples "feature_store" do |create_store_method|
 
   it "stores Unicode data correctly" do
     flag = {
-      key: "tęst-feåtūre-flæg😺",
+      key: "my-fancy-flag",
+      name: "Tęst Feåtūre Flæg😺",
       version: 1,
       deleted: false
     }
