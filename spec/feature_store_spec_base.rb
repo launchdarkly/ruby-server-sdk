@@ -197,4 +197,15 @@ shared_examples "feature_store" do |create_store_method, clear_data_method|
       expect(store.get(things_kind, key1)).to eq thing1
     end
   end
+
+  it "stores Unicode data correctly" do
+    flag = {
+      key: "my-fancy-flag",
+      name: "Tęst Feåtūre Flæg😺",
+      version: 1,
+      deleted: false
+    }
+    store.upsert(LaunchDarkly::FEATURES, flag)
+    expect(store.get(LaunchDarkly::FEATURES, flag[:key])).to eq flag
+  end
 end
