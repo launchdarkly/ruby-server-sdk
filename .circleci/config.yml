@@ -33,30 +33,35 @@ jobs:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.2.10-jessie
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
   test-2.3:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.3.7-jessie
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
   test-2.4:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.4.5-stretch
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
   test-2.5:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.5.3-stretch
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
   test-jruby-9.2:
     <<: *ruby-docker-template
     docker:
       - image: circleci/jruby:9-jdk
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
 
@@ -95,7 +100,18 @@ jobs:
               mv Gemfile.lock "Gemfile.lock.$i"
             done
       - run:
+          name: start DynamoDB
           command: docker run -p 8000:8000 amazon/dynamodb-local
+          background: true
+      - run:
+          name: download Consul
+          command: wget https://releases.hashicorp.com/consul/0.8.0/consul_0.8.0_linux_amd64.zip
+      - run:
+          name: extract Consul
+          command: unzip consul_0.8.0_linux_amd64.zip
+      - run:
+          name: start Consul
+          command: ./consul agent -dev
           background: true
       - run:
           name: run tests for all versions

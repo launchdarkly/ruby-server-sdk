@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/store_client_wrapper"
 require "concurrent/atomics"
 require "digest/sha1"
 require "logger"
@@ -30,8 +31,15 @@ module LaunchDarkly
     #
     def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
       @sdk_key = sdk_key
-      @config = config
-      @store = config.feature_store
+
+      # We need to wrap the feature store object with a FeatureStoreClientWrapper in order to add
+      # some necessary logic around updates. Unfortunately, we have code elsewhere that accesses
+      # the feature store through the Config object, so we need to make a new Config that uses
+      # the wrapped store.
+      @store = Impl::FeatureStoreClientWrapper.new(config.feature_store)
+      updated_config = config.clone
+      updated_config.instance_variable_set(:@feature_store, @store)
+      @config = updated_config
 
       if @config.offline? || !@config.send_events
         @event_processor = NullEventProcessor.new
@@ -46,7 +54,7 @@ module LaunchDarkly
 
       data_source_or_factory = @config.data_source || self.method(:create_default_data_source)
       if data_source_or_factory.respond_to? :call
-        @data_source = data_source_or_factory.call(sdk_key, config)
+        @data_source = data_source_or_factory.call(sdk_key, @config)
       else
         @data_source = data_source_or_factory
       end

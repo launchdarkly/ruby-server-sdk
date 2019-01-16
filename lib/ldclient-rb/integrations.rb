@@ -1,3 +1,4 @@
+require "ldclient-rb/integrations/consul"
 require "ldclient-rb/integrations/dynamodb"
 require "ldclient-rb/integrations/redis"
 require "ldclient-rb/integrations/util/store_wrapper"
@@ -7,6 +8,17 @@ module LaunchDarkly
   # Tools for connecting the LaunchDarkly client to other software.
   #
   module Integrations
+    #
+    # Integration with [Consul](https://www.consul.io/).
+    #
+    # Note that in order to use this integration, you must first install the gem `diplomat`.
+    #
+    # @since 5.5.0
+    #
+    module Consul
+      # code is in ldclient-rb/impl/integrations/consul_impl
+    end
+    
     #
     # Integration with [DynamoDB](https://aws.amazon.com/dynamodb/).
     #

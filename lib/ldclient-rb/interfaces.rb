@@ -34,6 +34,11 @@ module LaunchDarkly
       # date-- there is no need to perform individual version comparisons between the existing
       # objects and the supplied features.
       #
+      # If possible, the store should update the entire data set atomically. If that is not possible,
+      # it should iterate through the outer hash and then the inner hash using the existing iteration
+      # order of those hashes (the SDK will ensure that the items were inserted into the hashes in
+      # the correct order), storing each item, and then delete any leftover items at the very end.
+      #
       # @param all_data [Hash]  a hash where each key is one of the data kind objects, and each
       #   value is in turn a hash of string keys to entities
       # @return [void]

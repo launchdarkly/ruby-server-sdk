@@ -122,7 +122,7 @@ set HTTPS_PROXY=http://user:pass@web-proxy.domain.com:8080
 Database integrations
 ---------------------
 
-Feature flag data can be kept in a persistent store using Redis or DynamoDB. These adapters are implemented in the `LaunchDarkly::Integrations::Redis` and `LaunchDarkly::Integrations::DynamoDB` modules; to use them, call the `new_feature_store` method in the module, and put the returned object in the `feature_store` property of your client configuration. See the `LaunchDarkly::Integrations` module and the [SDK reference guide](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store) for more information.
+Feature flag data can be kept in a persistent store using Redis, DynamoDB, or Consul. These adapters are implemented in the `LaunchDarkly::Integrations::Redis`, `LaunchDarkly::Integrations::DynamoDB`, and `LaunchDarkly::Integrations::Consul` modules; to use them, call the `new_feature_store` method in the module, and put the returned object in the `feature_store` property of your client configuration. See the [API documentation](https://www.rubydoc.info/gems/ldclient-rb/LaunchDarkly/Integrations) and the [SDK reference guide](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store) for more information.
 
 Using flag data from a file
 ---------------------------
