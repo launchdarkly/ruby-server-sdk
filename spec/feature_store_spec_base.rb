@@ -205,7 +205,9 @@ shared_examples "feature_store" do |create_store_method, clear_data_method|
       version: 1,
       deleted: false
     }
-    store.upsert(LaunchDarkly::FEATURES, flag)
-    expect(store.get(LaunchDarkly::FEATURES, flag[:key])).to eq flag
+    with_inited_store([]) do |store|
+      store.upsert(LaunchDarkly::FEATURES, flag)
+      expect(store.get(LaunchDarkly::FEATURES, flag[:key])).to eq flag
+    end
   end
 end
