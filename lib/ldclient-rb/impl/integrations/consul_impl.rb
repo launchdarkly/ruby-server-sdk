@@ -23,6 +23,7 @@ module LaunchDarkly
             @prefix = (opts[:prefix] || LaunchDarkly::Integrations::Consul.default_prefix) + '/'
             @logger = opts[:logger] || Config.default_logger
             Diplomat.configuration = opts[:consul_config] if !opts[:consul_config].nil?
+            Diplomat.configuration.url = opts[:url] if !opts[:url].nil?
             @logger.info("ConsulFeatureStore: using Consul host at #{Diplomat.configuration.url}")
           end
 

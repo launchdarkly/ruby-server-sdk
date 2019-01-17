@@ -58,7 +58,7 @@ module LaunchDarkly
         conn.on_event { |event| process_message(event) }
         conn.on_error { |err|
           case err
-          when SSE::Errors::HTTPError
+          when SSE::Errors::HTTPStatusError
             status = err.status
             message = Util.http_error_message(status, "streaming connection", "will retry")
             @config.logger.error { "[LDClient] #{message}" }
