@@ -15,7 +15,7 @@ $dynamodb_opts = {
   endpoint: $endpoint
 }
 
-$base_opts = {
+$ddb_base_opts = {
   dynamodb_opts: $dynamodb_opts,
   prefix: $my_prefix,
   logger: $null_log
@@ -23,12 +23,35 @@ $base_opts = {
 
 def create_dynamodb_store(opts = {})
   LaunchDarkly::Integrations::DynamoDB::new_feature_store($table_name,
-    opts.merge($base_opts).merge({ expiration: 60 }))
+    $ddb_base_opts.merge(opts).merge({ expiration: 60 }))
 end
 
 def create_dynamodb_store_uncached(opts = {})
   LaunchDarkly::Integrations::DynamoDB::new_feature_store($table_name,
-    opts.merge($base_opts).merge({ expiration: 0 }))
+    $ddb_base_opts.merge(opts).merge({ expiration: 0 }))
+end
+
+def clear_all_data
+  client = create_test_client
+  items_to_delete = []
+  req = {
+    table_name: $table_name,
+    projection_expression: '#namespace, #key',
+    expression_attribute_names: {
+      '#namespace' => 'namespace',
+      '#key' => 'key'
+    }
+  }
+  while true
+    resp = client.scan(req)
+    items_to_delete = items_to_delete + resp.items
+    break if resp.last_evaluated_key.nil? || resp.last_evaluated_key.length == 0
+    req.exclusive_start_key = resp.last_evaluated_key
+  end
+  requests = items_to_delete.map do |item|
+    { delete_request: { key: item } }
+  end
+  LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBUtil.batch_write_requests(client, $table_name, requests)
 end
 
 def create_table_if_necessary
@@ -72,10 +95,10 @@ describe "DynamoDB feature store" do
   create_table_if_necessary
 
   context "with local cache" do
-    include_examples "feature_store", method(:create_dynamodb_store)
+    include_examples "feature_store", method(:create_dynamodb_store), method(:clear_all_data)
   end
 
   context "without local cache" do
-    include_examples "feature_store", method(:create_dynamodb_store_uncached)
+    include_examples "feature_store", method(:create_dynamodb_store_uncached), method(:clear_all_data)
   end
 end
