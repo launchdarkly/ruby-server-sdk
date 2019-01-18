@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.2] - 2019-01-18
+### Fixed:
+- Like 5.5.1, this release contains only documentation fixes. Implementation classes that are not part of the supported API are now hidden from the [generated documentation](https://www.rubydoc.info/gems/ldclient-rb).
+
+
 ## [5.5.1] - 2019-01-17
 ### Fixed:
 - Fixed several documentation comments that had the wrong parameter names. There are no other changes in this release; it's only to correct the documentation.
