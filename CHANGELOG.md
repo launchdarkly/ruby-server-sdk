@@ -2,6 +2,25 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.0] - 2019-01-17
+### Added:
+- It is now possible to use Consul or DynamoDB as a persistent feature store, similar to the existing Redis integration. See the `LaunchDarkly::Integrations::Consul` and `LaunchDarkly::Integrations::DynamoDB` modules, and the reference guide [Using a persistent feature store](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+- There is now a `LaunchDarkly::Integrations::Redis` module, which is the preferred method for creating a Redis feature store.
+- All of the database feature stores now support local caching not only for individual feature flag queries, but also for `all_flags_state`.
+- The `Config` property `data_source` is the new name for `update_processor` and `update_processor_factory`.
+
+### Changed:
+- The implementation of the SSE protocol for streaming has been moved into a separate gem, [`ld-eventsource`](https://github.com/launchdarkly/ruby-eventsource). This has no effect on streaming functionality.
+
+### Fixed:
+- Added or corrected a large number of documentation comments. All API classes and methods are now documented, and internal implementation details have been hidden from the documentation. You can view the latest documentation on [RubyDoc](https://www.rubydoc.info/gems/ldclient-rb).
+- Fixed a problem in the Redis feature store that would only happen under unlikely circumstances: trying to evaluate a flag when the LaunchDarkly client had not yet been fully initialized and the store did not yet have data in it, and then trying again when the client was still not ready but the store _did_ have data (presumably put there by another process). Previously, the second attempt would fail.
+- In polling mode, the SDK did not correctly handle non-ASCII Unicode characters in feature flag data. ([#90](https://github.com/launchdarkly/ruby-client/issues/90))
+
+### Deprecated:
+- `RedisFeatureStore.new`. This implementation class may be changed or moved in the future; use `LaunchDarkly::Integrations::Redis::new_feature_store`.
+- `Config.update_processor` and `Config.update_processor_factory`; use `Config.data_source`.
+
 ## [5.4.3] - 2019-01-11
 ### Changed:
 - The SDK is now compatible with `net-http-persistent` 3.x. (Thanks, [CodingAnarchy](https://github.com/launchdarkly/ruby-client/pull/113)!)
