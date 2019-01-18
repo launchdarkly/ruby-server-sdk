@@ -25,7 +25,7 @@ module LaunchDarkly
       # @option opts [String] :url   shortcut for setting the `url` property of the Consul client configuration
       # @option opts [String] :prefix  namespace prefix to add to all keys used by LaunchDarkly
       # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
-      # @option opts [Integer] :expiration_seconds (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching
+      # @option opts [Integer] :expiration (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching
       # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #

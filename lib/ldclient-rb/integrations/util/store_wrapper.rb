@@ -23,7 +23,7 @@ module LaunchDarkly
         #
         # @param core [Object]  an object that implements the {FeatureStoreCore} methods
         # @param opts [Hash]  a hash that may include cache-related options; all others will be ignored
-        # @option opts [Float] :expiration_seconds (15)  cache TTL; zero means no caching
+        # @option opts [Float] :expiration (15)  cache TTL; zero means no caching
         # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
         #
         def initialize(core, opts)

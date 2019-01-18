@@ -34,7 +34,7 @@ module LaunchDarkly
       # @option opts [Object] :existing_client  an already-constructed DynamoDB client for the feature store to use
       # @option opts [String] :prefix  namespace prefix to add to all keys used by LaunchDarkly
       # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
-      # @option opts [Integer] :expiration_seconds (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching
+      # @option opts [Integer] :expiration (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching
       # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
