@@ -6,20 +6,31 @@ module LaunchDarkly
   # we add another storable data type in the future, as long as it follows the same pattern
   # (having "key", "version", and "deleted" properties), we only need to add a corresponding
   # constant here and the existing store should be able to handle it.
+  #
+  # The :priority and :get_dependency_keys properties are used by FeatureStoreDataSetSorter
+  # to ensure data consistency during non-atomic updates.
+
+  # @private
   FEATURES = {
-    namespace: "features"
+    namespace: "features",
+    priority: 1,  # that is, features should be stored after segments
+    get_dependency_keys: lambda { |flag| (flag[:prerequisites] || []).map { |p| p[:key] } }
   }.freeze
 
+  # @private
   SEGMENTS = {
-    namespace: "segments"
+    namespace: "segments",
+    priority: 0
   }.freeze
 
   #
   # Default implementation of the LaunchDarkly client's feature store, using an in-memory
-  # cache.  This object holds feature flags and related data received from the
-  # streaming API.
+  # cache.  This object holds feature flags and related data received from LaunchDarkly.
+  # Database-backed implementations are available in {LaunchDarkly::Integrations}.
   #
   class InMemoryFeatureStore
+    include LaunchDarkly::Interfaces::FeatureStore
+
     def initialize
       @items = Hash.new
       @lock = Concurrent::ReadWriteLock.new

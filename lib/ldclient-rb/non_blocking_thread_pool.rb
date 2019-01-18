@@ -3,10 +3,10 @@ require "concurrent/atomics"
 require "concurrent/executors"
 require "thread"
 
-# Simple wrapper for a FixedThreadPool that rejects new jobs if all the threads are busy, rather
-# than blocking. Also provides a way to wait for all jobs to finish without shutting down.
-
 module LaunchDarkly
+  # Simple wrapper for a FixedThreadPool that rejects new jobs if all the threads are busy, rather
+  # than blocking. Also provides a way to wait for all jobs to finish without shutting down.
+  # @private
   class NonBlockingThreadPool
     def initialize(capacity)
       @capacity = capacity

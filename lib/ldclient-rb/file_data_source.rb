@@ -7,12 +7,15 @@ module LaunchDarkly
   # To avoid pulling in 'listen' and its transitive dependencies for people who aren't using the
   # file data source or who don't need auto-updating, we only enable auto-update if the 'listen'
   # gem has been provided by the host app.
+  # @private
   @@have_listen = false
   begin
     require 'listen'
     @@have_listen = true
   rescue LoadError
   end
+
+  # @private
   def self.have_listen?
     @@have_listen
   end
@@ -22,30 +25,32 @@ module LaunchDarkly
   # used in a test environment, to operate using a predetermined feature flag state without an
   # actual LaunchDarkly connection.
   #
-  # To use this component, call `FileDataSource.factory`, and store its return value in the
-  # `update_processor_factory` property of your LaunchDarkly client configuration. In the options
+  # To use this component, call {FileDataSource#factory}, and store its return value in the
+  # {Config#data_source} property of your LaunchDarkly client configuration. In the options
   # to `factory`, set `paths` to the file path(s) of your data file(s):
   #
-  #     factory = FileDataSource.factory(paths: [ myFilePath ])
-  #     config = LaunchDarkly::Config.new(update_processor_factory: factory)
+  #     file_source = FileDataSource.factory(paths: [ myFilePath ])
+  #     config = LaunchDarkly::Config.new(data_source: file_source)
   #
   # This will cause the client not to connect to LaunchDarkly to get feature flags. The
   # client may still make network connections to send analytics events, unless you have disabled
-  # this with Config.send_events or Config.offline.
+  # this with {Config#send_events} or {Config#offline?}.
   #
   # Flag data files can be either JSON or YAML. They contain an object with three possible
   # properties:
   #
-  # - "flags": Feature flag definitions.
-  # - "flagValues": Simplified feature flags that contain only a value.
-  # - "segments": User segment definitions.
+  # - `flags`: Feature flag definitions.
+  # - `flagValues`: Simplified feature flags that contain only a value.
+  # - `segments`: User segment definitions.
   #
-  # The format of the data in "flags" and "segments" is defined by the LaunchDarkly application
+  # The format of the data in `flags` and `segments` is defined by the LaunchDarkly application
   # and is subject to change. Rather than trying to construct these objects yourself, it is simpler
   # to request existing flags directly from the LaunchDarkly server in JSON format, and use this
   # output as the starting point for your file. In Linux you would do this:
   #
-  #    curl -H "Authorization: {your sdk key}" https://app.launchdarkly.com/sdk/latest-all
+  # ```
+  #     curl -H "Authorization: YOUR_SDK_KEY" https://app.launchdarkly.com/sdk/latest-all
+  # ```
   #
   # The output will look something like this (but with many more properties):
   #
@@ -108,14 +113,14 @@ module LaunchDarkly
     # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
     #   file modifications - used only if auto_update is true, and if the native file-watching
     #   mechanism from 'listen' is not being used. The default value is 1 second.
+    # @return an object that can be stored in {Config#data_source}
     #
     def self.factory(options={})
-      return Proc.new do |sdk_key, config|
-        FileDataSourceImpl.new(config.feature_store, config.logger, options)
-      end
+      return lambda { |sdk_key, config| FileDataSourceImpl.new(config.feature_store, config.logger, options) }
     end
   end
 
+  # @private
   class FileDataSourceImpl
     def initialize(feature_store, logger, options={})
       @feature_store = feature_store

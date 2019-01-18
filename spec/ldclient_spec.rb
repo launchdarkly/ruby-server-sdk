@@ -7,8 +7,8 @@ describe LaunchDarkly::LDClient do
   let(:offline_client) do
     subject.new("secret", offline_config)
   end
-  let(:update_processor) { LaunchDarkly::NullUpdateProcessor.new }
-  let(:config) { LaunchDarkly::Config.new({send_events: false, update_processor: update_processor}) }
+  let(:null_data) { LaunchDarkly::NullUpdateProcessor.new }
+  let(:config) { LaunchDarkly::Config.new({send_events: false, data_source: null_data}) }
   let(:client) do
     subject.new("secret", config)
   end
@@ -357,7 +357,7 @@ describe LaunchDarkly::LDClient do
   end
 
   describe 'with send_events: false' do
-    let(:config) { LaunchDarkly::Config.new({offline: true, send_events: false, update_processor: update_processor}) }
+    let(:config) { LaunchDarkly::Config.new({offline: true, send_events: false, data_source: null_data}) }
     let(:client) { subject.new("secret", config) }
 
     it "uses a NullEventProcessor" do
@@ -367,12 +367,91 @@ describe LaunchDarkly::LDClient do
   end
 
   describe 'with send_events: true' do
-    let(:config_with_events) { LaunchDarkly::Config.new({offline: false, send_events: true, update_processor: update_processor}) }
+    let(:config_with_events) { LaunchDarkly::Config.new({offline: false, send_events: true, data_source: null_data}) }
     let(:client_with_events) { subject.new("secret", config_with_events) }
 
     it "does not use a NullEventProcessor" do
       ep = client_with_events.instance_variable_get(:@event_processor)
       expect(ep).not_to be_a(LaunchDarkly::NullEventProcessor)
+    end
+  end
+
+  describe "feature store data ordering" do
+    let(:dependency_ordering_test_data) {
+      {
+        LaunchDarkly::FEATURES => {
+          a: { key: "a", prerequisites: [ { key: "b" }, { key: "c" } ] },
+          b: { key: "b", prerequisites: [ { key: "c" }, { key: "e" } ] },
+          c: { key: "c" },
+          d: { key: "d" },
+          e: { key: "e" },
+          f: { key: "f" }
+        },
+        LaunchDarkly::SEGMENTS => {
+          o: { key: "o" }
+        }
+      }
+    }
+
+    class FakeFeatureStore
+      attr_reader :received_data
+
+      def init(all_data)
+        @received_data = all_data
+      end
+    end
+
+    class FakeUpdateProcessor
+      def initialize(store, data)
+        @store = store
+        @data = data
+      end
+
+      def start
+        @store.init(@data)
+        ev = Concurrent::Event.new
+        ev.set
+        ev
+      end
+
+      def stop
+      end
+
+      def initialized?
+        true
+      end
+    end
+
+    it "passes data set to feature store in correct order on init" do
+      store = FakeFeatureStore.new
+      data_source_factory = lambda { |sdk_key, config| FakeUpdateProcessor.new(config.feature_store,
+        dependency_ordering_test_data) }
+      config = LaunchDarkly::Config.new(send_events: false, feature_store: store, data_source: data_source_factory)
+      client = subject.new("secret", config)
+
+      data = store.received_data
+      expect(data).not_to be_nil
+      expect(data.count).to eq(2)
+      
+      # Segments should always come first
+      expect(data.keys[0]).to be(LaunchDarkly::SEGMENTS)
+      expect(data.values[0].count).to eq(dependency_ordering_test_data[LaunchDarkly::SEGMENTS].count)
+
+      # Features should be ordered so that a flag always appears after its prerequisites, if any
+      expect(data.keys[1]).to be(LaunchDarkly::FEATURES)
+      flags_map = data.values[1]
+      flags_list = flags_map.values
+      expect(flags_list.count).to eq(dependency_ordering_test_data[LaunchDarkly::FEATURES].count)
+      flags_list.each_with_index do |item, item_index|
+        (item[:prerequisites] || []).each do |prereq|
+          prereq = flags_map[prereq[:key].to_sym]
+          prereq_index = flags_list.index(prereq)
+          if prereq_index > item_index
+            all_keys = (flags_list.map { |f| f[:key] }).join(", ")
+            raise "#{item[:key]} depends on #{prereq[:key]}, but #{item[:key]} was listed first; keys in order are [#{all_keys}]"
+          end
+        end
+      end
     end
   end
 end

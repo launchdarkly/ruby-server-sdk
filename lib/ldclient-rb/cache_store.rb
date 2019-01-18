@@ -7,6 +7,7 @@ module LaunchDarkly
   #
   # @see https://github.com/plataformatec/faraday-http-cache
   # @see https://github.com/ruby-concurrency
+  # @private
   #
   class ThreadSafeMemoryStore
     #

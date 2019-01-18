@@ -1,5 +1,6 @@
 
 module LaunchDarkly
+  # @private
   module Util
     def self.log_exception(logger, message, exc)
       logger.error { "[LDClient] #{message}: #{exc.inspect}" }

@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.summary       = "LaunchDarkly SDK for Ruby"
   spec.description   = "Official LaunchDarkly SDK for Ruby"
   spec.homepage      = "https://github.com/launchdarkly/ruby-client"
-  spec.license       = "Apache 2.0"
+  spec.license       = "Apache-2.0"
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
@@ -21,9 +21,11 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.extensions    = 'ext/mkrf_conf.rb'
 
+  spec.add_development_dependency "aws-sdk-dynamodb", "~> 1.18"
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rspec", "~> 3.2"
   spec.add_development_dependency "codeclimate-test-reporter", "~> 0"
+  spec.add_development_dependency "diplomat", ">= 2.0.2"
   spec.add_development_dependency "redis", "~> 3.3.5"
   spec.add_development_dependency "connection_pool", ">= 2.1.2"
   spec.add_development_dependency "rake", "~> 10.0"
@@ -37,6 +39,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "semantic", "~> 1.6"
   spec.add_runtime_dependency "net-http-persistent", [">= 2.9", "< 4.0"]
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0"
-  spec.add_runtime_dependency "http_tools", '~> 0.4.5'
-  spec.add_runtime_dependency "socketry", "~> 0.5.1"
+  spec.add_runtime_dependency "ld-eventsource", '~> 1.0'
 end

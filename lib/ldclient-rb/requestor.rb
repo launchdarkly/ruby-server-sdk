@@ -3,7 +3,7 @@ require "net/http/persistent"
 require "faraday/http_cache"
 
 module LaunchDarkly
-
+  # @private
   class UnexpectedResponseError < StandardError
     def initialize(status)
       @status = status
@@ -14,12 +14,13 @@ module LaunchDarkly
     end
   end
 
+  # @private
   class Requestor
     def initialize(sdk_key, config)
       @sdk_key = sdk_key
       @config = config
       @client = Faraday.new do |builder|
-        builder.use :http_cache, store: @config.cache_store
+        builder.use :http_cache, store: @config.cache_store, serializer: Marshal
         
         builder.adapter :net_http_persistent
       end

@@ -15,37 +15,37 @@ This version of the LaunchDarkly SDK has a minimum Ruby version of 2.2.6, or 9.1
 Quick setup
 -----------
 
-0. Install the Ruby SDK with `gem`
+1. Install the Ruby SDK with `gem`
 
-```shell
+    ```shell
 gem install ldclient-rb
 ```
 
-1. Require the LaunchDarkly client:
+2. Require the LaunchDarkly client:
 
-```ruby
+    ```ruby
 require 'ldclient-rb'
 ```
 
-2. Create a new LDClient with your SDK key:
+3. Create a new LDClient with your SDK key:
 
-```ruby
+    ```ruby
 client = LaunchDarkly::LDClient.new("your_sdk_key")
 ```
 
 ### Ruby on Rails
 
-0.  Add `gem 'ldclient-rb'` to your Gemfile and `bundle install`
+1. Add `gem 'ldclient-rb'` to your Gemfile and `bundle install`
 
-1.  Initialize the launchdarkly client in `config/initializers/launchdarkly.rb`:
+2. Initialize the launchdarkly client in `config/initializers/launchdarkly.rb`:
 
-```ruby
+    ```ruby
 Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_sdk_key")
 ```
 
-2.  You may want to include a function in your ApplicationController
+3.  You may want to include a function in your ApplicationController
 
-```ruby
+    ```ruby
     def launchdarkly_settings
       if current_user.present?
         {
@@ -72,45 +72,19 @@ Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_sdk_key")
     end
 ```
 
-3.  In your controllers, access the client using
+4. In your controllers, access the client using
 
-```ruby
+    ```ruby
 Rails.application.config.ld_client.variation('your.flag.key', launchdarkly_settings, false)
 ```
 
 Note that this gem will automatically switch to using the Rails logger it is detected.
 
 
-HTTPS proxy
-------------
-The Ruby SDK uses Faraday and Socketry to handle its network traffic. Both of these provide built-in support for the use of an  HTTPS proxy. If the HTTPS_PROXY environment variable is present then the SDK will proxy all network requests through the URL provided.
-
-How to set the HTTPS_PROXY environment variable on Mac/Linux systems:
-```
-export HTTPS_PROXY=https://web-proxy.domain.com:8080
-```
-
-
-How to set the HTTPS_PROXY environment variable on Windows systems:
-```
-set HTTPS_PROXY=https://web-proxy.domain.com:8080
-```
-
-
-If your proxy requires authentication then you can prefix the URN with your login information:
-```
-export HTTPS_PROXY=http://user:pass@web-proxy.domain.com:8080
-```
-or
-```
-set HTTPS_PROXY=http://user:pass@web-proxy.domain.com:8080
-```
-
-
 Your first feature flag
 -----------------------
 
-1. Create a new feature flag on your [dashboard](https://app.launchdarkly.com)
+1. Create a new feature flag on your [dashboard](https://app.launchdarkly.com).
 2. In your application code, use the feature's key to check whether the flag is on for each user:
 
 ```ruby
@@ -121,14 +95,46 @@ else
 end
 ```
 
+HTTPS proxy
+-----------
+
+The Ruby SDK uses Faraday and Socketry to handle its network traffic. Both of these provide built-in support for the use of an  HTTPS proxy. If the HTTPS_PROXY environment variable is present then the SDK will proxy all network requests through the URL provided. (HTTP_PROXY is not used because all LaunchDarkly services require HTTPS.)
+
+How to set the HTTPS_PROXY environment variable on Mac/Linux systems:
+```
+export HTTPS_PROXY=https://web-proxy.domain.com:8080
+```
+
+How to set the HTTPS_PROXY environment variable on Windows systems:
+```
+set HTTPS_PROXY=https://web-proxy.domain.com:8080
+```
+
+If your proxy requires authentication then you can prefix the URN with your login information:
+```
+export HTTPS_PROXY=http://user:pass@web-proxy.domain.com:8080
+```
+or
+```
+set HTTPS_PROXY=http://user:pass@web-proxy.domain.com:8080
+```
+
+Database integrations
+---------------------
+
+Feature flag data can be kept in a persistent store using Redis, DynamoDB, or Consul. These adapters are implemented in the `LaunchDarkly::Integrations::Redis`, `LaunchDarkly::Integrations::DynamoDB`, and `LaunchDarkly::Integrations::Consul` modules; to use them, call the `new_feature_store` method in the module, and put the returned object in the `feature_store` property of your client configuration. See the [API documentation](https://www.rubydoc.info/gems/ldclient-rb/LaunchDarkly/Integrations) and the [SDK reference guide](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store) for more information.
+
 Using flag data from a file
 ---------------------------
-For testing purposes, the SDK can be made to read feature flag state from a file or files instead of connecting to LaunchDarkly. See [`file_data_source.rb`](https://github.com/launchdarkly/ruby-client/blob/master/lib/ldclient-rb/file_data_source.rb) for more details.
+
+For testing purposes, the SDK can be made to read feature flag state from a file or files instead of connecting to LaunchDarkly. See `LaunchDarkly::FileDataSource` or the [SDK reference guide](https://docs.launchdarkly.com/v2.0/docs/reading-flags-from-a-file) for more details.
 
 Learn more
 -----------
 
-Check out our [documentation](http://docs.launchdarkly.com) for in-depth instructions on configuring and using LaunchDarkly. You can also head straight to the [complete reference guide for this SDK](http://docs.launchdarkly.com/docs/ruby-sdk-reference).
+Check out our [documentation](http://docs.launchdarkly.com) for in-depth instructions on configuring and using LaunchDarkly. You can also head straight to the [reference guide for this SDK](http://docs.launchdarkly.com/docs/ruby-sdk-reference).
+
+Generated API documentation is on [RubyDoc.info](https://www.rubydoc.info/gems/ldclient-rb).
 
 Testing
 -------
@@ -138,10 +144,10 @@ We run integration tests for all our SDKs using a centralized test harness. This
 Contributing
 ------------
 
-See [Contributing](https://github.com/launchdarkly/ruby-client/blob/master/CONTRIBUTING.md)
+See [Contributing](https://github.com/launchdarkly/ruby-client/blob/master/CONTRIBUTING.md).
 
 About LaunchDarkly
------------
+------------------
 
 * LaunchDarkly is a continuous delivery platform that provides feature flags as a service and allows developers to iterate quickly and safely. We allow you to easily flag your features and manage them from the LaunchDarkly dashboard.  With LaunchDarkly, you can:
     * Roll out a new feature to a subset of your users (like a group of users who opt-in to a beta tester group), gathering feedback and bug reports from real-world use cases.
@@ -153,9 +159,9 @@ About LaunchDarkly
     * [JavaScript](http://docs.launchdarkly.com/docs/js-sdk-reference "LaunchDarkly JavaScript SDK")
     * [PHP](http://docs.launchdarkly.com/docs/php-sdk-reference "LaunchDarkly PHP SDK")
     * [Python](http://docs.launchdarkly.com/docs/python-sdk-reference "LaunchDarkly Python SDK")
-    * [Python Twisted](http://docs.launchdarkly.com/docs/python-twisted-sdk-reference "LaunchDarkly Python Twisted SDK")
     * [Go](http://docs.launchdarkly.com/docs/go-sdk-reference "LaunchDarkly Go SDK")
     * [Node.JS](http://docs.launchdarkly.com/docs/node-sdk-reference "LaunchDarkly Node SDK")
+    * [Electron](http://docs.launchdarkly.com/docs/electron-sdk-reference "LaunchDarkly Electron SDK")
     * [.NET](http://docs.launchdarkly.com/docs/dotnet-sdk-reference "LaunchDarkly .Net SDK")
     * [Ruby](http://docs.launchdarkly.com/docs/ruby-sdk-reference "LaunchDarkly Ruby SDK")
     * [iOS](http://docs.launchdarkly.com/docs/ios-sdk-reference "LaunchDarkly iOS SDK")
