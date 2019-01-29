@@ -23,6 +23,7 @@ class StubHTTPServer
       retry
     end
     @requests = []
+    @requests_queue = Queue.new
   end
 
   def self.next_port
@@ -62,6 +63,11 @@ class StubHTTPServer
 
   def record_request(req, res)
     @requests.push(req)
+    @requests_queue << req
+  end
+
+  def await_request
+    @requests_queue.pop
   end
 end
 
