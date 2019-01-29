@@ -1,5 +1,5 @@
-require "spec_helper"
 require "http_util"
+require "spec_helper"
 
 $sdk_key = "secret"
 

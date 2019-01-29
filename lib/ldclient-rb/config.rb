@@ -332,7 +332,7 @@ module LaunchDarkly
 
     #
     # The default value for {#logger}.
-    # @return [::Logger] the Rails logger if in Rails, or a default [::Logger] at WARN level otherwise
+    # @return [Logger] the Rails logger if in Rails, or a default Logger at WARN level otherwise
     #
     def self.default_logger
       if defined?(Rails) && Rails.respond_to?(:logger)

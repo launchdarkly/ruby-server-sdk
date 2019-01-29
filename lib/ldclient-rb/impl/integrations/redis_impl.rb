@@ -48,14 +48,15 @@ module LaunchDarkly
           def init_internal(all_data)
             count = 0
             with_connection do |redis|
-              all_data.each do |kind, items|
-                redis.multi do |multi|
+              redis.multi do |multi|
+                all_data.each do |kind, items|
                   multi.del(items_key(kind))
                   count = count + items.count
-                  items.each { |key, item|
-                    redis.hset(items_key(kind), key, item.to_json)
-                  }
+                  items.each do |key, item|
+                    multi.hset(items_key(kind), key, item.to_json)
+                  end
                 end
+                multi.set(inited_key, inited_key)
               end
             end
             @logger.info { "RedisFeatureStore: initialized with #{count} items" }
@@ -112,7 +113,7 @@ module LaunchDarkly
           end
 
           def initialized_internal?
-            with_connection { |redis| redis.exists(items_key(FEATURES)) }
+            with_connection { |redis| redis.exists(inited_key) }
           end
 
           def stop
@@ -133,6 +134,10 @@ module LaunchDarkly
 
           def cache_key(kind, key)
             kind[:namespace] + ":" + key.to_s
+          end
+
+          def inited_key
+            @prefix + ":$inited"
           end
 
           def with_connection

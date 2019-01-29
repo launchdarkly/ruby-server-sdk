@@ -13,7 +13,7 @@ module LaunchDarkly
   # of your client configuration.
   #
   # @deprecated Use the factory method in {LaunchDarkly::Integrations::Redis} instead. This specific
-  #   implementation class may change in the future.
+  #   implementation class may be changed or removed in the future.
   #
   class RedisFeatureStore
     include LaunchDarkly::Interfaces::FeatureStore
@@ -32,7 +32,7 @@ module LaunchDarkly
     # @option opts [String] :prefix  namespace prefix to add to all hash keys used by LaunchDarkly
     # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
     # @option opts [Integer] :max_connections  size of the Redis connection pool
-    # @option opts [Integer] :expiration_seconds  expiration time for the in-memory cache, in seconds; 0 for no local caching
+    # @option opts [Integer] :expiration  expiration time for the in-memory cache, in seconds; 0 for no local caching
     # @option opts [Integer] :capacity  maximum number of feature flags (or related objects) to cache locally
     # @option opts [Object] :pool  custom connection pool, if desired
     #

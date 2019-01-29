@@ -19,7 +19,7 @@ ruby-docker-template: &ruby-docker-template
           gem install jruby-openssl; # required by bundler, no effect on Ruby MRI
         fi
     - run: ruby -v
-    - run: gem install bundler -v "~> 1.7"
+    - run: gem install bundler -v 1.17.3
     - run: bundle install
     - run: mkdir ./rspec
     - run: bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
@@ -33,30 +33,35 @@ jobs:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.2.10-jessie
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
   test-2.3:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.3.7-jessie
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
   test-2.4:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.4.5-stretch
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
   test-2.5:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.5.3-stretch
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
   test-jruby-9.2:
     <<: *ruby-docker-template
     docker:
       - image: circleci/jruby:9-jdk
+      - image: consul
       - image: redis
       - image: amazon/dynamodb-local
 
@@ -90,12 +95,23 @@ jobs:
               fi
               # bundler 2.0 may be preinstalled, we need to remove it if so
               yes | gem uninstall bundler --version '>=2.0' || true;
-              gem install bundler -v "~> 1.7";
+              gem install bundler -v 1.17.3;
               bundle install;
               mv Gemfile.lock "Gemfile.lock.$i"
             done
       - run:
+          name: start DynamoDB
           command: docker run -p 8000:8000 amazon/dynamodb-local
+          background: true
+      - run:
+          name: download Consul
+          command: wget https://releases.hashicorp.com/consul/0.8.0/consul_0.8.0_linux_amd64.zip
+      - run:
+          name: extract Consul
+          command: unzip consul_0.8.0_linux_amd64.zip
+      - run:
+          name: start Consul
+          command: ./consul agent -dev
           background: true
       - run:
           name: run tests for all versions

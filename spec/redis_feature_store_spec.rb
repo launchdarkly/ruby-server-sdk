@@ -9,13 +9,22 @@ $my_prefix = 'testprefix'
 $null_log = ::Logger.new($stdout)
 $null_log.level = ::Logger::FATAL
 
+$base_opts = {
+  prefix: $my_prefix,
+  logger: $null_log
+}
 
 def create_redis_store(opts = {})
-  LaunchDarkly::RedisFeatureStore.new(opts.merge({ prefix: $my_prefix, logger: $null_log, expiration: 60 }))
+  LaunchDarkly::RedisFeatureStore.new($base_opts.merge(opts).merge({ expiration: 60 }))
 end
 
 def create_redis_store_uncached(opts = {})
-  LaunchDarkly::RedisFeatureStore.new(opts.merge({ prefix: $my_prefix, logger: $null_log, expiration: 0 }))
+  LaunchDarkly::RedisFeatureStore.new($base_opts.merge(opts).merge({ expiration: 0 }))
+end
+
+def clear_all_data
+  client = Redis.new
+  client.flushdb
 end
 
 
@@ -25,11 +34,11 @@ describe LaunchDarkly::RedisFeatureStore do
   # These tests will all fail if there isn't a Redis instance running on the default port.
   
   context "real Redis with local cache" do
-    include_examples "feature_store", method(:create_redis_store)
+    include_examples "feature_store", method(:create_redis_store), method(:clear_all_data)
   end
 
   context "real Redis without local cache" do
-    include_examples "feature_store", method(:create_redis_store_uncached)
+    include_examples "feature_store", method(:create_redis_store_uncached), method(:clear_all_data)
   end
 
   def make_concurrent_modifier_test_hook(other_client, flag, start_version, end_version)

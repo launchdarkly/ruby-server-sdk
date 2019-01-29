@@ -23,7 +23,7 @@ module LaunchDarkly
         #
         # @param core [Object]  an object that implements the {FeatureStoreCore} methods
         # @param opts [Hash]  a hash that may include cache-related options; all others will be ignored
-        # @option opts [Float] :expiration_seconds (15)  cache TTL; zero means no caching
+        # @option opts [Float] :expiration (15)  cache TTL; zero means no caching
         # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
         #
         def initialize(core, opts)
@@ -150,6 +150,11 @@ module LaunchDarkly
         #
         # Initializes the store. This is the same as {LaunchDarkly::Interfaces::FeatureStore#init},
         # but the wrapper will take care of updating the cache if caching is enabled.
+        #
+        # If possible, the store should update the entire data set atomically. If that is not possible,
+        # it should iterate through the outer hash and then the inner hash using the existing iteration
+        # order of those hashes (the SDK will ensure that the items were inserted into the hashes in
+        # the correct order), storing each item, and then delete any leftover items at the very end.
         #
         # @param all_data [Hash]  a hash where each key is one of the data kind objects, and each
         #   value is in turn a hash of string keys to entities
