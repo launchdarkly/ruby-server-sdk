@@ -26,7 +26,7 @@ module LaunchDarkly
 
     def stop
       if @stopped.make_true
-        if @worker && @worker.alive?
+        if @worker && @worker.alive? && @worker != Thread.current
           @worker.run  # causes the thread to wake up if it's currently in a sleep
           @worker.join
         end

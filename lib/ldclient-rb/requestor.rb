@@ -1,6 +1,6 @@
 require "concurrent/atomics"
 require "json"
-require "net/http/persistent"
+require "uri"
 
 module LaunchDarkly
   # @private
@@ -22,9 +22,7 @@ module LaunchDarkly
     def initialize(sdk_key, config)
       @sdk_key = sdk_key
       @config = config
-      @client = Net::HTTP::Persistent.new
-      @client.open_timeout = @config.connect_timeout
-      @client.read_timeout = @config.read_timeout
+      @client = Util.new_http_client(@config.base_uri, @config)
       @cache = @config.cache_store
     end
 
@@ -41,21 +39,26 @@ module LaunchDarkly
     end
     
     def stop
-      @client.shutdown
+      begin
+        @client.finish
+      rescue
+      end
     end
 
     private
 
     def make_request(path)
+      @client.start if !@client.started?
       uri = URI(@config.base_uri + path)
       req = Net::HTTP::Get.new(uri)
       req["Authorization"] = @sdk_key
       req["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
+      req["Connection"] = "keep-alive"
       cached = @cache.read(uri)
       if !cached.nil?
         req["If-None-Match"] = cached.etag
       end
-      res = @client.request(uri, req)
+      res = @client.request(req)
       status = res.code.to_i
       @config.logger.debug { "[LDClient] Got response from uri: #{uri}\n\tstatus code: #{status}\n\theaders: #{res.to_hash}\n\tbody: #{res.body}" }
 

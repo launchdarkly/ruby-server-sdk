@@ -1,7 +1,6 @@
 require "concurrent"
 require "concurrent/atomics"
 require "concurrent/executors"
-require "net/http/persistent"
 require "thread"
 require "time"
 
@@ -116,9 +115,10 @@ module LaunchDarkly
       @sdk_key = sdk_key
       @config = config
 
-      @client = client ? client : Net::HTTP::Persistent.new do |c|
-        c.open_timeout = @config.connect_timeout
-        c.read_timeout = @config.read_timeout
+      if client
+        @client = client
+      else
+        @client = Util.new_http_client(@config.events_uri, @config)
       end
 
       @user_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
@@ -167,7 +167,10 @@ module LaunchDarkly
     def do_shutdown(flush_workers)
       flush_workers.shutdown
       flush_workers.wait_for_termination
-      @client.shutdown
+      begin
+        @client.finish
+      rescue
+      end
     end
 
     def synchronize_for_testing(flush_workers)
@@ -322,6 +325,7 @@ module LaunchDarkly
           sleep(1)
         end
         begin
+          client.start if !client.started?
           config.logger.debug { "[LDClient] sending #{events_out.length} events: #{body}" }
           uri = URI(config.events_uri + "/bulk")
           req = Net::HTTP::Post.new(uri)
@@ -330,7 +334,8 @@ module LaunchDarkly
           req["Authorization"] = sdk_key
           req["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
           req["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
-          res = client.request(uri, req)
+          req["Connection"] = "keep-alive"
+          res = client.request(req)
         rescue StandardError => exn
           config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}." }
           next
