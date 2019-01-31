@@ -124,7 +124,7 @@ module LaunchDarkly
       @user_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
       @formatter = EventOutputFormatter.new(config)
       @disabled = Concurrent::AtomicBoolean.new(false)
-      @last_known_past_time = Concurrent::AtomicFixnum.new(0)
+      @last_known_past_time = Concurrent::AtomicReference.new(0)
 
       buffer = EventBuffer.new(config.capacity, config.logger)
       flush_workers = NonBlockingThreadPool.new(MAX_FLUSH_WORKERS)
