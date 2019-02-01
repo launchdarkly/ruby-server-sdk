@@ -536,7 +536,7 @@ describe LaunchDarkly::EventProcessor do
       @status = 200
     end
 
-    def request(uri, req)
+    def request(req)
       @requests.push(req)
       if @exception
         raise @exception
@@ -549,11 +549,18 @@ describe LaunchDarkly::EventProcessor do
       end
     end
 
-    def get_request
-      @requests.shift
+    def start
     end
 
-    def shutdown
+    def started?
+      false
+    end
+
+    def finish
+    end
+
+    def get_request
+      @requests.shift
     end
   end
 
