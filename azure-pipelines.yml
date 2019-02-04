@@ -1,0 +1,14 @@
+jobs:
+  - job: build
+    pool:
+      vmImage: 'vs2017-win2016'
+    steps:
+      - task: PowerShell@2
+        inputs:
+          targetType: inline
+          script: |
+            ruby -v
+            gem install bundler -v 1.17.3
+            bundle install
+            mkdir rspec
+            bundle exec rspec --exclude-pattern "spec/integrations/*,spec/redis_*" --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
