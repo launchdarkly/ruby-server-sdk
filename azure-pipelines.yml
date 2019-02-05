@@ -4,6 +4,17 @@ jobs:
       vmImage: 'vs2017-win2016'
     steps:
       - task: PowerShell@2
+        displayName: 'Setup Dynamo'
+        inputs:
+          targetType: inline
+          workingDirectory: $(System.DefaultWorkingDirectory)
+          script: |
+            iwr -outf dynamo.zip https://s3-us-west-2.amazonaws.com/dynamodb-local/dynamodb_local_latest.zip
+            mkdir dynamo
+            Expand-Archive -Path dynamo.zip -DestinationPath dynamo
+            cd dynamo
+            javaw -D"java.library.path=./DynamoDBLocal_lib" -jar DynamoDBLocal.jar
+      - task: PowerShell@2
         displayName: 'Setup Consul'
         inputs:
           targetType: inline
@@ -37,4 +48,4 @@ jobs:
             gem install bundler -v 1.17.3
             bundle install
             mkdir rspec
-            bundle exec rspec --exclude-pattern "spec/integrations/dynamodb_feature_store_spec.rb," --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
+            bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
