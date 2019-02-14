@@ -2,6 +2,15 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.3] - 2019-02-13
+### Changed:
+- The SDK previously used the `faraday` and `net-http-persistent` gems for all HTTP requests other than streaming connections. Since `faraday` lacks a stable version and has a known issue with character encoding, and `net-http-persistent` is no longer maintained, these have both been removed. This should not affect any SDK functionality.
+
+### Fixed:
+- The SDK was not usable in Windows because of `net-http-persistent`. That gem has been removed.
+- When running in Windows, the event-processing thread threw a `RangeError` due to a difference in the Windows implementation of `concurrent-ruby`. This has been fixed.
+- Windows incompatibilities were undetected before because we were not running a Windows CI job. We are now testing on Windows with Ruby 2.5.
+
 ## [5.5.2] - 2019-01-18
 ### Fixed:
 - Like 5.5.1, this release contains only documentation fixes. Implementation classes that are not part of the supported API are now hidden from the [generated documentation](https://www.rubydoc.info/gems/ldclient-rb).
