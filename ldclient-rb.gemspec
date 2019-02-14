@@ -34,10 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "listen", "~> 3.0" # see file_data_source.rb
 
   spec.add_runtime_dependency "json", [">= 1.8", "< 3"]
-  spec.add_runtime_dependency "faraday", [">= 0.9", "< 2"]
-  spec.add_runtime_dependency "faraday-http-cache", [">= 1.3.0", "< 3"]
   spec.add_runtime_dependency "semantic", "~> 1.6"
-  spec.add_runtime_dependency "net-http-persistent", [">= 2.9", "< 4.0"]
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0"
   spec.add_runtime_dependency "ld-eventsource", '~> 1.0'
 end

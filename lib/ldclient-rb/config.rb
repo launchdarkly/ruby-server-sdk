@@ -53,7 +53,6 @@ module LaunchDarkly
       @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > Config.default_poll_interval ? opts[:poll_interval] : Config.default_poll_interval
-      @proxy = opts[:proxy] || Config.default_proxy
       @all_attributes_private = opts[:all_attributes_private] || false
       @private_attribute_names = opts[:private_attribute_names] || []
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
@@ -153,9 +152,10 @@ module LaunchDarkly
     attr_reader :capacity
 
     #
-    # A store for HTTP caching. This must support the semantics used by the
-    # [`faraday-http-cache`](https://github.com/plataformatec/faraday-http-cache) gem. Defaults
-    # to the Rails cache in a Rails environment, or a thread-safe in-memory store otherwise.
+    # A store for HTTP caching (used only in polling mode). This must support the semantics used by
+    # the [`faraday-http-cache`](https://github.com/plataformatec/faraday-http-cache) gem, although
+    # the SDK no longer uses Faraday. Defaults to the Rails cache in a Rails environment, or a
+    # thread-safe in-memory store otherwise.
     # @return [Object]
     #
     attr_reader :cache_store
@@ -183,12 +183,6 @@ module LaunchDarkly
     # @return [LaunchDarkly::Interfaces::FeatureStore]
     #
     attr_reader :feature_store
-
-    #
-    # The proxy configuration string.
-    # @return [String]
-    #
-    attr_reader :proxy
 
     #
     # True if all user attributes (other than the key) should be considered private. This means
@@ -334,14 +328,6 @@ module LaunchDarkly
     #
     def self.default_connect_timeout
       2
-    end
-
-    #
-    # The default value for {#proxy}.
-    # @return [String] nil
-    #
-    def self.default_proxy
-      nil
     end
 
     #

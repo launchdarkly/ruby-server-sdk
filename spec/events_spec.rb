@@ -1,5 +1,5 @@
+require "http_util"
 require "spec_helper"
-require "faraday"
 require "time"
 
 describe LaunchDarkly::EventProcessor do
@@ -348,7 +348,7 @@ describe LaunchDarkly::EventProcessor do
     @ep.flush
     @ep.wait_until_inactive
     
-    expect(hc.get_request.headers["Authorization"]).to eq "sdk_key"
+    expect(hc.get_request["authorization"]).to eq "sdk_key"
   end
 
   def verify_unrecoverable_http_error(status)
@@ -414,13 +414,53 @@ describe LaunchDarkly::EventProcessor do
     e = { kind: "identify", user: user }
     @ep.add_event(e)
 
-    hc.set_exception(Faraday::Error::ConnectionFailed.new("fail"))
+    hc.set_exception(IOError.new("deliberate error"))
     @ep.flush
     @ep.wait_until_inactive
 
     expect(hc.get_request).not_to be_nil
     expect(hc.get_request).not_to be_nil
     expect(hc.get_request).to be_nil  # no 3rd request
+  end
+
+  it "makes actual HTTP request with correct headers" do
+    e = { kind: "identify", key: user[:key], user: user }
+    with_server do |server|
+      server.setup_ok_response("/bulk", "")
+
+      @ep = subject.new("sdk_key", LaunchDarkly::Config.new(events_uri: server.base_uri.to_s))
+      @ep.add_event(e)
+      @ep.flush
+
+      req = server.await_request
+      expect(req.header).to include({
+        "authorization" => [ "sdk_key" ],
+        "content-type" => [ "application/json" ],
+        "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
+        "x-launchdarkly-event-schema" => [ "3" ]
+      })
+    end
+  end
+
+  it "can use a proxy server" do
+    e = { kind: "identify", key: user[:key], user: user }
+    with_server do |server|
+      server.setup_ok_response("/bulk", "")
+
+      with_server(StubProxyServer.new) do |proxy|
+        begin
+          ENV["http_proxy"] = proxy.base_uri.to_s
+          @ep = subject.new("sdk_key", LaunchDarkly::Config.new(events_uri: server.base_uri.to_s))
+          @ep.add_event(e)
+          @ep.flush
+
+          req = server.await_request
+          expect(req["content-type"]).to eq("application/json")
+        ensure
+          ENV["http_proxy"] = nil
+        end
+      end
+    end
   end
 
   def index_event(e, user)
@@ -496,26 +536,27 @@ describe LaunchDarkly::EventProcessor do
       @status = 200
     end
 
-    def post(uri)
-      req = Faraday::Request.create("POST")
-      req.headers = {}
-      req.options = Faraday::RequestOptions.new
-      yield req
+    def request(req)
       @requests.push(req)
       if @exception
         raise @exception
       else
-        resp = Faraday::Response.new
         headers = {}
         if @server_time
           headers["Date"] = @server_time.httpdate
         end
-        resp.finish({
-          status: @status ? @status : 200,
-          response_headers: headers
-        })
-        resp
+        FakeResponse.new(@status ? @status : 200, headers)
       end
+    end
+
+    def start
+    end
+
+    def started?
+      false
+    end
+
+    def finish
     end
 
     def get_request
@@ -524,10 +565,13 @@ describe LaunchDarkly::EventProcessor do
   end
 
   class FakeResponse
-    def initialize(status)
-      @status = status
-    end
+    include Net::HTTPHeader
 
-    attr_reader :status
+    attr_reader :code
+
+    def initialize(status, headers)
+      @code = status.to_s
+      initialize_http_header(headers)
+    end
   end
 end

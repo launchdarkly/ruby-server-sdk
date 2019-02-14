@@ -50,7 +50,6 @@ module LaunchDarkly
       }
       opts = {
         headers: headers,
-        proxy: @config.proxy,
         read_timeout: READ_TIMEOUT_SECONDS,
         logger: @config.logger
       }

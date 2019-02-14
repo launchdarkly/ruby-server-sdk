@@ -3,7 +3,6 @@ require "concurrent/atomics"
 require "concurrent/executors"
 require "thread"
 require "time"
-require "faraday"
 
 module LaunchDarkly
   MAX_FLUSH_WORKERS = 5
@@ -115,11 +114,17 @@ module LaunchDarkly
     def initialize(queue, sdk_key, config, client)
       @sdk_key = sdk_key
       @config = config
-      @client = client ? client : Faraday.new
+
+      if client
+        @client = client
+      else
+        @client = Util.new_http_client(@config.events_uri, @config)
+      end
+
       @user_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
       @formatter = EventOutputFormatter.new(config)
       @disabled = Concurrent::AtomicBoolean.new(false)
-      @last_known_past_time = Concurrent::AtomicFixnum.new(0)
+      @last_known_past_time = Concurrent::AtomicReference.new(0)
 
       buffer = EventBuffer.new(config.capacity, config.logger)
       flush_workers = NonBlockingThreadPool.new(MAX_FLUSH_WORKERS)
@@ -162,7 +167,10 @@ module LaunchDarkly
     def do_shutdown(flush_workers)
       flush_workers.shutdown
       flush_workers.wait_for_termination
-      # There seems to be no such thing as "close" in Faraday: https://github.com/lostisland/faraday/issues/241
+      begin
+        @client.finish
+      rescue
+      end
     end
 
     def synchronize_for_testing(flush_workers)
@@ -246,16 +254,17 @@ module LaunchDarkly
     end
 
     def handle_response(res)
-      if res.status >= 400
-        message = Util.http_error_message(res.status, "event delivery", "some events were dropped")
+      status = res.code.to_i
+      if status >= 400
+        message = Util.http_error_message(status, "event delivery", "some events were dropped")
         @config.logger.error { "[LDClient] #{message}" }
-        if !Util.http_error_recoverable?(res.status)
+        if !Util.http_error_recoverable?(status)
           @disabled.value = true
         end
       else
-        if !res.headers.nil? && res.headers.has_key?("Date")
+        if !res["date"].nil?
           begin
-            res_time = (Time.httpdate(res.headers["Date"]).to_f * 1000).to_i
+            res_time = (Time.httpdate(res["date"]).to_f * 1000).to_i
             @last_known_past_time.value = res_time
           rescue ArgumentError
           end
@@ -316,22 +325,24 @@ module LaunchDarkly
           sleep(1)
         end
         begin
+          client.start if !client.started?
           config.logger.debug { "[LDClient] sending #{events_out.length} events: #{body}" }
-          res = client.post (config.events_uri + "/bulk") do |req|
-            req.headers["Authorization"] = sdk_key
-            req.headers["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
-            req.headers["Content-Type"] = "application/json"
-            req.headers["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
-            req.body = body
-            req.options.timeout = config.read_timeout
-            req.options.open_timeout = config.connect_timeout
-          end
+          uri = URI(config.events_uri + "/bulk")
+          req = Net::HTTP::Post.new(uri)
+          req.content_type = "application/json"
+          req.body = body
+          req["Authorization"] = sdk_key
+          req["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
+          req["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
+          req["Connection"] = "keep-alive"
+          res = client.request(req)
         rescue StandardError => exn
           config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}." }
           next
         end
-        if res.status < 200 || res.status >= 300
-          if Util.http_error_recoverable?(res.status)
+        status = res.code.to_i
+        if status < 200 || status >= 300
+          if Util.http_error_recoverable?(status)
             next
           end
         end

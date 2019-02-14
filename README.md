@@ -17,19 +17,19 @@ Quick setup
 
 1. Install the Ruby SDK with `gem`
 
-    ```shell
+```shell
 gem install ldclient-rb
 ```
 
 2. Require the LaunchDarkly client:
 
-    ```ruby
+```ruby
 require 'ldclient-rb'
 ```
 
 3. Create a new LDClient with your SDK key:
 
-    ```ruby
+```ruby
 client = LaunchDarkly::LDClient.new("your_sdk_key")
 ```
 
@@ -39,42 +39,42 @@ client = LaunchDarkly::LDClient.new("your_sdk_key")
 
 2. Initialize the launchdarkly client in `config/initializers/launchdarkly.rb`:
 
-    ```ruby
+```ruby
 Rails.configuration.ld_client = LaunchDarkly::LDClient.new("your_sdk_key")
 ```
 
 3.  You may want to include a function in your ApplicationController
 
-    ```ruby
-    def launchdarkly_settings
-      if current_user.present?
-        {
-          key: current_user.id,
-          anonymous: false,
-          email: current_user.email,
-          custom: { groups: current_user.groups.pluck(:name) },
-          # Any other fields you may have
-          # e.g. lastName: current_user.last_name,
-        }
-      else
-        if Rails::VERSION::MAJOR <= 3
-          hash_key = request.session_options[:id]
-        else
-          hash_key = session.id
-        end
-        # session ids should be private to prevent session hijacking
-        hash_key = Digest::SHA256.base64digest hash_key
-        {
-          key: hash_key,
-          anonymous: true,
-        }
-      end
+```ruby
+def launchdarkly_settings
+  if current_user.present?
+    {
+      key: current_user.id,
+      anonymous: false,
+      email: current_user.email,
+      custom: { groups: current_user.groups.pluck(:name) },
+      # Any other fields you may have
+      # e.g. lastName: current_user.last_name,
+    }
+  else
+    if Rails::VERSION::MAJOR <= 3
+      hash_key = request.session_options[:id]
+    else
+      hash_key = session.id
     end
+    # session ids should be private to prevent session hijacking
+    hash_key = Digest::SHA256.base64digest hash_key
+    {
+      key: hash_key,
+      anonymous: true,
+    }
+  end
+end
 ```
 
 4. In your controllers, access the client using
 
-    ```ruby
+```ruby
 Rails.application.config.ld_client.variation('your.flag.key', launchdarkly_settings, false)
 ```
 

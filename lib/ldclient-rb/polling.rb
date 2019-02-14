@@ -26,7 +26,7 @@ module LaunchDarkly
 
     def stop
       if @stopped.make_true
-        if @worker && @worker.alive?
+        if @worker && @worker.alive? && @worker != Thread.current
           @worker.run  # causes the thread to wake up if it's currently in a sleep
           @worker.join
         end
@@ -63,8 +63,7 @@ module LaunchDarkly
               stop
             end
           rescue StandardError => exn
-            @config.logger.error { "[LDClient] Exception while polling: #{exn.inspect}" }
-            # TODO: log_exception(__method__.to_s, exn)
+            Util.log_exception(@config.logger, "Exception while polling", exn)
           end
           delta = @config.poll_interval - (Time.now - started_at)
           if delta > 0

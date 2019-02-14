@@ -2,11 +2,9 @@ require "concurrent/map"
 
 module LaunchDarkly
   #
-  # A thread-safe in-memory store suitable for use with the Faraday caching HTTP client. Uses the
-  # concurrent-ruby gem's Map as the underlying cache.
+  # A thread-safe in-memory store that uses the same semantics that Faraday would expect, although we
+  # no longer use Faraday. This is used by Requestor, when we are not in a Rails environment.
   #
-  # @see https://github.com/plataformatec/faraday-http-cache
-  # @see https://github.com/ruby-concurrency
   # @private
   #
   class ThreadSafeMemoryStore

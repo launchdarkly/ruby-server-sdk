@@ -74,7 +74,7 @@ flagValues:
 segments:
   seg1:
     key: seg1
-    include: ["user1"]  
+    include: ["user1"]
 EOF
   }
 
@@ -87,7 +87,7 @@ EOF
   end
 
   after do
-    FileUtils.remove_dir(@tmp_dir)
+    FileUtils.rm_rf(@tmp_dir)
   end
 
   def make_temp_file(content)
@@ -198,10 +198,10 @@ EOF
       event = ds.start
       expect(event.set?).to eq(true)
       expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq([])
-      
+
       sleep(1)
       IO.write(file, all_properties_json)
-      
+
       max_time = 10
       ok = wait_for_condition(10) { @store.all(LaunchDarkly::SEGMENTS).keys == all_segment_keys }
       expect(ok).to eq(true), "Waited #{max_time}s after modifying file and it did not reload"
@@ -243,7 +243,7 @@ EOF
       client.close
     end
   end
-  
+
   def wait_for_condition(max_time)
     deadline = Time.now + max_time
     while Time.now < deadline
