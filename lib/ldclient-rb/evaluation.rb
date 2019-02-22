@@ -263,6 +263,7 @@ module LaunchDarkly
             event = {
               kind: "feature",
               key: prereq_key,
+              user: user,
               variation: prereq_res.variation_index,
               value: prereq_res.value,
               version: prereq_flag[:version],
@@ -272,7 +273,7 @@ module LaunchDarkly
             }
             events.push(event)
           rescue => exn
-            Util.log_exception(logger, "Error evaluating prerequisite flag \"#{prereq_key}\" for flag \"{flag[:key]}\"", exn)
+            Util.log_exception(logger, "Error evaluating prerequisite flag \"#{prereq_key}\" for flag \"#{flag[:key]}\"", exn)
             prereq_ok = false
           end
         end

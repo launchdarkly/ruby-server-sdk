@@ -127,7 +127,7 @@ describe LaunchDarkly::Evaluation do
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
         { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
       events_should_be = [{
-        kind: 'feature', key: 'feature1', variation: nil, value: nil, version: 2, prereqOf: 'feature0',
+        kind: 'feature', key: 'feature1', user: user, variation: nil, value: nil, version: 2, prereqOf: 'feature0',
         trackEvents: nil, debugEventsUntilDate: nil
       }]
       result = evaluate(flag, user, features, logger)
@@ -159,7 +159,7 @@ describe LaunchDarkly::Evaluation do
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
         { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
       events_should_be = [{
-        kind: 'feature', key: 'feature1', variation: 1, value: 'e', version: 2, prereqOf: 'feature0',
+        kind: 'feature', key: 'feature1', user: user, variation: 1, value: 'e', version: 2, prereqOf: 'feature0',
         trackEvents: nil, debugEventsUntilDate: nil
       }]
       result = evaluate(flag, user, features, logger)
@@ -189,7 +189,7 @@ describe LaunchDarkly::Evaluation do
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
         { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
       events_should_be = [{
-        kind: 'feature', key: 'feature1', variation: 0, value: 'd', version: 2, prereqOf: 'feature0',
+        kind: 'feature', key: 'feature1', user: user, variation: 0, value: 'd', version: 2, prereqOf: 'feature0',
         trackEvents: nil, debugEventsUntilDate: nil
       }]
       result = evaluate(flag, user, features, logger)
@@ -218,7 +218,7 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new('a', 0, { kind: 'FALLTHROUGH' })
       events_should_be = [{
-        kind: 'feature', key: 'feature1', variation: 1, value: 'e', version: 2, prereqOf: 'feature0',
+        kind: 'feature', key: 'feature1', user: user, variation: 1, value: 'e', version: 2, prereqOf: 'feature0',
         trackEvents: nil, debugEventsUntilDate: nil
       }]
       result = evaluate(flag, user, features, logger)
