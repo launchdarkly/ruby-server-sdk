@@ -91,7 +91,6 @@ describe LaunchDarkly::LDClient do
         key: "key",
         version: 100,
         user: nil,
-        variation: nil,
         value: "default",
         default: "default",
         trackEvents: true,
@@ -109,13 +108,67 @@ describe LaunchDarkly::LDClient do
         key: "key",
         version: 100,
         user: bad_user,
-        variation: nil,
         value: "default",
         default: "default",
         trackEvents: true,
         debugEventsUntilDate: 1000
       ))
       client.variation("key", bad_user, "default")
+    end
+
+    it "sets trackEvents and reason if trackEvents is set for matched rule" do
+      flag = {
+        key: 'flag',
+        on: true,
+        variations: [ 'value' ],
+        version: 100,
+        rules: [
+          clauses: [
+            { attribute: 'key', op: 'in', values: [ user[:key] ] }
+          ],
+          variation: 0,
+          id: 'id',
+          trackEvents: true
+        ]
+      }
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, flag)
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: 'feature',
+        key: 'flag',
+        version: 100,
+        user: user,
+        value: 'value',
+        default: 'default',
+        trackEvents: true,
+        reason: { kind: 'RULE_MATCH', ruleIndex: 0, ruleId: 'id' }
+      ))
+      client.variation('flag', user, 'default')
+    end
+
+    it "sets trackEvents and reason if trackEventsFallthrough is set and we fell through" do
+      flag = {
+        key: 'flag',
+        on: true,
+        variations: [ 'value' ],
+        fallthrough: { variation: 0 },
+        version: 100,
+        rules: [],
+        trackEventsFallthrough: true
+      }
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, flag)
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: 'feature',
+        key: 'flag',
+        version: 100,
+        user: user,
+        value: 'value',
+        default: 'default',
+        trackEvents: true,
+        reason: { kind: 'FALLTHROUGH' }
+      ))
+      client.variation('flag', user, 'default')
     end
   end
 

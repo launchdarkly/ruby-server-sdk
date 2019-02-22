@@ -7,6 +7,8 @@ describe LaunchDarkly::Evaluation do
 
   let(:features) { LaunchDarkly::InMemoryFeatureStore.new }
 
+  let(:factory) { LaunchDarkly::Impl::EventFactory.new(false) }
+
   let(:user) {
     {
       key: "userkey",
@@ -36,7 +38,7 @@ describe LaunchDarkly::Evaluation do
       }
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new('b', 1, { kind: 'OFF' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -50,7 +52,7 @@ describe LaunchDarkly::Evaluation do
       }
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil, { kind: 'OFF' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -66,7 +68,7 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil,
         { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -82,7 +84,7 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil,
         { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -99,7 +101,7 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
         { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'badfeature' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -127,10 +129,9 @@ describe LaunchDarkly::Evaluation do
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
         { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
       events_should_be = [{
-        kind: 'feature', key: 'feature1', variation: nil, value: nil, version: 2, prereqOf: 'feature0',
-        trackEvents: nil, debugEventsUntilDate: nil
+        kind: 'feature', key: 'feature1', user: user, value: nil, default: nil, variation: nil, version: 2, prereqOf: 'feature0'
       }]
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq(events_should_be)
     end
@@ -159,10 +160,9 @@ describe LaunchDarkly::Evaluation do
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
         { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
       events_should_be = [{
-        kind: 'feature', key: 'feature1', variation: 1, value: 'e', version: 2, prereqOf: 'feature0',
-        trackEvents: nil, debugEventsUntilDate: nil
+        kind: 'feature', key: 'feature1', user: user, variation: 1, value: 'e', default: nil, version: 2, prereqOf: 'feature0'
       }]
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq(events_should_be)
     end
@@ -189,10 +189,9 @@ describe LaunchDarkly::Evaluation do
       detail = LaunchDarkly::EvaluationDetail.new('b', 1,
         { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
       events_should_be = [{
-        kind: 'feature', key: 'feature1', variation: 0, value: 'd', version: 2, prereqOf: 'feature0',
-        trackEvents: nil, debugEventsUntilDate: nil
+        kind: 'feature', key: 'feature1', user: user, variation: 0, value: 'd', default: nil, version: 2, prereqOf: 'feature0'
       }]
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq(events_should_be)
     end
@@ -218,10 +217,9 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'x' }
       detail = LaunchDarkly::EvaluationDetail.new('a', 0, { kind: 'FALLTHROUGH' })
       events_should_be = [{
-        kind: 'feature', key: 'feature1', variation: 1, value: 'e', version: 2, prereqOf: 'feature0',
-        trackEvents: nil, debugEventsUntilDate: nil
+        kind: 'feature', key: 'feature1', user: user, variation: 1, value: 'e', default: nil, version: 2, prereqOf: 'feature0'
       }]
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq(events_should_be)
     end
@@ -236,7 +234,7 @@ describe LaunchDarkly::Evaluation do
       }
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -251,7 +249,7 @@ describe LaunchDarkly::Evaluation do
       }
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -266,7 +264,7 @@ describe LaunchDarkly::Evaluation do
       }
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -281,7 +279,7 @@ describe LaunchDarkly::Evaluation do
       }
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -299,7 +297,7 @@ describe LaunchDarkly::Evaluation do
       }
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new('c', 2, { kind: 'TARGET_MATCH' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -310,7 +308,7 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new(true, 1,
         { kind: 'RULE_MATCH', ruleIndex: 0, ruleId: 'ruleid' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -321,7 +319,7 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil,
         { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -332,7 +330,7 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil,
         { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -343,7 +341,7 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil,
         { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -355,7 +353,7 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'userkey' }
       detail = LaunchDarkly::EvaluationDetail.new(nil, nil,
         { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
-      result = evaluate(flag, user, features, logger)
+      result = evaluate(flag, user, features, logger, factory)
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
@@ -366,28 +364,28 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'x', name: 'Bob' }
       clause = { attribute: 'name', op: 'in', values: ['Bob'] }
       flag = boolean_flag_with_clauses([clause])
-      expect(evaluate(flag, user, features, logger).detail.value).to be true
+      expect(evaluate(flag, user, features, logger, factory).detail.value).to be true
     end
 
     it "can match custom attribute" do
       user = { key: 'x', name: 'Bob', custom: { legs: 4 } }
       clause = { attribute: 'legs', op: 'in', values: [4] }
       flag = boolean_flag_with_clauses([clause])
-      expect(evaluate(flag, user, features, logger).detail.value).to be true
+      expect(evaluate(flag, user, features, logger, factory).detail.value).to be true
     end
 
     it "returns false for missing attribute" do
       user = { key: 'x', name: 'Bob' }
       clause = { attribute: 'legs', op: 'in', values: [4] }
       flag = boolean_flag_with_clauses([clause])
-      expect(evaluate(flag, user, features, logger).detail.value).to be false
+      expect(evaluate(flag, user, features, logger, factory).detail.value).to be false
     end
 
     it "returns false for unknown operator" do
       user = { key: 'x', name: 'Bob' }
       clause = { attribute: 'name', op: 'unknown', values: [4] }
       flag = boolean_flag_with_clauses([clause])
-      expect(evaluate(flag, user, features, logger).detail.value).to be false
+      expect(evaluate(flag, user, features, logger, factory).detail.value).to be false
     end
 
     it "does not stop evaluating rules after clause with unknown operator" do
@@ -397,14 +395,14 @@ describe LaunchDarkly::Evaluation do
       clause1 = { attribute: 'name', op: 'in', values: ['Bob'] }
       rule1 = { clauses: [ clause1 ], variation: 1 }
       flag = boolean_flag_with_rules([rule0, rule1])
-      expect(evaluate(flag, user, features, logger).detail.value).to be true
+      expect(evaluate(flag, user, features, logger, factory).detail.value).to be true
     end
 
     it "can be negated" do
       user = { key: 'x', name: 'Bob' }
       clause = { attribute: 'name', op: 'in', values: ['Bob'], negate: true }
       flag = boolean_flag_with_clauses([clause])
-      expect(evaluate(flag, user, features, logger).detail.value).to be false
+      expect(evaluate(flag, user, features, logger, factory).detail.value).to be false
     end
 
     it "retrieves segment from segment store for segmentMatch operator" do
@@ -419,14 +417,14 @@ describe LaunchDarkly::Evaluation do
       user = { key: 'userkey' }
       clause = { attribute: '', op: 'segmentMatch', values: ['segkey'] }
       flag = boolean_flag_with_clauses([clause])
-      expect(evaluate(flag, user, features, logger).detail.value).to be true
+      expect(evaluate(flag, user, features, logger, factory).detail.value).to be true
     end
 
     it "falls through with no errors if referenced segment is not found" do
       user = { key: 'userkey' }
       clause = { attribute: '', op: 'segmentMatch', values: ['segkey'] }
       flag = boolean_flag_with_clauses([clause])
-      expect(evaluate(flag, user, features, logger).detail.value).to be false
+      expect(evaluate(flag, user, features, logger, factory).detail.value).to be false
     end
 
     it "can be negated" do
@@ -435,7 +433,7 @@ describe LaunchDarkly::Evaluation do
       flag = boolean_flag_with_clauses([clause])
       expect {
          clause[:negate] = true
-      }.to change {evaluate(flag, user, features, logger).detail.value}.from(true).to(false)
+      }.to change {evaluate(flag, user, features, logger, factory).detail.value}.from(true).to(false)
     end
   end
 
@@ -538,7 +536,7 @@ describe LaunchDarkly::Evaluation do
         user = { key: 'x', custom: { foo: value1 } }
         clause = { attribute: 'foo', op: op, values: [value2] }
         flag = boolean_flag_with_clauses([clause])
-        expect(evaluate(flag, user, features, logger).detail.value).to be shouldBe
+        expect(evaluate(flag, user, features, logger, factory).detail.value).to be shouldBe
       end
     end
   end
@@ -629,7 +627,7 @@ describe LaunchDarkly::Evaluation do
       features.upsert(LaunchDarkly::SEGMENTS, segment)
       clause = make_segment_match_clause(segment)
       flag = boolean_flag_with_clauses([clause])
-      evaluate(flag, user, features, logger).detail.value
+      evaluate(flag, user, features, logger, factory).detail.value
     end
 
     it 'explicitly includes user' do

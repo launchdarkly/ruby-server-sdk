@@ -195,22 +195,22 @@ module LaunchDarkly
 
     # Evaluates a feature flag and returns an EvalResult. The result.value will be nil if the flag returns
     # the default value. Error conditions produce a result with an error reason, not an exception.
-    def evaluate(flag, user, store, logger)
+    def evaluate(flag, user, store, logger, event_factory)
       if user.nil? || user[:key].nil?
         return EvalResult.new(error_result('USER_NOT_SPECIFIED'), [])
       end
 
       events = []
-      detail = eval_internal(flag, user, store, events, logger)
+      detail = eval_internal(flag, user, store, events, logger, event_factory)
       return EvalResult.new(detail, events)
     end
 
-    def eval_internal(flag, user, store, events, logger)
+    def eval_internal(flag, user, store, events, logger, event_factory)
       if !flag[:on]
         return get_off_value(flag, { kind: 'OFF' }, logger)
       end
 
-      prereq_failure_reason = check_prerequisites(flag, user, store, events, logger)
+      prereq_failure_reason = check_prerequisites(flag, user, store, events, logger, event_factory)
       if !prereq_failure_reason.nil?
         return get_off_value(flag, prereq_failure_reason, logger)
       end
@@ -243,7 +243,7 @@ module LaunchDarkly
       return EvaluationDetail.new(nil, nil, { kind: 'FALLTHROUGH' })
     end
 
-    def check_prerequisites(flag, user, store, events, logger)
+    def check_prerequisites(flag, user, store, events, logger, event_factory)
       (flag[:prerequisites] || []).each do |prerequisite|
         prereq_ok = true
         prereq_key = prerequisite[:key]
@@ -254,25 +254,16 @@ module LaunchDarkly
           prereq_ok = false
         else
           begin
-            prereq_res = eval_internal(prereq_flag, user, store, events, logger)
+            prereq_res = eval_internal(prereq_flag, user, store, events, logger, event_factory)
             # Note that if the prerequisite flag is off, we don't consider it a match no matter what its
             # off variation was. But we still need to evaluate it in order to generate an event.
             if !prereq_flag[:on] || prereq_res.variation_index != prerequisite[:variation]
               prereq_ok = false
             end
-            event = {
-              kind: "feature",
-              key: prereq_key,
-              variation: prereq_res.variation_index,
-              value: prereq_res.value,
-              version: prereq_flag[:version],
-              prereqOf: flag[:key],
-              trackEvents: prereq_flag[:trackEvents],
-              debugEventsUntilDate: prereq_flag[:debugEventsUntilDate]
-            }
+            event = event_factory.new_eval_event(prereq_flag, user, prereq_res, nil, flag)
             events.push(event)
           rescue => exn
-            Util.log_exception(logger, "Error evaluating prerequisite flag \"#{prereq_key}\" for flag \"{flag[:key]}\"", exn)
+            Util.log_exception(logger, "Error evaluating prerequisite flag \"#{prereq_key}\" for flag \"#{flag[:key]}\"", exn)
             prereq_ok = false
           end
         end
