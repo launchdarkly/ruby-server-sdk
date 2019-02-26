@@ -29,7 +29,6 @@ module LaunchDarkly
       end
 
       def new_default_event(flag, user, default_value, reason)
-        add_experiment_data = is_experiment(flag, reason)
         e = {
           kind: 'feature',
           key: flag[:key],
@@ -38,9 +37,9 @@ module LaunchDarkly
           default: default_value,
           version: flag[:version]
         }
-        e[:trackEvents] = true if add_experiment_data || flag[:trackEvents]
+        e[:trackEvents] = true if flag[:trackEvents]
         e[:debugEventsUntilDate] = flag[:debugEventsUntilDate] if flag[:debugEventsUntilDate]
-        e[:reason] = reason if add_experiment_data || @with_reasons
+        e[:reason] = reason if @with_reasons
         e
       end
 
