@@ -4,6 +4,9 @@ module LaunchDarkly
     # Event constructors are centralized here to avoid mistakes and repetitive logic.
     # The LDClient owns two instances of EventFactory: one that always embeds evaluation reasons
     # in the events (for when variation_detail is called) and one that doesn't.
+    #
+    # Note that these methods do not set the "creationDate" property, because in the Ruby client,
+    # that is done by EventProcessor.add_event().
     class EventFactory
       def initialize(with_reasons)
         @with_reasons = with_reasons
@@ -53,6 +56,23 @@ module LaunchDarkly
         }
         e[:reason] = reason if @with_reasons
         e
+      end
+
+      def new_identify_event(user)
+        {
+          kind: 'identify',
+          key: user[:key],
+          user: user
+        }
+      end
+
+      def new_custom_event(event_name, user, data)
+        {
+          kind: 'custom',
+          key: event_name,
+          user: user,
+          data: data
+        }
       end
 
       private

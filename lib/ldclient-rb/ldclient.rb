@@ -217,7 +217,7 @@ module LaunchDarkly
     #
     def identify(user)
       sanitize_user(user)
-      @event_processor.add_event(kind: "identify", key: user[:key], user: user)
+      @event_processor.add_event(@event_factory_default.new_identify_event(user))
     end
 
     #
@@ -235,7 +235,7 @@ module LaunchDarkly
     #
     def track(event_name, user, data)
       sanitize_user(user)
-      @event_processor.add_event(kind: "custom", key: event_name, user: user, data: data)
+      @event_processor.add_event(@event_factory_default.new_custom_event(event_name, user, data))
     end
 
     #
