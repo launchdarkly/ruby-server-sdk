@@ -33,6 +33,8 @@ require 'ldclient-rb'
 client = LaunchDarkly::LDClient.new("your_sdk_key")
 ```
 
+*NOTE: Please refer to [our documentation](https://docs.launchdarkly.com/docs/ruby-sdk-reference#section-initializing-ldclient-using-spring-unicorn-or-puma) for additional instructions on how to use LaunchDarkly with [Spring](https://github.com/rails/spring), [Unicorn](https://bogomips.org/unicorn/), or [Puma](https://github.com/puma/puma).*
+
 ### Ruby on Rails
 
 1. Add `gem 'ldclient-rb'` to your Gemfile and `bundle install`
