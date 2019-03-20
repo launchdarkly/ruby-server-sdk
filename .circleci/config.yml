@@ -9,6 +9,7 @@ workflows:
       - test-2.3
       - test-2.4
       - test-2.5
+      - test-2.6
       - test-jruby-9.2
 
 ruby-docker-template: &ruby-docker-template
@@ -54,6 +55,13 @@ jobs:
     <<: *ruby-docker-template
     docker:
       - image: circleci/ruby:2.5.3-stretch
+      - image: consul
+      - image: redis
+      - image: amazon/dynamodb-local
+  test-2.6:
+    <<: *ruby-docker-template
+    docker:
+      - image: circleci/ruby:2.6.2-stretch
       - image: consul
       - image: redis
       - image: amazon/dynamodb-local
