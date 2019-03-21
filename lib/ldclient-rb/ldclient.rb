@@ -211,6 +211,10 @@ module LaunchDarkly
     # @return [void]
     #
     def identify(user)
+      if !user || user[:key].nil?
+        @config.logger.warn("Identify called with nil user or nil user key!")
+        return
+      end
       sanitize_user(user)
       @event_processor.add_event(kind: "identify", key: user[:key], user: user)
     end
@@ -229,6 +233,10 @@ module LaunchDarkly
     # @return [void]
     #
     def track(event_name, user, data)
+      if !user || user[:key].nil?
+        @config.logger.warn("Track called with nil user or nil user key!")
+        return
+      end
       sanitize_user(user)
       @event_processor.add_event(kind: "custom", key: event_name, user: user, data: data)
     end

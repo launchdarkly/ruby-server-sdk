@@ -8,7 +8,8 @@ describe LaunchDarkly::LDClient do
     subject.new("secret", offline_config)
   end
   let(:null_data) { LaunchDarkly::NullUpdateProcessor.new }
-  let(:config) { LaunchDarkly::Config.new({send_events: false, data_source: null_data}) }
+  let(:logger) { double().as_null_object }
+  let(:config) { LaunchDarkly::Config.new({ send_events: false, data_source: null_data, logger: logger }) }
   let(:client) do
     subject.new("secret", config)
   end
@@ -17,16 +18,31 @@ describe LaunchDarkly::LDClient do
     JSON.parse(data, symbolize_names: true)
   end
   let(:user) do
-    data = File.read(File.join("spec", "fixtures", "user.json"))
-    JSON.parse(data, symbolize_names: true)
+    {
+      key: "user@test.com",
+      custom: {
+          groups: [ "microsoft", "google" ]
+      }
+    }
   end
   let(:numeric_key_user) do
-    data = File.read(File.join("spec", "fixtures", "numeric_key_user.json"))
-    JSON.parse(data, symbolize_names: true)
+    {
+      key: 33,
+      custom: {
+          groups: [ "microsoft", "google" ]
+      }
+    }
   end
   let(:sanitized_numeric_key_user) do
-    data = File.read(File.join("spec", "fixtures", "sanitized_numeric_key_user.json"))
-    JSON.parse(data, symbolize_names: true)
+    {
+      key: "33",
+      custom: {
+          groups: [ "microsoft", "google" ]
+      }
+    }
+  end
+  let(:user_without_key) do
+    { name: "Keyless Joe" }
   end
 
   def event_processor
@@ -342,6 +358,18 @@ describe LaunchDarkly::LDClient do
       expect(event_processor).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
       client.track("custom_event_name", numeric_key_user, nil)
     end
+
+    it "does not send an event, and logs a warning, if user is nil" do
+      expect(event_processor).not_to receive(:add_event)
+      expect(logger).to receive(:warn)
+      client.track("custom_event_name", nil, nil)
+    end
+
+    it "does not send an event, and logs a warning, if user key is nil" do
+      expect(event_processor).not_to receive(:add_event)
+      expect(logger).to receive(:warn)
+      client.track("custom_event_name", user_without_key, nil)
+    end
   end
 
   describe '#identify' do 
@@ -353,6 +381,18 @@ describe LaunchDarkly::LDClient do
     it "sanitizes the user in the event" do
       expect(event_processor).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
       client.identify(numeric_key_user)
+    end
+
+    it "does not send an event, and logs a warning, if user is nil" do
+      expect(event_processor).not_to receive(:add_event)
+      expect(logger).to receive(:warn)
+      client.identify(nil)
+    end
+
+    it "does not send an event, and logs a warning, if user key is nil" do
+      expect(event_processor).not_to receive(:add_event)
+      expect(logger).to receive(:warn)
+      client.identify(user_without_key)
     end
   end
 
