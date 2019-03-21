@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.4] - 2019-03-29
+### Fixed:
+- Fixed a missing `require` that could sometimes cause a `NameError` to be thrown when starting the client, depending on what other gems were installed. This bug was introduced in version 5.5.3. ([#129](https://github.com/launchdarkly/ruby-client/issues/129))
+- When an analytics event was generated for a feature flag because it is a prerequisite for another flag that was evaluated, the user data was being omitted from the event. ([#128](https://github.com/launchdarkly/ruby-client/issues/128))
+- If `track` or `identify` is called without a user, the SDK now logs a warning, and does not send an analytics event to LaunchDarkly (since it would not be processed without a user).
+- Added a link from the SDK readme to the guide regarding the client initialization.
+
 ## [5.5.3] - 2019-02-13
 ### Changed:
 - The SDK previously used the `faraday` and `net-http-persistent` gems for all HTTP requests other than streaming connections. Since `faraday` lacks a stable version and has a known issue with character encoding, and `net-http-persistent` is no longer maintained, these have both been removed. This should not affect any SDK functionality.
