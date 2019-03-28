@@ -7,9 +7,12 @@ require "time"
 module LaunchDarkly
   MAX_FLUSH_WORKERS = 5
   CURRENT_SCHEMA_VERSION = 3
+  USER_ATTRS_TO_STRINGIFY_FOR_EVENTS = [ :key, :secondary, :ip, :country, :email, :firstName, :lastName,
+    :avatar, :name ]
 
   private_constant :MAX_FLUSH_WORKERS
   private_constant :CURRENT_SCHEMA_VERSION
+  private_constant :USER_ATTRS_TO_STRINGIFY_FOR_EVENTS
 
   # @private
   class NullEventProcessor
@@ -219,7 +222,7 @@ module LaunchDarkly
       if user.nil? || !user.has_key?(:key)
         true
       else
-        @user_keys.add(user[:key])
+        @user_keys.add(user[:key].to_s)
       end
     end
 
@@ -371,6 +374,11 @@ module LaunchDarkly
 
     private
 
+    def process_user(event)
+      filtered = @user_filter.transform_user_props(event[:user])
+      Util.stringify_attrs(filtered, USER_ATTRS_TO_STRINGIFY_FOR_EVENTS)
+    end
+
     def make_output_event(event)
       case event[:kind]
       when "feature"
@@ -386,7 +394,7 @@ module LaunchDarkly
         out[:version] = event[:version] if event.has_key?(:version)
         out[:prereqOf] = event[:prereqOf] if event.has_key?(:prereqOf)
         if @inline_users || is_debug
-          out[:user] = @user_filter.transform_user_props(event[:user])
+          out[:user] = process_user(event)
         else
           out[:userKey] = event[:user].nil? ? nil : event[:user][:key]
         end
@@ -396,8 +404,8 @@ module LaunchDarkly
         {
           kind: "identify",
           creationDate: event[:creationDate],
-          key: event[:user].nil? ? nil : event[:user][:key],
-          user: @user_filter.transform_user_props(event[:user])
+          key: event[:user].nil? ? nil : event[:user][:key].to_s,
+          user: process_user(event)
         }
       when "custom"
         out = {
@@ -407,7 +415,7 @@ module LaunchDarkly
         }
         out[:data] = event[:data] if event.has_key?(:data)
         if @inline_users
-          out[:user] = @user_filter.transform_user_props(event[:user])
+          out[:user] = process_user(event)
         else
           out[:userKey] = event[:user].nil? ? nil : event[:user][:key]
         end
@@ -416,7 +424,7 @@ module LaunchDarkly
         {
           kind: "index",
           creationDate: event[:creationDate],
-          user: @user_filter.transform_user_props(event[:user])
+          user: process_user(event)
         }
       else
         event

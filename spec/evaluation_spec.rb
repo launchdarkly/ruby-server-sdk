@@ -359,6 +359,25 @@ describe LaunchDarkly::Evaluation do
       expect(result.detail).to eq(detail)
       expect(result.events).to eq([])
     end
+
+    it "coerces user key to a string for evaluation" do
+      clause = { attribute: 'key', op: 'in', values: ['999'] }
+      flag = boolean_flag_with_clauses([clause])
+      user = { key: 999 }
+      result = evaluate(flag, user, features, logger)
+      expect(result.detail.value).to eq(true)
+    end
+
+    it "coerces secondary key to a string for evaluation" do
+      # We can't really verify that the rollout calculation works correctly, but we can at least
+      # make sure it doesn't error out if there's a non-string secondary value (ch35189)
+      rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }],
+        rollout: { salt: '', variations: [ { weight: 100000, variation: 1 } ] } }
+      flag = boolean_flag_with_rules([rule])
+      user = { key: "userkey", secondary: 999 }
+      result = evaluate(flag, user, features, logger)
+      expect(result.detail.reason).to eq({ kind: 'RULE_MATCH', ruleIndex: 0, ruleId: 'ruleid'})
+    end
   end
 
   describe "clause" do
