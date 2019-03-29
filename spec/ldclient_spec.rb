@@ -25,22 +25,6 @@ describe LaunchDarkly::LDClient do
       }
     }
   end
-  let(:numeric_key_user) do
-    {
-      key: 33,
-      custom: {
-          groups: [ "microsoft", "google" ]
-      }
-    }
-  end
-  let(:sanitized_numeric_key_user) do
-    {
-      key: "33",
-      custom: {
-          groups: [ "microsoft", "google" ]
-      }
-    }
-  end
   let(:user_without_key) do
     { name: "Keyless Joe" }
   end
@@ -354,11 +338,6 @@ describe LaunchDarkly::LDClient do
       client.track("custom_event_name", user, 42)
     end
 
-    it "sanitizes the user in the event" do
-      expect(event_processor).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
-      client.track("custom_event_name", numeric_key_user, nil)
-    end
-
     it "does not send an event, and logs a warning, if user is nil" do
       expect(event_processor).not_to receive(:add_event)
       expect(logger).to receive(:warn)
@@ -376,11 +355,6 @@ describe LaunchDarkly::LDClient do
     it "queues up an identify event" do
       expect(event_processor).to receive(:add_event).with(hash_including(kind: "identify", key: user[:key], user: user))
       client.identify(user)
-    end
-
-    it "sanitizes the user in the event" do
-      expect(event_processor).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
-      client.identify(numeric_key_user)
     end
 
     it "does not send an event, and logs a warning, if user is nil" do
