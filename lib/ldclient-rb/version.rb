@@ -1,3 +1,3 @@
 module LaunchDarkly
-  VERSION = "5.5.4"
+  VERSION = "5.5.5"
 end
