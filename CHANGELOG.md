@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.5] - 2019-03-28
+### Fixed:
+- Setting user attributes to non-string values when a string was expected would cause analytics events not to be processed. Also, in the case of the `secondary` attribute, this could cause evaluations to fail for a flag with a percentage rollout. The SDK will now convert attribute values to strings as needed. ([#131](https://github.com/launchdarkly/ruby-client/issues/131))
+
 ## [5.5.4] - 2019-03-29
 ### Fixed:
 - Fixed a missing `require` that could sometimes cause a `NameError` to be thrown when starting the client, depending on what other gems were installed. This bug was introduced in version 5.5.3. ([#129](https://github.com/launchdarkly/ruby-client/issues/129))
