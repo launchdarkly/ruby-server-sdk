@@ -189,6 +189,10 @@ module LaunchDarkly
     # Used internally to hold an evaluation result and the events that were generated from prerequisites.
     EvalResult = Struct.new(:detail, :events)
 
+    USER_ATTRS_TO_STRINGIFY_FOR_EVALUATION = [ :key, :secondary ]
+    # Currently we are not stringifying the rest of the built-in attributes prior to evaluation, only for events.
+    # This is because it could affect evaluation results for existing users (ch35206).
+    
     def error_result(errorKind, value = nil)
       EvaluationDetail.new(value, nil, { kind: 'ERROR', errorKind: errorKind })
     end
@@ -200,8 +204,10 @@ module LaunchDarkly
         return EvalResult.new(error_result('USER_NOT_SPECIFIED'), [])
       end
 
+      sanitized_user = Util.stringify_attrs(user, USER_ATTRS_TO_STRINGIFY_FOR_EVALUATION)
+
       events = []
-      detail = eval_internal(flag, user, store, events, logger)
+      detail = eval_internal(flag, sanitized_user, store, events, logger)
       return EvalResult.new(detail, events)
     end
 

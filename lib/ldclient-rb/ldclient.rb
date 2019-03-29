@@ -215,7 +215,6 @@ module LaunchDarkly
         @config.logger.warn("Identify called with nil user or nil user key!")
         return
       end
-      sanitize_user(user)
       @event_processor.add_event(kind: "identify", key: user[:key], user: user)
     end
 
@@ -237,7 +236,6 @@ module LaunchDarkly
         @config.logger.warn("Track called with nil user or nil user key!")
         return
       end
-      sanitize_user(user)
       @event_processor.add_event(kind: "custom", key: event_name, user: user, data: data)
     end
 
@@ -279,8 +277,6 @@ module LaunchDarkly
         @config.logger.error { "[LDClient] User and user key must be specified in all_flags_state" }
         return FeatureFlagsState.new(false)
       end
-
-      sanitize_user(user)
 
       begin
         features = @store.all(FEATURES)
@@ -353,7 +349,6 @@ module LaunchDarkly
         end
       end
 
-      sanitize_user(user) if !user.nil?
       feature = @store.get(FEATURES, key)
 
       if feature.nil?
@@ -367,12 +362,12 @@ module LaunchDarkly
       unless user
         @config.logger.error { "[LDClient] Must specify user" }
         detail = error_result('USER_NOT_SPECIFIED', default)
-        @event_processor.add_event(make_feature_event(feature, user, detail, default, include_reasons_in_events))
+        @event_processor.add_event(make_feature_event(feature, nil, detail, default, include_reasons_in_events))
         return detail
       end
 
       begin
-        res = evaluate(feature, user, @store, @config.logger)
+        res = evaluate(feature, user, @store, @config.logger)  # note, evaluate will do its own sanitization
         if !res.events.nil?
           res.events.each do |event|
             @event_processor.add_event(event)
@@ -389,12 +384,6 @@ module LaunchDarkly
         detail = error_result('EXCEPTION', default)
         @event_processor.add_event(make_feature_event(feature, user, detail, default, include_reasons_in_events))
         return detail
-      end
-    end
-
-    def sanitize_user(user)
-      if user[:key]
-        user[:key] = user[:key].to_s
       end
     end
 

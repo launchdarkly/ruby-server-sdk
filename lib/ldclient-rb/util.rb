@@ -4,6 +4,21 @@ require "uri"
 module LaunchDarkly
   # @private
   module Util
+    def self.stringify_attrs(hash, attrs)
+      return hash if hash.nil?
+      ret = hash
+      changed = false
+      attrs.each do |attr|
+        value = hash[attr]
+        if !value.nil? && !value.is_a?(String)
+          ret = hash.clone if !changed
+          ret[attr] = value.to_s
+          changed = true
+        end
+      end
+      ret
+    end
+
     def self.new_http_client(uri_s, config)
       uri = URI(uri_s)
       client = Net::HTTP.new(uri.hostname, uri.port)
