@@ -289,7 +289,7 @@ describe LaunchDarkly::EventProcessor do
 
   it "queues custom event with user" do
     @ep = subject.new("sdk_key", default_config, hc)
-    e = { kind: "custom", key: "eventkey", user: user, data: { thing: "stuff" } }
+    e = { kind: "custom", key: "eventkey", user: user, data: { thing: "stuff" }, metricValue: 1.5 }
     @ep.add_event(e)
 
     output = flush_and_get_events
@@ -500,6 +500,7 @@ describe LaunchDarkly::EventProcessor do
     else
       out[:user] = inline_user
     end
+    out[:metricValue] = e[:metricValue] if e.has_key?(:metricValue)
     out
   end
 

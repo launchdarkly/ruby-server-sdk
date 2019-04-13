@@ -391,6 +391,12 @@ describe LaunchDarkly::LDClient do
       client.track("custom_event_name", user, 42)
     end
 
+    it "can include a metric value" do
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "custom", key: "custom_event_name", user: user, metricValue: 1.5))
+      client.track("custom_event_name", user, nil, 1.5)
+    end
+
     it "sanitizes the user in the event" do
       expect(event_processor).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
       client.track("custom_event_name", numeric_key_user, nil)
