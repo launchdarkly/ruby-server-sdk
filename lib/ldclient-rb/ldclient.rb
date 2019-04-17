@@ -230,12 +230,16 @@ module LaunchDarkly
     # @param event_name [String] The name of the event
     # @param user [Hash] The user to register; this can have all the same user properties
     #   described in {#variation}
-    # @param data [Hash] A hash containing any additional data associated with the event
+    # @param data [Hash] An optional hash containing any additional data associated with the event
+    # @param metric_value [Number] A numeric value used by the LaunchDarkly experimentation
+    #   feature in numeric custom metrics. Can be omitted if this event is used by only
+    #   non-numeric metrics. This field will also be returned as part of the custom event
+    #   for Data Export.
     # @return [void]
     #
-    def track(event_name, user, data)
+    def track(event_name, user, data = nil, metric_value = nil)
       sanitize_user(user)
-      @event_processor.add_event(@event_factory_default.new_custom_event(event_name, user, data))
+      @event_processor.add_event(@event_factory_default.new_custom_event(event_name, user, data, metric_value))
     end
 
     #

@@ -66,13 +66,15 @@ module LaunchDarkly
         }
       end
 
-      def new_custom_event(event_name, user, data)
-        {
+      def new_custom_event(event_name, user, data, metric_value)
+        e = {
           kind: 'custom',
           key: event_name,
-          user: user,
-          data: data
+          user: user
         }
+        e[:data] = data if !data.nil?
+        e[:metricValue] = metric_value if !metric_value.nil?
+        e
       end
 
       private
