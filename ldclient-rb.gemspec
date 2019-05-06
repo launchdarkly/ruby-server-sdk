@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["team@launchdarkly.com"]
   spec.summary       = "LaunchDarkly SDK for Ruby"
   spec.description   = "Official LaunchDarkly SDK for Ruby"
-  spec.homepage      = "https://github.com/launchdarkly/ruby-client"
+  spec.homepage      = "https://github.com/launchdarkly/ruby-server-sdk"
   spec.license       = "Apache-2.0"
 
   spec.files         = `git ls-files -z`.split("\x0")
