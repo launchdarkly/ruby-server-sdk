@@ -31,6 +31,8 @@ end
 describe LaunchDarkly::RedisFeatureStore do
   subject { LaunchDarkly::RedisFeatureStore }
   
+  return if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+
   # These tests will all fail if there isn't a Redis instance running on the default port.
   
   context "real Redis with local cache" do
