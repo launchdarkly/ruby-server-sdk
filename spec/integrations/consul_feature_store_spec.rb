@@ -28,6 +28,7 @@ end
 
 
 describe "Consul feature store" do
+  return if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
   
   # These tests will all fail if there isn't a local Consul instance running.
   
