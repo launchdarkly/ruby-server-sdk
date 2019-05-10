@@ -9,7 +9,7 @@
 # When done you should commit and push the changes made.
 
 set -uxe
-echo "Starting ruby-client release."
+echo "Starting ruby-server-sdk release."
 
 VERSION=$1
 
@@ -24,4 +24,4 @@ gem build ldclient-rb.gemspec
 # Publish Ruby Gem
 gem push ldclient-rb-${VERSION}.gem
 
-echo "Done with ruby-client release"
+echo "Done with ruby-server-sdk release"

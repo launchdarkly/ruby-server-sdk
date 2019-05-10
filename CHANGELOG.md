@@ -4,12 +4,12 @@ All notable changes to the LaunchDarkly Ruby SDK will be documented in this file
 
 ## [5.5.5] - 2019-03-28
 ### Fixed:
-- Setting user attributes to non-string values when a string was expected would cause analytics events not to be processed. Also, in the case of the `secondary` attribute, this could cause evaluations to fail for a flag with a percentage rollout. The SDK will now convert attribute values to strings as needed. ([#131](https://github.com/launchdarkly/ruby-client/issues/131))
+- Setting user attributes to non-string values when a string was expected would cause analytics events not to be processed. Also, in the case of the `secondary` attribute, this could cause evaluations to fail for a flag with a percentage rollout. The SDK will now convert attribute values to strings as needed. ([#131](https://github.com/launchdarkly/ruby-server-sdk/issues/131))
 
 ## [5.5.4] - 2019-03-29
 ### Fixed:
-- Fixed a missing `require` that could sometimes cause a `NameError` to be thrown when starting the client, depending on what other gems were installed. This bug was introduced in version 5.5.3. ([#129](https://github.com/launchdarkly/ruby-client/issues/129))
-- When an analytics event was generated for a feature flag because it is a prerequisite for another flag that was evaluated, the user data was being omitted from the event. ([#128](https://github.com/launchdarkly/ruby-client/issues/128))
+- Fixed a missing `require` that could sometimes cause a `NameError` to be thrown when starting the client, depending on what other gems were installed. This bug was introduced in version 5.5.3. ([#129](https://github.com/launchdarkly/ruby-server-sdk/issues/129))
+- When an analytics event was generated for a feature flag because it is a prerequisite for another flag that was evaluated, the user data was being omitted from the event. ([#128](https://github.com/launchdarkly/ruby-server-sdk/issues/128))
 - If `track` or `identify` is called without a user, the SDK now logs a warning, and does not send an analytics event to LaunchDarkly (since it would not be processed without a user).
 - Added a link from the SDK readme to the guide regarding the client initialization.
 
@@ -44,7 +44,7 @@ All notable changes to the LaunchDarkly Ruby SDK will be documented in this file
 ### Fixed:
 - Added or corrected a large number of documentation comments. All API classes and methods are now documented, and internal implementation details have been hidden from the documentation. You can view the latest documentation on [RubyDoc](https://www.rubydoc.info/gems/ldclient-rb).
 - Fixed a problem in the Redis feature store that would only happen under unlikely circumstances: trying to evaluate a flag when the LaunchDarkly client had not yet been fully initialized and the store did not yet have data in it, and then trying again when the client was still not ready but the store _did_ have data (presumably put there by another process). Previously, the second attempt would fail.
-- In polling mode, the SDK did not correctly handle non-ASCII Unicode characters in feature flag data. ([#90](https://github.com/launchdarkly/ruby-client/issues/90))
+- In polling mode, the SDK did not correctly handle non-ASCII Unicode characters in feature flag data. ([#90](https://github.com/launchdarkly/ruby-server-sdk/issues/90))
 
 ### Deprecated:
 - `RedisFeatureStore.new`. This implementation class may be changed or moved in the future; use `LaunchDarkly::Integrations::Redis::new_feature_store`.
@@ -52,16 +52,16 @@ All notable changes to the LaunchDarkly Ruby SDK will be documented in this file
 
 ## [5.4.3] - 2019-01-11
 ### Changed:
-- The SDK is now compatible with `net-http-persistent` 3.x. (Thanks, [CodingAnarchy](https://github.com/launchdarkly/ruby-client/pull/113)!)
+- The SDK is now compatible with `net-http-persistent` 3.x. (Thanks, [CodingAnarchy](https://github.com/launchdarkly/ruby-server-sdk/pull/113)!)
 
 ## [5.4.2] - 2019-01-04
 ### Fixed:
-- Fixed overly specific dependency versions of `concurrent-ruby` and `semantic`. ([#115](https://github.com/launchdarkly/ruby-client/issues/115))
+- Fixed overly specific dependency versions of `concurrent-ruby` and `semantic`. ([#115](https://github.com/launchdarkly/ruby-server-sdk/issues/115))
 - Removed obsolete dependencies on `hashdiff` and `thread_safe`.
 
 ## [5.4.1] - 2018-11-05
 ### Fixed:
-- Fixed a `LoadError` in `file_data_source.rb`, which was added in 5.4.0. (Thanks, [kbarrette](https://github.com/launchdarkly/ruby-client/pull/110)!)
+- Fixed a `LoadError` in `file_data_source.rb`, which was added in 5.4.0. (Thanks, [kbarrette](https://github.com/launchdarkly/ruby-server-sdk/pull/110)!)
 
 
 ## [5.4.0] - 2018-11-02
@@ -128,7 +128,7 @@ Fixed a regression in version 5.0.0 that could prevent the client from reconnect
 
 ## [3.0.2] - 2018-03-06
 ## Fixed
-- Improved efficiency of logging by not constructing messages that won't be visible at the current log level. (Thanks, [julik](https://github.com/launchdarkly/ruby-client/pull/98)!)
+- Improved efficiency of logging by not constructing messages that won't be visible at the current log level. (Thanks, [julik](https://github.com/launchdarkly/ruby-server-sdk/pull/98)!)
 
 
 ## [3.0.1] - 2018-02-26
