@@ -2,6 +2,18 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.6] - 2019-05-08
+### Fixed:
+- CI tests now include Ruby 2.6.x.
+- Running the SDK unit tests is now simpler, as the database integrations can be skipped. See `CONTRIBUTING.md`.
+
+# Note on future releases
+
+The LaunchDarkly SDK repositories are being renamed for consistency. This repository is now `ruby-server-sdk` rather than `ruby-client`.
+
+The gem name will also change. In the 5.5.6 release, it is still `ldclient-rb`; in all future releases, it will be `launchdarkly-ruby-server-sdk`. No further updates to the `ldclient-rb` gem will be published after this release.
+
+
 ## [5.5.5] - 2019-03-28
 ### Fixed:
 - Setting user attributes to non-string values when a string was expected would cause analytics events not to be processed. Also, in the case of the `secondary` attribute, this could cause evaluations to fail for a flag with a percentage rollout. The SDK will now convert attribute values to strings as needed. ([#131](https://github.com/launchdarkly/ruby-server-sdk/issues/131))
