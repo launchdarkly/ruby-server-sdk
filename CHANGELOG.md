@@ -11,7 +11,7 @@ All notable changes to the LaunchDarkly Ruby SDK will be documented in this file
 
 The LaunchDarkly SDK repositories are being renamed for consistency. This repository is now `ruby-server-sdk` rather than `ruby-client`.
 
-The gem name will also change. In the 5.5.6 release, it is still `ldclient-rb`; in all future releases, it will be `launchdarkly-ruby-server-sdk`. No further updates to the `ldclient-rb` gem will be published after this release.
+The gem name will also change. In the 5.5.6 release, it is still `ldclient-rb`; in all future releases, it will be `launchdarkly-server-sdk`. No further updates to the `ldclient-rb` gem will be published after this release.
 
 
 ## [5.5.5] - 2019-03-28

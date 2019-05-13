@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ldclient-rb (5.5.5)
+    launchdarkly-server-sdk (5.5.6)
       concurrent-ruby (~> 1.0)
       json (>= 1.8, < 3)
       ld-eventsource (~> 1.0)
@@ -90,7 +90,7 @@ DEPENDENCIES
   codeclimate-test-reporter (~> 0)
   connection_pool (>= 2.1.2)
   diplomat (>= 2.0.2)
-  ldclient-rb!
+  launchdarkly-server-sdk!
   listen (~> 3.0)
   rake (~> 10.0)
   redis (~> 3.3.5)
