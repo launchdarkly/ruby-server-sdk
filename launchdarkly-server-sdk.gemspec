@@ -6,7 +6,7 @@ require "ldclient-rb/version"
 
 # rubocop:disable Metrics/BlockLength
 Gem::Specification.new do |spec|
-  spec.name          = "ldclient-rb"
+  spec.name          = "launchdarkly-server-sdk"
   spec.version       = LaunchDarkly::VERSION
   spec.authors       = ["LaunchDarkly"]
   spec.email         = ["team@launchdarkly.com"]

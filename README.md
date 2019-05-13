@@ -1,7 +1,7 @@
 LaunchDarkly Server-side SDK for Ruby
 ===========================
 
-[![Gem Version](https://badge.fury.io/rb/ldclient-rb.svg)](http://badge.fury.io/rb/ldclient-rb)
+[![Gem Version](https://badge.fury.io/rb/launchdarkly-server-sdk.svg)](http://badge.fury.io/rb/launchdarkly-server-sdk)
 
 [![Circle CI](https://circleci.com/gh/launchdarkly/ruby-server-sdk/tree/master.svg?style=svg)](https://circleci.com/gh/launchdarkly/ruby-server-sdk/tree/master)
 [![Security](https://hakiri.io/github/launchdarkly/ruby-server-sdk/master.svg)](https://hakiri.io/github/launchdarkly/ruby-server-sdk/master)
@@ -27,7 +27,7 @@ Learn more
 
 Check out our [documentation](http://docs.launchdarkly.com) for in-depth instructions on configuring and using LaunchDarkly. You can also head straight to the [reference guide for this SDK](http://docs.launchdarkly.com/docs/ruby-sdk-reference).
 
-Generated API documentation is on [RubyDoc.info](https://www.rubydoc.info/gems/ldclient-rb).
+Generated API documentation is on [RubyDoc.info](https://www.rubydoc.info/gems/launchdarkly-server-sdk).
 
 Testing
 -------
