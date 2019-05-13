@@ -2,6 +2,12 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.7] - 2019-05-13
+### Changed:
+- Changed the gem name from `ldclient-rb` to `launchdarkly-server-sdk`.
+
+There are no other changes in this release. Substituting `ldclient-rb` version 5.5.6 with `launchdarkly-server-sdk` version 5.5.7 will not affect functionality.
+
 ## [5.5.6] - 2019-05-08
 ### Fixed:
 - CI tests now include Ruby 2.6.x.
