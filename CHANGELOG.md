@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.8] - 2019-07-11
+### Fixed:
+- In streaming mode, depending on the Ruby version, calling `close` on the client could cause a misleading warning message in the log, such as `Unexpected error from event source: #<IOError: stream closed in another thread>`. ([#135](https://github.com/launchdarkly/ruby-server-sdk/issues/135))
+
 ## [5.5.7] - 2019-05-13
 ### Changed:
 - Changed the gem name from `ldclient-rb` to `launchdarkly-server-sdk`.
