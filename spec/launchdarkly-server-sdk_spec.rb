@@ -14,7 +14,7 @@ describe LaunchDarkly do
           end
 
           Bundler.require(:development)
-          abort unless $LOADED_FEATURES.any?(/ldclient-rb\.rb/)
+          abort unless $LOADED_FEATURES.any? { |file| file =~ /ldclient-rb\.rb/ }
         RUBY
       end
 
