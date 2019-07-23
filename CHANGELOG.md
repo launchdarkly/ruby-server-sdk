@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.9] - 2019-07-23
+### Fixed:
+- Due to the gem name no longer being the same as the `require` name, Bundler autoloading was no longer working in versions 5.5.7 and 5.5.8 of the SDK. This has been fixed. (Thanks, [tonyta](https://github.com/launchdarkly/ruby-server-sdk/pull/137)!)
+
 ## [5.5.8] - 2019-07-11
 ### Fixed:
 - In streaming mode, depending on the Ruby version, calling `close` on the client could cause a misleading warning message in the log, such as `Unexpected error from event source: #<IOError: stream closed in another thread>`. ([#135](https://github.com/launchdarkly/ruby-server-sdk/issues/135))
