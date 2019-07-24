@@ -206,7 +206,7 @@ module LaunchDarkly
       # We can use the Ruby YAML parser for both YAML and JSON (JSON is a subset of YAML and while
       # not all YAML parsers handle it correctly, we have verified that the Ruby one does, at least
       # for all the samples of actual flag data that we've tested).
-      symbolize_all_keys(YAML.safe_load(content))
+      symbolize_all_keys(YAML.load(content))
     end
 
     def symbolize_all_keys(value)
