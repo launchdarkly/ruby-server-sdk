@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.11] - 2019-07-24
+### Fixed:
+- `FileDataSource` was using `YAML.load`, which has a known [security vulnerability](https://trailofbits.github.io/rubysec/yaml/index.html). This has been changed to use `YAML.safe_load`, which will refuse to parse any files that contain the `!` directives used in this type of attack. This issue does not affect any applications that do not use `FileDataSource` (which is meant for testing purposes, not production use). ([#139](https://github.com/launchdarkly/ruby-server-sdk/issues/139))
+
+
 ## [5.5.10] - 2019-07-24
 This release was an error; it is identical to 5.5.9.
 
