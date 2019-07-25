@@ -1,6 +1,14 @@
 require "spec_helper"
 require "tempfile"
 
+# see does not allow Ruby objects in YAML" for the purpose of the following two things
+$created_bad_class = false
+class BadClassWeShouldNotInstantiate < Hash
+  def []=(key, value)
+    $created_bad_class = true
+  end
+end
+
 describe LaunchDarkly::FileDataSource do
   let(:full_flag_1_key) { "flag1" }
   let(:full_flag_1_value) { "on" }
@@ -78,6 +86,12 @@ segments:
 EOF
   }
 
+  let(:unsafe_yaml) { <<-EOF
+--- !ruby/hash:BadClassWeShouldNotInstantiate
+foo: bar
+EOF
+  }
+
   let(:bad_file_path) { "no-such-file" }
 
   before do
@@ -135,6 +149,20 @@ EOF
       expect(@store.initialized?).to eq(true)
       expect(@store.all(LaunchDarkly::FEATURES).keys).to eq(all_flag_keys)
       expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq(all_segment_keys)
+    end
+  end
+
+  it "does not allow Ruby objects in YAML" do
+    # This tests for the vulnerability described here: https://trailofbits.github.io/rubysec/yaml/index.html
+    # The file we're loading contains a hash with a custom Ruby class, BadClassWeShouldNotInstantiate (see top
+    # of file). If we're not loading in safe mode, it will create an instance of that class and call its []=
+    # method, which we've defined to set $created_bad_class to true. In safe mode, it refuses to parse this file.
+    file = make_temp_file(unsafe_yaml)
+    with_data_source({ paths: [file.path ] }) do |ds|
+      event = ds.start
+      expect(event.set?).to eq(true)
+      expect(ds.initialized?).to eq(false)
+      expect($created_bad_class).to eq(false)
     end
   end
 
