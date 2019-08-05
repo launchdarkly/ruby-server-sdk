@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.5.12] - 2019-08-05
+### Fixed:
+- Under conditions where analytics events are being generated at an extremely high rate (for instance, if an application is evaluating a flag repeatedly in a tight loop on many threads), it was possible for the internal event processing logic to fall behind on processing the events, causing them to use more and more memory. The logic has been changed to drop events if necessary so that besides the existing limit on the number of events waiting to be sent to LaunchDarkly (`config.capacity`), the same limit also applies on the number of events that are waiting to be processed by the worker thread that decides whether or not to send them to LaunchDarkly. If that limit is exceeded, this warning message will be logged once: "Events are being produced faster than they can be processed; some events will be dropped". Under normal conditions this should never happen; this change is meant to avoid a concurrency bottleneck in applications that are already so busy that thread starvation is likely.
+
 ## [5.5.11] - 2019-07-24
 ### Fixed:
 - `FileDataSource` was using `YAML.load`, which has a known [security vulnerability](https://trailofbits.github.io/rubysec/yaml/index.html). This has been changed to use `YAML.safe_load`, which will refuse to parse any files that contain the `!` directives used in this type of attack. This issue does not affect any applications that do not use `FileDataSource` (which is meant for testing purposes, not production use). ([#139](https://github.com/launchdarkly/ruby-server-sdk/issues/139))
