@@ -216,6 +216,10 @@ module LaunchDarkly
     # @return [void]
     #
     def identify(user)
+      if !user || user[:key].nil?
+        @config.logger.warn("Identify called with nil user or nil user key!")
+        return
+      end
       sanitize_user(user)
       @event_processor.add_event(@event_factory_default.new_identify_event(user))
     end
@@ -238,6 +242,10 @@ module LaunchDarkly
     # @return [void]
     #
     def track(event_name, user, data = nil, metric_value = nil)
+      if !user || user[:key].nil?
+        @config.logger.warn("Track called with nil user or nil user key!")
+        return
+      end
       sanitize_user(user)
       @event_processor.add_event(@event_factory_default.new_custom_event(event_name, user, data, metric_value))
     end
@@ -280,8 +288,6 @@ module LaunchDarkly
         @config.logger.error { "[LDClient] User and user key must be specified in all_flags_state" }
         return FeatureFlagsState.new(false)
       end
-
-      sanitize_user(user)
 
       begin
         features = @store.all(FEATURES)
@@ -355,7 +361,6 @@ module LaunchDarkly
         end
       end
 
-      sanitize_user(user) if !user.nil?
       feature = @store.get(FEATURES, key)
 
       if feature.nil?

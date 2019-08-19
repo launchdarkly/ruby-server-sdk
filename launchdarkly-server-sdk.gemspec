@@ -6,13 +6,13 @@ require "ldclient-rb/version"
 
 # rubocop:disable Metrics/BlockLength
 Gem::Specification.new do |spec|
-  spec.name          = "ldclient-rb"
+  spec.name          = "launchdarkly-server-sdk"
   spec.version       = LaunchDarkly::VERSION
   spec.authors       = ["LaunchDarkly"]
   spec.email         = ["team@launchdarkly.com"]
   spec.summary       = "LaunchDarkly SDK for Ruby"
   spec.description   = "Official LaunchDarkly SDK for Ruby"
-  spec.homepage      = "https://github.com/launchdarkly/ruby-client"
+  spec.homepage      = "https://github.com/launchdarkly/ruby-server-sdk"
   spec.license       = "Apache-2.0"
 
   spec.files         = `git ls-files -z`.split("\x0")
@@ -36,5 +36,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "json", [">= 1.8", "< 3"]
   spec.add_runtime_dependency "semantic", "~> 1.6"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0"
-  spec.add_runtime_dependency "ld-eventsource", '~> 1.0'
+  spec.add_runtime_dependency "ld-eventsource", "1.0.1"
 end

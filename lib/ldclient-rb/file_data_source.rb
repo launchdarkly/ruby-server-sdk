@@ -21,9 +21,11 @@ module LaunchDarkly
   end
 
   #
-  # Provides a way to use local files as a source of feature flag state. This would typically be
-  # used in a test environment, to operate using a predetermined feature flag state without an
-  # actual LaunchDarkly connection.
+  # Provides a way to use local files as a source of feature flag state. This allows using a
+  # predetermined feature flag state without an actual LaunchDarkly connection.
+  #
+  # Reading flags from a file is only intended for pre-production environments. Production
+  # environments should always be configured to receive flag updates from LaunchDarkly.
   #
   # To use this component, call {FileDataSource#factory}, and store its return value in the
   # {Config#data_source} property of your LaunchDarkly client configuration. In the options
@@ -206,7 +208,7 @@ module LaunchDarkly
       # We can use the Ruby YAML parser for both YAML and JSON (JSON is a subset of YAML and while
       # not all YAML parsers handle it correctly, we have verified that the Ruby one does, at least
       # for all the samples of actual flag data that we've tested).
-      symbolize_all_keys(YAML.load(content))
+      symbolize_all_keys(YAML.safe_load(content))
     end
 
     def symbolize_all_keys(value)

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# This script updates the version for the ldclient library and releases it to RubyGems
+# This script updates the version for the launchdarkly-server-sdk library and releases it to RubyGems
 # It will only work if you have the proper credentials set up in ~/.gem/credentials
 
 # It takes exactly one argument: the new version.
@@ -9,19 +9,19 @@
 # When done you should commit and push the changes made.
 
 set -uxe
-echo "Starting ruby-client release."
+echo "Starting ruby-server-sdk release."
 
 VERSION=$1
 
-#Update version in ldclient/version.py
+#Update version in lib/ldclient-rb/version.rb
 VERSION_RB_TEMP=./version.rb.tmp
 sed "s/VERSION =.*/VERSION = \"${VERSION}\"/g" lib/ldclient-rb/version.rb > ${VERSION_RB_TEMP}
 mv ${VERSION_RB_TEMP} lib/ldclient-rb/version.rb
 
 # Build Ruby Gem
-gem build ldclient-rb.gemspec
+gem build launchdarkly-server-sdk.gemspec
 
 # Publish Ruby Gem
-gem push ldclient-rb-${VERSION}.gem
+gem push launchdarkly-server-sdk-${VERSION}.gem
 
-echo "Done with ruby-client release"
+echo "Done with ruby-server-sdk release"

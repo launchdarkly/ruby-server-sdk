@@ -9,6 +9,10 @@ describe LaunchDarkly::EventProcessor do
   let(:hc) { FakeHttpClient.new }
   let(:user) { { key: "userkey", name: "Red" } }
   let(:filtered_user) { { key: "userkey", privateAttrs: [ "name" ] } }
+  let(:numeric_user) { { key: 1, secondary: 2, ip: 3, country: 4, email: 5, firstName: 6, lastName: 7,
+    avatar: 8, name: 9, anonymous: false, custom: { age: 99 } } }
+  let(:stringified_numeric_user) { { key: '1', secondary: '2', ip: '3', country: '4', email: '5', firstName: '6',
+    lastName: '7', avatar: '8', name: '9', anonymous: false, custom: { age: 99 } } }
 
   after(:each) do
     if !@ep.nil?
@@ -38,6 +42,21 @@ describe LaunchDarkly::EventProcessor do
       creationDate: e[:creationDate],
       user: filtered_user
     })
+  end
+
+  it "stringifies built-in user attributes in identify event" do
+    @ep = subject.new("sdk_key", default_config, hc)
+    flag = { key: "flagkey", version: 11 }
+    e = { kind: "identify", key: numeric_user[:key], user: numeric_user }
+    @ep.add_event(e)
+
+    output = flush_and_get_events
+    expect(output).to contain_exactly(
+      kind: "identify",
+      key: numeric_user[:key].to_s,
+      creationDate: e[:creationDate],
+      user: stringified_numeric_user
+    )
   end
 
   it "queues individual feature event with index event" do
@@ -75,6 +94,23 @@ describe LaunchDarkly::EventProcessor do
     )
   end
 
+  it "stringifies built-in user attributes in index event" do
+    @ep = subject.new("sdk_key", default_config, hc)
+    flag = { key: "flagkey", version: 11 }
+    fe = {
+      kind: "feature", key: "flagkey", version: 11, user: numeric_user,
+      variation: 1, value: "value", trackEvents: true
+    }
+    @ep.add_event(fe)
+
+    output = flush_and_get_events
+    expect(output).to contain_exactly(
+      eq(index_event(fe, stringified_numeric_user)),
+      eq(feature_event(fe, flag, false, nil)),
+      include(:kind => "summary")
+    )
+  end
+
   it "can include inline user in feature event" do
     config = LaunchDarkly::Config.new(inline_users_in_events: true)
     @ep = subject.new("sdk_key", config, hc)
@@ -88,6 +124,23 @@ describe LaunchDarkly::EventProcessor do
     output = flush_and_get_events
     expect(output).to contain_exactly(
       eq(feature_event(fe, flag, false, user)),
+      include(:kind => "summary")
+    )
+  end
+
+  it "stringifies built-in user attributes in feature event" do
+    config = LaunchDarkly::Config.new(inline_users_in_events: true)
+    @ep = subject.new("sdk_key", config, hc)
+    flag = { key: "flagkey", version: 11 }
+    fe = {
+      kind: "feature", key: "flagkey", version: 11, user: numeric_user,
+      variation: 1, value: "value", trackEvents: true
+    }
+    @ep.add_event(fe)
+
+    output = flush_and_get_events
+    expect(output).to contain_exactly(
+      eq(feature_event(fe, flag, false, stringified_numeric_user)),
       include(:kind => "summary")
     )
   end
@@ -320,6 +373,18 @@ describe LaunchDarkly::EventProcessor do
     output = flush_and_get_events
     expect(output).to contain_exactly(
       eq(custom_event(e, filtered_user))
+    )
+  end
+
+  it "stringifies built-in user attributes in custom event" do
+    config = LaunchDarkly::Config.new(inline_users_in_events: true)
+    @ep = subject.new("sdk_key", config, hc)
+    e = { kind: "custom", key: "eventkey", user: numeric_user }
+    @ep.add_event(e)
+
+    output = flush_and_get_events
+    expect(output).to contain_exactly(
+      eq(custom_event(e, stringified_numeric_user))
     )
   end
 
