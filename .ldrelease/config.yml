@@ -1,0 +1,13 @@
+repo:
+  public: ruby-server-sdk
+  private: ruby-server-sdk-private
+
+publications:
+  - url: https://www.rubydoc.info/gems/launchdarkly-server-sdk
+    description: documentation
+
+template:
+  name: ruby
+
+sdk:
+  displayName: "Ruby"
