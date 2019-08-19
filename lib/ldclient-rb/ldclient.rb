@@ -231,6 +231,11 @@ module LaunchDarkly
     # Note that event delivery is asynchronous, so the event may not actually be sent
     # until later; see {#flush}.
     #
+    # As of this version’s release date, the LaunchDarkly service does not support the `metricValue`
+    # parameter. As a result, specifying `metricValue` will not yet produce any different behavior
+    # from omitting it. Refer to the [SDK reference guide](https://docs.launchdarkly.com/docs/ruby-sdk-reference#section-track)
+    # for the latest status.
+    #
     # @param event_name [String] The name of the event
     # @param user [Hash] The user to register; this can have all the same user properties
     #   described in {#variation}
