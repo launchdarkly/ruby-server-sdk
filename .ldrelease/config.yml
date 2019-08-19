@@ -3,6 +3,8 @@ repo:
   private: ruby-server-sdk-private
 
 publications:
+  - url: https://rubygems.org/gems/launchdarkly-server-sdk
+    description: RubyGems
   - url: https://www.rubydoc.info/gems/launchdarkly-server-sdk
     description: documentation
 
