@@ -25,6 +25,22 @@ describe LaunchDarkly::LDClient do
       }
     }
   end
+  let(:numeric_key_user) do
+    {
+      key: 33,
+      custom: {
+          groups: [ "microsoft", "google" ]
+      }
+    }
+  end
+  let(:sanitized_numeric_key_user) do
+    {
+      key: "33",
+      custom: {
+          groups: [ "microsoft", "google" ]
+      }
+    }
+  end
   let(:user_without_key) do
     { name: "Keyless Joe" }
   end
@@ -91,7 +107,6 @@ describe LaunchDarkly::LDClient do
         key: "key",
         version: 100,
         user: nil,
-        variation: nil,
         value: "default",
         default: "default",
         trackEvents: true,
@@ -109,13 +124,67 @@ describe LaunchDarkly::LDClient do
         key: "key",
         version: 100,
         user: bad_user,
-        variation: nil,
         value: "default",
         default: "default",
         trackEvents: true,
         debugEventsUntilDate: 1000
       ))
       client.variation("key", bad_user, "default")
+    end
+
+    it "sets trackEvents and reason if trackEvents is set for matched rule" do
+      flag = {
+        key: 'flag',
+        on: true,
+        variations: [ 'value' ],
+        version: 100,
+        rules: [
+          clauses: [
+            { attribute: 'key', op: 'in', values: [ user[:key] ] }
+          ],
+          variation: 0,
+          id: 'id',
+          trackEvents: true
+        ]
+      }
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, flag)
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: 'feature',
+        key: 'flag',
+        version: 100,
+        user: user,
+        value: 'value',
+        default: 'default',
+        trackEvents: true,
+        reason: { kind: 'RULE_MATCH', ruleIndex: 0, ruleId: 'id' }
+      ))
+      client.variation('flag', user, 'default')
+    end
+
+    it "sets trackEvents and reason if trackEventsFallthrough is set and we fell through" do
+      flag = {
+        key: 'flag',
+        on: true,
+        variations: [ 'value' ],
+        fallthrough: { variation: 0 },
+        version: 100,
+        rules: [],
+        trackEventsFallthrough: true
+      }
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, flag)
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: 'feature',
+        key: 'flag',
+        version: 100,
+        user: user,
+        value: 'value',
+        default: 'default',
+        trackEvents: true,
+        reason: { kind: 'FALLTHROUGH' }
+      ))
+      client.variation('flag', user, 'default')
     end
   end
 
@@ -336,6 +405,17 @@ describe LaunchDarkly::LDClient do
     it "queues up an custom event" do
       expect(event_processor).to receive(:add_event).with(hash_including(kind: "custom", key: "custom_event_name", user: user, data: 42))
       client.track("custom_event_name", user, 42)
+    end
+
+    it "can include a metric value" do
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "custom", key: "custom_event_name", user: user, metricValue: 1.5))
+      client.track("custom_event_name", user, nil, 1.5)
+    end
+
+    it "sanitizes the user in the event" do
+      expect(event_processor).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
+      client.track("custom_event_name", numeric_key_user, nil)
     end
 
     it "does not send an event, and logs a warning, if user is nil" do

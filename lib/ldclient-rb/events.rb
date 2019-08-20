@@ -456,6 +456,7 @@ module LaunchDarkly
         else
           out[:userKey] = event[:user].nil? ? nil : event[:user][:key]
         end
+        out[:metricValue] = event[:metricValue] if event.has_key?(:metricValue)
         out
       when "index"
         {

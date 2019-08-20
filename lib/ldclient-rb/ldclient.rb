@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/event_factory"
 require "ldclient-rb/impl/store_client_wrapper"
 require "concurrent/atomics"
 require "digest/sha1"
@@ -13,6 +14,7 @@ module LaunchDarkly
   #
   class LDClient
     include Evaluation
+    include Impl
     #
     # Creates a new client instance that connects to LaunchDarkly. A custom
     # configuration parameter can also supplied to specify advanced options,
@@ -31,6 +33,9 @@ module LaunchDarkly
     #
     def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
       @sdk_key = sdk_key
+
+      @event_factory_default = EventFactory.new(false)
+      @event_factory_with_reasons = EventFactory.new(true)
 
       # We need to wrap the feature store object with a FeatureStoreClientWrapper in order to add
       # some necessary logic around updates. Unfortunately, we have code elsewhere that accesses
@@ -165,7 +170,7 @@ module LaunchDarkly
     # @return the variation to show the user, or the default value if there's an an error
     #
     def variation(key, user, default)
-      evaluate_internal(key, user, default, false).value
+      evaluate_internal(key, user, default, @event_factory_default).value
     end
 
     #
@@ -192,7 +197,7 @@ module LaunchDarkly
     # @return [EvaluationDetail] an object describing the result
     #
     def variation_detail(key, user, default)
-      evaluate_internal(key, user, default, true)
+      evaluate_internal(key, user, default, @event_factory_with_reasons)
     end
 
     #
@@ -215,7 +220,8 @@ module LaunchDarkly
         @config.logger.warn("Identify called with nil user or nil user key!")
         return
       end
-      @event_processor.add_event(kind: "identify", key: user[:key], user: user)
+      sanitize_user(user)
+      @event_processor.add_event(@event_factory_default.new_identify_event(user))
     end
 
     #
@@ -225,18 +231,28 @@ module LaunchDarkly
     # Note that event delivery is asynchronous, so the event may not actually be sent
     # until later; see {#flush}.
     #
+    # As of this version’s release date, the LaunchDarkly service does not support the `metricValue`
+    # parameter. As a result, specifying `metricValue` will not yet produce any different behavior
+    # from omitting it. Refer to the [SDK reference guide](https://docs.launchdarkly.com/docs/ruby-sdk-reference#section-track)
+    # for the latest status.
+    #
     # @param event_name [String] The name of the event
     # @param user [Hash] The user to register; this can have all the same user properties
     #   described in {#variation}
-    # @param data [Hash] A hash containing any additional data associated with the event
+    # @param data [Hash] An optional hash containing any additional data associated with the event
+    # @param metric_value [Number] A numeric value used by the LaunchDarkly experimentation
+    #   feature in numeric custom metrics. Can be omitted if this event is used by only
+    #   non-numeric metrics. This field will also be returned as part of the custom event
+    #   for Data Export.
     # @return [void]
     #
-    def track(event_name, user, data)
+    def track(event_name, user, data = nil, metric_value = nil)
       if !user || user[:key].nil?
         @config.logger.warn("Track called with nil user or nil user key!")
         return
       end
-      @event_processor.add_event(kind: "custom", key: event_name, user: user, data: data)
+      sanitize_user(user)
+      @event_processor.add_event(@event_factory_default.new_custom_event(event_name, user, data, metric_value))
     end
 
     #
@@ -294,7 +310,7 @@ module LaunchDarkly
           next
         end
         begin
-          result = evaluate(f, user, @store, @config.logger)
+          result = evaluate(f, user, @store, @config.logger, @event_factory_default)
           state.add_flag(f, result.detail.value, result.detail.variation_index, with_reasons ? result.detail.reason : nil,
             details_only_if_tracked)
         rescue => exn
@@ -334,7 +350,7 @@ module LaunchDarkly
     end
 
     # @return [EvaluationDetail]
-    def evaluate_internal(key, user, default, include_reasons_in_events)
+    def evaluate_internal(key, user, default, event_factory)
       if @config.offline?
         return error_result('CLIENT_NOT_READY', default)
       end
@@ -344,8 +360,9 @@ module LaunchDarkly
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
         else
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
-          @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user)
-          return error_result('CLIENT_NOT_READY', default)
+          detail = error_result('CLIENT_NOT_READY', default)
+          @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
+          return  detail
         end
       end
 
@@ -354,20 +371,19 @@ module LaunchDarkly
       if feature.nil?
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
         detail = error_result('FLAG_NOT_FOUND', default)
-        @event_processor.add_event(kind: "feature", key: key, value: default, default: default, user: user,
-          reason: include_reasons_in_events ? detail.reason : nil)
+        @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
         return detail
       end
 
       unless user
         @config.logger.error { "[LDClient] Must specify user" }
         detail = error_result('USER_NOT_SPECIFIED', default)
-        @event_processor.add_event(make_feature_event(feature, nil, detail, default, include_reasons_in_events))
+        @event_processor.add_event(event_factory.new_default_event(feature, user, default, detail.reason))
         return detail
       end
 
       begin
-        res = evaluate(feature, user, @store, @config.logger)  # note, evaluate will do its own sanitization
+        res = evaluate(feature, user, @store, @config.logger, event_factory)
         if !res.events.nil?
           res.events.each do |event|
             @event_processor.add_event(event)
@@ -377,29 +393,20 @@ module LaunchDarkly
         if detail.default_value?
           detail = EvaluationDetail.new(default, nil, detail.reason)
         end
-        @event_processor.add_event(make_feature_event(feature, user, detail, default, include_reasons_in_events))
+        @event_processor.add_event(event_factory.new_eval_event(feature, user, detail, default))
         return detail
       rescue => exn
         Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         detail = error_result('EXCEPTION', default)
-        @event_processor.add_event(make_feature_event(feature, user, detail, default, include_reasons_in_events))
+        @event_processor.add_event(event_factory.new_default_event(feature, user, default, detail.reason))
         return detail
       end
     end
 
-    def make_feature_event(flag, user, detail, default, with_reasons)
-      {
-        kind: "feature",
-        key: flag[:key],
-        user: user,
-        variation: detail.variation_index,
-        value: detail.value,
-        default: default,
-        version: flag[:version],
-        trackEvents: flag[:trackEvents],
-        debugEventsUntilDate: flag[:debugEventsUntilDate],
-        reason: with_reasons ? detail.reason : nil
-      }
+    def sanitize_user(user)
+      if user[:key]
+        user[:key] = user[:key].to_s
+      end
     end
   end
 
