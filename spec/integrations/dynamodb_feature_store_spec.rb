@@ -89,7 +89,7 @@ end
 
 
 describe "DynamoDB feature store" do
-  return if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
 
   # These tests will all fail if there isn't a local DynamoDB instance running.
   
