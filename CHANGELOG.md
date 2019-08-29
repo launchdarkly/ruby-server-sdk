@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.6.0] - 2019-08-28
+### Added:
+- Added support for upcoming LaunchDarkly experimentation features. See `LDClient.track()`.
+
 ## [5.6.0] - 2019-08-20
 ### Added:
 - Added support for upcoming LaunchDarkly experimentation features. See `LDClient.track()`.
