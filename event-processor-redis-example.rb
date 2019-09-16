@@ -1,8 +1,9 @@
 require "launchdarkly-server-sdk"
 require "redis"
+require "connection_pool"
 
-flag_key = "test-flag"
-user_key = "test-user"
+$flag_key = "test-flag"
+$user_key = "test-user"
 
 # This is an example of using Redis both for retrieving flags and for storing events.
 #
@@ -24,10 +25,19 @@ user_key = "test-user"
 # Flag value is yes
 # redis-cli> LRANGE eventlist 0 99     (shows "feature" event followed by "custom" event)
 
+# This example simulates just one request cycle, but in real life we might be using
+# multiple client instances to handle multiple requests. It's desirable to share the
+# Redis resources, and the feature store instance (since the feature store maintains
+# an in-memory cache).
+$redis_connection_pool = ConnectionPool.new(size: 10) do
+  Redis.new
+end
+$shared_feature_store = LaunchDarkly::Integrations::Redis::new_feature_store({})
+
 class RedisEventSink
   include LaunchDarkly::Interfaces::EventProcessor
   
-  def initialize
+  def initialize(pool)
     # We'll create a new Redis client here, but we could use a connection pool
     @redis = Redis::new
     @list_key = "eventlist"
@@ -52,25 +62,28 @@ class RedisEventSink
   end
 end
 
-event_sink = RedisEventSink.new
-config = LaunchDarkly::Config.new({
-  event_processor: event_sink,
-  feature_store: LaunchDarkly::Integrations::Redis::new_feature_store({}),
-  use_ldd: true
-})
-client = LaunchDarkly::LDClient.new("irrelevant SDK key", config)
+# This function simulates some SDK actions taking place for a single web request.
+# We'll create our own client instance scoped to this requset; since the client in
+# this configuration makes no HTTP requests and has no state (other than the Redis
+# database, and the RedisEventSink which is also locally scoped), it is lightweight.
+def do_something
+  user = { key: $user_key }
+  config = LaunchDarkly::Config.new({
+    event_processor: RedisEventSink.new($redis_connection_pool),
+    feature_store: $shared_feature_store,
+    use_ldd: true
+  })
+  client = LaunchDarkly::LDClient.new("irrelevant SDK key", config)
+  # not connecting to LaunchDarkly, so SDK key doesn't matter
 
-# Note that this client instance makes no HTTP connections and has no shared state
-# other than the Redis database. Since it does not contact LaunchDarkly directly,
-# it does not need to be configured with a real SDK key.
+  # Evaluate a flag - this generates a "feature" event
+  flag_value = client.variation($flag_key, user, nil)
+  puts "Flag value is #{flag_value}"
 
-user = { key: user_key }
+  # Also send a custom event
+  client.track("custom-event-key", user)
 
-# Evaluate a flag - this generates a "feature" event
-flag_value = client.variation(flag_key, user, nil)
-puts "Flag value is #{flag_value}"
+  client.flush  # this calls RedisEventSink.flush
+end
 
-# Also send a custom event
-client.track("custom-event-key", user)
-
-client.flush  # this calls RedisEventSink.flush
+do_something
