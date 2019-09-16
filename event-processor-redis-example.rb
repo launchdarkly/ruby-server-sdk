@@ -1,7 +1,6 @@
 require "launchdarkly-server-sdk"
 require "redis"
 
-sdk_key = "<sdk key here>"
 flag_key = "test-flag"
 user_key = "test-user"
 
@@ -59,10 +58,11 @@ config = LaunchDarkly::Config.new({
   feature_store: LaunchDarkly::Integrations::Redis::new_feature_store({}),
   use_ldd: true
 })
-client = LaunchDarkly::LDClient.new(sdk_key, config)
+client = LaunchDarkly::LDClient.new("irrelevant SDK key", config)
 
 # Note that this client instance makes no HTTP connections and has no shared state
-# other than the Redis database.
+# other than the Redis database. Since it does not contact LaunchDarkly directly,
+# it does not need to be configured with a real SDK key.
 
 user = { key: user_key }
 
