@@ -35,6 +35,7 @@ module LaunchDarkly
     # @option opts [Float] :user_keys_flush_interval (300) See {#user_keys_flush_interval}.
     # @option opts [Boolean] :inline_users_in_events (false) See {#inline_users_in_events}.
     # @option opts [Object] :data_source See {#data_source}.
+    # @option opts [Object] :event_processor See {#event_processor}.
     # @option opts [Object] :update_processor Obsolete synonym for `data_source`.
     # @option opts [Object] :update_processor_factory Obsolete synonym for `data_source`.
     #
@@ -60,6 +61,7 @@ module LaunchDarkly
       @user_keys_flush_interval = opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
       @inline_users_in_events = opts[:inline_users_in_events] || false
       @data_source = opts[:data_source] || opts[:update_processor] || opts[:update_processor_factory]
+      @event_processor = opts[:event_processor]
       @update_processor = opts[:update_processor]
       @update_processor_factory = opts[:update_processor_factory]
     end
@@ -250,6 +252,21 @@ module LaunchDarkly
     # @see FileDataSource
     #
     attr_reader :data_source
+
+    #
+    # An object that is responsible for delivering analytics event data. By default, the client
+    # uses a standard implementation that processes events on a worker thread and sends events to
+    # LaunchDarkly on another worker thread.
+    #
+    # This may be set to either an object that confirms to {LaunchDarkly::Interfaces::EventProcessor},
+    # or a lambda (or Proc) that takes two parameters-- SDK key and {Config}-- and returns such an
+    # object.
+    #
+    # If you set this property, then the {#send_events} property is ignored.
+    #
+    # @return [LaunchDarkly::Interfaces::EventProcessor|lambda]
+    #
+    attr_reader :event_processor
 
     # @deprecated This is replaced by {#data_source}.
     attr_reader :update_processor

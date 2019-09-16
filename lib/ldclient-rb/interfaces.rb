@@ -149,5 +149,53 @@ module LaunchDarkly
       def stop
       end
     end
+
+    #
+    # Mixin that defines the required methods of an event processor implementation. This is the
+    # component that receives information about analytics-generating activities from the SDK (flag
+    # evaluations, and calls to `track` or `identify`) and delivers the appropriate analytics events.
+    #
+    # The SDK's standard implementation runs one worker thread to process the event data, and a pool
+    # of up to five worker threads for delivering batches of events via HTTP to LaunchDarkly (the
+    # pool will only use one thread unless the LaunchDarkly event service is running abnormally
+    # slowly).
+    #
+    module EventProcessor
+      #
+      # Processes (or queues to be processed asychronously) a unit of analytics information.
+      #
+      # The event parameter is similar, but not identical, to the final analytics events that may be
+      # delivered to LaunchDarkly (whose schema is described in the [data export documentation](https://docs.launchdarkly.com/docs/data-export-schema-reference)).
+      # It will always have a `:kind` of `"feature"`, `"track"`, or `"identify"`. However:
+      #
+      # * The `:user` property will always contain a full user object, whereas (unless
+      # `inline_users_in_events` is set in your configuration) the SDK normally deduplicates users
+      # and sends only the key. The user object does not have private attributes removed.
+      # * A `feature` event will have additional properties `trackEvents` and `debugEventsUntilDate`
+      # which determine whether to send an individual event or just include it in a summary.
+      # * It is the event processor's responsibility to add a timestamp (`creationDate`).
+      #
+      # The method should return as quickly as possible and must not throw any exceptions.
+      #
+      # @param event [Object] an event object, prior to being processed into the final schema
+      #
+      def add_event(event)
+      end
+  
+      #
+      # Indicates that all pending analytics events should be delivered as soon as possible.
+      #
+      # This implements the client's {LDClient#flush} method. It should be asynchronous and not
+      # wait for event delivery to finish. It must not throw any exceptions.
+      #
+      def flush
+      end
+  
+      #
+      # Puts the component permanently into an inactive state and releases all of its resources.
+      #
+      def stop
+      end
+    end
   end
 end

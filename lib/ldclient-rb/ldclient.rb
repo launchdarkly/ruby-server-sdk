@@ -46,10 +46,11 @@ module LaunchDarkly
       updated_config.instance_variable_set(:@feature_store, @store)
       @config = updated_config
 
-      if @config.offline? || !@config.send_events
-        @event_processor = NullEventProcessor.new
+      event_processor_or_factory = @config.event_processor || self.method(:create_default_event_processor)
+      if event_processor_or_factory.respond_to? :call
+        @event_processor = event_processor_or_factory.call(sdk_key, @config)
       else
-        @event_processor = EventProcessor.new(sdk_key, config)
+        @event_processor = event_processor_or_factory
       end
 
       if @config.use_ldd?
@@ -346,6 +347,14 @@ module LaunchDarkly
         config.logger.info { "Disabling streaming API" }
         config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
         PollingProcessor.new(config, requestor)
+      end
+    end
+
+    def create_default_event_processor(sdk_key, config)
+      if config.offline? || !@config.send_events
+        NullEventProcessor.new
+      else
+        EventProcessor.new(sdk_key, config)
       end
     end
 
