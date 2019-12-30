@@ -560,6 +560,58 @@ describe LaunchDarkly::Evaluation do
     end
   end
 
+  describe "variation_index_for_user" do
+    it "matches bucket" do
+      user = { key: "userkey" }
+      flag_key = "flagkey"
+      salt = "salt"
+
+      # First verify that with our test inputs, the bucket value will be greater than zero and less than 100000,
+      # so we can construct a rollout whose second bucket just barely contains that value
+      bucket_value = (bucket_user(user, flag_key, "key", salt) * 100000).truncate()
+      expect(bucket_value).to be > 0
+      expect(bucket_value).to be < 100000
+
+      bad_variation_a = 0
+      matched_variation = 1
+      bad_variation_b = 2
+      rule = {
+        rollout: {
+          variations: [
+            { variation: bad_variation_a, weight: bucket_value }, # end of bucket range is not inclusive, so it will *not* match the target value
+            { variation: matched_variation, weight: 1 }, # size of this bucket is 1, so it only matches that specific value
+            { variation: bad_variation_b, weight: 100000 - (bucket_value + 1) }
+          ]
+        }
+      }
+      flag = { key: flag_key, salt: salt }
+
+      result_variation = variation_index_for_user(flag, rule, user)
+      expect(result_variation).to be matched_variation
+    end
+
+    it "uses last bucket if bucket value is equal to total weight" do
+      user = { key: "userkey" }
+      flag_key = "flagkey"
+      salt = "salt"
+
+      bucket_value = (bucket_user(user, flag_key, "key", salt) * 100000).truncate()
+
+      # We'll construct a list of variations that stops right at the target bucket value
+      rule = {
+        rollout: {
+          variations: [
+            { variation: 0, weight: bucket_value }
+          ]
+        }
+      }
+      flag = { key: flag_key, salt: salt }
+
+      result_variation = variation_index_for_user(flag, rule, user)
+      expect(result_variation).to be 0
+    end
+  end
+
   describe "bucket_user" do
     it "gets expected bucket values for specific keys" do
       user = { key: "userKeyA" }

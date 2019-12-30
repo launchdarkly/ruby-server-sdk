@@ -323,20 +323,28 @@ module LaunchDarkly
     end
 
     def variation_index_for_user(flag, rule, user)
-      if !rule[:variation].nil? # fixed variation
-        return rule[:variation]
-      elsif !rule[:rollout].nil? # percentage rollout
+      variation = rule[:variation]
+      return variation if !variation.nil? # fixed variation
+      rollout = rule[:rollout]
+      return nil if rollout.nil?
+      variations = rollout[:variations]
+      if !variations.nil? && variations.length > 0 # percentage rollout
         rollout = rule[:rollout]
         bucket_by = rollout[:bucketBy].nil? ? "key" : rollout[:bucketBy]
         bucket = bucket_user(user, flag[:key], bucket_by, flag[:salt])
         sum = 0;
-        rollout[:variations].each do |variate|
+        variations.each do |variate|
           sum += variate[:weight].to_f / 100000.0
           if bucket < sum
             return variate[:variation]
           end
         end
-        nil
+        # The user's bucket value was greater than or equal to the end of the last bucket. This could happen due
+        # to a rounding error, or due to the fact that we are scaling to 100000 rather than 99999, or the flag
+        # data could contain buckets that don't actually add up to 100000. Rather than returning an error in
+        # this case (or changing the scaling, which would potentially change the results for *all* users), we
+        # will simply put the user in the last bucket.
+        variations[-1][:variation]
       else # the rule isn't well-formed
         nil
       end
