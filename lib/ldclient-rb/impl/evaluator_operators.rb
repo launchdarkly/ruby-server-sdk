@@ -148,7 +148,6 @@ module LaunchDarkly
           m[0] + ".0" + v[m[0].length..-1]
         }
       end
-
     end
   end
 end
