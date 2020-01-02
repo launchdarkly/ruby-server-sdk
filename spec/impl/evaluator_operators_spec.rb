@@ -103,4 +103,39 @@ describe LaunchDarkly::Impl::EvaluatorOperators do
       end
     end
   end
+
+  describe "user_value" do
+    [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous, :some_custom_attr].each do |attr|
+      it "returns nil if property #{attr} is not defined" do
+        expect(subject::user_value({}, attr)).to be nil
+      end
+    end
+
+    [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name].each do |attr|
+      it "gets string value of string property #{attr}" do
+        expect(subject::user_value({ attr => 'x' }, attr)).to eq 'x'
+      end
+
+      it "coerces non-string value of property #{attr} to string" do
+        expect(subject::user_value({ attr => 3 }, attr)).to eq '3'
+      end
+    end
+
+    it "gets boolean value of property anonymous" do
+      expect(subject::user_value({ anonymous: true }, :anonymous)).to be true
+      expect(subject::user_value({ anonymous: false }, :anonymous)).to be false
+    end
+
+    it "coerces non-boolean value of property anonymous to boolean" do
+      expect(subject::user_value({ anonymous: 3 }, :anonymous)).to be true
+    end
+
+    it "gets string value of custom property" do
+      expect(subject::user_value({ custom: { some_custom_attr: 'x' } }, :some_custom_attr)).to eq 'x'
+    end
+
+    it "gets non-string value of custom property" do
+      expect(subject::user_value({ custom: { some_custom_attr: 3 } }, :some_custom_attr)).to eq 3
+    end
+  end
 end
