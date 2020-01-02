@@ -1,7 +1,15 @@
 
 module LaunchDarkly
   module Impl
+    # Encapsulates the logic for percentage rollouts.
     module EvaluatorBucketing
+      # Returns a user's bucket value as a floating-point value in `[0, 1)`.
+      #
+      # @param user [Object] the user properties
+      # @param key [String] the feature flag key (or segment key, if this is for a segment rule)
+      # @param bucket_by [String|Symbol] the name of the user attribute to be used for bucketing
+      # @param salt [String] the feature flag's or segment's salt value
+      # @return [Number] the bucket value, from 0 inclusive to 1 exclusive
       def self.bucket_user(user, key, bucket_by, salt)
         return nil unless user[:key]
 

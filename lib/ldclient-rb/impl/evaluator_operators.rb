@@ -3,7 +3,17 @@ require "semantic"
 
 module LaunchDarkly
   module Impl
+    # Defines the behavior of all operators that can be used in feature flag rules and segment rules.
     module EvaluatorOperators
+      # Applies an operator to produce a boolean result.
+      #
+      # @param op [Symbol] one of the supported LaunchDarkly operators, as a symbol
+      # @param user_value the value of the user attribute that is referenced in the current clause (left-hand
+      #   side of the expression)
+      # @param clause_value the constant value that `user_value` is being compared to (right-hand side of the
+      #   expression)
+      # @return [Boolean] true if the expression should be considered a match; false if it is not a match, or
+      #   if the values cannot be compared because they are of the wrong types, or if the operator is unknown
       def self.apply(op, user_value, clause_value)
         case op
         when :in
@@ -35,12 +45,23 @@ module LaunchDarkly
         when :semVerGreaterThan
           semver_op(user_value, clause_value, lambda { |a, b| a > b })
         when :segmentMatch
-          false   # we should never reach this - instead we special-case this operator in clause_match_user
+          # We should never reach this; it can't be evaluated based on just two parameters, because it requires
+          # looking up the segment from the data store. Instead, we special-case this operator in clause_match_user.
+          false
         else
           false
         end
       end
 
+      # Retrieves the value of a user attribute by name.
+      #
+      # Built-in attributes correspond to top-level properties in the user object, and are always coerced to
+      # strings except for `anonymous`. Custom attributes correspond to properties within the `custom` property,
+      # if any, and can be of any type.
+      #
+      # @param user [Object] the user properties
+      # @param attribute [String|Symbol] the attribute to get, for instance `:key` or `:name` or `:some_custom_attr`
+      # @return the attribute value, or nil if the attribute is unknown
       def self.user_value(user, attribute)
         attribute = attribute.to_sym
         if BUILTINS.include? attribute
@@ -56,7 +77,7 @@ module LaunchDarkly
 
       private
 
-      BUILTINS = [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
+      BUILTINS = Set[:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
       NUMERIC_VERSION_COMPONENTS_REGEX = Regexp.new("^[0-9.]*")
 
       private_constant :BUILTINS

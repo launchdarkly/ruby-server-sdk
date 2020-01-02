@@ -4,22 +4,43 @@ require "ldclient-rb/impl/evaluator_operators"
 
 module LaunchDarkly
   module Impl
+    # Encapsulates the feature flag evaluation logic. The Evaluator has no knowledge of the rest of the SDK environment;
+    # if it needs to retrieve flags or segments that are referenced by a flag, it does so through a simple function that
+    # is provided in the constructor. It also produces feature requests as appropriate for any referenced prerequisite
+    # flags, but does not send them.
     class Evaluator
+      # A single Evaluator is instantiated for each client instance.
+      #
+      # @param get_flag [Function] called if the Evaluator needs to query a different flag from the one that it is
+      #   currently evaluating (i.e. a prerequisite flag); takes a single parameter, the flag key, and returns the
+      #   flag data - or nil if the flag is unknown or deleted
+      # @param get_segment [Function] similar to `get_flag`, but is used to query a user segment.
+      # @param logger [Logger] the client's logger
       def initialize(get_flag, get_segment, logger)
         @get_flag = get_flag
         @get_segment = get_segment
         @logger = logger
       end
 
-      # Used internally to hold an evaluation result and the events that were generated from prerequisites.
+      # Used internally to hold an evaluation result and the events that were generated from prerequisites. The
+      # `detail` property is an EvaluationDetail. The `events` property can be either an array of feature request
+      # events or nil.
       EvalResult = Struct.new(:detail, :events)
 
+      # Helper function used internally to construct an EvaluationDetail for an error result.
       def self.error_result(errorKind, value = nil)
         EvaluationDetail.new(value, nil, { kind: 'ERROR', errorKind: errorKind })
       end
 
-      # Evaluates a feature flag and returns an EvalResult. The result.value will be nil if the flag returns
-      # the default value. Error conditions produce a result with an error reason, not an exception.
+      # The client's entry point for evaluating a flag. The returned `EvalResult` contains the evaluation result and
+      # any events that were generated for prerequisite flags; its `value` will be `nil` if the flag returns the
+      # default value. Error conditions produce a result with a nil value and an error reason, not an exception.
+      #
+      # @param flag [Object] the flag
+      # @param user [Object] the user properties
+      # @param event_factory [EventFactory] called to construct a feature request event when a prerequisite flag is
+      #   evaluated; the caller is responsible for constructing the feature event for the top-level evaluation
+      # @return [EvalResult] the evaluation result 
       def evaluate(flag, user, event_factory)
         if user.nil? || user[:key].nil?
           return EvalResult.new(Evaluator.error_result('USER_NOT_SPECIFIED'), [])
