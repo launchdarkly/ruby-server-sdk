@@ -126,8 +126,8 @@ describe LaunchDarkly::Impl::EvaluatorOperators do
       expect(subject::user_value({ anonymous: false }, :anonymous)).to be false
     end
 
-    it "coerces non-boolean value of property anonymous to boolean" do
-      expect(subject::user_value({ anonymous: 3 }, :anonymous)).to be true
+    it "does not coerces non-boolean value of property anonymous" do
+      expect(subject::user_value({ anonymous: 3 }, :anonymous)).to eq 3
     end
 
     it "gets string value of custom property" do

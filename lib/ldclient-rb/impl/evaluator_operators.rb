@@ -57,10 +57,10 @@ module LaunchDarkly
       # Retrieves the value of a user attribute by name.
       #
       # Built-in attributes correspond to top-level properties in the user object. They are treated as strings and
-      # non-string values are coerced to strings, except for `anonymous` which is treated as a boolean if present
-      # (using Ruby's "truthiness" standard). The coercion behavior is not guaranteed to be consistent with other
-      # SDKs; the built-in attributes should not be set to values of the wrong type (in the strongly-typed SDKs,
-      # they can't be, and in a future version of the Ruby SDK we may make it impossible to do so).
+      # non-string values are coerced to strings, except for `anonymous` which is meant to be a boolean if present
+      # and is not currently coerced. This behavior is consistent with earlier versions of the Ruby SDK, but is not
+      # guaranteed to be consistent with other SDKs, since the evaluator specification is based on the strongly-typed
+      # SDKs where it is not possible for an attribute to have the wrong type.
       #
       # Custom attributes correspond to properties within the `custom` property, if any, and can be of any type.
       #
@@ -72,7 +72,7 @@ module LaunchDarkly
         if BUILTINS.include? attribute
           value = user[attribute]
           return nil if value.nil?
-          (attribute == :anonymous) ? !!value : value.to_s
+          (attribute == :anonymous) ? value : value.to_s
         elsif !user[:custom].nil?
           user[:custom][attribute]
         else
@@ -83,11 +83,9 @@ module LaunchDarkly
       private
 
       BUILTINS = Set[:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
-      NON_STRING_BUILTINS = Set[:anonymous]
       NUMERIC_VERSION_COMPONENTS_REGEX = Regexp.new("^[0-9.]*")
 
       private_constant :BUILTINS
-      private_constant :NON_STRING_BUILTINS
       private_constant :NUMERIC_VERSION_COMPONENTS_REGEX
 
       def self.string_op(user_value, clause_value, fn)
