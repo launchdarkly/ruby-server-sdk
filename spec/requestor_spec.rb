@@ -32,7 +32,7 @@ describe LaunchDarkly::Requestor do
         with_requestor(server.base_uri.to_s) do |requestor|
           server.setup_ok_response("/", expected_data.to_json)
           data = requestor.request_all_data()
-          expect(data).to eq expected_data
+          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data)
         end
       end
     end
@@ -75,7 +75,7 @@ describe LaunchDarkly::Requestor do
           data = requestor.request_all_data()
           expect(server.requests.count).to eq 2
           expect(server.requests[1].header).to include({ "if-none-match" => [ etag ] })
-          expect(data).to eq expected_data
+          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data)
         end
       end
     end
@@ -93,14 +93,14 @@ describe LaunchDarkly::Requestor do
             res["ETag"] = etag1
           end
           data = requestor.request_all_data()
-          expect(data).to eq expected_data1
+          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data1)
           expect(server.requests.count).to eq 1
 
           server.setup_response("/") do |req, res|
             res.status = 304
           end
           data = requestor.request_all_data()
-          expect(data).to eq expected_data1
+          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data1)
           expect(server.requests.count).to eq 2
           expect(server.requests[1].header).to include({ "if-none-match" => [ etag1 ] })
 
@@ -110,7 +110,7 @@ describe LaunchDarkly::Requestor do
             res["ETag"] = etag2
           end
           data = requestor.request_all_data()
-          expect(data).to eq expected_data2
+          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data2)
           expect(server.requests.count).to eq 3
           expect(server.requests[2].header).to include({ "if-none-match" => [ etag1 ] })
 
@@ -118,7 +118,7 @@ describe LaunchDarkly::Requestor do
             res.status = 304
           end
           data = requestor.request_all_data()
-          expect(data).to eq expected_data2
+          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data2)
           expect(server.requests.count).to eq 4
           expect(server.requests[3].header).to include({ "if-none-match" => [ etag2 ] })
         end
@@ -131,7 +131,7 @@ describe LaunchDarkly::Requestor do
         server.setup_ok_response("/sdk/latest-all", content, "application/json")
         with_requestor(server.base_uri.to_s) do |requestor|
           data = requestor.request_all_data
-          expect(data).to eq(JSON.parse(content, symbolize_names: true))
+          expect(data).to eq(LaunchDarkly::Impl::Model.make_all_store_data(JSON.parse(content, symbolize_names: true)))
         end
       end
     end
@@ -143,7 +143,7 @@ describe LaunchDarkly::Requestor do
           "text/plain; charset=ISO-8859-2")
         with_requestor(server.base_uri.to_s) do |requestor|
           data = requestor.request_all_data
-          expect(data).to eq(JSON.parse(content, symbolize_names: true))
+          expect(data).to eq(LaunchDarkly::Impl::Model.make_all_store_data(JSON.parse(content, symbolize_names: true)))
         end
       end
     end
@@ -160,15 +160,15 @@ describe LaunchDarkly::Requestor do
     end
 
     it "can use a proxy server" do
-      content = '{"flags": {"flagkey": {"key": "flagkey"}}}'
+      expected_data = { flags: { flagkey: { key: "flagkey" } } }
       with_server do |server|
-        server.setup_ok_response("/sdk/latest-all", content, "application/json", { "etag" => "x" })
+        server.setup_ok_response("/sdk/latest-all", expected_data.to_json, "application/json", { "etag" => "x" })
         with_server(StubProxyServer.new) do |proxy|
           begin
             ENV["http_proxy"] = proxy.base_uri.to_s
             with_requestor(server.base_uri.to_s) do |requestor|
               data = requestor.request_all_data
-              expect(data).to eq(JSON.parse(content, symbolize_names: true))
+              expect(data).to eq(LaunchDarkly::Impl::Model.make_all_store_data(expected_data))
             end
           ensure
             ENV["http_proxy"] = nil

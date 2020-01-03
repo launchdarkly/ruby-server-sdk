@@ -1,3 +1,5 @@
+require "ldclient-rb/impl/model/serialization"
+
 require "concurrent/atomics"
 require "json"
 require "ld-eventsource"
@@ -86,10 +88,8 @@ module LaunchDarkly
       @config.logger.debug { "[LDClient] Stream received #{method} message: #{message.data}" }
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
-        @feature_store.init({
-          FEATURES => message[:data][:flags],
-          SEGMENTS => message[:data][:segments]
-        })
+        all_data = Impl::Model.make_all_store_data(message[:data])
+        @feature_store.init(all_data)
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized" }
         @ready.set
@@ -98,7 +98,9 @@ module LaunchDarkly
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, data[:path])
           if key
-            @feature_store.upsert(kind, data[:data])
+            data = data[:data]
+            Impl::Model.postprocess_item_after_deserializing!(kind, data)
+            @feature_store.upsert(kind, data)
             break
           end
         end
@@ -113,10 +115,7 @@ module LaunchDarkly
         end
       elsif method == INDIRECT_PUT
         all_data = @requestor.request_all_data
-        @feature_store.init({
-          FEATURES => all_data[:flags],
-          SEGMENTS => all_data[:segments]
-        })
+        @feature_store.init(all_data)
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized (via indirect message)" }
       elsif method == INDIRECT_PATCH

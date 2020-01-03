@@ -16,6 +16,18 @@ module LaunchDarkly
         expect(result.events).to eq(nil)
       end
 
+      it "reuses rule match reason instances if possible" do
+        rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }], variation: 1 }
+        flag = boolean_flag_with_rules([rule])
+        Model.postprocess_item_after_deserializing!(FEATURES, flag)  # now there's a cached rule match reason
+        user = { key: 'userkey' }
+        detail = EvaluationDetail.new(true, 1, EvaluationReason::rule_match(0, 'ruleid'))
+        result1 = basic_evaluator.evaluate(flag, user, factory)
+        result2 = basic_evaluator.evaluate(flag, user, factory)
+        expect(result1.detail.reason.rule_id).to eq 'ruleid'
+        expect(result1.detail.reason).to be result2.detail.reason
+      end
+
       it "returns an error if rule variation is too high" do
         rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }], variation: 999 }
         flag = boolean_flag_with_rules([rule])

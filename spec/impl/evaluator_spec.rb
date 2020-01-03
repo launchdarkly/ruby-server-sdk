@@ -3,7 +3,7 @@ require "impl/evaluator_spec_base"
 
 module LaunchDarkly
   module Impl
-    describe "Evaluator", :evaluator_spec_base => true do
+    describe "Evaluator (general)", :evaluator_spec_base => true do
       subject { Evaluator }
 
       describe "evaluate" do
@@ -83,6 +83,24 @@ module LaunchDarkly
           result = e.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
+        end
+
+        it "reuses prerequisite-failed reason instances if possible" do
+          flag = {
+            key: 'feature0',
+            on: true,
+            prerequisites: [{key: 'badfeature', variation: 1}],
+            fallthrough: { variation: 0 },
+            offVariation: 1,
+            variations: ['a', 'b', 'c']
+          }
+          Model.postprocess_item_after_deserializing!(FEATURES, flag)  # now there's a cached reason
+          user = { key: 'x' }
+          e = subject.new(get_things( 'badfeature' => nil ), get_nothing, logger)
+          result1 = e.evaluate(flag, user, factory)
+          expect(result1.detail.reason).to eq EvaluationReason::prerequisite_failed('badfeature')
+          result2 = e.evaluate(flag, user, factory)
+          expect(result2.detail.reason).to be result1.detail.reason
         end
 
         it "returns off variation and event if prerequisite of a prerequisite is not found" do

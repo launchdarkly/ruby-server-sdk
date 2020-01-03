@@ -84,7 +84,9 @@ module LaunchDarkly
         rules.each_index do |i|
           rule = rules[i]
           if rule_match_user(rule, user)
-            return get_value_for_variation_or_rollout(flag, rule, user, EvaluationReason::rule_match(i, rule[:id]))
+            reason = rule[:_reason]  # try to use cached reason for this rule
+            reason = EvaluationReason::rule_match(i, rule[:id]) if reason.nil?
+            return get_value_for_variation_or_rollout(flag, rule, user, reason)
           end
         end
 
@@ -121,7 +123,8 @@ module LaunchDarkly
             end
           end
           if !prereq_ok
-            return EvaluationReason::prerequisite_failed(prereq_key)
+            reason = prerequisite[:_reason]  # try to use cached reason
+            return reason.nil? ? EvaluationReason::prerequisite_failed(prereq_key) : reason
           end
         end
         nil
