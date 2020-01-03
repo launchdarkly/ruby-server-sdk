@@ -2,10 +2,10 @@
 module LaunchDarkly
   module Impl
     #
-    # Implements a dependency graph ordering for data to be stored in a feature store. We must use this
-    # on every data set that will be passed to the feature store's init() method.
+    # Implements a dependency graph ordering for data to be stored in a data store. We must use this
+    # on every data set that will be passed to the data store's init() method.
     #
-    class FeatureStoreDataSetSorter
+    class DataStoreDataSetSorter
       #
       # Returns a copy of the input hash that has the following guarantees: the iteration order of the outer
       # hash will be in ascending order by the VersionDataKind's :priority property (if any), and for each

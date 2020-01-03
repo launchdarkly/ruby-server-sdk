@@ -6,22 +6,22 @@ module LaunchDarkly
   module Integrations
     module Util
       #
-      # CachingStoreWrapper is a partial implementation of the {LaunchDarkly::Interfaces::FeatureStore}
+      # CachingStoreWrapper is a partial implementation of the {LaunchDarkly::Interfaces::DataStore}
       # pattern that delegates part of its behavior to another object, while providing optional caching
-      # behavior and other logic that would otherwise be repeated in every feature store implementation.
+      # behavior and other logic that would otherwise be repeated in every data store implementation.
       # This makes it easier to create new database integrations by implementing only the database-specific
       # logic.
       #
-      # The mixin {FeatureStoreCore} describes the methods that need to be supported by the inner
+      # The mixin {DataStoreCore} describes the methods that need to be supported by the inner
       # implementation object.
       #
       class CachingStoreWrapper
-        include LaunchDarkly::Interfaces::FeatureStore
+        include LaunchDarkly::Interfaces::DataStore
         
         #
         # Creates a new store wrapper instance.
         #
-        # @param core [Object]  an object that implements the {FeatureStoreCore} methods
+        # @param core [Object]  an object that implements the {DataStoreCore} methods
         # @param opts [Hash]  a hash that may include cache-related options; all others will be ignored
         # @option opts [Float] :expiration (15)  cache TTL; zero means no caching
         # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
@@ -146,9 +146,9 @@ module LaunchDarkly
       # This module describes the methods that you must implement on your own object in order to
       # use {CachingStoreWrapper}.
       #
-      module FeatureStoreCore
+      module DataStoreCore
         #
-        # Initializes the store. This is the same as {LaunchDarkly::Interfaces::FeatureStore#init},
+        # Initializes the store. This is the same as {LaunchDarkly::Interfaces::DataStore#init},
         # but the wrapper will take care of updating the cache if caching is enabled.
         #
         # If possible, the store should update the entire data set atomically. If that is not possible,
@@ -164,7 +164,7 @@ module LaunchDarkly
         end
 
         #
-        # Retrieves a single entity. This is the same as {LaunchDarkly::Interfaces::FeatureStore#get}
+        # Retrieves a single entity. This is the same as {LaunchDarkly::Interfaces::DataStore#get}
         # except that 1. the wrapper will take care of filtering out deleted entities by checking the
         # `:deleted` property, so you can just return exactly what was in the data store, and 2. the
         # wrapper will take care of checking and updating the cache if caching is enabled.
@@ -177,7 +177,7 @@ module LaunchDarkly
         end
 
         #
-        # Retrieves all entities of the specified kind. This is the same as {LaunchDarkly::Interfaces::FeatureStore#all}
+        # Retrieves all entities of the specified kind. This is the same as {LaunchDarkly::Interfaces::DataStore#all}
         # except that 1. the wrapper will take care of filtering out deleted entities by checking the
         # `:deleted` property, so you can just return exactly what was in the data store, and 2. the
         # wrapper will take care of checking and updating the cache if caching is enabled.
@@ -190,13 +190,13 @@ module LaunchDarkly
         end
 
         #
-        # Attempts to add or update an entity. This is the same as {LaunchDarkly::Interfaces::FeatureStore#upsert}
+        # Attempts to add or update an entity. This is the same as {LaunchDarkly::Interfaces::DataStore#upsert}
         # except that 1. the wrapper will take care of updating the cache if caching is enabled, and 2.
         # the method is expected to return the final state of the entity (i.e. either the `item`
         # parameter if the update succeeded, or the previously existing entity in the store if the
         # update failed; this is used for the caching logic).
         #
-        # Note that FeatureStoreCore does not have a `delete` method. This is because {CachingStoreWrapper}
+        # Note that DataStoreCore does not have a `delete` method. This is because {CachingStoreWrapper}
         # implements `delete` by simply calling `upsert` with an item whose `:deleted` property is true.
         #
         # @param kind [Object]  the kind of entity to add or update
@@ -208,7 +208,7 @@ module LaunchDarkly
 
         #
         # Checks whether this store has been initialized. This is the same as
-        # {LaunchDarkly::Interfaces::FeatureStore#initialized?} except that there is less of a concern
+        # {LaunchDarkly::Interfaces::DataStore#initialized?} except that there is less of a concern
         # for efficiency, because the wrapper will use caching and memoization in order to call the method
         # as little as possible.
         #

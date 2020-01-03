@@ -29,7 +29,7 @@ module LaunchDarkly
     def initialize(sdk_key, config, requestor)
       @sdk_key = sdk_key
       @config = config
-      @feature_store = config.feature_store
+      @data_store = config.data_store
       @requestor = requestor
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
@@ -89,7 +89,7 @@ module LaunchDarkly
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
         all_data = Impl::Model.make_all_store_data(message[:data])
-        @feature_store.init(all_data)
+        @data_store.init(all_data)
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized" }
         @ready.set
@@ -100,7 +100,7 @@ module LaunchDarkly
           if key
             data = data[:data]
             Impl::Model.postprocess_item_after_deserializing!(kind, data)
-            @feature_store.upsert(kind, data)
+            @data_store.upsert(kind, data)
             break
           end
         end
@@ -109,23 +109,23 @@ module LaunchDarkly
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, data[:path])
           if key
-            @feature_store.delete(kind, key, data[:version])
+            @data_store.delete(kind, key, data[:version])
             break
           end
         end
       elsif method == INDIRECT_PUT
         all_data = @requestor.request_all_data
-        @feature_store.init(all_data)
+        @data_store.init(all_data)
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized (via indirect message)" }
       elsif method == INDIRECT_PATCH
         key = key_for_path(FEATURES, message.data)
         if key
-          @feature_store.upsert(FEATURES, @requestor.request_flag(key))
+          @data_store.upsert(FEATURES, @requestor.request_flag(key))
         else
           key = key_for_path(SEGMENTS, message.data)
           if key
-            @feature_store.upsert(SEGMENTS, @requestor.request_segment(key))
+            @data_store.upsert(SEGMENTS, @requestor.request_segment(key))
           end
         end
       else

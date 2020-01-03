@@ -37,7 +37,7 @@ module LaunchDarkly
     def poll
       all_data = @requestor.request_all_data
       if all_data
-        @config.feature_store.init(all_data)
+        @config.data_store.init(all_data)
         if @initialized.make_true
           @config.logger.info { "[LDClient] Polling connection initialized" }
           @ready.set

@@ -23,7 +23,7 @@ module LaunchDarkly
     # @option opts [Float] :read_timeout (10) See {#read_timeout}.
     # @option opts [Float] :connect_timeout (2) See {#connect_timeout}.
     # @option opts [Object] :cache_store See {#cache_store}.
-    # @option opts [Object] :feature_store See {#feature_store}.
+    # @option opts [Object] :data_store See {#data_store}.
     # @option opts [Boolean] :use_ldd (false) See {#use_ldd?}.
     # @option opts [Boolean] :offline (false) See {#offline?}.
     # @option opts [Float] :poll_interval (30) See {#poll_interval}.
@@ -48,7 +48,7 @@ module LaunchDarkly
       @flush_interval = opts[:flush_interval] || Config.default_flush_interval
       @connect_timeout = opts[:connect_timeout] || Config.default_connect_timeout
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
-      @feature_store = opts[:feature_store] || Config.default_feature_store
+      @data_store = opts[:data_store] || Config.default_data_store
       @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
       @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
@@ -98,9 +98,9 @@ module LaunchDarkly
     #
     # Whether to use the LaunchDarkly relay proxy in daemon mode. In this mode, the client does not
     # use polling or streaming to get feature flag updates from the server, but instead reads them
-    # from the {#feature_store feature store}, which is assumed to be a database that is populated by
+    # from the {#data_store data store}, which is assumed to be a database that is populated by
     # a LaunchDarkly relay proxy. For more information, see ["The relay proxy"](https://docs.launchdarkly.com/v2.0/docs/the-relay-proxy)
-    # and ["Using a persistent feature store"](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+    # and ["Using a persistent data store"](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
     #
     # All other properties related to streaming or polling are ignored if this option is set to true.
     #
@@ -176,13 +176,13 @@ module LaunchDarkly
     #
     # A store for feature flags and related data. The client uses it to store all data received
     # from LaunchDarkly, and uses the last stored data when evaluating flags. Defaults to
-    # {InMemoryFeatureStore}; for other implementations, see {LaunchDarkly::Integrations}.
+    # {InMemoryDataStore}; for other implementations, see {LaunchDarkly::Integrations}.
     #
-    # For more information, see ["Using a persistent feature store"](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+    # For more information, see ["Using a persistent data store"](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
     #
-    # @return [LaunchDarkly::Interfaces::FeatureStore]
+    # @return [LaunchDarkly::Interfaces::DataStore]
     #
-    attr_reader :feature_store
+    attr_reader :data_store
 
     #
     # True if all user attributes (other than the key) should be considered private. This means
@@ -361,11 +361,11 @@ module LaunchDarkly
     end
 
     #
-    # The default value for {#feature_store}.
-    # @return [LaunchDarkly::Interfaces::FeatureStore] an {InMemoryFeatureStore}
+    # The default value for {#data_store}.
+    # @return [LaunchDarkly::Interfaces::DataStore] an {InMemoryDataStore}
     #
-    def self.default_feature_store
-      InMemoryFeatureStore.new
+    def self.default_data_store
+      InMemoryDataStore.new
     end
 
     #

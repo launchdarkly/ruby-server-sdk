@@ -37,13 +37,13 @@ module LaunchDarkly
       @event_factory_default = EventFactory.new(false)
       @event_factory_with_reasons = EventFactory.new(true)
 
-      # We need to wrap the feature store object with a FeatureStoreClientWrapper in order to add
+      # We need to wrap the data store object with a DataStoreClientWrapper in order to add
       # some necessary logic around updates. Unfortunately, we have code elsewhere that accesses
-      # the feature store through the Config object, so we need to make a new Config that uses
+      # the data store through the Config object, so we need to make a new Config that uses
       # the wrapped store.
-      @store = Impl::FeatureStoreClientWrapper.new(config.feature_store)
+      @store = Impl::DataStoreClientWrapper.new(config.data_store)
       updated_config = config.clone
-      updated_config.instance_variable_set(:@feature_store, @store)
+      updated_config.instance_variable_set(:@data_store, @store)
       @config = updated_config
 
       get_flag = lambda { |key| @store.get(FEATURES, key) }
@@ -127,7 +127,7 @@ module LaunchDarkly
     # given up permanently (for instance, if your SDK key is invalid). In the meantime,
     # any call to {#variation} or {#variation_detail} will behave as follows:
     #
-    # 1. It will check whether the feature store already contains data (that is, you
+    # 1. It will check whether the data store already contains data (that is, you
     # are using a database-backed store and it was populated by a previous run of this
     # application). If so, it will use the last known feature flag data.
     #
@@ -362,9 +362,9 @@ module LaunchDarkly
 
       if !initialized?
         if @store.initialized?
-          @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
+          @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from data store" }
         else
-          @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
+          @config.logger.error { "[LDClient] Client has not finished initializing; data store unavailable, returning default value" }
           detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
           @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
           return  detail

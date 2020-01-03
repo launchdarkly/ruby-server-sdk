@@ -70,21 +70,21 @@ describe LaunchDarkly::LDClient do
     end
 
     it "returns the value for an existing feature" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       expect(client.variation("key", user, "default")).to eq "value"
     end
 
     it "returns the default value if a feature evaluates to nil" do
       empty_feature = { key: "key", on: false, offVariation: nil }
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, empty_feature)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, empty_feature)
       expect(client.variation("key", user, "default")).to eq "default"
     end
 
     it "queues a feature request event for an existing feature" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: "feature",
         key: "key",
@@ -100,8 +100,8 @@ describe LaunchDarkly::LDClient do
     end
 
     it "queues a feature event for an existing feature when user is nil" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: "feature",
         key: "key",
@@ -116,8 +116,8 @@ describe LaunchDarkly::LDClient do
     end
 
     it "queues a feature event for an existing feature when user key is nil" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       bad_user = { name: "Bob" }
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: "feature",
@@ -147,8 +147,8 @@ describe LaunchDarkly::LDClient do
           trackEvents: true
         ]
       }
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, flag)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, flag)
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: 'feature',
         key: 'flag',
@@ -172,8 +172,8 @@ describe LaunchDarkly::LDClient do
         rules: [],
         trackEventsFallthrough: true
       }
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, flag)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, flag)
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: 'feature',
         key: 'flag',
@@ -215,8 +215,8 @@ describe LaunchDarkly::LDClient do
     end
 
     it "returns a value for an existing feature" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       result = client.variation_detail("key", user, "default")
       expected = LaunchDarkly::EvaluationDetail.new("value", 0, LaunchDarkly::EvaluationReason::off)
       expect(result).to eq expected
@@ -224,8 +224,8 @@ describe LaunchDarkly::LDClient do
 
     it "returns the default value if a feature evaluates to nil" do
       empty_feature = { key: "key", on: false, offVariation: nil }
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, empty_feature)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, empty_feature)
       result = client.variation_detail("key", user, "default")
       expected = LaunchDarkly::EvaluationDetail.new("default", nil, LaunchDarkly::EvaluationReason::off)
       expect(result).to eq expected
@@ -233,8 +233,8 @@ describe LaunchDarkly::LDClient do
     end
 
     it "queues a feature request event for an existing feature" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
-      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      config.data_store.init({ LaunchDarkly::FEATURES => {} })
+      config.data_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: "feature",
         key: "key",
@@ -256,28 +256,28 @@ describe LaunchDarkly::LDClient do
     let(:flag2) { { key: "key2", offVariation: 0, variations: [ 'value2' ] } }
 
     it "returns flag values" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+      config.data_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
 
       result = client.all_flags({ key: 'userkey' })
       expect(result).to eq({ 'key1' => 'value1', 'key2' => 'value2' })
     end
 
     it "returns empty map for nil user" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+      config.data_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
 
       result = client.all_flags(nil)
       expect(result).to eq({})
     end
 
     it "returns empty map for nil user key" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+      config.data_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
 
       result = client.all_flags({})
       expect(result).to eq({})
     end
 
     it "returns empty map if offline" do
-      offline_config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+      offline_config.data_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
 
       result = offline_client.all_flags(nil)
       expect(result).to eq({})
@@ -289,7 +289,7 @@ describe LaunchDarkly::LDClient do
     let(:flag2) { { key: "key2", version: 200, offVariation: 1, variations: [ 'x', 'value2' ], trackEvents: true, debugEventsUntilDate: 1000 } }
 
     it "returns flags state" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+      config.data_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
 
       state = client.all_flags_state({ key: 'userkey' })
       expect(state.valid?).to be true
@@ -322,7 +322,7 @@ describe LaunchDarkly::LDClient do
       flag2 = { key: "server-side-2", offVariation: 0, variations: [ 'b' ], clientSide: false }
       flag3 = { key: "client-side-1", offVariation: 0, variations: [ 'value1' ], clientSide: true }
       flag4 = { key: "client-side-2", offVariation: 0, variations: [ 'value2' ], clientSide: true }
-      config.feature_store.init({ LaunchDarkly::FEATURES => {
+      config.data_store.init({ LaunchDarkly::FEATURES => {
         flag1[:key] => flag1, flag2[:key] => flag2, flag3[:key] => flag3, flag4[:key] => flag4
       }})
 
@@ -339,7 +339,7 @@ describe LaunchDarkly::LDClient do
       flag2 = { key: "key2", version: 200, offVariation: 1, variations: [ 'x', 'value2' ], trackEvents: true }
       flag3 = { key: "key3", version: 300, offVariation: 1, variations: [ 'x', 'value3' ], debugEventsUntilDate: future_time }
 
-      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2, 'key3' => flag3 } })
+      config.data_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2, 'key3' => flag3 } })
 
       state = client.all_flags_state({ key: 'userkey' }, { details_only_for_tracked_flags: true })
       expect(state.valid?).to be true
@@ -372,7 +372,7 @@ describe LaunchDarkly::LDClient do
     end
 
     it "returns empty state for nil user" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+      config.data_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
 
       state = client.all_flags_state(nil)
       expect(state.valid?).to be false
@@ -380,7 +380,7 @@ describe LaunchDarkly::LDClient do
     end
 
     it "returns empty state for nil user key" do
-      config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+      config.data_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
 
       state = client.all_flags_state({})
       expect(state.valid?).to be false
@@ -388,7 +388,7 @@ describe LaunchDarkly::LDClient do
     end
 
     it "returns empty state if offline" do
-      offline_config.feature_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
+      offline_config.data_store.init({ LaunchDarkly::FEATURES => { 'key1' => flag1, 'key2' => flag2 } })
 
       state = offline_client.all_flags_state({ key: 'userkey' })
       expect(state.valid?).to be false
@@ -472,7 +472,7 @@ describe LaunchDarkly::LDClient do
     end
   end
 
-  describe "feature store data ordering" do
+  describe "data store data ordering" do
     let(:dependency_ordering_test_data) {
       {
         LaunchDarkly::FEATURES => {
@@ -489,7 +489,7 @@ describe LaunchDarkly::LDClient do
       }
     }
 
-    class FakeFeatureStore
+    class FakeDataStore
       attr_reader :received_data
 
       def init(all_data)
@@ -518,11 +518,11 @@ describe LaunchDarkly::LDClient do
       end
     end
 
-    it "passes data set to feature store in correct order on init" do
-      store = FakeFeatureStore.new
-      data_source_factory = lambda { |sdk_key, config| FakeUpdateProcessor.new(config.feature_store,
+    it "passes data set to data store in correct order on init" do
+      store = FakeDataStore.new
+      data_source_factory = lambda { |sdk_key, config| FakeUpdateProcessor.new(config.data_store,
         dependency_ordering_test_data) }
-      config = LaunchDarkly::Config.new(send_events: false, feature_store: store, data_source: data_source_factory)
+      config = LaunchDarkly::Config.new(send_events: false, data_store: store, data_source: data_source_factory)
       client = subject.new("secret", config)
 
       data = store.received_data
