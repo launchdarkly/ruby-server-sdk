@@ -112,9 +112,9 @@ module LaunchDarkly
 
     it "freezes string properties" do
       rm = EvaluationReason::rule_match(1, "x")
-      expect { rm.rule_id.upcase! }.to raise_error(FrozenError)
+      expect { rm.rule_id.upcase! }.to raise_error(RuntimeError)
       pf = EvaluationReason::prerequisite_failed("x")
-      expect { pf.prerequisite_key.upcase! }.to raise_error(FrozenError)
+      expect { pf.prerequisite_key.upcase! }.to raise_error(RuntimeError)
     end
 
     it "checks parameter types" do
