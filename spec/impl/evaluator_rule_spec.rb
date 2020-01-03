@@ -10,8 +10,7 @@ module LaunchDarkly
         rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }], variation: 1 }
         flag = boolean_flag_with_rules([rule])
         user = { key: 'userkey' }
-        detail = EvaluationDetail.new(true, 1,
-          { kind: 'RULE_MATCH', ruleIndex: 0, ruleId: 'ruleid' })
+        detail = EvaluationDetail.new(true, 1, EvaluationReason::rule_match(0, 'ruleid'))
         result = basic_evaluator.evaluate(flag, user, factory)
         expect(result.detail).to eq(detail)
         expect(result.events).to eq(nil)
@@ -22,7 +21,7 @@ module LaunchDarkly
         flag = boolean_flag_with_rules([rule])
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(nil, nil,
-          { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+          EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
         result = basic_evaluator.evaluate(flag, user, factory)
         expect(result.detail).to eq(detail)
         expect(result.events).to eq(nil)
@@ -33,7 +32,7 @@ module LaunchDarkly
         flag = boolean_flag_with_rules([rule])
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(nil, nil,
-          { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+          EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
         result = basic_evaluator.evaluate(flag, user, factory)
         expect(result.detail).to eq(detail)
         expect(result.events).to eq(nil)
@@ -44,7 +43,7 @@ module LaunchDarkly
         flag = boolean_flag_with_rules([rule])
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(nil, nil,
-          { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+          EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
         result = basic_evaluator.evaluate(flag, user, factory)
         expect(result.detail).to eq(detail)
         expect(result.events).to eq(nil)
@@ -56,7 +55,7 @@ module LaunchDarkly
         flag = boolean_flag_with_rules([rule])
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(nil, nil,
-          { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+          EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
         result = basic_evaluator.evaluate(flag, user, factory)
         expect(result.detail).to eq(detail)
         expect(result.events).to eq(nil)
@@ -78,7 +77,7 @@ module LaunchDarkly
         flag = boolean_flag_with_rules([rule])
         user = { key: "userkey", secondary: 999 }
         result = basic_evaluator.evaluate(flag, user, factory)
-        expect(result.detail.reason).to eq({ kind: 'RULE_MATCH', ruleIndex: 0, ruleId: 'ruleid'})
+        expect(result.detail.reason).to eq(EvaluationReason::rule_match(0, 'ruleid'))
       end
     end
   end

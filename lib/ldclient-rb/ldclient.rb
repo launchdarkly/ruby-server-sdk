@@ -319,7 +319,8 @@ module LaunchDarkly
             details_only_if_tracked)
         rescue => exn
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
-          state.add_flag(f, nil, nil, with_reasons ? { kind: 'ERROR', errorKind: 'EXCEPTION' } : nil, details_only_if_tracked)
+          state.add_flag(f, nil, nil, with_reasons ? EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION) : nil,
+            details_only_if_tracked)
         end
       end
 
@@ -356,7 +357,7 @@ module LaunchDarkly
     # @return [EvaluationDetail]
     def evaluate_internal(key, user, default, event_factory)
       if @config.offline?
-        return Evaluator.error_result('CLIENT_NOT_READY', default)
+        return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
       end
 
       if !initialized?
@@ -364,7 +365,7 @@ module LaunchDarkly
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
         else
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
-          detail = Evaluator.error_result('CLIENT_NOT_READY', default)
+          detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
           @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
           return  detail
         end
@@ -374,14 +375,14 @@ module LaunchDarkly
 
       if feature.nil?
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
-        detail = Evaluator.error_result('FLAG_NOT_FOUND', default)
+        detail = Evaluator.error_result(EvaluationReason::ERROR_FLAG_NOT_FOUND, default)
         @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
         return detail
       end
 
       unless user
         @config.logger.error { "[LDClient] Must specify user" }
-        detail = Evaluator.error_result('USER_NOT_SPECIFIED', default)
+        detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
         @event_processor.add_event(event_factory.new_default_event(feature, user, default, detail.reason))
         return detail
       end
@@ -401,7 +402,7 @@ module LaunchDarkly
         return detail
       rescue => exn
         Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
-        detail = Evaluator.error_result('EXCEPTION', default)
+        detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
         @event_processor.add_event(event_factory.new_default_event(feature, user, default, detail.reason))
         return detail
       end

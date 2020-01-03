@@ -16,7 +16,7 @@ module LaunchDarkly
             variations: ['a', 'b', 'c']
           }
           user = { key: 'x' }
-          detail = EvaluationDetail.new('b', 1, { kind: 'OFF' })
+          detail = EvaluationDetail.new('b', 1, EvaluationReason::off)
           result = basic_evaluator.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
@@ -30,7 +30,7 @@ module LaunchDarkly
             variations: ['a', 'b', 'c']
           }
           user = { key: 'x' }
-          detail = EvaluationDetail.new(nil, nil, { kind: 'OFF' })
+          detail = EvaluationDetail.new(nil, nil, EvaluationReason::off)
           result = basic_evaluator.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
@@ -46,7 +46,7 @@ module LaunchDarkly
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new(nil, nil,
-            { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+            EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
@@ -62,7 +62,7 @@ module LaunchDarkly
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new(nil, nil,
-            { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+            EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
@@ -78,8 +78,7 @@ module LaunchDarkly
             variations: ['a', 'b', 'c']
           }
           user = { key: 'x' }
-          detail = EvaluationDetail.new('b', 1,
-            { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'badfeature' })
+          detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('badfeature'))
           e = subject.new(get_things( 'badfeature' => nil ), get_nothing, logger)
           result = e.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
@@ -105,8 +104,7 @@ module LaunchDarkly
             version: 2
           }
           user = { key: 'x' }
-          detail = EvaluationDetail.new('b', 1,
-            { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
+          detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
           events_should_be = [{
             kind: 'feature', key: 'feature1', user: user, value: nil, default: nil, variation: nil, version: 2, prereqOf: 'feature0'
           }]
@@ -137,8 +135,7 @@ module LaunchDarkly
             version: 2
           }
           user = { key: 'x' }
-          detail = EvaluationDetail.new('b', 1,
-            { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
+          detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
           events_should_be = [{
             kind: 'feature', key: 'feature1', user: user, variation: 1, value: 'e', default: nil, version: 2, prereqOf: 'feature0'
           }]
@@ -167,8 +164,7 @@ module LaunchDarkly
             version: 2
           }
           user = { key: 'x' }
-          detail = EvaluationDetail.new('b', 1,
-            { kind: 'PREREQUISITE_FAILED', prerequisiteKey: 'feature1' })
+          detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
           events_should_be = [{
             kind: 'feature', key: 'feature1', user: user, variation: 0, value: 'd', default: nil, version: 2, prereqOf: 'feature0'
           }]
@@ -197,7 +193,7 @@ module LaunchDarkly
             version: 2
           }
           user = { key: 'x' }
-          detail = EvaluationDetail.new('a', 0, { kind: 'FALLTHROUGH' })
+          detail = EvaluationDetail.new('a', 0, EvaluationReason::fallthrough)
           events_should_be = [{
             kind: 'feature', key: 'feature1', user: user, variation: 1, value: 'e', default: nil, version: 2, prereqOf: 'feature0'
           }]
@@ -217,7 +213,7 @@ module LaunchDarkly
             variations: ['a', 'b', 'c']
           }
           user = { key: 'userkey' }
-          detail = EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+          detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
@@ -232,7 +228,7 @@ module LaunchDarkly
             variations: ['a', 'b', 'c']
           }
           user = { key: 'userkey' }
-          detail = EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+          detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
@@ -247,7 +243,7 @@ module LaunchDarkly
             variations: ['a', 'b', 'c']
           }
           user = { key: 'userkey' }
-          detail = EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+          detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
@@ -262,7 +258,7 @@ module LaunchDarkly
             variations: ['a', 'b', 'c']
           }
           user = { key: 'userkey' }
-          detail = EvaluationDetail.new(nil, nil, { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' })
+          detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
@@ -280,7 +276,7 @@ module LaunchDarkly
             variations: ['a', 'b', 'c']
           }
           user = { key: 'userkey' }
-          detail = EvaluationDetail.new('c', 2, { kind: 'TARGET_MATCH' })
+          detail = EvaluationDetail.new('c', 2, EvaluationReason::target_match)
           result = basic_evaluator.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)

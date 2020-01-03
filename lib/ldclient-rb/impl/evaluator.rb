@@ -29,7 +29,7 @@ module LaunchDarkly
 
       # Helper function used internally to construct an EvaluationDetail for an error result.
       def self.error_result(errorKind, value = nil)
-        EvaluationDetail.new(value, nil, { kind: 'ERROR', errorKind: errorKind })
+        EvaluationDetail.new(value, nil, EvaluationReason.error(errorKind))
       end
 
       # The client's entry point for evaluating a flag. The returned `EvalResult` contains the evaluation result and
@@ -43,7 +43,7 @@ module LaunchDarkly
       # @return [EvalResult] the evaluation result 
       def evaluate(flag, user, event_factory)
         if user.nil? || user[:key].nil?
-          return EvalResult.new(Evaluator.error_result('USER_NOT_SPECIFIED'), [])
+          return EvalResult.new(Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED), [])
         end
 
         # If the flag doesn't have any prerequisites (which most flags don't) then it cannot generate any feature
@@ -62,7 +62,7 @@ module LaunchDarkly
       
       def eval_internal(flag, user, events, event_factory)
         if !flag[:on]
-          return get_off_value(flag, { kind: 'OFF' })
+          return get_off_value(flag, EvaluationReason::off)
         end
 
         prereq_failure_reason = check_prerequisites(flag, user, events, event_factory)
@@ -74,7 +74,7 @@ module LaunchDarkly
         (flag[:targets] || []).each do |target|
           (target[:values] || []).each do |value|
             if value == user[:key]
-              return get_variation(flag, target[:variation], { kind: 'TARGET_MATCH' })
+              return get_variation(flag, target[:variation], EvaluationReason::target_match)
             end
           end
         end
@@ -84,18 +84,16 @@ module LaunchDarkly
         rules.each_index do |i|
           rule = rules[i]
           if rule_match_user(rule, user)
-            return get_value_for_variation_or_rollout(flag, rule, user,
-              { kind: 'RULE_MATCH', ruleIndex: i, ruleId: rule[:id] })
+            return get_value_for_variation_or_rollout(flag, rule, user, EvaluationReason::rule_match(i, rule[:id]))
           end
         end
 
         # Check the fallthrough rule
         if !flag[:fallthrough].nil?
-          return get_value_for_variation_or_rollout(flag, flag[:fallthrough], user,
-            { kind: 'FALLTHROUGH' })
+          return get_value_for_variation_or_rollout(flag, flag[:fallthrough], user, EvaluationReason::fallthrough)
         end
 
-        return EvaluationDetail.new(nil, nil, { kind: 'FALLTHROUGH' })
+        return EvaluationDetail.new(nil, nil, EvaluationReason::fallthrough)
       end
 
       def check_prerequisites(flag, user, events, event_factory)
@@ -123,7 +121,7 @@ module LaunchDarkly
             end
           end
           if !prereq_ok
-            return { kind: 'PREREQUISITE_FAILED', prerequisiteKey: prereq_key }
+            return EvaluationReason::prerequisite_failed(prereq_key)
           end
         end
         nil
@@ -219,7 +217,7 @@ module LaunchDarkly
       def get_variation(flag, index, reason)
         if index < 0 || index >= flag[:variations].length
           @logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": invalid variation index")
-          return Evaluator.error_result('MALFORMED_FLAG')
+          return Evaluator.error_result(EvaluationReason::ERROR_MALFORMED_FLAG)
         end
         EvaluationDetail.new(flag[:variations][index], index, reason)
       end
@@ -235,7 +233,7 @@ module LaunchDarkly
         index = variation_index_for_user(flag, vr, user)
         if index.nil?
           @logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": variation/rollout object with no variation or rollout")
-          return Evaluator.error_result('MALFORMED_FLAG')
+          return Evaluator.error_result(EvaluationReason::ERROR_MALFORMED_FLAG)
         end
         return get_variation(flag, index, reason)
       end

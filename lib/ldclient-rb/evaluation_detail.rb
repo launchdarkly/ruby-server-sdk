@@ -3,7 +3,16 @@ module LaunchDarkly
 # An object returned by {LDClient#variation_detail}, combining the result of a flag evaluation with
   # an explanation of how it was calculated.
   class EvaluationDetail
+    # Creates a new instance.
+    #
+    # @param value the result value of the flag evaluation; may be of any type
+    # @param variation_index [int|nil] the index of the value within the flag's list of variations, or
+    #  `nil` if the application default value was returned
+    # @param reason [EvaluationReason] an object describing the main factor that influenced the result
+    # @raise [ArgumentError] if `variation_index` or `reason` is not of the correct type
     def initialize(value, variation_index, reason)
+      raise ArgumentError.new("variation_index must be a number") if !variation_index.nil? && !(variation_index.is_a? Numeric)
+      raise ArgumentError.new("reason must be an EvaluationReason") if !(reason.is_a? EvaluationReason)
       @value = value
       @variation_index = variation_index
       @reason = reason
@@ -29,37 +38,7 @@ module LaunchDarkly
     #
     # An object describing the main factor that influenced the flag evaluation value.
     #
-    # This object is currently represented as a Hash, which may have the following keys:
-    #
-    # `:kind`: The general category of reason. Possible values:
-    #
-    # * `'OFF'`: the flag was off and therefore returned its configured off value
-    # * `'FALLTHROUGH'`: the flag was on but the user did not match any targets or rules
-    # * `'TARGET_MATCH'`: the user key was specifically targeted for this flag
-    # * `'RULE_MATCH'`: the user matched one of the flag's rules
-    # * `'PREREQUISITE_FAILED`': the flag was considered off because it had at least one
-    # prerequisite flag that either was off or did not return the desired variation
-    # * `'ERROR'`: the flag could not be evaluated, so the default value was returned
-    #
-    # `:ruleIndex`: If the kind was `RULE_MATCH`, this is the positional index of the
-    # matched rule (0 for the first rule).
-    #
-    # `:ruleId`: If the kind was `RULE_MATCH`, this is the rule's unique identifier.
-    #
-    # `:prerequisiteKey`: If the kind was `PREREQUISITE_FAILED`, this is the flag key of
-    # the prerequisite flag that failed.
-    #
-    # `:errorKind`: If the kind was `ERROR`, this indicates the type of error:
-    #
-    # * `'CLIENT_NOT_READY'`: the caller tried to evaluate a flag before the client had
-    # successfully initialized
-    # * `'FLAG_NOT_FOUND'`: the caller provided a flag key that did not match any known flag
-    # * `'MALFORMED_FLAG'`: there was an internal inconsistency in the flag data, e.g. a
-    # rule specified a nonexistent variation
-    # * `'USER_NOT_SPECIFIED'`: the user object or user key was not provied
-    # * `'EXCEPTION'`: an unexpected exception stopped flag evaluation
-    #
-    # @return [Hash]
+    # @return [EvaluationReason]
     #
     attr_reader :reason
 
@@ -76,5 +55,239 @@ module LaunchDarkly
     def ==(other)
       @value == other.value && @variation_index == other.variation_index && @reason == other.reason
     end
+  end
+
+  # Describes the reason that a flag evaluation produced a particular value. This is returned by
+  # methods such as {LDClient#variation_detail} as the `reason` property of an {EvaluationDetail}.
+  #
+  # The `kind` property is always defined, but other properties will have non-nil values only for
+  # certain values of `kind`. All properties are immutable.
+  #
+  # There is a standard JSON representation of evaluation reasons when they appear in analytics events.
+  # Use `as_json` or `to_json` to convert to this representation.
+  #
+  # Use factory methods such as {EvaluationReason#off} to obtain instances of this class.
+  class EvaluationReason
+    # Value for {#kind} indicating that the flag was off and therefore returned its configured off value.
+    OFF = :OFF
+    
+    # Value for {#kind} indicating that the flag was on but the user did not match any targets or rules.
+    FALLTHROUGH = :FALLTHROUGH
+    
+    # Value for {#kind} indicating that the user key was specifically targeted for this flag.
+    TARGET_MATCH = :TARGET_MATCH
+    
+    # Value for {#kind} indicating that the user matched one of the flag's rules.
+    RULE_MATCH = :RULE_MATCH
+    
+    # Value for {#kind} indicating that the flag was considered off because it had at least one
+    # prerequisite flag that either was off or did not return the desired variation.
+    PREREQUISITE_FAILED = :PREREQUISITE_FAILED
+    
+    # Value for {#kind} indicating that the flag could not be evaluated, e.g. because it does not exist
+    # or due to an unexpected error. In this case the result value will be the application default value
+    # that the caller passed to the client. Check {#error_kind} for more details on the problem.
+    ERROR = :ERROR
+
+    # Value for {#error_kind} indicating that the caller tried to evaluate a flag before the client had
+    # successfully initialized.
+    ERROR_CLIENT_NOT_READY = :CLIENT_NOT_READY
+
+    # Value for {#error_kind} indicating that the caller provided a flag key that did not match any known flag.
+    ERROR_FLAG_NOT_FOUND = :FLAG_NOT_FOUND
+
+    # Value for {#error_kind} indicating that there was an internal inconsistency in the flag data, e.g.
+    # a rule specified a nonexistent  variation. An error message will always be logged in this case.
+    ERROR_MALFORMED_FLAG = :MALFORMED_FLAG
+
+    # Value for {#error_kind} indicating that the caller passed `nil` for the user parameter, or the
+    # user lacked a key.
+    ERROR_USER_NOT_SPECIFIED = :USER_NOT_SPECIFIED
+
+    # Value for {#error_kind} indicating that an unexpected exception stopped flag evaluation. An error
+    # message will always be logged in this case.
+    ERROR_EXCEPTION = :EXCEPTION
+
+    # Indicates the general category of the reason. Will always be one of the class constants such
+    # as {#OFF}.
+    attr_reader :kind
+
+    # The index of the rule that was matched (0 for the first rule in the feature flag). If
+    # {#kind} is not {#RULE_MATCH}, this will be `nil`.
+    attr_reader :rule_index
+
+    # A unique string identifier for the matched rule, which will not change if other rules are added
+    # or deleted. If {#kind} is not {#RULE_MATCH}, this will be `nil`.
+    attr_reader :rule_id
+
+    # The key of the prerequisite flag that did not return the desired variation. If {#kind} is not
+    # {#PREREQUISITE_FAILED}, this will be `nil`.
+    attr_reader :prerequisite_key
+
+    # A value indicating the general category of error. This should be one of the class constants such
+    # as {#ERROR_FLAG_NOT_FOUND}. If {#kind} is not {#ERROR}, it will be `nil`.
+    attr_reader :error_kind
+
+    # Returns an instance whose {#kind} is {#OFF}.
+    # @return [EvaluationReason]
+    def self.off
+      @@off
+    end
+
+    # Returns an instance whose {#kind} is {#FALLTHROUGH}.
+    # @return [EvaluationReason]
+    def self.fallthrough
+      @@fallthrough
+    end
+
+    # Returns an instance whose {#kind} is {#TARGET_MATCH}.
+    # @return [EvaluationReason]
+    def self.target_match
+      @@target_match
+    end
+
+    # Returns an instance whose {#kind} is {#RULE_MATCH}.
+    #
+    # @param rule_index [Number] the index of the rule that was matched (0 for the first rule in
+    #   the feature flag)
+    # @param rule_id [String] unique string identifier for the matched rule
+    # @return [EvaluationReason]
+    # @raise [ArgumentError] if `rule_index` is not a number or `rule_id` is not a string
+    def self.rule_match(rule_index, rule_id)
+      raise ArgumentError.new("rule_index must be a number") if !(rule_index.is_a? Numeric)
+      raise ArgumentError.new("rule_id must be a string") if !rule_id.nil? && !(rule_id.is_a? String) # in test data, ID could be nil
+      new(:RULE_MATCH, rule_index, rule_id, nil, nil)
+    end
+
+    # Returns an instance whose {#kind} is {#PREREQUISITE_FAILED}.
+    #
+    # @param prerequisite_key [String] key of the prerequisite flag that did not return the desired variation
+    # @return [EvaluationReason]
+    # @raise [ArgumentError] if `prerequisite_key` is nil or not a string
+    def self.prerequisite_failed(prerequisite_key)
+      raise ArgumentError.new("prerequisite_key must be a string") if !(prerequisite_key.is_a? String)
+      new(:PREREQUISITE_FAILED, nil, nil, prerequisite_key, nil)
+    end
+
+    # Returns an instance whose {#kind} is {#ERROR}.
+    #
+    # @param error_kind [Symbol] value indicating the general category of error
+    # @return [EvaluationReason]
+    # @raise [ArgumentError] if `error_kind` is not a symbol
+    def self.error(error_kind)
+      raise ArgumentError.new("error_kind must be a symbol") if !(error_kind.is_a? Symbol)
+      e = @@error_instances[error_kind]
+      e.nil? ? make_error(error_kind) : e
+    end
+
+    def ==(other)
+      if other.is_a? EvaluationReason
+        @kind == other.kind && @rule_index == other.rule_index && @rule_id == other.rule_id &&
+          @prerequisite_key == other.prerequisite_key && @error_kind == other.error_kind
+      elsif other.is_a? Hash
+        @kind.to_s == other[:kind] && @rule_index == other[:ruleIndex] && @rule_id == other[:ruleId] &&
+          @prerequisite_key == other[:prerequisiteKey] &&
+          (other[:errorKind] == @error_kind.nil? ? nil : @error_kind.to_s)
+      end
+    end
+
+    # Equivalent to {#inspect}.
+    # @return [String]
+    def to_s
+      inspect
+    end
+
+    # Returns a concise string representation of the reason. Examples: `"FALLTHROUGH"`,
+    # `"ERROR(FLAG_NOT_FOUND)"`. The exact syntax is not guaranteed to remain the same; this is meant
+    # for debugging.
+    # @return [String]
+    def inspect
+      case @kind
+      when :RULE_MATCH
+        "RULE_MATCH(#{@rule_index},#{@rule_id})"
+      when :PREREQUISITE_FAILED
+        "PREREQUISITE_FAILED(#{@prerequisite_key})"
+      when :ERROR
+        "ERROR(#{@error_kind})"
+      else
+        @kind.to_s
+      end
+    end
+
+    # Returns a hash that can be used as a JSON representation of the reason, in the format used
+    # in LaunchDarkly analytics events.
+    # @return [Hash]
+    def as_json(*) # parameter is unused, but may be passed if we're using the json gem
+      # Note that this implementation is somewhat inefficient; it allocates a new hash every time.
+      # However, in normal usage the SDK only serializes reasons if 1. full event tracking is
+      # enabled for a flag and the application called variation_detail, or 2. experimentation is
+      # enabled for an evaluation. We can't reuse these hashes because an application could call
+      # as_json and then modify the result.
+      case @kind
+      when :RULE_MATCH
+        { kind: @kind, ruleIndex: @rule_index, ruleId: @rule_id }
+      when :PREREQUISITE_FAILED
+        { kind: @kind, prerequisiteKey: @prerequisite_key }
+      when :ERROR
+        { kind: @kind, errorKind: @error_kind }
+      else
+        { kind: @kind }
+      end
+    end
+
+    # Same as {#as_json}, but converts the JSON structure into a string.
+    # @return [String]
+    def to_json(*a)
+      as_json.to_json(a)
+    end
+
+    # Allows this object to be treated as a hash corresponding to its JSON representation. For
+    # instance, if `reason.kind` is {#RULE_MATCH}, then `reason[:kind]` will be `"RULE_MATCH"` and
+    # `reason[:ruleIndex]` will be equal to `reason.rule_index`.
+    def [](key)
+      case key
+      when :kind
+        @kind.to_s
+      when :ruleIndex
+        @rule_index
+      when :ruleId
+        @rule_id
+      when :prerequisiteKey
+        @prerequisite_key
+      when :errorKind
+        @error_kind.nil? ? nil : @error_kind.to_s
+      else
+        nil
+      end
+    end
+
+    private
+
+    def initialize(kind, rule_index, rule_id, prerequisite_key, error_kind)
+      @kind = kind.to_sym
+      @rule_index = rule_index
+      @rule_id = rule_id
+      @rule_id.freeze if !rule_id.nil?
+      @prerequisite_key = prerequisite_key
+      @prerequisite_key.freeze if !prerequisite_key.nil?
+      @error_kind = error_kind
+    end
+
+    private_class_method :new
+
+    def self.make_error(error_kind)
+      new(:ERROR, nil, nil, nil, error_kind)
+    end
+
+    @@fallthrough = new(:FALLTHROUGH, nil, nil, nil, nil)
+    @@off = new(:OFF, nil, nil, nil, nil)
+    @@target_match = new(:TARGET_MATCH, nil, nil, nil, nil)
+    @@error_instances = {
+      ERROR_CLIENT_NOT_READY => make_error(ERROR_CLIENT_NOT_READY),
+      ERROR_FLAG_NOT_FOUND => make_error(ERROR_FLAG_NOT_FOUND),
+      ERROR_MALFORMED_FLAG => make_error(ERROR_MALFORMED_FLAG),
+      ERROR_USER_NOT_SPECIFIED => make_error(ERROR_USER_NOT_SPECIFIED),
+      ERROR_EXCEPTION => make_error(ERROR_EXCEPTION)
+    }
   end
 end
