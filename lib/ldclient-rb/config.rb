@@ -35,8 +35,6 @@ module LaunchDarkly
     # @option opts [Float] :user_keys_flush_interval (300) See {#user_keys_flush_interval}.
     # @option opts [Boolean] :inline_users_in_events (false) See {#inline_users_in_events}.
     # @option opts [Object] :data_source See {#data_source}.
-    # @option opts [Object] :update_processor Obsolete synonym for `data_source`.
-    # @option opts [Object] :update_processor_factory Obsolete synonym for `data_source`.
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -59,9 +57,7 @@ module LaunchDarkly
       @user_keys_capacity = opts[:user_keys_capacity] || Config.default_user_keys_capacity
       @user_keys_flush_interval = opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
       @inline_users_in_events = opts[:inline_users_in_events] || false
-      @data_source = opts[:data_source] || opts[:update_processor] || opts[:update_processor_factory]
-      @update_processor = opts[:update_processor]
-      @update_processor_factory = opts[:update_processor_factory]
+      @data_source = opts[:data_source]
     end
 
     #
@@ -250,12 +246,6 @@ module LaunchDarkly
     # @see FileDataSource
     #
     attr_reader :data_source
-
-    # @deprecated This is replaced by {#data_source}.
-    attr_reader :update_processor
-    
-    # @deprecated This is replaced by {#data_source}.
-    attr_reader :update_processor_factory
 
     #
     # The default LaunchDarkly client configuration. This configuration sets

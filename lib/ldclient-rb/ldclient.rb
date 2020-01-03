@@ -58,7 +58,7 @@ module LaunchDarkly
 
       if @config.use_ldd?
         @config.logger.info { "[LDClient] Started LaunchDarkly Client in LDD mode" }
-        return  # requestor and update processor are not used in this mode
+        return  # requestor and data processor are not used in this mode
       end
 
       data_source_or_factory = @config.data_source || self.method(:create_default_data_source)
@@ -342,7 +342,7 @@ module LaunchDarkly
 
     def create_default_data_source(sdk_key, config)
       if config.offline?
-        return NullUpdateProcessor.new
+        return NullDataSource.new
       end
       requestor = Requestor.new(sdk_key, config)
       if config.stream?
@@ -419,7 +419,7 @@ module LaunchDarkly
   # Used internally when the client is offline.
   # @private
   #
-  class NullUpdateProcessor
+  class NullDataSource
     def start
       e = Concurrent::Event.new
       e.set

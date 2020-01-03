@@ -7,7 +7,7 @@ describe LaunchDarkly::LDClient do
   let(:offline_client) do
     subject.new("secret", offline_config)
   end
-  let(:null_data) { LaunchDarkly::NullUpdateProcessor.new }
+  let(:null_data) { LaunchDarkly::NullDataSource.new }
   let(:logger) { double().as_null_object }
   let(:config) { LaunchDarkly::Config.new({ send_events: false, data_source: null_data, logger: logger }) }
   let(:client) do
@@ -497,7 +497,7 @@ describe LaunchDarkly::LDClient do
       end
     end
 
-    class FakeUpdateProcessor
+    class FakeDataSource
       def initialize(store, data)
         @store = store
         @data = data
@@ -520,7 +520,7 @@ describe LaunchDarkly::LDClient do
 
     it "passes data set to data store in correct order on init" do
       store = FakeDataStore.new
-      data_source_factory = lambda { |sdk_key, config| FakeUpdateProcessor.new(config.data_store,
+      data_source_factory = lambda { |sdk_key, config| FakeDataSource.new(config.data_store,
         dependency_ordering_test_data) }
       config = LaunchDarkly::Config.new(send_events: false, data_store: store, data_source: data_source_factory)
       client = subject.new("secret", config)
