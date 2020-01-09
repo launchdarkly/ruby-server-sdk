@@ -8,7 +8,6 @@ end
 require "ldclient-rb/version"
 require "ldclient-rb/interfaces"
 require "ldclient-rb/util"
-require "ldclient-rb/evaluation"
 require "ldclient-rb/flags_state"
 require "ldclient-rb/ldclient"
 require "ldclient-rb/cache_store"

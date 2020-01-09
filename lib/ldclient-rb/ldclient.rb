@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/event_factory"
 require "ldclient-rb/impl/store_client_wrapper"
 require "concurrent/atomics"
@@ -13,7 +14,6 @@ module LaunchDarkly
   # should create a single client instance for the lifetime of the application.
   #
   class LDClient
-    include Evaluation
     include Impl
     #
     # Creates a new client instance that connects to LaunchDarkly. A custom
@@ -45,6 +45,10 @@ module LaunchDarkly
       updated_config = config.clone
       updated_config.instance_variable_set(:@feature_store, @store)
       @config = updated_config
+
+      get_flag = lambda { |key| @store.get(FEATURES, key) }
+      get_segment = lambda { |key| @store.get(SEGMENTS, key) }
+      @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, @config.logger)
 
       if @config.offline? || !@config.send_events
         @event_processor = NullEventProcessor.new
@@ -310,7 +314,7 @@ module LaunchDarkly
           next
         end
         begin
-          result = evaluate(f, user, @store, @config.logger, @event_factory_default)
+          result = @evaluator.evaluate(f, user, @event_factory_default)
           state.add_flag(f, result.detail.value, result.detail.variation_index, with_reasons ? result.detail.reason : nil,
             details_only_if_tracked)
         rescue => exn
@@ -352,7 +356,7 @@ module LaunchDarkly
     # @return [EvaluationDetail]
     def evaluate_internal(key, user, default, event_factory)
       if @config.offline?
-        return error_result('CLIENT_NOT_READY', default)
+        return Evaluator.error_result('CLIENT_NOT_READY', default)
       end
 
       if !initialized?
@@ -360,7 +364,7 @@ module LaunchDarkly
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
         else
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
-          detail = error_result('CLIENT_NOT_READY', default)
+          detail = Evaluator.error_result('CLIENT_NOT_READY', default)
           @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
           return  detail
         end
@@ -370,20 +374,20 @@ module LaunchDarkly
 
       if feature.nil?
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
-        detail = error_result('FLAG_NOT_FOUND', default)
+        detail = Evaluator.error_result('FLAG_NOT_FOUND', default)
         @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
         return detail
       end
 
       unless user
         @config.logger.error { "[LDClient] Must specify user" }
-        detail = error_result('USER_NOT_SPECIFIED', default)
+        detail = Evaluator.error_result('USER_NOT_SPECIFIED', default)
         @event_processor.add_event(event_factory.new_default_event(feature, user, default, detail.reason))
         return detail
       end
 
       begin
-        res = evaluate(feature, user, @store, @config.logger, event_factory)
+        res = @evaluator.evaluate(feature, user, event_factory)
         if !res.events.nil?
           res.events.each do |event|
             @event_processor.add_event(event)
@@ -397,7 +401,7 @@ module LaunchDarkly
         return detail
       rescue => exn
         Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
-        detail = error_result('EXCEPTION', default)
+        detail = Evaluator.error_result('EXCEPTION', default)
         @event_processor.add_event(event_factory.new_default_event(feature, user, default, detail.reason))
         return detail
       end
