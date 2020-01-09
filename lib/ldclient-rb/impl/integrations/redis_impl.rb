@@ -53,7 +53,7 @@ module LaunchDarkly
                   multi.del(items_key(kind))
                   count = count + items.count
                   items.each do |key, item|
-                    multi.hset(items_key(kind), key, item.to_json)
+                    multi.hset(items_key(kind), key, Model.serialize(kind,item))
                   end
                 end
                 multi.set(inited_key, inited_key)
@@ -73,8 +73,7 @@ module LaunchDarkly
             with_connection do |redis|
               hashfs = redis.hgetall(items_key(kind))
               hashfs.each do |k, json_item|
-                f = JSON.parse(json_item, symbolize_names: true)
-                fs[k.to_sym] = f
+                fs[k.to_sym] = Model.deserialize(kind, json_item)
               end
             end
             fs
@@ -93,7 +92,7 @@ module LaunchDarkly
                   before_update_transaction(base_key, key)
                   if old_item.nil? || old_item[:version] < new_item[:version]
                     result = redis.multi do |multi|
-                      multi.hset(base_key, key, new_item.to_json)
+                      multi.hset(base_key, key, Model.serialize(kind, new_item))
                     end
                     if result.nil?
                       @logger.debug { "RedisFeatureStore: concurrent modification detected, retrying" }
@@ -145,8 +144,7 @@ module LaunchDarkly
           end
 
           def get_redis(redis, kind, key)
-            json_item = redis.hget(items_key(kind), key)
-            json_item.nil? ? nil : JSON.parse(json_item, symbolize_names: true)
+            Model.deserialize(kind, redis.hget(items_key(kind), key))
           end
         end
       end

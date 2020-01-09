@@ -77,7 +77,7 @@ module LaunchDarkly
 
           def get_internal(kind, key)
             resp = get_item_by_keys(namespace_for_kind(kind), key)
-            unmarshal_item(resp.item)
+            unmarshal_item(kind, resp.item)
           end
 
           def get_all_internal(kind)
@@ -86,7 +86,7 @@ module LaunchDarkly
             while true
               resp = @client.query(req)
               resp.items.each do |item|
-                item_out = unmarshal_item(item)
+                item_out = unmarshal_item(kind, item)
                 items_out[item_out[:key].to_sym] = item_out
               end
               break if resp.last_evaluated_key.nil? || resp.last_evaluated_key.length == 0
@@ -196,15 +196,15 @@ module LaunchDarkly
           def marshal_item(kind, item)
             make_keys_hash(namespace_for_kind(kind), item[:key]).merge({
               VERSION_ATTRIBUTE => item[:version],
-              ITEM_JSON_ATTRIBUTE => item.to_json
+              ITEM_JSON_ATTRIBUTE => Model.serialize(kind, item)
             })
           end
 
-          def unmarshal_item(item)
+          def unmarshal_item(kind, item)
             return nil if item.nil? || item.length == 0
             json_attr = item[ITEM_JSON_ATTRIBUTE]
             raise RuntimeError.new("DynamoDB map did not contain expected item string") if json_attr.nil?
-            JSON.parse(json_attr, symbolize_names: true)
+            Model.deserialize(kind, json_attr)
           end
         end
 

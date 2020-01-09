@@ -1,3 +1,5 @@
+require "ldclient-rb/impl/model/serialization"
+
 require "concurrent/atomics"
 require "json"
 require "uri"
@@ -27,15 +29,16 @@ module LaunchDarkly
     end
 
     def request_flag(key)
-      make_request("/sdk/latest-flags/" + key)
+      request_single_item(FEATURES, "/sdk/latest-flags/" + key)
     end
 
     def request_segment(key)
-      make_request("/sdk/latest-segments/" + key)
+      request_single_item(SEGMENTS, "/sdk/latest-segments/" + key)
     end
 
     def request_all_data()
-      make_request("/sdk/latest-all")
+      all_data = JSON.parse(make_request("/sdk/latest-all"), symbolize_names: true)
+      Impl::Model.make_all_store_data(all_data)
     end
     
     def stop
@@ -46,6 +49,10 @@ module LaunchDarkly
     end
 
     private
+
+    def request_single_item(kind, path)
+      Impl::Model.deserialize(kind, make_request(path))
+    end
 
     def make_request(path)
       @client.start if !@client.started?
@@ -73,7 +80,7 @@ module LaunchDarkly
         etag = res["etag"]
         @cache.write(uri, CacheEntry.new(etag, body)) if !etag.nil?
       end
-      JSON.parse(body, symbolize_names: true)
+      body
     end
 
     def fix_encoding(body, content_type)

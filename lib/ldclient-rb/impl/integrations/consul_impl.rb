@@ -39,7 +39,7 @@ module LaunchDarkly
             # Insert or update every provided item
             all_data.each do |kind, items|
               items.values.each do |item|
-                value = item.to_json
+                value = Model.serialize(kind, item)
                 key = item_key(kind, item[:key])
                 ops.push({ 'KV' => { 'Verb' => 'set', 'Key' => key, 'Value' => value } })
                 unused_old_keys.delete(key)
@@ -62,7 +62,7 @@ module LaunchDarkly
 
           def get_internal(kind, key)
             value = Diplomat::Kv.get(item_key(kind, key), {}, :return)  # :return means "don't throw an error if not found"
-            (value.nil? || value == "") ? nil : JSON.parse(value, symbolize_names: true)
+            (value.nil? || value == "") ? nil : Model.deserialize(kind, value)
           end
 
           def get_all_internal(kind)
@@ -71,7 +71,7 @@ module LaunchDarkly
             (results == "" ? [] : results).each do |result|
               value = result[:value]
               if !value.nil?
-                item = JSON.parse(value, symbolize_names: true)
+                item = Model.deserialize(kind, value)
                 items_out[item[:key].to_sym] = item
               end
             end
@@ -80,7 +80,7 @@ module LaunchDarkly
 
           def upsert_internal(kind, new_item)
             key = item_key(kind, new_item[:key])
-            json = new_item.to_json
+            json = Model.serialize(kind, new_item)
 
             # We will potentially keep retrying indefinitely until someone's write succeeds
             while true
@@ -88,7 +88,7 @@ module LaunchDarkly
               if old_value.nil? || old_value == ""
                 mod_index = 0
               else
-                old_item = JSON.parse(old_value[0]["Value"], symbolize_names: true)
+                old_item = Model.deserialize(kind, old_value[0]["Value"])
                 # Check whether the item is stale. If so, don't do the update (and return the existing item to
                 # FeatureStoreWrapper so it can be cached)
                 if old_item[:version] >= new_item[:version]
