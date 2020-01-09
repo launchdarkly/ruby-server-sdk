@@ -157,7 +157,7 @@ describe LaunchDarkly::LDClient do
         value: 'value',
         default: 'default',
         trackEvents: true,
-        reason: { kind: 'RULE_MATCH', ruleIndex: 0, ruleId: 'id' }
+        reason: LaunchDarkly::EvaluationReason::rule_match(0, 'id')
       ))
       client.variation('flag', user, 'default')
     end
@@ -182,7 +182,7 @@ describe LaunchDarkly::LDClient do
         value: 'value',
         default: 'default',
         trackEvents: true,
-        reason: { kind: 'FALLTHROUGH' }
+        reason: LaunchDarkly::EvaluationReason::fallthrough
       ))
       client.variation('flag', user, 'default')
     end
@@ -194,20 +194,22 @@ describe LaunchDarkly::LDClient do
 
     it "returns the default value if the client is offline" do
       result = offline_client.variation_detail("doesntmatter", user, "default")
-      expected = LaunchDarkly::EvaluationDetail.new("default", nil, { kind: 'ERROR', errorKind: 'CLIENT_NOT_READY' })
+      expected = LaunchDarkly::EvaluationDetail.new("default", nil,
+        LaunchDarkly::EvaluationReason::error(LaunchDarkly::EvaluationReason::ERROR_CLIENT_NOT_READY))
       expect(result).to eq expected
     end
 
     it "returns the default value for an unknown feature" do
       result = client.variation_detail("badkey", user, "default")
-      expected = LaunchDarkly::EvaluationDetail.new("default", nil, { kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND'})
+      expected = LaunchDarkly::EvaluationDetail.new("default", nil,
+      LaunchDarkly::EvaluationReason::error(LaunchDarkly::EvaluationReason::ERROR_FLAG_NOT_FOUND))
       expect(result).to eq expected
     end
 
     it "queues a feature request event for an unknown feature" do
       expect(event_processor).to receive(:add_event).with(hash_including(
         kind: "feature", key: "badkey", user: user, value: "default", default: "default",
-        reason: { kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND' }
+        reason: LaunchDarkly::EvaluationReason::error(LaunchDarkly::EvaluationReason::ERROR_FLAG_NOT_FOUND)
       ))
       client.variation_detail("badkey", user, "default")
     end
@@ -216,7 +218,7 @@ describe LaunchDarkly::LDClient do
       config.feature_store.init({ LaunchDarkly::FEATURES => {} })
       config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       result = client.variation_detail("key", user, "default")
-      expected = LaunchDarkly::EvaluationDetail.new("value", 0, { kind: 'OFF' })
+      expected = LaunchDarkly::EvaluationDetail.new("value", 0, LaunchDarkly::EvaluationReason::off)
       expect(result).to eq expected
     end
 
@@ -225,7 +227,7 @@ describe LaunchDarkly::LDClient do
       config.feature_store.init({ LaunchDarkly::FEATURES => {} })
       config.feature_store.upsert(LaunchDarkly::FEATURES, empty_feature)
       result = client.variation_detail("key", user, "default")
-      expected = LaunchDarkly::EvaluationDetail.new("default", nil, { kind: 'OFF' })
+      expected = LaunchDarkly::EvaluationDetail.new("default", nil, LaunchDarkly::EvaluationReason::off)
       expect(result).to eq expected
       expect(result.default_value?).to be true
     end
@@ -243,7 +245,7 @@ describe LaunchDarkly::LDClient do
         default: "default",
         trackEvents: true,
         debugEventsUntilDate: 1000,
-        reason: { kind: "OFF" }
+        reason: LaunchDarkly::EvaluationReason::off
       ))
       client.variation_detail("key", user, "default")
     end
