@@ -165,26 +165,6 @@ module LaunchDarkly
         clause[:negate] ? !result : result
       end
 
-      def variation_index_for_user(flag, rule, user)
-        if !rule[:variation].nil? # fixed variation
-          return rule[:variation]
-        elsif !rule[:rollout].nil? # percentage rollout
-          rollout = rule[:rollout]
-          bucket_by = rollout[:bucketBy].nil? ? "key" : rollout[:bucketBy]
-          bucket = EvaluatorBucketing.bucket_user(user, flag[:key], bucket_by, flag[:salt])
-          sum = 0;
-          rollout[:variations].each do |variate|
-            sum += variate[:weight].to_f / 100000.0
-            if bucket < sum
-              return variate[:variation]
-            end
-          end
-          nil
-        else # the rule isn't well-formed
-          nil
-        end
-      end
-
       def segment_match_user(segment, user)
         return false unless user[:key]
 
@@ -230,7 +210,7 @@ module LaunchDarkly
       end
 
       def get_value_for_variation_or_rollout(flag, vr, user, reason)
-        index = variation_index_for_user(flag, vr, user)
+        index = EvaluatorBucketing.variation_index_for_user(flag, vr, user)
         if index.nil?
           @logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": variation/rollout object with no variation or rollout")
           return Evaluator.error_result(EvaluationReason::ERROR_MALFORMED_FLAG)
