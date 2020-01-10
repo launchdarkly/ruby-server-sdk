@@ -6,7 +6,7 @@ describe LaunchDarkly::PollingProcessor do
   let(:requestor) { double() }
 
   def with_processor(store)
-    config = LaunchDarkly::Config.new(feature_store: store)
+    config = LaunchDarkly::Config.new(data_store: store)
     processor = subject.new(config, requestor)
     begin
       yield processor
@@ -29,7 +29,7 @@ describe LaunchDarkly::PollingProcessor do
 
     it 'puts feature data in store' do
       allow(requestor).to receive(:request_all_data).and_return(all_data)
-      store = LaunchDarkly::InMemoryFeatureStore.new
+      store = LaunchDarkly::InMemoryDataStore.new
       with_processor(store) do |processor|
         ready = processor.start
         ready.wait
@@ -40,7 +40,7 @@ describe LaunchDarkly::PollingProcessor do
 
     it 'sets initialized to true' do
       allow(requestor).to receive(:request_all_data).and_return(all_data)
-      store = LaunchDarkly::InMemoryFeatureStore.new
+      store = LaunchDarkly::InMemoryDataStore.new
       with_processor(store) do |processor|
         ready = processor.start
         ready.wait
@@ -53,7 +53,7 @@ describe LaunchDarkly::PollingProcessor do
   describe 'connection error' do
     it 'does not cause immediate failure, does not set initialized' do
       allow(requestor).to receive(:request_all_data).and_raise(StandardError.new("test error"))
-      store = LaunchDarkly::InMemoryFeatureStore.new
+      store = LaunchDarkly::InMemoryDataStore.new
       with_processor(store) do |processor|
         ready = processor.start
         finished = ready.wait(0.2)
@@ -67,7 +67,7 @@ describe LaunchDarkly::PollingProcessor do
   describe 'HTTP errors' do
     def verify_unrecoverable_http_error(status)
       allow(requestor).to receive(:request_all_data).and_raise(LaunchDarkly::UnexpectedResponseError.new(status))
-      with_processor(LaunchDarkly::InMemoryFeatureStore.new) do |processor|
+      with_processor(LaunchDarkly::InMemoryDataStore.new) do |processor|
         ready = processor.start
         finished = ready.wait(0.2)
         expect(finished).to be true
@@ -77,7 +77,7 @@ describe LaunchDarkly::PollingProcessor do
 
     def verify_recoverable_http_error(status)
       allow(requestor).to receive(:request_all_data).and_raise(LaunchDarkly::UnexpectedResponseError.new(status))
-      with_processor(LaunchDarkly::InMemoryFeatureStore.new) do |processor|
+      with_processor(LaunchDarkly::InMemoryDataStore.new) do |processor|
         ready = processor.start
         finished = ready.wait(0.2)
         expect(finished).to be false
@@ -108,7 +108,7 @@ describe LaunchDarkly::PollingProcessor do
 
   describe 'stop' do
     it 'stops promptly rather than continuing to wait for poll interval' do
-      with_processor(LaunchDarkly::InMemoryFeatureStore.new) do |processor|
+      with_processor(LaunchDarkly::InMemoryDataStore.new) do |processor|
         sleep(1)  # somewhat arbitrary, but should ensure that it has started polling
         start_time = Time.now
         processor.stop

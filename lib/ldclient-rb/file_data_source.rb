@@ -118,14 +118,14 @@ module LaunchDarkly
     # @return an object that can be stored in {Config#data_source}
     #
     def self.factory(options={})
-      return lambda { |sdk_key, config| FileDataSourceImpl.new(config.feature_store, config.logger, options) }
+      return lambda { |sdk_key, config| FileDataSourceImpl.new(config.data_store, config.logger, options) }
     end
   end
 
   # @private
   class FileDataSourceImpl
-    def initialize(feature_store, logger, options={})
-      @feature_store = feature_store
+    def initialize(data_store, logger, options={})
+      @data_store = data_store
       @logger = logger
       @paths = options[:paths] || []
       if @paths.is_a? String
@@ -187,7 +187,7 @@ module LaunchDarkly
           return
         end
       end
-      @feature_store.init(all_data)
+      @data_store.init(all_data)
       @initialized.make_true
     end
 
