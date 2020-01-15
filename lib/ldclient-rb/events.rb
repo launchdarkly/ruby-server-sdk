@@ -1,6 +1,7 @@
 require "concurrent"
 require "concurrent/atomics"
 require "concurrent/executors"
+require "securerandom"
 require "thread"
 require "time"
 
@@ -359,6 +360,7 @@ module LaunchDarkly
       events_out = formatter.make_output_events(payload.events, payload.summary)
       res = nil
       body = events_out.to_json
+      payload_id = SecureRandom.uuid
       (0..1).each do |attempt|
         if attempt > 0
           config.logger.warn { "[LDClient] Will retry posting events after 1 second" }
@@ -374,6 +376,7 @@ module LaunchDarkly
           req["Authorization"] = sdk_key
           req["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
           req["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
+          req["X-LaunchDarkly-Payload-ID"] = payload_id
           req["Connection"] = "keep-alive"
           res = client.request(req)
         rescue StandardError => exn
