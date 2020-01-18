@@ -416,6 +416,29 @@ describe LaunchDarkly::EventProcessor do
     expect(hc.get_request["authorization"]).to eq "sdk_key"
   end
 
+  it "sends unique payload IDs" do
+    @ep = subject.new("sdk_key", default_config, hc)
+    e = { kind: "identify", user: user }
+  
+    @ep.add_event(e)
+    @ep.flush
+    @ep.wait_until_inactive
+    req0 = hc.get_request
+
+    @ep.add_event(e)
+    @ep.flush
+    @ep.wait_until_inactive
+    req1 = hc.get_request
+
+    id0 = req0["x-launchdarkly-payload-id"]
+    id1 = req1["x-launchdarkly-payload-id"]
+    expect(id0).not_to be_nil
+    expect(id0).not_to eq ""
+    expect(id1).not_to be nil
+    expect(id1).not_to eq ""
+    expect(id1).not_to eq id0
+  end
+
   def verify_unrecoverable_http_error(status)
     @ep = subject.new("sdk_key", default_config, hc)
     e = { kind: "identify", user: user }
@@ -442,8 +465,15 @@ describe LaunchDarkly::EventProcessor do
     @ep.flush
     @ep.wait_until_inactive
 
-    expect(hc.get_request).not_to be_nil
-    expect(hc.get_request).not_to be_nil
+    req0 = hc.get_request
+    expect(req0).not_to be_nil
+    req1 = hc.get_request
+    expect(req1).not_to be_nil
+    id0 = req0["x-launchdarkly-payload-id"]
+    expect(id0).not_to be_nil
+    expect(id0).not_to eq ""
+    expect(req1["x-launchdarkly-payload-id"]).to eq id0
+    
     expect(hc.get_request).to be_nil  # no 3rd request
 
     # now verify that a subsequent flush still generates a request
