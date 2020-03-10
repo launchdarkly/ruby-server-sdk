@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/event_factory"
 require "ldclient-rb/impl/store_client_wrapper"
 require "concurrent/atomics"
@@ -46,10 +47,16 @@ module LaunchDarkly
       updated_config.instance_variable_set(:@feature_store, @store)
       @config = updated_config
 
+      if !@config.offline? && @config.send_events && !@config.diagnostic_opt_out?
+        diagnostic_accumulator = Impl::DiagnosticAccumulator.new(Impl::DiagnosticAccumulator.create_diagnostic_id(sdk_key))
+      else
+        diagnostic_accumulator = nil
+      end
+
       if @config.offline? || !@config.send_events
         @event_processor = NullEventProcessor.new
       else
-        @event_processor = EventProcessor.new(sdk_key, config)
+        @event_processor = EventProcessor.new(sdk_key, config, diagnostic_accumulator)
       end
 
       if @config.use_ldd?
@@ -59,7 +66,13 @@ module LaunchDarkly
 
       data_source_or_factory = @config.data_source || self.method(:create_default_data_source)
       if data_source_or_factory.respond_to? :call
-        @data_source = data_source_or_factory.call(sdk_key, @config)
+        # Currently, data source factories take two parameters unless they need to be aware of diagnostic_accumulator, in
+        # which case they take three parameters. This will be changed in the future to use a less awkware mechanism.
+        if data_source_or_factory.arity == 3
+          @data_source = data_source_or_factory.call(sdk_key, @config, diagnostic_accumulator)
+        else
+          @data_source = data_source_or_factory.call(sdk_key, @config)
+        end
       else
         @data_source = data_source_or_factory
       end
@@ -335,13 +348,13 @@ module LaunchDarkly
 
     private
 
-    def create_default_data_source(sdk_key, config)
+    def create_default_data_source(sdk_key, config, diagnostic_accumulator)
       if config.offline?
         return NullUpdateProcessor.new
       end
       requestor = Requestor.new(sdk_key, config)
       if config.stream?
-        StreamProcessor.new(sdk_key, config, requestor)
+        StreamProcessor.new(sdk_key, config, requestor, diagnostic_accumulator)
       else
         config.logger.info { "Disabling streaming API" }
         config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }

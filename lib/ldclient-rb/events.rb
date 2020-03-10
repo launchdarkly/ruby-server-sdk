@@ -1,7 +1,10 @@
+require "ldclient-rb/impl/diagnostic_events"
+require "ldclient-rb/impl/event_sender"
+require "ldclient-rb/impl/util"
+
 require "concurrent"
 require "concurrent/atomics"
 require "concurrent/executors"
-require "securerandom"
 require "thread"
 require "time"
 
@@ -24,12 +27,10 @@ require "time"
 
 module LaunchDarkly
   MAX_FLUSH_WORKERS = 5
-  CURRENT_SCHEMA_VERSION = 3
   USER_ATTRS_TO_STRINGIFY_FOR_EVENTS = [ :key, :secondary, :ip, :country, :email, :firstName, :lastName,
     :avatar, :name ]
 
   private_constant :MAX_FLUSH_WORKERS
-  private_constant :CURRENT_SCHEMA_VERSION
   private_constant :USER_ATTRS_TO_STRINGIFY_FOR_EVENTS
 
   # @private
@@ -61,6 +62,10 @@ module LaunchDarkly
   end
 
   # @private
+  class DiagnosticEventMessage
+  end
+
+  # @private
   class SynchronousMessage
     def initialize
       @reply = Concurrent::Semaphore.new(0)
@@ -85,9 +90,9 @@ module LaunchDarkly
 
   # @private
   class EventProcessor
-    def initialize(sdk_key, config, client = nil)
+    def initialize(sdk_key, config, client = nil, diagnostic_accumulator = nil, test_properties = nil)
       @logger = config.logger
-      @inbox = SizedQueue.new(config.capacity)
+      @inbox = SizedQueue.new(config.capacity < 100 ? 100 : config.capacity)
       @flush_task = Concurrent::TimerTask.new(execution_interval: config.flush_interval) do
         post_to_inbox(FlushMessage.new)
       end
@@ -96,14 +101,29 @@ module LaunchDarkly
         post_to_inbox(FlushUsersMessage.new)
       end
       @users_flush_task.execute
+      if !diagnostic_accumulator.nil?
+        interval = test_properties && test_properties.has_key?(:diagnostic_recording_interval) ?
+          test_properties[:diagnostic_recording_interval] :
+          config.diagnostic_recording_interval
+        @diagnostic_event_task = Concurrent::TimerTask.new(execution_interval: interval) do
+          post_to_inbox(DiagnosticEventMessage.new)
+        end
+        @diagnostic_event_task.execute
+      else
+        @diagnostic_event_task = nil
+      end
       @stopped = Concurrent::AtomicBoolean.new(false)
       @inbox_full = Concurrent::AtomicBoolean.new(false)
 
-      EventDispatcher.new(@inbox, sdk_key, config, client)
+      event_sender = test_properties && test_properties.has_key?(:event_sender) ?
+        test_properties[:event_sender] :
+        Impl::EventSender.new(sdk_key, config, client ? client : Util.new_http_client(config.events_uri, config))
+
+      EventDispatcher.new(@inbox, sdk_key, config, diagnostic_accumulator, event_sender)
     end
 
     def add_event(event)
-      event[:creationDate] = (Time.now.to_f * 1000).to_i
+      event[:creationDate] = Impl::Util.current_time_millis
       post_to_inbox(EventMessage.new(event))
     end
 
@@ -117,6 +137,7 @@ module LaunchDarkly
       if @stopped.make_true
         @flush_task.shutdown
         @users_flush_task.shutdown
+        @diagnostic_event_task.shutdown if !@diagnostic_event_task.nil?
         # Note that here we are not calling post_to_inbox, because we *do* want to wait if the inbox
         # is full; an orderly shutdown can't happen unless these messages are received.
         @inbox << FlushMessage.new
@@ -152,34 +173,36 @@ module LaunchDarkly
 
   # @private
   class EventDispatcher
-    def initialize(inbox, sdk_key, config, client)
+    def initialize(inbox, sdk_key, config, diagnostic_accumulator, event_sender)
       @sdk_key = sdk_key
       @config = config
-
-      if client
-        @client = client
-      else
-        @client = Util.new_http_client(@config.events_uri, @config)
-      end
+      @diagnostic_accumulator = config.diagnostic_opt_out? ? nil : diagnostic_accumulator
+      @event_sender = event_sender
 
       @user_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
       @formatter = EventOutputFormatter.new(config)
       @disabled = Concurrent::AtomicBoolean.new(false)
       @last_known_past_time = Concurrent::AtomicReference.new(0)
-
+      @deduplicated_users = 0
+      @events_in_last_batch = 0
+      
       outbox = EventBuffer.new(config.capacity, config.logger)
       flush_workers = NonBlockingThreadPool.new(MAX_FLUSH_WORKERS)
 
-      Thread.new { main_loop(inbox, outbox, flush_workers) }
+      if !@diagnostic_accumulator.nil?
+        diagnostic_event_workers = NonBlockingThreadPool.new(1)
+        init_event = @diagnostic_accumulator.create_init_event(config)
+        send_diagnostic_event(init_event, diagnostic_event_workers)
+      else
+        diagnostic_event_workers = nil
+      end
+
+      Thread.new { main_loop(inbox, outbox, flush_workers, diagnostic_event_workers) }
     end
 
     private
 
-    def now_millis()
-      (Time.now.to_f * 1000).to_i
-    end
-
-    def main_loop(inbox, outbox, flush_workers)
+    def main_loop(inbox, outbox, flush_workers, diagnostic_event_workers)
       running = true
       while running do
         begin
@@ -191,11 +214,13 @@ module LaunchDarkly
             trigger_flush(outbox, flush_workers)
           when FlushUsersMessage
             @user_keys.clear
+          when DiagnosticEventMessage
+            send_and_reset_diagnostics(outbox, diagnostic_event_workers)
           when TestSyncMessage
-            synchronize_for_testing(flush_workers)
+            synchronize_for_testing(flush_workers, diagnostic_event_workers)
             message.completed
           when StopMessage
-            do_shutdown(flush_workers)
+            do_shutdown(flush_workers, diagnostic_event_workers)
             running = false
             message.completed
           end
@@ -205,18 +230,23 @@ module LaunchDarkly
       end
     end
 
-    def do_shutdown(flush_workers)
+    def do_shutdown(flush_workers, diagnostic_event_workers)
       flush_workers.shutdown
       flush_workers.wait_for_termination
+      if !diagnostic_event_workers.nil?
+        diagnostic_event_workers.shutdown
+        diagnostic_event_workers.wait_for_termination
+      end
       begin
         @client.finish
       rescue
       end
     end
 
-    def synchronize_for_testing(flush_workers)
+    def synchronize_for_testing(flush_workers, diagnostic_event_workers)
       # Used only by unit tests. Wait until all active flush workers have finished.
       flush_workers.wait_all
+      diagnostic_event_workers.wait_all if !diagnostic_event_workers.nil?
     end
 
     def dispatch_event(event, outbox)
@@ -260,7 +290,9 @@ module LaunchDarkly
       if user.nil? || !user.has_key?(:key)
         true
       else
-        @user_keys.add(user[:key].to_s)
+        known = @user_keys.add(user[:key].to_s)
+        @deduplicated_users += 1 if known
+        known
       end
     end
 
@@ -268,7 +300,7 @@ module LaunchDarkly
       debug_until = event[:debugEventsUntilDate]
       if !debug_until.nil?
         last_past = @last_known_past_time.value
-        debug_until > last_past && debug_until > now_millis
+        debug_until > last_past && debug_until > Impl::Util.current_time_millis
       else
         false
       end
@@ -281,34 +313,44 @@ module LaunchDarkly
 
       payload = outbox.get_payload  
       if !payload.events.empty? || !payload.summary.counters.empty?
+        count = payload.events.length + (payload.summary.counters.empty? ? 0 : 1)
+        @events_in_last_batch = count
         # If all available worker threads are busy, success will be false and no job will be queued.
         success = flush_workers.post do
           begin
-            resp = EventPayloadSendTask.new.run(@sdk_key, @config, @client, payload, @formatter)
-            handle_response(resp) if !resp.nil?
+            events_out = @formatter.make_output_events(payload.events, payload.summary)
+            result = @event_sender.send_event_data(events_out.to_json, false)
+            @disabled.value = true if result.must_shutdown
+            if !result.time_from_server.nil?
+              @last_known_past_time.value = (result.time_from_server.to_f * 1000).to_i
+            end
           rescue => e
             Util.log_exception(@config.logger, "Unexpected error in event processor", e)
           end
         end
         outbox.clear if success # Reset our internal state, these events now belong to the flush worker
+      else
+        @events_in_last_batch = 0
       end
     end
 
-    def handle_response(res)
-      status = res.code.to_i
-      if status >= 400
-        message = Util.http_error_message(status, "event delivery", "some events were dropped")
-        @config.logger.error { "[LDClient] #{message}" }
-        if !Util.http_error_recoverable?(status)
-          @disabled.value = true
-        end
-      else
-        if !res["date"].nil?
-          begin
-            res_time = (Time.httpdate(res["date"]).to_f * 1000).to_i
-            @last_known_past_time.value = res_time
-          rescue ArgumentError
-          end
+    def send_and_reset_diagnostics(outbox, diagnostic_event_workers)
+      return if @diagnostic_accumulator.nil?
+      dropped_count = outbox.get_and_clear_dropped_count
+      event = @diagnostic_accumulator.create_periodic_event_and_reset(dropped_count, @deduplicated_users, @events_in_last_batch)
+      @deduplicated_users = 0
+      @events_in_last_batch = 0
+      send_diagnostic_event(event, diagnostic_event_workers)
+    end
+
+    def send_diagnostic_event(event, diagnostic_event_workers)
+      return if diagnostic_event_workers.nil?
+      uri = URI(@config.events_uri + "/diagnostic")
+      diagnostic_event_workers.post do
+        begin
+          @event_sender.send_event_data(event.to_json, true)
+        rescue => e
+          Util.log_exception(@config.logger, "Unexpected error in event processor", e)
         end
       end
     end
@@ -323,6 +365,7 @@ module LaunchDarkly
       @capacity = capacity
       @logger = logger
       @capacity_exceeded = false
+      @dropped_events = 0
       @events = []
       @summarizer = EventSummarizer.new
     end
@@ -333,6 +376,7 @@ module LaunchDarkly
         @events.push(event)
         @capacity_exceeded = false
       else
+        @dropped_events += 1
         if !@capacity_exceeded
           @capacity_exceeded = true
           @logger.warn { "[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events." }
@@ -348,51 +392,15 @@ module LaunchDarkly
       return FlushPayload.new(@events, @summarizer.snapshot)
     end
 
+    def get_and_clear_dropped_count
+      ret = @dropped_events
+      @dropped_events = 0
+      ret
+    end
+
     def clear
       @events = []
       @summarizer.clear
-    end
-  end
-
-  # @private
-  class EventPayloadSendTask
-    def run(sdk_key, config, client, payload, formatter)
-      events_out = formatter.make_output_events(payload.events, payload.summary)
-      res = nil
-      body = events_out.to_json
-      payload_id = SecureRandom.uuid
-      (0..1).each do |attempt|
-        if attempt > 0
-          config.logger.warn { "[LDClient] Will retry posting events after 1 second" }
-          sleep(1)
-        end
-        begin
-          client.start if !client.started?
-          config.logger.debug { "[LDClient] sending #{events_out.length} events: #{body}" }
-          uri = URI(config.events_uri + "/bulk")
-          req = Net::HTTP::Post.new(uri)
-          req.content_type = "application/json"
-          req.body = body
-          req["Authorization"] = sdk_key
-          req["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
-          req["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
-          req["X-LaunchDarkly-Payload-ID"] = payload_id
-          req["Connection"] = "keep-alive"
-          res = client.request(req)
-        rescue StandardError => exn
-          config.logger.warn { "[LDClient] Error flushing events: #{exn.inspect}." }
-          next
-        end
-        status = res.code.to_i
-        if status < 200 || status >= 300
-          if Util.http_error_recoverable?(status)
-            next
-          end
-        end
-        break
-      end
-      # used up our retries, return the last response if any
-      res
     end
   end
 

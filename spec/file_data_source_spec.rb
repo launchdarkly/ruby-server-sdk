@@ -95,7 +95,7 @@ EOF
   let(:bad_file_path) { "no-such-file" }
 
   before do
-    @config = LaunchDarkly::Config.new
+    @config = LaunchDarkly::Config.new(logger: $null_log)
     @store = @config.feature_store
     @tmp_dir = Dir.mktmpdir
   end

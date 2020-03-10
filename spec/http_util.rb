@@ -52,6 +52,13 @@ class StubHTTPServer
     @server.mount_proc(uri_path, action)
   end
 
+  def setup_status_response(uri_path, status, headers={})
+    setup_response(uri_path) do |req, res|
+      res.status = status
+      headers.each { |n, v| res[n] = v }
+    end
+  end
+
   def setup_ok_response(uri_path, body, content_type=nil, headers={})
     setup_response(uri_path) do |req, res|
       res.status = 200
@@ -63,11 +70,17 @@ class StubHTTPServer
 
   def record_request(req, res)
     @requests.push(req)
-    @requests_queue << req
+    @requests_queue << [req, req.body]
   end
 
   def await_request
-    @requests_queue.pop
+    r = @requests_queue.pop
+    r[0]
+  end
+
+  def await_request_with_body
+    r = @requests_queue.pop
+    return r[0], r[1]
   end
 end
 

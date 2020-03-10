@@ -6,7 +6,7 @@ describe LaunchDarkly::PollingProcessor do
   let(:requestor) { double() }
 
   def with_processor(store)
-    config = LaunchDarkly::Config.new(feature_store: store)
+    config = LaunchDarkly::Config.new(feature_store: store, logger: $null_log)
     processor = subject.new(config, requestor)
     begin
       yield processor

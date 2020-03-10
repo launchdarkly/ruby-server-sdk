@@ -17,7 +17,7 @@ describe LaunchDarkly::Evaluation do
     }
   }
 
-  let(:logger) { LaunchDarkly::Config.default_logger }
+  let(:logger) { $null_log }
 
   def boolean_flag_with_rules(rules)
     { key: 'feature', on: true, rules: rules, fallthrough: { variation: 0 }, variations: [ false, true ] }
