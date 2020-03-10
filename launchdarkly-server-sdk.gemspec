@@ -28,7 +28,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "diplomat", ">= 2.0.2"
   spec.add_development_dependency "redis", "~> 3.3.5"
   spec.add_development_dependency "connection_pool", ">= 2.1.2"
-  spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec_junit_formatter", "~> 0.3.0"
   spec.add_development_dependency "timecop", "~> 0.9.1"
   spec.add_development_dependency "listen", "~> 3.0" # see file_data_source.rb
@@ -36,5 +35,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "json", [">= 1.8", "< 3"]
   spec.add_runtime_dependency "semantic", "~> 1.6"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0"
-  spec.add_runtime_dependency "ld-eventsource", "1.0.1"
+  spec.add_runtime_dependency "ld-eventsource", "1.0.2"
 end
