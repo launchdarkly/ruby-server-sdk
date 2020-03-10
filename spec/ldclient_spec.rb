@@ -461,7 +461,7 @@ describe LaunchDarkly::LDClient do
   end
 
   describe 'with send_events: true' do
-    let(:config_with_events) { LaunchDarkly::Config.new({offline: false, send_events: true, data_source: null_data}) }
+    let(:config_with_events) { LaunchDarkly::Config.new({offline: false, send_events: true, diagnostic_opt_out: true, data_source: null_data}) }
     let(:client_with_events) { subject.new("secret", config_with_events) }
 
     it "does not use a NullEventProcessor" do

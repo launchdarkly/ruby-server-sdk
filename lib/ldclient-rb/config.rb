@@ -37,6 +37,10 @@ module LaunchDarkly
     # @option opts [Object] :data_source See {#data_source}.
     # @option opts [Object] :update_processor Obsolete synonym for `data_source`.
     # @option opts [Object] :update_processor_factory Obsolete synonym for `data_source`.
+    # @option opts [Boolean] :diagnostic_opt_out (false) See {#diagnostic_opt_out?}.
+    # @option opts [Float] :diagnostic_recording_interval (900) See {#diagnostic_recording_interval}.
+    # @option opts [String] :wrapper_name See {#wrapper_name}.
+    # @option opts [String] :wrapper_version See {#wrapper_version}.
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -62,6 +66,11 @@ module LaunchDarkly
       @data_source = opts[:data_source] || opts[:update_processor] || opts[:update_processor_factory]
       @update_processor = opts[:update_processor]
       @update_processor_factory = opts[:update_processor_factory]
+      @diagnostic_opt_out = opts.has_key?(:diagnostic_opt_out) && opts[:diagnostic_opt_out]
+      @diagnostic_recording_interval = opts.has_key?(:diagnostic_recording_interval) && opts[:diagnostic_recording_interval] > Config.minimum_diagnostic_recording_interval ?
+        opts[:diagnostic_recording_interval] : Config.default_diagnostic_recording_interval
+      @wrapper_name = opts[:wrapper_name]
+      @wrapper_version = opts[:wrapper_version]
     end
 
     #
@@ -258,6 +267,45 @@ module LaunchDarkly
     attr_reader :update_processor_factory
 
     #
+    # Set to true to opt out of sending diagnostics data.
+    #
+    # Unless `diagnostic_opt_out` is set to true, the client will send some diagnostics data to the LaunchDarkly servers
+    # in order to assist in the development of future SDK improvements. These diagnostics consist of an initial payload
+    # containing some details of the SDK in use, the SDK's configuration, and the platform the SDK is being run on, as
+    # well as periodic information on irregular occurrences such as dropped events.
+    # @return [Boolean]
+    #
+    def diagnostic_opt_out?
+      @diagnostic_opt_out
+    end
+
+    #
+    # The interval at which periodic diagnostic data is sent, in seconds.
+    #
+    # The default is 900 (every 15 minutes) and the minimum value is 60 (every minute).
+    # @return [Float]
+    #
+    attr_reader :diagnostic_recording_interval
+
+    #
+    # For use by wrapper libraries to set an identifying name for the wrapper being used.
+    #
+    # This will be sent in User-Agent headers during requests to the LaunchDarkly servers to allow recording
+    # metrics on the usage of these wrapper libraries.
+    # @return [String]
+    #
+    attr_reader :wrapper_name
+
+    #
+    # For use by wrapper libraries to report the version of the library in use.
+    #
+    # If `wrapper_name` is not set, this field will be ignored. Otherwise the version string will be included in
+    # the User-Agent headers along with the `wrapper_name` during requests to the LaunchDarkly servers.
+    # @return [String]
+    #
+    attr_reader :wrapper_version
+
+    #
     # The default LaunchDarkly client configuration. This configuration sets
     # reasonable defaults for most users.
     # @return [Config] The default LaunchDarkly configuration.
@@ -406,6 +454,22 @@ module LaunchDarkly
     #
     def self.default_user_keys_flush_interval
       300
+    end
+
+    #
+    # The default value for {#diagnostic_recording_interval}.
+    # @return [Float] 900
+    #
+    def self.default_diagnostic_recording_interval
+      900
+    end
+
+    #
+    # The minimum value for {#diagnostic_recording_interval}.
+    # @return [Float] 60
+    #
+    def self.minimum_diagnostic_recording_interval
+      60
     end
   end
 end

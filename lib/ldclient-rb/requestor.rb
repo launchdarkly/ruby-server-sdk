@@ -51,8 +51,7 @@ module LaunchDarkly
       @client.start if !@client.started?
       uri = URI(@config.base_uri + path)
       req = Net::HTTP::Get.new(uri)
-      req["Authorization"] = @sdk_key
-      req["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
+      Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| req[k] = v }
       req["Connection"] = "keep-alive"
       cached = @cache.read(uri)
       if !cached.nil?

@@ -4,10 +4,7 @@ require "redis"
 require "spec_helper"
 
 
-
 $my_prefix = 'testprefix'
-$null_log = ::Logger.new($stdout)
-$null_log.level = ::Logger::FATAL
 
 $base_opts = {
   prefix: $my_prefix,

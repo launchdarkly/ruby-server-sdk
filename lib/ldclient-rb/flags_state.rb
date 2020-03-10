@@ -22,7 +22,7 @@ module LaunchDarkly
       meta = {}
       with_details = !details_only_if_tracked || flag[:trackEvents]
       if !with_details && flag[:debugEventsUntilDate]
-        with_details = flag[:debugEventsUntilDate] > (Time.now.to_f * 1000).to_i
+        with_details = flag[:debugEventsUntilDate] > Impl::Util::current_time_millis
       end
       if with_details
         meta[:version] = flag[:version]
