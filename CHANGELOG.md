@@ -2,6 +2,14 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.7.0] - 2020-03-10
+### Added:
+- The SDK now periodically sends diagnostic data to LaunchDarkly, describing the version and configuration of the SDK, the architecture and version of the runtime platform, and performance statistics. No credentials, hostnames, or other identifiable values are included. This behavior can be disabled with `Config.diagnostic_opt_out` or configured with `Config.diagnostic_recording_interval`.
+- New `Config` properties `wrapper_name` and `wrapper_version` allow a library that uses the Ruby SDK to identify itself for usage data if desired.
+
+### Removed:
+- Removed an unused dependency on `rake`.
+
 ## [5.6.2] - 2020-01-15
 ### Fixed:
 - The SDK now specifies a uniquely identifiable request header when sending events to LaunchDarkly to ensure that events are only processed once, even if the SDK sends them two times due to a failed initial attempt.
