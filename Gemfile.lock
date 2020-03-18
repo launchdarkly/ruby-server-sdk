@@ -4,7 +4,7 @@ PATH
     launchdarkly-server-sdk (5.7.0)
       concurrent-ruby (~> 1.0)
       json (>= 1.8, < 3)
-      ld-eventsource (= 1.0.2)
+      ld-eventsource (= 1.0.3)
       semantic (~> 1.6)
 
 GEM
@@ -40,7 +40,7 @@ GEM
     jmespath (1.4.0)
     json (1.8.6)
     json (1.8.6-java)
-    ld-eventsource (1.0.2)
+    ld-eventsource (1.0.3)
       concurrent-ruby (~> 1.0)
       http_tools (~> 0.4.5)
       socketry (~> 0.5.1)
