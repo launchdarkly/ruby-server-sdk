@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.7.1] - 2020-03-18
+### Fixed:
+- The backoff delay logic for reconnecting after a stream failure was broken so that if a failure occurred after a stream had been active for at least 60 seconds, retries would use _no_ delay, potentially causing a flood of requests and a spike in CPU usage. This bug was introduced in version 5.5.0 of the SDK.
+
 ## [5.7.0] - 2020-03-10
 ### Added:
 - The SDK now periodically sends diagnostic data to LaunchDarkly, describing the version and configuration of the SDK, the architecture and version of the runtime platform, and performance statistics. No credentials, hostnames, or other identifiable values are included. This behavior can be disabled with `Config.diagnostic_opt_out` or configured with `Config.diagnostic_recording_interval`.
