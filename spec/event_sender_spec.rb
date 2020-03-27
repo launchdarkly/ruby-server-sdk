@@ -27,7 +27,7 @@ module LaunchDarkly
         with_sender_and_server do |es, server|
           server.setup_ok_response("/bulk", "")
 
-          result = es.send_event_data(fake_data, false)
+          result = es.send_event_data(fake_data, "", false)
 
           expect(result.success).to be true
           expect(result.must_shutdown).to be false
@@ -49,8 +49,8 @@ module LaunchDarkly
         with_sender_and_server do |es, server|
           server.setup_ok_response("/bulk", "")
 
-          result1 = es.send_event_data(fake_data, false)
-          result2 = es.send_event_data(fake_data, false)
+          result1 = es.send_event_data(fake_data, "", false)
+          result2 = es.send_event_data(fake_data, "", false)
           expect(result1.success).to be true
           expect(result2.success).to be true
 
@@ -66,7 +66,7 @@ module LaunchDarkly
         with_sender_and_server do |es, server|
           server.setup_ok_response("/diagnostic", "")
 
-          result = es.send_event_data(fake_data, true)
+          result = es.send_event_data(fake_data, "", true)
 
           expect(result.success).to be true
           expect(result.must_shutdown).to be false
@@ -94,7 +94,7 @@ module LaunchDarkly
 
               es = make_sender(server)
 
-              result = es.send_event_data(fake_data, false)
+              result = es.send_event_data(fake_data, "", false)
               
               expect(result.success).to be true
 
@@ -116,7 +116,7 @@ module LaunchDarkly
               res.status = req_count == 2 ? 200 : status
             end
 
-            result = es.send_event_data(fake_data, false)
+            result = es.send_event_data(fake_data, "", false)
 
             expect(result.success).to be true
             expect(result.must_shutdown).to be false
@@ -141,7 +141,7 @@ module LaunchDarkly
               res.status = req_count == 3 ? 200 : status
             end
 
-            result = es.send_event_data(fake_data, false)
+            result = es.send_event_data(fake_data, "", false)
 
             expect(result.success).to be false
             expect(result.must_shutdown).to be false
@@ -164,7 +164,7 @@ module LaunchDarkly
               res.status = status
             end
 
-            result = es.send_event_data(fake_data, false)
+            result = es.send_event_data(fake_data, "", false)
 
             expect(result.success).to be false
             expect(result.must_shutdown).to be true

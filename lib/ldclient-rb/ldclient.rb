@@ -56,7 +56,7 @@ module LaunchDarkly
       if @config.offline? || !@config.send_events
         @event_processor = NullEventProcessor.new
       else
-        @event_processor = EventProcessor.new(sdk_key, config, diagnostic_accumulator)
+        @event_processor = EventProcessor.new(sdk_key, config, nil, diagnostic_accumulator)
       end
 
       if @config.use_ldd?
