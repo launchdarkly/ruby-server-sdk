@@ -319,7 +319,7 @@ module LaunchDarkly
         success = flush_workers.post do
           begin
             events_out = @formatter.make_output_events(payload.events, payload.summary)
-            result = @event_sender.send_event_data(events_out.to_json, false)
+            result = @event_sender.send_event_data(events_out.to_json, "#{events_out.length} events", false)
             @disabled.value = true if result.must_shutdown
             if !result.time_from_server.nil?
               @last_known_past_time.value = (result.time_from_server.to_f * 1000).to_i
@@ -348,7 +348,7 @@ module LaunchDarkly
       uri = URI(@config.events_uri + "/diagnostic")
       diagnostic_event_workers.post do
         begin
-          @event_sender.send_event_data(event.to_json, true)
+          @event_sender.send_event_data(event.to_json, "diagnostic event", true)
         rescue => e
           Util.log_exception(@config.logger, "Unexpected error in event processor", e)
         end

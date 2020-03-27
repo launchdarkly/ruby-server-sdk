@@ -18,10 +18,9 @@ module LaunchDarkly
         @retry_interval = retry_interval
       end
 
-      def send_event_data(event_data, is_diagnostic)
+      def send_event_data(event_data, description, is_diagnostic)
         uri = is_diagnostic ? @diagnostic_uri : @events_uri
         payload_id = is_diagnostic ? nil : SecureRandom.uuid
-        description = is_diagnostic ? 'diagnostic event' : "#{event_data.length} events"
         res = nil
         (0..1).each do |attempt|
           if attempt > 0
@@ -30,7 +29,7 @@ module LaunchDarkly
           end
           begin
             @client.start if !@client.started?
-            @logger.debug { "[LDClient] sending #{description}: #{body}" }
+            @logger.debug { "[LDClient] sending #{description}: #{event_data}" }
             req = Net::HTTP::Post.new(uri)
             req.content_type = "application/json"
             req.body = event_data

@@ -578,7 +578,7 @@ describe LaunchDarkly::EventProcessor do
       @diagnostic_payloads = Queue.new
     end
 
-    def send_event_data(data, is_diagnostic)
+    def send_event_data(data, description, is_diagnostic)
       (is_diagnostic ? @diagnostic_payloads : @analytics_payloads).push(JSON.parse(data, symbolize_names: true))
       @result
     end
