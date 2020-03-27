@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.7.2] - 2020-03-27
+### Fixed:
+- Fixed a bug in the 5.7.0 and 5.7.1 releases that caused analytics events not to be sent unless diagnostic events were explicitly disabled. This also caused an error to be logged: `undefined method started?`.
+
 ## [5.7.1] - 2020-03-18
 ### Fixed:
 - The backoff delay logic for reconnecting after a stream failure was broken so that if a failure occurred after a stream had been active for at least 60 seconds, retries would use _no_ delay, potentially causing a flood of requests and a spike in CPU usage. This bug was introduced in version 5.5.0 of the SDK.
