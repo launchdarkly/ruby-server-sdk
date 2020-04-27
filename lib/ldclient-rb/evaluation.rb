@@ -140,35 +140,44 @@ module LaunchDarkly
         end,
       endsWith:
         lambda do |a, b|
-          (a.is_a? String) && (a.end_with? b)
+          (a.is_a? String) && (b.is_a? String) && (a.end_with? b)
         end,
       startsWith:
         lambda do |a, b|
-          (a.is_a? String) && (a.start_with? b)
+          (a.is_a? String) && (b.is_a? String) && (a.start_with? b)
         end,
       matches:
         lambda do |a, b|
-          (b.is_a? String) && !(Regexp.new b).match(a).nil?
+          if (b.is_a? String) && (b.is_a? String)
+            begin
+              re = Regexp.new b
+              !re.match(a).nil?
+            rescue
+              false
+            end
+          else
+            false
+          end
         end,
       contains:
         lambda do |a, b|
-          (a.is_a? String) && (a.include? b)
+          (a.is_a? String) && (b.is_a? String) && (a.include? b)
         end,
       lessThan:
         lambda do |a, b|
-          (a.is_a? Numeric) && (a < b)
+          (a.is_a? Numeric) && (b.is_a? Numeric) && (a < b)
         end,
       lessThanOrEqual:
         lambda do |a, b|
-          (a.is_a? Numeric) && (a <= b)
+          (a.is_a? Numeric) && (b.is_a? Numeric) && (a <= b)
         end,
       greaterThan:
         lambda do |a, b|
-          (a.is_a? Numeric) && (a > b)
+          (a.is_a? Numeric) && (b.is_a? Numeric) && (a > b)
         end,
       greaterThanOrEqual:
         lambda do |a, b|
-          (a.is_a? Numeric) && (a >= b)
+          (a.is_a? Numeric) && (b.is_a? Numeric) && (a >= b)
         end,
       before:
         comparator(DATE_OPERAND) { |n| n < 0 },

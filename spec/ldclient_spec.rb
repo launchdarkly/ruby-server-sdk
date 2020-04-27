@@ -49,6 +49,46 @@ describe LaunchDarkly::LDClient do
     client.instance_variable_get(:@event_processor)
   end
 
+  describe "constructor requirement of non-nil sdk key" do
+    it "is not enforced when offline" do
+      subject.new(nil, offline_config)
+    end
+
+    it "is not enforced if use_ldd is true and send_events is false" do
+      subject.new(nil, LaunchDarkly::Config.new({ use_ldd: true, send_events: false }))
+    end
+
+    it "is not enforced if using file data and send_events is false" do
+      source = LaunchDarkly::FileDataSource.factory({})
+      subject.new(nil, LaunchDarkly::Config.new({ data_source: source, send_events: false }))
+    end
+
+    it "is enforced in streaming mode even if send_events is false" do
+      expect {
+        subject.new(nil, LaunchDarkly::Config.new({ send_events: false }))
+      }.to raise_error(ArgumentError)
+    end
+
+    it "is enforced in polling mode even if send_events is false" do
+      expect {
+        subject.new(nil, LaunchDarkly::Config.new({ stream: false, send_events: false }))
+      }.to raise_error(ArgumentError)
+    end
+
+    it "is enforced if use_ldd is true and send_events is true" do
+      expect {
+        subject.new(nil, LaunchDarkly::Config.new({ use_ldd: true }))
+      }.to raise_error(ArgumentError)
+    end
+
+    it "is enforced if using file data and send_events is true" do
+      source = LaunchDarkly::FileDataSource.factory({})
+      expect {
+        subject.new(nil, LaunchDarkly::Config.new({ data_source: source }))
+      }.to raise_error(ArgumentError)
+    end
+  end
+
   describe '#variation' do
     feature_with_value = { key: "key", on: false, offVariation: 0, variations: ["value"], version: 100,
       trackEvents: true, debugEventsUntilDate: 1000 }

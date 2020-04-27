@@ -495,13 +495,13 @@ describe LaunchDarkly::Evaluation do
       # mixed strings and numbers
       [ :in,                 "99", 99, false ],
       [ :in,                  99, "99", false ],
-      #[ :contains,           "99", 99, false ],    # currently throws exception - would return false in Java SDK
-      #[ :startsWith,         "99", 99, false ],  # currently throws exception - would return false in Java SDK
-      #[ :endsWith,           "99", 99, false ]     # currently throws exception - would return false in Java SDK
+      [ :contains,           "99", 99, false ],
+      [ :startsWith,         "99", 99, false ],
+      [ :endsWith,           "99", 99, false ],
       [ :lessThanOrEqual,    "99", 99, false ],
-      #[ :lessThanOrEqual,    99, "99", false ],    # currently throws exception - would return false in Java SDK
+      [ :lessThanOrEqual,    99, "99", false ],
       [ :greaterThanOrEqual, "99", 99, false ],
-      #[ :greaterThanOrEqual, 99, "99", false ], # currently throws exception - would return false in Java SDK
+      [ :greaterThanOrEqual, 99, "99", false ],
       
       # regex
       [ :matches, "hello world", "hello.*rld",     true ],
@@ -509,7 +509,7 @@ describe LaunchDarkly::Evaluation do
       [ :matches, "hello world", "l+",             true ],
       [ :matches, "hello world", "(world|planet)", true ],
       [ :matches, "hello world", "aloha",          false ],
-      #[ :matches, "hello world", "***not a regex", false ]   # currently throws exception - same as Java SDK
+      [ :matches, "hello world", "***not a regex", false ],
 
       # dates
       [ :before, dateStr1, dateStr2,    true ],
