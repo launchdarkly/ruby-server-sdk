@@ -2,6 +2,15 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.7.3] - 2020-04-27
+### Changed:
+- Previously, installing the SDK in an environment that did not have `openssl` would cause a failure at build time. The SDK still requires `openssl` at runtime, but this check has been removed because it caused the `rake` problem mentioned below, and because `openssl` is normally bundled in modern Ruby versions.
+
+### Fixed:
+- The `LDClient` constructor will fail immediately with a descriptive `ArgumentError` if you provide a `nil` SDK key in a configuration that requires an SDK key (that is, a configuration that _will_ require communicating with LaunchDarkly services). Previously, it would still fail, but without a clear error message. You are still allowed to omit the SDK key in an offline configuration. ([#154](https://github.com/launchdarkly/ruby-server-sdk/issues/154))
+- Removed a hidden dependency on `rake` which could cause your build to fail if you had a dependency on this SDK and you did not have `rake` installed. ([#155](https://github.com/launchdarkly/ruby-server-sdk/issues/155))
+- Previously a clause in a feature flag rule that used a string operator (such as &#34;starts with&#34;) or a numeric operator (such as &#34;greater than&#34;) could cause evaluation of the flag to completely fail and return a default value if the value on the right-hand side of the expression did not have the right data type-- for instance, &#34;greater than&#34; with a string value. The LaunchDarkly dashboard does not allow creation of such a rule, but it might be possible to do so via the REST API; the correct behavior of the SDK is to simply treat the expression as a non-match.
+
 ## [5.7.2] - 2020-03-27
 ### Fixed:
 - Fixed a bug in the 5.7.0 and 5.7.1 releases that caused analytics events not to be sent unless diagnostic events were explicitly disabled. This also caused an error to be logged: `undefined method started?`.
