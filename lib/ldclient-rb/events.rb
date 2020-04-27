@@ -91,6 +91,7 @@ module LaunchDarkly
   # @private
   class EventProcessor
     def initialize(sdk_key, config, client = nil, diagnostic_accumulator = nil, test_properties = nil)
+      raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?  # see LDClient constructor comment on sdk_key
       @logger = config.logger
       @inbox = SizedQueue.new(config.capacity < 100 ? 100 : config.capacity)
       @flush_task = Concurrent::TimerTask.new(execution_interval: config.flush_interval) do
