@@ -33,6 +33,16 @@ module LaunchDarkly
     # @return [LDClient] The LaunchDarkly client instance
     #
     def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
+      # Note that sdk_key is normally a required parameter, and a nil value would cause the SDK to
+      # fail in most configurations. However, there are some configurations where it would be OK
+      # (offline = true, *or* we are using LDD mode or the file data source and events are disabled
+      # so we're not connecting to any LD services) so rather than try to check for all of those
+      # up front, we will let the constructors for the data source implementations implement this
+      # fail-fast as appropriate, and just check here for the part regarding events.
+      if !config.offline? && config.send_events
+        raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?
+      end
+
       @sdk_key = sdk_key
 
       @event_factory_default = EventFactory.new(false)
@@ -352,6 +362,7 @@ module LaunchDarkly
       if config.offline?
         return NullUpdateProcessor.new
       end
+      raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?  # see LDClient constructor comment on sdk_key
       requestor = Requestor.new(sdk_key, config)
       if config.stream?
         StreamProcessor.new(sdk_key, config, requestor, diagnostic_accumulator)
