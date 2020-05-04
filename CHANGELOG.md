@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.7.4] - 2020-05-04
+### Fixed:
+- Setting a user&#39;s `custom` property explicitly to `nil`, rather than omitting it entirely or setting it to an empty hash, would cause the SDK to log an error and drop the current batch of analytics events. Now, it will be treated the same as an empty hash. ([#147](https://github.com/launchdarkly/ruby-server-sdk/issues/147))
+
 ## [5.7.3] - 2020-04-27
 ### Changed:
 - Previously, installing the SDK in an environment that did not have `openssl` would cause a failure at build time. The SDK still requires `openssl` at runtime, but this check has been removed because it caused the `rake` problem mentioned below, and because `openssl` is normally bundled in modern Ruby versions.
