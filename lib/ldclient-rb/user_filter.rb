@@ -15,8 +15,9 @@ module LaunchDarkly
       user_private_attrs = Set.new((user_props[:privateAttributeNames] || []).map(&:to_sym))
 
       filtered_user_props, removed = filter_values(user_props, user_private_attrs, ALLOWED_TOP_LEVEL_KEYS, IGNORED_TOP_LEVEL_KEYS)
-      if user_props.has_key?(:custom)
-        filtered_user_props[:custom], removed_custom = filter_values(user_props[:custom], user_private_attrs)
+      custom = user_props[:custom]
+      if !custom.nil?
+        filtered_user_props[:custom], removed_custom = filter_values(custom, user_private_attrs)
         removed.merge(removed_custom)
       end
 
