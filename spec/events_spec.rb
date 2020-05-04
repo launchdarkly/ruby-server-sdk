@@ -408,6 +408,17 @@ describe LaunchDarkly::EventProcessor do
     end
   end
 
+  it "treats nil value for custom the same as an empty hash" do
+    with_processor_and_sender(default_config) do |ep, sender|
+      user_with_nil_custom = { key: "userkey", custom: nil }
+      e = { kind: "identify", key: "userkey", user: user_with_nil_custom }
+      ep.add_event(e)
+
+      output = flush_and_get_events(ep, sender)
+      expect(output).to contain_exactly(e)
+    end
+  end
+
   it "does a final flush when shutting down" do
     with_processor_and_sender(default_config) do |ep, sender|
       e = { kind: "identify", key: user[:key], user: user }
