@@ -33,6 +33,7 @@ module LaunchDarkly
             @pool = opts[:pool] || ConnectionPool.new(size: max_connections) do
               ::Redis.new(@redis_opts)
             end
+            @pool_owned = !opts[:pool]
             @prefix = opts[:prefix] || LaunchDarkly::Integrations::Redis::default_prefix
             @logger = opts[:logger] || Config.default_logger
             @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
@@ -117,6 +118,8 @@ module LaunchDarkly
           end
 
           def stop
+            return unless @pool_owned
+
             if @stopped.make_true
               @pool.shutdown { |redis| redis.close }
             end

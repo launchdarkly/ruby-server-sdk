@@ -1,3 +1,4 @@
+require "connection_pool"
 require "feature_store_spec_base"
 require "json"
 require "redis"
@@ -27,11 +28,11 @@ end
 
 describe LaunchDarkly::RedisFeatureStore do
   subject { LaunchDarkly::RedisFeatureStore }
-  
+
   break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
 
   # These tests will all fail if there isn't a Redis instance running on the default port.
-  
+
   context "real Redis with local cache" do
     include_examples "feature_store", method(:create_redis_store), method(:clear_all_data)
   end
@@ -59,7 +60,7 @@ describe LaunchDarkly::RedisFeatureStore do
     flag = { key: "foo", version: 1 }
     test_hook = make_concurrent_modifier_test_hook(other_client, flag, 2, 4)
     store = create_redis_store({ test_hook: test_hook })
-    
+
     begin
       store.init(LaunchDarkly::FEATURES => { flag[:key] => flag })
 
@@ -77,7 +78,7 @@ describe LaunchDarkly::RedisFeatureStore do
     flag = { key: "foo", version: 1 }
     test_hook = make_concurrent_modifier_test_hook(other_client, flag, 3, 3)
     store = create_redis_store({ test_hook: test_hook })
-    
+
     begin
       store.init(LaunchDarkly::FEATURES => { flag[:key] => flag })
 
@@ -87,6 +88,20 @@ describe LaunchDarkly::RedisFeatureStore do
       expect(result[:version]).to eq 3
     ensure
       other_client.close
+    end
+  end
+
+  it "doesn't shut down a Redis pool passed in options" do
+    unowned_pool = ConnectionPool.new(size: 1, timeout: 1) { Redis.new({ url: "redis://localhost:6379" }) }
+    store = create_redis_store({ pool: unowned_pool })
+
+    begin
+      store.init(LaunchDarkly::FEATURES => { })
+      store.stop
+
+      expect { unowned_pool.with {} }.not_to raise_error(ConnectionPool::PoolShuttingDownError)
+    ensure
+      unowned_pool.shutdown { |conn| conn.close }
     end
   end
 end
