@@ -91,9 +91,23 @@ describe LaunchDarkly::RedisFeatureStore do
     end
   end
 
-  it "doesn't shut down a Redis pool passed in options" do
+  it "shuts down a custom Redis pool by default" do
     unowned_pool = ConnectionPool.new(size: 1, timeout: 1) { Redis.new({ url: "redis://localhost:6379" }) }
     store = create_redis_store({ pool: unowned_pool })
+
+    begin
+      store.init(LaunchDarkly::FEATURES => { })
+      store.stop
+
+      expect { unowned_pool.with {} }.to raise_error(ConnectionPool::PoolShuttingDownError)
+    ensure
+      unowned_pool.shutdown { |conn| conn.close }
+    end
+  end
+
+  it "doesn't shut down a custom Redis pool if pool_shutdown_on_close = false" do
+    unowned_pool = ConnectionPool.new(size: 1, timeout: 1) { Redis.new({ url: "redis://localhost:6379" }) }
+    store = create_redis_store({ pool: unowned_pool, pool_shutdown_on_close: false })
 
     begin
       store.init(LaunchDarkly::FEATURES => { })
