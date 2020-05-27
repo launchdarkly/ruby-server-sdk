@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.8.0] - 2020-05-27
+### Added:
+- In `LaunchDarkly::Integrations::Redis::new_feature_store`, if you pass in an externally created `pool`, you can now set the new option `pool_shutdown_on_close` to `false` to indicate that the SDK should _not_ shut down this pool if the SDK is shut down. The default behavior, as before, is that it will be shut down. (Thanks, [jacobthemyth](https://github.com/launchdarkly/ruby-server-sdk/pull/158)!)
+
 ## [5.7.4] - 2020-05-04
 ### Fixed:
 - Setting a user&#39;s `custom` property explicitly to `nil`, rather than omitting it entirely or setting it to an empty hash, would cause the SDK to log an error and drop the current batch of analytics events. Now, it will be treated the same as an empty hash. ([#147](https://github.com/launchdarkly/ruby-server-sdk/issues/147))
