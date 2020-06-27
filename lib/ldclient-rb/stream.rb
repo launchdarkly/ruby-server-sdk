@@ -10,10 +10,6 @@ module LaunchDarkly
   # @private
   DELETE = :delete
   # @private
-  INDIRECT_PUT = :'indirect/put'
-  # @private
-  INDIRECT_PATCH = :'indirect/patch'
-  # @private
   READ_TIMEOUT_SECONDS = 300  # 5 minutes; the stream should send a ping every 3 minutes
 
   # @private
@@ -24,11 +20,10 @@ module LaunchDarkly
 
   # @private
   class StreamProcessor
-    def initialize(sdk_key, config, requestor, diagnostic_accumulator = nil)
+    def initialize(sdk_key, config, diagnostic_accumulator = nil)
       @sdk_key = sdk_key
       @config = config
       @feature_store = config.feature_store
-      @requestor = requestor
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
       @stopped = Concurrent::AtomicBoolean.new(false)
@@ -110,24 +105,6 @@ module LaunchDarkly
           if key
             @feature_store.delete(kind, key, data[:version])
             break
-          end
-        end
-      elsif method == INDIRECT_PUT
-        all_data = @requestor.request_all_data
-        @feature_store.init({
-          FEATURES => all_data[:flags],
-          SEGMENTS => all_data[:segments]
-        })
-        @initialized.make_true
-        @config.logger.info { "[LDClient] Stream initialized (via indirect message)" }
-      elsif method == INDIRECT_PATCH
-        key = key_for_path(FEATURES, message.data)
-        if key
-          @feature_store.upsert(FEATURES, @requestor.request_flag(key))
-        else
-          key = key_for_path(SEGMENTS, message.data)
-          if key
-            @feature_store.upsert(SEGMENTS, @requestor.request_segment(key))
           end
         end
       else

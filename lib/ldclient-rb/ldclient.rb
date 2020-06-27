@@ -363,12 +363,12 @@ module LaunchDarkly
         return NullUpdateProcessor.new
       end
       raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?  # see LDClient constructor comment on sdk_key
-      requestor = Requestor.new(sdk_key, config)
       if config.stream?
-        StreamProcessor.new(sdk_key, config, requestor, diagnostic_accumulator)
+        StreamProcessor.new(sdk_key, config, diagnostic_accumulator)
       else
         config.logger.info { "Disabling streaming API" }
         config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
+        requestor = Requestor.new(sdk_key, config)
         PollingProcessor.new(config, requestor)
       end
     end
