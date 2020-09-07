@@ -115,7 +115,11 @@ module LaunchDarkly
           end
 
           def initialized_internal?
-            with_connection { |redis| redis.exists(inited_key) }
+            if Gem::Version.new(::Redis::VERSION) >= Gem::Version.new('4.2.0')
+              with_connection { |redis| redis.exists?(inited_key) }
+            else
+              with_connection { |redis| redis.exists(inited_key) }
+            end
           end
 
           def stop
