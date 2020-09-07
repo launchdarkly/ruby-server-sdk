@@ -115,7 +115,7 @@ module LaunchDarkly
           end
 
           def initialized_internal?
-            with_connection { |redis| redis.exists(inited_key) }
+            with_connection { |redis| redis.exists?(inited_key) }
           end
 
           def stop
