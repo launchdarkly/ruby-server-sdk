@@ -240,7 +240,7 @@ module LaunchDarkly
     #
     def identify(user)
       if !user || user[:key].nil?
-        @config.logger.warn("Identify called with nil user or nil user key!")
+        @config.logger.warn("[LDClient] Identify called with nil user or nil user key!")
         return
       end
       sanitize_user(user)
@@ -271,7 +271,7 @@ module LaunchDarkly
     #
     def track(event_name, user, data = nil, metric_value = nil)
       if !user || user[:key].nil?
-        @config.logger.warn("Track called with nil user or nil user key!")
+        @config.logger.warn("[LDClient] Track called with nil user or nil user key!")
         return
       end
       sanitize_user(user)
@@ -367,8 +367,8 @@ module LaunchDarkly
       if config.stream?
         StreamProcessor.new(sdk_key, config, requestor, diagnostic_accumulator)
       else
-        config.logger.info { "Disabling streaming API" }
-        config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
+        config.logger.info { "[LDClient] Disabling streaming API" }
+        config.logger.warn { "[LDClient] You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
         PollingProcessor.new(config, requestor)
       end
     end
