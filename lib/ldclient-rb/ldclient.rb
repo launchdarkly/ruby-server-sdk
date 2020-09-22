@@ -393,7 +393,7 @@ module LaunchDarkly
       feature = @store.get(FEATURES, key)
 
       if feature.nil?
-        @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
+        @config.logger.warn { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
         detail = error_result('FLAG_NOT_FOUND', default)
         @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
         return detail
