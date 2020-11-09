@@ -193,38 +193,4 @@ describe LaunchDarkly::Requestor do
       end
     end
   end
-
-  describe "request_flag" do
-    it "uses expected URI and headers" do
-      with_server do |server|
-        with_requestor(server.base_uri.to_s) do |requestor|
-          server.setup_ok_response("/", "{}")
-          requestor.request_flag("key")
-          expect(server.requests.count).to eq 1
-          expect(server.requests[0].unparsed_uri).to eq "/sdk/latest-flags/key"
-          expect(server.requests[0].header).to include({
-            "authorization" => [ $sdk_key ],
-            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ]
-          })
-        end
-      end
-    end
-  end
-
-  describe "request_segment" do
-    it "uses expected URI and headers" do
-      with_server do |server|
-        with_requestor(server.base_uri.to_s) do |requestor|
-          server.setup_ok_response("/", "{}")
-          requestor.request_segment("key")
-          expect(server.requests.count).to eq 1
-          expect(server.requests[0].unparsed_uri).to eq "/sdk/latest-segments/key"
-          expect(server.requests[0].header).to include({
-            "authorization" => [ $sdk_key ],
-            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ]
-          })
-        end
-      end
-    end
-  end
 end

@@ -26,14 +26,6 @@ module LaunchDarkly
       @cache = @config.cache_store
     end
 
-    def request_flag(key)
-      make_request("/sdk/latest-flags/" + key)
-    end
-
-    def request_segment(key)
-      make_request("/sdk/latest-segments/" + key)
-    end
-
     def request_all_data()
       make_request("/sdk/latest-all")
     end
