@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.8.1] - 2020-11-09
+### Fixed:
+- Updated `json` gem to patch [CVE-2020-10663](https://nvd.nist.gov/vuln/detail/CVE-2020-10663).
+
+
 ## [5.8.0] - 2020-05-27
 ### Added:
 - In `LaunchDarkly::Integrations::Redis::new_feature_store`, if you pass in an externally created `pool`, you can now set the new option `pool_shutdown_on_close` to `false` to indicate that the SDK should _not_ shut down this pool if the SDK is shut down. The default behavior, as before, is that it will be shut down. (Thanks, [jacobthemyth](https://github.com/launchdarkly/ruby-server-sdk/pull/158)!)
