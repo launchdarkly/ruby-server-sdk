@@ -1,6 +1,3 @@
-require "codeclimate-test-reporter"
-CodeClimate::TestReporter.start
-
 require "ldclient-rb"
 
 $null_log = ::Logger.new($stdout)
