@@ -35,6 +35,7 @@ module LaunchDarkly
     # @option opts [Integer] :expiration  expiration time for the in-memory cache, in seconds; 0 for no local caching
     # @option opts [Integer] :capacity  maximum number of feature flags (or related objects) to cache locally
     # @option opts [Object] :pool  custom connection pool, if desired
+    # @option opts [Boolean] :pool_shutdown_on_close whether calling `close` should shutdown the custom connection pool.
     #
     def initialize(opts = {})
       core = LaunchDarkly::Impl::Integrations::Redis::RedisDataStoreCore.new(opts)

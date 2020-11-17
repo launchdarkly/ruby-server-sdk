@@ -28,14 +28,6 @@ module LaunchDarkly
       @cache = @config.cache_store
     end
 
-    def request_flag(key)
-      request_single_item(FEATURES, "/sdk/latest-flags/" + key)
-    end
-
-    def request_segment(key)
-      request_single_item(SEGMENTS, "/sdk/latest-segments/" + key)
-    end
-
     def request_all_data()
       all_data = JSON.parse(make_request("/sdk/latest-all"), symbolize_names: true)
       Impl::Model.make_all_store_data(all_data)
@@ -58,8 +50,7 @@ module LaunchDarkly
       @client.start if !@client.started?
       uri = URI(@config.base_uri + path)
       req = Net::HTTP::Get.new(uri)
-      req["Authorization"] = @sdk_key
-      req["User-Agent"] = "RubyClient/" + LaunchDarkly::VERSION
+      Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| req[k] = v }
       req["Connection"] = "keep-alive"
       cached = @cache.read(uri)
       if !cached.nil?

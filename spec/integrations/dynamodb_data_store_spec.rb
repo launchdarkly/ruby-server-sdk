@@ -6,8 +6,6 @@ require "spec_helper"
 $table_name = 'LD_DYNAMODB_TEST_TABLE'
 $endpoint = 'http://localhost:8000'
 $my_prefix = 'testprefix'
-$null_log = ::Logger.new($stdout)
-$null_log.level = ::Logger::FATAL
 
 $dynamodb_opts = {
   credentials: Aws::Credentials.new("key", "secret"),

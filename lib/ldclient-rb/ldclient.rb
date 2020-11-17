@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/event_factory"
 require "ldclient-rb/impl/store_client_wrapper"
@@ -32,6 +33,16 @@ module LaunchDarkly
     # @return [LDClient] The LaunchDarkly client instance
     #
     def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
+      # Note that sdk_key is normally a required parameter, and a nil value would cause the SDK to
+      # fail in most configurations. However, there are some configurations where it would be OK
+      # (offline = true, *or* we are using LDD mode or the file data source and events are disabled
+      # so we're not connecting to any LD services) so rather than try to check for all of those
+      # up front, we will let the constructors for the data source implementations implement this
+      # fail-fast as appropriate, and just check here for the part regarding events.
+      if !config.offline? && config.send_events
+        raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?
+      end
+
       @sdk_key = sdk_key
 
       @event_factory_default = EventFactory.new(false)
@@ -50,10 +61,16 @@ module LaunchDarkly
       get_segment = lambda { |key| @store.get(SEGMENTS, key) }
       @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, @config.logger)
 
+      if !@config.offline? && @config.send_events && !@config.diagnostic_opt_out?
+        diagnostic_accumulator = Impl::DiagnosticAccumulator.new(Impl::DiagnosticAccumulator.create_diagnostic_id(sdk_key))
+      else
+        diagnostic_accumulator = nil
+      end
+
       if @config.offline? || !@config.send_events
         @event_processor = NullEventProcessor.new
       else
-        @event_processor = EventProcessor.new(sdk_key, config)
+        @event_processor = EventProcessor.new(sdk_key, config, nil, diagnostic_accumulator)
       end
 
       if @config.use_ldd?
@@ -63,7 +80,13 @@ module LaunchDarkly
 
       data_source_or_factory = @config.data_source || self.method(:create_default_data_source)
       if data_source_or_factory.respond_to? :call
-        @data_source = data_source_or_factory.call(sdk_key, @config)
+        # Currently, data source factories take two parameters unless they need to be aware of diagnostic_accumulator, in
+        # which case they take three parameters. This will be changed in the future to use a less awkware mechanism.
+        if data_source_or_factory.arity == 3
+          @data_source = data_source_or_factory.call(sdk_key, @config, diagnostic_accumulator)
+        else
+          @data_source = data_source_or_factory.call(sdk_key, @config)
+        end
       else
         @data_source = data_source_or_factory
       end
@@ -340,16 +363,17 @@ module LaunchDarkly
 
     private
 
-    def create_default_data_source(sdk_key, config)
+    def create_default_data_source(sdk_key, config, diagnostic_accumulator)
       if config.offline?
         return NullDataSource.new
       end
-      requestor = Requestor.new(sdk_key, config)
+      raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?  # see LDClient constructor comment on sdk_key
       if config.stream?
-        StreamProcessor.new(sdk_key, config, requestor)
+        StreamProcessor.new(sdk_key, config, diagnostic_accumulator)
       else
         config.logger.info { "Disabling streaming API" }
         config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
+        requestor = Requestor.new(sdk_key, config)
         PollingProcessor.new(config, requestor)
       end
     end

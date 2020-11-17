@@ -4,10 +4,13 @@ require "spec_helper"
 $sdk_key = "secret"
 
 describe LaunchDarkly::Requestor do
-  def with_requestor(base_uri)
-    r = LaunchDarkly::Requestor.new($sdk_key, LaunchDarkly::Config.new(base_uri: base_uri))
-    yield r
-    r.stop
+  def with_requestor(base_uri, opts = {})
+    r = LaunchDarkly::Requestor.new($sdk_key, LaunchDarkly::Config.new({ base_uri: base_uri }.merge(opts)))
+    begin
+      yield r
+    ensure
+      r.stop
+    end
   end
 
   describe "request_all_flags" do
@@ -56,6 +59,19 @@ describe LaunchDarkly::Requestor do
       end
     end
 
+    it "sends wrapper header if configured" do
+      with_server do |server|
+        with_requestor(server.base_uri.to_s, { wrapper_name: 'MyWrapper', wrapper_version: '1.0' }) do |requestor|
+          server.setup_ok_response("/", "{}")
+          requestor.request_all_data()
+          expect(server.requests.count).to eq 1
+          expect(server.requests[0].header).to include({
+            "x-launchdarkly-wrapper" => [ "MyWrapper/1.0" ]
+          })
+        end
+      end
+    end
+    
     it "can reuse cached data" do
       etag = "xyz"
       expected_data = { flags: { x: { key: "x" } } }
@@ -173,40 +189,6 @@ describe LaunchDarkly::Requestor do
           ensure
             ENV["http_proxy"] = nil
           end
-        end
-      end
-    end
-  end
-
-  describe "request_flag" do
-    it "uses expected URI and headers" do
-      with_server do |server|
-        with_requestor(server.base_uri.to_s) do |requestor|
-          server.setup_ok_response("/", "{}")
-          requestor.request_flag("key")
-          expect(server.requests.count).to eq 1
-          expect(server.requests[0].unparsed_uri).to eq "/sdk/latest-flags/key"
-          expect(server.requests[0].header).to include({
-            "authorization" => [ $sdk_key ],
-            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ]
-          })
-        end
-      end
-    end
-  end
-
-  describe "request_segment" do
-    it "uses expected URI and headers" do
-      with_server do |server|
-        with_requestor(server.base_uri.to_s) do |requestor|
-          server.setup_ok_response("/", "{}")
-          requestor.request_segment("key")
-          expect(server.requests.count).to eq 1
-          expect(server.requests[0].unparsed_uri).to eq "/sdk/latest-segments/key"
-          expect(server.requests[0].header).to include({
-            "authorization" => [ $sdk_key ],
-            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ]
-          })
         end
       end
     end

@@ -26,7 +26,14 @@ module LaunchDarkly
         when :contains
           string_op(user_value, clause_value, lambda { |a, b| a.include? b })
         when :matches
-          string_op(user_value, clause_value, lambda { |a, b| !(Regexp.new b).match(a).nil? })
+          string_op(user_value, clause_value, lambda { |a, b|
+            begin
+              re = Regexp.new b
+              !re.match(a).nil?
+            rescue
+              false
+            end
+          })
         when :lessThan
           numeric_op(user_value, clause_value, lambda { |a, b| a < b })
         when :lessThanOrEqual

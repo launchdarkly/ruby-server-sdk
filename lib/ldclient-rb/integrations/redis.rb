@@ -45,6 +45,9 @@ module LaunchDarkly
       # @option opts [Integer] :expiration (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching
       # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
       # @option opts [Object] :pool  custom connection pool, if desired
+      # @option opts [Boolean] :pool_shutdown_on_close whether calling `close` should shutdown the custom connection pool;
+      #   this is true by default, and should be set to false only if you are managing the pool yourself and want its
+      #   lifecycle to be independent of the SDK client
       # @return [LaunchDarkly::Interfaces::DataStore]  a data store object
       #
       def self.new_data_store(opts)

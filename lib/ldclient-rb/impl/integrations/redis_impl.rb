@@ -33,6 +33,8 @@ module LaunchDarkly
             @pool = opts[:pool] || ConnectionPool.new(size: max_connections) do
               ::Redis.new(@redis_opts)
             end
+            # shutdown pool on close unless the client passed a custom pool and specified not to shutdown
+            @pool_shutdown_on_close = (!opts[:pool] || opts.fetch(:pool_shutdown_on_close, true))
             @prefix = opts[:prefix] || LaunchDarkly::Integrations::Redis::default_prefix
             @logger = opts[:logger] || Config.default_logger
             @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
@@ -117,6 +119,7 @@ module LaunchDarkly
 
           def stop
             if @stopped.make_true
+              return unless @pool_shutdown_on_close
               @pool.shutdown { |redis| redis.close }
             end
           end

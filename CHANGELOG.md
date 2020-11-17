@@ -2,6 +2,44 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.8.1] - 2020-11-09
+### Fixed:
+- Updated `json` gem to patch [CVE-2020-10663](https://nvd.nist.gov/vuln/detail/CVE-2020-10663).
+
+
+## [5.8.0] - 2020-05-27
+### Added:
+- In `LaunchDarkly::Integrations::Redis::new_feature_store`, if you pass in an externally created `pool`, you can now set the new option `pool_shutdown_on_close` to `false` to indicate that the SDK should _not_ shut down this pool if the SDK is shut down. The default behavior, as before, is that it will be shut down. (Thanks, [jacobthemyth](https://github.com/launchdarkly/ruby-server-sdk/pull/158)!)
+
+## [5.7.4] - 2020-05-04
+### Fixed:
+- Setting a user&#39;s `custom` property explicitly to `nil`, rather than omitting it entirely or setting it to an empty hash, would cause the SDK to log an error and drop the current batch of analytics events. Now, it will be treated the same as an empty hash. ([#147](https://github.com/launchdarkly/ruby-server-sdk/issues/147))
+
+## [5.7.3] - 2020-04-27
+### Changed:
+- Previously, installing the SDK in an environment that did not have `openssl` would cause a failure at build time. The SDK still requires `openssl` at runtime, but this check has been removed because it caused the `rake` problem mentioned below, and because `openssl` is normally bundled in modern Ruby versions.
+
+### Fixed:
+- The `LDClient` constructor will fail immediately with a descriptive `ArgumentError` if you provide a `nil` SDK key in a configuration that requires an SDK key (that is, a configuration that _will_ require communicating with LaunchDarkly services). Previously, it would still fail, but without a clear error message. You are still allowed to omit the SDK key in an offline configuration. ([#154](https://github.com/launchdarkly/ruby-server-sdk/issues/154))
+- Removed a hidden dependency on `rake` which could cause your build to fail if you had a dependency on this SDK and you did not have `rake` installed. ([#155](https://github.com/launchdarkly/ruby-server-sdk/issues/155))
+- Previously a clause in a feature flag rule that used a string operator (such as &#34;starts with&#34;) or a numeric operator (such as &#34;greater than&#34;) could cause evaluation of the flag to completely fail and return a default value if the value on the right-hand side of the expression did not have the right data type-- for instance, &#34;greater than&#34; with a string value. The LaunchDarkly dashboard does not allow creation of such a rule, but it might be possible to do so via the REST API; the correct behavior of the SDK is to simply treat the expression as a non-match.
+
+## [5.7.2] - 2020-03-27
+### Fixed:
+- Fixed a bug in the 5.7.0 and 5.7.1 releases that caused analytics events not to be sent unless diagnostic events were explicitly disabled. This also caused an error to be logged: `undefined method started?`.
+
+## [5.7.1] - 2020-03-18
+### Fixed:
+- The backoff delay logic for reconnecting after a stream failure was broken so that if a failure occurred after a stream had been active for at least 60 seconds, retries would use _no_ delay, potentially causing a flood of requests and a spike in CPU usage. This bug was introduced in version 5.5.0 of the SDK.
+
+## [5.7.0] - 2020-03-10
+### Added:
+- The SDK now periodically sends diagnostic data to LaunchDarkly, describing the version and configuration of the SDK, the architecture and version of the runtime platform, and performance statistics. No credentials, hostnames, or other identifiable values are included. This behavior can be disabled with `Config.diagnostic_opt_out` or configured with `Config.diagnostic_recording_interval`.
+- New `Config` properties `wrapper_name` and `wrapper_version` allow a library that uses the Ruby SDK to identify itself for usage data if desired.
+
+### Removed:
+- Removed an unused dependency on `rake`.
+
 ## [5.6.2] - 2020-01-15
 ### Fixed:
 - The SDK now specifies a uniquely identifiable request header when sending events to LaunchDarkly to ensure that events are only processed once, even if the SDK sends them two times due to a failed initial attempt.
