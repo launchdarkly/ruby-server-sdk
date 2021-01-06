@@ -1,9 +1,0 @@
---no-private
---markup markdown
---embed-mixins
-lib/*.rb
-lib/**/*.rb
-lib/**/**/*.rb
-lib/**/**/**/*.rb
--
-README.md
