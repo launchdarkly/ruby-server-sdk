@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: LaunchDarkly::LDClient
+  
+    &mdash; LaunchDarkly Ruby SDK
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "LaunchDarkly::LDClient";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (L)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span>
+     &raquo; 
+    <span class="title">LDClient</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: LaunchDarkly::LDClient
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">LaunchDarkly::LDClient</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/ldclient-rb/ldclient.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A client for LaunchDarkly. Client instances are thread-safe. Users
+should create a single client instance for the lifetime of the application.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public deprecated">
+  <span class="summary_signature">
+    
+      <a href="#all_flags-instance_method" title="#all_flags (instance method)">#<strong>all_flags</strong>(user)  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  <span class="deprecated note title">deprecated</span>
+  
+
+  
+    <span class="summary_desc"><strong>Deprecated.</strong> <div class='inline'><p>Please use <span class='object_link'><a href="#all_flags_state-instance_method" title="LaunchDarkly::LDClient#all_flags_state (method)">#all_flags_state</a></span> instead. Current versions of the
+client-side SDK will not generate analytics events correctly if you pass the
+result of <code>all_flags</code>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#all_flags_state-instance_method" title="#all_flags_state (instance method)">#<strong>all_flags_state</strong>(user, options = {})  &#x21d2; FeatureFlagsState </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a <span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span> object that encapsulates the state of all feature flags for a given user, including the flag values and also metadata that can be used on the front end.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#close-instance_method" title="#close (instance method)">#<strong>close</strong>  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Releases all network connections and other resources held by the client, making it no longer usable.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#flush-instance_method" title="#flush (instance method)">#<strong>flush</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Tells the client that all pending analytics events should be delivered as soon as possible.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#identify-instance_method" title="#identify (instance method)">#<strong>identify</strong>(user)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Registers the user.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(sdk_key, config = Config.default, wait_for_sec = 5)  &#x21d2; LDClient </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Creates a new client instance that connects to LaunchDarkly.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialized%3F-instance_method" title="#initialized? (instance method)">#<strong>initialized?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns whether the client has been initialized and is ready to serve feature flag requests.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#secure_mode_hash-instance_method" title="#secure_mode_hash (instance method)">#<strong>secure_mode_hash</strong>(user)  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Creates a hash string that can be used by the JavaScript SDK to identify a user.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public deprecated">
+  <span class="summary_signature">
+    
+      <a href="#toggle%3F-instance_method" title="#toggle? (instance method)">#<strong>toggle?</strong>(key, user, default = false)  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  <span class="deprecated note title">deprecated</span>
+  
+
+  
+    <span class="summary_desc"><strong>Deprecated.</strong> <div class='inline'><p>Use <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span> instead.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#track-instance_method" title="#track (instance method)">#<strong>track</strong>(event_name, user, data = nil, metric_value = nil)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Tracks that a user performed an event.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#variation-instance_method" title="#variation (instance method)">#<strong>variation</strong>(key, user, default)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Determines the variation of a feature flag to present to a user.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#variation_detail-instance_method" title="#variation_detail (instance method)">#<strong>variation_detail</strong>(key, user, default)  &#x21d2; EvaluationDetail </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Determines the variation of a feature flag for a user, like <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span>, but also provides additional information about how this value was calculated.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(sdk_key, config = Config.default, wait_for_sec = 5)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::LDClient (class)">LDClient</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Creates a new client instance that connects to LaunchDarkly. A custom
+configuration parameter can also supplied to specify advanced options,
+but for most use cases, the default configuration is appropriate.</p>
+
+<p>The client will immediately attempt to connect to LaunchDarkly and retrieve
+your feature flag data. If it cannot successfully do so within the time limit
+specified by <code>wait_for_sec</code>, the constructor will return a client that is in
+an uninitialized state. See <span class='object_link'><a href="#initialized%3F-instance_method" title="LaunchDarkly::LDClient#initialized? (method)">#initialized?</a></span> for more details.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>sdk_key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the SDK key for your LaunchDarkly account</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>config</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>Config.default</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>an optional client configuration object</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>wait_for_sec</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>5</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>maximum time (in seconds) to wait for initialization</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 35</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default'><span class='object_link'><a href="Config.html#default-class_method" title="LaunchDarkly::Config.default (method)">default</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_wait_for_sec'>wait_for_sec</span> <span class='op'>=</span> <span class='int'>5</span><span class='rparen'>)</span>
+  <span class='comment'># Note that sdk_key is normally a required parameter, and a nil value would cause the SDK to
+</span>  <span class='comment'># fail in most configurations. However, there are some configurations where it would be OK
+</span>  <span class='comment'># (offline = true, *or* we are using LDD mode or the file data source and events are disabled
+</span>  <span class='comment'># so we&#39;re not connecting to any LD services) so rather than try to check for all of those
+</span>  <span class='comment'># up front, we will let the constructors for the data source implementations implement this
+</span>  <span class='comment'># fail-fast as appropriate, and just check here for the part regarding events.
+</span>  <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_send_events'>send_events</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sdk_key must not be nil</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>end</span>
+
+  <span class='ivar'>@sdk_key</span> <span class='op'>=</span> <span class='id identifier rubyid_sdk_key'>sdk_key</span>
+
+  <span class='ivar'>@event_factory_default</span> <span class='op'>=</span> <span class='const'>EventFactory</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='ivar'>@event_factory_with_reasons</span> <span class='op'>=</span> <span class='const'>EventFactory</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span>
+
+  <span class='comment'># We need to wrap the feature store object with a FeatureStoreClientWrapper in order to add
+</span>  <span class='comment'># some necessary logic around updates. Unfortunately, we have code elsewhere that accesses
+</span>  <span class='comment'># the feature store through the Config object, so we need to make a new Config that uses
+</span>  <span class='comment'># the wrapped store.
+</span>  <span class='ivar'>@store</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>FeatureStoreClientWrapper</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_feature_store'>feature_store</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_updated_config'>updated_config</span> <span class='op'>=</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_clone'>clone</span>
+  <span class='id identifier rubyid_updated_config'>updated_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@feature_store</span><span class='comma'>,</span> <span class='ivar'>@store</span><span class='rparen'>)</span>
+  <span class='ivar'>@config</span> <span class='op'>=</span> <span class='id identifier rubyid_updated_config'>updated_config</span>
+
+  <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_send_events'>send_events</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_diagnostic_opt_out?'>diagnostic_opt_out?</span>
+    <span class='id identifier rubyid_diagnostic_accumulator'>diagnostic_accumulator</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>DiagnosticAccumulator</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>DiagnosticAccumulator</span><span class='period'>.</span><span class='id identifier rubyid_create_diagnostic_id'>create_diagnostic_id</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_diagnostic_accumulator'>diagnostic_accumulator</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span> <span class='op'>||</span> <span class='op'>!</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_send_events'>send_events</span>
+    <span class='ivar'>@event_processor</span> <span class='op'>=</span> <span class='const'>NullEventProcessor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='kw'>else</span>
+    <span class='ivar'>@event_processor</span> <span class='op'>=</span> <span class='const'>EventProcessor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_diagnostic_accumulator'>diagnostic_accumulator</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_use_ldd?'>use_ldd?</span>
+    <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] Started LaunchDarkly Client in LDD mode</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+    <span class='kw'>return</span>  <span class='comment'># requestor and update processor are not used in this mode
+</span>  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_data_source_or_factory'>data_source_or_factory</span> <span class='op'>=</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_data_source'>data_source</span> <span class='op'>||</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_method'>method</span><span class='lparen'>(</span><span class='symbol'>:create_default_data_source</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_data_source_or_factory'>data_source_or_factory</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span> <span class='symbol'>:call</span>
+    <span class='comment'># Currently, data source factories take two parameters unless they need to be aware of diagnostic_accumulator, in
+</span>    <span class='comment'># which case they take three parameters. This will be changed in the future to use a less awkware mechanism.
+</span>    <span class='kw'>if</span> <span class='id identifier rubyid_data_source_or_factory'>data_source_or_factory</span><span class='period'>.</span><span class='id identifier rubyid_arity'>arity</span> <span class='op'>==</span> <span class='int'>3</span>
+      <span class='ivar'>@data_source</span> <span class='op'>=</span> <span class='id identifier rubyid_data_source_or_factory'>data_source_or_factory</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='ivar'>@config</span><span class='comma'>,</span> <span class='id identifier rubyid_diagnostic_accumulator'>diagnostic_accumulator</span><span class='rparen'>)</span>
+    <span class='kw'>else</span>
+      <span class='ivar'>@data_source</span> <span class='op'>=</span> <span class='id identifier rubyid_data_source_or_factory'>data_source_or_factory</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='ivar'>@config</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>else</span>
+    <span class='ivar'>@data_source</span> <span class='op'>=</span> <span class='id identifier rubyid_data_source_or_factory'>data_source_or_factory</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_ready'>ready</span> <span class='op'>=</span> <span class='ivar'>@data_source</span><span class='period'>.</span><span class='id identifier rubyid_start'>start</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_wait_for_sec'>wait_for_sec</span> <span class='op'>&gt;</span> <span class='int'>0</span>
+    <span class='id identifier rubyid_ok'>ok</span> <span class='op'>=</span> <span class='id identifier rubyid_ready'>ready</span><span class='period'>.</span><span class='id identifier rubyid_wait'>wait</span><span class='lparen'>(</span><span class='id identifier rubyid_wait_for_sec'>wait_for_sec</span><span class='rparen'>)</span>
+    <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_ok'>ok</span>
+      <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] Timeout encountered waiting for LaunchDarkly client initialization</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+    <span class='kw'>elsif</span> <span class='op'>!</span><span class='ivar'>@data_source</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
+      <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] LaunchDarkly client initialization failed</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="all_flags-instance_method">
+  
+    #<strong>all_flags</strong>(user)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <div class="note deprecated"><strong>Deprecated.</strong> <div class='inline'><p>Please use <span class='object_link'><a href="#all_flags_state-instance_method" title="LaunchDarkly::LDClient#all_flags_state (method)">#all_flags_state</a></span> instead. Current versions of the
+client-side SDK will not generate analytics events correctly if you pass the
+result of <code>all_flags</code>.</p>
+</div></div>
+<p>Returns all feature flag values for the given user.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>user</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The end user requesting the feature flags</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a hash of feature flag keys to values</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+291
+292
+293</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 291</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_all_flags'>all_flags</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_all_flags_state'>all_flags_state</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_values_map'>values_map</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="all_flags_state-instance_method">
+  
+    #<strong>all_flags_state</strong>(user, options = {})  &#x21d2; <tt><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a <span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span> object that encapsulates the state of all feature flags for a given user,
+including the flag values and also metadata that can be used on the front end. This method does not
+send analytics events back to LaunchDarkly.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>user</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The end user requesting the feature flags</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Optional parameters to control how the state is generated</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+  
+    
+    
+    
+    
+    <p class="tag_title">Options Hash (<tt>options</tt>):</p>
+    <ul class="option">
+      
+        <li>
+          <span class="name">:client_side_only</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>True if only flags marked for use with the
+client-side SDK should be included in the state. By default, all flags are included.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:with_reasons</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>True if evaluation reasons should be included
+in the state (see <span class='object_link'><a href="#variation_detail-instance_method" title="LaunchDarkly::LDClient#variation_detail (method)">#variation_detail</a></span>). By default, they are not included.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:details_only_for_tracked_flags</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>True if any flag metadata that is
+normally only used for event generation - such as flag versions and evaluation reasons - should be
+omitted for any flag that does not have event tracking or debugging turned on. This reduces the size
+of the JSON data if you are passing the flag state to the front end.</p>
+</div>
+          
+        </li>
+      
+    </ul>
+  
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a <span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span> object which can be serialized to JSON</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 312</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_all_flags_state'>all_flags_state</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span>
+
+  <span class='kw'>unless</span> <span class='id identifier rubyid_user'>user</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_user'>user</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] User and user key must be specified in all_flags_state</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+    <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>begin</span>
+    <span class='id identifier rubyid_features'>features</span> <span class='op'>=</span> <span class='ivar'>@store</span><span class='period'>.</span><span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='const'>FEATURES</span><span class='rparen'>)</span>
+  <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_exn'>exn</span>
+    <span class='const'>Util</span><span class='period'>.</span><span class='id identifier rubyid_log_exception'>log_exception</span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Unable to read flags for all_flags_state</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_exn'>exn</span><span class='rparen'>)</span>
+    <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_client_only'>client_only</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:client_side_only</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='kw'>false</span>
+  <span class='id identifier rubyid_with_reasons'>with_reasons</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:with_reasons</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='kw'>false</span>
+  <span class='id identifier rubyid_details_only_if_tracked'>details_only_if_tracked</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:details_only_for_tracked_flags</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='kw'>false</span>
+  <span class='id identifier rubyid_features'>features</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_f'>f</span><span class='op'>|</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_client_only'>client_only</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_f'>f</span><span class='lbracket'>[</span><span class='symbol'>:clientSide</span><span class='rbracket'>]</span>
+      <span class='kw'>next</span>
+    <span class='kw'>end</span>
+    <span class='kw'>begin</span>
+      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_evaluate'>evaluate</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='ivar'>@store</span><span class='comma'>,</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='ivar'>@event_factory_default</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_state'>state</span><span class='period'>.</span><span class='id identifier rubyid_add_flag'>add_flag</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_variation_index'>variation_index</span><span class='comma'>,</span> <span class='id identifier rubyid_with_reasons'>with_reasons</span> <span class='op'>?</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_reason'>reason</span> <span class='op'>:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+        <span class='id identifier rubyid_details_only_if_tracked'>details_only_if_tracked</span><span class='rparen'>)</span>
+    <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_exn'>exn</span>
+      <span class='const'>Util</span><span class='period'>.</span><span class='id identifier rubyid_log_exception'>log_exception</span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Error evaluating flag \&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_k'>k</span><span class='embexpr_end'>}</span><span class='tstring_content'>\&quot; in all_flags_state</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_exn'>exn</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_state'>state</span><span class='period'>.</span><span class='id identifier rubyid_add_flag'>add_flag</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_with_reasons'>with_reasons</span> <span class='op'>?</span> <span class='lbrace'>{</span> <span class='label'>kind:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>ERROR</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>errorKind:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>EXCEPTION</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span> <span class='op'>:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_details_only_if_tracked'>details_only_if_tracked</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_state'>state</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="close-instance_method">
+  
+    #<strong>close</strong>  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Releases all network connections and other resources held by the client, making it no longer usable.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+352
+353
+354
+355
+356
+357</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 352</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
+  <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] Closing LaunchDarkly client...</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+  <span class='ivar'>@data_source</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span>
+  <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span>
+  <span class='ivar'>@store</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="flush-instance_method">
+  
+    #<strong>flush</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Tells the client that all pending analytics events should be delivered as soon as possible.</p>
+
+<p>When the LaunchDarkly client generates analytics events (from <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span>, <span class='object_link'><a href="#variation_detail-instance_method" title="LaunchDarkly::LDClient#variation_detail (method)">#variation_detail</a></span>,
+<span class='object_link'><a href="#identify-instance_method" title="LaunchDarkly::LDClient#identify (method)">#identify</a></span>, or <span class='object_link'><a href="#track-instance_method" title="LaunchDarkly::LDClient#track (method)">#track</a></span>), they are queued on a worker thread. The event thread normally
+sends all queued events to LaunchDarkly at regular intervals, controlled by the
+<span class='object_link'><a href="Config.html#flush_interval-instance_method" title="LaunchDarkly::Config#flush_interval (method)">Config#flush_interval</a></span> option. Calling <code>flush</code> triggers a send without waiting for the
+next interval.</p>
+
+<p>Flushing is asynchronous, so this method will return before it is complete. However, if you
+call <span class='object_link'><a href="#close-instance_method" title="LaunchDarkly::LDClient#close (method)">#close</a></span>, events are guaranteed to be sent before that method returns.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+113
+114
+115</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 113</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_flush'>flush</span>
+  <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_flush'>flush</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="identify-instance_method">
+  
+    #<strong>identify</strong>(user)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Registers the user. This method simply creates an analytics event containing the user
+properties, so that LaunchDarkly will know about that user if it does not already.</p>
+
+<p>Calling <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span> or <span class='object_link'><a href="#variation_detail-instance_method" title="LaunchDarkly::LDClient#variation_detail (method)">#variation_detail</a></span> also sends the user information to
+LaunchDarkly (if events are enabled), so you only need to use <span class='object_link'><a href="#identify-instance_method" title="LaunchDarkly::LDClient#identify (method)">#identify</a></span> if you
+want to identify the user without evaluating a flag.</p>
+
+<p>Note that event delivery is asynchronous, so the event may not actually be sent
+until later; see <span class='object_link'><a href="#flush-instance_method" title="LaunchDarkly::LDClient#flush (method)">#flush</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>user</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The user to register; this can have all the same user properties
+described in <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span></p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+241
+242
+243
+244
+245
+246
+247
+248</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 241</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_identify'>identify</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_user'>user</span> <span class='op'>||</span> <span class='id identifier rubyid_user'>user</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Identify called with nil user or nil user key!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='kw'>return</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_sanitize_user'>sanitize_user</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
+  <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_add_event'>add_event</span><span class='lparen'>(</span><span class='ivar'>@event_factory_default</span><span class='period'>.</span><span class='id identifier rubyid_new_identify_event'>new_identify_event</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="initialized?-instance_method">
+  
+    #<strong>initialized?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns whether the client has been initialized and is ready to serve feature flag requests.</p>
+
+<p>If this returns false, it means that the client did not succeed in connecting to
+LaunchDarkly within the time limit that you specified in the constructor. It could
+still succeed in connecting at a later time (on another thread), or it could have
+given up permanently (for instance, if your SDK key is invalid). In the meantime,
+any call to <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span> or <span class='object_link'><a href="#variation_detail-instance_method" title="LaunchDarkly::LDClient#variation_detail (method)">#variation_detail</a></span> will behave as follows:</p>
+
+<ol>
+<li><p>It will check whether the feature store already contains data (that is, you
+are using a database-backed store and it was populated by a previous run of this
+application). If so, it will use the last known feature flag data.</p></li>
+<li><p>Failing that, it will return the value that you specified for the <code>default</code>
+parameter of <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span> or <span class='object_link'><a href="#variation_detail-instance_method" title="LaunchDarkly::LDClient#variation_detail (method)">#variation_detail</a></span>.</p></li>
+</ol>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true if the client has been initialized</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+158
+159
+160</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 158</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
+  <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span> <span class='op'>||</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_use_ldd?'>use_ldd?</span> <span class='op'>||</span> <span class='ivar'>@data_source</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="secure_mode_hash-instance_method">
+  
+    #<strong>secure_mode_hash</strong>(user)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Creates a hash string that can be used by the JavaScript SDK to identify a user.
+For more information, see <a href="https://docs.launchdarkly.com/docs/js-sdk-reference#section-secure-mode">Secure mode</a>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>user</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the user properties</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a hash string</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+136
+137
+138</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 136</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_secure_mode_hash'>secure_mode_hash</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
+  <span class='const'>OpenSSL</span><span class='op'>::</span><span class='const'>HMAC</span><span class='period'>.</span><span class='id identifier rubyid_hexdigest'>hexdigest</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sha256</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='ivar'>@sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="toggle?-instance_method">
+  
+    #<strong>toggle?</strong>(key, user, default = false)  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <div class="note deprecated"><strong>Deprecated.</strong> <div class='inline'><p>Use <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span> instead.</p>
+</div></div>
+<p>Returns the flag value.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the feature flag key</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the user properties</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>default</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>(false) the value to use if the flag cannot be evaluated</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag value</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+124
+125
+126
+127</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 124</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_toggle?'>toggle?</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span> <span class='op'>=</span> <span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] toggle? is deprecated. Use variation instead</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_variation'>variation</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="track-instance_method">
+  
+    #<strong>track</strong>(event_name, user, data = nil, metric_value = nil)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Tracks that a user performed an event. This method creates a &quot;custom&quot; analytics event
+containing the specified event name (key), user properties, and optional data.</p>
+
+<p>Note that event delivery is asynchronous, so the event may not actually be sent
+until later; see <span class='object_link'><a href="#flush-instance_method" title="LaunchDarkly::LDClient#flush (method)">#flush</a></span>.</p>
+
+<p>As of this version’s release date, the LaunchDarkly service does not support the <code>metricValue</code>
+parameter. As a result, specifying <code>metricValue</code> will not yet produce any different behavior
+from omitting it. Refer to the <a href="https://docs.launchdarkly.com/docs/ruby-sdk-reference#section-track">SDK reference guide</a>
+for the latest status.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>event_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the event</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The user to register; this can have all the same user properties
+described in <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span></p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>data</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An optional hash containing any additional data associated with the event</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>metric_value</span>
+      
+      
+        <span class='type'>(<tt>Number</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A numeric value used by the LaunchDarkly experimentation
+feature in numeric custom metrics. Can be omitted if this event is used by only
+non-numeric metrics. This field will also be returned as part of the custom event
+for Data Export.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+272
+273
+274
+275
+276
+277
+278
+279</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 272</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_track'>track</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_metric_value'>metric_value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_user'>user</span> <span class='op'>||</span> <span class='id identifier rubyid_user'>user</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Track called with nil user or nil user key!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='kw'>return</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_sanitize_user'>sanitize_user</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
+  <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_add_event'>add_event</span><span class='lparen'>(</span><span class='ivar'>@event_factory_default</span><span class='period'>.</span><span class='id identifier rubyid_new_custom_event'>new_custom_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='id identifier rubyid_metric_value'>metric_value</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="variation-instance_method">
+  
+    #<strong>variation</strong>(key, user, default)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Determines the variation of a feature flag to present to a user.</p>
+
+<p>At a minimum, the user hash should contain a <code>:key</code>, which should be the unique
+identifier for your user (or, for an anonymous user, a session identifier or
+cookie).</p>
+
+<p>Other supported user attributes include IP address, country code, and an arbitrary hash of
+custom attributes. For more about the supported user properties and how they work in
+LaunchDarkly, see <a href="https://docs.launchdarkly.com/docs/targeting-users">Targeting users</a>.</p>
+
+<p>The optional <code>:privateAttributeNames</code> user property allows you to specify a list of
+attribute names that should not be sent back to LaunchDarkly.
+<a href="https://docs.launchdarkly.com/docs/private-user-attributes">Private attributes</a>
+can also be configured globally in <span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <p class="tag_title">Examples:</p>
+    
+      
+        <p class="example_title"><div class='inline'><p>Basic user hash</p>
+</div></p>
+      
+      <pre class="example code"><code><span class='lbrace'>{</span><span class='label'>key:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my-user-id</span><span class='tstring_end'>&quot;</span></span><span class='rbrace'>}</span></code></pre>
+    
+      
+        <p class="example_title"><div class='inline'><p>More complete user hash</p>
+</div></p>
+      
+      <pre class="example code"><code><span class='lbrace'>{</span><span class='label'>key:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my-user-id</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>ip:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>127.0.0.1</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>country:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>US</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>custom:</span> <span class='lbrace'>{</span><span class='label'>customer_rank:</span> <span class='int'>1000</span><span class='rbrace'>}</span><span class='rbrace'>}</span></code></pre>
+    
+      
+        <p class="example_title"><div class='inline'><p>User with a private attribute</p>
+</div></p>
+      
+      <pre class="example code"><code><span class='lbrace'>{</span><span class='label'>key:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my-user-id</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>email:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>email@example.com</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>privateAttributeNames:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>email</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rbrace'>}</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the unique feature key for the feature flag, as shown
+on the LaunchDarkly dashboard</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a hash containing parameters for the end user requesting the flag</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>default</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the default value of the flag; this is used if there is an error
+condition making it impossible to find or evaluate the flag</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        
+        <div class='inline'><p>the variation to show the user, or the default value if there&#39;s an an error</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+195
+196
+197</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 195</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_variation'>variation</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_evaluate_internal'>evaluate_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='comma'>,</span> <span class='ivar'>@event_factory_default</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="variation_detail-instance_method">
+  
+    #<strong>variation_detail</strong>(key, user, default)  &#x21d2; <tt><span class='object_link'><a href="EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Determines the variation of a feature flag for a user, like <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span>, but also
+provides additional information about how this value was calculated.</p>
+
+<p>The return value of <code>variation_detail</code> is an <span class='object_link'><a href="EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span> object, which has
+three properties: the result value, the positional index of this value in the flag&#39;s
+list of variations, and an object describing the main reason why this value was
+selected. See <span class='object_link'><a href="EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span> for more on these properties.</p>
+
+<p>Calling <code>variation_detail</code> instead of <code>variation</code> also causes the &quot;reason&quot; data to
+be included in analytics events, if you are capturing detailed event data for this flag.</p>
+
+<p>For more information, see the reference guide on
+<a href="https://docs.launchdarkly.com/v2.0/docs/evaluation-reasons">Evaluation reasons</a>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the unique feature key for the feature flag, as shown
+on the LaunchDarkly dashboard</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>user</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a hash containing parameters for the end user requesting the flag</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>default</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the default value of the flag; this is used if there is an error
+condition making it impossible to find or evaluate the flag</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>an object describing the result</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+222
+223
+224</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 222</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_variation_detail'>variation_detail</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_evaluate_internal'>evaluate_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='comma'>,</span> <span class='ivar'>@event_factory_with_reasons</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jan  6 10:21:56 2021 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.26 (ruby-2.5.6).
+</div>
+
+    </div>
+  </body>
+</html>

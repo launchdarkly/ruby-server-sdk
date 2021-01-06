@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: LaunchDarkly
+  
+    &mdash; LaunchDarkly Ruby SDK
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "LaunchDarkly";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index (L)</a> &raquo;
+    
+    
+    <span class="title">LaunchDarkly</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: LaunchDarkly
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/ldclient-rb.rb<span class="defines">,<br />
+  lib/ldclient-rb/cache_store.rb,<br /> lib/ldclient-rb/config.rb,<br /> lib/ldclient-rb/evaluation.rb,<br /> lib/ldclient-rb/event_summarizer.rb,<br /> lib/ldclient-rb/events.rb,<br /> lib/ldclient-rb/expiring_cache.rb,<br /> lib/ldclient-rb/file_data_source.rb,<br /> lib/ldclient-rb/flags_state.rb,<br /> lib/ldclient-rb/impl.rb,<br /> lib/ldclient-rb/in_memory_store.rb,<br /> lib/ldclient-rb/integrations.rb,<br /> lib/ldclient-rb/interfaces.rb,<br /> lib/ldclient-rb/ldclient.rb,<br /> lib/ldclient-rb/memoized_value.rb,<br /> lib/ldclient-rb/newrelic.rb,<br /> lib/ldclient-rb/non_blocking_thread_pool.rb,<br /> lib/ldclient-rb/polling.rb,<br /> lib/ldclient-rb/redis_store.rb,<br /> lib/ldclient-rb/requestor.rb,<br /> lib/ldclient-rb/simple_lru_cache.rb,<br /> lib/ldclient-rb/stream.rb,<br /> lib/ldclient-rb/user_filter.rb,<br /> lib/ldclient-rb/util.rb,<br /> lib/ldclient-rb/version.rb,<br /> lib/ldclient-rb/impl/diagnostic_events.rb,<br /> lib/ldclient-rb/impl/event_factory.rb,<br /> lib/ldclient-rb/impl/event_sender.rb,<br /> lib/ldclient-rb/impl/store_client_wrapper.rb,<br /> lib/ldclient-rb/impl/store_data_set_sorter.rb,<br /> lib/ldclient-rb/impl/util.rb,<br /> lib/ldclient-rb/integrations/consul.rb,<br /> lib/ldclient-rb/integrations/dynamodb.rb,<br /> lib/ldclient-rb/integrations/redis.rb,<br /> lib/ldclient-rb/impl/integrations/consul_impl.rb,<br /> lib/ldclient-rb/impl/integrations/dynamodb_impl.rb,<br /> lib/ldclient-rb/impl/integrations/redis_impl.rb,<br /> lib/ldclient-rb/integrations/util/store_wrapper.rb</span>
+</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>Analytics event processing in the SDK involves several components. The purpose of this design is to
+minimize overhead on the application threads that are generating analytics events.</p>
+
+<p>EventProcessor receives an analytics event from the SDK client, on an application thread. It places
+the event in a bounded queue, the &quot;inbox&quot;, and immediately returns.</p>
+
+<p>On a separate worker thread, EventDispatcher consumes events from the inbox. These are considered
+&quot;input events&quot; because they may or may not actually be sent to LaunchDarkly; most flag evaluation
+events are not sent, but are counted and the counters become part of a single summary event.
+EventDispatcher updates those counters, creates &quot;index&quot; events for any users that have not been seen
+recently, and places any events that will be sent to LaunchDarkly into the &quot;outbox&quot; queue.</p>
+
+<p>When it is time to flush events to LaunchDarkly, the contents of the outbox are handed off to
+another worker thread which sends the HTTP request.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+      <strong class="modules">Modules:</strong> <span class='object_link'><a href="LaunchDarkly/Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span>, <span class='object_link'><a href="LaunchDarkly/Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span>
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="LaunchDarkly/Config.html" title="LaunchDarkly::Config (class)">Config</a></span>, <span class='object_link'><a href="LaunchDarkly/EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span>, <span class='object_link'><a href="LaunchDarkly/FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span>, <span class='object_link'><a href="LaunchDarkly/FileDataSource.html" title="LaunchDarkly::FileDataSource (class)">FileDataSource</a></span>, <span class='object_link'><a href="LaunchDarkly/InMemoryFeatureStore.html" title="LaunchDarkly::InMemoryFeatureStore (class)">InMemoryFeatureStore</a></span>, <span class='object_link'><a href="LaunchDarkly/LDClient.html" title="LaunchDarkly::LDClient (class)">LDClient</a></span>, <span class='object_link'><a href="LaunchDarkly/RedisFeatureStore.html" title="LaunchDarkly::RedisFeatureStore (class)">RedisFeatureStore</a></span>
+    
+  
+</p>
+
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="VERSION-constant" class="">VERSION =
+          
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>5.8.1</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+
+
+
+
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jan  6 10:21:56 2021 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.26 (ruby-2.5.6).
+</div>
+
+    </div>
+  </body>
+</html>
