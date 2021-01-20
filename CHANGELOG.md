@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [5.8.2] - 2021-01-19
+### Fixed:
+- Fixed a warning within the Redis integration when run with version 4.3 or later of the `redis` gem. (Thanks, [emancu](https://github.com/launchdarkly/ruby-server-sdk/pull/167)!)
+
+
 ## [5.8.1] - 2020-11-09
 ### Fixed:
 - Updated `json` gem to patch [CVE-2020-10663](https://nvd.nist.gov/vuln/detail/CVE-2020-10663).
