@@ -18,5 +18,13 @@ circleci:
 documentation:
   githubPages: true
 
+circleci:
+  linux:
+    image: circleci/ruby:2.6.2-stretch
+    context: org-global
+
+documentation:
+  githubPages: true
+
 sdk:
   displayName: "Ruby"
