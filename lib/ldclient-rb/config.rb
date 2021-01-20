@@ -15,7 +15,7 @@ module LaunchDarkly
     #
     # @param opts [Hash] the configuration options
     # @option opts [Logger] :logger See {#logger}.
-    # @option opts [String] :base_uri ("https://app.launchdarkly.com") See {#base_uri}.
+    # @option opts [String] :base_uri ("https://sdk.launchdarkly.com") See {#base_uri}.
     # @option opts [String] :stream_uri ("https://stream.launchdarkly.com") See {#stream_uri}.
     # @option opts [String] :events_uri ("https://events.launchdarkly.com") See {#events_uri}.
     # @option opts [Integer] :capacity (10000) See {#capacity}.
@@ -314,10 +314,10 @@ module LaunchDarkly
 
     #
     # The default value for {#base_uri}.
-    # @return [String] "https://app.launchdarkly.com"
+    # @return [String] "https://sdk.launchdarkly.com"
     #
     def self.default_base_uri
-      "https://app.launchdarkly.com"
+      "https://sdk.launchdarkly.com"
     end
 
     #
