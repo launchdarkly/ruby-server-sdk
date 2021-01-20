@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStoreCore
   
-    &mdash; LaunchDarkly Ruby SDK
+    &mdash; LaunchDarkly Ruby SDK (5.8.2)
   
 </title>
 
@@ -678,13 +678,17 @@
 
 117
 118
-119</pre>
+119
+120
+121</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 117</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized_internal?'>initialized_internal?</span>
-  <span class='id identifier rubyid_with_connection'>with_connection</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_redis'>redis</span><span class='op'>|</span> <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_exists'>exists</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_with_connection'>with_connection</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_redis'>redis</span><span class='op'>|</span>
+    <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:exists?</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_exists?'>exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_exists'>exists</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -730,15 +734,15 @@
       <pre class="lines">
 
 
-121
-122
 123
 124
 125
-126</pre>
+126
+127
+128</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 121</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 123</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='kw'>if</span> <span class='ivar'>@stopped</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
@@ -866,9 +870,9 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jan  6 10:21:57 2021 by
+  Generated on Wed Jan 20 00:36:19 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.5.6).
+  0.9.26 (ruby-2.6.2).
 </div>
 
     </div>
