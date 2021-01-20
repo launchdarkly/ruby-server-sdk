@@ -5,6 +5,8 @@ LaunchDarkly Server-side SDK for Ruby
 
 [![Circle CI](https://circleci.com/gh/launchdarkly/ruby-server-sdk/tree/master.svg?style=svg)](https://circleci.com/gh/launchdarkly/ruby-server-sdk/tree/master)
 [![Security](https://hakiri.io/github/launchdarkly/ruby-server-sdk/master.svg)](https://hakiri.io/github/launchdarkly/ruby-server-sdk/master)
+[![RubyDoc](https://img.shields.io/static/v1?label=docs+-+all+versions&message=reference&color=00add8)](https://www.rubydoc.info/gems/launchdarkly-server-sdk)
+[![GitHub Pages](https://img.shields.io/static/v1?label=docs+-+latest&message=reference&color=00add8)](https://launchdarkly.github.io/ruby-server-sdk)
 
 LaunchDarkly overview
 -------------------------
@@ -27,7 +29,7 @@ Learn more
 
 Check out our [documentation](http://docs.launchdarkly.com) for in-depth instructions on configuring and using LaunchDarkly. You can also head straight to the [reference guide for this SDK](http://docs.launchdarkly.com/docs/ruby-sdk-reference).
 
-Generated API documentation is on [RubyDoc.info](https://www.rubydoc.info/gems/launchdarkly-server-sdk).
+Generated API documentation for all versions of the SDK is on [RubyDoc.info](https://www.rubydoc.info/gems/launchdarkly-server-sdk). The API documentation for the latest version is also on [GitHub Pages](https://launchdarkly.github.io/ruby-server-sdk).
 
 Testing
 -------
