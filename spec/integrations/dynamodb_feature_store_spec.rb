@@ -1,4 +1,4 @@
-require "data_store_spec_base"
+require "feature_store_spec_base"
 require "aws-sdk-dynamodb"
 require "spec_helper"
 
@@ -20,12 +20,12 @@ $ddb_base_opts = {
 }
 
 def create_dynamodb_store(opts = {})
-  LaunchDarkly::Integrations::DynamoDB::new_data_store($table_name,
+  LaunchDarkly::Integrations::DynamoDB::new_feature_store($table_name,
     $ddb_base_opts.merge(opts).merge({ expiration: 60 }))
 end
 
 def create_dynamodb_store_uncached(opts = {})
-  LaunchDarkly::Integrations::DynamoDB::new_data_store($table_name,
+  LaunchDarkly::Integrations::DynamoDB::new_feature_store($table_name,
     $ddb_base_opts.merge(opts).merge({ expiration: 0 }))
 end
 
@@ -86,7 +86,7 @@ def create_test_client
 end
 
 
-describe "DynamoDB data store" do
+describe "DynamoDB feature store" do
   break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
 
   # These tests will all fail if there isn't a local DynamoDB instance running.
@@ -94,10 +94,10 @@ describe "DynamoDB data store" do
   create_table_if_necessary
 
   context "with local cache" do
-    include_examples "data_store", method(:create_dynamodb_store), method(:clear_all_data)
+    include_examples "feature_store", method(:create_dynamodb_store), method(:clear_all_data)
   end
 
   context "without local cache" do
-    include_examples "data_store", method(:create_dynamodb_store_uncached), method(:clear_all_data)
+    include_examples "feature_store", method(:create_dynamodb_store_uncached), method(:clear_all_data)
   end
 end

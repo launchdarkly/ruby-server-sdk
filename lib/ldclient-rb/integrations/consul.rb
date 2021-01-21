@@ -5,7 +5,7 @@ module LaunchDarkly
   module Integrations
     module Consul
       #
-      # Default value for the `prefix` option for {new_data_store}.
+      # Default value for the `prefix` option for {new_feature_store}.
       #
       # @return [String]  the default key prefix
       #
@@ -14,10 +14,10 @@ module LaunchDarkly
       end
 
       #
-      # Creates a Consul-backed persistent data store.
+      # Creates a Consul-backed persistent feature store.
       #
       # To use this method, you must first install the gem `diplomat`. Then, put the object returned by
-      # this method into the `data_store` property of your client configuration ({LaunchDarkly::Config}).
+      # this method into the `feature_store` property of your client configuration ({LaunchDarkly::Config}).
       #
       # @param opts [Hash] the configuration options
       # @option opts [Hash] :consul_config  an instance of `Diplomat::Configuration` to replace the default
@@ -27,10 +27,10 @@ module LaunchDarkly
       # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
       # @option opts [Integer] :expiration (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching
       # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
-      # @return [LaunchDarkly::Interfaces::DataStore]  a data store object
+      # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
-      def self.new_data_store(opts, &block)
-        core = LaunchDarkly::Impl::Integrations::Consul::ConsulDataStoreCore.new(opts)
+      def self.new_feature_store(opts, &block)
+        core = LaunchDarkly::Impl::Integrations::Consul::ConsulFeatureStoreCore.new(opts)
         return LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
       end
     end

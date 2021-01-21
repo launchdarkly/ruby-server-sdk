@@ -1,4 +1,4 @@
-require "data_store_spec_base"
+require "feature_store_spec_base"
 require "connection_pool"
 require "json"
 require "redis"
@@ -13,11 +13,11 @@ $base_opts = {
 }
 
 def create_redis_store(opts = {})
-  LaunchDarkly::RedisDataStore.new($base_opts.merge(opts).merge({ expiration: 60 }))
+  LaunchDarkly::RedisFeatureStore.new($base_opts.merge(opts).merge({ expiration: 60 }))
 end
 
 def create_redis_store_uncached(opts = {})
-  LaunchDarkly::RedisDataStore.new($base_opts.merge(opts).merge({ expiration: 0 }))
+  LaunchDarkly::RedisFeatureStore.new($base_opts.merge(opts).merge({ expiration: 0 }))
 end
 
 def clear_all_data
@@ -26,19 +26,19 @@ def clear_all_data
 end
 
 
-describe LaunchDarkly::RedisDataStore do
-  subject { LaunchDarkly::RedisDataStore }
+describe LaunchDarkly::RedisFeatureStore do
+  subject { LaunchDarkly::RedisFeatureStore }
   
   break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
 
   # These tests will all fail if there isn't a Redis instance running on the default port.
 
   context "real Redis with local cache" do
-    include_examples "data_store", method(:create_redis_store), method(:clear_all_data)
+    include_examples "feature_store", method(:create_redis_store), method(:clear_all_data)
   end
 
   context "real Redis without local cache" do
-    include_examples "data_store", method(:create_redis_store_uncached), method(:clear_all_data)
+    include_examples "feature_store", method(:create_redis_store_uncached), method(:clear_all_data)
   end
 
   def make_concurrent_modifier_test_hook(other_client, flag, start_version, end_version)

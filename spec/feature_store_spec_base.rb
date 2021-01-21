@@ -1,9 +1,9 @@
 require "spec_helper"
 
-shared_examples "data_store" do |create_store_method, clear_data_method|
+shared_examples "feature_store" do |create_store_method, clear_data_method|
 
   # Rather than testing with feature flag or segment data, we'll use this fake data kind
-  # to make it clear that data stores need to be able to handle arbitrary data.
+  # to make it clear that feature stores need to be able to handle arbitrary data.
   let(:things_kind) { { namespace: "things" } }
 
   let(:key1) { "thing1" }

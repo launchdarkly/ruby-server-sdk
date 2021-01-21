@@ -5,9 +5,9 @@ module LaunchDarkly
     module Integrations
       module Consul
         #
-        # Internal implementation of the Consul data store, intended to be used with CachingStoreWrapper.
+        # Internal implementation of the Consul feature store, intended to be used with CachingStoreWrapper.
         #
-        class ConsulDataStoreCore
+        class ConsulFeatureStoreCore
           begin
             require "diplomat"
             CONSUL_ENABLED = true
@@ -17,14 +17,14 @@ module LaunchDarkly
 
           def initialize(opts)
             if !CONSUL_ENABLED
-              raise RuntimeError.new("can't use Consul data store without the 'diplomat' gem")
+              raise RuntimeError.new("can't use Consul feature store without the 'diplomat' gem")
             end
 
             @prefix = (opts[:prefix] || LaunchDarkly::Integrations::Consul.default_prefix) + '/'
             @logger = opts[:logger] || Config.default_logger
             Diplomat.configuration = opts[:consul_config] if !opts[:consul_config].nil?
             Diplomat.configuration.url = opts[:url] if !opts[:url].nil?
-            @logger.info("ConsulDataStore: using Consul host at #{Diplomat.configuration.url}")
+            @logger.info("ConsulFeatureStore: using Consul host at #{Diplomat.configuration.url}")
           end
 
           def init_internal(all_data)
@@ -90,7 +90,7 @@ module LaunchDarkly
               else
                 old_item = Model.deserialize(kind, old_value[0]["Value"])
                 # Check whether the item is stale. If so, don't do the update (and return the existing item to
-                # DataStoreWrapper so it can be cached)
+                # FeatureStoreWrapper so it can be cached)
                 if old_item[:version] >= new_item[:version]
                   return old_item
                 end

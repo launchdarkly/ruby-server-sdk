@@ -5,13 +5,13 @@ module LaunchDarkly
   #
   module Interfaces
     #
-    # Mixin that defines the required methods of a data store implementation. The LaunchDarkly
-    # client uses the data store to persist feature flags and related objects received from
+    # Mixin that defines the required methods of a feature store implementation. The LaunchDarkly
+    # client uses the feature store to persist feature flags and related objects received from
     # the LaunchDarkly service. Implementations must support concurrent access and updates.
-    # For more about how data stores can be used, see:
-    # [Using a persistent data store](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+    # For more about how feature stores can be used, see:
+    # [Using a persistent feature store](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
     #
-    # An entity that can be stored in a data store is a hash that can be converted to and from
+    # An entity that can be stored in a feature store is a hash that can be converted to and from
     # JSON, and that has at a minimum the following properties: `:key`, a string that is unique
     # among entities of the same kind; `:version`, an integer that is higher for newer data;
     # `:deleted`, a boolean (optional, defaults to false) that if true means this is a
@@ -22,12 +22,12 @@ module LaunchDarkly
     # `:namespace`, which is a short string unique to that kind. This string can be used as a
     # collection name or a key prefix.
     #
-    # The default implementation is {LaunchDarkly::InMemoryDataStore}. Several implementations
+    # The default implementation is {LaunchDarkly::InMemoryFeatureStore}. Several implementations
     # that use databases can be found in {LaunchDarkly::Integrations}. If you want to write a new
     # implementation, see {LaunchDarkly::Integrations::Util} for tools that can make this task
     # simpler.
     #
-    module DataStore
+    module FeatureStore
       #
       # Initializes (or re-initializes) the store with the specified set of entities. Any
       # existing entries will be removed. Implementations can assume that this data set is up to
@@ -116,7 +116,7 @@ module LaunchDarkly
     #
     # Mixin that defines the required methods of a data source implementation. This is the
     # component that delivers feature flag data from LaunchDarkly to the LDClient by putting
-    # the data in the {DataStore}. It is expected to run concurrently on its own thread.
+    # the data in the {FeatureStore}. It is expected to run concurrently on its own thread.
     #
     # The client has its own standard implementation, which uses either a streaming connection or
     # polling depending on your configuration. Normally you will not need to use another one
