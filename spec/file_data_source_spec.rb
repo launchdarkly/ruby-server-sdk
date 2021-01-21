@@ -96,7 +96,7 @@ EOF
 
   before do
     @config = LaunchDarkly::Config.new(logger: $null_log)
-    @store = @config.data_store
+    @store = @config.feature_store
     @tmp_dir = Dir.mktmpdir
   end
 

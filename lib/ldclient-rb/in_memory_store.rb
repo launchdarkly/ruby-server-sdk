@@ -2,12 +2,12 @@ require "concurrent/atomics"
 
 module LaunchDarkly
 
-  # These constants denote the types of data that can be stored in the data store.  If
+  # These constants denote the types of data that can be stored in the feature store.  If
   # we add another storable data type in the future, as long as it follows the same pattern
   # (having "key", "version", and "deleted" properties), we only need to add a corresponding
   # constant here and the existing store should be able to handle it.
   #
-  # The :priority and :get_dependency_keys properties are used by DataStoreDataSetSorter
+  # The :priority and :get_dependency_keys properties are used by FeatureStoreDataSetSorter
   # to ensure data consistency during non-atomic updates.
 
   # @private
@@ -24,12 +24,12 @@ module LaunchDarkly
   }.freeze
 
   #
-  # Default implementation of the LaunchDarkly client's data store, using an in-memory
+  # Default implementation of the LaunchDarkly client's feature store, using an in-memory
   # cache.  This object holds feature flags and related data received from LaunchDarkly.
   # Database-backed implementations are available in {LaunchDarkly::Integrations}.
   #
-  class InMemoryDataStore
-    include LaunchDarkly::Interfaces::DataStore
+  class InMemoryFeatureStore
+    include LaunchDarkly::Interfaces::FeatureStore
 
     def initialize
       @items = Hash.new

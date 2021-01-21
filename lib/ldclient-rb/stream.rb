@@ -25,7 +25,7 @@ module LaunchDarkly
     def initialize(sdk_key, config, diagnostic_accumulator = nil)
       @sdk_key = sdk_key
       @config = config
-      @data_store = config.data_store
+      @feature_store = config.feature_store
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
       @stopped = Concurrent::AtomicBoolean.new(false)
@@ -85,7 +85,7 @@ module LaunchDarkly
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
         all_data = Impl::Model.make_all_store_data(message[:data])
-        @data_store.init(all_data)
+        @feature_store.init(all_data)
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized" }
         @ready.set
@@ -96,7 +96,7 @@ module LaunchDarkly
           if key
             data = data[:data]
             Impl::Model.postprocess_item_after_deserializing!(kind, data)
-            @data_store.upsert(kind, data)
+            @feature_store.upsert(kind, data)
             break
           end
         end
@@ -105,7 +105,7 @@ module LaunchDarkly
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, data[:path])
           if key
-            @data_store.delete(kind, key, data[:version])
+            @feature_store.delete(kind, key, data[:version])
             break
           end
         end

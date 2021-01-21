@@ -3,28 +3,28 @@ require "ldclient-rb/impl/integrations/redis_impl"
 
 module LaunchDarkly
   #
-  # An implementation of the LaunchDarkly client's data store that uses a Redis
+  # An implementation of the LaunchDarkly client's feature store that uses a Redis
   # instance.  This object holds feature flags and related data received from the
   # streaming API.  Feature data can also be further cached in memory to reduce overhead
   # of calls to Redis.
   #
   # To use this class, you must first have the `redis` and `connection-pool` gems
-  # installed.  Then, create an instance and store it in the `data_store` property
+  # installed.  Then, create an instance and store it in the `feature_store` property
   # of your client configuration.
   #
   # @deprecated Use the factory method in {LaunchDarkly::Integrations::Redis} instead. This specific
   #   implementation class may be changed or removed in the future.
   #
-  class RedisDataStore
-    include LaunchDarkly::Interfaces::DataStore
+  class RedisFeatureStore
+    include LaunchDarkly::Interfaces::FeatureStore
 
     # Note that this class is now just a facade around CachingStoreWrapper, which is in turn delegating
-    # to RedisDataStoreCore where the actual database logic is. This class was retained for historical
-    # reasons, so that existing code can still call RedisDataStore.new. In the future, we will migrate
+    # to RedisFeatureStoreCore where the actual database logic is. This class was retained for historical
+    # reasons, so that existing code can still call RedisFeatureStore.new. In the future, we will migrate
     # away from exposing these concrete classes and use factory methods instead.
 
     #
-    # Constructor for a RedisDataStore instance.
+    # Constructor for a RedisFeatureStore instance.
     #
     # @param opts [Hash] the configuration options
     # @option opts [String] :redis_url  URL of the Redis instance (shortcut for omitting redis_opts)
@@ -38,7 +38,7 @@ module LaunchDarkly
     # @option opts [Boolean] :pool_shutdown_on_close whether calling `close` should shutdown the custom connection pool.
     #
     def initialize(opts = {})
-      core = LaunchDarkly::Impl::Integrations::Redis::RedisDataStoreCore.new(opts)
+      core = LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStoreCore.new(opts)
       @wrapper = LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
     end
 

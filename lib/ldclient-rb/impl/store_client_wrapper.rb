@@ -4,19 +4,19 @@ require "ldclient-rb/impl/store_data_set_sorter"
 module LaunchDarkly
   module Impl
     #
-    # Provides additional behavior that the client requires before or after data store operations.
+    # Provides additional behavior that the client requires before or after feature store operations.
     # Currently this just means sorting the data set for init(). In the future we may also use this
     # to provide an update listener capability.
     #
-    class DataStoreClientWrapper
-      include Interfaces::DataStore
+    class FeatureStoreClientWrapper
+      include Interfaces::FeatureStore
 
       def initialize(store)
         @store = store
       end
 
       def init(all_data)
-        @store.init(DataStoreDataSetSorter.sort_all_collections(all_data))
+        @store.init(FeatureStoreDataSetSorter.sort_all_collections(all_data))
       end
 
       def get(kind, key)

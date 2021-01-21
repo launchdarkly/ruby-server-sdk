@@ -15,26 +15,26 @@ describe LaunchDarkly::StreamProcessor do
 
     it "will accept PUT methods" do
       processor.send(:process_message, put_message)
-      expect(config.data_store.get(LaunchDarkly::FEATURES, "asdf")).to eq(key: "asdf")
-      expect(config.data_store.get(LaunchDarkly::SEGMENTS, "segkey")).to eq(key: "segkey")
+      expect(config.feature_store.get(LaunchDarkly::FEATURES, "asdf")).to eq(key: "asdf")
+      expect(config.feature_store.get(LaunchDarkly::SEGMENTS, "segkey")).to eq(key: "segkey")
     end
     it "will accept PATCH methods for flags" do
       processor.send(:process_message, patch_flag_message)
-      expect(config.data_store.get(LaunchDarkly::FEATURES, "asdf")).to eq(key: "asdf", version: 1)
+      expect(config.feature_store.get(LaunchDarkly::FEATURES, "asdf")).to eq(key: "asdf", version: 1)
     end
     it "will accept PATCH methods for segments" do
       processor.send(:process_message, patch_seg_message)
-      expect(config.data_store.get(LaunchDarkly::SEGMENTS, "asdf")).to eq(key: "asdf", version: 1)
+      expect(config.feature_store.get(LaunchDarkly::SEGMENTS, "asdf")).to eq(key: "asdf", version: 1)
     end
     it "will accept DELETE methods for flags" do
       processor.send(:process_message, patch_flag_message)
       processor.send(:process_message, delete_flag_message)
-      expect(config.data_store.get(LaunchDarkly::FEATURES, "key")).to eq(nil)
+      expect(config.feature_store.get(LaunchDarkly::FEATURES, "key")).to eq(nil)
     end
     it "will accept DELETE methods for segments" do
       processor.send(:process_message, patch_seg_message)
       processor.send(:process_message, delete_seg_message)
-      expect(config.data_store.get(LaunchDarkly::SEGMENTS, "key")).to eq(nil)
+      expect(config.feature_store.get(LaunchDarkly::SEGMENTS, "key")).to eq(nil)
     end
     it "will log a warning if the method is not recognized" do
       expect(processor.instance_variable_get(:@config).logger).to receive :warn

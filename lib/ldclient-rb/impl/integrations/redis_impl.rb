@@ -6,9 +6,9 @@ module LaunchDarkly
     module Integrations
       module Redis
         #
-        # Internal implementation of the Redis data store, intended to be used with CachingStoreWrapper.
+        # Internal implementation of the Redis feature store, intended to be used with CachingStoreWrapper.
         #
-        class RedisDataStoreCore
+        class RedisFeatureStoreCore
           begin
             require "redis"
             require "connection_pool"
@@ -19,7 +19,7 @@ module LaunchDarkly
 
           def initialize(opts)
             if !REDIS_ENABLED
-              raise RuntimeError.new("can't use Redis data store because one of these gems is missing: redis, connection_pool")
+              raise RuntimeError.new("can't use Redis feature store because one of these gems is missing: redis, connection_pool")
             end
 
             @redis_opts = opts[:redis_opts] || Hash.new
@@ -42,7 +42,7 @@ module LaunchDarkly
             @stopped = Concurrent::AtomicBoolean.new(false)
 
             with_connection do |redis|
-              @logger.info("RedisDataStore: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} \
+              @logger.info("RedisFeatureStore: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} \
       and prefix: #{@prefix}")
             end
           end
@@ -61,7 +61,7 @@ module LaunchDarkly
                 multi.set(inited_key, inited_key)
               end
             end
-            @logger.info { "RedisDataStore: initialized with #{count} items" }
+            @logger.info { "RedisFeatureStore: initialized with #{count} items" }
           end
 
           def get_internal(kind, key)
@@ -97,13 +97,13 @@ module LaunchDarkly
                       multi.hset(base_key, key, Model.serialize(kind, new_item))
                     end
                     if result.nil?
-                      @logger.debug { "RedisDataStore: concurrent modification detected, retrying" }
+                      @logger.debug { "RedisFeatureStore: concurrent modification detected, retrying" }
                       try_again = true
                     end
                   else
                     final_item = old_item
                     action = new_item[:deleted] ? "delete" : "update"
-                    @logger.warn { "RedisDataStore: attempted to #{action} #{key} version: #{old_item[:version]} \
+                    @logger.warn { "RedisFeatureStore: attempted to #{action} #{key} version: #{old_item[:version]} \
     in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:version]}" }
                   end
                   redis.unwatch

@@ -5,9 +5,9 @@ module LaunchDarkly
     module Integrations
       module DynamoDB
         #
-        # Internal implementation of the DynamoDB data store, intended to be used with CachingStoreWrapper.
+        # Internal implementation of the DynamoDB feature store, intended to be used with CachingStoreWrapper.
         #
-        class DynamoDBDataStoreCore
+        class DynamoDBFeatureStoreCore
           begin
             require "aws-sdk-dynamodb"
             AWS_SDK_ENABLED = true
@@ -28,7 +28,7 @@ module LaunchDarkly
 
           def initialize(table_name, opts)
             if !AWS_SDK_ENABLED
-              raise RuntimeError.new("can't use DynamoDB data store without the aws-sdk or aws-sdk-dynamodb gem")
+              raise RuntimeError.new("can't use DynamoDB feature store without the aws-sdk or aws-sdk-dynamodb gem")
             end
 
             @table_name = table_name
@@ -41,7 +41,7 @@ module LaunchDarkly
               @client = Aws::DynamoDB::Client.new(opts[:dynamodb_opts] || {})
             end
 
-            @logger.info("DynamoDBDataStore: using DynamoDB table \"#{table_name}\"")
+            @logger.info("DynamoDBFeatureStore: using DynamoDB table \"#{table_name}\"")
           end
 
           def init_internal(all_data)
