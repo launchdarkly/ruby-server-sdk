@@ -46,7 +46,8 @@ module LaunchDarkly
       opts = {
         headers: headers,
         read_timeout: READ_TIMEOUT_SECONDS,
-        logger: @config.logger
+        logger: @config.logger,
+        socket_factory: @config.socket_factory
       }
       log_connection_started
       @es = SSE::Client.new(@config.stream_uri + "/all", **opts) do |conn|

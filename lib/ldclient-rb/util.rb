@@ -1,5 +1,5 @@
-require "net/http"
 require "uri"
+require "http"
 
 module LaunchDarkly
   # @private
@@ -18,14 +18,18 @@ module LaunchDarkly
       end
       ret
     end
-
+    
     def self.new_http_client(uri_s, config)
-      uri = URI(uri_s)
-      client = Net::HTTP.new(uri.hostname, uri.port)
-      client.use_ssl = true if uri.scheme == "https"
-      client.open_timeout = config.connect_timeout
-      client.read_timeout = config.read_timeout
-      client
+      http_client_options = {}
+      if config.socket_factory
+        http_client_options["socket_class"] = config.socket_factory
+      end
+      return HTTP::Client.new(http_client_options)
+        .timeout({
+          read: config.read_timeout,
+          connect: config.connect_timeout
+        })
+        .persistent(uri_s)
     end
 
     def self.log_exception(logger, message, exc)

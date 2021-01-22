@@ -3,7 +3,7 @@ require "webrick/httpproxy"
 require "webrick/https"
 
 class StubHTTPServer
-  attr_reader :requests
+  attr_reader :requests, :port
 
   @@next_port = 50000
 
@@ -118,5 +118,15 @@ def with_server(server = nil)
     yield server
   ensure
     server.stop
+  end
+end
+
+class SocketFactoryFromHash
+  def initialize(ports = {})
+    @ports = ports
+  end
+
+  def open(uri, timeout)
+    TCPSocket.new 'localhost', @ports[uri]
   end
 end

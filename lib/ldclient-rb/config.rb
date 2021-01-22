@@ -41,6 +41,7 @@ module LaunchDarkly
     # @option opts [Float] :diagnostic_recording_interval (900) See {#diagnostic_recording_interval}.
     # @option opts [String] :wrapper_name See {#wrapper_name}.
     # @option opts [String] :wrapper_version See {#wrapper_version}.
+    # @option opts [#open] :socket_factory See {#socket_factory}.
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -71,6 +72,7 @@ module LaunchDarkly
         opts[:diagnostic_recording_interval] : Config.default_diagnostic_recording_interval
       @wrapper_name = opts[:wrapper_name]
       @wrapper_version = opts[:wrapper_version]
+      @socket_factory = opts[:socket_factory]
     end
 
     #
@@ -304,6 +306,16 @@ module LaunchDarkly
     # @return [String]
     #
     attr_reader :wrapper_version
+
+    #
+    # The factory used to construct sockets for HTTP operations. The factory must
+    # provide the method `open(uri, timeout)`. The `open` method must return a
+    # connected stream that implements the `IO` class, such as a `TCPSocket`.
+    #
+    # Defaults to nil.
+    # @return [#open]
+    #
+    attr_reader :socket_factory
 
     #
     # The default LaunchDarkly client configuration. This configuration sets

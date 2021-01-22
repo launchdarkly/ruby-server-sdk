@@ -238,10 +238,7 @@ module LaunchDarkly
         diagnostic_event_workers.shutdown
         diagnostic_event_workers.wait_for_termination
       end
-      begin
-        @client.finish
-      rescue
-      end
+      @event_sender.stop if @event_sender.respond_to?(:stop)
     end
 
     def synchronize_for_testing(flush_workers, diagnostic_event_workers)
