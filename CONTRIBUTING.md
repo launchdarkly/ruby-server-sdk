@@ -18,7 +18,7 @@ Build instructions
 
 ### Prerequisites
 
-This SDK is built with [Bundler](https://bundler.io/). To install Bundler, run `gem install bundler -v 1.17.3`. You might need `sudo` to execute the command successfully. As of this writing, the SDK does not support being built with Bundler 2.0.
+This SDK is built with [Bundler](https://bundler.io/). To install Bundler, run `gem install bundler`. You might need `sudo` to execute the command successfully.
 
 To install the runtime dependencies:
 
