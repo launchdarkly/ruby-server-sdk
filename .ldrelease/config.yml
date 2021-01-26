@@ -2,6 +2,10 @@ repo:
   public: ruby-server-sdk
   private: ruby-server-sdk-private
 
+releasableBranches:
+  - name: master
+  - name: 5.x
+
 publications:
   - url: https://rubygems.org/gems/launchdarkly-server-sdk
     description: RubyGems
