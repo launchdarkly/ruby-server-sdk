@@ -2,6 +2,15 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.0.0] - 2021-01-26
+### Added:
+- Added a `socket_factory` configuration option which can be used for socket creation by the HTTP client if provided. The value of `socket_factory` must be an object providing an `open(uri, timeout)` method and returning a connected socket.
+
+### Changed:
+- Switched to the `http` gem instead of `socketry` (with a custom http client) for streaming, and instead of `Net::HTTP` for polling / events.
+- Dropped support for Ruby &lt; version 2.5
+- Dropped support for JRuby &lt; version 9.2
+
 ## [5.8.2] - 2021-01-19
 ### Fixed:
 - Fixed a warning within the Redis integration when run with version 4.3 or later of the `redis` gem. (Thanks, [emancu](https://github.com/launchdarkly/ruby-server-sdk/pull/167)!)
