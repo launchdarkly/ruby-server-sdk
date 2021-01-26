@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::EvaluationDetail
   
-    &mdash; LaunchDarkly Ruby SDK (5.8.2)
+    &mdash; LaunchDarkly Ruby SDK (6.0.0)
   
 </title>
 
@@ -94,15 +94,14 @@
   
   <dl>
     <dt>Defined in:</dt>
-    <dd>lib/ldclient-rb/evaluation.rb</dd>
+    <dd>lib/ldclient-rb/evaluation_detail.rb</dd>
   </dl>
   
 </div>
 
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
-    <p>An object returned by <span class='object_link'><a href="LDClient.html#variation_detail-instance_method" title="LaunchDarkly::LDClient#variation_detail (method)">LDClient#variation_detail</a></span>, combining the result of a flag evaluation with
-an explanation of how it was calculated.</p>
+    <p>an explanation of how it was calculated.</p>
 
 
   </div>
@@ -120,7 +119,7 @@ an explanation of how it was calculated.</p>
       <li class="public ">
   <span class="summary_signature">
     
-      <a href="#reason-instance_method" title="#reason (instance method)">#<strong>reason</strong>  &#x21d2; Hash </a>
+      <a href="#reason-instance_method" title="#reason (instance method)">#<strong>reason</strong>  &#x21d2; EvaluationReason </a>
     
 
     
@@ -278,7 +277,7 @@ an explanation of how it was calculated.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>A new instance of EvaluationDetail.</p>
+    <span class="summary_desc"><div class='inline'><p>Creates a new instance.</p>
 </div></span>
   
 </li>
@@ -301,13 +300,80 @@ an explanation of how it was calculated.</p>
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Returns a new instance of EvaluationDetail.</p>
+    <p>Creates a new instance.</p>
 
 
   </div>
 </div>
 <div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
   
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the result value of the flag evaluation; may be of any type</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>variation_index</span>
+      
+      
+        <span class='type'>(<tt>int|nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the index of the value within the flag&#39;s list of variations, or
+<code>nil</code> if the application default value was returned</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>reason</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>an object describing the main factor that influenced the result</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>ArgumentError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if <code>variation_index</code> or <code>reason</code> is not of the correct type</p>
+</div>
+      
+    </li>
+  
+</ul>
 
 </div><table class="source_code">
   <tr>
@@ -315,16 +381,20 @@ an explanation of how it was calculated.</p>
       <pre class="lines">
 
 
-8
-9
-10
-11
-12</pre>
+13
+14
+15
+16
+17
+18
+19</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation.rb', line 8</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 13</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='id identifier rubyid_variation_index'>variation_index</span><span class='comma'>,</span> <span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>variation_index must be a number</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_variation_index'>variation_index</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='lparen'>(</span><span class='id identifier rubyid_variation_index'>variation_index</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Numeric</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>reason must be an EvaluationReason</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='op'>!</span><span class='lparen'>(</span><span class='id identifier rubyid_reason'>reason</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='rparen'>)</span>
   <span class='ivar'>@value</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
   <span class='ivar'>@variation_index</span> <span class='op'>=</span> <span class='id identifier rubyid_variation_index'>variation_index</span>
   <span class='ivar'>@reason</span> <span class='op'>=</span> <span class='id identifier rubyid_reason'>reason</span>
@@ -344,7 +414,7 @@ an explanation of how it was calculated.</p>
       <div class="method_details first">
   <h3 class="signature first" id="reason-instance_method">
   
-    #<strong>reason</strong>  &#x21d2; <tt>Hash</tt>  <span class="extras">(readonly)</span>
+    #<strong>reason</strong>  &#x21d2; <tt><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></tt>  <span class="extras">(readonly)</span>
   
 
   
@@ -353,40 +423,6 @@ an explanation of how it was calculated.</p>
 </h3><div class="docstring">
   <div class="discussion">
     <p>An object describing the main factor that influenced the flag evaluation value.</p>
-
-<p>This object is currently represented as a Hash, which may have the following keys:</p>
-
-<p><code>:kind</code>: The general category of reason. Possible values:</p>
-
-<ul>
-<li><code>&#39;OFF&#39;</code>: the flag was off and therefore returned its configured off value</li>
-<li><code>&#39;FALLTHROUGH&#39;</code>: the flag was on but the user did not match any targets or rules</li>
-<li><code>&#39;TARGET_MATCH&#39;</code>: the user key was specifically targeted for this flag</li>
-<li><code>&#39;RULE_MATCH&#39;</code>: the user matched one of the flag&#39;s rules</li>
-<li><code>&#39;PREREQUISITE_FAILED</code>&#39;: the flag was considered off because it had at least one
-prerequisite flag that either was off or did not return the desired variation</li>
-<li><code>&#39;ERROR&#39;</code>: the flag could not be evaluated, so the default value was returned</li>
-</ul>
-
-<p><code>:ruleIndex</code>: If the kind was <code>RULE_MATCH</code>, this is the positional index of the
-matched rule (0 for the first rule).</p>
-
-<p><code>:ruleId</code>: If the kind was <code>RULE_MATCH</code>, this is the rule&#39;s unique identifier.</p>
-
-<p><code>:prerequisiteKey</code>: If the kind was <code>PREREQUISITE_FAILED</code>, this is the flag key of
-the prerequisite flag that failed.</p>
-
-<p><code>:errorKind</code>: If the kind was <code>ERROR</code>, this indicates the type of error:</p>
-
-<ul>
-<li><code>&#39;CLIENT_NOT_READY&#39;</code>: the caller tried to evaluate a flag before the client had
-successfully initialized</li>
-<li><code>&#39;FLAG_NOT_FOUND&#39;</code>: the caller provided a flag key that did not match any known flag</li>
-<li><code>&#39;MALFORMED_FLAG&#39;</code>: there was an internal inconsistency in the flag data, e.g. a
-rule specified a nonexistent variation</li>
-<li><code>&#39;USER_NOT_SPECIFIED&#39;</code>: the user object or user key was not provied</li>
-<li><code>&#39;EXCEPTION&#39;</code>: an unexpected exception stopped flag evaluation</li>
-</ul>
 
 
   </div>
@@ -399,7 +435,7 @@ rule specified a nonexistent variation</li>
     <li>
       
       
-        <span class='type'>(<tt>Hash</tt>)</span>
+        <span class='type'>(<tt><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></tt>)</span>
       
       
       
@@ -413,12 +449,12 @@ rule specified a nonexistent variation</li>
       <pre class="lines">
 
 
-66
-67
-68</pre>
+43
+44
+45</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation.rb', line 66</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 43</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_reason'>reason</span>
   <span class='ivar'>@reason</span>
@@ -470,12 +506,12 @@ value of <span class='object_link'><a href="LDClient.html#variation-instance_met
       <pre class="lines">
 
 
-21
-22
-23</pre>
+28
+29
+30</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation.rb', line 21</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 28</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_value'>value</span>
   <span class='ivar'>@value</span>
@@ -526,12 +562,12 @@ value of <span class='object_link'><a href="LDClient.html#variation-instance_met
       <pre class="lines">
 
 
-29
-30
-31</pre>
+36
+37
+38</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation.rb', line 29</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 36</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation_index'>variation_index</span>
   <span class='ivar'>@variation_index</span>
@@ -563,12 +599,12 @@ value of <span class='object_link'><a href="LDClient.html#variation-instance_met
       <pre class="lines">
 
 
-78
-79
-80</pre>
+55
+56
+57</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation.rb', line 78</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 55</span>
 
 <span class='kw'>def</span> <span class='op'>==</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
   <span class='ivar'>@value</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@variation_index</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_variation_index'>variation_index</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@reason</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_reason'>reason</span>
@@ -617,12 +653,12 @@ whether <span class='object_link'><a href="#variation_index-instance_method" tit
       <pre class="lines">
 
 
-74
-75
-76</pre>
+51
+52
+53</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation.rb', line 74</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 51</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_value?'>default_value?</span>
   <span class='id identifier rubyid_variation_index'>variation_index</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -637,7 +673,7 @@ whether <span class='object_link'><a href="#variation_index-instance_method" tit
 </div>
 
       <div id="footer">
-  Generated on Wed Jan 20 00:36:19 2021 by
+  Generated on Tue Jan 26 19:39:55 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.26 (ruby-2.6.2).
 </div>

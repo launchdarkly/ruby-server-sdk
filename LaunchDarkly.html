@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly
   
-    &mdash; LaunchDarkly Ruby SDK (5.8.2)
+    &mdash; LaunchDarkly Ruby SDK (6.0.0)
   
 </title>
 
@@ -79,7 +79,7 @@
   <dl>
     <dt>Defined in:</dt>
     <dd>lib/ldclient-rb.rb<span class="defines">,<br />
-  lib/ldclient-rb/cache_store.rb,<br /> lib/ldclient-rb/config.rb,<br /> lib/ldclient-rb/evaluation.rb,<br /> lib/ldclient-rb/event_summarizer.rb,<br /> lib/ldclient-rb/events.rb,<br /> lib/ldclient-rb/expiring_cache.rb,<br /> lib/ldclient-rb/file_data_source.rb,<br /> lib/ldclient-rb/flags_state.rb,<br /> lib/ldclient-rb/impl.rb,<br /> lib/ldclient-rb/in_memory_store.rb,<br /> lib/ldclient-rb/integrations.rb,<br /> lib/ldclient-rb/interfaces.rb,<br /> lib/ldclient-rb/ldclient.rb,<br /> lib/ldclient-rb/memoized_value.rb,<br /> lib/ldclient-rb/newrelic.rb,<br /> lib/ldclient-rb/non_blocking_thread_pool.rb,<br /> lib/ldclient-rb/polling.rb,<br /> lib/ldclient-rb/redis_store.rb,<br /> lib/ldclient-rb/requestor.rb,<br /> lib/ldclient-rb/simple_lru_cache.rb,<br /> lib/ldclient-rb/stream.rb,<br /> lib/ldclient-rb/user_filter.rb,<br /> lib/ldclient-rb/util.rb,<br /> lib/ldclient-rb/version.rb,<br /> lib/ldclient-rb/impl/diagnostic_events.rb,<br /> lib/ldclient-rb/impl/event_factory.rb,<br /> lib/ldclient-rb/impl/event_sender.rb,<br /> lib/ldclient-rb/impl/store_client_wrapper.rb,<br /> lib/ldclient-rb/impl/store_data_set_sorter.rb,<br /> lib/ldclient-rb/impl/util.rb,<br /> lib/ldclient-rb/integrations/consul.rb,<br /> lib/ldclient-rb/integrations/dynamodb.rb,<br /> lib/ldclient-rb/integrations/redis.rb,<br /> lib/ldclient-rb/impl/integrations/consul_impl.rb,<br /> lib/ldclient-rb/impl/integrations/dynamodb_impl.rb,<br /> lib/ldclient-rb/impl/integrations/redis_impl.rb,<br /> lib/ldclient-rb/integrations/util/store_wrapper.rb</span>
+  lib/ldclient-rb/cache_store.rb,<br /> lib/ldclient-rb/config.rb,<br /> lib/ldclient-rb/evaluation_detail.rb,<br /> lib/ldclient-rb/event_summarizer.rb,<br /> lib/ldclient-rb/events.rb,<br /> lib/ldclient-rb/expiring_cache.rb,<br /> lib/ldclient-rb/file_data_source.rb,<br /> lib/ldclient-rb/flags_state.rb,<br /> lib/ldclient-rb/impl.rb,<br /> lib/ldclient-rb/in_memory_store.rb,<br /> lib/ldclient-rb/integrations.rb,<br /> lib/ldclient-rb/interfaces.rb,<br /> lib/ldclient-rb/ldclient.rb,<br /> lib/ldclient-rb/memoized_value.rb,<br /> lib/ldclient-rb/newrelic.rb,<br /> lib/ldclient-rb/non_blocking_thread_pool.rb,<br /> lib/ldclient-rb/polling.rb,<br /> lib/ldclient-rb/redis_store.rb,<br /> lib/ldclient-rb/requestor.rb,<br /> lib/ldclient-rb/simple_lru_cache.rb,<br /> lib/ldclient-rb/stream.rb,<br /> lib/ldclient-rb/user_filter.rb,<br /> lib/ldclient-rb/util.rb,<br /> lib/ldclient-rb/version.rb,<br /> lib/ldclient-rb/impl/diagnostic_events.rb,<br /> lib/ldclient-rb/impl/evaluator.rb,<br /> lib/ldclient-rb/impl/evaluator_bucketing.rb,<br /> lib/ldclient-rb/impl/evaluator_operators.rb,<br /> lib/ldclient-rb/impl/event_factory.rb,<br /> lib/ldclient-rb/impl/event_sender.rb,<br /> lib/ldclient-rb/impl/store_client_wrapper.rb,<br /> lib/ldclient-rb/impl/store_data_set_sorter.rb,<br /> lib/ldclient-rb/impl/unbounded_pool.rb,<br /> lib/ldclient-rb/impl/util.rb,<br /> lib/ldclient-rb/integrations/consul.rb,<br /> lib/ldclient-rb/integrations/dynamodb.rb,<br /> lib/ldclient-rb/integrations/redis.rb,<br /> lib/ldclient-rb/impl/integrations/consul_impl.rb,<br /> lib/ldclient-rb/impl/integrations/dynamodb_impl.rb,<br /> lib/ldclient-rb/impl/integrations/redis_impl.rb,<br /> lib/ldclient-rb/impl/model/serialization.rb,<br /> lib/ldclient-rb/integrations/util/store_wrapper.rb</span>
 </dd>
   </dl>
   
@@ -116,7 +116,7 @@ another worker thread which sends the HTTP request.</p>
     
   
     
-      <strong class="classes">Classes:</strong> <span class='object_link'><a href="LaunchDarkly/Config.html" title="LaunchDarkly::Config (class)">Config</a></span>, <span class='object_link'><a href="LaunchDarkly/EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span>, <span class='object_link'><a href="LaunchDarkly/FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span>, <span class='object_link'><a href="LaunchDarkly/FileDataSource.html" title="LaunchDarkly::FileDataSource (class)">FileDataSource</a></span>, <span class='object_link'><a href="LaunchDarkly/InMemoryFeatureStore.html" title="LaunchDarkly::InMemoryFeatureStore (class)">InMemoryFeatureStore</a></span>, <span class='object_link'><a href="LaunchDarkly/LDClient.html" title="LaunchDarkly::LDClient (class)">LDClient</a></span>, <span class='object_link'><a href="LaunchDarkly/RedisFeatureStore.html" title="LaunchDarkly::RedisFeatureStore (class)">RedisFeatureStore</a></span>
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="LaunchDarkly/Config.html" title="LaunchDarkly::Config (class)">Config</a></span>, <span class='object_link'><a href="LaunchDarkly/EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span>, <span class='object_link'><a href="LaunchDarkly/EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span>, <span class='object_link'><a href="LaunchDarkly/FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span>, <span class='object_link'><a href="LaunchDarkly/FileDataSource.html" title="LaunchDarkly::FileDataSource (class)">FileDataSource</a></span>, <span class='object_link'><a href="LaunchDarkly/InMemoryFeatureStore.html" title="LaunchDarkly::InMemoryFeatureStore (class)">InMemoryFeatureStore</a></span>, <span class='object_link'><a href="LaunchDarkly/LDClient.html" title="LaunchDarkly::LDClient (class)">LDClient</a></span>, <span class='object_link'><a href="LaunchDarkly/RedisFeatureStore.html" title="LaunchDarkly::RedisFeatureStore (class)">RedisFeatureStore</a></span>
     
   
 </p>
@@ -132,7 +132,7 @@ another worker thread which sends the HTTP request.</p>
         <dt id="VERSION-constant" class="">VERSION =
           
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>5.8.1</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>5.8.2</span><span class='tstring_end'>&quot;</span></span></pre></dd>
       
     </dl>
   
@@ -148,7 +148,7 @@ another worker thread which sends the HTTP request.</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Jan 20 00:36:19 2021 by
+  Generated on Tue Jan 26 19:39:55 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.26 (ruby-2.6.2).
 </div>

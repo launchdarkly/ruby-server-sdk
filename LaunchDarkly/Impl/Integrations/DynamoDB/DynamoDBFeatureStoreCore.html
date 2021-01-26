@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore
   
-    &mdash; LaunchDarkly Ruby SDK (5.8.2)
+    &mdash; LaunchDarkly Ruby SDK (6.0.0)
   
 </title>
 
@@ -582,7 +582,7 @@
   <span class='kw'>while</span> <span class='kw'>true</span>
     <span class='id identifier rubyid_resp'>resp</span> <span class='op'>=</span> <span class='ivar'>@client</span><span class='period'>.</span><span class='id identifier rubyid_query'>query</span><span class='lparen'>(</span><span class='id identifier rubyid_req'>req</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_items'>items</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_item'>item</span><span class='op'>|</span>
-      <span class='id identifier rubyid_item_out'>item_out</span> <span class='op'>=</span> <span class='id identifier rubyid_unmarshal_item'>unmarshal_item</span><span class='lparen'>(</span><span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_item_out'>item_out</span> <span class='op'>=</span> <span class='id identifier rubyid_unmarshal_item'>unmarshal_item</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
       <span class='id identifier rubyid_items_out'>items_out</span><span class='lbracket'>[</span><span class='id identifier rubyid_item_out'>item_out</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_item_out'>item_out</span>
     <span class='kw'>end</span>
     <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_last_evaluated_key'>last_evaluated_key</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_last_evaluated_key'>last_evaluated_key</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>==</span> <span class='int'>0</span>
@@ -644,7 +644,7 @@
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_internal'>get_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_resp'>resp</span> <span class='op'>=</span> <span class='id identifier rubyid_get_item_by_keys'>get_item_by_keys</span><span class='lparen'>(</span><span class='id identifier rubyid_namespace_for_kind'>namespace_for_kind</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_unmarshal_item'>unmarshal_item</span><span class='lparen'>(</span><span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_unmarshal_item'>unmarshal_item</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -981,7 +981,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jan 20 00:36:19 2021 by
+  Generated on Tue Jan 26 19:39:56 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.26 (ruby-2.6.2).
 </div>

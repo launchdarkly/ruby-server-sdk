@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStoreCore
   
-    &mdash; LaunchDarkly Ruby SDK (5.8.2)
+    &mdash; LaunchDarkly Ruby SDK (6.0.0)
   
 </title>
 
@@ -464,8 +464,7 @@
 79
 80
 81
-82
-83</pre>
+82</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 73</span>
@@ -475,8 +474,7 @@
   <span class='id identifier rubyid_with_connection'>with_connection</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_redis'>redis</span><span class='op'>|</span>
     <span class='id identifier rubyid_hashfs'>hashfs</span> <span class='op'>=</span> <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_hgetall'>hgetall</span><span class='lparen'>(</span><span class='id identifier rubyid_items_key'>items_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_hashfs'>hashfs</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_json_item'>json_item</span><span class='op'>|</span>
-      <span class='id identifier rubyid_f'>f</span> <span class='op'>=</span> <span class='const'>JSON</span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_json_item'>json_item</span><span class='comma'>,</span> <span class='label'>symbolize_names:</span> <span class='kw'>true</span><span class='rparen'>)</span>
-      <span class='id identifier rubyid_fs'>fs</span><span class='lbracket'>[</span><span class='id identifier rubyid_k'>k</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_f'>f</span>
+      <span class='id identifier rubyid_fs'>fs</span><span class='lbracket'>[</span><span class='id identifier rubyid_k'>k</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='const'>Model</span><span class='period'>.</span><span class='id identifier rubyid_deserialize'>deserialize</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_json_item'>json_item</span><span class='rparen'>)</span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
   <span class='id identifier rubyid_fs'>fs</span>
@@ -611,7 +609,7 @@
         <span class='id identifier rubyid_multi'>multi</span><span class='period'>.</span><span class='id identifier rubyid_del'>del</span><span class='lparen'>(</span><span class='id identifier rubyid_items_key'>items_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='rparen'>)</span>
         <span class='id identifier rubyid_count'>count</span> <span class='op'>=</span> <span class='id identifier rubyid_count'>count</span> <span class='op'>+</span> <span class='id identifier rubyid_items'>items</span><span class='period'>.</span><span class='id identifier rubyid_count'>count</span>
         <span class='id identifier rubyid_items'>items</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='op'>|</span>
-          <span class='id identifier rubyid_multi'>multi</span><span class='period'>.</span><span class='id identifier rubyid_hset'>hset</span><span class='lparen'>(</span><span class='id identifier rubyid_items_key'>items_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_multi'>multi</span><span class='period'>.</span><span class='id identifier rubyid_hset'>hset</span><span class='lparen'>(</span><span class='id identifier rubyid_items_key'>items_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='const'>Model</span><span class='period'>.</span><span class='id identifier rubyid_serialize'>serialize</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span><span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span><span class='rparen'>)</span>
         <span class='kw'>end</span>
       <span class='kw'>end</span>
       <span class='id identifier rubyid_multi'>multi</span><span class='period'>.</span><span class='id identifier rubyid_set'>set</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='comma'>,</span> <span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span>
@@ -676,19 +674,15 @@
       <pre class="lines">
 
 
+116
 117
-118
-119
-120
-121</pre>
+118</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 117</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 116</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized_internal?'>initialized_internal?</span>
-  <span class='id identifier rubyid_with_connection'>with_connection</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_redis'>redis</span><span class='op'>|</span>
-    <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:exists?</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_exists?'>exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_exists'>exists</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
+  <span class='id identifier rubyid_with_connection'>with_connection</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_redis'>redis</span><span class='op'>|</span> <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_exists?'>exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -734,15 +728,15 @@
       <pre class="lines">
 
 
+120
+121
+122
 123
 124
-125
-126
-127
-128</pre>
+125</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 123</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 120</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='kw'>if</span> <span class='ivar'>@stopped</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
@@ -794,6 +788,7 @@
       <pre class="lines">
 
 
+84
 85
 86
 87
@@ -823,11 +818,10 @@
 111
 112
 113
-114
-115</pre>
+114</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 84</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_upsert_internal'>upsert_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_base_key'>base_key</span> <span class='op'>=</span> <span class='id identifier rubyid_items_key'>items_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
@@ -842,7 +836,7 @@
         <span class='id identifier rubyid_before_update_transaction'>before_update_transaction</span><span class='lparen'>(</span><span class='id identifier rubyid_base_key'>base_key</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
         <span class='kw'>if</span> <span class='id identifier rubyid_old_item'>old_item</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_old_item'>old_item</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span> <span class='op'>&lt;</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span>
           <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_multi'>multi</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_multi'>multi</span><span class='op'>|</span>
-            <span class='id identifier rubyid_multi'>multi</span><span class='period'>.</span><span class='id identifier rubyid_hset'>hset</span><span class='lparen'>(</span><span class='id identifier rubyid_base_key'>base_key</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='rparen'>)</span>
+            <span class='id identifier rubyid_multi'>multi</span><span class='period'>.</span><span class='id identifier rubyid_hset'>hset</span><span class='lparen'>(</span><span class='id identifier rubyid_base_key'>base_key</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='const'>Model</span><span class='period'>.</span><span class='id identifier rubyid_serialize'>serialize</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='rparen'>)</span><span class='rparen'>)</span>
           <span class='kw'>end</span>
           <span class='kw'>if</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
             <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>RedisFeatureStore: concurrent modification detected, retrying</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
@@ -870,7 +864,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jan 20 00:36:19 2021 by
+  Generated on Tue Jan 26 19:39:56 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.26 (ruby-2.6.2).
 </div>
