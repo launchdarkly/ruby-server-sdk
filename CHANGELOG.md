@@ -10,6 +10,7 @@ All notable changes to the LaunchDarkly Ruby SDK will be documented in this file
 - Switched to the `http` gem instead of `socketry` (with a custom http client) for streaming, and instead of `Net::HTTP` for polling / events.
 - Dropped support for Ruby &lt; version 2.5
 - Dropped support for JRuby &lt; version 9.2
+- Switched the default polling domain from `app.launchdarkly.com` to `sdk.launchdarkly.com`.
 
 ## [5.8.2] - 2021-01-19
 ### Fixed:
