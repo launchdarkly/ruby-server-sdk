@@ -17,7 +17,7 @@ template:
 
 circleci:
   linux:
-    image: circleci/ruby:2.6.2-stretch
+    image: circleci/ruby:2.6.6-buster
     context: org-global
     env:
       LD_SKIP_DATABASE_TESTS: "1"  # Don't run Redis/Consul/DynamoDB tests in release; they are run in CI
