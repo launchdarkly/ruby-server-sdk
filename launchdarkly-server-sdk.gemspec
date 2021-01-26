@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "semantic", "~> 1.6"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.1"
-  spec.add_runtime_dependency "ld-eventsource", "2.0.0.pre.beta.1"
+  spec.add_runtime_dependency "ld-eventsource", "~> 2.0"
 
   # lock json to 2.3.x as ruby libraries often remove
   # support for older ruby versions in minor releases
