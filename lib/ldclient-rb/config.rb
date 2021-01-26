@@ -15,7 +15,7 @@ module LaunchDarkly
     #
     # @param opts [Hash] the configuration options
     # @option opts [Logger] :logger See {#logger}.
-    # @option opts [String] :base_uri ("https://app.launchdarkly.com") See {#base_uri}.
+    # @option opts [String] :base_uri ("https://sdk.launchdarkly.com") See {#base_uri}.
     # @option opts [String] :stream_uri ("https://stream.launchdarkly.com") See {#stream_uri}.
     # @option opts [String] :events_uri ("https://events.launchdarkly.com") See {#events_uri}.
     # @option opts [Integer] :capacity (10000) See {#capacity}.
@@ -41,6 +41,7 @@ module LaunchDarkly
     # @option opts [Float] :diagnostic_recording_interval (900) See {#diagnostic_recording_interval}.
     # @option opts [String] :wrapper_name See {#wrapper_name}.
     # @option opts [String] :wrapper_version See {#wrapper_version}.
+    # @option opts [#open] :socket_factory See {#socket_factory}.
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -71,6 +72,7 @@ module LaunchDarkly
         opts[:diagnostic_recording_interval] : Config.default_diagnostic_recording_interval
       @wrapper_name = opts[:wrapper_name]
       @wrapper_version = opts[:wrapper_version]
+      @socket_factory = opts[:socket_factory]
     end
 
     #
@@ -306,6 +308,16 @@ module LaunchDarkly
     attr_reader :wrapper_version
 
     #
+    # The factory used to construct sockets for HTTP operations. The factory must
+    # provide the method `open(uri, timeout)`. The `open` method must return a
+    # connected stream that implements the `IO` class, such as a `TCPSocket`.
+    #
+    # Defaults to nil.
+    # @return [#open]
+    #
+    attr_reader :socket_factory
+
+    #
     # The default LaunchDarkly client configuration. This configuration sets
     # reasonable defaults for most users.
     # @return [Config] The default LaunchDarkly configuration.
@@ -324,10 +336,10 @@ module LaunchDarkly
 
     #
     # The default value for {#base_uri}.
-    # @return [String] "https://app.launchdarkly.com"
+    # @return [String] "https://sdk.launchdarkly.com"
     #
     def self.default_base_uri
-      "https://app.launchdarkly.com"
+      "https://sdk.launchdarkly.com"
     end
 
     #

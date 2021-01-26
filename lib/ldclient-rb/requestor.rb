@@ -1,6 +1,9 @@
+require "ldclient-rb/impl/model/serialization"
+
 require "concurrent/atomics"
 require "json"
 require "uri"
+require "http"
 
 module LaunchDarkly
   # @private
@@ -22,37 +25,44 @@ module LaunchDarkly
     def initialize(sdk_key, config)
       @sdk_key = sdk_key
       @config = config
-      @client = Util.new_http_client(@config.base_uri, @config)
+      @http_client = LaunchDarkly::Util.new_http_client(config.base_uri, config)
       @cache = @config.cache_store
     end
 
     def request_all_data()
-      make_request("/sdk/latest-all")
+      all_data = JSON.parse(make_request("/sdk/latest-all"), symbolize_names: true)
+      Impl::Model.make_all_store_data(all_data)
     end
     
     def stop
       begin
-        @client.finish
+        @http_client.close
       rescue
       end
     end
 
     private
 
+    def request_single_item(kind, path)
+      Impl::Model.deserialize(kind, make_request(path))
+    end
+
     def make_request(path)
-      @client.start if !@client.started?
       uri = URI(@config.base_uri + path)
-      req = Net::HTTP::Get.new(uri)
-      Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| req[k] = v }
-      req["Connection"] = "keep-alive"
+      headers = {}
+      Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| headers[k] = v }
+      headers["Connection"] = "keep-alive"
       cached = @cache.read(uri)
       if !cached.nil?
-        req["If-None-Match"] = cached.etag
+        headers["If-None-Match"] = cached.etag
       end
-      res = @client.request(req)
-      status = res.code.to_i
-      @config.logger.debug { "[LDClient] Got response from uri: #{uri}\n\tstatus code: #{status}\n\theaders: #{res.to_hash}\n\tbody: #{res.body}" }
-
+      response = @http_client.request("GET", uri, {
+        headers: headers
+      })
+      status = response.status.code
+      @config.logger.debug { "[LDClient] Got response from uri: #{uri}\n\tstatus code: #{status}\n\theaders: #{response.headers}\n\tbody: #{res.to_s}" }
+      # must fully read body for persistent connections
+      body = response.to_s
       if status == 304 && !cached.nil?
         body = cached.body
       else
@@ -60,11 +70,11 @@ module LaunchDarkly
         if status < 200 || status >= 300
           raise UnexpectedResponseError.new(status)
         end
-        body = fix_encoding(res.body, res["content-type"])
-        etag = res["etag"]
+        body = fix_encoding(body, response.headers["content-type"])
+        etag = response.headers["etag"]
         @cache.write(uri, CacheEntry.new(etag, body)) if !etag.nil?
       end
-      JSON.parse(body, symbolize_names: true)
+      body
     end
 
     def fix_encoding(body, content_type)

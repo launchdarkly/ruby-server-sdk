@@ -80,6 +80,7 @@ module LaunchDarkly
 
             req, body = events_server.await_request_with_body
             expect(req.header['authorization']).to eq [ SDK_KEY ]
+            expect(req.header['connection']).to eq [ "Keep-Alive" ]
             data = JSON.parse(body)
             expect(data.length).to eq 1
             expect(data[0]["kind"]).to eq "identify"
@@ -111,8 +112,41 @@ module LaunchDarkly
             req = req0.path == "/diagnostic" ? req0 : req1
             body = req0.path == "/diagnostic" ? body0 : body1
             expect(req.header['authorization']).to eq [ SDK_KEY ]
+            expect(req.header['connection']).to eq [ "Keep-Alive" ]
             data = JSON.parse(body)
             expect(data["kind"]).to eq "diagnostic-init"
+          end
+        end
+      end
+    end
+
+    it "can use socket factory" do
+      with_server do |poll_server|
+        with_server do |events_server|
+          events_server.setup_ok_response("/bulk", "")
+          poll_server.setup_ok_response("/sdk/latest-all", '{"flags":{},"segments":{}}', "application/json")
+          
+          config = Config.new(
+            stream: false,
+            base_uri: "http://polling.com",
+            events_uri: "http://events.com",
+            diagnostic_opt_out: true,
+            logger: NullLogger.new,
+            socket_factory: SocketFactoryFromHash.new({
+              "polling.com" => poll_server.port,
+              "events.com" => events_server.port  
+            })
+          )
+          with_client(config) do |client|
+            client.identify(USER)
+            client.flush
+
+            req, body = events_server.await_request_with_body
+            expect(req.header['authorization']).to eq [ SDK_KEY ]
+            expect(req.header['connection']).to eq [ "Keep-Alive" ]
+            data = JSON.parse(body)
+            expect(data.length).to eq 1
+            expect(data[0]["kind"]).to eq "identify"
           end
         end
       end

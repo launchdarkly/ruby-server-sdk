@@ -1,3 +1,5 @@
+require "ldclient-rb/impl/model/serialization"
+
 require "concurrent/atomics"
 require "json"
 require "ld-eventsource"
@@ -44,7 +46,8 @@ module LaunchDarkly
       opts = {
         headers: headers,
         read_timeout: READ_TIMEOUT_SECONDS,
-        logger: @config.logger
+        logger: @config.logger,
+        socket_factory: @config.socket_factory
       }
       log_connection_started
       @es = SSE::Client.new(@config.stream_uri + "/all", **opts) do |conn|
@@ -82,10 +85,8 @@ module LaunchDarkly
       @config.logger.debug { "[LDClient] Stream received #{method} message: #{message.data}" }
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
-        @feature_store.init({
-          FEATURES => message[:data][:flags],
-          SEGMENTS => message[:data][:segments]
-        })
+        all_data = Impl::Model.make_all_store_data(message[:data])
+        @feature_store.init(all_data)
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized" }
         @ready.set
@@ -94,7 +95,9 @@ module LaunchDarkly
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, data[:path])
           if key
-            @feature_store.upsert(kind, data[:data])
+            data = data[:data]
+            Impl::Model.postprocess_item_after_deserializing!(kind, data)
+            @feature_store.upsert(kind, data)
             break
           end
         end

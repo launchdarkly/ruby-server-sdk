@@ -1,5 +1,5 @@
-require "connection_pool"
 require "feature_store_spec_base"
+require "connection_pool"
 require "json"
 require "redis"
 require "spec_helper"
@@ -28,7 +28,7 @@ end
 
 describe LaunchDarkly::RedisFeatureStore do
   subject { LaunchDarkly::RedisFeatureStore }
-
+  
   break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
 
   # These tests will all fail if there isn't a Redis instance running on the default port.

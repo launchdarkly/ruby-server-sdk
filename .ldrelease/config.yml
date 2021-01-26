@@ -2,16 +2,25 @@ repo:
   public: ruby-server-sdk
   private: ruby-server-sdk-private
 
+releasableBranches:
+  - name: master
+  - name: 5.x
+
 publications:
   - url: https://rubygems.org/gems/launchdarkly-server-sdk
     description: RubyGems
   - url: https://www.rubydoc.info/gems/launchdarkly-server-sdk
     description: documentation
 
-template:
-  name: ruby
-  env:
-    LD_SKIP_DATABASE_TESTS: 1  # Don't run Redis/Consul/DynamoDB tests in release; they are run in CI
+circleci:
+  linux:
+    image: circleci/ruby:2.6.2-stretch
+    context: org-global
+    env:
+      LD_SKIP_DATABASE_TESTS: "1"  # Don't run Redis/Consul/DynamoDB tests in release; they are run in CI
+
+documentation:
+  githubPages: true
 
 circleci:
   linux:

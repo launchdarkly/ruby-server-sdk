@@ -39,12 +39,29 @@ module LaunchDarkly
             "authorization" => [ sdk_key ],
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
-            "x-launchdarkly-event-schema" => [ "3" ]
+            "x-launchdarkly-event-schema" => [ "3" ],
+            "connection" => [ "Keep-Alive" ]
           })
           expect(req.header['x-launchdarkly-payload-id']).not_to eq []
         end
       end
-      
+
+      it "can use a socket factory" do
+        with_server do |server|
+          server.setup_ok_response("/bulk", "")
+
+          config = Config.new(events_uri: "http://events.com/bulk", socket_factory: SocketFactoryFromHash.new({"events.com" => server.port}), logger: $null_log)
+          es = subject.new(sdk_key, config, nil, 0.1)
+
+          result = es.send_event_data(fake_data, "", false)
+
+          expect(result.success).to be true
+          req = server.await_request
+          expect(req.body).to eq fake_data
+          expect(req.host).to eq "events.com"
+        end
+      end
+
       it "generates a new payload ID for each payload" do
         with_sender_and_server do |es, server|
           server.setup_ok_response("/bulk", "")
@@ -78,6 +95,7 @@ module LaunchDarkly
             "authorization" => [ sdk_key ],
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
+            "connection" => [ "Keep-Alive" ]
           })
           expect(req.header['x-launchdarkly-event-schema']).to eq []
           expect(req.header['x-launchdarkly-payload-id']).to eq []

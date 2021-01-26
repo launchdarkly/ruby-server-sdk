@@ -51,7 +51,7 @@ module LaunchDarkly
   # output as the starting point for your file. In Linux you would do this:
   #
   # ```
-  #     curl -H "Authorization: YOUR_SDK_KEY" https://app.launchdarkly.com/sdk/latest-all
+  #     curl -H "Authorization: YOUR_SDK_KEY" https://sdk.launchdarkly.com/sdk/latest-all
   # ```
   #
   # The output will look something like this (but with many more properties):
