@@ -28,6 +28,7 @@ module LaunchDarkly
         e[:debugEventsUntilDate] = flag[:debugEventsUntilDate] if flag[:debugEventsUntilDate]
         e[:prereqOf] = prereq_of_flag[:key] if !prereq_of_flag.nil?
         e[:reason] = detail.reason if add_experiment_data || @with_reasons
+        e[:contextKind] = context_to_context_kind(user) if !user.nil? && user[:anonymous]
         e
       end
 
@@ -43,6 +44,7 @@ module LaunchDarkly
         e[:trackEvents] = true if flag[:trackEvents]
         e[:debugEventsUntilDate] = flag[:debugEventsUntilDate] if flag[:debugEventsUntilDate]
         e[:reason] = reason if @with_reasons
+        e[:contextKind] = context_to_context_kind(user) if !user.nil? && user[:anonymous]
         e
       end
 
@@ -55,6 +57,7 @@ module LaunchDarkly
           default: default_value
         }
         e[:reason] = reason if @with_reasons
+        e[:contextKind] = context_to_context_kind(user) if !user.nil? && user[:anonymous]
         e
       end
 
@@ -66,6 +69,16 @@ module LaunchDarkly
         }
       end
 
+      def new_alias_event(current_context, previous_context)
+        {
+          kind: 'alias',
+          key: current_context[:key],
+          contextKind: context_to_context_kind(current_context),
+          previousKey: previous_context[:key],
+          previousContextKind: context_to_context_kind(previous_context)
+        }
+      end
+
       def new_custom_event(event_name, user, data, metric_value)
         e = {
           kind: 'custom',
@@ -74,10 +87,19 @@ module LaunchDarkly
         }
         e[:data] = data if !data.nil?
         e[:metricValue] = metric_value if !metric_value.nil?
+        e[:contextKind] = context_to_context_kind(user) if !user.nil? && user[:anonymous]
         e
       end
 
       private
+
+      def context_to_context_kind(user)
+          if !user.nil? && user[:anonymous]
+            return "anonymousUser"
+          else
+            return "user"
+          end
+      end
 
       def is_experiment(flag, reason)
         return false if !reason

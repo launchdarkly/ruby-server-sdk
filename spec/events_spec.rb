@@ -408,6 +408,16 @@ describe LaunchDarkly::EventProcessor do
     end
   end
 
+  it "queues alias event" do
+    with_processor_and_sender(default_config) do |ep, sender|
+      e = { kind: "alias", key: "a", contextKind: "user", previousKey: "b", previousContextKind: "user" }
+      ep.add_event(e)
+
+      output = flush_and_get_events(ep, sender)
+      expect(output).to contain_exactly(e)
+    end
+  end
+
   it "treats nil value for custom the same as an empty hash" do
     with_processor_and_sender(default_config) do |ep, sender|
       user_with_nil_custom = { key: "userkey", custom: nil }

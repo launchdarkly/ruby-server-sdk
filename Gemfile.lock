@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    launchdarkly-server-sdk (5.8.2)
+    launchdarkly-server-sdk (6.0.0)
       concurrent-ruby (~> 1.1)
       http (~> 4.4.1)
       json (~> 2.3.1)
