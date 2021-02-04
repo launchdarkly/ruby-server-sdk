@@ -439,6 +439,7 @@ module LaunchDarkly
         out[:variation] = event[:variation] if event.has_key?(:variation)
         out[:version] = event[:version] if event.has_key?(:version)
         out[:prereqOf] = event[:prereqOf] if event.has_key?(:prereqOf)
+        out[:contextKind] = event[:contextKind] if event.has_key?(:contextKind)
         if @inline_users || is_debug
           out[:user] = process_user(event)
         else
@@ -466,6 +467,7 @@ module LaunchDarkly
           out[:userKey] = event[:user].nil? ? nil : event[:user][:key]
         end
         out[:metricValue] = event[:metricValue] if event.has_key?(:metricValue)
+        out[:contextKind] = event[:contextKind] if event.has_key?(:contextKind)
         out
       when "index"
         {

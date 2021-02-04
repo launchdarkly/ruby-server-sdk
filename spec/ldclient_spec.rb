@@ -25,6 +25,12 @@ describe LaunchDarkly::LDClient do
       }
     }
   end
+  let(:user_anonymous) do
+    {
+      key: "anonymous@test.com",
+      anonymous: true
+    }
+  end
   let(:numeric_key_user) do
     {
       key: 33,
@@ -153,6 +159,24 @@ describe LaunchDarkly::LDClient do
         debugEventsUntilDate: 1000
       ))
       client.variation("key", nil, "default")
+    end
+
+    it "queues a feature event for an existing feature when user is anonymous" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "feature",
+        key: "key",
+        version: 100,
+        contextKind: "anonymousUser",
+        user: user_anonymous,
+        variation: 0,
+        value: "value",
+        default: "default",
+        trackEvents: true,
+        debugEventsUntilDate: 1000
+      ))
+      client.variation("key", user_anonymous, "default")
     end
 
     it "queues a feature event for an existing feature when user key is nil" do
@@ -455,6 +479,12 @@ describe LaunchDarkly::LDClient do
       client.track("custom_event_name", user, nil, 1.5)
     end
 
+    it "includes contextKind with anonymous user" do
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "custom", key: "custom_event_name", user: user_anonymous, metricValue: 2.2, contextKind: "anonymousUser"))
+      client.track("custom_event_name", user_anonymous, nil, 2.2)
+    end
+
     it "sanitizes the user in the event" do
       expect(event_processor).to receive(:add_event).with(hash_including(user: sanitized_numeric_key_user))
       client.track("custom_event_name", numeric_key_user, nil)
@@ -470,6 +500,26 @@ describe LaunchDarkly::LDClient do
       expect(event_processor).not_to receive(:add_event)
       expect(logger).to receive(:warn)
       client.track("custom_event_name", user_without_key, nil)
+    end
+  end
+
+  describe '#alias' do
+    it "queues up an alias event" do
+      expect(event_processor).to receive(:add_event).with(hash_including(
+        kind: "alias", key: user[:key], contextKind: "user", previousKey: user_anonymous[:key], previousContextKind: "anonymousUser"))
+      client.alias(user, user_anonymous)
+    end
+
+    it "does not send an event, and logs a warning, if user is nil" do
+      expect(event_processor).not_to receive(:add_event)
+      expect(logger).to receive(:warn)
+      client.alias(nil, nil)
+    end
+
+    it "does not send an event, and logs a warning, if user key is nil" do
+      expect(event_processor).not_to receive(:add_event)
+      expect(logger).to receive(:warn)
+      client.alias(user_without_key, user_without_key)
     end
   end
 
