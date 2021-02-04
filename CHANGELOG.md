@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.1.0] - 2021-02-04
+### Added:
+- Added the `alias` method. This can be used to associate two user objects for analytics purposes by generating an alias event.
+
+
 ## [6.0.0] - 2021-01-26
 ### Added:
 - Added a `socket_factory` configuration option which can be used for socket creation by the HTTP client if provided. The value of `socket_factory` must be an object providing an `open(uri, timeout)` method and returning a connected socket.
