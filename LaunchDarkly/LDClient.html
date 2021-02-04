@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::LDClient
   
-    &mdash; LaunchDarkly Ruby SDK (6.0.0)
+    &mdash; LaunchDarkly Ruby SDK (6.1.0)
   
 </title>
 
@@ -124,6 +124,29 @@ should create a single client instance for the lifetime of the application.</p>
     </h2>
 
     <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#alias-instance_method" title="#alias (instance method)">#<strong>alias</strong>(current_context, previous_context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Associates a new and old user object for analytics purposes via an alias event.</p>
+</div></span>
+  
+</li>
+
       
         <li class="public deprecated">
   <span class="summary_signature">
@@ -653,7 +676,93 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="all_flags-instance_method">
+  <h3 class="signature first" id="alias-instance_method">
+  
+    #<strong>alias</strong>(current_context, previous_context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Associates a new and old user object for analytics purposes via an alias event.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>current_context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The current version of a user.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>previous_context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The previous version of a user.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+292
+293
+294
+295
+296
+297
+298
+299
+300</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 292</span>
+
+<span class='kw'>def</span> <span class='kw'>alias</span><span class='lparen'>(</span><span class='id identifier rubyid_current_context'>current_context</span><span class='comma'>,</span> <span class='id identifier rubyid_previous_context'>previous_context</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_current_context'>current_context</span> <span class='op'>||</span> <span class='id identifier rubyid_current_context'>current_context</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='op'>!</span><span class='id identifier rubyid_previous_context'>previous_context</span> <span class='op'>||</span> <span class='id identifier rubyid_previous_context'>previous_context</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Alias called with nil user or nil user key!</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='kw'>return</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_sanitize_user'>sanitize_user</span><span class='lparen'>(</span><span class='id identifier rubyid_current_context'>current_context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_sanitize_user'>sanitize_user</span><span class='lparen'>(</span><span class='id identifier rubyid_previous_context'>previous_context</span><span class='rparen'>)</span>
+  <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_add_event'>add_event</span><span class='lparen'>(</span><span class='ivar'>@event_factory_default</span><span class='period'>.</span><span class='id identifier rubyid_new_alias_event'>new_alias_event</span><span class='lparen'>(</span><span class='id identifier rubyid_current_context'>current_context</span><span class='comma'>,</span> <span class='id identifier rubyid_previous_context'>previous_context</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="all_flags-instance_method">
   
     #<strong>all_flags</strong>(user)  &#x21d2; <tt>Hash</tt> 
   
@@ -717,12 +826,12 @@ result of <code>all_flags</code>.</p>
       <pre class="lines">
 
 
-295
-296
-297</pre>
+312
+313
+314</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 295</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 312</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_flags'>all_flags</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_all_flags_state'>all_flags_state</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_values_map'>values_map</span>
@@ -873,23 +982,6 @@ of the JSON data if you are passing the flag state to the front end.</p>
       <pre class="lines">
 
 
-316
-317
-318
-319
-320
-321
-322
-323
-324
-325
-326
-327
-328
-329
-330
-331
-332
 333
 334
 335
@@ -908,10 +1000,27 @@ of the JSON data if you are passing the flag state to the front end.</p>
 348
 349
 350
-351</pre>
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 316</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 333</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_flags_state'>all_flags_state</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span>
@@ -979,15 +1088,15 @@ of the JSON data if you are passing the flag state to the front end.</p>
       <pre class="lines">
 
 
-357
-358
-359
-360
-361
-362</pre>
+374
+375
+376
+377
+378
+379</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 357</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 374</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
   <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] Closing LaunchDarkly client...</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
@@ -1787,7 +1896,7 @@ condition making it impossible to find or evaluate the flag</p>
 </div>
 
       <div id="footer">
-  Generated on Tue Jan 26 22:43:28 2021 by
+  Generated on Thu Feb  4 21:19:45 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.26 (ruby-2.6.6).
 </div>
