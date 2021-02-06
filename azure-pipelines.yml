@@ -45,7 +45,7 @@ jobs:
           workingDirectory: $(System.DefaultWorkingDirectory)
           script: |
             ruby -v
-            gem install bundler:2.2.7
+            gem install bundler
             bundle install
             mkdir rspec
             bundle exec rspec --format progress --format RspecJunitFormatter -o ./rspec/rspec.xml spec
