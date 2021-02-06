@@ -443,7 +443,7 @@ module LaunchDarkly
         if @inline_users || is_debug
           out[:user] = process_user(event)
         else
-          out[:userKey] = event[:user].nil? ? nil : event[:user][:key]
+          out[:userKey] = event[:user][:key]
         end
         out[:reason] = event[:reason] if !event[:reason].nil?
         out
@@ -451,7 +451,7 @@ module LaunchDarkly
         {
           kind: "identify",
           creationDate: event[:creationDate],
-          key: event[:user].nil? ? nil : event[:user][:key].to_s,
+          key: event[:user][:key].to_s,
           user: process_user(event)
         }
       when "custom"
@@ -464,7 +464,7 @@ module LaunchDarkly
         if @inline_users
           out[:user] = process_user(event)
         else
-          out[:userKey] = event[:user].nil? ? nil : event[:user][:key]
+          out[:userKey] = event[:user][:key]
         end
         out[:metricValue] = event[:metricValue] if event.has_key?(:metricValue)
         out[:contextKind] = event[:contextKind] if event.has_key?(:contextKind)
