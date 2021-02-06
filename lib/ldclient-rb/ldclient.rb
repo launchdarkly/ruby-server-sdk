@@ -401,6 +401,12 @@ module LaunchDarkly
         return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
       end
 
+      unless user
+        @config.logger.error { "[LDClient] Must specify user" }
+        detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
+        return detail
+      end
+
       if !initialized?
         if @store.initialized?
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
@@ -418,13 +424,6 @@ module LaunchDarkly
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_FLAG_NOT_FOUND, default)
         @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
-        return detail
-      end
-
-      unless user
-        @config.logger.error { "[LDClient] Must specify user" }
-        detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
-        @event_processor.add_event(event_factory.new_default_event(feature, user, default, detail.reason))
         return detail
       end
 
