@@ -103,6 +103,11 @@ module LaunchDarkly
 
       def is_experiment(flag, reason)
         return false if !reason
+
+        if reason.in_experiment
+          return true
+        end
+
         case reason[:kind]
         when 'RULE_MATCH'
           index = reason[:ruleIndex]
@@ -115,6 +120,7 @@ module LaunchDarkly
         end
         false
       end
+
     end
   end
 end

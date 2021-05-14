@@ -190,7 +190,7 @@ module LaunchDarkly
         return true if !rule[:weight]
         
         # All of the clauses are met. See if the user buckets in
-        bucket = EvaluatorBucketing.bucket_user(user, segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt)
+        bucket = EvaluatorBucketing.bucket_user(user, segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt, nil)
         weight = rule[:weight].to_f / 100000.0
         return bucket < weight
       end
@@ -213,7 +213,13 @@ module LaunchDarkly
       end
 
       def get_value_for_variation_or_rollout(flag, vr, user, reason)
-        index = EvaluatorBucketing.variation_index_for_user(flag, vr, user)
+        index, in_experiment = EvaluatorBucketing.variation_index_for_user(flag, vr, user)
+        #if in experiment is true, set reason to a different reason instance/singleton with in_experiment set
+        if in_experiment && reason.kind == :FALLTHROUGH
+          reason = EvaluationReason::fallthrough(in_experiment)
+        elsif in_experiment && reason.kind == :RULE_MATCH
+          reason = EvaluationReason::rule_match(reason.rule_index, reason.rule_id, in_experiment)
+        end
         if index.nil?
           @logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": variation/rollout object with no variation or rollout")
           return Evaluator.error_result(EvaluationReason::ERROR_MALFORMED_FLAG)
