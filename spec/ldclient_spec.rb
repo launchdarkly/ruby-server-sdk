@@ -145,19 +145,11 @@ describe LaunchDarkly::LDClient do
       client.variation("key", user, "default")
     end
 
-    it "queues a feature event for an existing feature when user is nil" do
+    it "does not send an event if user is nil" do
       config.feature_store.init({ LaunchDarkly::FEATURES => {} })
       config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
-      expect(event_processor).to receive(:add_event).with(hash_including(
-        kind: "feature",
-        key: "key",
-        version: 100,
-        user: nil,
-        value: "default",
-        default: "default",
-        trackEvents: true,
-        debugEventsUntilDate: 1000
-      ))
+      expect(event_processor).not_to receive(:add_event)
+      expect(logger).to receive(:error)
       client.variation("key", nil, "default")
     end
 
@@ -312,6 +304,14 @@ describe LaunchDarkly::LDClient do
         reason: LaunchDarkly::EvaluationReason::off
       ))
       client.variation_detail("key", user, "default")
+    end
+
+    it "does not send an event if user is nil" do
+      config.feature_store.init({ LaunchDarkly::FEATURES => {} })
+      config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
+      expect(event_processor).not_to receive(:add_event)
+      expect(logger).to receive(:error)
+      client.variation_detail("key", nil, "default")
     end
   end
 
