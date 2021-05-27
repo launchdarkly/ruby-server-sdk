@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.1.1] - 2021-05-27
+### Fixed:
+- Calling `variation` with a nil user parameter is invalid, causing the SDK to log an error and return a fallback value, but the SDK was still sending an analytics event for this. An event without a user is meaningless and can&#39;t be processed by LaunchDarkly. This is now fixed so the SDK will not send one.
+
 ## [6.1.0] - 2021-02-04
 ### Added:
 - Added the `alias` method. This can be used to associate two user objects for analytics purposes by generating an alias event.
