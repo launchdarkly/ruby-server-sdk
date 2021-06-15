@@ -311,7 +311,7 @@ module LaunchDarkly
             }
             user = { key: 'userkey' }
             result = basic_evaluator.evaluate(flag, user, factory)
-            expect(result.detail.reason.to_json).to include('"in_experiment":true')
+            expect(result.detail.reason.to_json).to include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(true)
           end
 
@@ -325,7 +325,7 @@ module LaunchDarkly
             }
             user = { key: 'userkey' }
             result = basic_evaluator.evaluate(flag, user, factory)
-            expect(result.detail.reason.to_json).to_not include('"in_experiment":true')
+            expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)
           end
 
@@ -339,7 +339,7 @@ module LaunchDarkly
             }
             user = { key: 'userkey' }
             result = basic_evaluator.evaluate(flag, user, factory)
-            expect(result.detail.reason.to_json).to_not include('"in_experiment":true')
+            expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)
           end
         end

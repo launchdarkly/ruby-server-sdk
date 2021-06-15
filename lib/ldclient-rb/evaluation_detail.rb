@@ -245,7 +245,7 @@ module LaunchDarkly
       case @kind
       when :RULE_MATCH
         if @in_experiment
-          { kind: @kind, ruleIndex: @rule_index, ruleId: @rule_id, in_experiment: @in_experiment }
+          { kind: @kind, ruleIndex: @rule_index, ruleId: @rule_id, inExperiment: @in_experiment }
         else
           { kind: @kind, ruleIndex: @rule_index, ruleId: @rule_id }
         end
@@ -255,7 +255,7 @@ module LaunchDarkly
         { kind: @kind, errorKind: @error_kind }
       when :FALLTHROUGH
         if @in_experiment
-          { kind: @kind, in_experiment: @in_experiment }
+          { kind: @kind, inExperiment: @in_experiment }
         else
           { kind: @kind }
         end
