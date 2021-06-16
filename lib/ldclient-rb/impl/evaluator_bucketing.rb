@@ -10,29 +10,26 @@ module LaunchDarkly
       # @param user [Object] the user properties
       # @return [Number] the variation index, or nil if there is an error
       def self.variation_index_for_user(flag, rule, user)
-        in_experiment = nil
 
         variation = rule[:variation]
-        return variation, in_experiment if !variation.nil? # fixed variation
+        return variation, false if !variation.nil? # fixed variation
         rollout = rule[:rollout]
-        return nil, in_experiment if rollout.nil?
+        return nil, false if rollout.nil?
         variations = rollout[:variations]
         if !variations.nil? && variations.length > 0 # percentage rollout
-          rollout = rule[:rollout]
           bucket_by = rollout[:bucketBy].nil? ? "key" : rollout[:bucketBy]
 
           seed = rollout[:seed]
           bucket = bucket_user(user, flag[:key], bucket_by, flag[:salt], seed) # may not be present
           sum = 0;
           variations.each do |variate|
-            if rule[:rollout][:kind] == "experiment" && !variate[:untracked]
+            if rollout[:kind] == "experiment" && !variate[:untracked]
               in_experiment = true
             end
 
             sum += variate[:weight].to_f / 100000.0
-
             if bucket < sum
-              return variate[:variation], in_experiment
+              return variate[:variation], !!in_experiment
             end
           end
           # The user's bucket value was greater than or equal to the end of the last bucket. This could happen due
@@ -40,9 +37,12 @@ module LaunchDarkly
           # data could contain buckets that don't actually add up to 100000. Rather than returning an error in
           # this case (or changing the scaling, which would potentially change the results for *all* users), we
           # will simply put the user in the last bucket.
-          [ variations[-1][:variation], in_experiment ]
+          last_variation = variations[-1]
+          in_experiment = rollout[:kind] == "experiment" && !last_variation[:untracked]
+
+          [last_variation[:variation], in_experiment]
         else # the rule isn't well-formed
-          [ nil, in_experiment ]
+          [nil, false]
         end
       end
 
