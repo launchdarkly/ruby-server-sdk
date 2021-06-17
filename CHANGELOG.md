@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.2.0] - 2021-06-17
+### Added:
+- The SDK now supports the ability to control the proportion of traffic allocation to an experiment. This works in conjunction with a new platform feature now available to early access customers.
+
 ## [6.1.1] - 2021-05-27
 ### Fixed:
 - Calling `variation` with a nil user parameter is invalid, causing the SDK to log an error and return a fallback value, but the SDK was still sending an analytics event for this. An event without a user is meaningless and can&#39;t be processed by LaunchDarkly. This is now fixed so the SDK will not send one.
