@@ -120,6 +120,9 @@ module LaunchDarkly
     # or deleted. If {#kind} is not {#RULE_MATCH}, this will be `nil`.
     attr_reader :rule_id
 
+    # A boolean or nil value representing if the rule or fallthrough has an experiment rollout.
+    attr_reader :in_experiment
+
     # The key of the prerequisite flag that did not return the desired variation. If {#kind} is not
     # {#PREREQUISITE_FAILED}, this will be `nil`.
     attr_reader :prerequisite_key
@@ -136,8 +139,12 @@ module LaunchDarkly
 
     # Returns an instance whose {#kind} is {#FALLTHROUGH}.
     # @return [EvaluationReason]
-    def self.fallthrough
-      @@fallthrough
+    def self.fallthrough(in_experiment=false)
+      if in_experiment
+        @@fallthrough_with_experiment
+      else
+        @@fallthrough
+      end
     end
 
     # Returns an instance whose {#kind} is {#TARGET_MATCH}.
@@ -153,10 +160,16 @@ module LaunchDarkly
     # @param rule_id [String] unique string identifier for the matched rule
     # @return [EvaluationReason]
     # @raise [ArgumentError] if `rule_index` is not a number or `rule_id` is not a string
-    def self.rule_match(rule_index, rule_id)
+    def self.rule_match(rule_index, rule_id, in_experiment=false)
       raise ArgumentError.new("rule_index must be a number") if !(rule_index.is_a? Numeric)
       raise ArgumentError.new("rule_id must be a string") if !rule_id.nil? && !(rule_id.is_a? String) # in test data, ID could be nil
-      new(:RULE_MATCH, rule_index, rule_id, nil, nil)
+      
+      if in_experiment
+        er = new(:RULE_MATCH, rule_index, rule_id, nil, nil, true)
+      else
+        er = new(:RULE_MATCH, rule_index, rule_id, nil, nil)
+      end
+      er
     end
 
     # Returns an instance whose {#kind} is {#PREREQUISITE_FAILED}.
@@ -204,11 +217,17 @@ module LaunchDarkly
     def inspect
       case @kind
       when :RULE_MATCH
-        "RULE_MATCH(#{@rule_index},#{@rule_id})"
+        if @in_experiment
+          "RULE_MATCH(#{@rule_index},#{@rule_id},#{@in_experiment})"
+        else
+          "RULE_MATCH(#{@rule_index},#{@rule_id})"
+        end
       when :PREREQUISITE_FAILED
         "PREREQUISITE_FAILED(#{@prerequisite_key})"
       when :ERROR
         "ERROR(#{@error_kind})"
+      when :FALLTHROUGH
+        @in_experiment ? "FALLTHROUGH(#{@in_experiment})" : @kind.to_s
       else
         @kind.to_s
       end
@@ -225,11 +244,21 @@ module LaunchDarkly
       # as_json and then modify the result.
       case @kind
       when :RULE_MATCH
-        { kind: @kind, ruleIndex: @rule_index, ruleId: @rule_id }
+        if @in_experiment
+          { kind: @kind, ruleIndex: @rule_index, ruleId: @rule_id, inExperiment: @in_experiment }
+        else
+          { kind: @kind, ruleIndex: @rule_index, ruleId: @rule_id }
+        end
       when :PREREQUISITE_FAILED
         { kind: @kind, prerequisiteKey: @prerequisite_key }
       when :ERROR
         { kind: @kind, errorKind: @error_kind }
+      when :FALLTHROUGH
+        if @in_experiment
+          { kind: @kind, inExperiment: @in_experiment }
+        else
+          { kind: @kind }
+        end
       else
         { kind: @kind }
       end
@@ -263,7 +292,7 @@ module LaunchDarkly
 
     private
 
-    def initialize(kind, rule_index, rule_id, prerequisite_key, error_kind)
+    def initialize(kind, rule_index, rule_id, prerequisite_key, error_kind, in_experiment=nil)
       @kind = kind.to_sym
       @rule_index = rule_index
       @rule_id = rule_id
@@ -271,6 +300,7 @@ module LaunchDarkly
       @prerequisite_key = prerequisite_key
       @prerequisite_key.freeze if !prerequisite_key.nil?
       @error_kind = error_kind
+      @in_experiment = in_experiment
     end
 
     private_class_method :new
@@ -279,6 +309,7 @@ module LaunchDarkly
       new(:ERROR, nil, nil, nil, error_kind)
     end
 
+    @@fallthrough_with_experiment = new(:FALLTHROUGH, nil, nil, nil, nil, true)
     @@fallthrough = new(:FALLTHROUGH, nil, nil, nil, nil)
     @@off = new(:OFF, nil, nil, nil, nil)
     @@target_match = new(:TARGET_MATCH, nil, nil, nil, nil)

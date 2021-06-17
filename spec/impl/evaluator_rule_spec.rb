@@ -91,6 +91,38 @@ module LaunchDarkly
         result = basic_evaluator.evaluate(flag, user, factory)
         expect(result.detail.reason).to eq(EvaluationReason::rule_match(0, 'ruleid'))
       end
+
+      describe "experiment rollout behavior" do
+        it "sets the in_experiment value if rollout kind is experiment " do
+          rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }],
+            rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: false } ] } }
+          flag = boolean_flag_with_rules([rule])
+          user = { key: "userkey", secondary: 999 }
+          result = basic_evaluator.evaluate(flag, user, factory)
+          expect(result.detail.reason.to_json).to include('"inExperiment":true')
+          expect(result.detail.reason.in_experiment).to eq(true)
+        end
+
+        it "does not set the in_experiment value if rollout kind is not experiment " do
+          rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }],
+            rollout: { kind: 'rollout', variations: [ { weight: 100000, variation: 1, untracked: false } ] } }
+          flag = boolean_flag_with_rules([rule])
+          user = { key: "userkey", secondary: 999 }
+          result = basic_evaluator.evaluate(flag, user, factory)
+          expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
+          expect(result.detail.reason.in_experiment).to eq(nil)
+        end
+
+        it "does not set the in_experiment value if rollout kind is experiment and untracked is true" do
+          rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }],
+            rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: true } ] } }
+          flag = boolean_flag_with_rules([rule])
+          user = { key: "userkey", secondary: 999 }
+          result = basic_evaluator.evaluate(flag, user, factory)
+          expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
+          expect(result.detail.reason.in_experiment).to eq(nil)
+        end
+      end
     end
   end
 end

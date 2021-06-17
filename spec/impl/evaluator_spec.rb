@@ -299,6 +299,50 @@ module LaunchDarkly
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
         end
+
+        describe "experiment rollout behavior" do
+          it "sets the in_experiment value if rollout kind is experiment and untracked false" do
+            flag = {
+              key: 'feature',
+              on: true,
+              fallthrough: { rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: false } ]  } },
+              offVariation: 1,
+              variations: ['a', 'b', 'c']
+            }
+            user = { key: 'userkey' }
+            result = basic_evaluator.evaluate(flag, user, factory)
+            expect(result.detail.reason.to_json).to include('"inExperiment":true')
+            expect(result.detail.reason.in_experiment).to eq(true)
+          end
+
+          it "does not set the in_experiment value if rollout kind is not experiment" do
+            flag = {
+              key: 'feature',
+              on: true,
+              fallthrough: { rollout: { kind: 'rollout', variations: [ { weight: 100000, variation: 1, untracked: false } ]  } },
+              offVariation: 1,
+              variations: ['a', 'b', 'c']
+            }
+            user = { key: 'userkey' }
+            result = basic_evaluator.evaluate(flag, user, factory)
+            expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
+            expect(result.detail.reason.in_experiment).to eq(nil)
+          end
+
+          it "does not set the in_experiment value if rollout kind is experiment and untracked is true" do
+            flag = {
+              key: 'feature',
+              on: true,
+              fallthrough: { rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: true } ]  } },
+              offVariation: 1,
+              variations: ['a', 'b', 'c']
+            }
+            user = { key: 'userkey' }
+            result = basic_evaluator.evaluate(flag, user, factory)
+            expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
+            expect(result.detail.reason.in_experiment).to eq(nil)
+          end
+        end
       end
     end
   end
