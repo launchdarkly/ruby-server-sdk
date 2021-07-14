@@ -171,20 +171,12 @@ describe LaunchDarkly::LDClient do
       client.variation("key", user_anonymous, "default")
     end
 
-    it "queues a feature event for an existing feature when user key is nil" do
+    it "does not queue a feature event for an existing feature when user key is nil" do
       config.feature_store.init({ LaunchDarkly::FEATURES => {} })
       config.feature_store.upsert(LaunchDarkly::FEATURES, feature_with_value)
       bad_user = { name: "Bob" }
-      expect(event_processor).to receive(:add_event).with(hash_including(
-        kind: "feature",
-        key: "key",
-        version: 100,
-        user: bad_user,
-        value: "default",
-        default: "default",
-        trackEvents: true,
-        debugEventsUntilDate: 1000
-      ))
+      expect(event_processor).not_to receive(:add_event)
+      expect(logger).to receive(:warn)
       client.variation("key", bad_user, "default")
     end
 
