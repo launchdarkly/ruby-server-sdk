@@ -407,6 +407,12 @@ module LaunchDarkly
         return detail
       end
 
+      if user[:key].nil?
+        @config.logger.warn { "[LDClient] Variation called with nil user key; returning default value" }
+        detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
+        return detail
+      end
+
       if !initialized?
         if @store.initialized?
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
