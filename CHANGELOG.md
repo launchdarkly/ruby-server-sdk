@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.2.1] - 2021-07-15
+### Changed:
+- If `variation` or `variation_detail` is called with a user object that has no `key` (an invalid condition that will always result in the default value being returned), the SDK now logs a `warn`-level message to alert you to this incorrect usage. This makes the Ruby SDK&#39;s logging behavior consistent with the other server-side LaunchDarkly SDKs. ([#177](https://github.com/launchdarkly/ruby-server-sdk/issues/177))
+
 ## [6.2.0] - 2021-06-17
 ### Added:
 - The SDK now supports the ability to control the proportion of traffic allocation to an experiment. This works in conjunction with a new platform feature now available to early access customers.
