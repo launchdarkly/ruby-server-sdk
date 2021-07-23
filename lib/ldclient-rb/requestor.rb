@@ -60,9 +60,9 @@ module LaunchDarkly
         headers: headers
       })
       status = response.status.code
-      @config.logger.debug { "[LDClient] Got response from uri: #{uri}\n\tstatus code: #{status}\n\theaders: #{response.headers}\n\tbody: #{res.to_s}" }
       # must fully read body for persistent connections
       body = response.to_s
+      @config.logger.debug { "[LDClient] Got response from uri: #{uri}\n\tstatus code: #{status}\n\theaders: #{response.headers.to_h}\n\tbody: #{body}" }
       if status == 304 && !cached.nil?
         body = cached.body
       else

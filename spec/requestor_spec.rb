@@ -40,6 +40,19 @@ describe LaunchDarkly::Requestor do
       end
     end
 
+    it "logs debug output" do
+      logger = ::Logger.new($stdout)
+      logger.level = ::Logger::DEBUG
+      with_server do |server|
+        with_requestor(server.base_uri.to_s, { logger: logger }) do |requestor|
+          server.setup_ok_response("/", { flags: { x: { key: "y" } } }.to_json)
+          expect do
+            requestor.request_all_data()
+          end.to output(/\[LDClient\] Got response from uri\:/).to_stdout_from_any_process
+        end
+      end
+    end
+
     it "sends etag from previous response" do
       etag = "xyz"
       with_server do |server|
