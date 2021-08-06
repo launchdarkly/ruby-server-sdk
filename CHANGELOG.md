@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.2.3] - 2021-08-06
+### Fixed:
+- Diagnostic events did not properly set the `usingProxy` attribute when a proxy was configured with the `HTTPS_PROXY` environment variable. ([#182](https://github.com/launchdarkly/ruby-server-sdk/issues/182))
+
 ## [6.2.2] - 2021-07-23
 ### Fixed:
 - Enabling debug logging in polling mode could cause polling to fail with a `NameError`. (Thanks, [mmurphy-notarize](https://github.com/launchdarkly/ruby-server-sdk/pull/180)!)
