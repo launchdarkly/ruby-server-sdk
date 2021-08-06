@@ -79,13 +79,15 @@ module LaunchDarkly
           end
         end
 
-        it "detects proxy" do
-          begin
-            ENV["http_proxy"] = 'http://my-proxy'
-            event = default_acc.create_init_event(Config.new)
-            expect(event[:configuration][:usingProxy]).to be true
-          ensure
-            ENV["http_proxy"] = nil
+        ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY'].each do |name|
+          it "detects proxy #{name}" do
+            begin
+              ENV["#{name}"] = 'http://my-proxy'
+              event = default_acc.create_init_event(Config.new)
+              expect(event[:configuration][:usingProxy]).to be true
+            ensure
+              ENV["#{name}"] = nil
+            end
           end
         end
 
