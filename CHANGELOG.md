@@ -2,6 +2,12 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.2.4] - 2021-08-11
+### Changed:
+- The dependency version constraint for the `http` gem is now looser: it allows 5.x versions as well as 4.x. The breaking changes in `http` v5.0.0 do not affect the SDK. ([#184](https://github.com/launchdarkly/ruby-server-sdk/issues/184))
+- The dependency version constraint for the `json` gem is also looser: it allows any 2.x version that is higher than the SDK&#39;s minimum dependency version, not just 2.3. ([#184](https://github.com/launchdarkly/ruby-server-sdk/issues/184))
+- The project&#39;s build now uses v2.2.10 of `bundler` due to known vulnerabilities in other versions.
+
 ## [6.2.3] - 2021-08-06
 ### Fixed:
 - Diagnostic events did not properly set the `usingProxy` attribute when a proxy was configured with the `HTTPS_PROXY` environment variable. ([#182](https://github.com/launchdarkly/ruby-server-sdk/issues/182))
