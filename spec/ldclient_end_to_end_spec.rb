@@ -128,13 +128,13 @@ module LaunchDarkly
           
           config = Config.new(
             stream: false,
-            base_uri: "http://polling.com",
-            events_uri: "http://events.com",
+            base_uri: "http://fake-polling-server",
+            events_uri: "http://fake-events-server",
             diagnostic_opt_out: true,
             logger: NullLogger.new,
             socket_factory: SocketFactoryFromHash.new({
-              "polling.com" => poll_server.port,
-              "events.com" => events_server.port  
+              "fake-polling-server" => poll_server.port,
+              "fake-events-server" => events_server.port  
             })
           )
           with_client(config) do |client|
