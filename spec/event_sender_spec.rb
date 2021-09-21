@@ -50,7 +50,9 @@ module LaunchDarkly
         with_server do |server|
           server.setup_ok_response("/bulk", "")
 
-          config = Config.new(events_uri: "http://events.com/bulk", socket_factory: SocketFactoryFromHash.new({"events.com" => server.port}), logger: $null_log)
+          config = Config.new(events_uri: "http://fake-event-server/bulk",
+            socket_factory: SocketFactoryFromHash.new({"fake-event-server" => server.port}),
+            logger: $null_log)
           es = subject.new(sdk_key, config, nil, 0.1)
 
           result = es.send_event_data(fake_data, "", false)
@@ -58,7 +60,7 @@ module LaunchDarkly
           expect(result.success).to be true
           req = server.await_request
           expect(req.body).to eq fake_data
-          expect(req.host).to eq "events.com"
+          expect(req.host).to eq "fake-event-server"
         end
       end
 
