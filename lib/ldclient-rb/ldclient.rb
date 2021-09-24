@@ -132,7 +132,7 @@ module LaunchDarkly
 
     #
     # Creates a hash string that can be used by the JavaScript SDK to identify a user.
-    # For more information, see [Secure mode](https://docs.launchdarkly.com/docs/js-sdk-reference#section-secure-mode).
+    # For more information, see [Secure mode](https://docs.launchdarkly.com/sdk/features/secure-mode#configuring-secure-mode-in-the-javascript-client-side-sdk).
     #
     # @param user [Hash] the user properties
     # @return [String] a hash string
@@ -172,11 +172,11 @@ module LaunchDarkly
     #
     # Other supported user attributes include IP address, country code, and an arbitrary hash of
     # custom attributes. For more about the supported user properties and how they work in
-    # LaunchDarkly, see [Targeting users](https://docs.launchdarkly.com/docs/targeting-users).
+    # LaunchDarkly, see [Targeting users](https://docs.launchdarkly.com/home/flags/targeting-users).
     # 
     # The optional `:privateAttributeNames` user property allows you to specify a list of
     # attribute names that should not be sent back to LaunchDarkly.
-    # [Private attributes](https://docs.launchdarkly.com/docs/private-user-attributes)
+    # [Private attributes](https://docs.launchdarkly.com/home/users/attributes#creating-private-user-attributes)
     # can also be configured globally in {Config}.
     #
     # @example Basic user hash
@@ -213,7 +213,7 @@ module LaunchDarkly
     # be included in analytics events, if you are capturing detailed event data for this flag.
     #
     # For more information, see the reference guide on
-    # [Evaluation reasons](https://docs.launchdarkly.com/v2.0/docs/evaluation-reasons).
+    # [Evaluation reasons](https://docs.launchdarkly.com/sdk/concepts/evaluation-reasons).
     #
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
@@ -260,7 +260,7 @@ module LaunchDarkly
     #
     # As of this version’s release date, the LaunchDarkly service does not support the `metricValue`
     # parameter. As a result, specifying `metricValue` will not yet produce any different behavior
-    # from omitting it. Refer to the [SDK reference guide](https://docs.launchdarkly.com/docs/ruby-sdk-reference#section-track)
+    # from omitting it. Refer to the [SDK reference guide](https://docs.launchdarkly.com/sdk/features/events#ruby)
     # for the latest status.
     #
     # @param event_name [String] The name of the event
