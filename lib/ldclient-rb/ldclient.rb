@@ -132,7 +132,7 @@ module LaunchDarkly
 
     #
     # Creates a hash string that can be used by the JavaScript SDK to identify a user.
-    # For more information, see [Secure mode](https://docs.launchdarkly.com/sdk/features/secure-mode#configuring-secure-mode-in-the-javascript-client-side-sdk).
+    # For more information, see [Secure mode](https://docs.launchdarkly.com/sdk/features/secure-mode#ruby).
     #
     # @param user [Hash] the user properties
     # @return [String] a hash string
