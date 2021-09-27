@@ -25,7 +25,7 @@ module LaunchDarkly
       #
       # Creates a Redis-backed persistent feature store. For more details about how and why you can
       # use a persistent feature store, see the
-      # [SDK reference guide](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+      # [SDK reference guide](https://docs.launchdarkly.com/sdk/features/storing-data#rubys).
       #
       # To use this method, you must first have the `redis` and `connection-pool` gems installed. Then,
       # put the object returned by this method into the `feature_store` property of your

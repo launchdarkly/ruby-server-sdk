@@ -110,8 +110,8 @@ module LaunchDarkly
     # Whether to use the LaunchDarkly relay proxy in daemon mode. In this mode, the client does not
     # use polling or streaming to get feature flag updates from the server, but instead reads them
     # from the {#feature_store feature store}, which is assumed to be a database that is populated by
-    # a LaunchDarkly relay proxy. For more information, see ["The relay proxy"](https://docs.launchdarkly.com/v2.0/docs/the-relay-proxy)
-    # and ["Using a persistent feature store"](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+    # a LaunchDarkly relay proxy. For more information, see ["The relay proxy"](https://docs.launchdarkly.com/home/relay-proxy)
+    # and ["Using a persistent data stores"](https://docs.launchdarkly.com/sdk/concepts/data-stores).
     #
     # All other properties related to streaming or polling are ignored if this option is set to true.
     #
@@ -189,7 +189,7 @@ module LaunchDarkly
     # from LaunchDarkly, and uses the last stored data when evaluating flags. Defaults to
     # {InMemoryFeatureStore}; for other implementations, see {LaunchDarkly::Integrations}.
     #
-    # For more information, see ["Using a persistent feature store"](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+    # For more information, see ["Persistent data stores"](https://docs.launchdarkly.com/sdk/concepts/data-stores).
     #
     # @return [LaunchDarkly::Interfaces::FeatureStore]
     #

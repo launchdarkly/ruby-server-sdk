@@ -9,7 +9,7 @@ module LaunchDarkly
     # client uses the feature store to persist feature flags and related objects received from
     # the LaunchDarkly service. Implementations must support concurrent access and updates.
     # For more about how feature stores can be used, see:
-    # [Using a persistent feature store](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+    # [Using a persistent feature store](https://docs.launchdarkly.com/sdk/features/storing-data#ruby).
     #
     # An entity that can be stored in a feature store is a hash that can be converted to and from
     # JSON, and that has at a minimum the following properties: `:key`, a string that is unique

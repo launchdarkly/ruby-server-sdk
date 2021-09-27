@@ -7,7 +7,7 @@ module LaunchDarkly
       #
       # Creates a DynamoDB-backed persistent feature store. For more details about how and why you can
       # use a persistent feature store, see the
-      # [SDK reference guide](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+      # [SDK reference guide](https://docs.launchdarkly.com/sdk/features/storing-data#ruby).
       #
       # To use this method, you must first install one of the AWS SDK gems: either `aws-sdk-dynamodb`, or
       # the full `aws-sdk`. Then, put the object returned by this method into the `feature_store` property
