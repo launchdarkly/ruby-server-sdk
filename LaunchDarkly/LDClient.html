@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::LDClient
   
-    &mdash; LaunchDarkly Ruby SDK (6.2.4)
+    &mdash; LaunchDarkly Ruby SDK (6.2.5)
   
 </title>
 
@@ -1319,7 +1319,7 @@ parameter of <span class='object_link'><a href="#variation-instance_method" titl
 </h3><div class="docstring">
   <div class="discussion">
     <p>Creates a hash string that can be used by the JavaScript SDK to identify a user.
-For more information, see <a href="https://docs.launchdarkly.com/docs/js-sdk-reference#section-secure-mode">Secure mode</a>.</p>
+For more information, see <a href="https://docs.launchdarkly.com/sdk/features/secure-mode#ruby">Secure mode</a>.</p>
 
 
   </div>
@@ -1515,7 +1515,7 @@ until later; see <span class='object_link'><a href="#flush-instance_method" titl
 
 <p>As of this version’s release date, the LaunchDarkly service does not support the <code>metricValue</code>
 parameter. As a result, specifying <code>metricValue</code> will not yet produce any different behavior
-from omitting it. Refer to the <a href="https://docs.launchdarkly.com/docs/ruby-sdk-reference#section-track">SDK reference guide</a>
+from omitting it. Refer to the <a href="https://docs.launchdarkly.com/sdk/features/events#ruby">SDK reference guide</a>
 for the latest status.</p>
 
 
@@ -1646,11 +1646,11 @@ cookie).</p>
 
 <p>Other supported user attributes include IP address, country code, and an arbitrary hash of
 custom attributes. For more about the supported user properties and how they work in
-LaunchDarkly, see <a href="https://docs.launchdarkly.com/docs/targeting-users">Targeting users</a>.</p>
+LaunchDarkly, see <a href="https://docs.launchdarkly.com/home/flags/targeting-users">Targeting users</a>.</p>
 
 <p>The optional <code>:privateAttributeNames</code> user property allows you to specify a list of
 attribute names that should not be sent back to LaunchDarkly.
-<a href="https://docs.launchdarkly.com/docs/private-user-attributes">Private attributes</a>
+<a href="https://docs.launchdarkly.com/home/users/attributes#creating-private-user-attributes">Private attributes</a>
 can also be configured globally in <span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span>.</p>
 
 
@@ -1794,7 +1794,7 @@ selected. See <span class='object_link'><a href="EvaluationDetail.html" title="L
 be included in analytics events, if you are capturing detailed event data for this flag.</p>
 
 <p>For more information, see the reference guide on
-<a href="https://docs.launchdarkly.com/v2.0/docs/evaluation-reasons">Evaluation reasons</a>.</p>
+<a href="https://docs.launchdarkly.com/sdk/concepts/evaluation-reasons">Evaluation reasons</a>.</p>
 
 
   </div>
@@ -1896,9 +1896,9 @@ condition making it impossible to find or evaluate the flag</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Aug 11 19:22:08 2021 by
+  Generated on Tue Oct 12 23:21:32 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.6.6).
+  0.9.26 (ruby-2.5.9).
 </div>
 
     </div>

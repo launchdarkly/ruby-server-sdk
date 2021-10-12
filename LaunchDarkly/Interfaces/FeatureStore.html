@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly::Interfaces::FeatureStore
   
-    &mdash; LaunchDarkly Ruby SDK (6.2.4)
+    &mdash; LaunchDarkly Ruby SDK (6.2.5)
   
 </title>
 
@@ -94,7 +94,7 @@
 client uses the feature store to persist feature flags and related objects received from
 the LaunchDarkly service. Implementations must support concurrent access and updates.
 For more about how feature stores can be used, see:
-<a href="https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store">Using a persistent feature store</a>.</p>
+<a href="https://docs.launchdarkly.com/sdk/features/storing-data#ruby">Using a persistent feature store</a>.</p>
 
 <p>An entity that can be stored in a feature store is a hash that can be converted to and from
 JSON, and that has at a minimum the following properties: <code>:key</code>, a string that is unique
@@ -799,9 +799,9 @@ otherwise, the method should do nothing.</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Aug 11 19:22:07 2021 by
+  Generated on Tue Oct 12 23:21:31 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.6.6).
+  0.9.26 (ruby-2.5.9).
 </div>
 
     </div>

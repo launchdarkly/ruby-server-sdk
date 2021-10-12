@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Config
   
-    &mdash; LaunchDarkly Ruby SDK (6.2.4)
+    &mdash; LaunchDarkly Ruby SDK (6.2.5)
   
 </title>
 
@@ -2406,7 +2406,7 @@ purposes; most users should use the default value.</p>
 from LaunchDarkly, and uses the last stored data when evaluating flags. Defaults to
 <span class='object_link'><a href="InMemoryFeatureStore.html" title="LaunchDarkly::InMemoryFeatureStore (class)">InMemoryFeatureStore</a></span>; for other implementations, see <span class='object_link'><a href="Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span>.</p>
 
-<p>For more information, see <a href="https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store">&quot;Using a persistent feature store&quot;</a>.</p>
+<p>For more information, see <a href="https://docs.launchdarkly.com/sdk/concepts/data-stores">&quot;Persistent data stores&quot;</a>.</p>
 
 
   </div>
@@ -4643,8 +4643,8 @@ should only be disabled on the advice of LaunchDarkly support.</p>
     <p>Whether to use the LaunchDarkly relay proxy in daemon mode. In this mode, the client does not
 use polling or streaming to get feature flag updates from the server, but instead reads them
 from the <span class='object_link'><a href="#feature_store-instance_method" title="LaunchDarkly::Config#feature_store (method)">feature store</a></span>, which is assumed to be a database that is populated by
-a LaunchDarkly relay proxy. For more information, see <a href="https://docs.launchdarkly.com/v2.0/docs/the-relay-proxy">&quot;The relay proxy&quot;</a>
-and <a href="https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store">&quot;Using a persistent feature store&quot;</a>.</p>
+a LaunchDarkly relay proxy. For more information, see <a href="https://docs.launchdarkly.com/home/relay-proxy">&quot;The relay proxy&quot;</a>
+and <a href="https://docs.launchdarkly.com/sdk/concepts/data-stores">&quot;Using a persistent data stores&quot;</a>.</p>
 
 <p>All other properties related to streaming or polling are ignored if this option is set to true.</p>
 
@@ -4693,9 +4693,9 @@ and <a href="https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-
 </div>
 
       <div id="footer">
-  Generated on Wed Aug 11 19:22:07 2021 by
+  Generated on Tue Oct 12 23:21:32 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.6.6).
+  0.9.26 (ruby-2.5.9).
 </div>
 
     </div>
