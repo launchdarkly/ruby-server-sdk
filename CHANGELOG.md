@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.2.5] - 2021-10-12
+### Fixed:
+- Fixed a bug that caused unnecessarily heavy CPU usage when receiving very large sets of flag data from LaunchDarkly.
+- Improved the speed of making the initial streaming connection to LaunchDarkly. The delay that happens before reconnecting after a connection failure was mistakenly being applied before the first connection.
+
 ## [6.2.4] - 2021-08-11
 ### Changed:
 - The dependency version constraint for the `http` gem is now looser: it allows 5.x versions as well as 4.x. The breaking changes in `http` v5.0.0 do not affect the SDK. ([#184](https://github.com/launchdarkly/ruby-server-sdk/issues/184))
