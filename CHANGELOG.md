@@ -167,7 +167,7 @@ The gem name will also change. In the 5.5.6 release, it is still `ldclient-rb`; 
 
 ## [5.5.0] - 2019-01-17
 ### Added:
-- It is now possible to use Consul or DynamoDB as a persistent feature store, similar to the existing Redis integration. See the `LaunchDarkly::Integrations::Consul` and `LaunchDarkly::Integrations::DynamoDB` modules, and the reference guide [Using a persistent feature store](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+- It is now possible to use Consul or DynamoDB as a persistent feature store, similar to the existing Redis integration. See the `LaunchDarkly::Integrations::Consul` and `LaunchDarkly::Integrations::DynamoDB` modules, and the reference guide [Persistent data stores](https://docs.launchdarkly.com/sdk/concepts/data-stores).
 - There is now a `LaunchDarkly::Integrations::Redis` module, which is the preferred method for creating a Redis feature store.
 - All of the database feature stores now support local caching not only for individual feature flag queries, but also for `all_flags_state`.
 - The `Config` property `data_source` is the new name for `update_processor` and `update_processor_factory`.
@@ -249,7 +249,7 @@ Fixed a regression in version 5.0.0 that could prevent the client from reconnect
 ## [4.0.0] - 2018-05-10
 
 ### Changed:
-- To reduce the network bandwidth used for analytics events, feature request events are now sent as counters rather than individual events, and user details are now sent only at intervals rather than in each event. These behaviors can be modified through the LaunchDarkly UI and with the new configuration option `inline_users_in_events`. For more details, see [Analytics Data Stream Reference](https://docs.launchdarkly.com/v2.0/docs/analytics-data-stream-reference).
+- To reduce the network bandwidth used for analytics events, feature request events are now sent as counters rather than individual events, and user details are now sent only at intervals rather than in each event. These behaviors can be modified through the LaunchDarkly UI and with the new configuration option `inline_users_in_events`.
 
 ### Removed:
 - JRuby 1.7 is no longer supported.
