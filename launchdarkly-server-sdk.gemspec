@@ -36,7 +36,9 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "semantic", "~> 1.6"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.1"
-  spec.add_runtime_dependency "ld-eventsource", "2.0.1"
+  spec.add_runtime_dependency "ld-eventsource", "2.1.1"
+  # Please keep ld-eventsource dependency as an exact version so that bugfixes to
+  # that LD library are always associated with a new SDK version.
 
   spec.add_runtime_dependency "json", "~> 2.3"
   spec.add_runtime_dependency "http", ">= 4.4.0", "< 6.0.0"
