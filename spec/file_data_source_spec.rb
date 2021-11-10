@@ -71,6 +71,17 @@ EOF
 EOF
   }
 
+    let(:json_with_erb) { <<-EOF
+      {
+        "flagValues": {
+          "onePlusOne": <%= 1 + 1 %>,
+          "constantTwo": 2
+        }
+      }
+EOF
+  }
+
+
   let(:all_properties_yaml) { <<-EOF
 ---
 flags:
@@ -85,6 +96,15 @@ segments:
     include: ["user1"]
 EOF
   }
+
+  let(:yaml_with_erb) { <<-EOF
+---
+flagValues:
+  onePlusOne: <%= 1 + 1 %>
+  constantTwo: 2
+EOF
+  }
+
 
   let(:unsafe_yaml) { <<-EOF
 --- !ruby/hash:BadClassWeShouldNotInstantiate
@@ -131,6 +151,41 @@ EOF
       expect(@store.all(LaunchDarkly::SEGMENTS)).to eq({})
     end
   end
+
+  it "evaulates erb in json if ERB is available" do
+    file = make_temp_file(yaml_with_erb)
+    with_data_source({ paths: [ file.path ] }) do |ds|
+      ds.start
+      onePlusOne = @store.all(LaunchDarkly::FEATURES).dig(:onePlusOne, :variations)
+      constantTwo = @store.all(LaunchDarkly::FEATURES).dig(:constantTwo, :variations)
+      expect(onePlusOne).to eq([2])
+      expect(constantTwo).to eq([2])
+    end
+  end
+
+  it "does not evaulate ERB if ERB is not available" do
+    expect(LaunchDarkly).to receive(:have_erb?).and_return(false)
+    file = make_temp_file(yaml_with_erb)
+    with_data_source({ paths: [ file.path ] }) do |ds|
+      ds.start
+      onePlusOne = @store.all(LaunchDarkly::FEATURES).dig(:onePlusOne, :variations)
+      constantTwo = @store.all(LaunchDarkly::FEATURES).dig(:constantTwo, :variations)
+      expect(onePlusOne).to eq(['<%= 1 + 1 %>'])
+      expect(constantTwo).to eq([2])
+    end
+  end
+
+  it "evaulates erb in json if ERB is available" do
+    file = make_temp_file(json_with_erb)
+    with_data_source({ paths: [ file.path ] }) do |ds|
+      ds.start
+      onePlusOne = @store.all(LaunchDarkly::FEATURES).dig(:onePlusOne, :variations)
+      constantTwo = @store.all(LaunchDarkly::FEATURES).dig(:constantTwo, :variations)
+      expect(onePlusOne).to eq([2])
+      expect(constantTwo).to eq([2])
+    end
+  end
+
 
   it "loads flags on start - from JSON" do
     file = make_temp_file(all_properties_json)

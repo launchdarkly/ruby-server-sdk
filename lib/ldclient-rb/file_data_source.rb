@@ -15,11 +15,21 @@ module LaunchDarkly
   rescue LoadError
   end
 
+  @@have_erb = false
+  begin
+    require 'erb'
+    @@have_erb = true
+  rescue LoadError
+  end
+
   # @private
   def self.have_listen?
     @@have_listen
   end
 
+  def self.have_erb?
+    @@have_erb
+  end
   #
   # Provides a way to use local files as a source of feature flag state. This allows using a
   # predetermined feature flag state without an actual LaunchDarkly connection.
@@ -192,7 +202,9 @@ module LaunchDarkly
     end
 
     def load_file(path, all_data)
-      parsed = parse_content(IO.read(path))
+      content = IO.read(path)
+      content = ERB.new(content).result if LaunchDarkly.have_erb?
+      parsed = parse_content(content)
       (parsed[:flags] || {}).each do |key, flag|
         add_item(all_data, FEATURES, flag)
       end
