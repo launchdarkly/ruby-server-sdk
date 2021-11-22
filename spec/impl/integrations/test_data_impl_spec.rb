@@ -1,9 +1,106 @@
 require "ldclient-rb/impl/integrations/test_data_impl"
+require "ldclient-rb/cache_store"
+require "ldclient-rb/interfaces"
+require "ldclient-rb/in_memory_store"
+require "ldclient-rb/config"
+require "ldclient-rb/events"
+require "ldclient-rb/ldclient"
 
 module LaunchDarkly
   module Impl
     module Integrations
       describe 'TestData' do
+        it 'is a valid datasource' do
+          td = TestData.factory
+          config = LaunchDarkly::Config.new(send_events: false, data_source: td)
+          client = LaunchDarkly::LDClient.new('sdkKey', config)
+          expect(config.feature_store.all(LaunchDarkly::FEATURES)).to eql({})
+          client.close
+        end
+
+        it 'initializes the feature store with existing flags' do
+          td = TestData.factory
+          td.update(td.flag('flag'))
+          config = LaunchDarkly::Config.new(send_events: false, data_source: td)
+          client = LaunchDarkly::LDClient.new('sdkKey', config)
+          expect(config.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+            key: 'flag',
+            variations: [true, false],
+            fallthrough: { variation: 0 },
+            off_variation: 1,
+            on: true,
+            version: 1
+          })
+          client.close
+        end
+
+        it 'updates the feature store with new flags' do
+          td = TestData.factory
+          td.update(td.flag('flag'))
+          config = LaunchDarkly::Config.new(send_events: false, data_source: td)
+          client = LaunchDarkly::LDClient.new('sdkKey', config)
+          config2 = LaunchDarkly::Config.new(send_events: false, data_source: td)
+          client2 = LaunchDarkly::LDClient.new('sdkKey', config2)
+
+          expect(config.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+            key: 'flag',
+            variations: [true, false],
+            fallthrough: { variation: 0 },
+            off_variation: 1,
+            on: true,
+            version: 1
+          })
+          expect(config2.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+            key: 'flag',
+            variations: [true, false],
+            fallthrough: { variation: 0 },
+            off_variation: 1,
+            on: true,
+            version: 1
+          })
+
+          td.update(td.flag('flag').variation_for_all_users(false))
+
+          expect(config.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+            key: 'flag',
+            variations: [true, false],
+            fallthrough: { variation: 1 },
+            off_variation: 1,
+            on: true,
+            version: 2
+          })
+          expect(config2.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+            key: 'flag',
+            variations: [true, false],
+            fallthrough: { variation: 1 },
+            off_variation: 1,
+            on: true,
+            version: 2
+          })
+
+          client.close
+          client2.close
+        end
+
+        it 'TestData.flag defaults to a boolean flag' do
+          td = TestData.new
+          f = td.flag('flag').build(0)
+          expect(f[:variations]).to eq([true, false])
+          expect(f[:fallthrough][:variation]).to eq(0)
+          expect(f[:off_variation]).to eq(1)
+        end
+
+        it 'TestData.flag returns a copy of the existing flag if it exists' do
+          td = TestData.new
+          td.update(td.flag('flag').variation_for_all_users(true))
+          expect(td.flag('flag').build(0)[:fallthrough][:variation]).to eq(0)
+
+          #modify the flag but dont call update
+          td.flag('flag').variation_for_all_users(false).build(0)
+
+          expect(td.flag('flag').build(0)[:fallthrough][:variation]).to eq(0)
+        end
+
         describe 'FlagBuilder' do
 
           it 'defaults to targeting on and sets the flag key' do

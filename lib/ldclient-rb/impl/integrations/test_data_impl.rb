@@ -1,8 +1,95 @@
+require 'concurrent/atomics'
+require 'ldclient-rb/interfaces'
 
 module LaunchDarkly
   module Impl
     module Integrations
       class TestData
+        def self.factory
+          TestData.new
+        end
+
+        def arity
+          2
+        end
+
+        def call(_, config)
+          impl = DataSourceImpl.new(config.feature_store, self)
+          @instances_lock.with_write_lock { @instances.push(impl) }
+          impl
+        end
+
+        def make_init_data
+            { FEATURES => @current_flags }
+        end
+
+        def closed_instance(instance)
+          @instances_lock.with_write_lock { @instances.delete(instance) }
+        end
+
+        def initialize
+          @flag_builders = Hash.new
+          @current_flags = Hash.new
+          @instances = Array.new
+          @instances_lock = Concurrent::ReadWriteLock.new
+          @lock = Concurrent::ReadWriteLock.new
+        end
+
+        def flag(flag_name)
+          existing_builder = @lock.with_read_lock { @flag_builders[flag_name] }
+          if existing_builder.nil? then
+              FlagBuilder.new(flag_name).boolean_flag
+          else
+              existing_builder.clone
+          end
+        end
+
+        def update(flag_builder)
+          new_flag = nil
+          @lock.with_write_lock do
+            @flag_builders[flag_builder.key] = flag_builder
+            version = 0
+            if @current_flags[flag_builder.key] then
+              version = @current_flags[flag_builder.key][:version]
+            end
+            new_flag = flag_builder.build(version+1)
+            @current_flags[flag_builder.key] = new_flag
+          end
+          @instances_lock.with_read_lock do
+            @instances.each do | instance |
+              instance.upsert(new_flag)
+            end
+          end
+        end
+
+        class DataSourceImpl
+          include LaunchDarkly::Interfaces::DataSource
+
+          def initialize(feature_store, test_data)
+            @feature_store = feature_store
+            @test_data = test_data
+          end
+
+          def initialized?
+            true
+          end
+
+          def start
+            ready = Concurrent::Event.new
+            ready.set
+            init_data = @test_data.make_init_data
+            @feature_store.init(init_data)
+            ready
+          end
+
+          def stop
+            @test_data.closed_instance(self)
+          end
+
+          def upsert(new_flag)
+            @feature_store.upsert(FEATURES, new_flag)
+          end
+        end
 
         class DeepCopyHash < Hash
           def initialize_copy(other)
@@ -21,6 +108,8 @@ module LaunchDarkly
         end
 
         class FlagBuilder
+          attr_reader :key
+
           def initialize(key)
             @key = key
             @on = true
@@ -160,13 +249,14 @@ module LaunchDarkly
             unless @rules.nil? then
               res[:rules] = @rules.each_with_index.collect { | rule, i | rule.build(i) }
             end
+
             res
           end
 
           class FlagRuleBuilder
             def initialize(flag_builder)
               @flag_builder = flag_builder
-              @clauses = DeepCopyArray.new
+              @clauses = Array.new
             end
 
             def intialize_copy(other)
@@ -208,7 +298,7 @@ module LaunchDarkly
               {
                 id: 'rule' + ri.to_s,
                 variation: @variation,
-                clauses: @clauses
+                clauses: @clauses.clone
               }
             end
           end
