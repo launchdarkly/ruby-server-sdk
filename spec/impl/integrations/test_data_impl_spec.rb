@@ -58,16 +58,62 @@ module LaunchDarkly
             expect(f[:fallthrough][:variation]).to be(0)
           end
 
+          it 'clears existing rules when setting variation for all users' do
+            f = TestData::FlagBuilder.new('flag')
+                            .if_match('name', 'ben')
+                            .then_return(false)
+                            .variation_for_user('ben', false)
+                            .variation_for_all_users(true).build(1)
+            expect(f[:rules]).to be_nil
+            expect(f[:targets]).to be_nil
+            expect(f[:fallthrough][:variation]).to be(0)
+          end
+
+          it 'can set a variation for a specific user' do
+            f = TestData::FlagBuilder.new('flag')
+                                     .variation_for_user('ben', false)
+            f2 = f.clone.variation_for_user('ben', true)
+            expect(f.build(0)[:targets]).to eql([ { variation: 1, values: ['ben'] } ])
+            expect(f2.build(1)[:targets]).to_not include({ variation: 1, values: ['ben'] })
+            expect(f2.build(1)[:targets]).to include({ variation: 0, values: ['ben'] })
+          end
+
           it 'can make an immutable copy of its self' do
             fb = TestData::FlagBuilder.new('flag').variation_for_all_users(true)
-            fbcopy = fb.copy.variation_for_all_users(false)
+            expect(fb.build(0)).to eql(fb.clone.build(0))
+
+            fcopy = fb.clone.variation_for_all_users(false).build(0)
             f = fb.build(0)
-            fcopy = fbcopy.build(0)
 
             expect(f[:key]).to eql(fcopy[:key])
             expect(f[:variations]).to eql(fcopy[:variations])
             expect(f[:fallthrough][:variation]).to be(0)
             expect(fcopy[:fallthrough][:variation]).to be(1)
+          end
+
+          it 'can build rules based on attributes' do
+            f = TestData::FlagBuilder.new('flag')
+                                      .if_match('name', 'ben')
+                                      .and_not_match('country', 'fr')
+                                      .then_return(true)
+                                      .build(1)
+            expect(f[:rules]).to eql([{
+                                      id: "rule0",
+                                      variation: 0,
+                                      clauses: [{
+                                          attribute: 'name',
+                                          op: 'in',
+                                          values: ['ben'],
+                                          negate: false,
+                                        },
+                                        {
+                                          attribute: 'country',
+                                          op: 'in',
+                                          values: ['fr'],
+                                          negate: true,
+                                        }
+                                      ]
+                                    }])
           end
         end
       end
