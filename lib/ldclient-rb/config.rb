@@ -42,6 +42,7 @@ module LaunchDarkly
     # @option opts [String] :wrapper_name See {#wrapper_name}.
     # @option opts [String] :wrapper_version See {#wrapper_version}.
     # @option opts [#open] :socket_factory See {#socket_factory}.
+    # @option opts [BigSegmentsConfig] :big_segments See {#big_segments}.
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -261,6 +262,16 @@ module LaunchDarkly
     # @see FileDataSource
     #
     attr_reader :data_source
+
+    #
+    # Configuration options related to Big Segments.
+    #
+    # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+    # documentation: https://docs.launchdarkly.com/home/users/big-segments
+    #
+    # @return [BigSegmentsConfig]
+    #
+    attr_reader :big_segments
 
     # @deprecated This is replaced by {#data_source}.
     attr_reader :update_processor
@@ -483,5 +494,69 @@ module LaunchDarkly
     def self.minimum_diagnostic_recording_interval
       60
     end
+  end
+
+  #
+  # Configuration options related to Big Segments.
+  #
+  # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+  # documentation: https://docs.launchdarkly.com/home/users/big-segments
+  #
+  # If your application uses Big Segments, you will need to create a `BigSegmentsConfig` that at a
+  # minimum specifies what database integration to use, and then pass the `BigSegmentsConfig`
+  # object as the `big_segments` parameter when creating a {Config}.
+  #
+  # @example Configuring Big Segments with Redis
+  #     store = LaunchDarkly::Integrations::Redis::new_big_segments_store(redis_url: "redis://my-server")
+  #     config = LaunchDarkly::Config.new(big_segments:
+  #       LaunchDarkly::BigSegmentsConfig.new(store: store))
+  #     client = LaunchDarkly::LDClient.new(my_sdk_key, config)
+  #
+  class BigSegmentsConfig
+    DEFAULT_USER_CACHE_SIZE = 1000
+    DEFAULT_USER_CACHE_TIME = 5
+    DEFAULT_STATUS_POLL_INTERVAL = 5
+    DEFAULT_STALE_AFTER = 2 * 60
+
+    #
+    # Constructor for setting Big Segments options.
+    #
+    # @param store [LaunchDarkly::Interfaces::BigSegmentStore] the data store implementation
+    # @param user_cache_size [Integer] See {#user_cache_size}.
+    # @param user_cache_time [Float] See {#user_cache_time}.
+    # @param status_poll_interval [Float] See {#status_poll_interval}.
+    # @param stale_after [Float] See {#stale_after}.
+    #
+    def initialize(store:, user_cache_size: nil, user_cache_time: nil, status_poll_interval: nil, stale_after: nil)
+      @store = store
+      @user_cache_size = user_cache_size.nil? ? DEFAULT_USER_CACHE_SIZE : user_cache_size
+      @user_cache_time = user_cache_time.nil? ? DEFAULT_USER_CACHE_TIME : user_cache_time
+      @status_poll_interval = status_poll_interval.nil? ? DEFAULT_STATUS_POLL_INTERVAL : status_poll_interval
+      @stale_after = stale_after.nil? ? DEFAULT_STALE_AFTER : stale_after
+    end
+
+    # The implementation of {LaunchDarkly::Interfaces::BigSegmentStore} that will be used to
+    # query the Big Segments database.
+    # @return [LaunchDarkly::Interfaces::BigSegmentStore]
+    attr_reader :store
+
+    # The maximum number of users whose Big Segment state will be cached by the SDK at any given time.
+    # @return [Integer]
+    attr_reader :user_cache_size
+
+    # The maximum length of time (in seconds) that the Big Segment state for a user will be cached
+    # by the SDK.
+    # @return [Float]
+    attr_reader :user_cache_time
+
+    # The interval (in seconds) at which the SDK will poll the Big Segment store to make sure it is
+    # available and to determine how long ago it was updated.
+    # @return [Float]
+    attr_reader :status_poll_interval
+
+    # The maximum length of time between updates of the Big Segments data before the data is
+    # considered out of date.
+    # @return [Float]
+    attr_reader :stale_after
   end
 end
