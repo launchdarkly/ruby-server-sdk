@@ -4,17 +4,13 @@ require 'ldclient-rb/interfaces'
 module LaunchDarkly
   module Impl
     module Integrations
-      class TestData
-        def self.factory
-          TestData.new
-        end
-
+      class TestDataImpl
         def arity
           2
         end
 
         def call(_, config)
-          impl = DataSourceImpl.new(config.feature_store, self)
+          impl = TestDataSource.new(config.feature_store, self)
           @instances_lock.with_write_lock { @instances.push(impl) }
           impl
         end
@@ -63,7 +59,7 @@ module LaunchDarkly
           end
         end
 
-        class DataSourceImpl
+        class TestDataSource
           include LaunchDarkly::Interfaces::DataSource
 
           def initialize(feature_store, test_data)
@@ -240,11 +236,9 @@ module LaunchDarkly
             end
 
             unless @targets.nil? then
-              targets = Array.new
-              @targets.each do | variation, values |
-                targets.push({ variation: variation, values: values })
+              res[:targets] = @targets.collect do | variation, values |
+                { variation: variation, values: values }
               end
-              res[:targets] = targets
             end
 
             unless @rules.nil? then
@@ -255,6 +249,8 @@ module LaunchDarkly
           end
 
           class FlagRuleBuilder
+            FlagRuleClause = Struct.new(:attribute, :op, :values, :negate, keyword_init: true)
+
             def initialize(flag_builder)
               @flag_builder = flag_builder
               @clauses = Array.new
@@ -266,22 +262,22 @@ module LaunchDarkly
             end
 
             def and_match(attribute, *values)
-              @clauses.push({
+              @clauses.push(FlagRuleClause.new(
                 attribute: attribute,
                 op: 'in',
                 values: values,
                 negate: false
-              })
+              ))
               self
             end
 
             def and_not_match(attribute, *values)
-              @clauses.push({
+              @clauses.push(FlagRuleClause.new(
                 attribute: attribute,
                 op: 'in',
                 values: values,
                 negate: true
-              })
+              ))
               self
             end
 
@@ -299,7 +295,7 @@ module LaunchDarkly
               {
                 id: 'rule' + ri.to_s,
                 variation: @variation,
-                clauses: @clauses.clone
+                clauses: @clauses.collect(&:to_h)
               }
             end
           end

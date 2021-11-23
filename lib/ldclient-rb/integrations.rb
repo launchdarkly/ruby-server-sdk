@@ -1,6 +1,7 @@
 require "ldclient-rb/integrations/consul"
 require "ldclient-rb/integrations/dynamodb"
 require "ldclient-rb/integrations/redis"
+require "ldclient-rb/integrations/test_data"
 require "ldclient-rb/integrations/util/store_wrapper"
 
 module LaunchDarkly
@@ -18,7 +19,7 @@ module LaunchDarkly
     module Consul
       # code is in ldclient-rb/impl/integrations/consul_impl
     end
-    
+
     #
     # Integration with [DynamoDB](https://aws.amazon.com/dynamodb/).
     #
@@ -50,6 +51,11 @@ module LaunchDarkly
     #
     module Util
       # code is in ldclient-rb/integrations/util/
+    end
+
+
+    module TestData
+      # code is in ldclient-rb/impl/integrations/test_data_impl
     end
   end
 end
