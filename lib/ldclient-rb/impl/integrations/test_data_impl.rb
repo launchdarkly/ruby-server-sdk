@@ -49,11 +49,12 @@ module LaunchDarkly
           @lock.with_write_lock do
             @flag_builders[flag_builder.key] = flag_builder
             version = 0
-            if @current_flags[flag_builder.key] then
-              version = @current_flags[flag_builder.key][:version]
+            flag_key = flag_builder.key.to_sym
+            if @current_flags[flag_key] then
+              version = @current_flags[flag_key][:version]
             end
             new_flag = flag_builder.build(version+1)
-            @current_flags[flag_builder.key] = new_flag
+            @current_flags[flag_key] = new_flag
           end
           @instances_lock.with_read_lock do
             @instances.each do | instance |

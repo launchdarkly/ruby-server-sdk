@@ -37,7 +37,6 @@ module LaunchDarkly
           # pick a random item that hasn't been updated yet
           key, item = remaining_items.first
           self.add_with_dependencies_first(item, dependency_fn, remaining_items, items_out)
-          remaining_items.delete(key)  # we won't need to visit this item again
         end
         items_out
       end
