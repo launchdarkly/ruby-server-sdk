@@ -169,7 +169,7 @@ module LaunchDarkly
               @clauses = DeepCopyArray.new
             end
 
-            def intialize_copy(other)
+            def initialize_copy(other)
               super(other)
               @clauses = @clauses.clone
             end
