@@ -1,3 +1,4 @@
+require 'concurrent/atomics'
 require 'ldclient-rb/impl/integrations/test_data/test_data_source'
 require 'ldclient-rb/integrations/test_data/flag_builder'
 
