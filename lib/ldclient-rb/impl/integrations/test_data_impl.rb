@@ -129,22 +129,6 @@ module LaunchDarkly
           end
         end
 
-        class DeepCopyHash < Hash
-          def initialize_copy(other)
-            other.each do | key, value |
-              self[key] = value.clone
-            end
-          end
-        end
-
-        class DeepCopyArray < Array
-          def initialize_copy(other)
-            other.each do | value |
-              self.push(value.clone)
-            end
-          end
-        end
-
         #
         # A builder for feature flag configurations to be used with {TestDataImpl}.
         #
@@ -165,8 +149,8 @@ module LaunchDarkly
           def initialize_copy(other)
             super(other)
             @variations = @variations.clone
-            @rules = @rules.nil? ? nil : @rules.clone
-            @targets = @targets.nil? ? nil : @targets.clone
+            @rules = @rules.nil? ? nil : deep_copy_array(@rules)
+            @targets = @targets.nil? ? nil : deep_copy_hash(@targets)
           end
 
           #
@@ -198,7 +182,7 @@ module LaunchDarkly
           # @return the builder
           #
           def fallthrough_variation(variation)
-            if [true,false].include? variation then
+            if Util.is_bool variation then
               boolean_flag.fallthrough_variation(variation_for_boolean(variation))
             else
               @fallthrough_variation = variation
@@ -218,7 +202,7 @@ module LaunchDarkly
           # @return [FlagBuilder] the builder
           #
           def off_variation(variation)
-            if [true,false].include? variation then
+            if Util.is_bool variation then
               boolean_flag.off_variation(variation_for_boolean(variation))
             else
               @off_variation = variation
@@ -255,7 +239,7 @@ module LaunchDarkly
           # @return [FlagBuilder] the builder
           #
           def variation_for_all_users(variation)
-            if [true,false].include? variation then
+            if Util.is_bool variation then
               boolean_flag.variation_for_all_users(variation_for_boolean(variation))
             else
               on(true).clear_rules.clear_user_targets.fallthrough_variation(variation)
@@ -292,11 +276,11 @@ module LaunchDarkly
           # @return [FlagBuilder] the builder
           #
           def variation_for_user(user_key, variation)
-            if [true,false].include? variation then
+            if Util.is_bool variation then
               boolean_flag.variation_for_user(user_key, variation_for_boolean(variation))
             else
               if @targets.nil? then
-                @targets = DeepCopyHash.new
+                @targets = Hash.new
               end
               @variations.count.times do | i |
                 if i == variation then
@@ -378,7 +362,7 @@ module LaunchDarkly
           # @private
           def add_rule(rule)
             if @rules.nil? then
-              @rules = DeepCopyArray.new
+              @rules = Array.new
             end
             @rules.push(rule)
             self
@@ -522,7 +506,7 @@ module LaunchDarkly
             # @result [FlagBuilder] the flag builder with this rule added
             #
             def then_return(variation)
-              if [true, false].include? variation then
+              if Util.is_bool variation then
                 @variation = @flag_builder.variation_for_boolean(variation)
                 @flag_builder.boolean_flag.add_rule(self)
               else
@@ -546,16 +530,28 @@ module LaunchDarkly
             variation ? TRUE_VARIATION_INDEX : FALSE_VARIATION_INDEX
           end
 
+
           private
-            TRUE_VARIATION_INDEX = 0
-            FALSE_VARIATION_INDEX = 1
+          TRUE_VARIATION_INDEX = 0
+          FALSE_VARIATION_INDEX = 1
 
-            def is_boolean_flag
-              @variations.size == 2 &&
-              @variations[TRUE_VARIATION_INDEX] == true &&
-              @variations[FALSE_VARIATION_INDEX] == false
-            end
+          def is_boolean_flag
+            @variations.size == 2 &&
+            @variations[TRUE_VARIATION_INDEX] == true &&
+            @variations[FALSE_VARIATION_INDEX] == false
+          end
 
+          def deep_copy_hash(from)
+            to = Hash.new
+            from.each { |k, v| to[k] = v.clone }
+            to
+          end
+
+          def deep_copy_array(from)
+            to = Array.new
+            from.each { |v| to.push(v.clone) }
+            to
+          end
         end
       end
     end
