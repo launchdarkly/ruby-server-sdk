@@ -74,6 +74,7 @@ module LaunchDarkly
       @wrapper_name = opts[:wrapper_name]
       @wrapper_version = opts[:wrapper_version]
       @socket_factory = opts[:socket_factory]
+      @big_segments = opts[:big_segments] || BigSegmentsConfig.new(store: nil)
     end
 
     #

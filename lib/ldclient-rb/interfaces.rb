@@ -247,6 +247,10 @@ module LaunchDarkly
       #
       # @return [Boolean]
       attr_reader :stale
+
+      def ==(other)
+        self.available == other.available && self.stale == other.stale
+      end
     end
 
     #
