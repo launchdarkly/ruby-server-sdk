@@ -5,6 +5,7 @@ module LaunchDarkly
   module Impl
     module Integrations
       class TestDataImpl
+        # @private
         def initialize
           @flag_builders = Hash.new
           @current_flags = Hash.new
@@ -32,21 +33,20 @@ module LaunchDarkly
         end
 
         #
-        # Creates or copies a {@link FlagBuilder} for building a test flag configuration.
-        # <p>
-        # If this flag key has already been defined in this {@code TestDataImpl} instance, then the builder
-        # starts with the same configuration that was last provided for this flag.
-        # <p>
-        # Otherwise, it starts with a new default configuration in which the flag has {@code true} and
-        # {@code false} variations, is {@code true} for all users when targeting is turned on and
-        # {@code false} otherwise, and currently has targeting turned on. You can change any of those
-        # properties, and provide more complex behavior, using the {@link FlagBuilder} methods.
-        # <p>
-        # Once you have set the desired configuration, pass the builder to {@link #update(FlagBuilder)}.
+        # Creates or copies a {FlagBuilder} for building a test flag configuration.
         #
-        # @param key the flag key
-        # @return a flag configuration builder
-        # @see #update(FlagBuilder)
+        # If this flag key has already been defined in this `TestDataImpl` instance, then the builder
+        # starts with the same configuration that was last provided for this flag.
+        #
+        # Otherwise, it starts with a new default configuration in which the flag has `true` and
+        # `false variations, is `true` for all users when targeting is turned on and
+        # `false` otherwise, and currently has targeting turned on. You can change any of those
+        # properties, and provide more complex behavior, using the {FlagBuilder} methods.
+        #
+        # Once you have set the desired configuration, pass the builder to {#update}.
+        #
+        # @param key [String] the flag key
+        # @return [FlagBuilder] a flag configuration builder
         #
         def flag(key)
           existing_builder = @lock.with_read_lock { @flag_builders[key] }
@@ -59,19 +59,18 @@ module LaunchDarkly
 
         #
         # Updates the test data with the specified flag configuration.
-        # <p>
-        # This has the same effect as if a flag were added or modified on the LaunchDarkly dashboard.
-        # It immediately propagates the flag change to any {@code LDClient} instance(s) that you have
-        # already configured to use this {@code TestDataImpl}. If no {@code LDClient} has been started yet,
-        # it simply adds this flag to the test data which will be provided to any {@code LDClient} that
-        # you subsequently configure.
-        # <p>
-        # Any subsequent changes to this {@link FlagBuilder} instance do not affect the test data,
-        # unless you call {@link #update(FlagBuilder)} again.
         #
-        # @param flag_builder a flag configuration builder
-        # @return the same {@code TestDataImpl} instance
-        # @see #flag(String)
+        # This has the same effect as if a flag were added or modified on the LaunchDarkly dashboard.
+        # It immediately propagates the flag change to any `LDClient` instance(s) that you have
+        # already configured to use this `TestDataImpl`. If no `LDClient` has been started yet,
+        # it simply adds this flag to the test data which will be provided to any `LDClient` that
+        # you subsequently configure.
+        #
+        # Any subsequent changes to this {FlagBuilder} instance do not affect the test data,
+        # unless you call {#update} again.
+        #
+        # @param flag_builder [FlagBuilder] a flag configuration builder
+        # @return [TestDataImpl] the same `TestDataImpl` instance
         #
         def update(flag_builder)
           new_flag = nil
@@ -100,6 +99,7 @@ module LaunchDarkly
           @instances_lock.with_write_lock { @instances.delete(instance) }
         end
 
+        # @private
         class TestDataSource
           include LaunchDarkly::Interfaces::DataSource
 
@@ -146,20 +146,22 @@ module LaunchDarkly
         end
 
         #
-        # A builder for feature flag configurations to be used with {@link TestDataImpl}.
+        # A builder for feature flag configurations to be used with {TestDataImpl}.
         #
-        # @see TestDataImpl#flag(String)
-        # @see TestDataImpl#update(FlagBuilder)
+        # @see TestDataImpl#flag
+        # @see TestDataImpl#update
         #
         class FlagBuilder
           attr_reader :key
 
+          # @private
           def initialize(key)
             @key = key
             @on = true
             @variations = []
           end
 
+          # @private
           def initialize_copy(other)
             super(other)
             @variations = @variations.clone
@@ -169,14 +171,14 @@ module LaunchDarkly
 
           #
           # Sets targeting to be on or off for this flag.
-          # <p>
+          #
           # The effect of this depends on the rest of the flag configuration, just as it does on the
           # real LaunchDarkly dashboard. In the default configuration that you get from calling
-          # {@link TestDataImpl#flag(String)} with a new flag key, the flag will return {@code false}
-          # whenever targeting is off, and {@code true} when targeting is on.
+          # {TestDataImpl#flag} with a new flag key, the flag will return `false`
+          # whenever targeting is off, and `true` when targeting is on.
           #
-          # @param on true if targeting should be on
-          # @return the builder
+          # @param on [Boolean] true if targeting should be on
+          # @return [FlagBuilder] the builder
           #
           def on(on)
             @on = on
@@ -187,11 +189,11 @@ module LaunchDarkly
           # Specifies the fallthrough variation. The fallthrough is the value
           # that is returned if targeting is on and the user was not matched by a more specific
           # target or rule.
-          # <p>
+          #
           # If the flag was previously configured with other variations and the variation specified is a boolean,
           # this also changes it to a boolean flag.
           #
-          # @param variation true or false or the desired fallthrough variation index:
+          # @param variation [Boolean, Integer] true or false or the desired fallthrough variation index:
           #                  0 for the first, 1 for the second, etc.
           # @return the builder
           #
@@ -207,13 +209,13 @@ module LaunchDarkly
           #
           # Specifies the off variation for a flag. This is the variation that is returned
           # whenever targeting is off.
-          # <p>
+          #
           # If the flag was previously configured with other variations and the variation specified is a boolean,
           # this also changes it to a boolean flag.
           #
-          # @param variation true or false or the desired off variation index:
+          # @param variation [Boolean, Integer] true or false or the desired off variation index:
           #                  0 for the first, 1 for the second, etc.
-          # @return the builder
+          # @return [FlagBuilder] the builder
           #
           def off_variation(variation)
             if [true,false].include? variation then
@@ -226,13 +228,13 @@ module LaunchDarkly
 
           #
           # Changes the allowable variation values for the flag.
-          # <p>
-          # The value may be of any valid JSON type. For instance, a boolean flag
-          # normally has {@code true, false}; a string-valued flag might have
-          # {@code 'red', 'green'}; etc.
           #
-          # @param variations the desired variations
-          # @return the builder
+          # The value may be of any valid JSON type. For instance, a boolean flag
+          # normally has `true, false`; a string-valued flag might have
+          # `'red', 'green'`; etc.
+          #
+          # @param *variations [Array<Object>] the desired variations
+          # @return [FlagBuilder] the builder
           #
           def variations(*variations)
             @variations = variations
@@ -241,16 +243,16 @@ module LaunchDarkly
 
           #
           # Sets the flag to always return the specified variation for all users.
-          # <p>
+          #
           # The variation is specified, Targeting is switched on, and any existing targets or rules are removed.
           # The fallthrough variation is set to the specified value. The off variation is left unchanged.
-          # <p>
+          #
           # If the flag was previously configured with other variations and the variation specified is a boolean,
           # this also changes it to a boolean flag.
           #
-          # @param variation true or false or the desired variation index to return:
+          # @param variation [Boolean, Integer] true or false or the desired variation index to return:
           #                  0 for the first, 1 for the second, etc.
-          # @return the builder
+          # @return [FlagBuilder] the builder
           #
           def variation_for_all_users(variation)
             if [true,false].include? variation then
@@ -262,14 +264,14 @@ module LaunchDarkly
 
           #
           # Sets the flag to always return the specified variation value for all users.
-          # <p>
+          #
           # The value may be of any valid JSON type. This method changes the
           # flag to have only a single variation, which is this value, and to return the same
           # variation regardless of whether targeting is on or off. Any existing targets or rules
           # are removed.
           #
-          # @param value the desired value to be returned for all users
-          # @return the builder
+          # @param value [Object] the desired value to be returned for all users
+          # @return [FlagBuilder] the builder
           #
           def value_for_all_users(value)
             variations(value).variation_for_all_users(0)
@@ -278,16 +280,16 @@ module LaunchDarkly
           #
           # Sets the flag to return the specified variation for a specific user key when targeting
           # is on.
-          # <p>
+          #
           # This has no effect when targeting is turned off for the flag.
-          # <p>
+          #
           # If the flag was previously configured with other variations and the variation specified is a boolean,
           # this also changes it to a boolean flag.
           #
-          # @param user_key a user key
-          # @param variation true or false or the desired variation index to return:
+          # @param user_key [String] a user key
+          # @param variation [Boolean, Integer] true or false or the desired variation index to return:
           #                  0 for the first, 1 for the second, etc.
-          # @return the builder
+          # @return [FlagBuilder] the builder
           #
           def variation_for_user(user_key, variation)
             if [true,false].include? variation then
@@ -313,20 +315,19 @@ module LaunchDarkly
 
           #
           # Starts defining a flag rule, using the "is one of" operator.
-          # <p>
-          # For example, this creates a rule that returns {@code true} if the name is "Patsy" or "Edina":
           #
-          # <pre><code>
+          # @example create a rule that returns `true` if the name is "Patsy" or "Edina"
           #     testData.flag("flag")
           #         .if_match(:name, 'Patsy', 'Edina')
           #         .then_return(true);
-          # </code></pre>
           #
-          # @param attribute the user attribute to match against
-          # @param values values to compare to
-          # @return a {@link FlagRuleBuilder}; call {@link FlagRuleBuilder#then_return(boolean|int)}
-          #   to finish the rule, or add more tests with another method like
-          #   {@link FlagRuleBuilder#and_match(UserAttribute, LDValue...)}
+          # @param attribute [Symbol] the user attribute to match against
+          # @param *values [Array<Object>] values to compare to
+          # @return [FlagRuleBuilder] a flag rule builder
+          #
+          # @see {FlagRuleBuilder#then_return} call to finish the rule
+          # @see {FlagRuleBuilder#and_match} add more tests
+          # @see {FlagRuleBuilder#and_not_match} add more tests
           #
           def if_match(attribute, *values)
             FlagRuleBuilder.new(self).and_match(attribute, *values)
@@ -334,30 +335,29 @@ module LaunchDarkly
 
           #
           # Starts defining a flag rule, using the "is not one of" operator.
-          # <p>
-          # For example, this creates a rule that returns {@code true} if the name is neither "Saffron" nor "Bubble":
           #
-          # <pre><code>
+          # @example create a rule that returns `true` if the name is neither "Saffron" nor "Bubble"
           #     testData.flag("flag")
           #         .if_not_match(:name, 'Saffron', 'Bubble')
           #         .then_return(true)
-          # </code></pre>
           #
-          # @param attribute the user attribute to match against
-          # @param values values to compare to
-          # @return a {@link FlagRuleBuilder}; call {@link FlagRuleBuilder#then_return(boolean|int)}
-          #   to finish the rule, or add more tests with another method like
-          #   {@link FlagRuleBuilder#and_match(UserAttribute, value...)}
+          # @param attribute [Symbol] the user attribute to match against
+          # @param *values [Array<Object>] values to compare to
+          # @return [FlagRuleBuilder] a flag rule builder
+          #
+          # @see {FlagRuleBuilder#then_return} call to finish the rule
+          # @see {FlagRuleBuilder#and_match} add more tests
+          # @see {FlagRuleBuilder#and_not_match} add more tests
           #
           def if_not_match(attribute, *values)
             FlagRuleBuilder.new(self).and_not_match(attribute, *values)
           end
 
           #
-          # Removes any existing user targets from the flag. This undoes the effect of methods like
-          # {@link #variation_for_user}
+          # Removes any existing user targets from the flag.
+          # This undoes the effect of methods like {#variation_for_user}
           #
-          # @return the same builder
+          # @return [FlagBuilder] the same builder
           #
           def clear_user_targets
             @targets = nil
@@ -365,16 +365,17 @@ module LaunchDarkly
           end
 
           #
-          # Removes any existing rules from the flag. This undoes the effect of methods like
-          # {@link #if_match}
+          # Removes any existing rules from the flag.
+          # This undoes the effect of methods like {#if_match}
           #
-          # @return the same builder
+          # @return [FlagBuilder] the same builder
           #
           def clear_rules
             @rules = nil
             self
           end
 
+          # @private
           def add_rule(rule)
             if @rules.nil? then
               @rules = DeepCopyArray.new
@@ -385,13 +386,13 @@ module LaunchDarkly
 
           #
           #  A shortcut for setting the flag to use the standard boolean configuration.
-          #  <p>
-          #  This is the default for all new flags created with {@link TestDataImpl#flag(String)}. The flag
-          #  will have two variations, {@code true} and {@code false} (in that order); it will return
-          #  {@code false} whenever targeting is off, and {@code true} when targeting is on if no other
-          #  settings specify otherwise.
           #
-          #  @return the builder
+          #  This is the default for all new flags created with {TestDataImpl#flag}.
+          #  The flag will have two variations, `true` and `false` (in that order);
+          #  it will return `false` whenever targeting is off, and `true` when targeting is on
+          #  if no other settings specify otherwise.
+          #
+          #  @return [FlagBuilder] the builder
           #
           def boolean_flag
             if is_boolean_flag then
@@ -403,6 +404,7 @@ module LaunchDarkly
             end
           end
 
+          # @private
           def build(version)
             res = { key: @key,
                     version: version,
@@ -435,26 +437,28 @@ module LaunchDarkly
           end
 
           #
-          # A builder for feature flag rules to be used with {@link FlagBuilder}.
-          # <p>
+          # A builder for feature flag rules to be used with {FlagBuilder}.
+          #
           # In the LaunchDarkly model, a flag can have any number of rules, and a rule can have any number of
           # clauses. A clause is an individual test such as "name is 'X'". A rule matches a user if all of the
           # rule's clauses match the user.
-          # <p>
+          #
           # To start defining a rule, use one of the flag builder's matching methods such as
-          # {@link FlagBuilder#if_match}. This defines the first clause for the rule.
+          # {FlagBuilder#if_match}. This defines the first clause for the rule.
           # Optionally, you may add more clauses with the rule builder's methods such as
-          # {@link #and_match} or {@link #and_not_match}.
-          # Finally, call {@link #then_return} to finish defining the rule.
+          # {#and_match} or {#and_not_match}.
+          # Finally, call {#then_return} to finish defining the rule.
           #
           class FlagRuleBuilder
             FlagRuleClause = Struct.new(:attribute, :op, :values, :negate, keyword_init: true)
 
+            # @private
             def initialize(flag_builder)
               @flag_builder = flag_builder
               @clauses = Array.new
             end
 
+            # @private
             def intialize_copy(other)
               super(other)
               @clauses = @clauses.clone
@@ -462,20 +466,16 @@ module LaunchDarkly
 
             #
             # Adds another clause, using the "is one of" operator.
-            # <p>
-            # For example, this creates a rule that returns {@code true} if the name is "Patsy" and the
-            # country is "gb":
             #
-            # <pre><code>
+            # @example create a rule that returns `true` if the name is "Patsy" and the country is "gb"
             #     testData.flag("flag")
             #         .if_match(:name, 'Patsy')
             #         .and_match(:country, 'gb')
             #         .then_return(true)
-            # </code></pre>
             #
-            # @param attribute the user attribute to match against
-            # @param values values to compare to
-            # @return the rule builder
+            # @param attribute [Symbol] the user attribute to match against
+            # @param *values [Array<Object>] values to compare to
+            # @return [FlagRuleBuilder] the rule builder
             #
             def and_match(attribute, *values)
               @clauses.push(FlagRuleClause.new(
@@ -489,20 +489,16 @@ module LaunchDarkly
 
             #
             # Adds another clause, using the "is not one of" operator.
-            # <p>
-            # For example, this creates a rule that returns {@code true} if the name is "Patsy" and the
-            # country is not "gb":
             #
-            # <pre><code>
+            # @example create a rule that returns `true` if the name is "Patsy" and the country is not "gb"
             #     testData.flag("flag")
             #         .if_match(:name, 'Patsy')
             #         .and_not_match(:country, 'gb')
             #         .then_return(true)
-            # </code></pre>
             #
-            # @param attribute the user attribute to match against
-            # @param values values to compare to
-            # @return the rule builder
+            # @param attribute [Symbol] the user attribute to match against
+            # @param *values [Array<Object>] values to compare to
+            # @return [FlagRuleBuilder] the rule builder
             #
             def and_not_match(attribute, *values)
               @clauses.push(FlagRuleClause.new(
@@ -517,13 +513,13 @@ module LaunchDarkly
             #
             # Finishes defining the rule, specifying the result as either a boolean
             # or a variation index.
-            # <p>
+            #
             # If the flag was previously configured with other variations and the variation specified is a boolean,
             # this also changes it to a boolean flag.
             #
-            # @param variation true or false or the desired variation index:
+            # @param variation [Boolean, Integer] true or false or the desired variation index:
             #                  0 for the first, 1 for the second, etc.
-            # @result the flag builder with this rule added
+            # @result [FlagBuilder] the flag builder with this rule added
             #
             def then_return(variation)
               if [true, false].include? variation then
@@ -535,6 +531,7 @@ module LaunchDarkly
               end
             end
 
+            # @private
             def build(ri)
               {
                 id: 'rule' + ri.to_s,
@@ -544,6 +541,7 @@ module LaunchDarkly
             end
           end
 
+          # @private
           def variation_for_boolean(variation)
             variation ? TRUE_VARIATION_INDEX : FALSE_VARIATION_INDEX
           end
