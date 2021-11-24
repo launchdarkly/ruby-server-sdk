@@ -1,42 +1,137 @@
-require 'ldclient-rb/impl/integrations/test_data_impl'
+require 'ldclient-rb/impl/integrations/test_data/test_data_source'
+require 'ldclient-rb/integrations/test_data/flag_builder'
 
-#
-# A mechanism for providing dynamically updatable feature flag state in a simplified form to an SDK
-# client in test scenarios.
-# <p>
-# Unlike {@link FileDataSource}, this mechanism does not use any external resources. It provides only
-# the data that the application has put into it using the {@link #update(FlagBuilder)} method.
-#
-# <pre><code>
-#     td = LaunchDarkly::Integrations::TestData.factory
-#     td.update(td.flag("flag-key-1").variation_for_all_users(true))
-#     config = LaunchDarkly::Config.new(data_source: td)
-#     client = LaunchDarkly::LDClient.new('sdkKey', config)
-#     # flags can be updated at any time:
-#     td.update(td.flag("flag-key-2")
-#                 .variation_for_user("some-user-key", true)
-#                 .fallthrough_variation(false))
-# </code></pre>
-#
-# The above example uses a simple boolean flag, but more complex configurations are possible using
-# the methods of the {@link FlagBuilder} that is returned by {@link #flag(String)}. {@link FlagBuilder}
-# supports many of the ways a flag can be configured on the LaunchDarkly dashboard, but does not
-# currently support 1. rule operators other than "in" and "not in", or 2. percentage rollouts.
-# <p>
-# If the same {@code TestData} instance is used to configure multiple {@code LDClient} instances,
-# any changes made to the data will propagate to all of the {@code LDClient}s.
-#
 module LaunchDarkly
   module Integrations
-    module TestData
+    #
+    # A mechanism for providing dynamically updatable feature flag state in a simplified form to an SDK
+    # client in test scenarios.
+    #
+    # Unlike {FileDataSource}, this mechanism does not use any external resources. It provides only
+    # the data that the application has put into it using the {#update} method.
+    #
+    # @example
+    #     td = LaunchDarkly::Integrations::TestData.factory
+    #     td.update(td.flag("flag-key-1").variation_for_all_users(true))
+    #     config = LaunchDarkly::Config.new(data_source: td)
+    #     client = LaunchDarkly::LDClient.new('sdkKey', config)
+    #     # flags can be updated at any time:
+    #     td.update(td.flag("flag-key-2")
+    #                 .variation_for_user("some-user-key", true)
+    #                 .fallthrough_variation(false))
+    #
+    # The above example uses a simple boolean flag, but more complex configurations are possible using
+    # the methods of the {FlagBuilder} that is returned by {#flag}. {FlagBuilder}
+    # supports many of the ways a flag can be configured on the LaunchDarkly dashboard, but does not
+    # currently support 1. rule operators other than "in" and "not in", or 2. percentage rollouts.
+    #
+    # If the same `TestData` instance is used to configure multiple `LDClient` instances,
+    # any changes made to the data will propagate to all of the `LDClient`s.
+    #
+    class TestData
       # Creates a new instance of the test data source.
-      # <p>
-      # See {@link TestDataImpl} for details.
+      #
       #
       # @return a new configurable test data source
       #
-      def self.factory
-        LaunchDarkly::Impl::Integrations::TestDataImpl.new
+      def self.data_source
+        self.new
+      end
+
+      # @private
+      def initialize
+        @flag_builders = Hash.new
+        @current_flags = Hash.new
+        @instances = Array.new
+        @instances_lock = Concurrent::ReadWriteLock.new
+        @lock = Concurrent::ReadWriteLock.new
+      end
+
+      #
+      # Called internally by the SDK to determine what arguments to pass to call
+      # You do not need to call this method.
+      #
+      def arity
+        2
+      end
+
+      #
+      # Called internally by the SDK to associate this test data source with an {@code LDClient} instance.
+      # You do not need to call this method.
+      #
+      def call(_, config)
+        impl = LaunchDarkly::Impl::Integrations::TestData::TestDataSource.new(config.feature_store, self)
+        @instances_lock.with_write_lock { @instances.push(impl) }
+        impl
+      end
+
+      #
+      # Creates or copies a {FlagBuilder} for building a test flag configuration.
+      #
+      # If this flag key has already been defined in this `TestData` instance, then the builder
+      # starts with the same configuration that was last provided for this flag.
+      #
+      # Otherwise, it starts with a new default configuration in which the flag has `true` and
+      # `false variations, is `true` for all users when targeting is turned on and
+      # `false` otherwise, and currently has targeting turned on. You can change any of those
+      # properties, and provide more complex behavior, using the {FlagBuilder} methods.
+      #
+      # Once you have set the desired configuration, pass the builder to {#update}.
+      #
+      # @param key [String] the flag key
+      # @return [FlagBuilder] a flag configuration builder
+      #
+      def flag(key)
+        existing_builder = @lock.with_read_lock { @flag_builders[key] }
+        if existing_builder.nil? then
+            FlagBuilder.new(key).boolean_flag
+        else
+            existing_builder.clone
+        end
+      end
+
+      #
+      # Updates the test data with the specified flag configuration.
+      #
+      # This has the same effect as if a flag were added or modified on the LaunchDarkly dashboard.
+      # It immediately propagates the flag change to any `LDClient` instance(s) that you have
+      # already configured to use this `TestData`. If no `LDClient` has been started yet,
+      # it simply adds this flag to the test data which will be provided to any `LDClient` that
+      # you subsequently configure.
+      #
+      # Any subsequent changes to this {FlagBuilder} instance do not affect the test data,
+      # unless you call {#update} again.
+      #
+      # @param flag_builder [FlagBuilder] a flag configuration builder
+      # @return [TestData] the same `TestData` instance
+      #
+      def update(flag_builder)
+        new_flag = nil
+        @lock.with_write_lock do
+          @flag_builders[flag_builder.key] = flag_builder
+          version = 0
+          flag_key = flag_builder.key.to_sym
+          if @current_flags[flag_key] then
+            version = @current_flags[flag_key][:version]
+          end
+          new_flag = flag_builder.build(version+1)
+          @current_flags[flag_key] = new_flag
+        end
+        @instances_lock.with_read_lock do
+          @instances.each do | instance |
+            instance.upsert(new_flag)
+          end
+        end
+      end
+
+      # @private
+      def make_init_data
+          { FEATURES => @current_flags }
+      end
+
+      # @private
+      def closed_instance(instance)
+        @instances_lock.with_write_lock { @instances.delete(instance) }
       end
     end
   end

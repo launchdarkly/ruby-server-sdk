@@ -4,6 +4,10 @@ require "http"
 module LaunchDarkly
   # @private
   module Util
+    def self.is_bool(aObject)
+       [true,false].include? aObject
+    end
+
     def self.stringify_attrs(hash, attrs)
       return hash if hash.nil?
       ret = hash
@@ -18,7 +22,7 @@ module LaunchDarkly
       end
       ret
     end
-    
+
     def self.new_http_client(uri_s, config)
       http_client_options = {}
       if config.socket_factory
