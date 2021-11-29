@@ -33,8 +33,7 @@ module LaunchDarkly
       # Creates a new instance of the test data source.
       #
       #
-      # @return a new configurable test data source
-      #
+      # @return [TestData] a new configurable test data source
       def self.data_source
         self.new
       end
@@ -52,6 +51,7 @@ module LaunchDarkly
       # Called internally by the SDK to determine what arguments to pass to call
       # You do not need to call this method.
       #
+      # @private
       def arity
         2
       end
@@ -60,6 +60,7 @@ module LaunchDarkly
       # Called internally by the SDK to associate this test data source with an {@code LDClient} instance.
       # You do not need to call this method.
       #
+      # @private
       def call(_, config)
         impl = LaunchDarkly::Impl::Integrations::TestData::TestDataSource.new(config.feature_store, self)
         @instances_lock.with_write_lock { @instances.push(impl) }
@@ -73,7 +74,7 @@ module LaunchDarkly
       # starts with the same configuration that was last provided for this flag.
       #
       # Otherwise, it starts with a new default configuration in which the flag has `true` and
-      # `false variations, is `true` for all users when targeting is turned on and
+      # `false` variations, is `true` for all users when targeting is turned on and
       # `false` otherwise, and currently has targeting turned on. You can change any of those
       # properties, and provide more complex behavior, using the {FlagBuilder} methods.
       #
@@ -104,7 +105,7 @@ module LaunchDarkly
       # unless you call {#update} again.
       #
       # @param flag_builder [FlagBuilder] a flag configuration builder
-      # @return [TestData] the same `TestData` instance
+      # @return [TestData] self
       #
       def update(flag_builder)
         new_flag = nil
@@ -123,6 +124,7 @@ module LaunchDarkly
             instance.upsert(new_flag)
           end
         end
+        self
       end
 
       # @private

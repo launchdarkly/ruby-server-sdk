@@ -4,10 +4,10 @@ module LaunchDarkly
   module Integrations
     class TestData
       #
-      # A builder for feature flag configurations to be used with {TestDataImpl}.
+      # A builder for feature flag configurations to be used with {TestData}.
       #
-      # @see TestDataImpl#flag
-      # @see TestDataImpl#update
+      # @see TestData#flag
+      # @see TestData#update
       #
       class FlagBuilder
         attr_reader :key
@@ -32,7 +32,7 @@ module LaunchDarkly
         #
         # The effect of this depends on the rest of the flag configuration, just as it does on the
         # real LaunchDarkly dashboard. In the default configuration that you get from calling
-        # {TestDataImpl#flag} with a new flag key, the flag will return `false`
+        # {TestData#flag} with a new flag key, the flag will return `false`
         # whenever targeting is off, and `true` when targeting is on.
         #
         # @param on [Boolean] true if targeting should be on
@@ -53,7 +53,7 @@ module LaunchDarkly
         #
         # @param variation [Boolean, Integer] true or false or the desired fallthrough variation index:
         #                  0 for the first, 1 for the second, etc.
-        # @return the builder
+        # @return [FlagBuilder] the builder
         #
         def fallthrough_variation(variation)
           if LaunchDarkly::Util.is_bool variation then
@@ -91,7 +91,15 @@ module LaunchDarkly
         # normally has `true, false`; a string-valued flag might have
         # `'red', 'green'`; etc.
         #
-        # @param *variations [Array<Object>] the desired variations
+        # @example A single variation
+        #    td.flag('new-flag')
+        #      .variations(true)
+        #
+        # @example Multiple variations
+        #   td.flag('new-flag')
+        #     .variations('red', 'green', 'blue')
+        #
+        # @param variations [Array<Object>] the the desired variations
         # @return [FlagBuilder] the builder
         #
         def variations(*variations)
@@ -180,12 +188,12 @@ module LaunchDarkly
         #         .then_return(true);
         #
         # @param attribute [Symbol] the user attribute to match against
-        # @param *values [Array<Object>] values to compare to
+        # @param values [Array<Object>] values to compare to
         # @return [FlagRuleBuilder] a flag rule builder
         #
-        # @see {FlagRuleBuilder#then_return} call to finish the rule
-        # @see {FlagRuleBuilder#and_match} add more tests
-        # @see {FlagRuleBuilder#and_not_match} add more tests
+        # @see FlagRuleBuilder#then_return
+        # @see FlagRuleBuilder#and_match
+        # @see FlagRuleBuilder#and_not_match
         #
         def if_match(attribute, *values)
           FlagRuleBuilder.new(self).and_match(attribute, *values)
@@ -200,12 +208,12 @@ module LaunchDarkly
         #         .then_return(true)
         #
         # @param attribute [Symbol] the user attribute to match against
-        # @param *values [Array<Object>] values to compare to
+        # @param values [Array<Object>] values to compare to
         # @return [FlagRuleBuilder] a flag rule builder
         #
-        # @see {FlagRuleBuilder#then_return} call to finish the rule
-        # @see {FlagRuleBuilder#and_match} add more tests
-        # @see {FlagRuleBuilder#and_not_match} add more tests
+        # @see FlagRuleBuilder#then_return
+        # @see FlagRuleBuilder#and_match
+        # @see FlagRuleBuilder#and_not_match
         #
         def if_not_match(attribute, *values)
           FlagRuleBuilder.new(self).and_not_match(attribute, *values)
@@ -243,14 +251,14 @@ module LaunchDarkly
         end
 
         #
-        #  A shortcut for setting the flag to use the standard boolean configuration.
+        # A shortcut for setting the flag to use the standard boolean configuration.
         #
-        #  This is the default for all new flags created with {TestDataImpl#flag}.
-        #  The flag will have two variations, `true` and `false` (in that order);
-        #  it will return `false` whenever targeting is off, and `true` when targeting is on
-        #  if no other settings specify otherwise.
+        # This is the default for all new flags created with {TestData#flag}.
+        # The flag will have two variations, `true` and `false` (in that order);
+        # it will return `false` whenever targeting is off, and `true` when targeting is on
+        # if no other settings specify otherwise.
         #
-        #  @return [FlagBuilder] the builder
+        # @return [FlagBuilder] the builder
         #
         def boolean_flag
           if is_boolean_flag then
@@ -308,6 +316,7 @@ module LaunchDarkly
         # Finally, call {#then_return} to finish defining the rule.
         #
         class FlagRuleBuilder
+          # @private
           FlagRuleClause = Struct.new(:attribute, :op, :values, :negate, keyword_init: true)
 
           # @private
@@ -332,7 +341,7 @@ module LaunchDarkly
           #         .then_return(true)
           #
           # @param attribute [Symbol] the user attribute to match against
-          # @param *values [Array<Object>] values to compare to
+          # @param values [Array<Object>] values to compare to
           # @return [FlagRuleBuilder] the rule builder
           #
           def and_match(attribute, *values)
@@ -355,7 +364,7 @@ module LaunchDarkly
           #         .then_return(true)
           #
           # @param attribute [Symbol] the user attribute to match against
-          # @param *values [Array<Object>] values to compare to
+          # @param values [Array<Object>] values to compare to
           # @return [FlagRuleBuilder] the rule builder
           #
           def and_not_match(attribute, *values)
@@ -377,7 +386,7 @@ module LaunchDarkly
           #
           # @param variation [Boolean, Integer] true or false or the desired variation index:
           #                  0 for the first, 1 for the second, etc.
-          # @result [FlagBuilder] the flag builder with this rule added
+          # @return [FlagBuilder] the flag builder with this rule added
           #
           def then_return(variation)
             if LaunchDarkly::Util.is_bool variation then
