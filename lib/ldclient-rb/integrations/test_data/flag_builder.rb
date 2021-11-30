@@ -56,7 +56,7 @@ module LaunchDarkly
         # @return [FlagBuilder] the builder
         #
         def fallthrough_variation(variation)
-          if LaunchDarkly::Util.is_bool variation then
+          if LaunchDarkly::Impl::Util.is_bool variation then
             boolean_flag.fallthrough_variation(variation_for_boolean(variation))
           else
             @fallthrough_variation = variation
@@ -76,7 +76,7 @@ module LaunchDarkly
         # @return [FlagBuilder] the builder
         #
         def off_variation(variation)
-          if LaunchDarkly::Util.is_bool variation then
+          if LaunchDarkly::Impl::Util.is_bool variation then
             boolean_flag.off_variation(variation_for_boolean(variation))
           else
             @off_variation = variation
@@ -121,7 +121,7 @@ module LaunchDarkly
         # @return [FlagBuilder] the builder
         #
         def variation_for_all_users(variation)
-          if LaunchDarkly::Util.is_bool variation then
+          if LaunchDarkly::Impl::Util.is_bool variation then
             boolean_flag.variation_for_all_users(variation_for_boolean(variation))
           else
             on(true).clear_rules.clear_user_targets.fallthrough_variation(variation)
@@ -158,7 +158,7 @@ module LaunchDarkly
         # @return [FlagBuilder] the builder
         #
         def variation_for_user(user_key, variation)
-          if LaunchDarkly::Util.is_bool variation then
+          if LaunchDarkly::Impl::Util.is_bool variation then
             boolean_flag.variation_for_user(user_key, variation_for_boolean(variation))
           else
             if @targets.nil? then
@@ -275,6 +275,7 @@ module LaunchDarkly
           res = { key: @key,
                   version: version,
                   on: @on,
+                  variations: @variations,
                 }
 
           unless @off_variation.nil? then
@@ -283,10 +284,6 @@ module LaunchDarkly
 
           unless @fallthrough_variation.nil? then
             res[:fallthrough] = { variation: @fallthrough_variation }
-          end
-
-          unless @variations.nil? then
-            res[:variations] = @variations
           end
 
           unless @targets.nil? then
@@ -389,7 +386,7 @@ module LaunchDarkly
           # @return [FlagBuilder] the flag builder with this rule added
           #
           def then_return(variation)
-            if LaunchDarkly::Util.is_bool variation then
+            if LaunchDarkly::Impl::Util.is_bool variation then
               @variation = @flag_builder.variation_for_boolean(variation)
               @flag_builder.boolean_flag.add_rule(self)
             else

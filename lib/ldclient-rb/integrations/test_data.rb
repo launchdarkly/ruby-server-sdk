@@ -12,7 +12,7 @@ module LaunchDarkly
     # the data that the application has put into it using the {#update} method.
     #
     # @example
-    #     td = LaunchDarkly::Integrations::TestData.factory
+    #     td = LaunchDarkly::Integrations::TestData.data_source
     #     td.update(td.flag("flag-key-1").variation_for_all_users(true))
     #     config = LaunchDarkly::Config.new(data_source: td)
     #     client = LaunchDarkly::LDClient.new('sdkKey', config)
@@ -31,7 +31,6 @@ module LaunchDarkly
     #
     class TestData
       # Creates a new instance of the test data source.
-      #
       #
       # @return [TestData] a new configurable test data source
       def self.data_source

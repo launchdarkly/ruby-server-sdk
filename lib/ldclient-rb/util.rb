@@ -4,10 +4,6 @@ require "http"
 module LaunchDarkly
   # @private
   module Util
-    def self.is_bool(aObject)
-       [true,false].include? aObject
-    end
-
     def self.stringify_attrs(hash, attrs)
       return hash if hash.nil?
       ret = hash

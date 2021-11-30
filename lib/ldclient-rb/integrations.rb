@@ -53,9 +53,5 @@ module LaunchDarkly
       # code is in ldclient-rb/integrations/util/
     end
 
-
-    class TestData
-      # code is in ldclient-rb/integrations/test_data
-    end
   end
 end
