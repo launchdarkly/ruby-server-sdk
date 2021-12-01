@@ -5,10 +5,7 @@ module LaunchDarkly
   module Impl
     module Integrations
       module Redis
-        #
-        # Internal implementation of the Redis feature store, intended to be used with CachingStoreWrapper.
-        #
-        class RedisFeatureStoreCore
+        class RedisStoreImplBase
           begin
             require "redis"
             require "connection_pool"
@@ -19,22 +16,14 @@ module LaunchDarkly
 
           def initialize(opts)
             if !REDIS_ENABLED
-              raise RuntimeError.new("can't use Redis feature store because one of these gems is missing: redis, connection_pool")
+              raise RuntimeError.new("can't use #{description} because one of these gems is missing: redis, connection_pool")
             end
 
-            @redis_opts = opts[:redis_opts] || Hash.new
-            if opts[:redis_url]
-              @redis_opts[:url] = opts[:redis_url]
-            end
-            if !@redis_opts.include?(:url)
-              @redis_opts[:url] = LaunchDarkly::Integrations::Redis::default_redis_url
-            end
-            max_connections = opts[:max_connections] || 16
-            @pool = opts[:pool] || ConnectionPool.new(size: max_connections) do
-              ::Redis.new(@redis_opts)
-            end
+            @pool = create_redis_pool(opts)
+
             # shutdown pool on close unless the client passed a custom pool and specified not to shutdown
             @pool_shutdown_on_close = (!opts[:pool] || opts.fetch(:pool_shutdown_on_close, true))
+
             @prefix = opts[:prefix] || LaunchDarkly::Integrations::Redis::default_prefix
             @logger = opts[:logger] || Config.default_logger
             @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
@@ -42,9 +31,52 @@ module LaunchDarkly
             @stopped = Concurrent::AtomicBoolean.new(false)
 
             with_connection do |redis|
-              @logger.info("RedisFeatureStore: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} \
-      and prefix: #{@prefix}")
+              @logger.info("#{description}: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} and prefix: #{@prefix}")
             end
+          end
+
+          def stop
+            if @stopped.make_true
+              return unless @pool_shutdown_on_close
+              @pool.shutdown { |redis| redis.close }
+            end
+          end
+
+          protected def description
+            "Redis"
+          end
+
+          protected def with_connection
+            @pool.with { |redis| yield(redis) }
+          end
+
+          private def create_redis_pool(opts)
+            redis_opts = opts[:redis_opts] ? opts[:redis_opts].clone : Hash.new
+            if opts[:redis_url]
+              redis_opts[:url] = opts[:redis_url]
+            end
+            if !redis_opts.include?(:url)
+              redis_opts[:url] = LaunchDarkly::Integrations::Redis::default_redis_url
+            end
+            max_connections = opts[:max_connections] || 16
+            return opts[:pool] || ConnectionPool.new(size: max_connections) do
+              ::Redis.new(redis_opts)
+            end
+          end
+        end
+
+        #
+        # Internal implementation of the Redis feature store, intended to be used with CachingStoreWrapper.
+        #
+        class RedisFeatureStoreCore < RedisStoreImplBase
+          def initialize(opts)
+            super(opts)
+
+            @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
+          end
+
+          def description
+            "RedisFeatureStore"
           end
 
           def init_internal(all_data)
@@ -103,8 +135,7 @@ module LaunchDarkly
                   else
                     final_item = old_item
                     action = new_item[:deleted] ? "delete" : "update"
-                    @logger.warn { "RedisFeatureStore: attempted to #{action} #{key} version: #{old_item[:version]} \
-    in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:version]}" }
+                    @logger.warn { "RedisFeatureStore: attempted to #{action} #{key} version: #{old_item[:version]} in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:version]}" }
                   end
                   redis.unwatch
                 end
@@ -115,13 +146,6 @@ module LaunchDarkly
 
           def initialized_internal?
             with_connection { |redis| redis.exists?(inited_key) }
-          end
-
-          def stop
-            if @stopped.make_true
-              return unless @pool_shutdown_on_close
-              @pool.shutdown { |redis| redis.close }
-            end
           end
 
           private
@@ -142,12 +166,41 @@ module LaunchDarkly
             @prefix + ":$inited"
           end
 
-          def with_connection
-            @pool.with { |redis| yield(redis) }
-          end
-
           def get_redis(redis, kind, key)
             Model.deserialize(kind, redis.hget(items_key(kind), key))
+          end
+        end
+
+        #
+        # Internal implementation of the Redis big segment store.
+        #
+        class RedisBigSegmentStore < RedisStoreImplBase
+          KEY_LAST_UP_TO_DATE = ':big_segments_synchronized_on'
+          KEY_USER_INCLUDE = ':big_segment_include:'
+          KEY_USER_EXCLUDE = ':big_segment_exclude:'
+
+          def description
+            "RedisBigSegmentStore"
+          end
+
+          def get_metadata
+            value = with_connection { |redis| redis.get(@prefix + KEY_LAST_UP_TO_DATE) }
+            Interfaces::BigSegmentStoreMetadata.new(value.nil? ? nil : value.to_i)
+          end
+
+          def get_membership(user_hash)
+            with_connection do |redis|
+              included_refs = redis.smembers(@prefix + KEY_USER_INCLUDE + user_hash)
+              excluded_refs = redis.smembers(@prefix + KEY_USER_EXCLUDE + user_hash)
+              if !included_refs && !excluded_refs
+                nil
+              else
+                membership = {}
+                excluded_refs.each { |ref| membership[ref] = false }
+                included_refs.each { |ref| membership[ref] = true }
+                membership
+              end
+            end
           end
         end
       end
