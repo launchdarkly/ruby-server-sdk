@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/event_factory"
