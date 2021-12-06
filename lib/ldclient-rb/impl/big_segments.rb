@@ -72,7 +72,7 @@ module LaunchDarkly
       end
 
       def is_stale(timestamp)
-        (Impl::Util.current_time_millis - timestamp) >= @stale_after_millis
+        !timestamp || ((Impl::Util.current_time_millis - timestamp) >= @stale_after_millis)
       end
 
       def self.hash_for_user_key(user_key)
