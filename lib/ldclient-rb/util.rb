@@ -18,7 +18,7 @@ module LaunchDarkly
       end
       ret
     end
-    
+
     def self.new_http_client(uri_s, config)
       http_client_options = {}
       if config.socket_factory
