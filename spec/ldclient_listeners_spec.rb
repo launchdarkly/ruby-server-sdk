@@ -1,12 +1,11 @@
-require "ldclient_spec_base"
 require "mock_components"
 require "spec_helper"
 
 module LaunchDarkly
-  describe "LDClient event listeners/observers", :ldclient_spec_base => true do
+  describe "LDClient event listeners/observers" do
     context "big_segment_store_status_provider" do
       it "returns unavailable status when not configured" do
-        with_client(base_config) do |client|
+        with_client(test_config) do |client|
           status = client.big_segment_store_status_provider.status
           expect(status.available).to be(false)
           expect(status.stale).to be(false)
@@ -16,16 +15,11 @@ module LaunchDarkly
       it "sends status updates" do
         store = MockBigSegmentStore.new
         store.setup_metadata(Time.now)
-        config = Config.new(
-          big_segments: BigSegmentsConfig.new(
-            store: store,
-            status_poll_interval: 0.01
-          ),
-          send_events: false,
-          data_source: null_data_source,
-          logger: null_logger
+        big_segments_config = BigSegmentsConfig.new(
+          store: store,
+          status_poll_interval: 0.01
         )
-        with_client(config) do |client|
+        with_client(test_config(big_segments: big_segments_config)) do |client|
           status1 = client.big_segment_store_status_provider.status
           expect(status1.available).to be(true)
           expect(status1.stale).to be(false)

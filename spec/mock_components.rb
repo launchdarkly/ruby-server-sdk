@@ -1,7 +1,55 @@
+require "spec_helper"
+
 require "ldclient-rb/impl/big_segments"
+require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/interfaces"
 
+def sdk_key
+  "sdk-key"
+end
+
+def null_data
+  LaunchDarkly::NullUpdateProcessor.new
+end
+
+def null_logger
+  double().as_null_object
+end
+
+def base_config
+  {
+    data_source: null_data,
+    send_events: false,
+    logger: null_logger
+  }
+end
+
+def test_config(add_props = {})
+  LaunchDarkly::Config.new(base_config.merge(add_props))
+end
+
+def with_client(config)
+  ensure_close(LaunchDarkly::LDClient.new(sdk_key, config)) do |client|
+    yield client
+  end
+end
+
+def basic_user
+  { "key": "user-key" }
+end
+
 module LaunchDarkly
+  class CapturingFeatureStore
+    attr_reader :received_data
+
+    def init(all_data)
+      @received_data = all_data
+    end
+
+    def stop
+    end
+  end
+
   class MockBigSegmentStore
     def initialize
       @metadata = nil
@@ -32,6 +80,37 @@ module LaunchDarkly
     def setup_membership(user_key, membership)
       user_hash = Impl::BigSegmentStoreManager.hash_for_user_key(user_key)
       @memberships[user_hash] = membership
+    end
+
+    def setup_segment_for_user(user_key, segment, included)
+      user_hash = Impl::BigSegmentStoreManager.hash_for_user_key(user_key)
+      @memberships[user_hash] ||= {}
+      @memberships[user_hash][Impl::Evaluator.make_big_segment_ref(segment)] = included
+    end
+  end
+
+  class MockDataSource
+    def self.factory_with_data(data)
+      lambda { |sdk_key, config| MockDataSource.new(config.feature_store, data) }
+    end
+
+    def initialize(store, data)
+      @store = store
+      @data = data
+    end
+
+    def start
+      @store.init(@data)
+      ev = Concurrent::Event.new
+      ev.set
+      ev
+    end
+
+    def stop
+    end
+
+    def initialized?
+      true
     end
   end
 
