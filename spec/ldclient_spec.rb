@@ -74,7 +74,7 @@ module LaunchDarkly
       it "passes data set to feature store in correct order on init" do
         store = CapturingFeatureStore.new
         data_source_factory = MockDataSource.factory_with_data(dependency_ordering_test_data)
-        ensure_close(subject.new(sdk_key, test_config(feature_store: store, data_source: data_source_factory))) do |client|
+        with_client(test_config(feature_store: store, data_source: data_source_factory)) do |client|
           data = store.received_data
           expect(data).not_to be_nil
           expect(data.count).to eq(2)

@@ -11,14 +11,14 @@ module LaunchDarkly
     end
 
     it 'uses NullEventProcessor if send_events is false' do
-      ensure_close(LDClient.new(sdk_key, test_config(send_events: false))) do |client|
+      with_client(test_config(send_events: false)) do |client|
         expect(event_processor(client)).to be_a(LaunchDarkly::NullEventProcessor)
       end
     end
   
     context "evaluation events - variation" do
       it "unknown flag" do
-        ensure_close(LDClient.new(sdk_key, test_config)) do |client|
+        with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature", key: "badkey", user: basic_user, value: "default", default: "default"
           ))
@@ -32,7 +32,7 @@ module LaunchDarkly
         store = InMemoryFeatureStore.new
         store.upsert(FEATURES, flag)
         
-        ensure_close(LDClient.new(sdk_key, test_config(feature_store: store))) do |client|
+        with_client(test_config(feature_store: store)) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature",
             key: flag[:key],
@@ -54,7 +54,7 @@ module LaunchDarkly
         store.upsert(FEATURES, flag)
         logger = double().as_null_object
         
-        ensure_close(LDClient.new(sdk_key, test_config(feature_store: store, logger: logger))) do |client|
+        with_client(test_config(feature_store: store, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:error)
           client.variation(flag[:key], nil, "default")
@@ -68,7 +68,7 @@ module LaunchDarkly
         logger = double().as_null_object
         keyless_user = { key: nil }
 
-        ensure_close(LDClient.new(sdk_key, test_config(feature_store: store, logger: logger))) do |client|
+        with_client(test_config(feature_store: store, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
           client.variation(flag[:key], keyless_user, "default")
@@ -83,7 +83,7 @@ module LaunchDarkly
         store = InMemoryFeatureStore.new
         store.upsert(FEATURES, flag)
 
-        ensure_close(LDClient.new(sdk_key, test_config(feature_store: store))) do |client|
+        with_client(test_config(feature_store: store)) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature",
             key: flag[:key],
@@ -105,7 +105,7 @@ module LaunchDarkly
         store = InMemoryFeatureStore.new
         store.upsert(FEATURES, flag)
 
-        ensure_close(LDClient.new(sdk_key, test_config(feature_store: store))) do |client|
+        with_client(test_config(feature_store: store)) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature",
             key: flag[:key],
@@ -124,7 +124,7 @@ module LaunchDarkly
 
     context "evaluation events - variation_detail" do
       it "unknown flag" do
-        ensure_close(LDClient.new(sdk_key, test_config)) do |client|
+        with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature", key: "badkey", user: basic_user, value: "default", default: "default",
             reason: LaunchDarkly::EvaluationReason::error(LaunchDarkly::EvaluationReason::ERROR_FLAG_NOT_FOUND)
@@ -139,7 +139,7 @@ module LaunchDarkly
         store = InMemoryFeatureStore.new
         store.upsert(FEATURES, flag)
         
-        ensure_close(LDClient.new(sdk_key, test_config(feature_store: store))) do |client|
+        with_client(test_config(feature_store: store)) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature",
             key: flag[:key],
@@ -162,7 +162,7 @@ module LaunchDarkly
         store.upsert(FEATURES, flag)
         logger = double().as_null_object
         
-        ensure_close(LDClient.new(sdk_key, test_config(feature_store: store, logger: logger))) do |client|
+        with_client(test_config(feature_store: store, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:error)
           client.variation_detail(flag[:key], nil, "default")
@@ -175,7 +175,7 @@ module LaunchDarkly
         store.upsert(FEATURES, flag)
         logger = double().as_null_object
 
-        ensure_close(LDClient.new(sdk_key, test_config(feature_store: store, logger: logger))) do |client|
+        with_client(test_config(feature_store: store, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
           client.variation_detail(flag[:key], { key: nil }, "default")
@@ -185,7 +185,7 @@ module LaunchDarkly
 
     context "identify" do 
       it "queues up an identify event" do
-        ensure_close(LDClient.new(sdk_key, test_config)) do |client|
+        with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "identify", key: basic_user[:key], user: basic_user))
           client.identify(basic_user)
@@ -195,7 +195,7 @@ module LaunchDarkly
       it "does not send event, and logs warning, if user is nil" do
         logger = double().as_null_object
 
-        ensure_close(LDClient.new(sdk_key, test_config(logger: logger))) do |client|
+        with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
           client.identify(nil)
@@ -205,7 +205,7 @@ module LaunchDarkly
       it "does not send event, and logs warning, if user key is nil" do
         logger = double().as_null_object
         
-        ensure_close(LDClient.new(sdk_key, test_config(logger: logger))) do |client|
+        with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
           client.identify({ key: nil })
@@ -215,7 +215,7 @@ module LaunchDarkly
 
     context "track" do 
       it "queues up an custom event" do
-        ensure_close(LDClient.new(sdk_key, test_config)) do |client|
+        with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "custom", key: "custom_event_name", user: basic_user, data: 42))
           client.track("custom_event_name", basic_user, 42)
@@ -223,7 +223,7 @@ module LaunchDarkly
       end
 
       it "can include a metric value" do
-        ensure_close(LDClient.new(sdk_key, test_config)) do |client|
+        with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "custom", key: "custom_event_name", user: basic_user, metricValue: 1.5))
           client.track("custom_event_name", basic_user, nil, 1.5)
@@ -233,7 +233,7 @@ module LaunchDarkly
       it "includes contextKind with anonymous user" do
         anon_user = { key: 'user-key', anonymous: true }
 
-        ensure_close(LDClient.new(sdk_key, test_config)) do |client|
+        with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "custom", key: "custom_event_name", user: anon_user, metricValue: 2.2, contextKind: "anonymousUser"))
           client.track("custom_event_name", anon_user, nil, 2.2)
@@ -244,7 +244,7 @@ module LaunchDarkly
         numeric_key_user = { key: 33 }
         sanitized_user = { key: "33" }
 
-        ensure_close(LDClient.new(sdk_key, test_config)) do |client|
+        with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(user: sanitized_user))
           client.track("custom_event_name", numeric_key_user, nil)
         end
@@ -253,7 +253,7 @@ module LaunchDarkly
       it "does not send event, and logs a warning, if user is nil" do
         logger = double().as_null_object
 
-        ensure_close(LDClient.new(sdk_key, test_config(logger: logger))) do |client|
+        with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
           client.track("custom_event_name", nil, nil)
@@ -263,7 +263,7 @@ module LaunchDarkly
       it "does not send event, and logs warning, if user key is nil" do
         logger = double().as_null_object
 
-        ensure_close(LDClient.new(sdk_key, test_config(logger: logger))) do |client|
+        with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
           client.track("custom_event_name", { key: nil }, nil)
@@ -275,7 +275,7 @@ module LaunchDarkly
       it "queues up an alias event" do
         anon_user = { key: "user-key", anonymous: true }
         
-        ensure_close(LDClient.new(sdk_key, test_config)) do |client|
+        with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "alias", key: basic_user[:key], contextKind: "user", previousKey: anon_user[:key], previousContextKind: "anonymousUser"))
           client.alias(basic_user, anon_user)
@@ -285,7 +285,7 @@ module LaunchDarkly
       it "does not send event, and logs warning, if user is nil" do
         logger = double().as_null_object
 
-        ensure_close(LDClient.new(sdk_key, test_config(logger: logger))) do |client|
+        with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
           client.alias(nil, nil)
@@ -295,7 +295,7 @@ module LaunchDarkly
       it "does not send event, and logs warning, if user key is nil" do
         logger = double().as_null_object
 
-        ensure_close(LDClient.new(sdk_key, test_config(logger: logger))) do |client|
+        with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
           client.alias({ key: nil }, { key: nil })
