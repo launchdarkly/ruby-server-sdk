@@ -76,7 +76,7 @@ module LaunchDarkly
       end
 
       def self.hash_for_user_key(user_key)
-        Digest::MD5.base64digest(user_key)
+        Digest::SHA256.base64digest(user_key)
       end
     end
 
