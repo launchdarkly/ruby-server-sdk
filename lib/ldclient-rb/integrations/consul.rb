@@ -3,6 +3,13 @@ require "ldclient-rb/integrations/util/store_wrapper"
 
 module LaunchDarkly
   module Integrations
+    #
+    # Integration with [Consul](https://www.consul.io/).
+    #
+    # Note that in order to use this integration, you must first install the gem `diplomat`.
+    #
+    # @since 5.5.0
+    #
     module Consul
       #
       # Default value for the `prefix` option for {new_feature_store}.

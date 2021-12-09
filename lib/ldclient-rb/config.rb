@@ -260,7 +260,8 @@ module LaunchDarkly
     # object.
     #
     # @return [LaunchDarkly::Interfaces::DataSource|lambda]
-    # @see FileDataSource
+    # @see LaunchDarkly::Integrations::FileData
+    # @see LaunchDarkly::Integrations::TestData
     #
     attr_reader :data_source
 

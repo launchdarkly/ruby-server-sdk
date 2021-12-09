@@ -1,6 +1,7 @@
-require 'concurrent/atomics'
 require 'ldclient-rb/impl/integrations/test_data/test_data_source'
 require 'ldclient-rb/integrations/test_data/flag_builder'
+
+require 'concurrent/atomics'
 
 module LaunchDarkly
   module Integrations
@@ -8,8 +9,8 @@ module LaunchDarkly
     # A mechanism for providing dynamically updatable feature flag state in a simplified form to an SDK
     # client in test scenarios.
     #
-    # Unlike {FileDataSource}, this mechanism does not use any external resources. It provides only
-    # the data that the application has put into it using the {#update} method.
+    # Unlike {LaunchDarkly::Integrations::FileData}, this mechanism does not use any external resources. It
+    # provides only the data that the application has put into it using the {#update} method.
     #
     # @example
     #     td = LaunchDarkly::Integrations::TestData.data_source
@@ -28,6 +29,8 @@ module LaunchDarkly
     #
     # If the same `TestData` instance is used to configure multiple `LDClient` instances,
     # any changes made to the data will propagate to all of the `LDClient`s.
+    #
+    # @since 6.3.0
     #
     class TestData
       # Creates a new instance of the test data source.
