@@ -2,6 +2,17 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.3.0] - 2021-12-09
+### Added:
+- The SDK now supports evaluation of Big Segments. See: https://docs.launchdarkly.com/home/users/big-segments
+- `LaunchDarkly::Integrations::TestData` is a new way to inject feature flag data programmatically into the SDK for testing—either with fixed values for each flag, or with targets and/or rules that can return different values for different users. Unlike `FileData`, this mechanism does not use any external resources, only the data that your test code has provided.
+
+### Changed:
+- To use the file data source feature, the preferred entry point is now `LaunchDarkly::Integrations::FileData.data_source` rather than `LaunchDarkly::FileDataSource.factory`. This makes the Ruby SDK more consistent with other SDKs, grouping together all of the optional "connecting the SDK to something else" features under `Integrations`, and using the method name `data_source` for consistency with the `Config` property that will receive the object.
+
+### Deprecated:
+- `LaunchDarkly::FileDataSource` (see above).
+
 ## [6.2.5] - 2021-10-12
 ### Fixed:
 - Fixed a bug that caused unnecessarily heavy CPU usage when receiving very large sets of flag data from LaunchDarkly.
