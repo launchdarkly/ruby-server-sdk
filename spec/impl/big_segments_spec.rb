@@ -3,6 +3,7 @@ require "ldclient-rb/impl/big_segments"
 
 require "concurrent/atomics"
 
+require "mock_components"
 require "spec_helper"
 
 module LaunchDarkly
@@ -54,6 +55,19 @@ module LaunchDarkly
 
           with_manager(BigSegmentsConfig.new(store: store)) do |m|
             expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::HEALTHY)
+            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_user_membership(user_key)).to eq(expected_result)
+          end
+        end
+
+        it "can cache a nil result" do
+          store = double
+          expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
+          expect(store).to receive(:get_membership).with(user_hash).once.and_return(nil)
+          allow(store).to receive(:stop)
+
+          with_manager(BigSegmentsConfig.new(store: store)) do |m|
+            expected_result = BigSegmentMembershipResult.new({}, BigSegmentsStatus::HEALTHY)
             expect(m.get_user_membership(user_key)).to eq(expected_result)
             expect(m.get_user_membership(user_key)).to eq(expected_result)
           end
