@@ -4,6 +4,11 @@ require "ldclient-rb/expiring_cache"
 
 module LaunchDarkly
   module Integrations
+    #
+    # Support code that may be helpful in creating integrations.
+    #
+    # @since 5.5.0
+    #
     module Util
       #
       # CachingStoreWrapper is a partial implementation of the {LaunchDarkly::Interfaces::FeatureStore}

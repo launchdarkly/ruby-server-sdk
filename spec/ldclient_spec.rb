@@ -15,7 +15,7 @@ module LaunchDarkly
       end
 
       it "is not enforced if using file data and send_events is false" do
-        source = FileDataSource.factory({})
+        source = LaunchDarkly::Integrations::FileData.data_source({})
         subject.new(nil, Config.new({ data_source: source, send_events: false }))
       end
 
@@ -38,7 +38,7 @@ module LaunchDarkly
       end
 
       it "is enforced if using file data and send_events is true" do
-        source = FileDataSource.factory({})
+        source = LaunchDarkly::Integrations::FileData.data_source({})
         expect {
           subject.new(nil, Config.new({ data_source: source }))
         }.to raise_error(ArgumentError)

@@ -121,7 +121,8 @@ module LaunchDarkly
     #
     # The client has its own standard implementation, which uses either a streaming connection or
     # polling depending on your configuration. Normally you will not need to use another one
-    # except for testing purposes. {FileDataSource} provides one such test fixture.
+    # except for testing purposes. Two such test fixtures are {LaunchDarkly::Integrations::FileData}
+    # and {LaunchDarkly::Integrations::TestData}.
     #
     module DataSource
       #

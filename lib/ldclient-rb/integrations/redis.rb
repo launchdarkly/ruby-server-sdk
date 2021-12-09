@@ -2,6 +2,14 @@ require "ldclient-rb/redis_store"  # eventually we will just refer to impl/integ
 
 module LaunchDarkly
   module Integrations
+    #
+    # Integration with [Redis](https://redis.io/).
+    #
+    # Note that in order to use this integration, you must first install the `redis` and `connection-pool`
+    # gems.
+    #
+    # @since 5.5.0
+    #
     module Redis
       #
       # Default value for the `redis_url` option for {new_feature_store}. This points to an instance of

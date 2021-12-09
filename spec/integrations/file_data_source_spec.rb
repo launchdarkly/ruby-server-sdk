@@ -9,7 +9,7 @@ class BadClassWeShouldNotInstantiate < Hash
   end
 end
 
-describe LaunchDarkly::FileDataSource do
+describe LaunchDarkly::Integrations::FileData do
   let(:full_flag_1_key) { "flag1" }
   let(:full_flag_1_value) { "on" }
   let(:flag_value_1_key) { "flag2" }
@@ -114,7 +114,7 @@ EOF
   end
 
   def with_data_source(options)
-    factory = LaunchDarkly::FileDataSource.factory(options)
+    factory = LaunchDarkly::Integrations::FileData.data_source(options)
     ds = factory.call('', @config)
     begin
       yield ds
@@ -246,7 +246,7 @@ EOF
 
   it "evaluates simplified flag with client as expected" do
     file = make_temp_file(all_properties_json)
-    factory = LaunchDarkly::FileDataSource.factory({ paths: file.path })
+    factory = LaunchDarkly::Integrations::FileData.data_source({ paths: file.path })
     config = LaunchDarkly::Config.new(send_events: false, data_source: factory)
     client = LaunchDarkly::LDClient.new('sdkKey', config)
 
@@ -260,7 +260,7 @@ EOF
 
   it "evaluates full flag with client as expected" do
     file = make_temp_file(all_properties_json)
-    factory = LaunchDarkly::FileDataSource.factory({ paths: file.path })
+    factory = LaunchDarkly::Integrations::FileData.data_source({ paths: file.path })
     config = LaunchDarkly::Config.new(send_events: false, data_source: factory)
     client = LaunchDarkly::LDClient.new('sdkKey', config)
 

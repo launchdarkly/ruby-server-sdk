@@ -3,6 +3,14 @@ require "ldclient-rb/integrations/util/store_wrapper"
 
 module LaunchDarkly
   module Integrations
+    #
+    # Integration with [DynamoDB](https://aws.amazon.com/dynamodb/).
+    #
+    # Note that in order to use this integration, you must first install one of the AWS SDK gems: either
+    # `aws-sdk-dynamodb`, or the full `aws-sdk`.
+    #
+    # @since 5.5.0
+    #
     module DynamoDB
       #
       # Creates a DynamoDB-backed persistent feature store. For more details about how and why you can
