@@ -79,7 +79,7 @@ module LaunchDarkly
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('badfeature'))
-          e = subject.new(get_things( 'badfeature' => nil ), get_nothing, logger)
+          e = EvaluatorBuilder.new(logger).with_unknown_flag('badfeature').build
           result = e.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(nil)
@@ -96,7 +96,7 @@ module LaunchDarkly
           }
           Model.postprocess_item_after_deserializing!(FEATURES, flag)  # now there's a cached reason
           user = { key: 'x' }
-          e = subject.new(get_things( 'badfeature' => nil ), get_nothing, logger)
+          e = EvaluatorBuilder.new(logger).with_unknown_flag('badfeature').build
           result1 = e.evaluate(flag, user, factory)
           expect(result1.detail.reason).to eq EvaluationReason::prerequisite_failed('badfeature')
           result2 = e.evaluate(flag, user, factory)
@@ -126,8 +126,7 @@ module LaunchDarkly
           events_should_be = [{
             kind: 'feature', key: 'feature1', user: user, value: nil, default: nil, variation: nil, version: 2, prereqOf: 'feature0'
           }]
-          get_flag = get_things('feature1' => flag1, 'feature2' => nil)
-          e = subject.new(get_flag, get_nothing, logger)
+          e = EvaluatorBuilder.new(logger).with_flag(flag1).with_unknown_flag('feature2').build
           result = e.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(events_should_be)
@@ -157,8 +156,7 @@ module LaunchDarkly
           events_should_be = [{
             kind: 'feature', key: 'feature1', user: user, variation: 1, value: 'e', default: nil, version: 2, prereqOf: 'feature0'
           }]
-          get_flag = get_things({ 'feature1' => flag1 })
-          e = subject.new(get_flag, get_nothing, logger)
+          e = EvaluatorBuilder.new(logger).with_flag(flag1).build
           result = e.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(events_should_be)
@@ -186,8 +184,7 @@ module LaunchDarkly
           events_should_be = [{
             kind: 'feature', key: 'feature1', user: user, variation: 0, value: 'd', default: nil, version: 2, prereqOf: 'feature0'
           }]
-          get_flag = get_things({ 'feature1' => flag1 })
-          e = subject.new(get_flag, get_nothing, logger)
+          e = EvaluatorBuilder.new(logger).with_flag(flag1).build
           result = e.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(events_should_be)
@@ -215,8 +212,7 @@ module LaunchDarkly
           events_should_be = [{
             kind: 'feature', key: 'feature1', user: user, variation: 1, value: 'e', default: nil, version: 2, prereqOf: 'feature0'
           }]
-          get_flag = get_things({ 'feature1' => flag1 })
-          e = subject.new(get_flag, get_nothing, logger)
+          e = EvaluatorBuilder.new(logger).with_flag(flag1).build
           result = e.evaluate(flag, user, factory)
           expect(result.detail).to eq(detail)
           expect(result.events).to eq(events_should_be)

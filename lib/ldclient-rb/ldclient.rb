@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/event_factory"
@@ -57,10 +58,14 @@ module LaunchDarkly
       updated_config.instance_variable_set(:@feature_store, @store)
       @config = updated_config
 
+      @big_segment_store_manager = Impl::BigSegmentStoreManager.new(config.big_segments, @config.logger)
+      @big_segment_store_status_provider = @big_segment_store_manager.status_provider
+
       get_flag = lambda { |key| @store.get(FEATURES, key) }
       get_segment = lambda { |key| @store.get(SEGMENTS, key) }
-      @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, @config.logger)
-
+      get_big_segments_membership = lambda { |key| @big_segment_store_manager.get_user_membership(key) }
+      @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, get_big_segments_membership, @config.logger)
+      
       if !@config.offline? && @config.send_events && !@config.diagnostic_opt_out?
         diagnostic_accumulator = Impl::DiagnosticAccumulator.new(Impl::DiagnosticAccumulator.create_diagnostic_id(sdk_key))
       else
@@ -375,8 +380,17 @@ module LaunchDarkly
       @config.logger.info { "[LDClient] Closing LaunchDarkly client..." }
       @data_source.stop
       @event_processor.stop
+      @big_segment_store_manager.stop
       @store.stop
     end
+
+    #
+    # Returns an interface for tracking the status of a Big Segment store.
+    #
+    # The {BigSegmentStoreStatusProvider} has methods for checking whether the Big Segment store
+    # is (as far as the SDK knows) currently operational and tracking changes in this status.
+    #
+    attr_reader :big_segment_store_status_provider
 
     private
 

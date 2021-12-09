@@ -4,10 +4,7 @@ module LaunchDarkly
   module Impl
     module Integrations
       module DynamoDB
-        #
-        # Internal implementation of the DynamoDB feature store, intended to be used with CachingStoreWrapper.
-        #
-        class DynamoDBFeatureStoreCore
+        class DynamoDBStoreImplBase
           begin
             require "aws-sdk-dynamodb"
             AWS_SDK_ENABLED = true
@@ -19,29 +16,50 @@ module LaunchDarkly
               AWS_SDK_ENABLED = false
             end
           end
-
+  
           PARTITION_KEY = "namespace"
           SORT_KEY = "key"
 
-          VERSION_ATTRIBUTE = "version"
-          ITEM_JSON_ATTRIBUTE = "item"
-
           def initialize(table_name, opts)
             if !AWS_SDK_ENABLED
-              raise RuntimeError.new("can't use DynamoDB feature store without the aws-sdk or aws-sdk-dynamodb gem")
+              raise RuntimeError.new("can't use #{description} without the aws-sdk or aws-sdk-dynamodb gem")
             end
-
+  
             @table_name = table_name
-            @prefix = opts[:prefix]
+            @prefix = opts[:prefix] ? (opts[:prefix] + ":") : ""
             @logger = opts[:logger] || Config.default_logger
-
+  
             if !opts[:existing_client].nil?
               @client = opts[:existing_client]
             else
               @client = Aws::DynamoDB::Client.new(opts[:dynamodb_opts] || {})
             end
+  
+            @logger.info("${description}: using DynamoDB table \"#{table_name}\"")
+          end
+  
+          def stop
+            # AWS client doesn't seem to have a close method
+          end
 
-            @logger.info("DynamoDBFeatureStore: using DynamoDB table \"#{table_name}\"")
+          protected def description
+            "DynamoDB"
+          end
+        end
+  
+        #
+        # Internal implementation of the DynamoDB feature store, intended to be used with CachingStoreWrapper.
+        #
+        class DynamoDBFeatureStoreCore < DynamoDBStoreImplBase
+          VERSION_ATTRIBUTE = "version"
+          ITEM_JSON_ATTRIBUTE = "item"
+
+          def initialize(table_name, opts)
+            super(table_name, opts)
+          end
+
+          def description
+            "DynamoDBFeatureStore"
           end
 
           def init_internal(all_data)
@@ -124,14 +142,10 @@ module LaunchDarkly
             !resp.item.nil? && resp.item.length > 0
           end
 
-          def stop
-            # AWS client doesn't seem to have a close method
-          end
-
           private
 
           def prefixed_namespace(base_str)
-            (@prefix.nil? || @prefix == "") ? base_str : "#{@prefix}:#{base_str}"
+            @prefix + base_str
           end
 
           def namespace_for_kind(kind)
@@ -205,6 +219,56 @@ module LaunchDarkly
             json_attr = item[ITEM_JSON_ATTRIBUTE]
             raise RuntimeError.new("DynamoDB map did not contain expected item string") if json_attr.nil?
             Model.deserialize(kind, json_attr)
+          end
+        end
+
+        class DynamoDBBigSegmentStore < DynamoDBStoreImplBase
+          KEY_METADATA = 'big_segments_metadata';
+          KEY_USER_DATA = 'big_segments_user';
+          ATTR_SYNC_TIME = 'synchronizedOn';
+          ATTR_INCLUDED = 'included';
+          ATTR_EXCLUDED = 'excluded';
+
+          def initialize(table_name, opts)
+            super(table_name, opts)
+          end
+
+          def description
+            "DynamoDBBigSegmentStore"
+          end
+
+          def get_metadata
+            key = @prefix + KEY_METADATA
+            data = @client.get_item(
+              table_name: @table_name,
+              key: {
+                PARTITION_KEY => key,
+                SORT_KEY => key
+              }
+            )
+            timestamp = data.item && data.item[ATTR_SYNC_TIME] ?
+              data.item[ATTR_SYNC_TIME] : nil
+            LaunchDarkly::Interfaces::BigSegmentStoreMetadata.new(timestamp)
+          end
+
+          def get_membership(user_hash)
+            data = @client.get_item(
+              table_name: @table_name,
+              key: {
+                PARTITION_KEY => @prefix + KEY_USER_DATA,
+                SORT_KEY => user_hash
+              })
+            return nil if !data.item
+            excluded_refs = data.item[ATTR_EXCLUDED] || []
+            included_refs = data.item[ATTR_INCLUDED] || []
+            if excluded_refs.empty? && included_refs.empty?
+              nil
+            else
+              membership = {}
+              excluded_refs.each { |ref| membership[ref] = false }
+              included_refs.each { |ref| membership[ref] = true }
+              membership
+            end
           end
         end
 

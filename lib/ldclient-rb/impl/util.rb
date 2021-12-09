@@ -1,7 +1,10 @@
-
 module LaunchDarkly
   module Impl
     module Util
+      def self.is_bool(aObject)
+         [true,false].include? aObject
+      end
+
       def self.current_time_millis
         (Time.now.to_f * 1000).to_i
       end

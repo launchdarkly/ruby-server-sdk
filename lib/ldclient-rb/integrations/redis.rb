@@ -2,6 +2,14 @@ require "ldclient-rb/redis_store"  # eventually we will just refer to impl/integ
 
 module LaunchDarkly
   module Integrations
+    #
+    # Integration with [Redis](https://redis.io/).
+    #
+    # Note that in order to use this integration, you must first install the `redis` and `connection-pool`
+    # gems.
+    #
+    # @since 5.5.0
+    #
     module Redis
       #
       # Default value for the `redis_url` option for {new_feature_store}. This points to an instance of
@@ -52,6 +60,38 @@ module LaunchDarkly
       #
       def self.new_feature_store(opts)
         return RedisFeatureStore.new(opts)
+      end
+
+      #
+      # Creates a Redis-backed Big Segment store.
+      #
+      # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+      # documentation: https://docs.launchdarkly.com/home/users/big-segments
+      #
+      # To use this method, you must first have the `redis` and `connection-pool` gems installed. Then,
+      # put the object returned by this method into the `store` property of your Big Segments configuration
+      # (see `Config`).
+      #
+      # @example Configuring Big Segments
+      #     store = LaunchDarkly::Integrations::Redis::new_big_segment_store(redis_url: "redis://my-server")
+      #     config = LaunchDarkly::Config.new(big_segments: LaunchDarkly::BigSegmentsConfig.new(store: store)
+      #     client = LaunchDarkly::LDClient.new(my_sdk_key, config)
+      #
+      # @param opts [Hash] the configuration options (these are all the same as for `new_feature_store`,
+      #   except that there are no caching parameters)
+      # @option opts [String] :redis_url (default_redis_url)  URL of the Redis instance (shortcut for omitting `redis_opts`)
+      # @option opts [Hash] :redis_opts  options to pass to the Redis constructor (if you want to specify more than just `redis_url`)
+      # @option opts [String] :prefix (default_prefix)  namespace prefix to add to all hash keys used by LaunchDarkly
+      # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
+      # @option opts [Integer] :max_connections  size of the Redis connection pool
+      # @option opts [Object] :pool  custom connection pool, if desired
+      # @option opts [Boolean] :pool_shutdown_on_close whether calling `close` should shutdown the custom connection pool;
+      #   this is true by default, and should be set to false only if you are managing the pool yourself and want its
+      #   lifecycle to be independent of the SDK client
+      # @return [LaunchDarkly::Interfaces::BigSegmentStore]  a Big Segment store object
+      #
+      def self.new_big_segment_store(opts)
+        return LaunchDarkly::Impl::Integrations::Redis::RedisBigSegmentStore.new(opts)
       end
     end
   end

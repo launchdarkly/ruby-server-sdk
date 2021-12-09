@@ -41,7 +41,10 @@ module LaunchDarkly
       [ EvaluationReason::prerequisite_failed("x"), EvaluationReason::PREREQUISITE_FAILED,
         { "kind" => "PREREQUISITE_FAILED", "prerequisiteKey" => "x" }, "PREREQUISITE_FAILED(x)" ],
       [ EvaluationReason::error(EvaluationReason::ERROR_FLAG_NOT_FOUND), EvaluationReason::ERROR,
-        { "kind" => "ERROR", "errorKind" => "FLAG_NOT_FOUND" }, "ERROR(FLAG_NOT_FOUND)" ]
+        { "kind" => "ERROR", "errorKind" => "FLAG_NOT_FOUND" }, "ERROR(FLAG_NOT_FOUND)" ],
+      [ EvaluationReason::fallthrough().with_big_segments_status(BigSegmentsStatus::HEALTHY), EvaluationReason::FALLTHROUGH,
+        { "kind" => "FALLTHROUGH", "bigSegmentsStatus" => "HEALTHY" }, "FALLTHROUGH",
+        [ EvaluationReason::fallthrough ] ],
     ]
     values.each_index do |i|
       params = values[i]
@@ -108,6 +111,7 @@ module LaunchDarkly
       expect(EvaluationReason::rule_match(1, "x")[:ruleId]).to eq "x"
       expect(EvaluationReason::prerequisite_failed("x")[:prerequisiteKey]).to eq "x"
       expect(EvaluationReason::error(EvaluationReason::ERROR_FLAG_NOT_FOUND)[:errorKind]).to eq "FLAG_NOT_FOUND"
+      expect(EvaluationReason::fallthrough().with_big_segments_status(BigSegmentsStatus::HEALTHY)[:bigSegmentsStatus]).to eq "HEALTHY"
     end
 
     it "freezes string properties" do
@@ -126,10 +130,6 @@ module LaunchDarkly
       expect { EvaluationReason::prerequisite_failed(9) }.to raise_error(ArgumentError)
       expect { EvaluationReason::error(nil) }.to raise_error(ArgumentError)
       expect { EvaluationReason::error(9) }.to raise_error(ArgumentError)
-    end
-
-    it "does not allow direct access to constructor" do
-      expect { EvaluationReason.new(:off, nil, nil, nil, nil) }.to raise_error(NoMethodError)
     end
   end
 end
