@@ -41,6 +41,7 @@ module LaunchDarkly
       def initialize
         @flag_builders = Hash.new
         @current_flags = Hash.new
+        @current_segments = Hash.new
         @instances = Array.new
         @instances_lock = Concurrent::ReadWriteLock.new
         @lock = Concurrent::ReadWriteLock.new
@@ -85,9 +86,9 @@ module LaunchDarkly
       def flag(key)
         existing_builder = @lock.with_read_lock { @flag_builders[key] }
         if existing_builder.nil? then
-            FlagBuilder.new(key).boolean_flag
+          FlagBuilder.new(key).boolean_flag
         else
-            existing_builder.clone
+          existing_builder.clone
         end
       end
 
@@ -104,7 +105,7 @@ module LaunchDarkly
       # unless you call {#update} again.
       #
       # @param flag_builder [FlagBuilder] a flag configuration builder
-      # @return [TestData] self
+      # @return [TestData] the TestData instance
       #
       def update(flag_builder)
         new_flag = nil
@@ -118,17 +119,82 @@ module LaunchDarkly
           new_flag = flag_builder.build(version+1)
           @current_flags[flag_key] = new_flag
         end
+        update_item(FEATURES, new_flag)
+        self
+      end
+
+      #
+      # Copies a full feature flag data model object into the test data.
+      #
+      # It immediately propagates the flag change to any `LDClient` instance(s) that you have already
+      # configured to use this `TestData`. If no `LDClient` has been started yet, it simply adds
+      # this flag to the test data which will be provided to any LDClient that you subsequently
+      # configure.
+      #
+      # Use this method if you need to use advanced flag configuration properties that are not supported by
+      # the simplified {FlagBuilder} API. Otherwise it is recommended to use the regular {flag}/{update}
+      # mechanism to avoid dependencies on details of the data model.
+      #
+      # You cannot make incremental changes with {flag}/{update} to a flag that has been added in this way;
+      # you can only replace it with an entirely new flag configuration.
+      #
+      # @param flag [Hash] the flag configuration
+      # @return [TestData] the TestData instance
+      #
+      def use_preconfigured_flag(flag)
+        use_preconfigured_item(FEATURES, flag, @current_flags)
+      end
+
+      #
+      # Copies a full user segment data model object into the test data.
+      #
+      # It immediately propagates the change to any `LDClient` instance(s) that you have already
+      # configured to use this `TestData`. If no `LDClient` has been started yet, it simply adds
+      # this segment to the test data which will be provided to any LDClient that you subsequently
+      # configure.
+      #
+      # This method is currently the only way to inject user segment data, since there is no builder
+      # API for segments. It is mainly intended for the SDK's own tests of user segment functionality,
+      # since application tests that need to produce a desired evaluation state could do so more easily
+      # by just setting flag values.
+      #
+      # @param segment [Hash] the segment configuration
+      # @return [TestData] the TestData instance
+      #
+      def use_preconfigured_segment(segment)
+        use_preconfigured_item(SEGMENTS, segment, @current_segments)
+      end
+
+      private def use_preconfigured_item(kind, item, current)
+        key = item[:key].to_sym
+        @lock.with_write_lock do
+          old_item = current[key]
+          if !old_item.nil? then
+            item = item.clone
+            item[:version] = old_item[:version] + 1
+          end
+          current[key] = item
+        end
+        update_item(kind, item)
+        self
+      end
+
+      private def update_item(kind, item)
         @instances_lock.with_read_lock do
           @instances.each do | instance |
-            instance.upsert(new_flag)
+            instance.upsert(kind, item)
           end
         end
-        self
       end
 
       # @private
       def make_init_data
-          { FEATURES => @current_flags }
+        @lock.with_read_lock do
+          {
+            FEATURES => @current_flags.clone,
+            SEGMENTS => @current_segments.clone
+          }
+        end
       end
 
       # @private

@@ -279,7 +279,7 @@ module LaunchDarkly
                 }
 
           unless @off_variation.nil? then
-            res[:off_variation] = @off_variation
+            res[:offVariation] = @off_variation
           end
 
           unless @fallthrough_variation.nil? then

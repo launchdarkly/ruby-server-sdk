@@ -30,8 +30,8 @@ module LaunchDarkly
             @test_data.closed_instance(self)
           end
 
-          def upsert(new_flag)
-            @feature_store.upsert(FEATURES, new_flag)
+          def upsert(kind, item)
+            @feature_store.upsert(kind, item)
           end
         end
       end

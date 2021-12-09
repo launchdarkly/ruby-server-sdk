@@ -4,23 +4,23 @@ module LaunchDarkly
   module Integrations
     describe 'TestData' do
       it 'is a valid datasource' do
-        td = LaunchDarkly::Integrations::TestData.data_source
-        config = LaunchDarkly::Config.new(send_events: false, data_source: td)
-        client = LaunchDarkly::LDClient.new('sdkKey', config)
-        expect(config.feature_store.all(LaunchDarkly::FEATURES)).to eql({})
+        td = Integrations::TestData.data_source
+        config = Config.new(send_events: false, data_source: td)
+        client = LDClient.new('sdkKey', config)
+        expect(config.feature_store.all(FEATURES)).to eql({})
         client.close
       end
 
       it 'initializes the feature store with existing flags' do
-        td = LaunchDarkly::Integrations::TestData.data_source
+        td = Integrations::TestData.data_source
         td.update(td.flag('flag'))
-        config = LaunchDarkly::Config.new(send_events: false, data_source: td)
-        client = LaunchDarkly::LDClient.new('sdkKey', config)
-        expect(config.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+        config = Config.new(send_events: false, data_source: td)
+        client = LDClient.new('sdkKey', config)
+        expect(config.feature_store.get(FEATURES, 'flag')).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 0 },
-          off_variation: 1,
+          offVariation: 1,
           on: true,
           version: 1
         })
@@ -28,45 +28,45 @@ module LaunchDarkly
       end
 
       it 'updates the feature store with new flags' do
-        td = LaunchDarkly::Integrations::TestData.data_source
+        td = Integrations::TestData.data_source
         td.update(td.flag('flag'))
-        config = LaunchDarkly::Config.new(send_events: false, data_source: td)
-        client = LaunchDarkly::LDClient.new('sdkKey', config)
-        config2 = LaunchDarkly::Config.new(send_events: false, data_source: td)
-        client2 = LaunchDarkly::LDClient.new('sdkKey', config2)
+        config = Config.new(send_events: false, data_source: td)
+        client = LDClient.new('sdkKey', config)
+        config2 = Config.new(send_events: false, data_source: td)
+        client2 = LDClient.new('sdkKey', config2)
 
-        expect(config.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+        expect(config.feature_store.get(FEATURES, 'flag')).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 0 },
-          off_variation: 1,
+          offVariation: 1,
           on: true,
           version: 1
         })
-        expect(config2.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+        expect(config2.feature_store.get(FEATURES, 'flag')).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 0 },
-          off_variation: 1,
+          offVariation: 1,
           on: true,
           version: 1
         })
 
         td.update(td.flag('flag').variation_for_all_users(false))
 
-        expect(config.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+        expect(config.feature_store.get(FEATURES, 'flag')).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 1 },
-          off_variation: 1,
+          offVariation: 1,
           on: true,
           version: 2
         })
-        expect(config2.feature_store.get(LaunchDarkly::FEATURES, 'flag')).to eql({
+        expect(config2.feature_store.get(FEATURES, 'flag')).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 1 },
-          off_variation: 1,
+          offVariation: 1,
           on: true,
           version: 2
         })
@@ -75,12 +75,42 @@ module LaunchDarkly
         client2.close
       end
 
+      it 'can include preconfigured items' do
+        td = Integrations::TestData.data_source
+        td.use_preconfigured_flag({ key: 'my-flag', version: 1000, on: true })
+        td.use_preconfigured_segment({ key: 'my-segment', version: 2000 })
+
+        config = Config.new(send_events: false, data_source: td)
+        client = LDClient.new('sdkKey', config)
+
+        expect(config.feature_store.get(FEATURES, 'my-flag')).to eql({
+          key: 'my-flag', version: 1000, on: true
+        })
+        expect(config.feature_store.get(SEGMENTS, 'my-segment')).to eql({
+          key: 'my-segment', version: 2000
+        })
+
+        td.use_preconfigured_flag({ key: 'my-flag', on: false })
+
+        expect(config.feature_store.get(FEATURES, 'my-flag')).to eql({
+          key: 'my-flag', version: 1001, on: false
+        })
+
+        td.use_preconfigured_segment({ key: 'my-segment', included: [ 'x' ] })
+
+        expect(config.feature_store.get(SEGMENTS, 'my-segment')).to eql({
+          key: 'my-segment', version: 2001, included: [ 'x' ]
+        })
+
+        client.close
+      end
+
       it 'TestData.flag defaults to a boolean flag' do
         td = TestData.new
         f = td.flag('flag').build(0)
         expect(f[:variations]).to eq([true, false])
         expect(f[:fallthrough][:variation]).to eq(0)
-        expect(f[:off_variation]).to eq(1)
+        expect(f[:offVariation]).to eq(1)
       end
 
       it 'TestData.flag returns a copy of the existing flag if it exists' do
@@ -116,7 +146,7 @@ module LaunchDarkly
 
         it 'can set variation for when targeting is off' do
           f = TestData::FlagBuilder.new('flag').off_variation(0).build(1)
-          expect(f[:off_variation]).to eq(0)
+          expect(f[:offVariation]).to eq(0)
         end
 
         it 'can set a list of variations' do
@@ -128,17 +158,17 @@ module LaunchDarkly
           f = TestData::FlagBuilder.new('flag').boolean_flag.build(1)
           expect(f[:variations]).to eq([true, false])
           expect(f[:fallthrough][:variation]).to eq(0)
-          expect(f[:off_variation]).to eq(1)
+          expect(f[:offVariation]).to eq(1)
         end
 
         it 'can handle boolean or index variation' do
           f = TestData::FlagBuilder.new('flag').off_variation(true).build(1)
           expect(f[:variations]).to eq([true, false])
-          expect(f[:off_variation]).to eq(0)
+          expect(f[:offVariation]).to eq(0)
 
           f2 = TestData::FlagBuilder.new('flag').fallthrough_variation(true).build(1)
           expect(f2[:variations]).to eq([true, false])
-          expect(f2[:off_variation]).to eq(1)
+          expect(f2[:offVariation]).to eq(1)
         end
 
         it 'can set variation for all users' do
