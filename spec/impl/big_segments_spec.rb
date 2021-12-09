@@ -3,6 +3,7 @@ require "ldclient-rb/impl/big_segments"
 
 require "concurrent/atomics"
 
+require "mock_components"
 require "spec_helper"
 
 module LaunchDarkly
@@ -50,11 +51,42 @@ module LaunchDarkly
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
           expect(store).to receive(:get_membership).with(user_hash).once.and_return(expected_membership)
+          # the ".once" on this mock expectation is what verifies that the cache is working; there should only be one query
           allow(store).to receive(:stop)
 
           with_manager(BigSegmentsConfig.new(store: store)) do |m|
             expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::HEALTHY)
             expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_user_membership(user_key)).to eq(expected_result)
+          end
+        end
+
+        it "can cache a nil result" do
+          store = double
+          expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
+          expect(store).to receive(:get_membership).with(user_hash).once.and_return(nil)
+          # the ".once" on this mock expectation is what verifies that the cache is working; there should only be one query
+          allow(store).to receive(:stop)
+
+          with_manager(BigSegmentsConfig.new(store: store)) do |m|
+            expected_result = BigSegmentMembershipResult.new({}, BigSegmentsStatus::HEALTHY)
+            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_user_membership(user_key)).to eq(expected_result)
+          end
+        end
+
+        it "cache can expire" do
+          expected_membership = { 'key1' => true, 'key2' => true }
+          store = double
+          expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
+          expect(store).to receive(:get_membership).with(user_hash).twice.and_return(expected_membership)
+          # the ".twice" on this mock expectation is what verifies that the cached result expired
+          allow(store).to receive(:stop)
+
+          with_manager(BigSegmentsConfig.new(store: store, user_cache_time: 0.01)) do |m|
+            expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::HEALTHY)
+            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            sleep(0.1)
             expect(m.get_user_membership(user_key)).to eq(expected_result)
           end
         end

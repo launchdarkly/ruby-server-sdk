@@ -11,6 +11,10 @@ module LaunchDarkly
     BigSegmentMembershipResult = Struct.new(:membership, :status)
 
     class BigSegmentStoreManager
+      # use this as a singleton whenever a membership query returns nil; it's safe to reuse it because
+      # we will never modify the membership properties after they're queried
+      EMPTY_MEMBERSHIP = {}
+
       def initialize(big_segments_config, logger)
         @store = big_segments_config.store
         @stale_after_millis = big_segments_config.stale_after * 1000
@@ -38,6 +42,7 @@ module LaunchDarkly
         if !membership
           begin
             membership = @store.get_membership(BigSegmentStoreManager.hash_for_user_key(user_key))
+            membership = EMPTY_MEMBERSHIP if membership.nil?
             @cache[user_key] = membership
           rescue => e
             LaunchDarkly::Util.log_exception(@logger, "Big Segment store membership query returned error", e)
