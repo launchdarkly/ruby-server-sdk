@@ -51,6 +51,7 @@ module LaunchDarkly
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
           expect(store).to receive(:get_membership).with(user_hash).once.and_return(expected_membership)
+          # the ".once" on this mock expectation is what verifies that the cache is working; there should only be one query
           allow(store).to receive(:stop)
 
           with_manager(BigSegmentsConfig.new(store: store)) do |m|
@@ -64,6 +65,7 @@ module LaunchDarkly
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
           expect(store).to receive(:get_membership).with(user_hash).once.and_return(nil)
+          # the ".once" on this mock expectation is what verifies that the cache is working; there should only be one query
           allow(store).to receive(:stop)
 
           with_manager(BigSegmentsConfig.new(store: store)) do |m|
