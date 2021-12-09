@@ -40,7 +40,44 @@ module LaunchDarkly
       #
       def self.new_feature_store(table_name, opts)
         core = LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore.new(table_name, opts)
-        return LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
+        LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
+      end
+
+      #
+      # Creates a DynamoDB-backed Big Segment store.
+      #
+      # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+      # documentation: https://docs.launchdarkly.com/home/users/big-segments
+      #
+      # To use this method, you must first install one of the AWS SDK gems: either `aws-sdk-dynamodb`, or
+      # the full `aws-sdk`. Then, put the object returned by this method into the `store` property of your
+      # Big Segments configuration (see `Config`).
+      #
+      # @example Configuring Big Segments
+      #     store = LaunchDarkly::Integrations::DynamoDB::new_big_segment_store("my-table-name")
+      #     config = LaunchDarkly::Config.new(big_segments: LaunchDarkly::BigSegmentsConfig.new(store: store)
+      #     client = LaunchDarkly::LDClient.new(my_sdk_key, config)
+      #
+      # Note that the specified table must already exist in DynamoDB. It must have a partition key called
+      # "namespace", and a sort key called "key" (both strings). The SDK does not create the table
+      # automatically because it has no way of knowing what additional properties (such as permissions
+      # and throughput) you would want it to have.
+      #
+      # By default, the DynamoDB client will try to get your AWS credentials and region name from
+      # environment variables and/or local configuration files, as described in the AWS SDK documentation.
+      # You can also specify any supported AWS SDK options in `dynamodb_opts`-- or, provide an
+      # already-configured DynamoDB client in `existing_client`.
+      #
+      # @param opts [Hash] the configuration options (these are all the same as for `new_feature_store`,
+      #   except that there are no caching parameters)
+      # @option opts [Hash] :dynamodb_opts  options to pass to the DynamoDB client constructor (ignored if you specify `:existing_client`)
+      # @option opts [Object] :existing_client  an already-constructed DynamoDB client for the feature store to use
+      # @option opts [String] :prefix  namespace prefix to add to all keys used by LaunchDarkly
+      # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
+      # @return [LaunchDarkly::Interfaces::BigSegmentStore]  a Big Segment store object
+      #
+      def self.new_big_segment_store(table_name, opts)
+        LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBBigSegmentStore.new(table_name, opts)
       end
     end
   end

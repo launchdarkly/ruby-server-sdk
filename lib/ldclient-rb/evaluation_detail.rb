@@ -110,26 +110,41 @@ module LaunchDarkly
 
     # Indicates the general category of the reason. Will always be one of the class constants such
     # as {#OFF}.
+    # @return [Symbol]
     attr_reader :kind
 
     # The index of the rule that was matched (0 for the first rule in the feature flag). If
     # {#kind} is not {#RULE_MATCH}, this will be `nil`.
+    # @return [Integer|nil]
     attr_reader :rule_index
 
     # A unique string identifier for the matched rule, which will not change if other rules are added
     # or deleted. If {#kind} is not {#RULE_MATCH}, this will be `nil`.
+    # @return [String]
     attr_reader :rule_id
 
     # A boolean or nil value representing if the rule or fallthrough has an experiment rollout.
+    # @return [Boolean|nil]
     attr_reader :in_experiment
 
     # The key of the prerequisite flag that did not return the desired variation. If {#kind} is not
     # {#PREREQUISITE_FAILED}, this will be `nil`.
+    # @return [String]
     attr_reader :prerequisite_key
 
     # A value indicating the general category of error. This should be one of the class constants such
     # as {#ERROR_FLAG_NOT_FOUND}. If {#kind} is not {#ERROR}, it will be `nil`.
+    # @return [Symbol]
     attr_reader :error_kind
+
+    # Describes the validity of Big Segment information, if and only if the flag evaluation required
+    # querying at least one Big Segment. Otherwise it returns `nil`. Possible values are defined by
+    # {BigSegmentsStatus}.
+    #
+    # Big Segments are a specific kind of user segments. For more information, read the LaunchDarkly
+    # documentation: https://docs.launchdarkly.com/home/users/big-segments
+    # @return [Symbol]
+    attr_reader :big_segments_status
 
     # Returns an instance whose {#kind} is {#OFF}.
     # @return [EvaluationReason]
@@ -196,11 +211,13 @@ module LaunchDarkly
     def ==(other)
       if other.is_a? EvaluationReason
         @kind == other.kind && @rule_index == other.rule_index && @rule_id == other.rule_id &&
-          @prerequisite_key == other.prerequisite_key && @error_kind == other.error_kind
+          @prerequisite_key == other.prerequisite_key && @error_kind == other.error_kind &&
+          @big_segments_status == other.big_segments_status
       elsif other.is_a? Hash
         @kind.to_s == other[:kind] && @rule_index == other[:ruleIndex] && @rule_id == other[:ruleId] &&
           @prerequisite_key == other[:prerequisiteKey] &&
-          (other[:errorKind] == @error_kind.nil? ? nil : @error_kind.to_s)
+          (other[:errorKind] == @error_kind.nil? ? nil : @error_kind.to_s) &&
+          (other[:bigSegmentsStatus] == @big_segments_status.nil? ? nil : @big_segments_status.to_s)
       end
     end
 
@@ -242,7 +259,7 @@ module LaunchDarkly
       # enabled for a flag and the application called variation_detail, or 2. experimentation is
       # enabled for an evaluation. We can't reuse these hashes because an application could call
       # as_json and then modify the result.
-      case @kind
+      ret = case @kind
       when :RULE_MATCH
         if @in_experiment
           { kind: @kind, ruleIndex: @rule_index, ruleId: @rule_id, inExperiment: @in_experiment }
@@ -262,6 +279,10 @@ module LaunchDarkly
       else
         { kind: @kind }
       end
+      if !@big_segments_status.nil?
+        ret[:bigSegmentsStatus] = @big_segments_status
+      end
+      ret
     end
 
     # Same as {#as_json}, but converts the JSON structure into a string.
@@ -285,14 +306,24 @@ module LaunchDarkly
         @prerequisite_key
       when :errorKind
         @error_kind.nil? ? nil : @error_kind.to_s
+      when :bigSegmentsStatus
+        @big_segments_status.nil? ? nil : @big_segments_status.to_s
       else
         nil
       end
     end
 
-    private
+    def with_big_segments_status(big_segments_status)
+      return self if @big_segments_status == big_segments_status
+      EvaluationReason.new(@kind, @rule_index, @rule_id, @prerequisite_key, @error_kind, @in_experiment, big_segments_status)
+    end
 
-    def initialize(kind, rule_index, rule_id, prerequisite_key, error_kind, in_experiment=nil)
+    #
+    # Constructor that sets all properties. Applications should not normally use this constructor,
+    # but should use class methods like {#off} to avoid creating unnecessary instances.
+    #
+    def initialize(kind, rule_index, rule_id, prerequisite_key, error_kind, in_experiment=nil,
+        big_segments_status = nil)
       @kind = kind.to_sym
       @rule_index = rule_index
       @rule_id = rule_id
@@ -301,11 +332,10 @@ module LaunchDarkly
       @prerequisite_key.freeze if !prerequisite_key.nil?
       @error_kind = error_kind
       @in_experiment = in_experiment
+      @big_segments_status = big_segments_status
     end
 
-    private_class_method :new
-
-    def self.make_error(error_kind)
+    private_class_method def self.make_error(error_kind)
       new(:ERROR, nil, nil, nil, error_kind)
     end
 
@@ -320,5 +350,34 @@ module LaunchDarkly
       ERROR_USER_NOT_SPECIFIED => make_error(ERROR_USER_NOT_SPECIFIED),
       ERROR_EXCEPTION => make_error(ERROR_EXCEPTION)
     }
+  end
+
+  #
+  # Defines the possible values of {EvaluationReason#big_segments_status}.
+  #
+  module BigSegmentsStatus
+    #
+    # Indicates that the Big Segment query involved in the flag evaluation was successful, and
+    # that the segment state is considered up to date.
+    #
+    HEALTHY = :HEALTHY
+
+    #
+    # Indicates that the Big Segment query involved in the flag evaluation was successful, but
+    # that the segment state may not be up to date.
+    #
+    STALE = :STALE
+
+    #
+    # Indicates that Big Segments could not be queried for the flag evaluation because the SDK
+    # configuration did not include a Big Segment store.
+    #
+    NOT_CONFIGURED = :NOT_CONFIGURED
+
+    #
+    # Indicates that the Big Segment query involved in the flag evaluation failed, for instance
+    # due to a database error.
+    #
+    STORE_ERROR = :STORE_ERROR
   end
 end

@@ -9,7 +9,7 @@ module LaunchDarkly
       def test_segment_match(segment)
         clause = make_segment_match_clause(segment)
         flag = boolean_flag_with_clauses([clause])
-        e = Evaluator.new(get_nothing, get_things({ segment[:key] => segment }), logger)
+        e = EvaluatorBuilder.new(logger).with_segment(segment).build
         e.evaluate(flag, user, factory).detail.value
       end
 
@@ -20,17 +20,13 @@ module LaunchDarkly
           version: 1,
           deleted: false
         }
-        get_segment = get_things({ 'segkey' => segment })
-        e = subject.new(get_nothing, get_segment, logger)
-        user = { key: 'userkey' }
-        clause = { attribute: '', op: 'segmentMatch', values: ['segkey'] }
-        flag = boolean_flag_with_clauses([clause])
+        e = EvaluatorBuilder.new(logger).with_segment(segment).build
+        flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
         expect(e.evaluate(flag, user, factory).detail.value).to be true
       end
 
       it "falls through with no errors if referenced segment is not found" do
-        e = subject.new(get_nothing, get_things({ 'segkey' => nil }), logger)
-        user = { key: 'userkey' }
+        e = EvaluatorBuilder.new(logger).with_unknown_segment('segkey').build
         clause = { attribute: '', op: 'segmentMatch', values: ['segkey'] }
         flag = boolean_flag_with_clauses([clause])
         expect(e.evaluate(flag, user, factory).detail.value).to be false
