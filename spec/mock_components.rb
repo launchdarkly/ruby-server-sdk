@@ -89,31 +89,6 @@ module LaunchDarkly
     end
   end
 
-  class MockDataSource
-    def self.factory_with_data(data)
-      lambda { |sdk_key, config| MockDataSource.new(config.feature_store, data) }
-    end
-
-    def initialize(store, data)
-      @store = store
-      @data = data
-    end
-
-    def start
-      @store.init(@data)
-      ev = Concurrent::Event.new
-      ev.set
-      ev
-    end
-
-    def stop
-    end
-
-    def initialized?
-      true
-    end
-  end
-
   class SimpleObserver
     def initialize(fn)
       @fn = fn

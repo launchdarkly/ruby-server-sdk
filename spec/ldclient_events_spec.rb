@@ -27,67 +27,64 @@ module LaunchDarkly
       end
 
       it "known flag" do
-        flag = FlagBuilder.new("flagkey").version(100).off_with_value("value").
-          track_events(true).debug_events_until_date(1000).build
-        store = InMemoryFeatureStore.new
-        store.upsert(FEATURES, flag)
+        td = Integrations::TestData.data_source
+        td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
         
-        with_client(test_config(feature_store: store)) do |client|
+        with_client(test_config(data_source: td)) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature",
-            key: flag[:key],
-            version: flag[:version],
+            key: "flagkey",
+            version: 1,
             user: basic_user,
             variation: 0,
             value: "value",
-            default: "default",
-            trackEvents: true,
-            debugEventsUntilDate: 1000
+            default: "default"
           ))
-          client.variation(flag[:key], basic_user, "default")
+          client.variation("flagkey", basic_user, "default")
         end
       end
 
       it "does not send event, and logs error, if user is nil" do
-        flag = FlagBuilder.new("flagkey").version(100).off_with_value("value").build
-        store = InMemoryFeatureStore.new
-        store.upsert(FEATURES, flag)
+        td = Integrations::TestData.data_source
+        td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
+
         logger = double().as_null_object
         
-        with_client(test_config(feature_store: store, logger: logger)) do |client|
+        with_client(test_config(data_source: td, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:error)
-          client.variation(flag[:key], nil, "default")
+          client.variation("flagkey", nil, "default")
         end
       end
 
       it "does not send event, and logs warning, if user key is nil" do
-        flag = FlagBuilder.new("flagkey").version(100).off_with_value("value").build
-        store = InMemoryFeatureStore.new
-        store.upsert(FEATURES, flag)
+        td = Integrations::TestData.data_source
+        td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
+
         logger = double().as_null_object
         keyless_user = { key: nil }
 
-        with_client(test_config(feature_store: store, logger: logger)) do |client|
+        with_client(test_config(data_source: td, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
-          client.variation(flag[:key], keyless_user, "default")
+          client.variation("flagkey", keyless_user, "default")
         end
       end
 
       it "sets trackEvents and reason if trackEvents is set for matched rule" do
-        flag = FlagBuilder.new("flagkey").version(100).on(true).variations("value").
-          rule(RuleBuilder.new.variation(0).id("id").track_events(true).
-            clause(Clauses.match_user(basic_user))).
-          build
-        store = InMemoryFeatureStore.new
-        store.upsert(FEATURES, flag)
+        td = Integrations::TestData.data_source
+        td.use_preconfigured_flag(
+          FlagBuilder.new("flagkey").version(100).on(true).variations("value").
+            rule(RuleBuilder.new.variation(0).id("id").track_events(true).
+              clause(Clauses.match_user(basic_user))).
+            build
+        )
 
-        with_client(test_config(feature_store: store)) do |client|
+        with_client(test_config(data_source: td)) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature",
-            key: flag[:key],
-            version: flag[:version],
+            key: "flagkey",
+            version: 100,
             user: basic_user,
             variation: 0,
             value: "value",
@@ -95,21 +92,22 @@ module LaunchDarkly
             trackEvents: true,
             reason: LaunchDarkly::EvaluationReason::rule_match(0, 'id')
           ))
-          client.variation(flag[:key], basic_user, "default")
+          client.variation("flagkey", basic_user, "default")
         end
       end
 
       it "sets trackEvents and reason if trackEventsFallthrough is set and we fell through" do
-        flag = FlagBuilder.new("flagkey").version(100).on(true).variations("value").fallthrough_variation(0).
-          track_events_fallthrough(true).build
-        store = InMemoryFeatureStore.new
-        store.upsert(FEATURES, flag)
+        td = Integrations::TestData.data_source
+        td.use_preconfigured_flag(
+          FlagBuilder.new("flagkey").version(100).on(true).variations("value").fallthrough_variation(0).
+            track_events_fallthrough(true).build
+        )
 
-        with_client(test_config(feature_store: store)) do |client|
+        with_client(test_config(data_source: td)) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature",
-            key: flag[:key],
-            version: flag[:version],
+            key: "flagkey",
+            version: 100,
             user: basic_user,
             variation: 0,
             value: "value",
@@ -117,7 +115,7 @@ module LaunchDarkly
             trackEvents: true,
             reason: LaunchDarkly::EvaluationReason::fallthrough
           ))
-          client.variation(flag[:key], basic_user, "default")
+          client.variation("flagkey", basic_user, "default")
         end
       end
     end
@@ -134,51 +132,47 @@ module LaunchDarkly
       end
 
       it "known flag" do
-        flag = FlagBuilder.new("flagkey").version(100).off_with_value("value").
-          track_events(true).debug_events_until_date(1000).build
-        store = InMemoryFeatureStore.new
-        store.upsert(FEATURES, flag)
-        
-        with_client(test_config(feature_store: store)) do |client|
+        td = Integrations::TestData.data_source
+        td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
+
+        with_client(test_config(data_source: td)) do |client|
           expect(event_processor(client)).to receive(:add_event).with(hash_including(
             kind: "feature",
-            key: flag[:key],
-            version: flag[:version],
+            key: "flagkey",
+            version: 1,
             user: basic_user,
             variation: 0,
             value: "value",
             default: "default",
-            trackEvents: true,
-            debugEventsUntilDate: 1000,
             reason: LaunchDarkly::EvaluationReason::off
           ))
-          client.variation_detail(flag[:key], basic_user, "default")
+          client.variation_detail("flagkey", basic_user, "default")
         end
       end
 
       it "does not send event, and logs error, if user is nil" do
-        flag = FlagBuilder.new("flagkey").version(100).off_with_value("value").build
-        store = InMemoryFeatureStore.new
-        store.upsert(FEATURES, flag)
+        td = Integrations::TestData.data_source
+        td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
+
         logger = double().as_null_object
-        
-        with_client(test_config(feature_store: store, logger: logger)) do |client|
+
+        with_client(test_config(data_source: td, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:error)
-          client.variation_detail(flag[:key], nil, "default")
+          client.variation_detail("flagkey", nil, "default")
         end
       end
 
       it "does not send event, and logs warning, if user key is nil" do
-        flag = FlagBuilder.new("flagkey").version(100).off_with_value("value").build
-        store = InMemoryFeatureStore.new
-        store.upsert(FEATURES, flag)
+        td = Integrations::TestData.data_source
+        td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
+
         logger = double().as_null_object
 
-        with_client(test_config(feature_store: store, logger: logger)) do |client|
+        with_client(test_config(data_source: td, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
-          client.variation_detail(flag[:key], { key: nil }, "default")
+          client.variation_detail("flagkey", { key: nil }, "default")
         end
       end
     end
