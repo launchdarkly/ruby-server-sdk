@@ -75,6 +75,22 @@ module LaunchDarkly
           end
         end
 
+        it "cache can expire" do
+          expected_membership = { 'key1' => true, 'key2' => true }
+          store = double
+          expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
+          expect(store).to receive(:get_membership).with(user_hash).twice.and_return(expected_membership)
+          # the ".twice" on this mock expectation is what verifies that the cached result expired
+          allow(store).to receive(:stop)
+
+          with_manager(BigSegmentsConfig.new(store: store, user_cache_time: 0.01)) do |m|
+            expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::HEALTHY)
+            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            sleep(0.1)
+            expect(m.get_user_membership(user_key)).to eq(expected_result)
+          end
+        end
+
         it "with stale status" do
           expected_membership = { 'key1' => true, 'key2' => true }
           store = double
