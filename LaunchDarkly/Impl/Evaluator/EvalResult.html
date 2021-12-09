@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Evaluator::EvalResult
   
-    &mdash; LaunchDarkly Ruby SDK (6.2.5)
+    &mdash; LaunchDarkly Ruby SDK (6.3.0)
   
 </title>
 
@@ -103,9 +103,15 @@
 
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
-    <p>Used internally to hold an evaluation result and the events that were generated from prerequisites. The
-<code>detail</code> property is an EvaluationDetail. The <code>events</code> property can be either an array of feature request
-events or nil.</p>
+    <p>Used internally to hold an evaluation result and additional state that may be accumulated during an
+evaluation. It&#39;s simpler and a bit more efficient to represent these as mutable properties rather than
+trying to use a pure functional approach, and since we&#39;re not exposing this object to any application code
+or retaining it anywhere, we don&#39;t have to be quite as strict about immutability.</p>
+
+<p>The big_segments_status and big_segments_membership properties are not used by the caller; they are used
+during an evaluation to cache the result of any Big Segments query that we&#39;ve done for this user, because
+we don&#39;t want to do multiple queries for the same user if multiple Big Segments are referenced in the same
+evaluation.</p>
 
 
   </div>
@@ -134,6 +140,58 @@ events or nil.</p>
 
   <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
   <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#big_segments_membership-instance_method" title="#big_segments_membership (instance method)">#<strong>big_segments_membership</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute big_segments_membership.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#big_segments_status-instance_method" title="#big_segments_status (instance method)">#<strong>big_segments_status</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute big_segments_status.</p>
+</div></span>
+  
+</li>
+
     
       <li class="public ">
   <span class="summary_signature">
@@ -198,9 +256,127 @@ events or nil.</p>
     <h2>Instance Attribute Details</h2>
     
       
-      <span id="detail=-instance_method"></span>
+      <span id="big_segments_membership=-instance_method"></span>
       <div class="method_details first">
-  <h3 class="signature first" id="detail-instance_method">
+  <h3 class="signature first" id="big_segments_membership-instance_method">
+  
+    #<strong>big_segments_membership</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute big_segments_membership</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the current value of big_segments_membership</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+35
+36
+37</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 35</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_big_segments_membership'>big_segments_membership</span>
+  <span class='ivar'>@big_segments_membership</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="big_segments_status=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="big_segments_status-instance_method">
+  
+    #<strong>big_segments_status</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute big_segments_status</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the current value of big_segments_status</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+35
+36
+37</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 35</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_big_segments_status'>big_segments_status</span>
+  <span class='ivar'>@big_segments_status</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="detail=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="detail-instance_method">
   
     #<strong>detail</strong>  &#x21d2; <tt>Object</tt> 
   
@@ -241,12 +417,12 @@ events or nil.</p>
       <pre class="lines">
 
 
-28
-29
-30</pre>
+35
+36
+37</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 28</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 35</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_detail'>detail</span>
   <span class='ivar'>@detail</span>
@@ -300,12 +476,12 @@ events or nil.</p>
       <pre class="lines">
 
 
-28
-29
-30</pre>
+35
+36
+37</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 28</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 35</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_events'>events</span>
   <span class='ivar'>@events</span>
@@ -321,9 +497,9 @@ events or nil.</p>
 </div>
 
       <div id="footer">
-  Generated on Tue Oct 12 23:21:32 2021 by
+  Generated on Thu Dec  9 23:39:38 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.5.9).
+  0.9.27 (ruby-2.5.9).
 </div>
 
     </div>

@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::LDClient
   
-    &mdash; LaunchDarkly Ruby SDK (6.2.5)
+    &mdash; LaunchDarkly Ruby SDK (6.3.0)
   
 </title>
 
@@ -113,6 +113,39 @@ should create a single client instance for the lifetime of the application.</p>
 </div>
 
 
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#big_segment_store_status_provider-instance_method" title="#big_segment_store_status_provider (instance method)">#<strong>big_segment_store_status_provider</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns an interface for tracking the status of a Big Segment store.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
 
 
 
@@ -521,7 +554,6 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
       <pre class="lines">
 
 
-35
 36
 37
 38
@@ -589,10 +621,15 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
 100
 101
 102
-103</pre>
+103
+104
+105
+106
+107
+108</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 35</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 36</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default'><span class='object_link'><a href="Config.html#default-class_method" title="LaunchDarkly::Config.default (method)">default</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_wait_for_sec'>wait_for_sec</span> <span class='op'>=</span> <span class='int'>5</span><span class='rparen'>)</span>
   <span class='comment'># Note that sdk_key is normally a required parameter, and a nil value would cause the SDK to
@@ -619,10 +656,14 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
   <span class='id identifier rubyid_updated_config'>updated_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@feature_store</span><span class='comma'>,</span> <span class='ivar'>@store</span><span class='rparen'>)</span>
   <span class='ivar'>@config</span> <span class='op'>=</span> <span class='id identifier rubyid_updated_config'>updated_config</span>
 
+  <span class='ivar'>@big_segment_store_manager</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>BigSegmentStoreManager</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_big_segments'>big_segments</span><span class='comma'>,</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+  <span class='ivar'>@big_segment_store_status_provider</span> <span class='op'>=</span> <span class='ivar'>@big_segment_store_manager</span><span class='period'>.</span><span class='id identifier rubyid_status_provider'>status_provider</span>
+
   <span class='id identifier rubyid_get_flag'>get_flag</span> <span class='op'>=</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_key'>key</span><span class='op'>|</span> <span class='ivar'>@store</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='const'>FEATURES</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
   <span class='id identifier rubyid_get_segment'>get_segment</span> <span class='op'>=</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_key'>key</span><span class='op'>|</span> <span class='ivar'>@store</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='const'>SEGMENTS</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
-  <span class='ivar'>@evaluator</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Evaluator</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_get_flag'>get_flag</span><span class='comma'>,</span> <span class='id identifier rubyid_get_segment'>get_segment</span><span class='comma'>,</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
-
+  <span class='id identifier rubyid_get_big_segments_membership'>get_big_segments_membership</span> <span class='op'>=</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_key'>key</span><span class='op'>|</span> <span class='ivar'>@big_segment_store_manager</span><span class='period'>.</span><span class='id identifier rubyid_get_user_membership'>get_user_membership</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+  <span class='ivar'>@evaluator</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Evaluator</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_get_flag'>get_flag</span><span class='comma'>,</span> <span class='id identifier rubyid_get_segment'>get_segment</span><span class='comma'>,</span> <span class='id identifier rubyid_get_big_segments_membership'>get_big_segments_membership</span><span class='comma'>,</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+  
   <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_send_events'>send_events</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_diagnostic_opt_out?'>diagnostic_opt_out?</span>
     <span class='id identifier rubyid_diagnostic_accumulator'>diagnostic_accumulator</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>DiagnosticAccumulator</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>DiagnosticAccumulator</span><span class='period'>.</span><span class='id identifier rubyid_create_diagnostic_id'>create_diagnostic_id</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='rparen'>)</span><span class='rparen'>)</span>
   <span class='kw'>else</span>
@@ -669,6 +710,56 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
 </div>
   
 </div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="big_segment_store_status_provider-instance_method">
+  
+    #<strong>big_segment_store_status_provider</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns an interface for tracking the status of a Big Segment store.</p>
+
+<p>The BigSegmentStoreStatusProvider has methods for checking whether the Big Segment store
+is (as far as the SDK knows) currently operational and tracking changes in this status.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+393
+394
+395</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 393</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_big_segment_store_status_provider'>big_segment_store_status_provider</span>
+  <span class='ivar'>@big_segment_store_status_provider</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
 
 
   <div id="instance_method_details" class="method_details_list">
@@ -734,18 +825,18 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
       <pre class="lines">
 
 
-292
-293
-294
-295
-296
 297
 298
 299
-300</pre>
+300
+301
+302
+303
+304
+305</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 292</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 297</span>
 
 <span class='kw'>def</span> <span class='kw'>alias</span><span class='lparen'>(</span><span class='id identifier rubyid_current_context'>current_context</span><span class='comma'>,</span> <span class='id identifier rubyid_previous_context'>previous_context</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_current_context'>current_context</span> <span class='op'>||</span> <span class='id identifier rubyid_current_context'>current_context</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='op'>!</span><span class='id identifier rubyid_previous_context'>previous_context</span> <span class='op'>||</span> <span class='id identifier rubyid_previous_context'>previous_context</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -826,12 +917,12 @@ result of <code>all_flags</code>.</p>
       <pre class="lines">
 
 
-312
-313
-314</pre>
+317
+318
+319</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 312</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 317</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_flags'>all_flags</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_all_flags_state'>all_flags_state</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_values_map'>values_map</span>
@@ -982,11 +1073,6 @@ of the JSON data if you are passing the flag state to the front end.</p>
       <pre class="lines">
 
 
-333
-334
-335
-336
-337
 338
 339
 340
@@ -1017,10 +1103,15 @@ of the JSON data if you are passing the flag state to the front end.</p>
 365
 366
 367
-368</pre>
+368
+369
+370
+371
+372
+373</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 333</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 338</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_flags_state'>all_flags_state</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span>
@@ -1088,20 +1179,22 @@ of the JSON data if you are passing the flag state to the front end.</p>
       <pre class="lines">
 
 
-374
-375
-376
-377
-378
-379</pre>
+379
+380
+381
+382
+383
+384
+385</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 374</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 379</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
   <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] Closing LaunchDarkly client...</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
   <span class='ivar'>@data_source</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span>
   <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span>
+  <span class='ivar'>@big_segment_store_manager</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span>
   <span class='ivar'>@store</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1143,12 +1236,12 @@ call <span class='object_link'><a href="#close-instance_method" title="LaunchDar
       <pre class="lines">
 
 
-117
-118
-119</pre>
+122
+123
+124</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 117</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 122</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flush'>flush</span>
   <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_flush'>flush</span>
@@ -1211,17 +1304,17 @@ described in <span class='object_link'><a href="#variation-instance_method" titl
       <pre class="lines">
 
 
-245
-246
-247
-248
-249
 250
 251
-252</pre>
+252
+253
+254
+255
+256
+257</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 245</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 250</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_identify'>identify</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_user'>user</span> <span class='op'>||</span> <span class='id identifier rubyid_user'>user</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -1292,12 +1385,12 @@ parameter of <span class='object_link'><a href="#variation-instance_method" titl
       <pre class="lines">
 
 
-162
-163
-164</pre>
+167
+168
+169</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 162</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 167</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span> <span class='op'>||</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_use_ldd?'>use_ldd?</span> <span class='op'>||</span> <span class='ivar'>@data_source</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
@@ -1369,12 +1462,12 @@ For more information, see <a href="https://docs.launchdarkly.com/sdk/features/se
       <pre class="lines">
 
 
-140
-141
-142</pre>
+145
+146
+147</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 140</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 145</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_secure_mode_hash'>secure_mode_hash</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
   <span class='const'>OpenSSL</span><span class='op'>::</span><span class='const'>HMAC</span><span class='period'>.</span><span class='id identifier rubyid_hexdigest'>hexdigest</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sha256</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='ivar'>@sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
@@ -1479,13 +1572,13 @@ For more information, see <a href="https://docs.launchdarkly.com/sdk/features/se
       <pre class="lines">
 
 
-128
-129
-130
-131</pre>
+133
+134
+135
+136</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 128</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 133</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_toggle?'>toggle?</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span> <span class='op'>=</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] toggle? is deprecated. Use variation instead</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
@@ -1602,17 +1695,17 @@ for Data Export.</p>
       <pre class="lines">
 
 
-276
-277
-278
-279
-280
 281
 282
-283</pre>
+283
+284
+285
+286
+287
+288</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 276</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 281</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_track'>track</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_metric_value'>metric_value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_user'>user</span> <span class='op'>||</span> <span class='id identifier rubyid_user'>user</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -1756,12 +1849,12 @@ condition making it impossible to find or evaluate the flag</p>
       <pre class="lines">
 
 
-199
-200
-201</pre>
+204
+205
+206</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 199</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 204</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation'>variation</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_evaluate_internal'>evaluate_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='comma'>,</span> <span class='ivar'>@event_factory_default</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
@@ -1876,12 +1969,12 @@ condition making it impossible to find or evaluate the flag</p>
       <pre class="lines">
 
 
-226
-227
-228</pre>
+231
+232
+233</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 226</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 231</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation_detail'>variation_detail</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_evaluate_internal'>evaluate_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='comma'>,</span> <span class='ivar'>@event_factory_with_reasons</span><span class='rparen'>)</span>
@@ -1896,9 +1989,9 @@ condition making it impossible to find or evaluate the flag</p>
 </div>
 
       <div id="footer">
-  Generated on Tue Oct 12 23:21:32 2021 by
+  Generated on Thu Dec  9 23:39:38 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.5.9).
+  0.9.27 (ruby-2.5.9).
 </div>
 
     </div>

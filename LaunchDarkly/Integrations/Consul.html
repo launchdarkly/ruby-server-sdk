@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly::Integrations::Consul
   
-    &mdash; LaunchDarkly Ruby SDK (6.2.5)
+    &mdash; LaunchDarkly Ruby SDK (6.3.0)
   
 </title>
 
@@ -78,9 +78,7 @@
   
   <dl>
     <dt>Defined in:</dt>
-    <dd>lib/ldclient-rb/integrations.rb<span class="defines">,<br />
-  lib/ldclient-rb/integrations/consul.rb</span>
-</dd>
+    <dd>lib/ldclient-rb/integrations/consul.rb</dd>
   </dl>
   
 </div>
@@ -239,12 +237,12 @@
       <pre class="lines">
 
 
-12
-13
-14</pre>
+19
+20
+21</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/consul.rb', line 12</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/consul.rb', line 19</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_prefix'>default_prefix</span>
   <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>launchdarkly</span><span class='tstring_end'>&#39;</span></span>
@@ -423,13 +421,13 @@ Consul client configuration (note that this is exactly the same as modifying <co
       <pre class="lines">
 
 
-32
-33
-34
-35</pre>
+39
+40
+41
+42</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/consul.rb', line 32</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/consul.rb', line 39</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_feature_store'>new_feature_store</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_core'>core</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Integrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Consul.html" title="LaunchDarkly::Impl::Integrations::Consul (module)">Consul</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Consul/ConsulFeatureStoreCore.html" title="LaunchDarkly::Impl::Integrations::Consul::ConsulFeatureStoreCore (class)">ConsulFeatureStoreCore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Impl/Integrations/Consul/ConsulFeatureStoreCore.html#initialize-instance_method" title="LaunchDarkly::Impl::Integrations::Consul::ConsulFeatureStoreCore#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
@@ -445,9 +443,9 @@ Consul client configuration (note that this is exactly the same as modifying <co
 </div>
 
       <div id="footer">
-  Generated on Tue Oct 12 23:21:31 2021 by
+  Generated on Thu Dec  9 23:39:37 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.5.9).
+  0.9.27 (ruby-2.5.9).
 </div>
 
     </div>

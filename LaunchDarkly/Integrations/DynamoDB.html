@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly::Integrations::DynamoDB
   
-    &mdash; LaunchDarkly Ruby SDK (6.2.5)
+    &mdash; LaunchDarkly Ruby SDK (6.3.0)
   
 </title>
 
@@ -78,9 +78,7 @@
   
   <dl>
     <dt>Defined in:</dt>
-    <dd>lib/ldclient-rb/integrations.rb<span class="defines">,<br />
-  lib/ldclient-rb/integrations/dynamodb.rb</span>
-</dd>
+    <dd>lib/ldclient-rb/integrations/dynamodb.rb</dd>
   </dl>
   
 </div>
@@ -131,6 +129,29 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#new_big_segment_store-class_method" title="new_big_segment_store (class method)">.<strong>new_big_segment_store</strong>(table_name, opts)  &#x21d2; LaunchDarkly::Interfaces::BigSegmentStore </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Creates a DynamoDB-backed Big Segment store.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#new_feature_store-class_method" title="new_feature_store (class method)">.<strong>new_feature_store</strong>(table_name, opts)  &#x21d2; LaunchDarkly::Interfaces::FeatureStore </a>
     
 
@@ -161,7 +182,188 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="new_feature_store-class_method">
+  <h3 class="signature first" id="new_big_segment_store-class_method">
+  
+    .<strong>new_big_segment_store</strong>(table_name, opts)  &#x21d2; <tt><span class='object_link'><a href="../Interfaces/BigSegmentStore.html" title="LaunchDarkly::Interfaces::BigSegmentStore (module)">LaunchDarkly::Interfaces::BigSegmentStore</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Creates a DynamoDB-backed Big Segment store.</p>
+
+<p>Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">https://docs.launchdarkly.com/home/users/big-segments</a></p>
+
+<p>To use this method, you must first install one of the AWS SDK gems: either <code>aws-sdk-dynamodb</code>, or
+the full <code>aws-sdk</code>. Then, put the object returned by this method into the <code>store</code> property of your
+Big Segments configuration (see <code>Config</code>).</p>
+
+<p>Note that the specified table must already exist in DynamoDB. It must have a partition key called
+&quot;namespace&quot;, and a sort key called &quot;key&quot; (both strings). The SDK does not create the table
+automatically because it has no way of knowing what additional properties (such as permissions
+and throughput) you would want it to have.</p>
+
+<p>By default, the DynamoDB client will try to get your AWS credentials and region name from
+environment variables and/or local configuration files, as described in the AWS SDK documentation.
+You can also specify any supported AWS SDK options in <code>dynamodb_opts</code>-- or, provide an
+already-configured DynamoDB client in <code>existing_client</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <p class="tag_title">Examples:</p>
+    
+      
+        <p class="example_title"><div class='inline'><p>Configuring Big Segments</p>
+</div></p>
+      
+      <pre class="example code"><code>store = LaunchDarkly::Integrations::DynamoDB::new_big_segment_store(&quot;my-table-name&quot;)
+config = LaunchDarkly::Config.new(big_segments: LaunchDarkly::BigSegmentsConfig.new(store: store)
+client = LaunchDarkly::LDClient.new(my_sdk_key, config)</code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the configuration options (these are all the same as for <code>new_feature_store</code>,
+except that there are no caching parameters)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+  
+    
+    
+    
+    
+    <p class="tag_title">Options Hash (<tt>opts</tt>):</p>
+    <ul class="option">
+      
+        <li>
+          <span class="name">:dynamodb_opts</span>
+          <span class="type">(<tt>Hash</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>options to pass to the DynamoDB client constructor (ignored if you specify <code>:existing_client</code>)</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:existing_client</span>
+          <span class="type">(<tt>Object</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>an already-constructed DynamoDB client for the feature store to use</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:prefix</span>
+          <span class="type">(<tt>String</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>namespace prefix to add to all keys used by LaunchDarkly</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:logger</span>
+          <span class="type">(<tt>Logger</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>a <code>Logger</code> instance; defaults to <code>Config.default_logger</code></p>
+</div>
+          
+        </li>
+      
+    </ul>
+  
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Interfaces/BigSegmentStore.html" title="LaunchDarkly::Interfaces::BigSegmentStore (module)">LaunchDarkly::Interfaces::BigSegmentStore</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a Big Segment store object</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+87
+88
+89</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/dynamodb.rb', line 87</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_big_segment_store'>new_big_segment_store</span><span class='lparen'>(</span><span class='id identifier rubyid_table_name'>table_name</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Integrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/DynamoDB.html" title="LaunchDarkly::Impl::Integrations::DynamoDB (module)">DynamoDB</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/DynamoDB/DynamoDBBigSegmentStore.html" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBBigSegmentStore (class)">DynamoDBBigSegmentStore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Impl/Integrations/DynamoDB/DynamoDBBigSegmentStore.html#initialize-instance_method" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBBigSegmentStore#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_table_name'>table_name</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="new_feature_store-class_method">
   
     .<strong>new_feature_store</strong>(table_name, opts)  &#x21d2; <tt><span class='object_link'><a href="../Interfaces/FeatureStore.html" title="LaunchDarkly::Interfaces::FeatureStore (module)">LaunchDarkly::Interfaces::FeatureStore</a></span></tt> 
   
@@ -369,17 +571,17 @@ already-configured DynamoDB client in <code>existing_client</code>.</p>
       <pre class="lines">
 
 
-41
-42
-43
-44</pre>
+49
+50
+51
+52</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/dynamodb.rb', line 41</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/dynamodb.rb', line 49</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_feature_store'>new_feature_store</span><span class='lparen'>(</span><span class='id identifier rubyid_table_name'>table_name</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_core'>core</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Integrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/DynamoDB.html" title="LaunchDarkly::Impl::Integrations::DynamoDB (module)">DynamoDB</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/DynamoDB/DynamoDBFeatureStoreCore.html" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore (class)">DynamoDBFeatureStoreCore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Impl/Integrations/DynamoDB/DynamoDBFeatureStoreCore.html#initialize-instance_method" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_table_name'>table_name</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Util.html" title="LaunchDarkly::Integrations::Util (module)">Util</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Util/CachingStoreWrapper.html" title="LaunchDarkly::Integrations::Util::CachingStoreWrapper (class)">CachingStoreWrapper</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Util/CachingStoreWrapper.html#initialize-instance_method" title="LaunchDarkly::Integrations::Util::CachingStoreWrapper#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_core'>core</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Util.html" title="LaunchDarkly::Integrations::Util (module)">Util</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Util/CachingStoreWrapper.html" title="LaunchDarkly::Integrations::Util::CachingStoreWrapper (class)">CachingStoreWrapper</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Util/CachingStoreWrapper.html#initialize-instance_method" title="LaunchDarkly::Integrations::Util::CachingStoreWrapper#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_core'>core</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -391,9 +593,9 @@ already-configured DynamoDB client in <code>existing_client</code>.</p>
 </div>
 
       <div id="footer">
-  Generated on Tue Oct 12 23:21:31 2021 by
+  Generated on Thu Dec  9 23:39:37 2021 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.5.9).
+  0.9.27 (ruby-2.5.9).
 </div>
 
     </div>
