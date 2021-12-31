@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.3.1] - 2021-12-31
+### Fixed:
+- Fixed a bug that could cause a streaming connection to fail intermittently if the feature flag data contained UTF-8 characters outside of the ASCII character set. This would happen if a multi-byte character happened to be split across two successive reads from the stream, so the chances of it happening varied according to how often international characters appeared in the data and how much buffering of reads was done by the OS.
+- In JRuby only, stream reconnections would fail if the application explicitly set the initial reconnect delay to zero.
+
 ## [6.3.0] - 2021-12-09
 ### Added:
 - The SDK now supports evaluation of Big Segments. See: https://docs.launchdarkly.com/home/users/big-segments
