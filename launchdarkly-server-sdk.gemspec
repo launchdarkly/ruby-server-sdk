@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 2.5.0"
 
   spec.add_development_dependency "aws-sdk-dynamodb", "~> 1.57"
-  spec.add_development_dependency "bundler", "2.2.10"
+  spec.add_development_dependency "bundler", "2.2.33"
   spec.add_development_dependency "rspec", "~> 3.10"
   spec.add_development_dependency "diplomat", "~> 2.4.2"
   spec.add_development_dependency "redis", "~> 4.2"

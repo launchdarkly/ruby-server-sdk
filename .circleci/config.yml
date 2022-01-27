@@ -49,10 +49,10 @@ jobs:
           steps:
             - run: sudo apt-get update -y && sudo apt-get install -y build-essential
       - run: ruby -v
-      - run: gem install bundler -v 2.2.10
-      - run: bundle _2.2.10_ install
+      - run: gem install bundler -v 2.2.33
+      - run: bundle _2.2.33_ install
       - run: mkdir ./rspec
-      - run: bundle _2.2.10_ exec rspec --format documentation --format RspecJunitFormatter -o ./rspec/rspec.xml spec
+      - run: bundle _2.2.33_ exec rspec --format documentation --format RspecJunitFormatter -o ./rspec/rspec.xml spec
       - store_test_results:
           path: ./rspec
       - store_artifacts:
