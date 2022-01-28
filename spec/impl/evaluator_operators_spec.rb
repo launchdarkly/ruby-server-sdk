@@ -105,13 +105,13 @@ describe LaunchDarkly::Impl::EvaluatorOperators do
   end
 
   describe "user_value" do
-    [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous, :some_custom_attr].each do |attr|
+    [:key, :secondary, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous, :some_custom_attr].each do |attr|
       it "returns nil if property #{attr} is not defined" do
         expect(subject::user_value({}, attr)).to be nil
       end
     end
 
-    [:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name].each do |attr|
+    [:key, :secondary, :ip, :country, :email, :firstName, :lastName, :avatar, :name].each do |attr|
       it "gets string value of string property #{attr}" do
         expect(subject::user_value({ attr => 'x' }, attr)).to eq 'x'
       end

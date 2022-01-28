@@ -89,7 +89,7 @@ module LaunchDarkly
 
       private
 
-      BUILTINS = Set[:key, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
+      BUILTINS = Set[:key, :secondary, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
       NUMERIC_VERSION_COMPONENTS_REGEX = Regexp.new("^[0-9.]*")
 
       private_constant :BUILTINS
