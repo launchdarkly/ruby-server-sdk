@@ -301,6 +301,22 @@ module LaunchDarkly
           expect(state.values_map).to eq({})
         end
       end
+
+      it "returns empty state if store is not initialize" do
+        wait = double
+        expect(wait).to receive(:wait).at_least(:once)
+
+        source = double
+        expect(source).to receive(:start).at_least(:once).and_return(wait)
+        expect(source).to receive(:stop).at_least(:once).and_return(wait)
+        expect(source).to receive(:initialized?).at_least(:once).and_return(false)
+        store = LaunchDarkly::InMemoryFeatureStore.new
+        with_client(test_config(store: store, data_source: source)) do |offline_client|
+          state = offline_client.all_flags_state({ key: 'userkey' })
+          expect(state.valid?).to be false
+          expect(state.values_map).to eq({})
+        end
+      end
     end
   end
 end

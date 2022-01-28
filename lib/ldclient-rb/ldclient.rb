@@ -338,6 +338,15 @@ module LaunchDarkly
     def all_flags_state(user, options={})
       return FeatureFlagsState.new(false) if @config.offline?
 
+      if !initialized?
+        if @store.initialized?
+            @config.logger.warn { "Called all_flags_state before client initialization; using last known values from data store" }
+        else
+            @config.logger.warn { "Called all_flags_state before client initialization. Data store not available; returning empty state" }
+            return FeatureFlagsState.new(false)
+        end
+      end
+
       unless user && !user[:key].nil?
         @config.logger.error { "[LDClient] User and user key must be specified in all_flags_state" }
         return FeatureFlagsState.new(false)
