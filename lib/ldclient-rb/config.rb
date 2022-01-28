@@ -21,6 +21,7 @@ module LaunchDarkly
     # @option opts [Integer] :capacity (10000) See {#capacity}.
     # @option opts [Float] :flush_interval (30) See {#flush_interval}.
     # @option opts [Float] :read_timeout (10) See {#read_timeout}.
+    # @option opts [Float] :initial_reconnect_delay (1) See {#initial_reconnect_delay}.
     # @option opts [Float] :connect_timeout (2) See {#connect_timeout}.
     # @option opts [Object] :cache_store See {#cache_store}.
     # @option opts [Object] :feature_store See {#feature_store}.
@@ -54,6 +55,7 @@ module LaunchDarkly
       @flush_interval = opts[:flush_interval] || Config.default_flush_interval
       @connect_timeout = opts[:connect_timeout] || Config.default_connect_timeout
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
+      @initial_reconnect_delay = opts[:initial_reconnect_delay] || Config.default_initial_reconnect_delay
       @feature_store = opts[:feature_store] || Config.default_feature_store
       @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
       @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
@@ -179,6 +181,13 @@ module LaunchDarkly
     # @return [Float]
     #
     attr_reader :read_timeout
+
+    #
+    # The initial delay before reconnecting after an error in the SSE client.
+    # This only applies to the streaming connection.
+    # @return [Float]
+    #
+    attr_reader :initial_reconnect_delay
 
     #
     # The connect timeout for network connections in seconds.
@@ -393,6 +402,14 @@ module LaunchDarkly
     #
     def self.default_read_timeout
       10
+    end
+
+    #
+    # The default value for {#initial_reconnect_delay}.
+    # @return [Float] 1
+    #
+    def self.default_initial_reconnect_delay
+      1
     end
 
     #
