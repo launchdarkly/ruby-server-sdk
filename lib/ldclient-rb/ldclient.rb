@@ -248,8 +248,8 @@ module LaunchDarkly
     # @return [void]
     #
     def identify(user)
-      if !user || user[:key].nil?
-        @config.logger.warn("Identify called with nil user or nil user key!")
+      if !user || user[:key].nil? || user[:key].empty?
+        @config.logger.warn("Identify called with nil user or empty user key!")
         return
       end
       sanitize_user(user)
