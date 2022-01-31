@@ -84,14 +84,14 @@ module LaunchDarkly
       method = message.type
       @config.logger.debug { "[LDClient] Stream received #{method} message: #{message.data}" }
       if method == PUT
-        message = JSON.parse(message.data, symbolize_names: true)
+        message = FastJsonparser.parse(message.data, symbolize_keys: true)
         all_data = Impl::Model.make_all_store_data(message[:data])
         @feature_store.init(all_data)
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized" }
         @ready.set
       elsif method == PATCH
-        data = JSON.parse(message.data, symbolize_names: true)
+        data = FastJsonparser.parse(message.data, symbolize_keys: true)
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, data[:path])
           if key
@@ -102,7 +102,7 @@ module LaunchDarkly
           end
         end
       elsif method == DELETE
-        data = JSON.parse(message.data, symbolize_names: true)
+        data = FastJsonparser.parse(message.data, symbolize_keys: true)
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, data[:path])
           if key
