@@ -368,14 +368,25 @@ module LaunchDarkly
           next
         end
         begin
-          result = @evaluator.evaluate(f, user, @event_factory_default)
-          state.add_flag(f, result.detail.value, result.detail.variation_index, with_reasons ? result.detail.reason : nil,
-            details_only_if_tracked)
+          detail = @evaluator.evaluate(f, user, @event_factory_default).detail
         rescue => exn
+          detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
-          state.add_flag(f, nil, nil, with_reasons ? EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION) : nil,
-            details_only_if_tracked)
         end
+
+        requires_experiment_data = EventFactory.is_experiment(f, detail.reason)
+        flag_state = {
+          key: f[:key],
+          value: detail.value,
+          variation: detail.variation_index,
+          reason: detail.reason,
+          version: f[:version],
+          trackEvents: f[:trackEvents] || requires_experiment_data,
+          trackReason: requires_experiment_data,
+          debugEventsUntilDate: f[:debugEventsUntilDate],
+        }
+
+        state.add_flag(flag_state, with_reasons, details_only_if_tracked)
       end
 
       state

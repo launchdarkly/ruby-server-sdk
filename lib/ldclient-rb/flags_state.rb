@@ -16,21 +16,32 @@ module LaunchDarkly
 
     # Used internally to build the state map.
     # @private
-    def add_flag(flag, value, variation, reason = nil, details_only_if_tracked = false)
-      key = flag[:key]
-      @flag_values[key] = value
+    def add_flag(flag_state, with_reasons, details_only_if_tracked)
+      key = flag_state[:key]
+      @flag_values[key] = flag_state[:value]
       meta = {}
-      with_details = !details_only_if_tracked || flag[:trackEvents]
-      if !with_details && flag[:debugEventsUntilDate]
-        with_details = flag[:debugEventsUntilDate] > Impl::Util::current_time_millis
+
+      omit_details = false
+      if details_only_if_tracked
+        if !flag_state[:trackEvents] && !flag_state[:trackReason] && !(flag_state[:debugEventsUntilDate] && flag_state[:debugEventsUntilDate] > Impl::Util::current_time_millis)
+          omit_details = true
+        end
       end
-      if with_details
-        meta[:version] = flag[:version]
-        meta[:reason] = reason if !reason.nil?
+
+      reason = (!with_reasons and !flag_state[:trackReason]) ? nil : flag_state[:reason]
+
+      if !reason.nil? && !omit_details
+        meta[:reason] = reason
       end
-      meta[:variation] = variation if !variation.nil?
-      meta[:trackEvents] = true if flag[:trackEvents]
-      meta[:debugEventsUntilDate] = flag[:debugEventsUntilDate] if flag[:debugEventsUntilDate]
+
+      if !omit_details
+        meta[:version] = flag_state[:version]
+      end
+
+      meta[:variation] = flag_state[:variation] if !flag_state[:variation].nil?
+      meta[:trackEvents] = true if flag_state[:trackEvents]
+      meta[:trackReason] = true if flag_state[:trackReason]
+      meta[:debugEventsUntilDate] = flag_state[:debugEventsUntilDate] if flag_state[:debugEventsUntilDate]
       @flag_metadata[key] = meta
     end
 

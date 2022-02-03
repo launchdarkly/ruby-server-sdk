@@ -41,7 +41,7 @@ jobs:
       - when:
           condition: <<parameters.jruby>>
           steps:
-            - run: gem install jruby-openssl  # required by bundler, no effect on Ruby MRI
+            - run: gem install jruby-openssl -v 0.11.0  # required by bundler, no effect on Ruby MRI
             - run: apt-get update -y && apt-get install -y build-essential
       - when:
           condition:
