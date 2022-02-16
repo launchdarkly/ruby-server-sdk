@@ -65,7 +65,7 @@ module LaunchDarkly
       get_segment = lambda { |key| @store.get(SEGMENTS, key) }
       get_big_segments_membership = lambda { |key| @big_segment_store_manager.get_user_membership(key) }
       @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, get_big_segments_membership, @config.logger)
-      
+
       if !@config.offline? && @config.send_events && !@config.diagnostic_opt_out?
         diagnostic_accumulator = Impl::DiagnosticAccumulator.new(Impl::DiagnosticAccumulator.create_diagnostic_id(sdk_key))
       else
@@ -178,7 +178,7 @@ module LaunchDarkly
     # Other supported user attributes include IP address, country code, and an arbitrary hash of
     # custom attributes. For more about the supported user properties and how they work in
     # LaunchDarkly, see [Targeting users](https://docs.launchdarkly.com/home/flags/targeting-users).
-    # 
+    #
     # The optional `:privateAttributeNames` user property allows you to specify a list of
     # attribute names that should not be sent back to LaunchDarkly.
     # [Private attributes](https://docs.launchdarkly.com/home/users/attributes#creating-private-user-attributes)
