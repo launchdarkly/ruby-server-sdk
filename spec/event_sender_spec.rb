@@ -107,7 +107,7 @@ module LaunchDarkly
       it "can use a proxy server" do
         with_server do |server|
           server.setup_ok_response("/bulk", "")
-    
+
           with_server(StubProxyServer.new) do |proxy|
             begin
               ENV["http_proxy"] = proxy.base_uri.to_s
@@ -115,18 +115,19 @@ module LaunchDarkly
               es = make_sender(server)
 
               result = es.send_event_data(fake_data, "", false)
-              
+
               expect(result.success).to be true
 
               req, body = server.await_request_with_body
               expect(body).to eq fake_data
+              expect(proxy.request_count).to eq(1)
             ensure
               ENV["http_proxy"] = nil
             end
           end
         end
       end
-    
+
       [400, 408, 429, 500].each do |status|
         it "handles recoverable error #{status}" do
           with_sender_and_server do |es, server|

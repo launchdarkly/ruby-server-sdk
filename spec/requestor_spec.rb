@@ -84,7 +84,7 @@ describe LaunchDarkly::Requestor do
         end
       end
     end
-    
+
     it "can reuse cached data" do
       etag = "xyz"
       expected_data = { flags: { x: { key: "x" } } }
@@ -199,6 +199,7 @@ describe LaunchDarkly::Requestor do
               data = requestor.request_all_data
               expect(data).to eq(LaunchDarkly::Impl::Model.make_all_store_data(expected_data))
             end
+            expect(proxy.request_count).to eq(1)
           ensure
             ENV["http_proxy"] = nil
           end
