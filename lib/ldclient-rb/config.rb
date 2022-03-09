@@ -99,6 +99,19 @@ module LaunchDarkly
     attr_reader :events_uri
 
     #
+    # Whether the client has detected any HTTP or HTTPS proxy settings. This doesn't mean a proxy
+    # will always be used as the no_proxy settings are also respected when it comes to perform a
+    # request.
+    # @return [Boolean]
+    #
+    def using_proxy?
+      ENV.has_key?('http_proxy')    ||
+        ENV.has_key?('https_proxy') ||
+        ENV.has_key?('HTTP_PROXY')  ||
+        ENV.has_key?('HTTPS_PROXY')
+    end
+
+    #
     # Whether streaming mode should be enabled. Streaming mode asynchronously updates
     # feature flags in real-time using server-sent events. Streaming is enabled by default, and
     # should only be disabled on the advice of LaunchDarkly support.
@@ -122,7 +135,7 @@ module LaunchDarkly
     def use_ldd?
       @use_ldd
     end
-    
+
     #
     # Whether the client should be initialized in offline mode. In offline mode, default values are
     # returned for all flags and no remote network requests are made.
@@ -219,7 +232,7 @@ module LaunchDarkly
     # @see #all_attributes_private
     #
     attr_reader :private_attribute_names
-    
+
     #
     # Whether to send events back to LaunchDarkly. This differs from {#offline?} in that it affects
     # only the sending of client-side events, not streaming or polling for events from the server.
@@ -277,7 +290,7 @@ module LaunchDarkly
 
     # @deprecated This is replaced by {#data_source}.
     attr_reader :update_processor
-    
+
     # @deprecated This is replaced by {#data_source}.
     attr_reader :update_processor_factory
 
@@ -409,8 +422,8 @@ module LaunchDarkly
     #
     def self.default_logger
       if defined?(Rails) && Rails.respond_to?(:logger)
-        Rails.logger 
-      else 
+        Rails.logger
+      else
         log = ::Logger.new($stdout)
         log.level = ::Logger::WARN
         log

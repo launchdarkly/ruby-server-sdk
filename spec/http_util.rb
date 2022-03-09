@@ -14,7 +14,7 @@ class StubHTTPServer
         BindAddress: '127.0.0.1',
         Port: @port,
         AccessLog: [],
-        Logger: NullLogger.new,
+        Logger: Logger.new($stdout, progname: self.class.to_s),
         RequestCallback: method(:record_request)
       }
       @server = create_server(@port, base_opts)
@@ -61,6 +61,7 @@ class StubHTTPServer
 
   def setup_ok_response(uri_path, body, content_type=nil, headers={})
     setup_response(uri_path) do |req, res|
+      require 'byebug'; byebug
       res.status = 200
       res.content_type = content_type if !content_type.nil?
       res.body = body
@@ -69,6 +70,7 @@ class StubHTTPServer
   end
 
   def record_request(req, res)
+    # require 'byebug'; byebug
     @requests.push(req)
     @requests_queue << [req, req.body]
   end
@@ -99,6 +101,9 @@ class StubProxyServer < StubHTTPServer
         if !@connect_status.nil?
           res.status = @connect_status
         end
+        puts '*' * 80
+
+        require 'byebug'; byebug
         @request_count += 1
       end
     }))

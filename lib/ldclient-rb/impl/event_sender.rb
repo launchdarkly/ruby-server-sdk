@@ -47,6 +47,7 @@ module LaunchDarkly
                 headers["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
                 headers["X-LaunchDarkly-Payload-ID"] = payload_id
               end
+              require 'byebug'; byebug
               response = http_client.request("POST", uri, {
                 headers: headers,
                 body: event_data

@@ -14,7 +14,7 @@ module LaunchDarkly
       let(:fake_data) { '{"things":[]}' }
 
       def make_sender(server)
-        subject.new(sdk_key, Config.new(events_uri: server.base_uri.to_s, logger: $null_log), nil, 0.1)
+        subject.new(sdk_key, Config.new(events_uri: server.base_uri.to_s, logger: Logger.new($stdout)), nil, 0.1)
       end
 
       def with_sender_and_server
@@ -107,7 +107,7 @@ module LaunchDarkly
       it "can use a proxy server" do
         with_server do |server|
           server.setup_ok_response("/bulk", "")
-
+          # require 'byebug'; byebug
           with_server(StubProxyServer.new) do |proxy|
             begin
               ENV["http_proxy"] = proxy.base_uri.to_s
@@ -115,7 +115,7 @@ module LaunchDarkly
               es = make_sender(server)
 
               result = es.send_event_data(fake_data, "", false)
-
+              require 'byebug'; byebug
               expect(result.success).to be true
 
               req, body = server.await_request_with_body
@@ -125,6 +125,7 @@ module LaunchDarkly
               ENV["http_proxy"] = nil
             end
           end
+
         end
       end
 

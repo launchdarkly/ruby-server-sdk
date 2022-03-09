@@ -21,6 +21,24 @@ module LaunchDarkly
 
     def self.new_http_client(uri_s, config)
       http_client_options = {}
+
+      uri = URI(uri_s)
+      if config.using_proxy?
+        if uri.scheme == 'http' && ENV["http_proxy"] || ENV["HTTP_PROXY"]
+          proxy_uri = URI(ENV["http_proxy"] || ENV["HTTP_PROXY"])
+        elsif uri.scheme == 'https' && ENV["https_proxy"] || ENV["HTTPS_PROXY"]
+          proxy_uri = URI(ENV["https_proxy"] || ENV["HTTPS_PROXY"])
+        end
+
+        if proxy_uri
+          # TODO: respect no_proxy settings
+          http_client_options["proxy"] = {
+            :proxy_address => proxy_uri.host,
+            :proxy_port => proxy_uri.port
+          }
+        end
+      end
+
       if config.socket_factory
         http_client_options["socket_class"] = config.socket_factory
       end
@@ -29,7 +47,7 @@ module LaunchDarkly
           read: config.read_timeout,
           connect: config.connect_timeout
         })
-        .persistent(uri_s)
+        .persistent(uri)
     end
 
     def self.log_exception(logger, message, exc)
