@@ -36,7 +36,7 @@ module LaunchDarkly
       return HTTP::Client.new(http_client_options)
         .timeout({
           read: config.read_timeout,
-          connect: config.connect_timeout,
+          connect: config.connect_timeout
         })
         .persistent(uri_s)
     end
