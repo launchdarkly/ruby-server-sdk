@@ -46,7 +46,7 @@ module LaunchDarkly
       # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
-      def self.new_feature_store(table_name, opts)
+      def self.new_feature_store(table_name, opts = {})
         core = LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore.new(table_name, opts)
         LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
       end

@@ -24,6 +24,15 @@ module LaunchDarkly
       if config.socket_factory
         http_client_options["socket_class"] = config.socket_factory
       end
+      proxy = URI.parse(uri_s).find_proxy
+      if !proxy.nil?
+        http_client_options["proxy"] = {
+          proxy_address: proxy.host,
+          proxy_port: proxy.port,
+          proxy_username: proxy.user,
+          proxy_password: proxy.password
+        }
+      end
       return HTTP::Client.new(http_client_options)
         .timeout({
           read: config.read_timeout,

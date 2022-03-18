@@ -189,19 +189,24 @@ describe LaunchDarkly::Requestor do
     end
 
     it "can use a proxy server" do
+      fake_target_uri = "http://request-will-not-really-go-here"
+      # Instead of a real proxy server, we just create a basic test HTTP server that
+      # pretends to be a proxy. The proof that the proxy logic is working correctly is
+      # that the request goes to that server, instead of to fake_target_uri. We can't
+      # use a real proxy that really forwards requests to another test server, because
+      # that test server would be at localhost, and proxy environment variables are
+      # ignored if the target is localhost.
       expected_data = { flags: { flagkey: { key: "flagkey" } } }
-      with_server do |server|
-        server.setup_ok_response("/sdk/latest-all", expected_data.to_json, "application/json", { "etag" => "x" })
-        with_server(StubProxyServer.new) do |proxy|
-          begin
-            ENV["http_proxy"] = proxy.base_uri.to_s
-            with_requestor(server.base_uri.to_s) do |requestor|
-              data = requestor.request_all_data
-              expect(data).to eq(LaunchDarkly::Impl::Model.make_all_store_data(expected_data))
-            end
-          ensure
-            ENV["http_proxy"] = nil
+      with_server do |proxy|
+        proxy.setup_ok_response("/sdk/latest-all", expected_data.to_json, "application/json", { "etag" => "x" })
+        begin
+          ENV["http_proxy"] = proxy.base_uri.to_s
+          with_requestor(fake_target_uri) do |requestor|
+            data = requestor.request_all_data
+            expect(data).to eq(LaunchDarkly::Impl::Model.make_all_store_data(expected_data))
           end
+        ensure
+          ENV["http_proxy"] = nil
         end
       end
     end

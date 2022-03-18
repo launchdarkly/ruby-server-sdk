@@ -13,7 +13,7 @@ module LaunchDarkly
       end
 
       def new_eval_event(flag, user, detail, default_value, prereq_of_flag = nil)
-        add_experiment_data = is_experiment(flag, detail.reason)
+        add_experiment_data = self.class.is_experiment(flag, detail.reason)
         e = {
           kind: 'feature',
           key: flag[:key],
@@ -91,17 +91,7 @@ module LaunchDarkly
         e
       end
 
-      private
-
-      def context_to_context_kind(user)
-          if !user.nil? && user[:anonymous]
-            return "anonymousUser"
-          else
-            return "user"
-          end
-      end
-
-      def is_experiment(flag, reason)
+      def self.is_experiment(flag, reason)
         return false if !reason
 
         if reason.in_experiment
@@ -121,6 +111,13 @@ module LaunchDarkly
         false
       end
 
+      private def context_to_context_kind(user)
+        if !user.nil? && user[:anonymous]
+          return "anonymousUser"
+        else
+          return "user"
+        end
+      end
     end
   end
 end

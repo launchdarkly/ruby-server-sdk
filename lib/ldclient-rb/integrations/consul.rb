@@ -36,7 +36,7 @@ module LaunchDarkly
       # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
-      def self.new_feature_store(opts, &block)
+      def self.new_feature_store(opts = {})
         core = LaunchDarkly::Impl::Integrations::Consul::ConsulFeatureStoreCore.new(opts)
         return LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
       end

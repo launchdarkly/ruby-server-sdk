@@ -196,13 +196,13 @@ module LaunchDarkly
         end
       end
 
-      it "does not send event, and logs warning, if user key is nil" do
+      it "does not send event, and logs warning, if user key is blank" do
         logger = double().as_null_object
         
         with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:add_event)
           expect(logger).to receive(:warn)
-          client.identify({ key: nil })
+          client.identify({ key: "" })
         end
       end
     end

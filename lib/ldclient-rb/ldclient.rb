@@ -65,7 +65,7 @@ module LaunchDarkly
       get_segment = lambda { |key| @store.get(SEGMENTS, key) }
       get_big_segments_membership = lambda { |key| @big_segment_store_manager.get_user_membership(key) }
       @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, get_big_segments_membership, @config.logger)
-      
+
       if !@config.offline? && @config.send_events && !@config.diagnostic_opt_out?
         diagnostic_accumulator = Impl::DiagnosticAccumulator.new(Impl::DiagnosticAccumulator.create_diagnostic_id(sdk_key))
       else
@@ -178,7 +178,7 @@ module LaunchDarkly
     # Other supported user attributes include IP address, country code, and an arbitrary hash of
     # custom attributes. For more about the supported user properties and how they work in
     # LaunchDarkly, see [Targeting users](https://docs.launchdarkly.com/home/flags/targeting-users).
-    # 
+    #
     # The optional `:privateAttributeNames` user property allows you to specify a list of
     # attribute names that should not be sent back to LaunchDarkly.
     # [Private attributes](https://docs.launchdarkly.com/home/users/attributes#creating-private-user-attributes)
@@ -248,8 +248,8 @@ module LaunchDarkly
     # @return [void]
     #
     def identify(user)
-      if !user || user[:key].nil?
-        @config.logger.warn("Identify called with nil user or nil user key!")
+      if !user || user[:key].nil? || user[:key].empty?
+        @config.logger.warn("Identify called with nil user or empty user key!")
         return
       end
       sanitize_user(user)
@@ -338,6 +338,15 @@ module LaunchDarkly
     def all_flags_state(user, options={})
       return FeatureFlagsState.new(false) if @config.offline?
 
+      if !initialized?
+        if @store.initialized?
+            @config.logger.warn { "Called all_flags_state before client initialization; using last known values from data store" }
+        else
+            @config.logger.warn { "Called all_flags_state before client initialization. Data store not available; returning empty state" }
+            return FeatureFlagsState.new(false)
+        end
+      end
+
       unless user && !user[:key].nil?
         @config.logger.error { "[LDClient] User and user key must be specified in all_flags_state" }
         return FeatureFlagsState.new(false)
@@ -359,14 +368,25 @@ module LaunchDarkly
           next
         end
         begin
-          result = @evaluator.evaluate(f, user, @event_factory_default)
-          state.add_flag(f, result.detail.value, result.detail.variation_index, with_reasons ? result.detail.reason : nil,
-            details_only_if_tracked)
+          detail = @evaluator.evaluate(f, user, @event_factory_default).detail
         rescue => exn
+          detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
-          state.add_flag(f, nil, nil, with_reasons ? EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION) : nil,
-            details_only_if_tracked)
         end
+
+        requires_experiment_data = EventFactory.is_experiment(f, detail.reason)
+        flag_state = {
+          key: f[:key],
+          value: detail.value,
+          variation: detail.variation_index,
+          reason: detail.reason,
+          version: f[:version],
+          trackEvents: f[:trackEvents] || requires_experiment_data,
+          trackReason: requires_experiment_data,
+          debugEventsUntilDate: f[:debugEventsUntilDate],
+        }
+
+        state.add_flag(flag_state, with_reasons, details_only_if_tracked)
       end
 
       state

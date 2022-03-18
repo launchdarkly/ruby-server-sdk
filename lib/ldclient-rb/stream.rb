@@ -47,7 +47,8 @@ module LaunchDarkly
         headers: headers,
         read_timeout: READ_TIMEOUT_SECONDS,
         logger: @config.logger,
-        socket_factory: @config.socket_factory
+        socket_factory: @config.socket_factory,
+        reconnect_time: @config.initial_reconnect_delay
       }
       log_connection_started
       @es = SSE::Client.new(@config.stream_uri + "/all", **opts) do |conn|

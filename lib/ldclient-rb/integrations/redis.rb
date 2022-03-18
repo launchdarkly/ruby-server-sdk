@@ -58,7 +58,7 @@ module LaunchDarkly
       #   lifecycle to be independent of the SDK client
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
-      def self.new_feature_store(opts)
+      def self.new_feature_store(opts = {})
         return RedisFeatureStore.new(opts)
       end
 

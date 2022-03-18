@@ -17,8 +17,8 @@ workflows:
           name: Ruby 3.0
           docker-image: cimg/ruby:3.0
       - build-test-linux:
-          name: JRuby 9.2
-          docker-image: jruby:9.2-jdk
+          name: JRuby 9.3
+          docker-image: jruby:9.3-jdk
           jruby: true
 
 jobs:
@@ -41,7 +41,7 @@ jobs:
       - when:
           condition: <<parameters.jruby>>
           steps:
-            - run: gem install jruby-openssl  # required by bundler, no effect on Ruby MRI
+            - run: gem install jruby-openssl -v 0.11.0  # required by bundler, no effect on Ruby MRI
             - run: apt-get update -y && apt-get install -y build-essential
       - when:
           condition:
@@ -49,11 +49,22 @@ jobs:
           steps:
             - run: sudo apt-get update -y && sudo apt-get install -y build-essential
       - run: ruby -v
-      - run: gem install bundler -v 2.2.10
-      - run: bundle _2.2.10_ install
-      - run: mkdir ./rspec
-      - run: bundle _2.2.10_ exec rspec --format documentation --format RspecJunitFormatter -o ./rspec/rspec.xml spec
+      - run: gem install bundler -v 2.2.33
+      - run: bundle _2.2.33_ install
+      - run: mkdir /tmp/circle-artifacts
+      - run: bundle _2.2.33_ exec rspec --format documentation --format RspecJunitFormatter -o /tmp/circle-artifacts/rspec.xml spec
+
+      - when:
+          condition:
+             not: <<parameters.jruby>>
+          steps:
+            - run: make build-contract-tests
+            - run:
+                command: make start-contract-test-service
+                background: true
+            - run: TEST_HARNESS_PARAMS="-junit /tmp/circle-artifacts/contract-tests-junit.xml" make run-contract-tests
+
       - store_test_results:
-          path: ./rspec
+          path: /tmp/circle-artifacts
       - store_artifacts:
-          path: ./rspec
+          path: /tmp/circle-artifacts

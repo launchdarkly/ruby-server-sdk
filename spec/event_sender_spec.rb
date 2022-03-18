@@ -14,7 +14,11 @@ module LaunchDarkly
       let(:fake_data) { '{"things":[]}' }
 
       def make_sender(server)
-        subject.new(sdk_key, Config.new(events_uri: server.base_uri.to_s, logger: $null_log), nil, 0.1)
+        make_sender_with_events_uri(server.base_uri.to_s)
+      end
+
+      def make_sender_with_events_uri(events_uri)
+        subject.new(sdk_key, Config.new(events_uri: events_uri, logger: $null_log), nil, 0.1)
       end
 
       def with_sender_and_server
@@ -105,25 +109,30 @@ module LaunchDarkly
       end
 
       it "can use a proxy server" do
-        with_server do |server|
-          server.setup_ok_response("/bulk", "")
-    
-          with_server(StubProxyServer.new) do |proxy|
-            begin
-              ENV["http_proxy"] = proxy.base_uri.to_s
+        fake_target_uri = "http://request-will-not-really-go-here"
+        # Instead of a real proxy server, we just create a basic test HTTP server that
+        # pretends to be a proxy. The proof that the proxy logic is working correctly is
+        # that the request goes to that server, instead of to fake_target_uri. We can't
+        # use a real proxy that really forwards requests to another test server, because
+        # that test server would be at localhost, and proxy environment variables are
+        # ignored if the target is localhost.
+        with_server do |proxy|
+          proxy.setup_ok_response("/bulk", "")
 
-              es = make_sender(server)
+          begin
+            ENV["http_proxy"] = proxy.base_uri.to_s
 
-              result = es.send_event_data(fake_data, "", false)
-              
-              expect(result.success).to be true
+            es = make_sender_with_events_uri(fake_target_uri)
 
-              req, body = server.await_request_with_body
-              expect(body).to eq fake_data
-            ensure
-              ENV["http_proxy"] = nil
-            end
+            result = es.send_event_data(fake_data, "", false)
+            
+            expect(result.success).to be true
+          ensure
+            ENV["http_proxy"] = nil
           end
+
+          req, body = proxy.await_request_with_body
+          expect(body).to eq fake_data
         end
       end
     

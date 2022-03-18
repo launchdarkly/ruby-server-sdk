@@ -35,7 +35,7 @@ module LaunchDarkly
               @client = Aws::DynamoDB::Client.new(opts[:dynamodb_opts] || {})
             end
   
-            @logger.info("${description}: using DynamoDB table \"#{table_name}\"")
+            @logger.info("#{description}: using DynamoDB table \"#{table_name}\"")
           end
   
           def stop
