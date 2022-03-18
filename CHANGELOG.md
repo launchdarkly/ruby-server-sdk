@@ -2,6 +2,21 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.3.2] - 2022-03-18
+### Added:
+- Add `initial_reconnect_delay` option to config which controls the initial delay for reconnecting the streaming connection.
+- CI builds now include a cross-platform test suite implemented in https://github.com/launchdarkly/sdk-test-harness. This covers many test cases that are also implemented in unit tests, but may be extended in the future to ensure consistent behavior across SDKs in other areas.
+
+### Fixed:
+- The `HTTP_PROXY`/`HTTPS_PROXY` environment variables are now correctly applied for all requests to LaunchDarkly. Previously, this setting worked for streaming flag requests, but did not work for analytics event delivery (or flag polling), causing the latter to be attempted without using the proxy.
+- Rules targeting `secondary` attribute on user will now reference the correct value.
+- `all_flags_state` will return invalid flag state if the store hasn't initialized properly.
+- When using `all_flags_state` to produce bootstrap data for the JavaScript SDK, the Ruby SDK was not returning the correct metadata for evaluations that involved an experiment. As a result, the analytics events produced by the JavaScript SDK did not correctly reflect experimentation results.
+- The info level message logged when using DynamoDB now correctly identifies the feature store description. ([#195](https://github.com/launchdarkly/ruby-server-sdk/issues/195))
+
+### Changed:
+- Providing a configuration hash when instantiating a persistent store is now optional.
+
 ## [6.3.1] - 2021-12-31
 ### Fixed:
 - Fixed a bug that could cause a streaming connection to fail intermittently if the feature flag data contained UTF-8 characters outside of the ASCII character set. This would happen if a multi-byte character happened to be split across two successive reads from the stream, so the chances of it happening varied according to how often international characters appeared in the data and how much buffering of reads was done by the OS.
