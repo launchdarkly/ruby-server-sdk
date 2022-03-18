@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Config
   
-    &mdash; LaunchDarkly Ruby SDK (6.3.1)
+    &mdash; LaunchDarkly Ruby SDK (6.3.2)
   
 </title>
 
@@ -421,6 +421,34 @@ the default configuration sets sane defaults for most use cases.</p>
 
   
     <span class="summary_desc"><div class='inline'><p>The number of seconds between flushes of the event buffer.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initial_reconnect_delay-instance_method" title="#initial_reconnect_delay (instance method)">#<strong>initial_reconnect_delay</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The initial delay before reconnecting after an error in the SSE client.</p>
 </div></span>
   
 </li>
@@ -1041,6 +1069,29 @@ the default configuration sets sane defaults for most use cases.</p>
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#default_initial_reconnect_delay-class_method" title="default_initial_reconnect_delay (class method)">.<strong>default_initial_reconnect_delay</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#initial_reconnect_delay-instance_method" title="LaunchDarkly::Config#initial_reconnect_delay (method)">#initial_reconnect_delay</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#default_logger-class_method" title="default_logger (class method)">.<strong>default_logger</strong>  &#x21d2; Logger </a>
     
 
@@ -1571,6 +1622,21 @@ the default configuration sets sane defaults for most use cases.</p>
         </li>
       
         <li>
+          <span class="name">:initial_reconnect_delay</span>
+          <span class="type">(<tt>Float</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>1</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#initial_reconnect_delay-instance_method" title="LaunchDarkly::Config#initial_reconnect_delay (method)">#initial_reconnect_delay</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
           <span class="name">:connect_timeout</span>
           <span class="type">(<tt>Float</tt>)</span>
           <span class="default">
@@ -1880,7 +1946,6 @@ the default configuration sets sane defaults for most use cases.</p>
       <pre class="lines">
 
 
-47
 48
 49
 50
@@ -1911,10 +1976,12 @@ the default configuration sets sane defaults for most use cases.</p>
 75
 76
 77
-78</pre>
+78
+79
+80</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 47</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 48</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='ivar'>@base_uri</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:base_uri</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_base_uri'><span class='object_link'><a href="#default_base_uri-class_method" title="LaunchDarkly::Config.default_base_uri (method)">default_base_uri</a></span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_chomp'>chomp</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -1926,6 +1993,7 @@ the default configuration sets sane defaults for most use cases.</p>
   <span class='ivar'>@flush_interval</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:flush_interval</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_flush_interval'><span class='object_link'><a href="#default_flush_interval-class_method" title="LaunchDarkly::Config.default_flush_interval (method)">default_flush_interval</a></span></span>
   <span class='ivar'>@connect_timeout</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:connect_timeout</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_connect_timeout'><span class='object_link'><a href="#default_connect_timeout-class_method" title="LaunchDarkly::Config.default_connect_timeout (method)">default_connect_timeout</a></span></span>
   <span class='ivar'>@read_timeout</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:read_timeout</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_read_timeout'><span class='object_link'><a href="#default_read_timeout-class_method" title="LaunchDarkly::Config.default_read_timeout (method)">default_read_timeout</a></span></span>
+  <span class='ivar'>@initial_reconnect_delay</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:initial_reconnect_delay</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_initial_reconnect_delay'><span class='object_link'><a href="#default_initial_reconnect_delay-class_method" title="LaunchDarkly::Config.default_initial_reconnect_delay (method)">default_initial_reconnect_delay</a></span></span>
   <span class='ivar'>@feature_store</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:feature_store</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_feature_store'><span class='object_link'><a href="#default_feature_store-class_method" title="LaunchDarkly::Config.default_feature_store (method)">default_feature_store</a></span></span>
   <span class='ivar'>@stream</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:stream</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:stream</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_stream'><span class='object_link'><a href="#default_stream-class_method" title="LaunchDarkly::Config.default_stream (method)">default_stream</a></span></span>
   <span class='ivar'>@use_ldd</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:use_ldd</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:use_ldd</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_use_ldd'><span class='object_link'><a href="#default_use_ldd-class_method" title="LaunchDarkly::Config.default_use_ldd (method)">default_use_ldd</a></span></span>
@@ -2007,12 +2075,12 @@ appear on the LaunchDarkly dashboard.</p>
       <pre class="lines">
 
 
-207
-208
-209</pre>
+216
+217
+218</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 207</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 216</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_attributes_private'>all_attributes_private</span>
   <span class='ivar'>@all_attributes_private</span>
@@ -2063,12 +2131,12 @@ purposes; most users should use the default value.</p>
       <pre class="lines">
 
 
-85
-86
-87</pre>
+87
+88
+89</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 87</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_base_uri'>base_uri</span>
   <span class='ivar'>@base_uri</span>
@@ -2121,12 +2189,12 @@ documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">h
       <pre class="lines">
 
 
-276
-277
-278</pre>
+285
+286
+287</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 276</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 285</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_big_segments'>big_segments</span>
   <span class='ivar'>@big_segments</span>
@@ -2179,12 +2247,12 @@ thread-safe in-memory store otherwise.</p>
       <pre class="lines">
 
 
-174
-175
-176</pre>
+176
+177
+178</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 174</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 176</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_cache_store'>cache_store</span>
   <span class='ivar'>@cache_store</span>
@@ -2238,12 +2306,12 @@ at the cost of consuming more memory.</p>
       <pre class="lines">
 
 
-165
-166
-167</pre>
+167
+168
+169</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 165</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 167</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_capacity'>capacity</span>
   <span class='ivar'>@capacity</span>
@@ -2293,12 +2361,12 @@ at the cost of consuming more memory.</p>
       <pre class="lines">
 
 
-187
-188
-189</pre>
+196
+197
+198</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 187</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 196</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_connect_timeout'>connect_timeout</span>
   <span class='ivar'>@connect_timeout</span>
@@ -2363,12 +2431,12 @@ object.</p>
       <pre class="lines">
 
 
-266
-267
-268</pre>
+275
+276
+277</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 266</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 275</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data_source'>data_source</span>
   <span class='ivar'>@data_source</span>
@@ -2420,12 +2488,12 @@ object.</p>
       <pre class="lines">
 
 
-303
-304
-305</pre>
+312
+313
+314</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 303</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 312</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_diagnostic_recording_interval'>diagnostic_recording_interval</span>
   <span class='ivar'>@diagnostic_recording_interval</span>
@@ -2476,12 +2544,12 @@ purposes; most users should use the default value.</p>
       <pre class="lines">
 
 
-99
-100
-101</pre>
+101
+102
+103</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 99</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 101</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_events_uri'>events_uri</span>
   <span class='ivar'>@events_uri</span>
@@ -2535,12 +2603,12 @@ from LaunchDarkly, and uses the last stored data when evaluating flags. Defaults
       <pre class="lines">
 
 
-198
-199
-200</pre>
+207
+208
+209</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 198</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 207</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_feature_store'>feature_store</span>
   <span class='ivar'>@feature_store</span>
@@ -2591,15 +2659,71 @@ that the event buffer is less likely to reach capacity.</p>
       <pre class="lines">
 
 
-140
-141
-142</pre>
+142
+143
+144</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 140</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 142</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flush_interval'>flush_interval</span>
   <span class='ivar'>@flush_interval</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="initial_reconnect_delay-instance_method">
+  
+    #<strong>initial_reconnect_delay</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The initial delay before reconnecting after an error in the SSE client.
+This only applies to the streaming connection.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+190
+191
+192</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 190</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initial_reconnect_delay'>initial_reconnect_delay</span>
+  <span class='ivar'>@initial_reconnect_delay</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2648,12 +2772,12 @@ The only reason to change this is if you are using the Analytics Data Stream.</p
       <pre class="lines">
 
 
-251
-252
-253</pre>
+260
+261
+262</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 251</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 260</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_inline_users_in_events'>inline_users_in_events</span>
   <span class='ivar'>@inline_users_in_events</span>
@@ -2705,12 +2829,12 @@ in a Rails environment, or stdout otherwise.</p>
       <pre class="lines">
 
 
-155
-156
-157</pre>
+157
+158
+159</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 155</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 157</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_logger'>logger</span>
   <span class='ivar'>@logger</span>
@@ -2761,12 +2885,12 @@ effect unless streaming is disabled.</p>
       <pre class="lines">
 
 
-147
-148
-149</pre>
+149
+150
+151</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 147</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 149</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_poll_interval'>poll_interval</span>
   <span class='ivar'>@poll_interval</span>
@@ -2829,12 +2953,12 @@ user object.</p>
       <pre class="lines">
 
 
-221
-222
-223</pre>
+230
+231
+232</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 221</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 230</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_private_attribute_names'>private_attribute_names</span>
   <span class='ivar'>@private_attribute_names</span>
@@ -2885,12 +3009,12 @@ connection, which uses a longer timeout since the server does not send data cons
       <pre class="lines">
 
 
-181
-182
-183</pre>
+183
+184
+185</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 181</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 183</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_read_timeout'>read_timeout</span>
   <span class='ivar'>@read_timeout</span>
@@ -2941,12 +3065,12 @@ only the sending of client-side events, not streaming or polling for events from
       <pre class="lines">
 
 
-228
-229
-230</pre>
+237
+238
+239</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 228</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 237</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_send_events'>send_events</span>
   <span class='ivar'>@send_events</span>
@@ -3000,12 +3124,12 @@ connected stream that implements the <code>IO</code> class, such as a <code>TCPS
       <pre class="lines">
 
 
-331
-332
-333</pre>
+340
+341
+342</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 331</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 340</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_socket_factory'>socket_factory</span>
   <span class='ivar'>@socket_factory</span>
@@ -3056,12 +3180,12 @@ purposes; most users should use the default value.</p>
       <pre class="lines">
 
 
-92
-93
-94</pre>
+94
+95
+96</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 92</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 94</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stream_uri'>stream_uri</span>
   <span class='ivar'>@stream_uri</span>
@@ -3099,12 +3223,12 @@ purposes; most users should use the default value.</p>
       <pre class="lines">
 
 
-279
-280
-281</pre>
+288
+289
+290</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 279</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 288</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_update_processor'>update_processor</span>
   <span class='ivar'>@update_processor</span>
@@ -3142,12 +3266,12 @@ purposes; most users should use the default value.</p>
       <pre class="lines">
 
 
-282
-283
-284</pre>
+291
+292
+293</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 282</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 291</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_update_processor_factory'>update_processor_factory</span>
   <span class='ivar'>@update_processor_factory</span>
@@ -3205,12 +3329,12 @@ amount of duplicate user details sent in analytics events.</p>
       <pre class="lines">
 
 
-236
-237
-238</pre>
+245
+246
+247</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 236</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 245</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_user_keys_capacity'>user_keys_capacity</span>
   <span class='ivar'>@user_keys_capacity</span>
@@ -3267,12 +3391,12 @@ amount of duplicate user details sent in analytics events.</p>
       <pre class="lines">
 
 
-243
-244
-245</pre>
+252
+253
+254</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 243</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 252</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_user_keys_flush_interval'>user_keys_flush_interval</span>
   <span class='ivar'>@user_keys_flush_interval</span>
@@ -3325,12 +3449,12 @@ metrics on the usage of these wrapper libraries.</p>
       <pre class="lines">
 
 
-312
-313
-314</pre>
+321
+322
+323</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 312</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 321</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_wrapper_name'>wrapper_name</span>
   <span class='ivar'>@wrapper_name</span>
@@ -3383,12 +3507,12 @@ the User-Agent headers along with the <code>wrapper_name</code> during requests 
       <pre class="lines">
 
 
-321
-322
-323</pre>
+330
+331
+332</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 321</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 330</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_wrapper_version'>wrapper_version</span>
   <span class='ivar'>@wrapper_version</span>
@@ -3448,12 +3572,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-338
-339
-340</pre>
+347
+348
+349</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 338</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 347</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span>
   <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span>
@@ -3505,12 +3629,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-354
-355
-356</pre>
+363
+364
+365</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 354</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 363</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_base_uri'>default_base_uri</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>https://sdk.launchdarkly.com</span><span class='tstring_end'>&quot;</span></span>
@@ -3562,12 +3686,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-378
-379
-380</pre>
+387
+388
+389</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 378</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 387</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_cache_store'>default_cache_store</span>
   <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'>Rails</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:cache</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_cache'>cache</span> <span class='op'>:</span> <span class='const'>ThreadSafeMemoryStore</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
@@ -3619,12 +3743,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-346
-347
-348</pre>
+355
+356
+357</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 346</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 355</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_capacity'>default_capacity</span>
   <span class='int'>10000</span>
@@ -3676,12 +3800,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-402
-403
-404</pre>
+419
+420
+421</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 402</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 419</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_connect_timeout'>default_connect_timeout</span>
   <span class='int'>2</span>
@@ -3733,12 +3857,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-488
-489
-490</pre>
+505
+506
+507</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 488</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 505</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_diagnostic_recording_interval'>default_diagnostic_recording_interval</span>
   <span class='int'>900</span>
@@ -3790,12 +3914,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-370
-371
-372</pre>
+379
+380
+381</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 370</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 379</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_events_uri'>default_events_uri</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>https://events.launchdarkly.com</span><span class='tstring_end'>&quot;</span></span>
@@ -3847,12 +3971,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-440
-441
-442</pre>
+457
+458
+459</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 440</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 457</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_feature_store'>default_feature_store</span>
   <span class='const'><span class='object_link'><a href="InMemoryFeatureStore.html" title="LaunchDarkly::InMemoryFeatureStore (class)">InMemoryFeatureStore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InMemoryFeatureStore.html#initialize-instance_method" title="LaunchDarkly::InMemoryFeatureStore#initialize (method)">new</a></span></span>
@@ -3904,15 +4028,72 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-386
-387
-388</pre>
+395
+396
+397</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 386</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 395</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_flush_interval'>default_flush_interval</span>
   <span class='int'>10</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_initial_reconnect_delay-class_method">
+  
+    .<strong>default_initial_reconnect_delay</strong>  &#x21d2; <tt>Float</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#initial_reconnect_delay-instance_method" title="LaunchDarkly::Config#initial_reconnect_delay (method)">#initial_reconnect_delay</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>1</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+411
+412
+413</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 411</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_initial_reconnect_delay'>default_initial_reconnect_delay</span>
+  <span class='int'>1</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -3961,18 +4142,18 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-410
-411
-412
-413
-414
-415
-416
-417
-418</pre>
+427
+428
+429
+430
+431
+432
+433
+434
+435</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 410</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 427</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_logger'>default_logger</span>
   <span class='kw'>if</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'>Rails</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:logger</span><span class='rparen'>)</span>
@@ -4030,12 +4211,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-448
-449
-450</pre>
+465
+466
+467</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 448</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 465</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_offline'>default_offline</span>
   <span class='kw'>false</span>
@@ -4087,12 +4268,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-456
-457
-458</pre>
+473
+474
+475</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 456</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 473</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_poll_interval'>default_poll_interval</span>
   <span class='int'>30</span>
@@ -4144,12 +4325,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-394
-395
-396</pre>
+403
+404
+405</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 394</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 403</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_read_timeout'>default_read_timeout</span>
   <span class='int'>10</span>
@@ -4201,12 +4382,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-464
-465
-466</pre>
+481
+482
+483</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 464</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 481</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_send_events'>default_send_events</span>
   <span class='kw'>true</span>
@@ -4258,12 +4439,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-424
-425
-426</pre>
+441
+442
+443</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 424</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 441</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_stream'>default_stream</span>
   <span class='kw'>true</span>
@@ -4315,12 +4496,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-362
-363
-364</pre>
+371
+372
+373</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 362</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 371</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_stream_uri'>default_stream_uri</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>https://stream.launchdarkly.com</span><span class='tstring_end'>&quot;</span></span>
@@ -4372,12 +4553,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-432
-433
-434</pre>
+449
+450
+451</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 432</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 449</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_use_ldd'>default_use_ldd</span>
   <span class='kw'>false</span>
@@ -4429,12 +4610,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-472
-473
-474</pre>
+489
+490
+491</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 472</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 489</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_user_keys_capacity'>default_user_keys_capacity</span>
   <span class='int'>1000</span>
@@ -4486,12 +4667,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-480
-481
-482</pre>
+497
+498
+499</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 480</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 497</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_user_keys_flush_interval'>default_user_keys_flush_interval</span>
   <span class='int'>300</span>
@@ -4543,12 +4724,12 @@ reasonable defaults for most users.</p>
       <pre class="lines">
 
 
-496
-497
-498</pre>
+513
+514
+515</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 496</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 513</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_minimum_diagnostic_recording_interval'>minimum_diagnostic_recording_interval</span>
   <span class='int'>60</span>
@@ -4607,12 +4788,12 @@ well as periodic information on irregular occurrences such as dropped events.</p
       <pre class="lines">
 
 
-293
-294
-295</pre>
+302
+303
+304</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 293</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 302</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_diagnostic_opt_out?'>diagnostic_opt_out?</span>
   <span class='ivar'>@diagnostic_opt_out</span>
@@ -4661,12 +4842,12 @@ returned for all flags and no remote network requests are made.</p>
       <pre class="lines">
 
 
-131
-132
-133</pre>
+133
+134
+135</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 131</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 133</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_offline?'>offline?</span>
   <span class='ivar'>@offline</span>
@@ -4716,12 +4897,12 @@ should only be disabled on the advice of LaunchDarkly support.</p>
       <pre class="lines">
 
 
-107
-108
-109</pre>
+109
+110
+111</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 107</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 109</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stream?'>stream?</span>
   <span class='ivar'>@stream</span>
@@ -4775,12 +4956,12 @@ and <a href="https://docs.launchdarkly.com/sdk/concepts/data-stores">&quot;Using
       <pre class="lines">
 
 
-122
-123
-124</pre>
+124
+125
+126</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 122</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 124</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_use_ldd?'>use_ldd?</span>
   <span class='ivar'>@use_ldd</span>
@@ -4795,7 +4976,7 @@ and <a href="https://docs.launchdarkly.com/sdk/concepts/data-stores">&quot;Using
 </div>
 
       <div id="footer">
-  Generated on Fri Dec 31 22:07:21 2021 by
+  Generated on Fri Mar 18 21:13:48 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.27 (ruby-2.5.9).
 </div>

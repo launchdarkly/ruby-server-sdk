@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly::Integrations::Consul
   
-    &mdash; LaunchDarkly Ruby SDK (6.3.1)
+    &mdash; LaunchDarkly Ruby SDK (6.3.2)
   
 </title>
 
@@ -151,7 +151,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#new_feature_store-class_method" title="new_feature_store (class method)">.<strong>new_feature_store</strong>(opts, &amp;block)  &#x21d2; LaunchDarkly::Interfaces::FeatureStore </a>
+      <a href="#new_feature_store-class_method" title="new_feature_store (class method)">.<strong>new_feature_store</strong>(opts = {})  &#x21d2; LaunchDarkly::Interfaces::FeatureStore </a>
     
 
     
@@ -255,7 +255,7 @@
       <div class="method_details ">
   <h3 class="signature " id="new_feature_store-class_method">
   
-    .<strong>new_feature_store</strong>(opts, &amp;block)  &#x21d2; <tt><span class='object_link'><a href="../Interfaces/FeatureStore.html" title="LaunchDarkly::Interfaces::FeatureStore (module)">LaunchDarkly::Interfaces::FeatureStore</a></span></tt> 
+    .<strong>new_feature_store</strong>(opts = {})  &#x21d2; <tt><span class='object_link'><a href="../Interfaces/FeatureStore.html" title="LaunchDarkly::Interfaces::FeatureStore (module)">LaunchDarkly::Interfaces::FeatureStore</a></span></tt> 
   
 
   
@@ -282,6 +282,8 @@ this method into the <code>feature_store</code> property of your client configur
       
         <span class='type'>(<tt>Hash</tt>)</span>
       
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
       
       
         &mdash;
@@ -379,8 +381,6 @@ Consul client configuration (note that this is exactly the same as modifying <co
       
     </ul>
   
-    
-    
 
 <p class="tag_title">Returns:</p>
 <ul class="return">
@@ -429,7 +429,7 @@ Consul client configuration (note that this is exactly the same as modifying <co
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/consul.rb', line 39</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_feature_store'>new_feature_store</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_feature_store'>new_feature_store</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_core'>core</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Integrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Consul.html" title="LaunchDarkly::Impl::Integrations::Consul (module)">Consul</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Consul/ConsulFeatureStoreCore.html" title="LaunchDarkly::Impl::Integrations::Consul::ConsulFeatureStoreCore (class)">ConsulFeatureStoreCore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Impl/Integrations/Consul/ConsulFeatureStoreCore.html#initialize-instance_method" title="LaunchDarkly::Impl::Integrations::Consul::ConsulFeatureStoreCore#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Util.html" title="LaunchDarkly::Integrations::Util (module)">Util</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Util/CachingStoreWrapper.html" title="LaunchDarkly::Integrations::Util::CachingStoreWrapper (class)">CachingStoreWrapper</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Util/CachingStoreWrapper.html#initialize-instance_method" title="LaunchDarkly::Integrations::Util::CachingStoreWrapper#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_core'>core</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
@@ -443,7 +443,7 @@ Consul client configuration (note that this is exactly the same as modifying <co
 </div>
 
       <div id="footer">
-  Generated on Fri Dec 31 22:07:21 2021 by
+  Generated on Fri Mar 18 21:13:48 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.27 (ruby-2.5.9).
 </div>
