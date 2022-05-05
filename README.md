@@ -3,7 +3,7 @@ LaunchDarkly Server-side SDK for Ruby
 
 [![Gem Version](https://badge.fury.io/rb/launchdarkly-server-sdk.svg)](http://badge.fury.io/rb/launchdarkly-server-sdk)
 
-[![Circle CI](https://circleci.com/gh/launchdarkly/ruby-server-sdk/tree/master.svg?style=svg)](https://circleci.com/gh/launchdarkly/ruby-server-sdk/tree/master)
+[![Circle CI](https://circleci.com/gh/launchdarkly/ruby-server-sdk/tree/main.svg?style=svg)](https://circleci.com/gh/launchdarkly/ruby-server-sdk/tree/master)
 [![RubyDoc](https://img.shields.io/static/v1?label=docs+-+all+versions&message=reference&color=00add8)](https://www.rubydoc.info/gems/launchdarkly-server-sdk)
 [![GitHub Pages](https://img.shields.io/static/v1?label=docs+-+latest&message=reference&color=00add8)](https://launchdarkly.github.io/ruby-server-sdk)
 
