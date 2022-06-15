@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.3.3] - 2022-06-15
+### Fixed:
+- Improved efficiency of SSE parsing to reduce transient memory/CPU usage spikes when receiving flag/segment data for a large LaunchDarkly environment. (Thanks, [sq-square](https://github.com/launchdarkly/ruby-eventsource/pull/32)!)
+
 ## [6.3.2] - 2022-03-18
 ### Added:
 - Add `initial_reconnect_delay` option to config which controls the initial delay for reconnecting the streaming connection.
