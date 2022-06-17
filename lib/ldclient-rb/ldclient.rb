@@ -435,8 +435,8 @@ module LaunchDarkly
         return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
       end
 
-      unless user
-        @config.logger.error { "[LDClient] Must specify user" }
+      unless user && user.is_a?(Hash)
+        @config.logger.error { "[LDClient] Must specify user hash" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
         return detail
       end
