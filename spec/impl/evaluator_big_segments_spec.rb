@@ -20,7 +20,7 @@ module LaunchDarkly
           with_segment(segment).
           build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
-        result = e.evaluate(flag, user, factory)
+        result = e.evaluate(flag, user)
         expect(result.detail.value).to be false
         expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::NOT_CONFIGURED)
       end
@@ -36,7 +36,7 @@ module LaunchDarkly
           with_segment(segment).
           build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
-        result = e.evaluate(flag, user, factory)
+        result = e.evaluate(flag, user)
         expect(result.detail.value).to be false
         expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::NOT_CONFIGURED)
       end
@@ -53,7 +53,7 @@ module LaunchDarkly
           with_big_segment_for_user(user, segment, true).
           build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
-        result = e.evaluate(flag, user, factory)
+        result = e.evaluate(flag, user)
         expect(result.detail.value).to be true
         expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
       end
@@ -73,7 +73,7 @@ module LaunchDarkly
           with_big_segment_for_user(user, segment, nil).
           build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
-        result = e.evaluate(flag, user, factory)
+        result = e.evaluate(flag, user)
         expect(result.detail.value).to be true
         expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
       end
@@ -93,7 +93,7 @@ module LaunchDarkly
           with_big_segment_for_user(user, segment, false).
           build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
-        result = e.evaluate(flag, user, factory)
+        result = e.evaluate(flag, user)
         expect(result.detail.value).to be false
         expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
       end
@@ -111,7 +111,7 @@ module LaunchDarkly
           with_big_segments_status(BigSegmentsStatus::STALE).
           build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
-        result = e.evaluate(flag, user, factory)
+        result = e.evaluate(flag, user)
         expect(result.detail.value).to be true
         expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::STALE)
       end
@@ -149,7 +149,7 @@ module LaunchDarkly
         # The membership deliberately does not include segment1, because we want the first rule to be
         # a non-match so that it will continue on and check segment2 as well.
     
-        result = e.evaluate(flag, user, factory)
+        result = e.evaluate(flag, user)
         expect(result.detail.value).to be true
         expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
 

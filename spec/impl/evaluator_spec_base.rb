@@ -75,10 +75,6 @@ module LaunchDarkly
     end
 
     module EvaluatorSpecBase
-      def factory
-        EventFactory.new(false)
-      end
-
       def user
         {
           key: "userkey",

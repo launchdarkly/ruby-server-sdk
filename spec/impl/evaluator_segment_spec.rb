@@ -10,7 +10,7 @@ module LaunchDarkly
         clause = make_segment_match_clause(segment)
         flag = boolean_flag_with_clauses([clause])
         e = EvaluatorBuilder.new(logger).with_segment(segment).build
-        e.evaluate(flag, user, factory).detail.value
+        e.evaluate(flag, user).detail.value
       end
 
       it "retrieves segment from segment store for segmentMatch operator" do
@@ -22,14 +22,14 @@ module LaunchDarkly
         }
         e = EvaluatorBuilder.new(logger).with_segment(segment).build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
-        expect(e.evaluate(flag, user, factory).detail.value).to be true
+        expect(e.evaluate(flag, user).detail.value).to be true
       end
 
       it "falls through with no errors if referenced segment is not found" do
         e = EvaluatorBuilder.new(logger).with_unknown_segment('segkey').build
         clause = { attribute: '', op: 'segmentMatch', values: ['segkey'] }
         flag = boolean_flag_with_clauses([clause])
-        expect(e.evaluate(flag, user, factory).detail.value).to be false
+        expect(e.evaluate(flag, user).detail.value).to be false
       end
 
       it 'explicitly includes user' do

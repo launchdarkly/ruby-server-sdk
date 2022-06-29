@@ -1,3 +1,6 @@
+require "ldclient-rb/impl/event_types"
+
+require "events_test_util"
 require "http_util"
 require "spec_helper"
 require "time"
@@ -5,6 +8,7 @@ require "time"
 describe LaunchDarkly::EventProcessor do
   subject { LaunchDarkly::EventProcessor }
 
+  let(:starting_timestamp) { 1000 }
   let(:default_config_opts) { { diagnostic_opt_out: true, logger: $null_log } }
   let(:default_config) { LaunchDarkly::Config.new(default_config_opts) }
   let(:user) { { key: "userkey", name: "Red" } }
@@ -16,7 +20,15 @@ describe LaunchDarkly::EventProcessor do
 
   def with_processor_and_sender(config)
     sender = FakeEventSender.new
-    ep = subject.new("sdk_key", config, nil, nil, { event_sender: sender })
+    timestamp = starting_timestamp
+    ep = subject.new("sdk_key", config, nil, nil, {
+      event_sender: sender,
+      timestamp_fn: proc {
+        t = timestamp
+        timestamp += 1
+        t
+      }
+    })
     begin
       yield ep, sender
     ensure
@@ -26,59 +38,41 @@ describe LaunchDarkly::EventProcessor do
 
   it "queues identify event" do
     with_processor_and_sender(default_config) do |ep, sender|
-      e = { kind: "identify", key: user[:key], user: user }
-      ep.add_event(e)
+      ep.record_identify_event(user)
 
       output = flush_and_get_events(ep, sender)
-      expect(output).to contain_exactly(e)
+      expect(output).to contain_exactly(eq(identify_event(user)))
     end
   end
 
   it "filters user in identify event" do
     config = LaunchDarkly::Config.new(default_config_opts.merge(all_attributes_private: true))
     with_processor_and_sender(config) do |ep, sender|
-      e = { kind: "identify", key: user[:key], user: user }
-      ep.add_event(e)
+      ep.record_identify_event(user)
 
       output = flush_and_get_events(ep, sender)
-      expect(output).to contain_exactly({
-        kind: "identify",
-        key: user[:key],
-        creationDate: e[:creationDate],
-        user: filtered_user
-      })
+      expect(output).to contain_exactly(eq(identify_event(filtered_user)))
     end
   end
 
   it "stringifies built-in user attributes in identify event" do
     with_processor_and_sender(default_config) do |ep, sender|
-      flag = { key: "flagkey", version: 11 }
-      e = { kind: "identify", key: numeric_user[:key], user: numeric_user }
-      ep.add_event(e)
+      ep.record_identify_event(numeric_user)
 
       output = flush_and_get_events(ep, sender)
-      expect(output).to contain_exactly(
-        kind: "identify",
-        key: numeric_user[:key].to_s,
-        creationDate: e[:creationDate],
-        user: stringified_numeric_user
-      )
+      expect(output).to contain_exactly(eq(identify_event(stringified_numeric_user)))
     end
   end
 
   it "queues individual feature event with index event" do
     with_processor_and_sender(default_config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: true
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(user, 'flagkey', 11, 1, 'value', nil, nil, true)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(index_event(fe, user)),
-        eq(feature_event(fe, flag, false, nil)),
+        eq(index_event(user)),
+        eq(feature_event(flag, user, 1, 'value')),
         include(:kind => "summary")
       )
     end
@@ -88,16 +82,12 @@ describe LaunchDarkly::EventProcessor do
     config = LaunchDarkly::Config.new(default_config_opts.merge(all_attributes_private: true))
     with_processor_and_sender(config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: true
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(user, 'flagkey', 11, 1, 'value', nil, nil, true)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(index_event(fe, filtered_user)),
-        eq(feature_event(fe, flag, false, nil)),
+        eq(index_event(filtered_user)),
+        eq(feature_event(flag, user, 1, 'value')),
         include(:kind => "summary")
       )
     end
@@ -106,16 +96,12 @@ describe LaunchDarkly::EventProcessor do
   it "stringifies built-in user attributes in index event" do
     with_processor_and_sender(default_config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: numeric_user,
-        variation: 1, value: "value", trackEvents: true
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(numeric_user, 'flagkey', 11, 1, 'value', nil, nil, true)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(index_event(fe, stringified_numeric_user)),
-        eq(feature_event(fe, flag, false, nil)),
+        eq(index_event(stringified_numeric_user)),
+        eq(feature_event(flag, stringified_numeric_user, 1, 'value')),
         include(:kind => "summary")
       )
     end
@@ -125,15 +111,11 @@ describe LaunchDarkly::EventProcessor do
     config = LaunchDarkly::Config.new(default_config_opts.merge(inline_users_in_events: true))
     with_processor_and_sender(config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: true
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(user, 'flagkey', 11, 1, 'value', nil, nil, true)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(feature_event(fe, flag, false, user)),
+        eq(feature_event(flag, user, 1, 'value', true)),
         include(:kind => "summary")
       )
     end
@@ -143,15 +125,11 @@ describe LaunchDarkly::EventProcessor do
     config = LaunchDarkly::Config.new(default_config_opts.merge(inline_users_in_events: true))
     with_processor_and_sender(config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: numeric_user,
-        variation: 1, value: "value", trackEvents: true
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(numeric_user, 'flagkey', 11, 1, 'value', nil, nil, true)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(feature_event(fe, flag, false, stringified_numeric_user)),
+        eq(feature_event(flag, stringified_numeric_user, 1, 'value', true)),
         include(:kind => "summary")
       )
     end
@@ -161,15 +139,11 @@ describe LaunchDarkly::EventProcessor do
     config = LaunchDarkly::Config.new(default_config_opts.merge(all_attributes_private: true, inline_users_in_events: true))
     with_processor_and_sender(config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: true
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(user, 'flagkey', 11, 1, 'value', nil, nil, true)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(feature_event(fe, flag, false, filtered_user)),
+        eq(feature_event(flag, filtered_user, 1, 'value', true)),
         include(:kind => "summary")
       )
     end
@@ -179,15 +153,11 @@ describe LaunchDarkly::EventProcessor do
     config = LaunchDarkly::Config.new(default_config_opts.merge(inline_users_in_events: true))
     with_processor_and_sender(config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: false
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(user, 'flagkey', 11, 1, 'value', nil, nil, false)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(index_event(fe, user)),
+        eq(index_event(user)),
         include(:kind => "summary")
       )
     end
@@ -197,16 +167,12 @@ describe LaunchDarkly::EventProcessor do
     with_processor_and_sender(default_config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
       future_time = (Time.now.to_f * 1000).to_i + 1000000
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: false, debugEventsUntilDate: future_time
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(user, 'flagkey', 11, 1, 'value', nil, nil, false, future_time)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(index_event(fe, user)),
-        eq(feature_event(fe, flag, true, user)),
+        eq(index_event(user)),
+        eq(debug_event(flag, user, 1, 'value')),
         include(:kind => "summary")
       )
     end
@@ -216,17 +182,13 @@ describe LaunchDarkly::EventProcessor do
     with_processor_and_sender(default_config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
       future_time = (Time.now.to_f * 1000).to_i + 1000000
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: true, debugEventsUntilDate: future_time
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(user, 'flagkey', 11, 1, 'value', nil, nil, true, future_time)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(index_event(fe, user)),
-        eq(feature_event(fe, flag, false, nil)),
-        eq(feature_event(fe, flag, true, user)),
+        eq(index_event(user)),
+        eq(feature_event(flag, user, 1, 'value')),
+        eq(debug_event(flag, user, 1, 'value')),
         include(:kind => "summary")
       )
     end
@@ -239,18 +201,15 @@ describe LaunchDarkly::EventProcessor do
 
       # Send and flush an event we don't care about, just to set the last server time
       sender.result = LaunchDarkly::Impl::EventSenderResult.new(true, false, server_time)
-      ep.add_event({ kind: "identify", user: user })
+      
+      ep.record_identify_event(user)
       flush_and_get_events(ep, sender)
 
       # Now send an event with debug mode on, with a "debug until" time that is further in
       # the future than the server time, but in the past compared to the client.
       flag = { key: "flagkey", version: 11 }
       debug_until = (server_time.to_f * 1000).to_i + 1000
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: false, debugEventsUntilDate: debug_until
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(user, 'flagkey', 11, 1, 'value', nil, nil, false, debug_until)
 
       # Should get a summary event only, not a full feature event
       output = flush_and_get_events(ep, sender)
@@ -267,18 +226,14 @@ describe LaunchDarkly::EventProcessor do
 
       # Send and flush an event we don't care about, just to set the last server time
       sender.result = LaunchDarkly::Impl::EventSenderResult.new(true, false, server_time)
-      ep.add_event({ kind: "identify", user: user })
+      ep.record_identify_event(user)
       flush_and_get_events(ep, sender)
 
       # Now send an event with debug mode on, with a "debug until" time that is further in
       # the future than the server time, but in the past compared to the client.
       flag = { key: "flagkey", version: 11 }
       debug_until = (server_time.to_f * 1000).to_i - 1000
-      fe = {
-        kind: "feature", key: "flagkey", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: false, debugEventsUntilDate: debug_until
-      }
-      ep.add_event(fe)
+      ep.record_eval_event(user, 'flagkey', 11, 1, 'value', nil, nil, false, debug_until)
 
       # Should get a summary event only, not a full feature event
       output = flush_and_get_events(ep, sender)
@@ -293,22 +248,14 @@ describe LaunchDarkly::EventProcessor do
       flag1 = { key: "flagkey1", version: 11 }
       flag2 = { key: "flagkey2", version: 22 }
       future_time = (Time.now.to_f * 1000).to_i + 1000000
-      fe1 = {
-        kind: "feature", key: "flagkey1", version: 11, user: user,
-        variation: 1, value: "value", trackEvents: true
-      }
-      fe2 = {
-        kind: "feature", key: "flagkey2", version: 22, user: user,
-        variation: 1, value: "value", trackEvents: true
-      }
-      ep.add_event(fe1)
-      ep.add_event(fe2)
+      ep.record_eval_event(user, 'flagkey1', 11, 1, 'value', nil, nil, true)
+      ep.record_eval_event(user, 'flagkey2', 22, 1, 'value', nil, nil, true)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(index_event(fe1, user)),
-        eq(feature_event(fe1, flag1, false, nil)),
-        eq(feature_event(fe2, flag2, false, nil)),
+        eq(index_event(user)),
+        eq(feature_event(flag1, user, 1, 'value', false, starting_timestamp)),
+        eq(feature_event(flag2, user, 1, 'value', false, starting_timestamp + 1)),
         include(:kind => "summary")
       )
     end
@@ -319,24 +266,16 @@ describe LaunchDarkly::EventProcessor do
       flag1 = { key: "flagkey1", version: 11 }
       flag2 = { key: "flagkey2", version: 22 }
       future_time = (Time.now.to_f * 1000).to_i + 1000000
-      fe1 = {
-        kind: "feature", key: "flagkey1", version: 11, user: user,
-        variation: 1, value: "value1", default: "default1"
-      }
-      fe2 = {
-        kind: "feature", key: "flagkey2", version: 22, user: user,
-        variation: 2, value: "value2", default: "default2"
-      }
-      ep.add_event(fe1)
-      ep.add_event(fe2)
+      ep.record_eval_event(user, 'flagkey1', 11, 1, 'value1', nil, 'default1', false)
+      ep.record_eval_event(user, 'flagkey2', 22, 2, 'value2', nil, 'default2', false)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(index_event(fe1, user)),
+        eq(index_event(user)),
         eq({
           kind: "summary",
-          startDate: fe1[:creationDate],
-          endDate: fe2[:creationDate],
+          startDate: starting_timestamp,
+          endDate: starting_timestamp + 1,
           features: {
             flagkey1: {
               default: "default1",
@@ -358,13 +297,12 @@ describe LaunchDarkly::EventProcessor do
 
   it "queues custom event with user" do
     with_processor_and_sender(default_config) do |ep, sender|
-      e = { kind: "custom", key: "eventkey", user: user, data: { thing: "stuff" }, metricValue: 1.5 }
-      ep.add_event(e)
+      ep.record_custom_event(user, 'eventkey', { thing: 'stuff' }, 1.5)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(index_event(e, user)),
-        eq(custom_event(e, nil))
+        eq(index_event(user)),
+        eq(custom_event(user, 'eventkey', { thing: 'stuff' }, 1.5))
       )
     end
   end
@@ -372,12 +310,11 @@ describe LaunchDarkly::EventProcessor do
   it "can include inline user in custom event" do
     config = LaunchDarkly::Config.new(default_config_opts.merge(inline_users_in_events: true))
     with_processor_and_sender(config) do |ep, sender|
-      e = { kind: "custom", key: "eventkey", user: user, data: { thing: "stuff" } }
-      ep.add_event(e)
+      ep.record_custom_event(user, 'eventkey')
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(custom_event(e, user))
+        eq(custom_event(user, 'eventkey', nil, nil, true))
       )
     end
   end
@@ -385,12 +322,11 @@ describe LaunchDarkly::EventProcessor do
   it "filters user in custom event" do
     config = LaunchDarkly::Config.new(default_config_opts.merge(all_attributes_private: true, inline_users_in_events: true))
     with_processor_and_sender(config) do |ep, sender|
-      e = { kind: "custom", key: "eventkey", user: user, data: { thing: "stuff" } }
-      ep.add_event(e)
+      ep.record_custom_event(user, 'eventkey')
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(custom_event(e, filtered_user))
+        eq(custom_event(filtered_user, 'eventkey', nil, nil, true))
       )
     end
   end
@@ -398,46 +334,49 @@ describe LaunchDarkly::EventProcessor do
   it "stringifies built-in user attributes in custom event" do
     config = LaunchDarkly::Config.new(default_config_opts.merge(inline_users_in_events: true))
     with_processor_and_sender(config) do |ep, sender|
-      e = { kind: "custom", key: "eventkey", user: numeric_user }
-      ep.add_event(e)
+      ep.record_custom_event(numeric_user, 'eventkey', nil, nil)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(custom_event(e, stringified_numeric_user))
+        eq(custom_event(stringified_numeric_user, 'eventkey', nil, nil, true))
       )
     end
   end
 
   it "queues alias event" do
     with_processor_and_sender(default_config) do |ep, sender|
-      e = { kind: "alias", key: "a", contextKind: "user", previousKey: "b", previousContextKind: "user" }
-      ep.add_event(e)
+      ep.record_alias_event({ key: 'a' }, { key: 'b', anonymous: true })
 
       output = flush_and_get_events(ep, sender)
-      expect(output).to contain_exactly(e)
+      expect(output).to contain_exactly({
+        creationDate: starting_timestamp,
+        kind: 'alias',
+        key: 'a',
+        contextKind: 'user',
+        previousKey: 'b',
+        previousContextKind: 'anonymousUser'
+      })
     end
   end
 
   it "treats nil value for custom the same as an empty hash" do
     with_processor_and_sender(default_config) do |ep, sender|
       user_with_nil_custom = { key: "userkey", custom: nil }
-      e = { kind: "identify", key: "userkey", user: user_with_nil_custom }
-      ep.add_event(e)
+      ep.record_identify_event(user_with_nil_custom)
 
       output = flush_and_get_events(ep, sender)
-      expect(output).to contain_exactly(e)
+      expect(output).to contain_exactly(eq(identify_event(user_with_nil_custom)))
     end
   end
 
   it "does a final flush when shutting down" do
     with_processor_and_sender(default_config) do |ep, sender|
-      e = { kind: "identify", key: user[:key], user: user }
-      ep.add_event(e)
+      ep.record_identify_event(user)
       
       ep.stop
 
       output = sender.analytics_payloads.pop
-      expect(output).to contain_exactly(e)
+      expect(output).to contain_exactly(eq(identify_event(user)))
     end
   end
 
@@ -452,12 +391,10 @@ describe LaunchDarkly::EventProcessor do
   it "stops posting events after unrecoverable error" do
     with_processor_and_sender(default_config) do |ep, sender|
       sender.result = LaunchDarkly::Impl::EventSenderResult.new(false, true, nil)
-      e = { kind: "identify", key: user[:key], user: user }
-      ep.add_event(e)
+      e = ep.record_identify_event(user)
       flush_and_get_events(ep, sender)
 
-      e = { kind: "identify", key: user[:key], user: user }
-      ep.add_event(e)
+      ep.record_identify_event(user)
       ep.flush
       ep.wait_until_inactive
       expect(sender.analytics_payloads.empty?).to be true
@@ -510,9 +447,9 @@ describe LaunchDarkly::EventProcessor do
       with_diagnostic_processor_and_sender(config) do |ep, sender|
         init_event = sender.diagnostic_payloads.pop
 
-        ep.add_event({ kind: 'identify', user: user })
-        ep.add_event({ kind: 'identify', user: user })
-        ep.add_event({ kind: 'identify', user: user })
+        3.times do
+          ep.record_identify_event(user)
+        end
         flush_and_get_events(ep, sender)
 
         periodic_event = sender.diagnostic_payloads.pop
@@ -528,8 +465,8 @@ describe LaunchDarkly::EventProcessor do
       with_diagnostic_processor_and_sender(diagnostic_config) do |ep, sender|
         init_event = sender.diagnostic_payloads.pop
 
-        ep.add_event({ kind: 'custom', key: 'event1', user: user })
-        ep.add_event({ kind: 'custom', key: 'event2', user: user })
+        ep.record_custom_event(user, 'event1')
+        ep.record_custom_event(user, 'event2')
         events = flush_and_get_events(ep, sender)
 
         periodic_event = sender.diagnostic_payloads.pop
@@ -541,44 +478,66 @@ describe LaunchDarkly::EventProcessor do
     end
   end
 
-  def index_event(e, user)
+  def index_event(user, timestamp = starting_timestamp)
     {
       kind: "index",
-      creationDate: e[:creationDate],
+      creationDate: timestamp,
       user: user
     }
   end
 
-  def feature_event(e, flag, debug, inline_user)
-    out = {
-      kind: debug ? "debug" : "feature",
-      creationDate: e[:creationDate],
-      key: flag[:key],
-      variation: e[:variation],
-      version: flag[:version],
-      value: e[:value]
+  def identify_event(user, timestamp = starting_timestamp)
+    {
+      kind: "identify",
+      creationDate: timestamp,
+      key: user[:key],
+      user: user
     }
-    if inline_user.nil?
-      out[:userKey] = e[:user][:key]
+  end
+
+  def feature_event(flag, user, variation, value, inline_user = false, timestamp = starting_timestamp)
+    out = {
+      kind: 'feature',
+      creationDate: timestamp,
+      key: flag[:key],
+      variation: variation,
+      version: flag[:version],
+      value: value
+    }
+    if inline_user
+      out[:user] = user
     else
-      out[:user] = inline_user
+      out[:userKey] = user[:key]
     end
     out
   end
 
-  def custom_event(e, inline_user)
+  def debug_event(flag, user, variation, value, timestamp = starting_timestamp)
+    out = {
+      kind: 'debug',
+      creationDate: timestamp,
+      key: flag[:key],
+      variation: variation,
+      version: flag[:version],
+      value: value,
+      user: user
+    }
+    out
+  end
+
+  def custom_event(user, key, data, metric_value, inline_user = false, timestamp = starting_timestamp)
     out = {
       kind: "custom",
-      creationDate: e[:creationDate],
-      key: e[:key]
+      creationDate: timestamp,
+      key: key
     }
-    out[:data] = e[:data] if e.has_key?(:data)
-    if inline_user.nil?
-      out[:userKey] = e[:user][:key]
+    out[:data] = data if !data.nil?
+    if inline_user
+      out[:user] = user
     else
-      out[:user] = inline_user
+      out[:userKey] = user[:key]
     end
-    out[:metricValue] = e[:metricValue] if e.has_key?(:metricValue)
+    out[:metricValue] = metric_value if !metric_value.nil?
     out
   end
 
