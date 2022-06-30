@@ -1,7 +1,6 @@
 require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
-require "ldclient-rb/impl/event_factory"
 require "ldclient-rb/impl/store_client_wrapper"
 require "concurrent/atomics"
 require "digest/sha1"
@@ -45,9 +44,6 @@ module LaunchDarkly
       end
 
       @sdk_key = sdk_key
-
-      @event_factory_default = EventFactory.new(false)
-      @event_factory_with_reasons = EventFactory.new(true)
 
       # We need to wrap the feature store object with a FeatureStoreClientWrapper in order to add
       # some necessary logic around updates. Unfortunately, we have code elsewhere that accesses
@@ -202,7 +198,7 @@ module LaunchDarkly
     # @return the variation to show the user, or the default value if there's an an error
     #
     def variation(key, user, default)
-      evaluate_internal(key, user, default, @event_factory_default).value
+      evaluate_internal(key, user, default, false).value
     end
 
     #
@@ -229,7 +225,7 @@ module LaunchDarkly
     # @return [EvaluationDetail] an object describing the result
     #
     def variation_detail(key, user, default)
-      evaluate_internal(key, user, default, @event_factory_with_reasons)
+      evaluate_internal(key, user, default, true)
     end
 
     #
@@ -253,7 +249,7 @@ module LaunchDarkly
         return
       end
       sanitize_user(user)
-      @event_processor.add_event(@event_factory_default.new_identify_event(user))
+      @event_processor.record_identify_event(user)
     end
 
     #
@@ -284,7 +280,7 @@ module LaunchDarkly
         return
       end
       sanitize_user(user)
-      @event_processor.add_event(@event_factory_default.new_custom_event(event_name, user, data, metric_value))
+      @event_processor.record_custom_event(user, event_name, data, metric_value)
     end
 
     #
@@ -301,7 +297,7 @@ module LaunchDarkly
       end
       sanitize_user(current_context)
       sanitize_user(previous_context)
-      @event_processor.add_event(@event_factory_default.new_alias_event(current_context, previous_context))
+      @event_processor.record_alias_event(current_context, previous_context)
     end
 
     #
@@ -368,13 +364,13 @@ module LaunchDarkly
           next
         end
         begin
-          detail = @evaluator.evaluate(f, user, @event_factory_default).detail
+          detail = @evaluator.evaluate(f, user).detail
         rescue => exn
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
         end
 
-        requires_experiment_data = EventFactory.is_experiment(f, detail.reason)
+        requires_experiment_data = is_experiment(f, detail.reason)
         flag_state = {
           key: f[:key],
           value: detail.value,
@@ -430,7 +426,7 @@ module LaunchDarkly
     end
 
     # @return [EvaluationDetail]
-    def evaluate_internal(key, user, default, event_factory)
+    def evaluate_internal(key, user, default, with_reasons)
       if @config.offline?
         return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
       end
@@ -453,7 +449,7 @@ module LaunchDarkly
         else
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
           detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
-          @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
+          record_unknown_flag_eval(key, user, default, detail.reason, with_reasons)
           return  detail
         end
       end
@@ -463,32 +459,94 @@ module LaunchDarkly
       if feature.nil?
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_FLAG_NOT_FOUND, default)
-        @event_processor.add_event(event_factory.new_unknown_flag_event(key, user, default, detail.reason))
+        record_unknown_flag_eval(key, user, default, detail.reason, with_reasons)
         return detail
       end
 
       begin
-        res = @evaluator.evaluate(feature, user, event_factory)
-        if !res.events.nil?
-          res.events.each do |event|
-            @event_processor.add_event(event)
+        res = @evaluator.evaluate(feature, user)
+        if !res.prereq_evals.nil?
+          res.prereq_evals.each do |prereq_eval|
+            record_prereq_flag_eval(prereq_eval.prereq_flag, prereq_eval.prereq_of_flag, user, prereq_eval.detail, with_reasons)
           end
         end
         detail = res.detail
         if detail.default_value?
           detail = EvaluationDetail.new(default, nil, detail.reason)
         end
-        @event_processor.add_event(event_factory.new_eval_event(feature, user, detail, default))
+        record_flag_eval(feature, user, detail, default, with_reasons)
         return detail
       rescue => exn
         Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
-        @event_processor.add_event(event_factory.new_default_event(feature, user, default, detail.reason))
+        record_flag_eval_error(feature, user, default, detail.reason, with_reasons)
         return detail
       end
     end
 
-    def sanitize_user(user)
+    private def record_flag_eval(flag, user, detail, default, with_reasons)
+      add_experiment_data = is_experiment(flag, detail.reason)
+      @event_processor.record_eval_event(
+        user,
+        flag[:key],
+        flag[:version],
+        detail.variation_index,
+        detail.value,
+        (add_experiment_data || with_reasons) ? detail.reason : nil,
+        default,
+        add_experiment_data || flag[:trackEvents] || false,
+        flag[:debugEventsUntilDate],
+        nil
+      )
+    end
+    
+    private def record_prereq_flag_eval(prereq_flag, prereq_of_flag, user, detail, with_reasons)
+      add_experiment_data = is_experiment(prereq_flag, detail.reason)
+      @event_processor.record_eval_event(
+        user,
+        prereq_flag[:key],
+        prereq_flag[:version],
+        detail.variation_index,
+        detail.value,
+        (add_experiment_data || with_reasons) ? detail.reason : nil,
+        nil,
+        add_experiment_data || prereq_flag[:trackEvents] || false,
+        prereq_flag[:debugEventsUntilDate],
+        prereq_of_flag[:key]
+      )
+    end
+    
+    private def record_flag_eval_error(flag, user, default, reason, with_reasons)
+      @event_processor.record_eval_event(user, flag[:key], flag[:version], nil, default, with_reasons ? reason : nil, default,
+        flag[:trackEvents], flag[:debugEventsUntilDate], nil)
+    end
+
+    private def record_unknown_flag_eval(flag_key, user, default, reason, with_reasons)
+      @event_processor.record_eval_event(user, flag_key, nil, nil, default, with_reasons ? reason : nil, default,
+        false, nil, nil)
+    end
+
+    private def is_experiment(flag, reason)
+      return false if !reason
+
+      if reason.in_experiment
+        return true
+      end
+
+      case reason[:kind]
+      when 'RULE_MATCH'
+        index = reason[:ruleIndex]
+        if !index.nil?
+          rules = flag[:rules] || []
+          return index >= 0 && index < rules.length && rules[index][:trackEvents]
+        end
+      when 'FALLTHROUGH'
+        return !!flag[:trackEventsFallthrough]
+      end
+      false
+    end
+
+    private def sanitize_user(user)
       if user[:key]
         user[:key] = user[:key].to_s
       end

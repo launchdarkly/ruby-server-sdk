@@ -1,5 +1,7 @@
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/event_sender"
+require "ldclient-rb/impl/event_summarizer"
+require "ldclient-rb/impl/event_types"
 require "ldclient-rb/impl/util"
 
 require "concurrent"
@@ -26,16 +28,33 @@ require "time"
 #
 
 module LaunchDarkly
-  MAX_FLUSH_WORKERS = 5
-  USER_ATTRS_TO_STRINGIFY_FOR_EVENTS = [ :key, :secondary, :ip, :country, :email, :firstName, :lastName,
-    :avatar, :name ]
+  module EventProcessorMethods
+    def record_eval_event(
+      user,
+      key,
+      version = nil,
+      variation = nil,
+      value = nil,
+      reason = nil,
+      default = nil,
+      track_events = false,
+      debug_until = nil,
+      prereq_of = nil
+    )
+    end
 
-  private_constant :MAX_FLUSH_WORKERS
-  private_constant :USER_ATTRS_TO_STRINGIFY_FOR_EVENTS
+    def record_identify_event(user)
+    end
 
-  # @private
-  class NullEventProcessor
-    def add_event(event)
+    def record_custom_event(
+      user,
+      key,
+      data = nil,
+      metric_value = nil
+    )
+    end
+
+    def record_alias_event(user, previous_user)
     end
 
     def flush
@@ -45,12 +64,16 @@ module LaunchDarkly
     end
   end
 
+  MAX_FLUSH_WORKERS = 5
+  USER_ATTRS_TO_STRINGIFY_FOR_EVENTS = [ :key, :secondary, :ip, :country, :email, :firstName, :lastName,
+    :avatar, :name ]
+
+  private_constant :MAX_FLUSH_WORKERS
+  private_constant :USER_ATTRS_TO_STRINGIFY_FOR_EVENTS
+
   # @private
-  class EventMessage
-    def initialize(event)
-      @event = event
-    end
-    attr_reader :event
+  class NullEventProcessor
+    include EventProcessorMethods
   end
 
   # @private
@@ -90,6 +113,8 @@ module LaunchDarkly
 
   # @private
   class EventProcessor
+    include EventProcessorMethods
+
     def initialize(sdk_key, config, client = nil, diagnostic_accumulator = nil, test_properties = nil)
       raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?  # see LDClient constructor comment on sdk_key
       @logger = config.logger
@@ -116,16 +141,46 @@ module LaunchDarkly
       @stopped = Concurrent::AtomicBoolean.new(false)
       @inbox_full = Concurrent::AtomicBoolean.new(false)
 
-      event_sender = test_properties && test_properties.has_key?(:event_sender) ?
-        test_properties[:event_sender] :
+      event_sender = (test_properties || {})[:event_sender] ||
         Impl::EventSender.new(sdk_key, config, client ? client : Util.new_http_client(config.events_uri, config))
+
+      @timestamp_fn = (test_properties || {})[:timestamp_fn] || proc { Impl::Util.current_time_millis }
 
       EventDispatcher.new(@inbox, sdk_key, config, diagnostic_accumulator, event_sender)
     end
 
-    def add_event(event)
-      event[:creationDate] = Impl::Util.current_time_millis
-      post_to_inbox(EventMessage.new(event))
+    def record_eval_event(
+      user,
+      key,
+      version = nil,
+      variation = nil,
+      value = nil,
+      reason = nil,
+      default = nil,
+      track_events = false,
+      debug_until = nil,
+      prereq_of = nil
+    )
+      post_to_inbox(LaunchDarkly::Impl::EvalEvent.new(timestamp, user, key, version, variation, value, reason,
+        default, track_events, debug_until, prereq_of))
+    end
+
+    def record_identify_event(user)
+      post_to_inbox(LaunchDarkly::Impl::IdentifyEvent.new(timestamp, user))
+    end
+
+    def record_custom_event(user, key, data = nil, metric_value = nil)
+      post_to_inbox(LaunchDarkly::Impl::CustomEvent.new(timestamp, user, key, data, metric_value))
+    end
+
+    def record_alias_event(user, previous_user)
+      post_to_inbox(LaunchDarkly::Impl::AliasEvent.new(
+        timestamp,
+        user.nil? ? nil : user[:key],
+        user_to_context_kind(user),
+        previous_user.nil? ? nil : previous_user[:key],
+        user_to_context_kind(previous_user)
+      ))
     end
 
     def flush
@@ -155,9 +210,11 @@ module LaunchDarkly
       sync_msg.wait_for_completion
     end
 
-    private
+    private def timestamp
+      @timestamp_fn.call()
+    end
 
-    def post_to_inbox(message)
+    private def post_to_inbox(message)
       begin
         @inbox.push(message, non_block=true)
       rescue ThreadError
@@ -169,6 +226,10 @@ module LaunchDarkly
           @logger.warn { "[LDClient] Events are being produced faster than they can be processed; some events will be dropped" }
         end
       end
+    end
+
+    private def user_to_context_kind(user)
+      (user.nil? || !user[:anonymous]) ? 'user' : 'anonymousUser'
     end
   end
 
@@ -209,8 +270,6 @@ module LaunchDarkly
         begin
           message = inbox.pop
           case message
-          when EventMessage
-            dispatch_event(message.event, outbox)
           when FlushMessage
             trigger_flush(outbox, flush_workers)
           when FlushUsersMessage
@@ -224,6 +283,8 @@ module LaunchDarkly
             do_shutdown(flush_workers, diagnostic_event_workers)
             running = false
             message.completed
+          else
+            dispatch_event(message, outbox)
           end
         rescue => e
           Util.log_exception(@config.logger, "Unexpected error in event processor", e)
@@ -257,11 +318,10 @@ module LaunchDarkly
       # the event (if tracked) and once for debugging.
       will_add_full_event = false
       debug_event = nil
-      if event[:kind] == "feature"
-        will_add_full_event = event[:trackEvents]
+      if event.is_a?(LaunchDarkly::Impl::EvalEvent)
+        will_add_full_event = event.track_events
         if should_debug_event(event)
-          debug_event = event.clone
-          debug_event[:debug] = true
+          debug_event = LaunchDarkly::Impl::DebugEvent.new(event)
         end
       else
         will_add_full_event = true
@@ -270,12 +330,8 @@ module LaunchDarkly
       # For each user we haven't seen before, we add an index event - unless this is already
       # an identify event for that user.
       if !(will_add_full_event && @config.inline_users_in_events)
-        if event.has_key?(:user) && !notice_user(event[:user]) && event[:kind] != "identify"
-          outbox.add_event({
-            kind: "index",
-            creationDate: event[:creationDate],
-            user: event[:user]
-          })
+        if !event.user.nil? && !notice_user(event.user) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
+          outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.user))
         end
       end
 
@@ -295,7 +351,7 @@ module LaunchDarkly
     end
 
     def should_debug_event(event)
-      debug_until = event[:debugEventsUntilDate]
+      debug_until = event.debug_until
       if !debug_until.nil?
         last_past = @last_known_past_time.value
         debug_until > last_past && debug_until > Impl::Util.current_time_millis
@@ -365,12 +421,11 @@ module LaunchDarkly
       @capacity_exceeded = false
       @dropped_events = 0
       @events = []
-      @summarizer = EventSummarizer.new
+      @summarizer = LaunchDarkly::Impl::EventSummarizer.new
     end
 
     def add_event(event)
       if @events.length < @capacity
-        @logger.debug { "[LDClient] Enqueueing event: #{event.to_json}" }
         @events.push(event)
         @capacity_exceeded = false
       else
@@ -404,6 +459,15 @@ module LaunchDarkly
 
   # @private
   class EventOutputFormatter
+    FEATURE_KIND = 'feature'
+    IDENTIFY_KIND = 'identify'
+    CUSTOM_KIND = 'custom'
+    ALIAS_KIND = 'alias'
+    INDEX_KIND = 'index'
+    DEBUG_KIND = 'debug'
+    SUMMARY_KIND = 'summary'
+    ANONYMOUS_USER_CONTEXT_KIND = 'anonymousUser'
+
     def initialize(config)
       @inline_users = config.inline_users_in_events
       @user_filter = UserFilter.new(config)
@@ -418,100 +482,130 @@ module LaunchDarkly
       events_out
     end
 
-    private
-
-    def process_user(event)
-      filtered = @user_filter.transform_user_props(event[:user])
-      Util.stringify_attrs(filtered, USER_ATTRS_TO_STRINGIFY_FOR_EVENTS)
-    end
-
-    def make_output_event(event)
-      case event[:kind]
-      when "feature"
-        is_debug = event[:debug]
+    private def make_output_event(event)
+      case event
+        
+      when LaunchDarkly::Impl::EvalEvent
         out = {
-          kind: is_debug ? "debug" : "feature",
-          creationDate: event[:creationDate],
-          key: event[:key],
-          value: event[:value]
+          kind: FEATURE_KIND,
+          creationDate: event.timestamp,
+          key: event.key,
+          value: event.value
         }
-        out[:default] = event[:default] if event.has_key?(:default)
-        out[:variation] = event[:variation] if event.has_key?(:variation)
-        out[:version] = event[:version] if event.has_key?(:version)
-        out[:prereqOf] = event[:prereqOf] if event.has_key?(:prereqOf)
-        out[:contextKind] = event[:contextKind] if event.has_key?(:contextKind)
-        if @inline_users || is_debug
-          out[:user] = process_user(event)
-        else
-          out[:userKey] = event[:user][:key]
-        end
-        out[:reason] = event[:reason] if !event[:reason].nil?
+        out[:default] = event.default if !event.default.nil?
+        out[:variation] = event.variation if !event.variation.nil?
+        out[:version] = event.version if !event.version.nil?
+        out[:prereqOf] = event.prereq_of if !event.prereq_of.nil?
+        set_opt_context_kind(out, event.user)
+        set_user_or_user_key(out, event.user)
+        out[:reason] = event.reason if !event.reason.nil?
         out
-      when "identify"
+
+      when LaunchDarkly::Impl::IdentifyEvent
         {
-          kind: "identify",
-          creationDate: event[:creationDate],
-          key: event[:user][:key].to_s,
-          user: process_user(event)
+          kind: IDENTIFY_KIND,
+          creationDate: event.timestamp,
+          key: event.user[:key].to_s,
+          user: process_user(event.user)
         }
-      when "custom"
+      
+      when LaunchDarkly::Impl::CustomEvent
         out = {
-          kind: "custom",
-          creationDate: event[:creationDate],
-          key: event[:key]
+          kind: CUSTOM_KIND,
+          creationDate: event.timestamp,
+          key: event.key
         }
-        out[:data] = event[:data] if event.has_key?(:data)
-        if @inline_users
-          out[:user] = process_user(event)
-        else
-          out[:userKey] = event[:user][:key]
-        end
-        out[:metricValue] = event[:metricValue] if event.has_key?(:metricValue)
-        out[:contextKind] = event[:contextKind] if event.has_key?(:contextKind)
+        out[:data] = event.data if !event.data.nil?
+        set_user_or_user_key(out, event.user)
+        out[:metricValue] = event.metric_value if !event.metric_value.nil?
+        set_opt_context_kind(out, event.user)
         out
-      when "index"
+
+      when LaunchDarkly::Impl::AliasEvent
         {
-          kind: "index",
-          creationDate: event[:creationDate],
-          user: process_user(event)
+          kind: ALIAS_KIND,
+          creationDate: event.timestamp,
+          key: event.key,
+          contextKind: event.context_kind,
+          previousKey: event.previous_key,
+          previousContextKind: event.previous_context_kind
         }
+      
+      when LaunchDarkly::Impl::IndexEvent
+        {
+          kind: INDEX_KIND,
+          creationDate: event.timestamp,
+          user: process_user(event.user)
+        }
+      
+      when LaunchDarkly::Impl::DebugEvent
+        original = event.eval_event
+        out = {
+          kind: DEBUG_KIND,
+          creationDate: original.timestamp,
+          key: original.key,
+          user: process_user(original.user),
+          value: original.value
+        }
+        out[:default] = original.default if !original.default.nil?
+        out[:variation] = original.variation if !original.variation.nil?
+        out[:version] = original.version if !original.version.nil?
+        out[:prereqOf] = original.prereq_of if !original.prereq_of.nil?
+        set_opt_context_kind(out, original.user)
+        out[:reason] = original.reason if !original.reason.nil?
+        out
+
       else
-        event
+        nil
       end
     end
 
     # Transforms the summary data into the format used for event sending.
-    def make_summary_event(summary)
+    private def make_summary_event(summary)
       flags = {}
-      summary[:counters].each { |ckey, cval|
-        flag = flags[ckey[:key]]
-        if flag.nil?
-          flag = {
-            default: cval[:default],
-            counters: []
-          }
-          flags[ckey[:key]] = flag
+      summary.counters.each do |flagKey, flagInfo|
+        counters = []
+        flagInfo.versions.each do |version, variations|
+          variations.each do |variation, counter|
+            c = {
+              value: counter.value,
+              count: counter.count
+            }
+            c[:variation] = variation if !variation.nil?
+            if version.nil?
+              c[:unknown] = true
+            else
+              c[:version] = version
+            end
+            counters.push(c)
+          end
         end
-        c = {
-          value: cval[:value],
-          count: cval[:count]
-        }
-        if !ckey[:variation].nil?
-          c[:variation] = ckey[:variation]
-        end
-        if ckey[:version].nil?
-          c[:unknown] = true
-        else
-          c[:version] = ckey[:version]
-        end
-        flag[:counters].push(c)
-      }
+        flags[flagKey] = { default: flagInfo.default, counters: counters }
+      end
       {
-        kind: "summary",
+        kind: SUMMARY_KIND,
         startDate: summary[:start_date],
         endDate: summary[:end_date],
         features: flags
       }
+    end
+
+    private def set_opt_context_kind(out, user)
+      out[:contextKind] = ANONYMOUS_USER_CONTEXT_KIND if !user.nil? && user[:anonymous]
+    end
+
+    private def set_user_or_user_key(out, user)
+      if @inline_users
+        out[:user] = process_user(user)
+      else
+        key = user[:key]
+        out[:userKey] = key.is_a?(String) ? key : key.to_s
+      end
+    end
+
+    private def process_user(user)
+      filtered = @user_filter.transform_user_props(user)
+      Util.stringify_attrs(filtered, USER_ATTRS_TO_STRINGIFY_FOR_EVENTS)
     end
   end
 end

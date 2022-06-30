@@ -11,9 +11,9 @@ module LaunchDarkly
         flag = boolean_flag_with_rules([rule])
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(true, 1, EvaluationReason::rule_match(0, 'ruleid'))
-        result = basic_evaluator.evaluate(flag, user, factory)
+        result = basic_evaluator.evaluate(flag, user)
         expect(result.detail).to eq(detail)
-        expect(result.events).to eq(nil)
+        expect(result.prereq_evals).to eq(nil)
       end
 
       it "reuses rule match reason instances if possible" do
@@ -22,8 +22,8 @@ module LaunchDarkly
         Model.postprocess_item_after_deserializing!(FEATURES, flag)  # now there's a cached rule match reason
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(true, 1, EvaluationReason::rule_match(0, 'ruleid'))
-        result1 = basic_evaluator.evaluate(flag, user, factory)
-        result2 = basic_evaluator.evaluate(flag, user, factory)
+        result1 = basic_evaluator.evaluate(flag, user)
+        result2 = basic_evaluator.evaluate(flag, user)
         expect(result1.detail.reason.rule_id).to eq 'ruleid'
         expect(result1.detail.reason).to be result2.detail.reason
       end
@@ -34,9 +34,9 @@ module LaunchDarkly
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(nil, nil,
           EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-        result = basic_evaluator.evaluate(flag, user, factory)
+        result = basic_evaluator.evaluate(flag, user)
         expect(result.detail).to eq(detail)
-        expect(result.events).to eq(nil)
+        expect(result.prereq_evals).to eq(nil)
       end
 
       it "returns an error if rule variation is negative" do
@@ -45,9 +45,9 @@ module LaunchDarkly
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(nil, nil,
           EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-        result = basic_evaluator.evaluate(flag, user, factory)
+        result = basic_evaluator.evaluate(flag, user)
         expect(result.detail).to eq(detail)
-        expect(result.events).to eq(nil)
+        expect(result.prereq_evals).to eq(nil)
       end
 
       it "returns an error if rule has neither variation nor rollout" do
@@ -56,9 +56,9 @@ module LaunchDarkly
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(nil, nil,
           EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-        result = basic_evaluator.evaluate(flag, user, factory)
+        result = basic_evaluator.evaluate(flag, user)
         expect(result.detail).to eq(detail)
-        expect(result.events).to eq(nil)
+        expect(result.prereq_evals).to eq(nil)
       end
 
       it "returns an error if rule has a rollout with no variations" do
@@ -68,16 +68,16 @@ module LaunchDarkly
         user = { key: 'userkey' }
         detail = EvaluationDetail.new(nil, nil,
           EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-        result = basic_evaluator.evaluate(flag, user, factory)
+        result = basic_evaluator.evaluate(flag, user)
         expect(result.detail).to eq(detail)
-        expect(result.events).to eq(nil)
+        expect(result.prereq_evals).to eq(nil)
       end
 
       it "coerces user key to a string for evaluation" do
         clause = { attribute: 'key', op: 'in', values: ['999'] }
         flag = boolean_flag_with_clauses([clause])
         user = { key: 999 }
-        result = basic_evaluator.evaluate(flag, user, factory)
+        result = basic_evaluator.evaluate(flag, user)
         expect(result.detail.value).to eq(true)
       end
 
@@ -88,7 +88,7 @@ module LaunchDarkly
           rollout: { salt: '', variations: [ { weight: 100000, variation: 1 } ] } }
         flag = boolean_flag_with_rules([rule])
         user = { key: "userkey", secondary: 999 }
-        result = basic_evaluator.evaluate(flag, user, factory)
+        result = basic_evaluator.evaluate(flag, user)
         expect(result.detail.reason).to eq(EvaluationReason::rule_match(0, 'ruleid'))
       end
 
@@ -98,7 +98,7 @@ module LaunchDarkly
             rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: false } ] } }
           flag = boolean_flag_with_rules([rule])
           user = { key: "userkey", secondary: 999 }
-          result = basic_evaluator.evaluate(flag, user, factory)
+          result = basic_evaluator.evaluate(flag, user)
           expect(result.detail.reason.to_json).to include('"inExperiment":true')
           expect(result.detail.reason.in_experiment).to eq(true)
         end
@@ -108,7 +108,7 @@ module LaunchDarkly
             rollout: { kind: 'rollout', variations: [ { weight: 100000, variation: 1, untracked: false } ] } }
           flag = boolean_flag_with_rules([rule])
           user = { key: "userkey", secondary: 999 }
-          result = basic_evaluator.evaluate(flag, user, factory)
+          result = basic_evaluator.evaluate(flag, user)
           expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
           expect(result.detail.reason.in_experiment).to eq(nil)
         end
@@ -118,7 +118,7 @@ module LaunchDarkly
             rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: true } ] } }
           flag = boolean_flag_with_rules([rule])
           user = { key: "userkey", secondary: 999 }
-          result = basic_evaluator.evaluate(flag, user, factory)
+          result = basic_evaluator.evaluate(flag, user)
           expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
           expect(result.detail.reason.in_experiment).to eq(nil)
         end
