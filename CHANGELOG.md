@@ -2,6 +2,11 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.3.4] - 2022-06-29
+### Changed:
+- Miscellaneous improvements to memory usage in analytics event processing: the SDK now allocates somewhat fewer short-lived objects when computing the analytics data for flag evaluations. This does not affect baseline memory usage by the SDK, but could somewhat reduce the need for garbage collection over an application's lifetime.
+- The decrease in allocation of short-lived objects is much more significant if analytics events are completely disabled. Previously, the SDK created and then discarded event-related objects in this case even though they were not being used.
+
 ## [6.3.3] - 2022-06-15
 ### Fixed:
 - Improved efficiency of SSE parsing to reduce transient memory/CPU usage spikes when receiving flag/segment data for a large LaunchDarkly environment. (Thanks, [sq-square](https://github.com/launchdarkly/ruby-eventsource/pull/32)!)
