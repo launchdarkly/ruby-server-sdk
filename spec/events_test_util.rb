@@ -13,7 +13,3 @@ end
 def make_custom_event(timestamp, user, key, data = nil, metric_value = nil)
   LaunchDarkly::Impl::CustomEvent.new(timestamp, user, key, data, metric_value)
 end
-
-def make_alias_event(timestamp, key, context_kind, previous_key, previous_context_kind)
-  LaunchDarkly::Impl::AliasEvent.new(timestamp, key, context_kind, previous_key, previous_context_kind)
-end

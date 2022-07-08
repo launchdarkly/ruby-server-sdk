@@ -284,23 +284,6 @@ module LaunchDarkly
     end
 
     #
-    # Associates a new and old user object for analytics purposes via an alias event.
-    #
-    # @param current_context [Hash] The current version of a user.
-    # @param previous_context [Hash] The previous version of a user.
-    # @return [void]
-    #
-    def alias(current_context, previous_context)
-      if !current_context || current_context[:key].nil? || !previous_context || previous_context[:key].nil?
-        @config.logger.warn("Alias called with nil user or nil user key!")
-        return
-      end
-      sanitize_user(current_context)
-      sanitize_user(previous_context)
-      @event_processor.record_alias_event(current_context, previous_context)
-    end
-
-    #
     # Returns all feature flag values for the given user.
     #
     # @deprecated Please use {#all_flags_state} instead. Current versions of the

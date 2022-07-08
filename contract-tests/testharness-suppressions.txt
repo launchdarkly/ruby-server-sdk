@@ -1,0 +1,4 @@
+events/alias events/from non-anonymous to non-anonymous
+events/alias events/from non-anonymous to anonymous
+events/alias events/from anonymous to non-anonymous
+events/alias events/from anonymous to anonymous

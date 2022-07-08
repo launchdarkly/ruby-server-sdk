@@ -233,36 +233,5 @@ module LaunchDarkly
         end
       end
     end
-
-    context "alias" do
-      it "queues up an alias event" do
-        anon_user = { key: "user-key", anonymous: true }
-        
-        with_client(test_config) do |client|
-          expect(event_processor(client)).to receive(:record_alias_event).with(basic_user, anon_user)
-          client.alias(basic_user, anon_user)
-        end
-      end
-
-      it "does not send event, and logs warning, if user is nil" do
-        logger = double().as_null_object
-
-        with_client(test_config(logger: logger)) do |client|
-          expect(event_processor(client)).not_to receive(:record_alias_event)
-          expect(logger).to receive(:warn)
-          client.alias(nil, nil)
-        end
-      end
-
-      it "does not send event, and logs warning, if user key is nil" do
-        logger = double().as_null_object
-
-        with_client(test_config(logger: logger)) do |client|
-          expect(event_processor(client)).not_to receive(:record_alias_event)
-          expect(logger).to receive(:warn)
-          client.alias({ key: nil }, { key: nil })
-        end
-      end
-    end
   end
 end

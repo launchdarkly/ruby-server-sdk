@@ -73,10 +73,6 @@ class ClientEntity
     @client.identify(params[:user])
   end
 
-  def alias(params)
-    @client.alias(params[:user], params[:previousUser])
-  end
-
   def flush_events
     @client.flush
   end

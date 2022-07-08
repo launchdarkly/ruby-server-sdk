@@ -57,21 +57,6 @@ module LaunchDarkly
       attr_reader :metric_value
     end
 
-    class AliasEvent < Event
-      def initialize(timestamp, key, context_kind, previous_key, previous_context_kind)
-        super(timestamp, nil)
-        @key = key
-        @context_kind = context_kind
-        @previous_key = previous_key
-        @previous_context_kind = previous_context_kind
-      end
-
-      attr_reader :key
-      attr_reader :context_kind
-      attr_reader :previous_key
-      attr_reader :previous_context_kind
-    end
-
     class IndexEvent < Event
       def initialize(timestamp, user)
         super(timestamp, user)

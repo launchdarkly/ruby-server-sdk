@@ -54,9 +54,6 @@ module LaunchDarkly
     )
     end
 
-    def record_alias_event(user, previous_user)
-    end
-
     def flush
     end
 
@@ -171,16 +168,6 @@ module LaunchDarkly
 
     def record_custom_event(user, key, data = nil, metric_value = nil)
       post_to_inbox(LaunchDarkly::Impl::CustomEvent.new(timestamp, user, key, data, metric_value))
-    end
-
-    def record_alias_event(user, previous_user)
-      post_to_inbox(LaunchDarkly::Impl::AliasEvent.new(
-        timestamp,
-        user.nil? ? nil : user[:key],
-        user_to_context_kind(user),
-        previous_user.nil? ? nil : previous_user[:key],
-        user_to_context_kind(previous_user)
-      ))
     end
 
     def flush
@@ -462,7 +449,6 @@ module LaunchDarkly
     FEATURE_KIND = 'feature'
     IDENTIFY_KIND = 'identify'
     CUSTOM_KIND = 'custom'
-    ALIAS_KIND = 'alias'
     INDEX_KIND = 'index'
     DEBUG_KIND = 'debug'
     SUMMARY_KIND = 'summary'
@@ -521,16 +507,6 @@ module LaunchDarkly
         set_opt_context_kind(out, event.user)
         out
 
-      when LaunchDarkly::Impl::AliasEvent
-        {
-          kind: ALIAS_KIND,
-          creationDate: event.timestamp,
-          key: event.key,
-          contextKind: event.context_kind,
-          previousKey: event.previous_key,
-          previousContextKind: event.previous_context_kind
-        }
-      
       when LaunchDarkly::Impl::IndexEvent
         {
           kind: INDEX_KIND,

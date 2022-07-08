@@ -87,9 +87,6 @@ post '/clients/:id' do |clientId|
   when "identifyEvent"
     client.identify(params[:identifyEvent])
     return 201
-  when "aliasEvent"
-    client.alias(params[:aliasEvent])
-    return 201
   when "flushEvents"
     client.flush_events
     return 201
