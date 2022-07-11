@@ -14,6 +14,11 @@ class ClientEntity
       streaming = config[:streaming]
       opts[:stream_uri] = streaming[:baseUri] if !streaming[:baseUri].nil?
       opts[:initial_reconnect_delay] = streaming[:initialRetryDelayMs] / 1_000.0 if !streaming[:initialRetryDelayMs].nil?
+    elsif config[:polling]
+      polling = config[:polling]
+      opts[:stream] = false
+      opts[:base_uri] = polling[:baseUri] if !polling[:baseUri].nil?
+      opts[:poll_interval] = polling[:pollIntervalMs] / 1_000.0 if !polling[:pollIntervalMs].nil?
     end
 
     if config[:events]
