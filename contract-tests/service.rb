@@ -29,7 +29,7 @@ get '/' do
       'all-flags-with-reasons',
       'all-flags-client-side-only',
       'all-flags-details-only-for-tracked-flags',
-    ]
+    ],
   }.to_json
 end
 

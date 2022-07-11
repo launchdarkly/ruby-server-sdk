@@ -64,8 +64,8 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
         key: "userkey",
         custom: {
           stringAttr: "33333",
-          intAttr: 33333
-        }
+          intAttr: 33333,
+        },
       }
       stringResult = subject.bucket_user(user, "hashKey", "stringAttr", "saltyA", nil)
       intResult = subject.bucket_user(user, "hashKey", "intAttr", "saltyA", nil)
@@ -78,8 +78,8 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
       user = {
         key: "userkey",
         custom: {
-          floatAttr: 33.5
-        }
+          floatAttr: 33.5,
+        },
       }
       result = subject.bucket_user(user, "hashKey", "floatAttr", "saltyA", nil)
       expect(result).to eq(0.0)
@@ -90,8 +90,8 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
       user = {
         key: "userkey",
         custom: {
-          boolAttr: true
-        }
+          boolAttr: true,
+        },
       }
       result = subject.bucket_user(user, "hashKey", "boolAttr", "saltyA", nil)
       expect(result).to eq(0.0)
@@ -119,9 +119,9 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
             variations: [
               { variation: bad_variation_a, weight: bucket_value }, # end of bucket range is not inclusive, so it will *not* match the target value
               { variation: matched_variation, weight: 1 }, # size of this bucket is 1, so it only matches that specific value
-              { variation: bad_variation_b, weight: 100000 - (bucket_value + 1) }
-            ]
-          }
+              { variation: bad_variation_b, weight: 100000 - (bucket_value + 1) },
+            ],
+          },
         }
         flag = { key: flag_key, salt: salt }
 
@@ -141,9 +141,9 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
         rule = {
           rollout: {
             variations: [
-              { variation: 0, weight: bucket_value }
-            ]
-          }
+              { variation: 0, weight: bucket_value },
+            ],
+          },
         }
         flag = { key: flag_key, salt: salt }
 
@@ -163,7 +163,7 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
       salt = "salt"
       seed = 61
 
-    
+
       rule = {
         rollout: {
           seed: seed,
@@ -171,9 +171,9 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
           variations: [
             { variation: 0, weight: 10000, untracked: false },
             { variation: 2, weight: 20000, untracked: false },
-            { variation: 0, weight: 70000 , untracked: true }
-          ]
-        }
+            { variation: 0, weight: 70000 , untracked: true },
+          ],
+        },
       }
       flag = { key: flag_key, salt: salt }
 
@@ -202,9 +202,9 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
           seed: seed,
           kind: 'experiment',
           variations: [
-            { variation: 0, weight: bucket_value, untracked: false }
-          ]
-        }
+            { variation: 0, weight: bucket_value, untracked: false },
+          ],
+        },
       }
       flag = { key: flag_key, salt: salt }
 

@@ -5,7 +5,7 @@ class FlagBuilder
       key: key,
       version: 1,
       variations: [ false ],
-      rules: []
+      rules: [],
     }
   end
 
@@ -27,7 +27,7 @@ class FlagBuilder
     @flag[:on] = value
     self
   end
-  
+
   def rule(r)
     @flag[:rules].append(r.build)
     self
@@ -71,7 +71,7 @@ class RuleBuilder
     @rule = {
       id: "",
       variation: 0,
-      clauses: []
+      clauses: [],
     }
   end
 
@@ -106,14 +106,14 @@ class SegmentBuilder
       key: key,
       version: 1,
     included: [],
-    excluded: []
+    excluded: [],
     }
   end
 
   def build
     @segment.clone
   end
-  
+
   def included(*keys)
     @segment[:included] = keys
     self
@@ -140,7 +140,7 @@ class Clauses
     {
       "attribute": "",
       "op": "segmentMatch",
-      "values": [ segment.is_a?(Hash) ? segment[:key] : segment ]
+      "values": [ segment.is_a?(Hash) ? segment[:key] : segment ],
     }
   end
 
@@ -148,7 +148,7 @@ class Clauses
     {
       "attribute": "key",
       "op": "in",
-      "values": [ user[:key] ]
+      "values": [ user[:key] ],
     }
   end
 end

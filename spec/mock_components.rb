@@ -20,7 +20,7 @@ def base_config
   {
     data_source: null_data,
     send_events: false,
-    logger: null_logger
+    logger: null_logger,
   }
 end
 

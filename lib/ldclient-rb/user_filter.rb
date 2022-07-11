@@ -11,7 +11,7 @@ module LaunchDarkly
 
     def transform_user_props(user_props)
       return nil if user_props.nil?
-      
+
       user_private_attrs = Set.new((user_props[:privateAttributeNames] || []).map(&:to_sym))
 
       filtered_user_props, removed = filter_values(user_props, user_private_attrs, ALLOWED_TOP_LEVEL_KEYS, IGNORED_TOP_LEVEL_KEYS)

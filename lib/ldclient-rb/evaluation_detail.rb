@@ -70,20 +70,20 @@ module LaunchDarkly
   class EvaluationReason
     # Value for {#kind} indicating that the flag was off and therefore returned its configured off value.
     OFF = :OFF
-    
+
     # Value for {#kind} indicating that the flag was on but the user did not match any targets or rules.
     FALLTHROUGH = :FALLTHROUGH
-    
+
     # Value for {#kind} indicating that the user key was specifically targeted for this flag.
     TARGET_MATCH = :TARGET_MATCH
-    
+
     # Value for {#kind} indicating that the user matched one of the flag's rules.
     RULE_MATCH = :RULE_MATCH
-    
+
     # Value for {#kind} indicating that the flag was considered off because it had at least one
     # prerequisite flag that either was off or did not return the desired variation.
     PREREQUISITE_FAILED = :PREREQUISITE_FAILED
-    
+
     # Value for {#kind} indicating that the flag could not be evaluated, e.g. because it does not exist
     # or due to an unexpected error. In this case the result value will be the application default value
     # that the caller passed to the client. Check {#error_kind} for more details on the problem.
@@ -178,7 +178,7 @@ module LaunchDarkly
     def self.rule_match(rule_index, rule_id, in_experiment=false)
       raise ArgumentError.new("rule_index must be a number") if !(rule_index.is_a? Numeric)
       raise ArgumentError.new("rule_id must be a string") if !rule_id.nil? && !(rule_id.is_a? String) # in test data, ID could be nil
-      
+
       if in_experiment
         er = new(:RULE_MATCH, rule_index, rule_id, nil, nil, true)
       else
@@ -348,7 +348,7 @@ module LaunchDarkly
       ERROR_FLAG_NOT_FOUND => make_error(ERROR_FLAG_NOT_FOUND),
       ERROR_MALFORMED_FLAG => make_error(ERROR_MALFORMED_FLAG),
       ERROR_USER_NOT_SPECIFIED => make_error(ERROR_USER_NOT_SPECIFIED),
-      ERROR_EXCEPTION => make_error(ERROR_EXCEPTION)
+      ERROR_EXCEPTION => make_error(ERROR_EXCEPTION),
     }
   end
 

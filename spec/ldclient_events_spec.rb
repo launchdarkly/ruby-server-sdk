@@ -16,7 +16,7 @@ module LaunchDarkly
         expect(event_processor(client)).to be_a(LaunchDarkly::NullEventProcessor)
       end
     end
-  
+
     context "evaluation events - variation" do
       it "unknown flag" do
         with_client(test_config) do |client|
@@ -30,7 +30,7 @@ module LaunchDarkly
       it "known flag" do
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
-        
+
         with_client(test_config(data_source: td)) do |client|
           expect(event_processor(client)).to receive(:record_eval_event).with(
             basic_user, 'flagkey', 1, 0, 'value', nil, 'default', false, nil, nil
@@ -44,7 +44,7 @@ module LaunchDarkly
         td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
 
         logger = double().as_null_object
-        
+
         with_client(test_config(data_source: td, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_eval_event)
           expect(logger).to receive(:error)
@@ -69,10 +69,10 @@ module LaunchDarkly
       it "sets trackEvents and reason if trackEvents is set for matched rule" do
         td = Integrations::TestData.data_source
         td.use_preconfigured_flag(
-          FlagBuilder.new("flagkey").version(100).on(true).variations("value").
-            rule(RuleBuilder.new.variation(0).id("id").track_events(true).
-              clause(Clauses.match_user(basic_user))).
-            build
+          FlagBuilder.new("flagkey").version(100).on(true).variations("value")
+            .rule(RuleBuilder.new.variation(0).id("id").track_events(true)
+              .clause(Clauses.match_user(basic_user)))
+            .build
         )
 
         with_client(test_config(data_source: td)) do |client|
@@ -87,8 +87,8 @@ module LaunchDarkly
       it "sets trackEvents and reason if trackEventsFallthrough is set and we fell through" do
         td = Integrations::TestData.data_source
         td.use_preconfigured_flag(
-          FlagBuilder.new("flagkey").version(100).on(true).variations("value").fallthrough_variation(0).
-            track_events_fallthrough(true).build
+          FlagBuilder.new("flagkey").version(100).on(true).variations("value").fallthrough_variation(0)
+            .track_events_fallthrough(true).build
         )
 
         with_client(test_config(data_source: td)) do |client|
@@ -153,7 +153,7 @@ module LaunchDarkly
       end
     end
 
-    context "identify" do 
+    context "identify" do
       it "queues up an identify event" do
         with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:record_identify_event).with(basic_user)
@@ -173,7 +173,7 @@ module LaunchDarkly
 
       it "does not send event, and logs warning, if user key is blank" do
         logger = double().as_null_object
-        
+
         with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_identify_event)
           expect(logger).to receive(:warn)
@@ -182,7 +182,7 @@ module LaunchDarkly
       end
     end
 
-    context "track" do 
+    context "track" do
       it "queues up an custom event" do
         with_client(test_config) do |client|
           expect(event_processor(client)).to receive(:record_custom_event).with(

@@ -14,11 +14,11 @@ module LaunchDarkly
           included: [ user[:key] ],  # included should be ignored for a big segment
           version: 1,
           unbounded: true,
-          generation: 1
+          generation: 1,
         }
-        e = EvaluatorBuilder.new(logger).
-          with_segment(segment).
-          build
+        e = EvaluatorBuilder.new(logger)
+          .with_segment(segment)
+          .build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
         result = e.evaluate(flag, user)
         expect(result.detail.value).to be false
@@ -30,11 +30,11 @@ module LaunchDarkly
           key: 'test',
           included: [ user[:key] ],  # included should be ignored for a big segment
           version: 1,
-          unbounded: true
+          unbounded: true,
         }
-        e = EvaluatorBuilder.new(logger).
-          with_segment(segment).
-          build
+        e = EvaluatorBuilder.new(logger)
+          .with_segment(segment)
+          .build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
         result = e.evaluate(flag, user)
         expect(result.detail.value).to be false
@@ -46,12 +46,12 @@ module LaunchDarkly
           key: 'test',
           version: 1,
           unbounded: true,
-          generation: 2
+          generation: 2,
         }
-        e = EvaluatorBuilder.new(logger).
-          with_segment(segment).
-          with_big_segment_for_user(user, segment, true).
-          build
+        e = EvaluatorBuilder.new(logger)
+          .with_segment(segment)
+          .with_big_segment_for_user(user, segment, true)
+          .build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
         result = e.evaluate(flag, user)
         expect(result.detail.value).to be true
@@ -65,13 +65,13 @@ module LaunchDarkly
           unbounded: true,
           generation: 2,
           rules: [
-            { clauses: [ make_user_matching_clause(user) ] }
-          ]
+            { clauses: [ make_user_matching_clause(user) ] },
+          ],
         }
-        e = EvaluatorBuilder.new(logger).
-          with_segment(segment).
-          with_big_segment_for_user(user, segment, nil).
-          build
+        e = EvaluatorBuilder.new(logger)
+          .with_segment(segment)
+          .with_big_segment_for_user(user, segment, nil)
+          .build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
         result = e.evaluate(flag, user)
         expect(result.detail.value).to be true
@@ -85,13 +85,13 @@ module LaunchDarkly
           unbounded: true,
           generation: 2,
           rules: [
-            { clauses: [ make_user_matching_clause(user) ] }
-          ]
+            { clauses: [ make_user_matching_clause(user) ] },
+          ],
         };
-        e = EvaluatorBuilder.new(logger).
-          with_segment(segment).
-          with_big_segment_for_user(user, segment, false).
-          build
+        e = EvaluatorBuilder.new(logger)
+          .with_segment(segment)
+          .with_big_segment_for_user(user, segment, false)
+          .build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
         result = e.evaluate(flag, user)
         expect(result.detail.value).to be false
@@ -103,13 +103,13 @@ module LaunchDarkly
           key: 'test',
           version: 1,
           unbounded: true,
-          generation: 2
+          generation: 2,
         }
-        e = EvaluatorBuilder.new(logger).
-          with_segment(segment).
-          with_big_segment_for_user(user, segment, true).
-          with_big_segments_status(BigSegmentsStatus::STALE).
-          build
+        e = EvaluatorBuilder.new(logger)
+          .with_segment(segment)
+          .with_big_segment_for_user(user, segment, true)
+          .with_big_segments_status(BigSegmentsStatus::STALE)
+          .build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
         result = e.evaluate(flag, user)
         expect(result.detail.value).to be true
@@ -121,13 +121,13 @@ module LaunchDarkly
           key: 'segmentkey1',
           version: 1,
           unbounded: true,
-          generation: 2
+          generation: 2,
         }
         segment2 = {
           key: 'segmentkey2',
           version: 1,
           unbounded: true,
-          generation: 3
+          generation: 3,
         }
         flag = {
           key: 'key',
@@ -136,19 +136,19 @@ module LaunchDarkly
           variations: [ false, true ],
           rules: [
             { variation: 1, clauses: [ make_segment_match_clause(segment1) ]},
-            { variation: 1, clauses: [ make_segment_match_clause(segment2) ]}
-          ]
+            { variation: 1, clauses: [ make_segment_match_clause(segment2) ]},
+          ],
         }
-    
+
         queries = []
-        e = EvaluatorBuilder.new(logger).
-          with_segment(segment1).with_segment(segment2).
-          with_big_segment_for_user(user, segment2, true).
-          record_big_segments_queries(queries).
-          build
+        e = EvaluatorBuilder.new(logger)
+          .with_segment(segment1).with_segment(segment2)
+          .with_big_segment_for_user(user, segment2, true)
+          .record_big_segments_queries(queries)
+          .build
         # The membership deliberately does not include segment1, because we want the first rule to be
         # a non-match so that it will continue on and check segment2 as well.
-    
+
         result = e.evaluate(flag, user)
         expect(result.detail.value).to be true
         expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)

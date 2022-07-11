@@ -31,7 +31,7 @@ shared_examples "big_segment_store" do |store_tester_class|
 
   prefix_test_groups = [
     ["with default prefix", {}],
-    ["with specified prefix", { prefix: "testprefix" }]
+    ["with specified prefix", { prefix: "testprefix" }],
   ]
   prefix_test_groups.each do |subgroup_description, prefix_options|
     context(subgroup_description) do
@@ -52,56 +52,56 @@ shared_examples "big_segment_store" do |store_tester_class|
           expected_timestamp = 1234567890
           with_empty_store do |store|
             store_tester.set_big_segments_metadata(LaunchDarkly::Interfaces::BigSegmentStoreMetadata.new(expected_timestamp))
-    
+
             actual = store.get_metadata
-    
+
             expect(actual).not_to be nil
             expect(actual.last_up_to_date).to eq(expected_timestamp)
           end
         end
-    
+
         it "no value" do
           with_empty_store do |store|
             actual = store.get_metadata
-    
+
             expect(actual).not_to be nil
             expect(actual.last_up_to_date).to be nil
           end
         end
       end
-    
+
       context "get_membership" do
         it "not found" do
           with_empty_store do |store|
             membership = store.get_membership(fake_user_hash)
             membership = {} if membership.nil?
-    
+
             expect(membership).to eq({})
           end
         end
-    
+
         it "includes only" do
           with_empty_store do |store|
             store_tester.set_big_segments(fake_user_hash, ["key1", "key2"], [])
-    
+
             membership = store.get_membership(fake_user_hash)
             expect(membership).to eq({ "key1" => true, "key2" => true })
           end
         end
-    
+
         it "excludes only" do
           with_empty_store do |store|
             store_tester.set_big_segments(fake_user_hash, [], ["key1", "key2"])
-    
+
             membership = store.get_membership(fake_user_hash)
             expect(membership).to eq({ "key1" => false, "key2" => false })
           end
         end
-    
+
         it "includes and excludes" do
           with_empty_store do |store|
             store_tester.set_big_segments(fake_user_hash, ["key1", "key2"], ["key2", "key3"])
-    
+
             membership = store.get_membership(fake_user_hash)
             expect(membership).to eq({ "key1" => true, "key2" => true, "key3" => false }) # include of key2 overrides exclude
           end

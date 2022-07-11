@@ -30,13 +30,13 @@ module LaunchDarkly
           proxy_address: proxy.host,
           proxy_port: proxy.port,
           proxy_username: proxy.user,
-          proxy_password: proxy.password
+          proxy_password: proxy.password,
         }
       end
       return HTTP::Client.new(http_client_options)
         .timeout({
           read: config.read_timeout,
-          connect: config.connect_timeout
+          connect: config.connect_timeout,
         })
         .persistent(uri_s)
     end

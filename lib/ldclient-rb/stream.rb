@@ -17,7 +17,7 @@ module LaunchDarkly
   # @private
   KEY_PATHS = {
     FEATURES => "/flags/",
-    SEGMENTS => "/segments/"
+    SEGMENTS => "/segments/",
   }
 
   # @private
@@ -41,14 +41,14 @@ module LaunchDarkly
       return @ready unless @started.make_true
 
       @config.logger.info { "[LDClient] Initializing stream connection" }
-      
+
       headers = Impl::Util.default_http_headers(@sdk_key, @config)
       opts = {
         headers: headers,
         read_timeout: READ_TIMEOUT_SECONDS,
         logger: @config.logger,
         socket_factory: @config.socket_factory,
-        reconnect_time: @config.initial_reconnect_delay
+        reconnect_time: @config.initial_reconnect_delay,
       }
       log_connection_started
       @es = SSE::Client.new(@config.stream_uri + "/all", **opts) do |conn|
@@ -67,7 +67,7 @@ module LaunchDarkly
           end
         }
       end
-      
+
       @ready
     end
 

@@ -353,7 +353,7 @@ module LaunchDarkly
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
         end
 
-        requires_experiment_data = is_experiment(f, detail.reason)
+        requires_experiment_data = experiment?(f, detail.reason)
         flag_state = {
           key: f[:key],
           value: detail.value,
@@ -433,7 +433,7 @@ module LaunchDarkly
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
           detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
           record_unknown_flag_eval(key, user, default, detail.reason, with_reasons)
-          return  detail
+          return detail
         end
       end
 
@@ -468,7 +468,7 @@ module LaunchDarkly
     end
 
     private def record_flag_eval(flag, user, detail, default, with_reasons)
-      add_experiment_data = is_experiment(flag, detail.reason)
+      add_experiment_data = experiment?(flag, detail.reason)
       @event_processor.record_eval_event(
         user,
         flag[:key],
@@ -482,9 +482,9 @@ module LaunchDarkly
         nil
       )
     end
-    
+
     private def record_prereq_flag_eval(prereq_flag, prereq_of_flag, user, detail, with_reasons)
-      add_experiment_data = is_experiment(prereq_flag, detail.reason)
+      add_experiment_data = experiment?(prereq_flag, detail.reason)
       @event_processor.record_eval_event(
         user,
         prereq_flag[:key],
@@ -498,7 +498,7 @@ module LaunchDarkly
         prereq_of_flag[:key]
       )
     end
-    
+
     private def record_flag_eval_error(flag, user, default, reason, with_reasons)
       @event_processor.record_eval_event(user, flag[:key], flag[:version], nil, default, with_reasons ? reason : nil, default,
         flag[:trackEvents], flag[:debugEventsUntilDate], nil)
@@ -509,7 +509,7 @@ module LaunchDarkly
         false, nil, nil)
     end
 
-    private def is_experiment(flag, reason)
+    private def experiment?(flag, reason)
       return false if !reason
 
       if reason.in_experiment

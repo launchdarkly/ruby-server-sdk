@@ -9,7 +9,7 @@ module LaunchDarkly
       def self.create_diagnostic_id(sdk_key)
         {
           diagnosticId: SecureRandom.uuid,
-          sdkKeySuffix: sdk_key[-6..-1] || sdk_key
+          sdkKeySuffix: sdk_key[-6..-1] || sdk_key,
         }
       end
 
@@ -31,10 +31,10 @@ module LaunchDarkly
           id: @id,
           configuration: DiagnosticAccumulator.make_config_data(config),
           sdk: DiagnosticAccumulator.make_sdk_data(config),
-          platform: DiagnosticAccumulator.make_platform_data
+          platform: DiagnosticAccumulator.make_platform_data,
         }
       end
-      
+
       def record_stream_init(timestamp, failed, duration_millis)
         @lock.synchronize do
           @stream_inits.push({ timestamp: timestamp, failed: failed, durationMillis: duration_millis })
@@ -57,7 +57,7 @@ module LaunchDarkly
           droppedEvents: dropped_events,
           deduplicatedUsers: deduplicated_users,
           eventsInLastBatch: events_in_last_batch,
-          streamInits: previous_stream_inits
+          streamInits: previous_stream_inits,
         }
         @data_since_date = current_time
         event
@@ -88,7 +88,7 @@ module LaunchDarkly
       def self.make_sdk_data(config)
         ret = {
           name: 'ruby-server-sdk',
-          version: LaunchDarkly::VERSION
+          version: LaunchDarkly::VERSION,
         }
         if config.wrapper_name
           ret[:wrapperName] = config.wrapper_name
@@ -105,7 +105,7 @@ module LaunchDarkly
           osName: self.normalize_os_name(conf['host_os']),
           osVersion: 'unknown', # there seems to be no portable way to detect this in Ruby
           rubyVersion: conf['ruby_version'],
-          rubyImplementation: Object.constants.include?(:RUBY_ENGINE) ? RUBY_ENGINE : 'unknown'
+          rubyImplementation: Object.constants.include?(:RUBY_ENGINE) ? RUBY_ENGINE : 'unknown',
         }
       end
 

@@ -78,7 +78,7 @@ module LaunchDarkly
     # same flag key or segment key more than once, either in a single file or across multiple files.
     #
     # If the data source encounters any error in any file-- malformed content, a missing file, or a
-    # duplicate key-- it will not load flags from any of the files.      
+    # duplicate key-- it will not load flags from any of the files.
     #
     module FileData
       #

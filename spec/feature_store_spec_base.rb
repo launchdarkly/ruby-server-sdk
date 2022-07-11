@@ -41,7 +41,7 @@ $thing1 = {
   key: $key1,
   name: "Thing 1",
   version: 11,
-  deleted: false
+  deleted: false,
 }
 $unused_key = "no"
 
@@ -111,7 +111,7 @@ shared_examples "any_feature_store" do |store_tester|
       key: key2,
       name: "Thing 2",
       version: 22,
-      deleted: false
+      deleted: false,
     }
     with_inited_store([ $thing1, thing2 ]) do |store|
       expect(store.all($things_kind)).to eq ({ $key1.to_sym => $thing1, key2.to_sym => thing2 })
@@ -124,7 +124,7 @@ shared_examples "any_feature_store" do |store_tester|
       key: key2,
       name: "Thing 2",
       version: 22,
-      deleted: true
+      deleted: true,
     }
     with_inited_store([ $thing1, thing2 ]) do |store|
       expect(store.all($things_kind)).to eq ({ $key1.to_sym => $thing1 })
@@ -188,7 +188,7 @@ shared_examples "any_feature_store" do |store_tester|
       key: "my-fancy-flag",
       name: "Tęst Feåtūre Flæg😺",
       version: 1,
-      deleted: false
+      deleted: false,
     }
     with_inited_store([]) do |store|
       store.upsert(LaunchDarkly::FEATURES, flag)
@@ -208,11 +208,11 @@ shared_examples "persistent_feature_store" do |store_tester_class|
 
   caching_test_groups = [
     ["with caching", { expiration: 60 }],
-    ["without caching", { expiration: 0 }]
+    ["without caching", { expiration: 0 }],
   ]
   prefix_test_groups = [
     ["with default prefix", {}],
-    ["with specified prefix", { prefix: "testprefix" }]
+    ["with specified prefix", { prefix: "testprefix" }],
   ]
 
   caching_test_groups.each do |test_group_description, caching_options|
@@ -226,7 +226,7 @@ shared_examples "persistent_feature_store" do |store_tester_class|
           store_tester = store_tester_class.new(base_options)
 
           before(:each) { store_tester.clear_data }
-  
+
           include_examples "any_feature_store", store_tester
 
           it "can detect if another instance has initialized the store" do

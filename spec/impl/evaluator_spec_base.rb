@@ -79,7 +79,7 @@ module LaunchDarkly
         {
           key: "userkey",
           email: "test@example.com",
-          name: "Bob"
+          name: "Bob",
         }
       end
 
@@ -104,7 +104,7 @@ module LaunchDarkly
           attribute: attr.to_s,
           op: :in,
           values: [ user[attr.to_sym] ],
-          negate: false
+          negate: false,
         }
       end
 
@@ -114,7 +114,7 @@ module LaunchDarkly
           included: [],
           excluded: [],
           salt: 'abcdef',
-          version: 1
+          version: 1,
         }
       end
 
@@ -122,7 +122,7 @@ module LaunchDarkly
         {
           op: :segmentMatch,
           values: [ segment[:key] ],
-          negate: false
+          negate: false,
         }
       end
     end

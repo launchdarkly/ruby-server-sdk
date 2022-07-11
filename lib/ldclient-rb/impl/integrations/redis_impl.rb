@@ -135,6 +135,7 @@ module LaunchDarkly
                   else
                     final_item = old_item
                     action = new_item[:deleted] ? "delete" : "update"
+                    # rubocop:disable Layout/LineLength
                     @logger.warn { "RedisFeatureStore: attempted to #{action} #{key} version: #{old_item[:version]} in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:version]}" }
                   end
                   redis.unwatch

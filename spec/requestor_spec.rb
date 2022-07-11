@@ -23,7 +23,7 @@ describe LaunchDarkly::Requestor do
           expect(server.requests[0].unparsed_uri).to eq "/sdk/latest-all"
           expect(server.requests[0].header).to include({
             "authorization" => [ $sdk_key ],
-            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ]
+            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
           })
         end
       end
@@ -79,12 +79,12 @@ describe LaunchDarkly::Requestor do
           requestor.request_all_data()
           expect(server.requests.count).to eq 1
           expect(server.requests[0].header).to include({
-            "x-launchdarkly-wrapper" => [ "MyWrapper/1.0" ]
+            "x-launchdarkly-wrapper" => [ "MyWrapper/1.0" ],
           })
         end
       end
     end
-    
+
     it "can reuse cached data" do
       etag = "xyz"
       expected_data = { flags: { x: { key: "x" } } }

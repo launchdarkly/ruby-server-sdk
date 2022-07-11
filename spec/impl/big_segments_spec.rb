@@ -124,7 +124,7 @@ module LaunchDarkly
           memberships = {
             user_hash_1 => { 'seg1': true },
             user_hash_2 => { 'seg2': true },
-            user_hash_3 => { 'seg3': true }
+            user_hash_3 => { 'seg3': true },
           }
           queried_users = []
           store = double
@@ -142,7 +142,7 @@ module LaunchDarkly
             expect(result1).to eq(BigSegmentMembershipResult.new(memberships[user_hash_1], BigSegmentsStatus::HEALTHY))
             expect(result2).to eq(BigSegmentMembershipResult.new(memberships[user_hash_2], BigSegmentsStatus::HEALTHY))
             expect(result3).to eq(BigSegmentMembershipResult.new(memberships[user_hash_3], BigSegmentsStatus::HEALTHY))
-            
+
             expect(queried_users).to eq([user_hash_1, user_hash_2, user_hash_3])
 
             # Since the capacity is only 2 and user_key_1 was the least recently used, that key should be
@@ -158,7 +158,7 @@ module LaunchDarkly
 
             result1a = m.get_user_membership(user_key_1)
             expect(result1a).to eq(result1)
-            
+
             expect(queried_users).to eq([user_hash_1, user_hash_2, user_hash_3, user_hash_1])
           end
         end

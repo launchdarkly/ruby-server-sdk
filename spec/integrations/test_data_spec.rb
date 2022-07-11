@@ -22,7 +22,7 @@ module LaunchDarkly
           fallthrough: { variation: 0 },
           offVariation: 1,
           on: true,
-          version: 1
+          version: 1,
         })
         client.close
       end
@@ -41,7 +41,7 @@ module LaunchDarkly
           fallthrough: { variation: 0 },
           offVariation: 1,
           on: true,
-          version: 1
+          version: 1,
         })
         expect(config2.feature_store.get(FEATURES, 'flag')).to eql({
           key: 'flag',
@@ -49,7 +49,7 @@ module LaunchDarkly
           fallthrough: { variation: 0 },
           offVariation: 1,
           on: true,
-          version: 1
+          version: 1,
         })
 
         td.update(td.flag('flag').variation_for_all_users(false))
@@ -60,7 +60,7 @@ module LaunchDarkly
           fallthrough: { variation: 1 },
           offVariation: 1,
           on: true,
-          version: 2
+          version: 2,
         })
         expect(config2.feature_store.get(FEATURES, 'flag')).to eql({
           key: 'flag',
@@ -68,7 +68,7 @@ module LaunchDarkly
           fallthrough: { variation: 1 },
           offVariation: 1,
           on: true,
-          version: 2
+          version: 2,
         })
 
         client.close
@@ -231,8 +231,8 @@ module LaunchDarkly
                                         op: 'in',
                                         values: ['fr'],
                                         negate: true,
-                                      }
-                                    ]
+                                      },
+                                    ],
                                   }])
         end
       end

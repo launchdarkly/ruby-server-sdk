@@ -18,7 +18,7 @@ module LaunchDarkly
           key: 'segkey',
           included: [ 'userkey' ],
           version: 1,
-          deleted: false
+          deleted: false,
         }
         e = EvaluatorBuilder.new(logger).with_segment(segment).build
         flag = boolean_flag_with_clauses([make_segment_match_clause(segment)])
@@ -54,7 +54,7 @@ module LaunchDarkly
       it 'matches user by rule when weight is absent' do
         segClause = make_user_matching_clause(user, :email)
         segRule = {
-          clauses: [ segClause ]
+          clauses: [ segClause ],
         }
         segment = make_segment('segkey')
         segment[:rules] = [ segRule ]
@@ -65,7 +65,7 @@ module LaunchDarkly
         segClause = make_user_matching_clause(user, :email)
         segRule = {
           clauses: [ segClause ],
-          weight: nil
+          weight: nil,
         }
         segment = make_segment('segkey')
         segment[:rules] = [ segRule ]
@@ -76,7 +76,7 @@ module LaunchDarkly
         segClause = make_user_matching_clause(user, :email)
         segRule = {
           clauses: [ segClause ],
-          weight: 100000
+          weight: 100000,
         }
         segment = make_segment('segkey')
         segment[:rules] = [ segRule ]
@@ -87,7 +87,7 @@ module LaunchDarkly
         segClause = make_user_matching_clause(user, :email)
         segRule = {
           clauses: [ segClause ],
-          weight: 0
+          weight: 0,
         }
         segment = make_segment('segkey')
         segment[:rules] = [ segRule ]
@@ -98,7 +98,7 @@ module LaunchDarkly
         segClause1 = make_user_matching_clause(user, :email)
         segClause2 = make_user_matching_clause(user, :name)
         segRule = {
-          clauses: [ segClause1, segClause2 ]
+          clauses: [ segClause1, segClause2 ],
         }
         segment = make_segment('segkey')
         segment[:rules] = [ segRule ]
@@ -110,7 +110,7 @@ module LaunchDarkly
         segClause2 = make_user_matching_clause(user, :name)
         segClause2[:values] = [ 'wrong' ]
         segRule = {
-          clauses: [ segClause1, segClause2 ]
+          clauses: [ segClause1, segClause2 ],
         }
         segment = make_segment('segkey')
         segment[:rules] = [ segRule ]

@@ -14,7 +14,7 @@ module LaunchDarkly
             on: false,
             offVariation: 1,
             fallthrough: { variation: 0 },
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new('b', 1, EvaluationReason::off)
@@ -28,7 +28,7 @@ module LaunchDarkly
             key: 'feature',
             on: false,
             fallthrough: { variation: 0 },
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::off)
@@ -43,7 +43,7 @@ module LaunchDarkly
             on: false,
             offVariation: 999,
             fallthrough: { variation: 0 },
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new(nil, nil,
@@ -59,7 +59,7 @@ module LaunchDarkly
             on: false,
             offVariation: -1,
             fallthrough: { variation: 0 },
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new(nil, nil,
@@ -76,7 +76,7 @@ module LaunchDarkly
             prerequisites: [{key: 'badfeature', variation: 1}],
             fallthrough: { variation: 0 },
             offVariation: 1,
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('badfeature'))
@@ -93,7 +93,7 @@ module LaunchDarkly
             prerequisites: [{key: 'badfeature', variation: 1}],
             fallthrough: { variation: 0 },
             offVariation: 1,
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           Model.postprocess_item_after_deserializing!(FEATURES, flag)  # now there's a cached reason
           user = { key: 'x' }
@@ -112,7 +112,7 @@ module LaunchDarkly
             fallthrough: { variation: 0 },
             offVariation: 1,
             variations: ['a', 'b', 'c'],
-            version: 1
+            version: 1,
           }
           flag1 = {
             key: 'feature1',
@@ -120,12 +120,12 @@ module LaunchDarkly
             prerequisites: [{key: 'feature2', variation: 1}], # feature2 doesn't exist
             fallthrough: { variation: 0 },
             variations: ['d', 'e'],
-            version: 2
+            version: 2,
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
           expected_prereqs = [
-            PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new(nil, nil, EvaluationReason::prerequisite_failed('feature2')))
+            PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new(nil, nil, EvaluationReason::prerequisite_failed('feature2'))),
           ]
           e = EvaluatorBuilder.new(logger).with_flag(flag1).with_unknown_flag('feature2').build
           result = e.evaluate(flag, user)
@@ -141,7 +141,7 @@ module LaunchDarkly
             fallthrough: { variation: 0 },
             offVariation: 1,
             variations: ['a', 'b', 'c'],
-            version: 1
+            version: 1,
           }
           flag1 = {
             key: 'feature1',
@@ -150,12 +150,12 @@ module LaunchDarkly
             offVariation: 1,
             fallthrough: { variation: 0 },
             variations: ['d', 'e'],
-            version: 2
+            version: 2,
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
           expected_prereqs = [
-            PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::off))
+            PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::off)),
           ]
           e = EvaluatorBuilder.new(logger).with_flag(flag1).build
           result = e.evaluate(flag, user)
@@ -171,19 +171,19 @@ module LaunchDarkly
             fallthrough: { variation: 0 },
             offVariation: 1,
             variations: ['a', 'b', 'c'],
-            version: 1
+            version: 1,
           }
           flag1 = {
             key: 'feature1',
             on: true,
             fallthrough: { variation: 0 },
             variations: ['d', 'e'],
-            version: 2
+            version: 2,
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
           expected_prereqs = [
-            PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough))
+            PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough)),
           ]
           e = EvaluatorBuilder.new(logger).with_flag(flag1).build
           result = e.evaluate(flag, user)
@@ -199,19 +199,19 @@ module LaunchDarkly
             fallthrough: { variation: 0 },
             offVariation: 1,
             variations: ['a', 'b', 'c'],
-            version: 1
+            version: 1,
           }
           flag1 = {
             key: 'feature1',
             on: true,
             fallthrough: { variation: 1 },
             variations: ['d', 'e'],
-            version: 2
+            version: 2,
           }
           user = { key: 'x' }
           detail = EvaluationDetail.new('a', 0, EvaluationReason::fallthrough)
           expected_prereqs = [
-            PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::fallthrough))
+            PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::fallthrough)),
           ]
           e = EvaluatorBuilder.new(logger).with_flag(flag1).build
           result = e.evaluate(flag, user)
@@ -225,7 +225,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { variation: 999 },
             offVariation: 1,
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'userkey' }
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
@@ -240,7 +240,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { variation: -1 },
             offVariation: 1,
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'userkey' }
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
@@ -255,7 +255,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { },
             offVariation: 1,
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'userkey' }
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
@@ -270,7 +270,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { rollout: { variations: [] } },
             offVariation: 1,
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'userkey' }
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
@@ -284,11 +284,11 @@ module LaunchDarkly
             key: 'feature',
             on: true,
             targets: [
-              { values: [ 'whoever', 'userkey' ], variation: 2 }
+              { values: [ 'whoever', 'userkey' ], variation: 2 },
             ],
             fallthrough: { variation: 0 },
             offVariation: 1,
-            variations: ['a', 'b', 'c']
+            variations: ['a', 'b', 'c'],
           }
           user = { key: 'userkey' }
           detail = EvaluationDetail.new('c', 2, EvaluationReason::target_match)
@@ -302,9 +302,9 @@ module LaunchDarkly
             flag = {
               key: 'feature',
               on: true,
-              fallthrough: { rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: false } ]  } },
+              fallthrough: { rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: false } ] } },
               offVariation: 1,
-              variations: ['a', 'b', 'c']
+              variations: ['a', 'b', 'c'],
             }
             user = { key: 'userkey' }
             result = basic_evaluator.evaluate(flag, user)
@@ -316,9 +316,9 @@ module LaunchDarkly
             flag = {
               key: 'feature',
               on: true,
-              fallthrough: { rollout: { kind: 'rollout', variations: [ { weight: 100000, variation: 1, untracked: false } ]  } },
+              fallthrough: { rollout: { kind: 'rollout', variations: [ { weight: 100000, variation: 1, untracked: false } ] } },
               offVariation: 1,
-              variations: ['a', 'b', 'c']
+              variations: ['a', 'b', 'c'],
             }
             user = { key: 'userkey' }
             result = basic_evaluator.evaluate(flag, user)
@@ -330,9 +330,9 @@ module LaunchDarkly
             flag = {
               key: 'feature',
               on: true,
-              fallthrough: { rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: true } ]  } },
+              fallthrough: { rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: true } ] } },
               offVariation: 1,
-              variations: ['a', 'b', 'c']
+              variations: ['a', 'b', 'c'],
             }
             user = { key: 'userkey' }
             result = basic_evaluator.evaluate(flag, user)

@@ -13,12 +13,12 @@ class DynamoDBStoreTester
   DYNAMODB_OPTS = {
     credentials: Aws::Credentials.new("key", "secret"),
     region: "us-east-1",
-    endpoint: "http://localhost:8000"
+    endpoint: "http://localhost:8000",
   }
   FEATURE_STORE_BASE_OPTS = {
     dynamodb_opts: DYNAMODB_OPTS,
     prefix: 'testprefix',
-    logger: $null_log
+    logger: $null_log,
   }
 
   def initialize(options = {})
@@ -44,16 +44,16 @@ class DynamoDBStoreTester
       table_name: TABLE_NAME,
       key_schema: [
         { attribute_name: "namespace", key_type: "HASH" },
-        { attribute_name: "key", key_type: "RANGE" }
+        { attribute_name: "key", key_type: "RANGE" },
       ],
       attribute_definitions: [
         { attribute_name: "namespace", attribute_type: "S" },
-        { attribute_name: "key", attribute_type: "S" }
+        { attribute_name: "key", attribute_type: "S" },
       ],
       provisioned_throughput: {
         read_capacity_units: 1,
-        write_capacity_units: 1
-      }
+        write_capacity_units: 1,
+      },
     }
     client.create_table(req)
 
@@ -68,8 +68,8 @@ class DynamoDBStoreTester
       projection_expression: '#namespace, #key',
       expression_attribute_names: {
         '#namespace' => 'namespace',
-        '#key' => 'key'
-      }
+        '#key' => 'key',
+      },
     }
     while true
       resp = client.scan(req)
@@ -94,7 +94,7 @@ class DynamoDBStoreTester
   def create_big_segment_store
     LaunchDarkly::Integrations::DynamoDB::new_big_segment_store(TABLE_NAME, @options)
   end
-  
+
   def set_big_segments_metadata(metadata)
     client = self.class.create_test_client
     key = @actual_prefix + $DynamoDBBigSegmentStore::KEY_METADATA
@@ -103,7 +103,7 @@ class DynamoDBStoreTester
       item: {
         "namespace" => key,
         "key" => key,
-        $DynamoDBBigSegmentStore::ATTR_SYNC_TIME => metadata.last_up_to_date
+        $DynamoDBBigSegmentStore::ATTR_SYNC_TIME => metadata.last_up_to_date,
       }
     )
   end
@@ -112,7 +112,7 @@ class DynamoDBStoreTester
     client = self.class.create_test_client
     sets = {
       $DynamoDBBigSegmentStore::ATTR_INCLUDED => Set.new(includes),
-      $DynamoDBBigSegmentStore::ATTR_EXCLUDED => Set.new(excludes)
+      $DynamoDBBigSegmentStore::ATTR_EXCLUDED => Set.new(excludes),
     }
     sets.each do |attr_name, values|
       if !values.empty?
@@ -120,11 +120,11 @@ class DynamoDBStoreTester
           table_name: TABLE_NAME,
           key: {
             "namespace" => @actual_prefix + $DynamoDBBigSegmentStore::KEY_USER_DATA,
-            "key" => user_hash
+            "key" => user_hash,
           },
           update_expression: "ADD #{attr_name} :value",
           expression_attribute_values: {
-            ":value" => values
+            ":value" => values,
           }
         )
       end

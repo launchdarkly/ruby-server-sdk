@@ -1,7 +1,7 @@
 module LaunchDarkly
   module Impl
     module Util
-      def self.is_bool(aObject)
+      def self.bool?(aObject)
          [true,false].include? aObject
       end
 

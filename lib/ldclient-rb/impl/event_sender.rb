@@ -49,7 +49,7 @@ module LaunchDarkly
               end
               response = http_client.request("POST", uri, {
                 headers: headers,
-                body: event_data
+                body: event_data,
               })
             rescue StandardError => exn
               @logger.warn { "[LDClient] Error sending events: #{exn.inspect}." }

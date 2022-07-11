@@ -195,7 +195,7 @@ module LaunchDarkly
         @lock.with_read_lock do
           {
             FEATURES => @current_flags.clone,
-            SEGMENTS => @current_segments.clone
+            SEGMENTS => @current_segments.clone,
           }
         end
       end

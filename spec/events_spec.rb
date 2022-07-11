@@ -27,7 +27,7 @@ describe LaunchDarkly::EventProcessor do
         t = timestamp
         timestamp += 1
         t
-      }
+      },
     })
     begin
       yield ep, sender
@@ -201,7 +201,7 @@ describe LaunchDarkly::EventProcessor do
 
       # Send and flush an event we don't care about, just to set the last server time
       sender.result = LaunchDarkly::Impl::EventSenderResult.new(true, false, server_time)
-      
+
       ep.record_identify_event(user)
       flush_and_get_events(ep, sender)
 
@@ -280,16 +280,16 @@ describe LaunchDarkly::EventProcessor do
             flagkey1: {
               default: "default1",
               counters: [
-                { version: 11, variation: 1, value: "value1", count: 1 }
-              ]
+                { version: 11, variation: 1, value: "value1", count: 1 },
+              ],
             },
             flagkey2: {
               default: "default2",
               counters: [
-                { version: 22, variation: 2, value: "value2", count: 1 }
-              ]
-            }
-          }
+                { version: 22, variation: 2, value: "value2", count: 1 },
+              ],
+            },
+          },
         })
       )
     end
@@ -356,7 +356,7 @@ describe LaunchDarkly::EventProcessor do
   it "does a final flush when shutting down" do
     with_processor_and_sender(default_config) do |ep, sender|
       ep.record_identify_event(user)
-      
+
       ep.stop
 
       output = sender.analytics_payloads.pop
@@ -406,7 +406,7 @@ describe LaunchDarkly::EventProcessor do
         event = sender.diagnostic_payloads.pop
         expect(event).to include({
           kind: 'diagnostic-init',
-          id: default_id
+          id: default_id,
         })
       end
     end
@@ -421,7 +421,7 @@ describe LaunchDarkly::EventProcessor do
           droppedEvents: 0,
           deduplicatedUsers: 0,
           eventsInLastBatch: 0,
-          streamInits: []
+          streamInits: [],
         })
       end
     end
@@ -440,7 +440,7 @@ describe LaunchDarkly::EventProcessor do
         expect(periodic_event).to include({
           kind: 'diagnostic',
           droppedEvents: 1,
-          eventsInLastBatch: 2
+          eventsInLastBatch: 2,
         })
       end
     end
@@ -456,7 +456,7 @@ describe LaunchDarkly::EventProcessor do
         periodic_event = sender.diagnostic_payloads.pop
         expect(periodic_event).to include({
           kind: 'diagnostic',
-          deduplicatedUsers: 1
+          deduplicatedUsers: 1,
         })
       end
     end
@@ -466,7 +466,7 @@ describe LaunchDarkly::EventProcessor do
     {
       kind: "index",
       creationDate: timestamp,
-      user: user
+      user: user,
     }
   end
 
@@ -475,7 +475,7 @@ describe LaunchDarkly::EventProcessor do
       kind: "identify",
       creationDate: timestamp,
       key: user[:key],
-      user: user
+      user: user,
     }
   end
 
@@ -486,7 +486,7 @@ describe LaunchDarkly::EventProcessor do
       key: flag[:key],
       variation: variation,
       version: flag[:version],
-      value: value
+      value: value,
     }
     if inline_user
       out[:user] = user
@@ -504,7 +504,7 @@ describe LaunchDarkly::EventProcessor do
       variation: variation,
       version: flag[:version],
       value: value,
-      user: user
+      user: user,
     }
     out
   end
@@ -513,7 +513,7 @@ describe LaunchDarkly::EventProcessor do
     out = {
       kind: "custom",
       creationDate: timestamp,
-      key: key
+      key: key,
     }
     out[:data] = data if !data.nil?
     if inline_user

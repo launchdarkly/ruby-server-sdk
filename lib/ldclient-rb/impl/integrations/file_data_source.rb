@@ -48,7 +48,7 @@ module LaunchDarkly
 
         def start
           ready = Concurrent::Event.new
-          
+
           # We will return immediately regardless of whether the file load succeeded or failed -
           # the difference can be detected by checking "initialized?"
           ready.set
@@ -63,7 +63,7 @@ module LaunchDarkly
 
           ready
         end
-        
+
         def stop
           @listener.stop if !@listener.nil?
         end
@@ -73,7 +73,7 @@ module LaunchDarkly
         def load_all
           all_data = {
             FEATURES => {},
-            SEGMENTS => {}
+            SEGMENTS => {},
           }
           @paths.each do |path|
             begin
@@ -134,7 +134,7 @@ module LaunchDarkly
             key: key,
             on: true,
             fallthrough: { variation: 0 },
-            variations: [ value ]
+            variations: [ value ],
           }
         end
 

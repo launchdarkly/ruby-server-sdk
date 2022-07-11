@@ -124,7 +124,7 @@ module LaunchDarkly
     def use_ldd?
       @use_ldd
     end
-    
+
     #
     # Whether the client should be initialized in offline mode. In offline mode, default values are
     # returned for all flags and no remote network requests are made.
@@ -228,7 +228,7 @@ module LaunchDarkly
     # @see #all_attributes_private
     #
     attr_reader :private_attribute_names
-    
+
     #
     # Whether to send events back to LaunchDarkly. This differs from {#offline?} in that it affects
     # only the sending of client-side events, not streaming or polling for events from the server.
@@ -286,7 +286,7 @@ module LaunchDarkly
 
     # @deprecated This is replaced by {#data_source}.
     attr_reader :update_processor
-    
+
     # @deprecated This is replaced by {#data_source}.
     attr_reader :update_processor_factory
 
@@ -426,8 +426,8 @@ module LaunchDarkly
     #
     def self.default_logger
       if defined?(Rails) && Rails.respond_to?(:logger)
-        Rails.logger 
-      else 
+        Rails.logger
+      else
         log = ::Logger.new($stdout)
         log.level = ::Logger::WARN
         log

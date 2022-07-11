@@ -40,16 +40,16 @@ describe LaunchDarkly::Impl::EvaluatorOperators do
       [ :contains,   "y",   "xyz", false ],
 
       # mixed strings and numbers
-      [ :in,                 "99", 99, false ],
+      [ :in,                  "99", 99, false ],
       [ :in,                  99, "99", false ],
-      [ :contains,           "99", 99, false ],
-      [ :startsWith,         "99", 99, false ],
-      [ :endsWith,           "99", 99, false ],
-      [ :lessThanOrEqual,    "99", 99, false ],
-      [ :lessThanOrEqual,    99, "99", false ],
-      [ :greaterThanOrEqual, "99", 99, false ],
-      [ :greaterThanOrEqual, 99, "99", false ],
-      
+      [ :contains,            "99", 99, false ],
+      [ :startsWith,          "99", 99, false ],
+      [ :endsWith,            "99", 99, false ],
+      [ :lessThanOrEqual,     "99", 99, false ],
+      [ :lessThanOrEqual,     99, "99", false ],
+      [ :greaterThanOrEqual,  "99", 99, false ],
+      [ :greaterThanOrEqual,  99, "99", false ],
+
       # regex
       [ :matches, "hello world", "hello.*rld",     true ],
       [ :matches, "hello world", "hello.*orl",     true ],
@@ -90,7 +90,7 @@ describe LaunchDarkly::Impl::EvaluatorOperators do
       [ :semVerGreaterThan, "2.0",   "2.0.1", false ],
       [ :semVerGreaterThan, "2.0.0-rc.1", "2.0.0-rc.0", true ],
       [ :semVerLessThan,    "2.0.1", "xbad%ver", false ],
-      [ :semVerGreaterThan, "2.0.1", "xbad%ver", false ]
+      [ :semVerGreaterThan, "2.0.1", "xbad%ver", false ],
     ]
 
     operatorTests.each do |params|

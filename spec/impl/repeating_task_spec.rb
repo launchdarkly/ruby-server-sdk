@@ -10,7 +10,7 @@ module LaunchDarkly
       def null_logger
         double().as_null_object
       end
-      
+
       it "does not start when created" do
         signal = Concurrent::Event.new
         task = RepeatingTask.new(0.01, 0, -> { signal.set }, null_logger)

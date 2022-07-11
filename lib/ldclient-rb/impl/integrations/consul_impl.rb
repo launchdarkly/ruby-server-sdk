@@ -51,10 +51,10 @@ module LaunchDarkly
             unused_old_keys.each do |key|
               ops.push({ 'KV' => { 'Verb' => 'delete', 'Key' => key } })
             end
-    
+
             # Now set the special key that we check in initialized_internal?
             ops.push({ 'KV' => { 'Verb' => 'set', 'Key' => inited_key, 'Value' => '' } })
-            
+
             ConsulUtil.batch_operations(ops)
 
             @logger.info { "Initialized database with #{num_items} items" }
@@ -132,7 +132,7 @@ module LaunchDarkly
           def kind_key(kind)
             @prefix + kind[:namespace] + '/'
           end
-          
+
           def inited_key
             @prefix + '$inited'
           end

@@ -22,7 +22,7 @@ module LaunchDarkly
       #
       class CachingStoreWrapper
         include LaunchDarkly::Interfaces::FeatureStore
-        
+
         #
         # Creates a new store wrapper instance.
         #

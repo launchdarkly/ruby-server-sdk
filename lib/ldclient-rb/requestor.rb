@@ -33,7 +33,7 @@ module LaunchDarkly
       all_data = JSON.parse(make_request("/sdk/latest-all"), symbolize_names: true)
       Impl::Model.make_all_store_data(all_data)
     end
-    
+
     def stop
       begin
         @http_client.close
@@ -57,7 +57,7 @@ module LaunchDarkly
         headers["If-None-Match"] = cached.etag
       end
       response = @http_client.request("GET", uri, {
-        headers: headers
+        headers: headers,
       })
       status = response.status.code
       # must fully read body for persistent connections

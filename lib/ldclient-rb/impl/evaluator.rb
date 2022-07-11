@@ -29,7 +29,7 @@ module LaunchDarkly
         @get_big_segments_membership = get_big_segments_membership
         @logger = logger
       end
-  
+
       # Used internally to hold an evaluation result and additional state that may be accumulated during an
       # evaluation. It's simpler and a bit more efficient to represent these as mutable properties rather than
       # trying to use a pure functional approach, and since we're not exposing this object to any application code
@@ -57,14 +57,14 @@ module LaunchDarkly
       #
       # @param flag [Object] the flag
       # @param user [Object] the user properties
-      # @return [EvalResult] the evaluation result 
+      # @return [EvalResult] the evaluation result
       def evaluate(flag, user)
         result = EvalResult.new
         if user.nil? || user[:key].nil?
           result.detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED)
           return result
         end
-        
+
         detail = eval_internal(flag, user, result)
         if !result.big_segments_status.nil?
           # If big_segments_status is non-nil at the end of the evaluation, it means a query was done at
@@ -84,7 +84,7 @@ module LaunchDarkly
       end
 
       private
-      
+
       def eval_internal(flag, user, state)
         if !flag[:on]
           return get_off_value(flag, EvaluationReason::off)
@@ -103,7 +103,7 @@ module LaunchDarkly
             end
           end
         end
-      
+
         # Check custom rules
         rules = flag[:rules] || []
         rules.each_index do |i|
@@ -245,7 +245,7 @@ module LaunchDarkly
 
         # If the weight is absent, this rule matches
         return true if !rule[:weight]
-        
+
         # All of the clauses are met. See if the user buckets in
         bucket = EvaluatorBucketing.bucket_user(user, segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt, nil)
         weight = rule[:weight].to_f / 100000.0

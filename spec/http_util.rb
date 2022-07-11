@@ -15,7 +15,7 @@ class StubHTTPServer
         Port: @port,
         AccessLog: [],
         Logger: NullLogger.new,
-        RequestCallback: method(:record_request)
+        RequestCallback: method(:record_request),
       }
       @server = create_server(@port, base_opts)
     rescue Errno::EADDRINUSE
@@ -100,7 +100,7 @@ class StubProxyServer < StubHTTPServer
           res.status = @connect_status
         end
         @request_count += 1
-      end
+      end,
     }))
   end
 end

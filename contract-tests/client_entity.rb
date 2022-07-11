@@ -29,7 +29,7 @@ class ClientEntity
       opts[:all_attributes_private]  = !!events[:allAttributesPrivate]
       opts[:private_attribute_names] = events[:globalPrivateAttributes]
       opts[:flush_interval] = (events[:flushIntervalMs] / 1_000) if !events[:flushIntervalMs].nil?
-      opts[:inline_users_in_events] =  events[:inlineUsers] || false
+      opts[:inline_users_in_events] = events[:inlineUsers] || false
     else
       opts[:send_events] = false
     end

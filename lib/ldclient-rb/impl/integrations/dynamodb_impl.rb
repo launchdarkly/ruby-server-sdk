@@ -16,7 +16,7 @@ module LaunchDarkly
               AWS_SDK_ENABLED = false
             end
           end
-  
+
           PARTITION_KEY = "namespace"
           SORT_KEY = "key"
 
@@ -24,20 +24,20 @@ module LaunchDarkly
             if !AWS_SDK_ENABLED
               raise RuntimeError.new("can't use #{description} without the aws-sdk or aws-sdk-dynamodb gem")
             end
-  
+
             @table_name = table_name
             @prefix = opts[:prefix] ? (opts[:prefix] + ":") : ""
             @logger = opts[:logger] || Config.default_logger
-  
+
             if !opts[:existing_client].nil?
               @client = opts[:existing_client]
             else
               @client = Aws::DynamoDB::Client.new(opts[:dynamodb_opts] || {})
             end
-  
+
             @logger.info("#{description}: using DynamoDB table \"#{table_name}\"")
           end
-  
+
           def stop
             # AWS client doesn't seem to have a close method
           end
@@ -46,7 +46,7 @@ module LaunchDarkly
             "DynamoDB"
           end
         end
-  
+
         #
         # Internal implementation of the DynamoDB feature store, intended to be used with CachingStoreWrapper.
         #
@@ -83,7 +83,7 @@ module LaunchDarkly
               del_item = make_keys_hash(tuple[0], tuple[1])
               requests.push({ delete_request: { key: del_item } })
             end
-    
+
             # Now set the special key that we check in initialized_internal?
             inited_item = make_keys_hash(inited_key, inited_key)
             requests.push({ put_request: { item: inited_item } })
@@ -123,11 +123,11 @@ module LaunchDarkly
                 expression_attribute_names: {
                   "#namespace" => PARTITION_KEY,
                   "#key" => SORT_KEY,
-                  "#version" => VERSION_ATTRIBUTE
+                  "#version" => VERSION_ATTRIBUTE,
                 },
                 expression_attribute_values: {
-                  ":version" => new_item[:version]
-                }
+                  ":version" => new_item[:version],
+                },
               })
               new_item
             rescue Aws::DynamoDB::Errors::ConditionalCheckFailedException
@@ -159,7 +159,7 @@ module LaunchDarkly
           def make_keys_hash(namespace, key)
             {
               PARTITION_KEY => namespace,
-              SORT_KEY => key
+              SORT_KEY => key,
             }
           end
 
@@ -170,16 +170,16 @@ module LaunchDarkly
               key_conditions: {
                 PARTITION_KEY => {
                   comparison_operator: "EQ",
-                  attribute_value_list: [ namespace_for_kind(kind) ]
-                }
-              }
+                  attribute_value_list: [ namespace_for_kind(kind) ],
+                },
+              },
             }
           end
 
           def get_item_by_keys(namespace, key)
             @client.get_item({
               table_name: @table_name,
-              key: make_keys_hash(namespace, key)
+              key: make_keys_hash(namespace, key),
             })
           end
 
@@ -190,8 +190,8 @@ module LaunchDarkly
                 projection_expression: "#namespace, #key",
                 expression_attribute_names: {
                   "#namespace" => PARTITION_KEY,
-                  "#key" => SORT_KEY
-                }
+                  "#key" => SORT_KEY,
+                },
               })
               while true
                 resp = @client.query(req)
@@ -210,7 +210,7 @@ module LaunchDarkly
           def marshal_item(kind, item)
             make_keys_hash(namespace_for_kind(kind), item[:key]).merge({
               VERSION_ATTRIBUTE => item[:version],
-              ITEM_JSON_ATTRIBUTE => Model.serialize(kind, item)
+              ITEM_JSON_ATTRIBUTE => Model.serialize(kind, item),
             })
           end
 
@@ -243,7 +243,7 @@ module LaunchDarkly
               table_name: @table_name,
               key: {
                 PARTITION_KEY => key,
-                SORT_KEY => key
+                SORT_KEY => key,
               }
             )
             timestamp = data.item && data.item[ATTR_SYNC_TIME] ?
@@ -256,7 +256,7 @@ module LaunchDarkly
               table_name: @table_name,
               key: {
                 PARTITION_KEY => @prefix + KEY_USER_DATA,
-                SORT_KEY => user_hash
+                SORT_KEY => user_hash,
               })
             return nil if !data.item
             excluded_refs = data.item[ATTR_EXCLUDED] || []

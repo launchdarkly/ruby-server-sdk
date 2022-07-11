@@ -56,7 +56,7 @@ module LaunchDarkly
         # @return [FlagBuilder] the builder
         #
         def fallthrough_variation(variation)
-          if LaunchDarkly::Impl::Util.is_bool variation then
+          if LaunchDarkly::Impl::Util.bool? variation then
             boolean_flag.fallthrough_variation(variation_for_boolean(variation))
           else
             @fallthrough_variation = variation
@@ -76,7 +76,7 @@ module LaunchDarkly
         # @return [FlagBuilder] the builder
         #
         def off_variation(variation)
-          if LaunchDarkly::Impl::Util.is_bool variation then
+          if LaunchDarkly::Impl::Util.bool? variation then
             boolean_flag.off_variation(variation_for_boolean(variation))
           else
             @off_variation = variation
@@ -121,7 +121,7 @@ module LaunchDarkly
         # @return [FlagBuilder] the builder
         #
         def variation_for_all_users(variation)
-          if LaunchDarkly::Impl::Util.is_bool variation then
+          if LaunchDarkly::Impl::Util.bool? variation then
             boolean_flag.variation_for_all_users(variation_for_boolean(variation))
           else
             on(true).clear_rules.clear_user_targets.fallthrough_variation(variation)
@@ -158,7 +158,7 @@ module LaunchDarkly
         # @return [FlagBuilder] the builder
         #
         def variation_for_user(user_key, variation)
-          if LaunchDarkly::Impl::Util.is_bool variation then
+          if LaunchDarkly::Impl::Util.bool? variation then
             boolean_flag.variation_for_user(user_key, variation_for_boolean(variation))
           else
             if @targets.nil? then
@@ -261,7 +261,7 @@ module LaunchDarkly
         # @return [FlagBuilder] the builder
         #
         def boolean_flag
-          if is_boolean_flag then
+          if boolean_flag? then
             self
           else
             variations(true, false)
@@ -287,13 +287,13 @@ module LaunchDarkly
           end
 
           unless @targets.nil? then
-            res[:targets] = @targets.collect do | variation, values |
+            res[:targets] = @targets.map do | variation, values |
               { variation: variation, values: values }
             end
           end
 
           unless @rules.nil? then
-            res[:rules] = @rules.each_with_index.collect { | rule, i | rule.build(i) }
+            res[:rules] = @rules.each_with_index.map { | rule, i | rule.build(i) }
           end
 
           res
@@ -386,7 +386,7 @@ module LaunchDarkly
           # @return [FlagBuilder] the flag builder with this rule added
           #
           def then_return(variation)
-            if LaunchDarkly::Impl::Util.is_bool variation then
+            if LaunchDarkly::Impl::Util.bool? variation then
               @variation = @flag_builder.variation_for_boolean(variation)
               @flag_builder.boolean_flag.add_rule(self)
             else
@@ -400,7 +400,7 @@ module LaunchDarkly
             {
               id: 'rule' + ri.to_s,
               variation: @variation,
-              clauses: @clauses.collect(&:to_h)
+              clauses: @clauses.map(&:to_h),
             }
           end
         end
@@ -415,10 +415,10 @@ module LaunchDarkly
         TRUE_VARIATION_INDEX = 0
         FALSE_VARIATION_INDEX = 1
 
-        def is_boolean_flag
+        def boolean_flag?
           @variations.size == 2 &&
-          @variations[TRUE_VARIATION_INDEX] == true &&
-          @variations[FALSE_VARIATION_INDEX] == false
+            @variations[TRUE_VARIATION_INDEX] == true &&
+            @variations[FALSE_VARIATION_INDEX] == false
         end
 
         def deep_copy_hash(from)

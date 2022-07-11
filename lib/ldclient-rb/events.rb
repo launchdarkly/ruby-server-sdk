@@ -90,7 +90,7 @@ module LaunchDarkly
     def initialize
       @reply = Concurrent::Semaphore.new(0)
     end
-    
+
     def completed
       @reply.release
     end
@@ -234,7 +234,7 @@ module LaunchDarkly
       @last_known_past_time = Concurrent::AtomicReference.new(0)
       @deduplicated_users = 0
       @events_in_last_batch = 0
-      
+
       outbox = EventBuffer.new(config.capacity, config.logger)
       flush_workers = NonBlockingThreadPool.new(MAX_FLUSH_WORKERS)
 
@@ -352,7 +352,7 @@ module LaunchDarkly
         return
       end
 
-      payload = outbox.get_payload  
+      payload = outbox.get_payload
       if !payload.events.empty? || !payload.summary.counters.empty?
         count = payload.events.length + (payload.summary.counters.empty? ? 0 : 1)
         @events_in_last_batch = count
@@ -470,13 +470,13 @@ module LaunchDarkly
 
     private def make_output_event(event)
       case event
-        
+
       when LaunchDarkly::Impl::EvalEvent
         out = {
           kind: FEATURE_KIND,
           creationDate: event.timestamp,
           key: event.key,
-          value: event.value
+          value: event.value,
         }
         out[:default] = event.default if !event.default.nil?
         out[:variation] = event.variation if !event.variation.nil?
@@ -492,14 +492,14 @@ module LaunchDarkly
           kind: IDENTIFY_KIND,
           creationDate: event.timestamp,
           key: event.user[:key].to_s,
-          user: process_user(event.user)
+          user: process_user(event.user),
         }
-      
+
       when LaunchDarkly::Impl::CustomEvent
         out = {
           kind: CUSTOM_KIND,
           creationDate: event.timestamp,
-          key: event.key
+          key: event.key,
         }
         out[:data] = event.data if !event.data.nil?
         set_user_or_user_key(out, event.user)
@@ -511,9 +511,9 @@ module LaunchDarkly
         {
           kind: INDEX_KIND,
           creationDate: event.timestamp,
-          user: process_user(event.user)
+          user: process_user(event.user),
         }
-      
+
       when LaunchDarkly::Impl::DebugEvent
         original = event.eval_event
         out = {
@@ -521,7 +521,7 @@ module LaunchDarkly
           creationDate: original.timestamp,
           key: original.key,
           user: process_user(original.user),
-          value: original.value
+          value: original.value,
         }
         out[:default] = original.default if !original.default.nil?
         out[:variation] = original.variation if !original.variation.nil?
@@ -545,7 +545,7 @@ module LaunchDarkly
           variations.each do |variation, counter|
             c = {
               value: counter.value,
-              count: counter.count
+              count: counter.count,
             }
             c[:variation] = variation if !variation.nil?
             if version.nil?
@@ -562,7 +562,7 @@ module LaunchDarkly
         kind: SUMMARY_KIND,
         startDate: summary[:start_date],
         endDate: summary[:end_date],
-        features: flags
+        features: flags,
       }
     end
 

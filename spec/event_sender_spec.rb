@@ -44,7 +44,7 @@ module LaunchDarkly
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
             "x-launchdarkly-event-schema" => [ "3" ],
-            "connection" => [ "Keep-Alive" ]
+            "connection" => [ "Keep-Alive" ],
           })
           expect(req.header['x-launchdarkly-payload-id']).not_to eq []
         end
@@ -101,7 +101,7 @@ module LaunchDarkly
             "authorization" => [ sdk_key ],
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
-            "connection" => [ "Keep-Alive" ]
+            "connection" => [ "Keep-Alive" ],
           })
           expect(req.header['x-launchdarkly-event-schema']).to eq []
           expect(req.header['x-launchdarkly-payload-id']).to eq []
@@ -125,7 +125,7 @@ module LaunchDarkly
             es = make_sender_with_events_uri(fake_target_uri)
 
             result = es.send_event_data(fake_data, "", false)
-            
+
             expect(result.success).to be true
           ensure
             ENV["http_proxy"] = nil
@@ -135,7 +135,7 @@ module LaunchDarkly
           expect(body).to eq fake_data
         end
       end
-    
+
       [400, 408, 429, 500].each do |status|
         it "handles recoverable error #{status}" do
           with_sender_and_server do |es, server|

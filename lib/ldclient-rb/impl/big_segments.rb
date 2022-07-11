@@ -65,18 +65,18 @@ module LaunchDarkly
         if !@store.nil?
           begin
             metadata = @store.get_metadata
-            new_status = Interfaces::BigSegmentStoreStatus.new(true, !metadata || is_stale(metadata.last_up_to_date))
+            new_status = Interfaces::BigSegmentStoreStatus.new(true, !metadata || stale?(metadata.last_up_to_date))
           rescue => e
             LaunchDarkly::Util.log_exception(@logger, "Big Segment store status query returned error", e)
           end
         end
         @last_status = new_status
         @status_provider.update_status(new_status)
-        
+
         new_status
       end
 
-      def is_stale(timestamp)
+      def stale?(timestamp)
         !timestamp || ((Impl::Util.current_time_millis - timestamp) >= @stale_after_millis)
       end
 

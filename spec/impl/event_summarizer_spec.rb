@@ -58,24 +58,24 @@ module LaunchDarkly
             'default1', {
               11 => {
                 1 => EventSummaryFlagVariationCounter.new('value1', 2),
-                2 => EventSummaryFlagVariationCounter.new('value2', 1)
-              }
+                2 => EventSummaryFlagVariationCounter.new('value2', 1),
+              },
             }
           ),
           'key2' => EventSummaryFlagInfo.new(
             'default2', {
               22 => {
-                1 => EventSummaryFlagVariationCounter.new('value99', 1)
-              }
+                1 => EventSummaryFlagVariationCounter.new('value99', 1),
+              },
             }
           ),
           'badkey' => EventSummaryFlagInfo.new(
             'default3', {
               nil => {
-                nil => EventSummaryFlagVariationCounter.new('default3', 1)
-              }
+                nil => EventSummaryFlagVariationCounter.new('default3', 1),
+              },
             }
-          )
+          ),
         }
         expect(data.counters).to eq expectedCounters
       end

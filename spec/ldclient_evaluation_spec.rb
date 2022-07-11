@@ -23,7 +23,7 @@ module LaunchDarkly
       it "returns the value for an existing feature" do
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
-        
+
         with_client(test_config(data_source: td)) do |client|
           expect(client.variation("flagkey", basic_user, "default")).to eq "value"
         end
@@ -34,7 +34,7 @@ module LaunchDarkly
         td.use_preconfigured_flag({  # TestData normally won't construct a flag with offVariation: nil
           key: "flagkey",
           on: false,
-          offVariation: nil
+          offVariation: nil,
         })
 
         with_client(test_config(data_source: td)) do |client|
@@ -98,7 +98,7 @@ module LaunchDarkly
       it "returns a value for an existing feature" do
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
-        
+
         with_client(test_config(data_source: td)) do |client|
           result = client.variation_detail("flagkey", basic_user, "default")
           expected = EvaluationDetail.new("value", 0, EvaluationReason::off)
@@ -111,7 +111,7 @@ module LaunchDarkly
         td.use_preconfigured_flag({  # TestData normally won't construct a flag with offVariation: nil
           key: "flagkey",
           on: false,
-          offVariation: nil
+          offVariation: nil,
         })
 
         with_client(test_config(data_source: td)) do |client|
@@ -201,7 +201,7 @@ module LaunchDarkly
 
           values = state.values_map
           expect(values).to eq({ 'key1' => 'value1', 'key2' => 'value2' })
-          
+
           result = state.as_json
           expect(result).to eq({
             'key1' => 'value1',
@@ -209,16 +209,16 @@ module LaunchDarkly
             '$flagsState' => {
               'key1' => {
                 :variation => 0,
-                :version => 100
+                :version => 100,
               },
               'key2' => {
                 :variation => 1,
                 :version => 200,
                 :trackEvents => true,
-                :debugEventsUntilDate => 1000
-              }
+                :debugEventsUntilDate => 1000,
+              },
             },
-            '$valid' => true
+            '$valid' => true,
           })
         end
       end
@@ -252,7 +252,7 @@ module LaunchDarkly
 
           values = state.values_map
           expect(values).to eq({ 'key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3' })
-          
+
           result = state.as_json
           expect(result).to eq({
             'key1' => 'value1',
@@ -260,20 +260,20 @@ module LaunchDarkly
             'key3' => 'value3',
             '$flagsState' => {
               'key1' => {
-                :variation => 0
+                :variation => 0,
               },
               'key2' => {
                 :variation => 1,
                 :version => 200,
-                :trackEvents => true
+                :trackEvents => true,
               },
               'key3' => {
                 :variation => 1,
                 :version => 300,
-                :debugEventsUntilDate => future_time
-              }
+                :debugEventsUntilDate => future_time,
+              },
             },
-            '$valid' => true
+            '$valid' => true,
           })
         end
       end
