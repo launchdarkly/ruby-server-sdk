@@ -34,6 +34,13 @@ class ClientEntity
       opts[:send_events] = false
     end
 
+    if config[:tags]
+      opts[:application] = {
+        :id => config[:tags][:applicationId],
+        :version => config[:tags][:applicationVersion],
+      }
+    end
+
     startWaitTimeMs = config[:startWaitTimeMs] || 5_000
 
     @client = LaunchDarkly::LDClient.new(

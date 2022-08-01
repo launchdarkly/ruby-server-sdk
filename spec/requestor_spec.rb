@@ -5,7 +5,7 @@ $sdk_key = "secret"
 
 describe LaunchDarkly::Requestor do
   def with_requestor(base_uri, opts = {})
-    r = LaunchDarkly::Requestor.new($sdk_key, LaunchDarkly::Config.new({ base_uri: base_uri }.merge(opts)))
+    r = LaunchDarkly::Requestor.new($sdk_key, LaunchDarkly::Config.new({ base_uri: base_uri, application: {id: "id", version: "version"} }.merge(opts)))
     begin
       yield r
     ensure
@@ -23,7 +23,8 @@ describe LaunchDarkly::Requestor do
           expect(server.requests[0].unparsed_uri).to eq "/sdk/latest-all"
           expect(server.requests[0].header).to include({
             "authorization" => [ $sdk_key ],
-            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ]
+            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
+            "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
           })
         end
       end
@@ -84,7 +85,7 @@ describe LaunchDarkly::Requestor do
         end
       end
     end
-    
+
     it "can reuse cached data" do
       etag = "xyz"
       expected_data = { flags: { x: { key: "x" } } }

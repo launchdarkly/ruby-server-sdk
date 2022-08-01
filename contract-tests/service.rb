@@ -29,6 +29,7 @@ get '/' do
       'all-flags-with-reasons',
       'all-flags-client-side-only',
       'all-flags-details-only-for-tracked-flags',
+      'tags',
     ]
   }.to_json
 end
