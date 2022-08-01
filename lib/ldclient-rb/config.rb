@@ -44,6 +44,7 @@ module LaunchDarkly
     # @option opts [String] :wrapper_version See {#wrapper_version}.
     # @option opts [#open] :socket_factory See {#socket_factory}.
     # @option opts [BigSegmentsConfig] :big_segments See {#big_segments}.
+    # @option opts [Hash] :application See {#application}
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -77,6 +78,7 @@ module LaunchDarkly
       @wrapper_version = opts[:wrapper_version]
       @socket_factory = opts[:socket_factory]
       @big_segments = opts[:big_segments] || BigSegmentsConfig.new(store: nil)
+      @application = LaunchDarkly::Impl::Util.validate_application_info(opts[:application] || {}, @logger)
     end
 
     #
@@ -283,6 +285,24 @@ module LaunchDarkly
     # @return [BigSegmentsConfig]
     #
     attr_reader :big_segments
+
+    #
+    # An object that allows configuration of application metadata.
+    #
+    # Application metadata may be used in LaunchDarkly analytics or other product features, but does not affect feature flag evaluations.
+    #
+    # If you want to set non-default values for any of these fields, provide the appropriately configured hash to the {Config} object.
+    #
+    # @example Configuring application information
+    #   opts[:application] = {
+    #     id: "MY APPLICATION ID",
+    #     version: "MY APPLICATION VERSION"
+    #   }
+    #   config = LDConfig.new(opts)
+    #
+    # @return [Hash]
+    #
+    attr_reader :application
 
     # @deprecated This is replaced by {#data_source}.
     attr_reader :update_processor

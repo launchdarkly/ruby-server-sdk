@@ -18,7 +18,7 @@ module LaunchDarkly
       end
 
       def make_sender_with_events_uri(events_uri)
-        subject.new(sdk_key, Config.new(events_uri: events_uri, logger: $null_log), nil, 0.1)
+        subject.new(sdk_key, Config.new(events_uri: events_uri, logger: $null_log, application: {id: "id", version: "version"}), nil, 0.1)
       end
 
       def with_sender_and_server
@@ -44,7 +44,8 @@ module LaunchDarkly
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
             "x-launchdarkly-event-schema" => [ "3" ],
-            "connection" => [ "Keep-Alive" ],
+            "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
+            "connection" => [ "Keep-Alive" ]
           })
           expect(req.header['x-launchdarkly-payload-id']).not_to eq []
         end
