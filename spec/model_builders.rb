@@ -1,3 +1,45 @@
+require "ldclient-rb/impl/model/preprocessed_data"
+require "json"
+
+def clone_json_object(o)
+  JSON.parse(o.to_json, symbolize_names: true)
+end
+
+class DataItemFactory
+  def initialize(with_preprocessing)
+    @with_preprocessing = with_preprocessing
+  end
+
+  def flag(flag_data)
+    @with_preprocessing ? preprocessed_flag(flag_data) : flag_data
+  end
+
+  def segment(segment_data)
+    @with_preprocessing ? preprocessed_segment(segment_data) : segment_data
+  end
+
+  def boolean_flag_with_rules(rules)
+    flag({ key: 'feature', on: true, rules: rules, fallthrough: { variation: 0 }, variations: [ false, true ] })
+  end
+
+  def boolean_flag_with_clauses(clauses)
+    flag(boolean_flag_with_rules([{ id: 'ruleid', clauses: clauses, variation: 1 }]))
+  end
+
+  attr_reader :with_preprocessing
+
+  private def preprocessed_flag(o)
+    ret = clone_json_object(o)
+    LaunchDarkly::Impl::DataModelPreprocessing::Preprocessor.new().preprocess_flag!(ret)
+    ret
+  end
+
+  private def preprocessed_segment(o)
+    ret = clone_json_object(o)
+    LaunchDarkly::Impl::DataModelPreprocessing::Preprocessor.new().preprocess_segment!(ret)
+    ret
+  end
+end
 
 class FlagBuilder
   def initialize(key)
@@ -10,7 +52,7 @@ class FlagBuilder
   end
 
   def build
-    @flag.clone
+    DataItemFactory.new(true).flag(@flag)
   end
 
   def version(value)
@@ -111,7 +153,7 @@ class SegmentBuilder
   end
 
   def build
-    @segment.clone
+    DataItemFactory.new(true).segment(@segment)
   end
   
   def included(*keys)

@@ -60,4 +60,37 @@ describe LaunchDarkly::Config do
       expect(subject.new(poll_interval: 29).poll_interval).to eq 30
     end
   end
+
+  describe ".application" do
+    it "can be set and read" do
+      app = { id: "my-id", version: "abcdef" }
+      expect(subject.new(application: app).application).to eq app
+    end
+
+    it "can handle non-string values" do
+      expect(subject.new(application: { id: 1, version: 2 }).application).to eq ({ id: "1", version: "2" })
+    end
+
+    it "will ignore invalid keys" do
+      expect(subject.new(application: { invalid: 1, hashKey: 2 }).application).to eq ({ id: "", version: "" })
+    end
+
+    it "will drop invalid values" do
+      [" ", "@", ":", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-a"]. each do |value|
+        expect(subject.new(logger: $null_log, application: { id: value, version: value }).application).to eq ({ id: "", version: "" })
+      end
+    end
+
+    it "will generate correct header tag value" do
+      [
+        { :id => "id", :version => "version", :expected => "application-id/id application-version/version" },
+        { :id => "id", :version => "", :expected => "application-id/id" },
+        { :id => "", :version => "version", :expected => "application-version/version" },
+        { :id => "", :version => "", :expected => "" }
+      ].each do |test_case|
+        config = subject.new(application: { id: test_case[:id], version: test_case[:version] })
+        expect(LaunchDarkly::Impl::Util.application_header_value(config.application)).to eq test_case[:expected]
+      end
+    end
+  end
 end

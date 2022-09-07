@@ -1,7 +1,10 @@
 require "ld-eventsource"
+require "model_builders"
 require "spec_helper"
 
 describe LaunchDarkly::StreamProcessor do
+  factory = DataItemFactory.new(true)  # true = enable the usual preprocessing logic
+
   subject { LaunchDarkly::StreamProcessor }
   let(:config) { LaunchDarkly::Config.new }
   let(:processor) { subject.new("sdk_key", config) }
@@ -15,16 +18,16 @@ describe LaunchDarkly::StreamProcessor do
 
     it "will accept PUT methods" do
       processor.send(:process_message, put_message)
-      expect(config.feature_store.get(LaunchDarkly::FEATURES, "asdf")).to eq(key: "asdf")
-      expect(config.feature_store.get(LaunchDarkly::SEGMENTS, "segkey")).to eq(key: "segkey")
+      expect(config.feature_store.get(LaunchDarkly::FEATURES, "asdf")).to eq(factory.flag(key: "asdf"))
+      expect(config.feature_store.get(LaunchDarkly::SEGMENTS, "segkey")).to eq(factory.segment(key: "segkey"))
     end
     it "will accept PATCH methods for flags" do
       processor.send(:process_message, patch_flag_message)
-      expect(config.feature_store.get(LaunchDarkly::FEATURES, "asdf")).to eq(key: "asdf", version: 1)
+      expect(config.feature_store.get(LaunchDarkly::FEATURES, "asdf")).to eq(factory.flag(key: "asdf", version: 1))
     end
     it "will accept PATCH methods for segments" do
       processor.send(:process_message, patch_seg_message)
-      expect(config.feature_store.get(LaunchDarkly::SEGMENTS, "asdf")).to eq(key: "asdf", version: 1)
+      expect(config.feature_store.get(LaunchDarkly::SEGMENTS, "asdf")).to eq(factory.segment(key: "asdf", version: 1))
     end
     it "will accept DELETE methods for flags" do
       processor.send(:process_message, patch_flag_message)

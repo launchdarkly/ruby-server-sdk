@@ -1,6 +1,21 @@
 require "ldclient-rb/impl/big_segments"
 
+require "model_builders"
 require "spec_helper"
+
+def evaluator_tests_with_and_without_preprocessing(desc_base)
+  # In the evaluator tests, we are really testing two sets of evaluation logic: one where preprocessed
+  # results are not available, and one where they are. In normal usage, flags always get preprocessed and
+  # we expect evaluations to almost always be able to reuse a preprocessed result-- but we still want to
+  # verify that the evaluator works even if preprocessing hasn't happened, since a flag is just a Hash and
+  # so we can't do any type-level enforcement to constrain its state. The DataItemFactory abstraction
+  # controls whether flags/segments created in these tests do or do not have preprocessing applied.
+  [true, false].each do |with_preprocessing|
+    pre_desc = with_preprocessing ? "with preprocessing" : "without preprocessing"
+    desc = "#{desc_base} - #{pre_desc}"
+    yield desc, DataItemFactory.new(with_preprocessing)
+  end
+end
 
 module LaunchDarkly
   module Impl
@@ -89,14 +104,6 @@ module LaunchDarkly
 
       def basic_evaluator
         EvaluatorBuilder.new(logger).build
-      end
-
-      def boolean_flag_with_rules(rules)
-        { key: 'feature', on: true, rules: rules, fallthrough: { variation: 0 }, variations: [ false, true ] }
-      end
-
-      def boolean_flag_with_clauses(clauses)
-        boolean_flag_with_rules([{ id: 'ruleid', clauses: clauses, variation: 1 }])
       end
 
       def make_user_matching_clause(user, attr = :key)

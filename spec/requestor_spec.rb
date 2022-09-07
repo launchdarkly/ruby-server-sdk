@@ -1,11 +1,14 @@
 require "http_util"
+require "model_builders"
 require "spec_helper"
 
 $sdk_key = "secret"
 
 describe LaunchDarkly::Requestor do
+  factory = DataItemFactory.new(true)  # true = enable the usual preprocessing logic
+
   def with_requestor(base_uri, opts = {})
-    r = LaunchDarkly::Requestor.new($sdk_key, LaunchDarkly::Config.new({ base_uri: base_uri }.merge(opts)))
+    r = LaunchDarkly::Requestor.new($sdk_key, LaunchDarkly::Config.new({ base_uri: base_uri, application: {id: "id", version: "version"} }.merge(opts)))
     begin
       yield r
     ensure
@@ -23,14 +26,15 @@ describe LaunchDarkly::Requestor do
           expect(server.requests[0].unparsed_uri).to eq "/sdk/latest-all"
           expect(server.requests[0].header).to include({
             "authorization" => [ $sdk_key ],
-            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ]
+            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
+            "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
           })
         end
       end
     end
 
     it "parses response" do
-      expected_data = { flags: { x: { key: "x" } } }
+      expected_data = { flags: { x: factory.flag({ key: "x" }) } }
       with_server do |server|
         with_requestor(server.base_uri.to_s) do |requestor|
           server.setup_ok_response("/", expected_data.to_json)
@@ -84,10 +88,10 @@ describe LaunchDarkly::Requestor do
         end
       end
     end
-    
+
     it "can reuse cached data" do
       etag = "xyz"
-      expected_data = { flags: { x: { key: "x" } } }
+      expected_data = { flags: { x: factory.flag({ key: "x" }) } }
       with_server do |server|
         with_requestor(server.base_uri.to_s) do |requestor|
           server.setup_response("/") do |req, res|
@@ -112,8 +116,8 @@ describe LaunchDarkly::Requestor do
     it "replaces cached data with new data" do
       etag1 = "abc"
       etag2 = "xyz"
-      expected_data1 = { flags: { x: { key: "x" } } }
-      expected_data2 = { flags: { y: { key: "y" } } }
+      expected_data1 = { flags: { x: factory.flag({ key: "x" }) } }
+      expected_data2 = { flags: { y: factory.flag({ key: "y" }) } }
       with_server do |server|
         with_requestor(server.base_uri.to_s) do |requestor|
           server.setup_response("/") do |req, res|
@@ -196,7 +200,7 @@ describe LaunchDarkly::Requestor do
       # use a real proxy that really forwards requests to another test server, because
       # that test server would be at localhost, and proxy environment variables are
       # ignored if the target is localhost.
-      expected_data = { flags: { flagkey: { key: "flagkey" } } }
+      expected_data = { flags: { flagkey: factory.flag({ key: "flagkey" }) } }
       with_server do |proxy|
         proxy.setup_ok_response("/sdk/latest-all", expected_data.to_json, "application/json", { "etag" => "x" })
         begin

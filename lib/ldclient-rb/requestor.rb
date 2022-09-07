@@ -31,7 +31,7 @@ module LaunchDarkly
 
     def request_all_data()
       all_data = JSON.parse(make_request("/sdk/latest-all"), symbolize_names: true)
-      Impl::Model.make_all_store_data(all_data)
+      Impl::Model.make_all_store_data(all_data, @config.logger)
     end
     
     def stop
@@ -44,7 +44,7 @@ module LaunchDarkly
     private
 
     def request_single_item(kind, path)
-      Impl::Model.deserialize(kind, make_request(path))
+      Impl::Model.deserialize(kind, make_request(path), @config.logger)
     end
 
     def make_request(path)
