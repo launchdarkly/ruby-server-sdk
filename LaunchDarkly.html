@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly
   
-    &mdash; LaunchDarkly Ruby SDK (6.3.4)
+    &mdash; LaunchDarkly Ruby SDK (6.4.0)
   
 </title>
 
@@ -79,7 +79,7 @@
   <dl>
     <dt>Defined in:</dt>
     <dd>lib/ldclient-rb.rb<span class="defines">,<br />
-  lib/ldclient-rb/cache_store.rb,<br /> lib/ldclient-rb/config.rb,<br /> lib/ldclient-rb/evaluation_detail.rb,<br /> lib/ldclient-rb/events.rb,<br /> lib/ldclient-rb/expiring_cache.rb,<br /> lib/ldclient-rb/file_data_source.rb,<br /> lib/ldclient-rb/flags_state.rb,<br /> lib/ldclient-rb/impl.rb,<br /> lib/ldclient-rb/in_memory_store.rb,<br /> lib/ldclient-rb/interfaces.rb,<br /> lib/ldclient-rb/ldclient.rb,<br /> lib/ldclient-rb/memoized_value.rb,<br /> lib/ldclient-rb/newrelic.rb,<br /> lib/ldclient-rb/non_blocking_thread_pool.rb,<br /> lib/ldclient-rb/polling.rb,<br /> lib/ldclient-rb/redis_store.rb,<br /> lib/ldclient-rb/requestor.rb,<br /> lib/ldclient-rb/simple_lru_cache.rb,<br /> lib/ldclient-rb/stream.rb,<br /> lib/ldclient-rb/user_filter.rb,<br /> lib/ldclient-rb/util.rb,<br /> lib/ldclient-rb/version.rb,<br /> lib/ldclient-rb/impl/big_segments.rb,<br /> lib/ldclient-rb/impl/diagnostic_events.rb,<br /> lib/ldclient-rb/impl/evaluator.rb,<br /> lib/ldclient-rb/impl/evaluator_bucketing.rb,<br /> lib/ldclient-rb/impl/evaluator_operators.rb,<br /> lib/ldclient-rb/impl/event_sender.rb,<br /> lib/ldclient-rb/impl/event_summarizer.rb,<br /> lib/ldclient-rb/impl/event_types.rb,<br /> lib/ldclient-rb/impl/repeating_task.rb,<br /> lib/ldclient-rb/impl/store_client_wrapper.rb,<br /> lib/ldclient-rb/impl/store_data_set_sorter.rb,<br /> lib/ldclient-rb/impl/unbounded_pool.rb,<br /> lib/ldclient-rb/impl/util.rb,<br /> lib/ldclient-rb/integrations/consul.rb,<br /> lib/ldclient-rb/integrations/dynamodb.rb,<br /> lib/ldclient-rb/integrations/file_data.rb,<br /> lib/ldclient-rb/integrations/redis.rb,<br /> lib/ldclient-rb/integrations/test_data.rb,<br /> lib/ldclient-rb/impl/integrations/consul_impl.rb,<br /> lib/ldclient-rb/impl/integrations/dynamodb_impl.rb,<br /> lib/ldclient-rb/impl/integrations/file_data_source.rb,<br /> lib/ldclient-rb/impl/integrations/redis_impl.rb,<br /> lib/ldclient-rb/impl/model/serialization.rb,<br /> lib/ldclient-rb/integrations/test_data/flag_builder.rb,<br /> lib/ldclient-rb/integrations/util/store_wrapper.rb</span>
+  lib/ldclient-rb/cache_store.rb,<br /> lib/ldclient-rb/config.rb,<br /> lib/ldclient-rb/evaluation_detail.rb,<br /> lib/ldclient-rb/events.rb,<br /> lib/ldclient-rb/expiring_cache.rb,<br /> lib/ldclient-rb/file_data_source.rb,<br /> lib/ldclient-rb/flags_state.rb,<br /> lib/ldclient-rb/impl.rb,<br /> lib/ldclient-rb/in_memory_store.rb,<br /> lib/ldclient-rb/interfaces.rb,<br /> lib/ldclient-rb/ldclient.rb,<br /> lib/ldclient-rb/memoized_value.rb,<br /> lib/ldclient-rb/newrelic.rb,<br /> lib/ldclient-rb/non_blocking_thread_pool.rb,<br /> lib/ldclient-rb/polling.rb,<br /> lib/ldclient-rb/redis_store.rb,<br /> lib/ldclient-rb/requestor.rb,<br /> lib/ldclient-rb/simple_lru_cache.rb,<br /> lib/ldclient-rb/stream.rb,<br /> lib/ldclient-rb/user_filter.rb,<br /> lib/ldclient-rb/util.rb,<br /> lib/ldclient-rb/version.rb,<br /> lib/ldclient-rb/impl/big_segments.rb,<br /> lib/ldclient-rb/impl/diagnostic_events.rb,<br /> lib/ldclient-rb/impl/evaluator.rb,<br /> lib/ldclient-rb/impl/evaluator_bucketing.rb,<br /> lib/ldclient-rb/impl/evaluator_helpers.rb,<br /> lib/ldclient-rb/impl/evaluator_operators.rb,<br /> lib/ldclient-rb/impl/event_sender.rb,<br /> lib/ldclient-rb/impl/event_summarizer.rb,<br /> lib/ldclient-rb/impl/event_types.rb,<br /> lib/ldclient-rb/impl/repeating_task.rb,<br /> lib/ldclient-rb/impl/store_client_wrapper.rb,<br /> lib/ldclient-rb/impl/store_data_set_sorter.rb,<br /> lib/ldclient-rb/impl/unbounded_pool.rb,<br /> lib/ldclient-rb/impl/util.rb,<br /> lib/ldclient-rb/integrations/consul.rb,<br /> lib/ldclient-rb/integrations/dynamodb.rb,<br /> lib/ldclient-rb/integrations/file_data.rb,<br /> lib/ldclient-rb/integrations/redis.rb,<br /> lib/ldclient-rb/integrations/test_data.rb,<br /> lib/ldclient-rb/impl/integrations/consul_impl.rb,<br /> lib/ldclient-rb/impl/integrations/dynamodb_impl.rb,<br /> lib/ldclient-rb/impl/integrations/file_data_source.rb,<br /> lib/ldclient-rb/impl/integrations/redis_impl.rb,<br /> lib/ldclient-rb/impl/model/preprocessed_data.rb,<br /> lib/ldclient-rb/impl/model/serialization.rb,<br /> lib/ldclient-rb/integrations/test_data/flag_builder.rb,<br /> lib/ldclient-rb/integrations/util/store_wrapper.rb</span>
 </dd>
   </dl>
   
@@ -87,20 +87,8 @@
 
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
-    <p>Analytics event processing in the SDK involves several components. The purpose of this design is to
-minimize overhead on the application threads that are generating analytics events.</p>
-
-<p>EventProcessor receives an analytics event from the SDK client, on an application thread. It places
-the event in a bounded queue, the &quot;inbox&quot;, and immediately returns.</p>
-
-<p>On a separate worker thread, EventDispatcher consumes events from the inbox. These are considered
-&quot;input events&quot; because they may or may not actually be sent to LaunchDarkly; most flag evaluation
-events are not sent, but are counted and the counters become part of a single summary event.
-EventDispatcher updates those counters, creates &quot;index&quot; events for any users that have not been seen
-recently, and places any events that will be sent to LaunchDarkly into the &quot;outbox&quot; queue.</p>
-
-<p>When it is time to flush events to LaunchDarkly, the contents of the outbox are handed off to
-another worker thread which sends the HTTP request.</p>
+    <p>This file contains any pieces of low-level evaluation logic that don&#39;t need to be inside the Evaluator
+class, because they don&#39;t depend on any SDK state outside of their input parameters.</p>
 
 
   </div>
@@ -132,7 +120,7 @@ another worker thread which sends the HTTP request.</p>
         <dt id="VERSION-constant" class="">VERSION =
           
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>6.3.4</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>6.4.0</span><span class='tstring_end'>&quot;</span></span></pre></dd>
       
     </dl>
   
@@ -148,7 +136,7 @@ another worker thread which sends the HTTP request.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu Jun 30 00:38:02 2022 by
+  Generated on Wed Sep  7 23:36:52 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.28 (ruby-2.5.9).
 </div>
