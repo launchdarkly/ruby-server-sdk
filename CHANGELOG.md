@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [6.4.0] - 2022-09-07
+### Added:
+- New `Config` property `application_info`, for configuration of application metadata that may be used in LaunchDarkly analytics or other product features. This does not affect feature flag evaluations.
+
+### Changed:
+- The SDK now produces fewer short-lived objects as a side effect of flag evaluations, causing less work for the garbage collector in applications that evaluate flags very frequently. This change applies to all flag evaluations, regardless of whether analytics events are enabled.
+
 ## [6.3.4] - 2022-06-29
 ### Changed:
 - Miscellaneous improvements to memory usage in analytics event processing: the SDK now allocates somewhat fewer short-lived objects when computing the analytics data for flag evaluations. This does not affect baseline memory usage by the SDK, but could somewhat reduce the need for garbage collection over an application's lifetime.
@@ -84,6 +91,7 @@ All notable changes to the LaunchDarkly Ruby SDK will be documented in this file
 
 ### Changed:
 - Switched to the `http` gem instead of `socketry` (with a custom http client) for streaming, and instead of `Net::HTTP` for polling / events.
+- User keys are required to be a string type. The SDK will no longer automatically perform this conversion.
 - Dropped support for Ruby &lt; version 2.5
 - Dropped support for JRuby &lt; version 9.2
 - Switched the default polling domain from `app.launchdarkly.com` to `sdk.launchdarkly.com`.

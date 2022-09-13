@@ -86,7 +86,7 @@ module LaunchDarkly
       @config.logger.debug { "[LDClient] Stream received #{method} message: #{message.data}" }
       if method == PUT
         message = JSON.parse(message.data, symbolize_names: true)
-        all_data = Impl::Model.make_all_store_data(message[:data])
+        all_data = Impl::Model.make_all_store_data(message[:data], @config.logger)
         @feature_store.init(all_data)
         @initialized.make_true
         @config.logger.info { "[LDClient] Stream initialized" }
@@ -97,7 +97,7 @@ module LaunchDarkly
           key = key_for_path(kind, data[:path])
           if key
             data = data[:data]
-            Impl::Model.postprocess_item_after_deserializing!(kind, data)
+            Impl::DataModelPreprocessing::Preprocessor.new(@config.logger).preprocess_item!(kind, data)
             @feature_store.upsert(kind, data)
             break
           end
