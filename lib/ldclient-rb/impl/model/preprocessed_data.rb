@@ -41,7 +41,7 @@ module LaunchDarkly
           else
             @factories[index].get_result(in_experiment)
           end
-        end 
+        end
       end
 
       # Base class for all of the preprocessed data classes we embed in our data model. Using this class
@@ -53,7 +53,7 @@ module LaunchDarkly
         def as_json(*)
           nil
         end
-        
+
         def to_json(*a)
           "null"
         end
@@ -138,23 +138,23 @@ module LaunchDarkly
             preprocess_flag_rule!(rules[index], index, flag)
           end
         end
-  
+
         def preprocess_segment!(segment)
           # nothing to do for segments currently
         end
-  
+
         private def preprocess_prerequisite!(prereq, flag)
           prereq[:_preprocessed] = PrerequisitePreprocessed.new(
             EvaluatorHelpers.prerequisite_failed_result(prereq, flag, @logger)
           )
         end
-  
+
         private def preprocess_target!(target, flag)
           target[:_preprocessed] = TargetPreprocessed.new(
             EvaluatorHelpers.target_match_result(target, flag, @logger)
           )
         end
-  
+
         private def preprocess_flag_rule!(rule, index, flag)
           match_reason = EvaluationReason::rule_match(index, rule[:id])
           match_reason_in_experiment = EvaluationReason::rule_match(index, rule[:id], true)
@@ -162,7 +162,7 @@ module LaunchDarkly
             precompute_multi_variation_results(flag, match_reason, match_reason_in_experiment)
           )
         end
-  
+
         private def precompute_multi_variation_results(flag, regular_reason, in_experiment_reason)
           factories = []
           vars = flag[:variations] || []

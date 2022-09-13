@@ -246,8 +246,8 @@ module LaunchDarkly
             variations: ['a', 'b', 'c'],
             version: 1,
             rules: [
-              { variation: 2, clauses: [ { attribute: "key", op: "in", values: ["zzz"] } ] }
-            ]
+              { variation: 2, clauses: [ { attribute: "key", op: "in", values: ["zzz"] } ] },
+            ],
           })
           user = { key: 'x' }
           detail = EvaluationDetail.new('a', 0, EvaluationReason::fallthrough)
@@ -266,8 +266,8 @@ module LaunchDarkly
               variations: ['a', 'b', 'c'],
               version: 1,
               rules: [
-                { variation: 2, clauses: [ { attribute: "key", op: "in", values: ["zzz"] } ] }
-              ]
+                { variation: 2, clauses: [ { attribute: "key", op: "in", values: ["zzz"] } ] },
+              ],
             })
             user = { key: 'x' }
             detail = EvaluationDetail.new('a', 0, EvaluationReason::fallthrough)
@@ -362,11 +362,11 @@ module LaunchDarkly
               key: 'feature',
               on: true,
               targets: [
-                { values: [ 'whoever', 'userkey' ], variation: 2 }
+                { values: [ 'whoever', 'userkey' ], variation: 2 },
               ],
               fallthrough: { variation: 0 },
               offVariation: 1,
-              variations: ['a', 'b', 'c']
+              variations: ['a', 'b', 'c'],
             })
             user = { key: 'userkey' }
             detail = EvaluationDetail.new('c', 2, EvaluationReason::target_match)
@@ -382,10 +382,10 @@ module LaunchDarkly
             flag = factory.flag({
               key: 'feature0',
               on: true,
-              fallthrough: { rollout: { variations: [ { weight: 100000, variation: 1, untracked: false } ]  } },
+              fallthrough: { rollout: { variations: [ { weight: 100000, variation: 1, untracked: false } ] } },
               offVariation: 1,
               variations: ['a', 'b', 'c'],
-              version: 1
+              version: 1,
             })
             user = { key: 'x' }
             detail = EvaluationDetail.new('b', 1, EvaluationReason::fallthrough)
@@ -399,10 +399,10 @@ module LaunchDarkly
               flag = factory.flag({
                 key: 'feature0',
                 on: true,
-                fallthrough: { rollout: { variations: [ { weight: 100000, variation: 1, untracked: false } ]  } },
+                fallthrough: { rollout: { variations: [ { weight: 100000, variation: 1, untracked: false } ] } },
                 offVariation: 1,
                 variations: ['a', 'b', 'c'],
-                version: 1
+                version: 1,
               })
               user = { key: 'x' }
               detail = EvaluationDetail.new('b', 1, EvaluationReason::fallthrough)

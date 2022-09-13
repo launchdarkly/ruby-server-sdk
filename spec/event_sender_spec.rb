@@ -45,7 +45,7 @@ module LaunchDarkly
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
             "x-launchdarkly-event-schema" => [ "3" ],
             "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
-            "connection" => [ "Keep-Alive" ]
+            "connection" => [ "Keep-Alive" ],
           })
           expect(req.header['x-launchdarkly-payload-id']).not_to eq []
         end

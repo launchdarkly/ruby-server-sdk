@@ -19,19 +19,19 @@ module LaunchDarkly
             variations: [true, false],
             fallthroughVariation: 1,
             prerequisites: [
-              { key: 'a', variation: 0 }
+              { key: 'a', variation: 0 },
             ],
             targets: [
-              { variation: 0, values: ['a'] }
+              { variation: 0, values: ['a'] },
             ],
             rules: [
               {
                 variation: 0,
                 clauses: [
-                  { attribute: 'key', op: 'in', values: ['a'] }
-                ]
-              }
-            ]
+                  { attribute: 'key', op: 'in', values: ['a'] },
+                ],
+              },
+            ],
           }
           flag = clone_json_object(original_flag)
           Preprocessor.new().preprocess_flag!(flag)
