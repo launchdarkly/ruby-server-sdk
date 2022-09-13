@@ -65,7 +65,7 @@ module LaunchDarkly
 
       class FlagPreprocessed < PreprocessedDataBase
         def initialize(off_result, fallthrough_factory)
-          super
+          super()
           @off_result = off_result
           @fallthrough_factory = fallthrough_factory
         end
@@ -78,7 +78,7 @@ module LaunchDarkly
 
       class PrerequisitePreprocessed < PreprocessedDataBase
         def initialize(failed_result)
-          super
+          super()
           @failed_result = failed_result
         end
 
@@ -88,7 +88,7 @@ module LaunchDarkly
 
       class TargetPreprocessed < PreprocessedDataBase
         def initialize(match_result)
-          super
+          super()
           @match_result = match_result
         end
 
@@ -98,7 +98,7 @@ module LaunchDarkly
 
       class FlagRulePreprocessed < PreprocessedDataBase
         def initialize(all_match_results)
-          super
+          super()
           @all_match_results = all_match_results
         end
 
