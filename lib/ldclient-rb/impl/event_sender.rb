@@ -33,7 +33,7 @@ module LaunchDarkly
         begin
           http_client = @http_client_pool.acquire()
           response = nil
-          (0..1).each do |attempt|
+          2.times do |attempt|
             if attempt > 0
               @logger.warn { "[LDClient] Will retry posting events after #{@retry_interval} second" }
               sleep(@retry_interval)

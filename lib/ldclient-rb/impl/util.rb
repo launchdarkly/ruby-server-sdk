@@ -56,7 +56,7 @@ module LaunchDarkly
           return ""
         end
 
-        if value.match(/[^a-zA-Z0-9._-]/)
+        if /[^a-zA-Z0-9._-]/.match?(value)
           logger.warn { "Value of application[#{name}] contained invalid characters and was discarded" }
           return ""
         end
