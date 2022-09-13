@@ -1,5 +1,4 @@
 require:
-  - rubocop-rails
   - rubocop-performance
 
 AllCops:
@@ -111,10 +110,6 @@ Metrics/CyclomaticComplexity:
   Description: >-
                  A complexity metric that is strongly correlated to the number
                  of test cases needed to validate a method.
-  Enabled: false
-
-Rails/Delegate:
-  Description: 'Prefer delegate method for delegations.'
   Enabled: false
 
 Style/PreferredHashMethods:
@@ -586,54 +581,6 @@ Performance/StringReplacement:
   Reference: 'https://github.com/JuanitoFatas/fast-ruby#stringgsub-vs-stringtr-code'
   Enabled: false
 
-# Rails
-
-Rails/ActionFilter:
-  Description: 'Enforces consistent use of action filter methods.'
-  Enabled: false
-
-Rails/Date:
-  Description: >-
-                  Checks the correct usage of date aware methods,
-                  such as Date.today, Date.current etc.
-  Enabled: false
-
-Rails/FindBy:
-  Description: 'Prefer find_by over where.first.'
-  Enabled: false
-
-Rails/FindEach:
-  Description: 'Prefer all.find_each over all.find.'
-  Enabled: false
-
-Rails/HasAndBelongsToMany:
-  Description: 'Prefer has_many :through to has_and_belongs_to_many.'
-  Enabled: false
-
-Rails/Output:
-  Description: 'Checks for calls to puts, print, etc.'
-  Enabled: false
-
-Rails/ReadWriteAttribute:
-  Description: >-
-                 Checks for read_attribute(:attr) and
-                 write_attribute(:attr, val).
-  Enabled: false
-
-Rails/ScopeArgs:
-  Description: 'Checks the arguments of ActiveRecord scopes.'
-  Enabled: false
-
-Rails/TimeZone:
-  Description: 'Checks the correct usage of time zone aware methods.'
-  StyleGuide: 'https://github.com/bbatsov/rails-style-guide#time'
-  Reference: 'http://danilenko.org/2012/7/6/rails_timezones'
-  Enabled: false
-
-Rails/Validation:
-  Description: 'Use validates :attribute, hash of validations.'
-  Enabled: false
-
 # Disabled temporarily while we bring code base inline
 Layout/ArgumentAlignment:
   Enabled: false
@@ -792,9 +739,6 @@ Naming/RescuedExceptionsVariableName:
   Enabled: false
 
 Naming/VariableNumber:
-  Enabled: false
-
-Rails/SkipsModelValidations:
   Enabled: false
 
 Style/AccessorGrouping:
