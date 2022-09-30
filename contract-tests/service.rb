@@ -4,7 +4,7 @@ require 'logger'
 require 'net/http'
 require 'sinatra'
 
-require './client_entity.rb'
+require './client_entity'
 
 configure :development do
   disable :show_exceptions
@@ -26,6 +26,7 @@ get '/' do
     capabilities: [
       'server-side',
       'server-side-polling',
+      'big-segments',
       'all-flags-with-reasons',
       'all-flags-client-side-only',
       'all-flags-details-only-for-tracked-flags',
@@ -92,6 +93,9 @@ post '/clients/:id' do |clientId|
   when "flushEvents"
     client.flush_events
     return 201
+  when "getBigSegmentStoreStatus"
+    status = client.get_big_segment_store_status
+    return [200, nil, status.to_json]
   end
 
   return [400, nil, {:error => "Unknown command requested"}.to_json]
