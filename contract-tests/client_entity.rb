@@ -1,6 +1,8 @@
 require 'ld-eventsource'
 require 'json'
 require 'net/http'
+require 'launchdarkly-server-sdk'
+require './big_segment_store_fixture'
 
 class ClientEntity
   def initialize(log, config)
@@ -32,6 +34,23 @@ class ClientEntity
       opts[:inline_users_in_events] =  events[:inlineUsers] || false
     else
       opts[:send_events] = false
+    end
+
+    if config[:bigSegments]
+      big_segments = config[:bigSegments]
+
+      store = BigSegmentStoreFixture.new(config[:bigSegments][:callbackUri])
+      user_cache_time = big_segments[:userCacheTimeMs].nil? ? nil : big_segments[:userCacheTimeMs] / 1_000
+      status_poll_interval_ms = big_segments[:statusPollIntervalMs].nil? ? nil : big_segments[:statusPollIntervalMs] / 1_000
+      stale_after_ms = big_segments[:staleAfterMs].nil? ? nil : big_segments[:staleAfterMs] / 1_000
+
+      opts[:big_segments] = LaunchDarkly::BigSegmentsConfig.new(
+        store: store,
+        user_cache_size: big_segments[:userCacheSize],
+        user_cache_time: user_cache_time,
+        status_poll_interval: status_poll_interval_ms,
+        stale_after: stale_after_ms
+      )
     end
 
     if config[:tags]
@@ -91,6 +110,11 @@ class ClientEntity
 
   def flush_events
     @client.flush
+  end
+
+  def get_big_segment_store_status
+    status = @client.big_segment_store_status_provider.status
+    { available: status.available, stale: status.stale }
   end
 
   def log
