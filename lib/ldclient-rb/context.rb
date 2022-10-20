@@ -1,5 +1,6 @@
 require 'set'
 require 'ldclient-rb/impl/context'
+require 'ldclient-rb/reference'
 
 module LaunchDarkly
   # LDContext is a collection of attributes that can be referenced in flag
@@ -62,33 +63,113 @@ module LaunchDarkly
       @error.nil?
     end
 
-    # TODO: Update this method to support references.
     #
-    # This method will be changing in subsequent PRs. Eventually it will
-    # receive a Reference or a string that we will turn into a Reference and
-    # then we will use that new reference to retrieve the correct value.
+    # get_value looks up the value of any attribute of the Context by name.
+    # This includes only attributes that are addressable in evaluations-- not
+    # metadata such as private attributes.
     #
-    # However, I want to break this up into multiple PRs. So for now, this is
-    # doing some very basic lookups so I can verify the little bit of behavior
-    # I have so far.
+    # For a single-kind context, the attribute name can be any custom attribute.
+    # It can also be one of the built-in ones like "kind", "key", or "name".
     #
-    # Later work will update this code and the tests.
+    # TODO: Update this paragraph once we implement these methods in ruby
     #
-    # @param attribute [Symbol]
+    # For a multi-kind context, the only supported attribute name is "kind".
+    # Use individual_context_by_index(), individual_context_by_name(), or
+    # get_all_individual_contexts() to inspect a Context for a particular kind
+    # and then get its attributes.
+    #
+    # This method does not support complex expressions for getting individual
+    # values out of JSON objects or arrays, such as "/address/street". Use
+    # {#get_value_for_reference} for that purpose.
+    #
+    # If the value is found, the return value is the attribute value;
+    # otherwise, it is nil.
+    #
+    # @param attribute [String, Symbol]
+    # @return [any]
     #
     def get_value(attribute)
-      return nil unless valid?
+      reference = Reference.create_literal(attribute)
+      get_value_for_reference(reference)
+    end
 
-      case attribute
-      when :key
-        @key
-      when :kind
-        @kind
-      when :secondary
-        @secondary
-      else
-        @attributes[attribute]
+    #
+    # get_value_for_reference looks up the value of any attribute of the
+    # Context, or a value contained within an attribute, based on a {Reference}
+    # instance. This includes only attributes that are addressable in
+    # evaluations-- not metadata such as private attributes.
+    #
+    # This implements the same behavior that the SDK uses to resolve attribute
+    # references during a flag evaluation. In a single-kind context, the
+    # {Reference} can represent a simple attribute name-- either a built-in one
+    # like "name" or "key", or a custom attribute -- or, it can be a
+    # slash-delimited path using a JSON-Pointer-like syntax. See {Reference}
+    # for more details.
+    #
+    # TODO: Update this paragraph once we implement these methods in ruby
+    #
+    # For a multi-kind context, the only supported attribute name is "kind".
+    # Use individual_context_by_index(), individual_context_by_name(), or
+    # get_all_individual_contexts() to inspect a Context for a particular kind
+    # and then get its attributes.
+    #
+    # If the value is found, the return value is the attribute value;
+    # otherwise, it is nil.
+    #
+    # @param reference [Reference]
+    # @return [any]
+    #
+    def get_value_for_reference(reference)
+      return nil unless valid?
+      return nil unless reference.is_a?(Reference)
+      return nil unless reference.error.nil?
+
+      first_component = reference.component(0)
+
+      if multi_kind?
+        if reference.depth == 1 && first_component == :kind
+          return kind
+        end
+
+        # Multi-kind contexts have no other addressable attributes
+        return nil
       end
+
+      value = get_top_level_addressable_attribute_single_kind(first_component)
+      return nil if value.nil?
+
+      (1...reference.depth).each do |i|
+        name = reference.component(i)
+
+        return nil unless value.is_a?(Hash)
+        return nil unless value.has_key?(name)
+
+        value = value[name]
+      end
+
+      value
+    end
+
+    #
+    # Retrieve the value of any top level, addressable attribute.
+    #
+    # This method returns an array of two values. The first element is the
+    # value of the requested attribute or nil if it does not exist. The second
+    # value will be true if the attribute exists; otherwise, it will be false.
+    #
+    # @param name [Symbol]
+    # @return [Array(any)]
+    #
+    private def get_top_level_addressable_attribute_single_kind(name)
+      if name == :kind
+        return kind
+      elsif name == :key
+        return key
+      elsif name == :secondary
+        return @secondary
+      end
+
+      @attributes[name]
     end
 
     #
@@ -205,6 +286,7 @@ module LaunchDarkly
       return create_invalid_context("The key for the context was not valid") if key.nil?
 
       attributes = data[:custom].clone || {}
+      attributes[:anonymous] = false
       built_in_attributes = [:key, :ip, :email, :name, :avatar, :firstName, :lastName, :country, :anonymous]
       built_in_attributes.each do |attr|
         attributes[attr] = data[attr].clone if data.has_key? attr

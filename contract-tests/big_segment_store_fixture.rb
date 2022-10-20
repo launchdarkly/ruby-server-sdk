@@ -19,6 +19,6 @@ class BigSegmentStoreFixture
   end
 
   def stop
-    HTTP.delete("#{@uri}")
+    HTTP.delete(@uri)
   end
 end
