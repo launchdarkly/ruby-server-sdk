@@ -18,6 +18,9 @@ module LaunchDarkly
   # context, and the associated errors by calling {LDContext#valid?} and
   # {LDContext#error}
   class LDContext
+    KIND_DEFAULT = "user"
+    private_constant :KIND_DEFAULT
+
     # @return [String] Returns the key for this context
     attr_reader :key
 
@@ -31,15 +34,19 @@ module LaunchDarkly
     # @private
     # @param key [String]
     # @param kind [String]
+    # @param name [String, nil]
+    # @param anonymous [Boolean, nil]
     # @param secondary [String, nil]
     # @param attributes [Hash, nil]
     # @param private_attributes [Array<String>, nil]
     # @param error [String, nil]
     # @param contexts [Array<LDContext>, nil]
     #
-    def initialize(key, kind, secondary = nil, attributes = nil, private_attributes = nil, error = nil, contexts = nil)
+    def initialize(key, kind, name = nil, anonymous = nil, secondary = nil, attributes = nil, private_attributes = nil, error = nil, contexts = nil)
       @key = key
       @kind = kind
+      @name = name
+      @anonymous = anonymous || false
       @secondary = secondary
       @attributes = attributes
       @private_attributes = private_attributes
@@ -158,18 +165,23 @@ module LaunchDarkly
     # value will be true if the attribute exists; otherwise, it will be false.
     #
     # @param name [Symbol]
-    # @return [Array(any)]
+    # @return [any]
     #
     private def get_top_level_addressable_attribute_single_kind(name)
-      if name == :kind
+      case name
+      when :kind
         return kind
-      elsif name == :key
+      when :key
         return key
-      elsif name == :secondary
+      when :name
+        return @name
+      when :anonymous
+        return @anonymous
+      when :secondary
         return @secondary
+      else
+        @attributes&.fetch(name, nil)
       end
-
-      @attributes[name]
     end
 
     #
@@ -179,7 +191,7 @@ module LaunchDarkly
     # @param key [String]
     # @param kind [String]
     #
-    def self.with_key(key, kind = "user")
+    def self.with_key(key, kind = KIND_DEFAULT)
       create({key: key, kind: kind})
     end
 
@@ -209,20 +221,39 @@ module LaunchDarkly
         return create_invalid_context("The key (#{key || 'nil'}) was not valid for the provided context.")
       end
 
+      name = data[:name]
+      unless LaunchDarkly::Impl::Context.validate_name(name)
+        return create_invalid_context("The name value was set to a non-string value.")
+      end
+
+      anonymous = data[:anonymous]
+      unless LaunchDarkly::Impl::Context.validate_anonymous(anonymous)
+        return create_invalid_context("The anonymous value was set to a non-boolean value.")
+      end
+
       meta = data.fetch(:_meta, {})
       private_attributes = meta[:privateAttributes]
       if private_attributes && !private_attributes.is_a?(Array)
         return create_invalid_context("The provided private attributes are not an array")
       end
 
-      attributes = {}
+      # We only need to create an attribute hash if there are keys set outside
+      # of the ones we store in dedicated instance variables.
+      #
+      # :secondary is not a supported top level key in the new schema.
+      # However, someone could still include it so we need to ignore it.
+      attributes = nil
       data.each do |k, v|
-        # :secondary is not a supported top level key in the new schema.
-        # However, someone could still include it so we need to ignore it.
-        attributes[k] = v.clone unless [:key, :kind, :_meta, :secondary].include? k
+        case k
+        when :kind, :key, :name, :anonymous, :secondary, :_meta
+          next
+        else
+          attributes ||= {}
+          attributes[k] = v.clone
+        end
       end
 
-      new(key, kind, meta[:secondary], attributes, private_attributes)
+      new(key.to_s, kind, name, anonymous, meta[:secondary], attributes, private_attributes)
     end
 
     #
@@ -264,7 +295,7 @@ module LaunchDarkly
 
       return contexts[0] if contexts.length == 1
 
-      new(nil, "multi", nil, nil, nil, nil, contexts)
+      new(nil, "multi", nil, false, nil, nil, nil, nil, contexts)
     end
 
     #
@@ -272,7 +303,7 @@ module LaunchDarkly
     # @return LDContext
     #
     private_class_method def self.create_invalid_context(error)
-      return new(nil, nil, nil, nil, nil, "Cannot create an LDContext. Provided data is not a hash.")
+      return new(nil, nil, nil, false, nil, nil, nil, "Cannot create an LDContext. Provided data is not a hash.")
     end
 
     #
@@ -285,11 +316,32 @@ module LaunchDarkly
       # Legacy users are allowed to have "" as a key but they cannot have nil as a key.
       return create_invalid_context("The key for the context was not valid") if key.nil?
 
-      attributes = data[:custom].clone || {}
-      attributes[:anonymous] = false
-      built_in_attributes = [:key, :ip, :email, :name, :avatar, :firstName, :lastName, :country, :anonymous]
-      built_in_attributes.each do |attr|
-        attributes[attr] = data[attr].clone if data.has_key? attr
+      name = data[:name]
+      unless LaunchDarkly::Impl::Context.validate_name(name)
+        return create_invalid_context("The name value was set to a non-string value.")
+      end
+
+      anonymous = data[:anonymous]
+      unless LaunchDarkly::Impl::Context.validate_anonymous(anonymous)
+        return create_invalid_context("The anonymous value was set to a non-boolean value.")
+      end
+
+      custom = data[:custom]
+      unless custom.nil? || custom.is_a?(Hash)
+        return create_invalid_context("The custom value was set to a non-hash value.")
+      end
+
+      # We only need to create an attribute hash if one of these keys exist.
+      # Everything else is stored in dedicated instance variables.
+      attributes = custom.clone
+      data.each do |k, v|
+        case k
+        when :ip, :email, :avatar, :firstName, :lastName, :country
+          attributes ||= {}
+          attributes[k] = v.clone
+        else
+          next
+        end
       end
 
       private_attributes = data[:privateAttributeNames]
@@ -297,7 +349,7 @@ module LaunchDarkly
         return create_invalid_context("The provided private attributes are not an array")
       end
 
-      return new(key, "user", data[:secondary], attributes, private_attributes)
+      return new(key.to_s, KIND_DEFAULT, name, anonymous, data[:secondary], attributes, private_attributes)
     end
   end
 end

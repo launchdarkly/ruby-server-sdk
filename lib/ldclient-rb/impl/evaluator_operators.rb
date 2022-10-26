@@ -61,38 +61,9 @@ module LaunchDarkly
         end
       end
 
-      # Retrieves the value of a user attribute by name.
-      #
-      # Built-in attributes correspond to top-level properties in the user object. They are treated as strings and
-      # non-string values are coerced to strings, except for `anonymous` which is meant to be a boolean if present
-      # and is not currently coerced. This behavior is consistent with earlier versions of the Ruby SDK, but is not
-      # guaranteed to be consistent with other SDKs, since the evaluator specification is based on the strongly-typed
-      # SDKs where it is not possible for an attribute to have the wrong type.
-      #
-      # Custom attributes correspond to properties within the `custom` property, if any, and can be of any type.
-      #
-      # @param user [Object] the user properties
-      # @param attribute [String|Symbol] the attribute to get, for instance `:key` or `:name` or `:some_custom_attr`
-      # @return the attribute value, or nil if the attribute is unknown
-      def self.user_value(user, attribute)
-        attribute = attribute.to_sym
-        if BUILTINS.include? attribute
-          value = user[attribute]
-          return nil if value.nil?
-          (attribute == :anonymous) ? value : value.to_s
-        elsif !user[:custom].nil?
-          user[:custom][attribute]
-        else
-          nil
-        end
-      end
-
       private
 
-      BUILTINS = Set[:key, :secondary, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous]
       NUMERIC_VERSION_COMPONENTS_REGEX = Regexp.new("^[0-9.]*")
-
-      private_constant :BUILTINS
       private_constant :NUMERIC_VERSION_COMPONENTS_REGEX
 
       def self.string_op(user_value, clause_value, fn)

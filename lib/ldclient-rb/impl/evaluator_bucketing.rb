@@ -1,4 +1,3 @@
-
 module LaunchDarkly
   module Impl
     # Encapsulates the logic for percentage rollouts.
@@ -7,9 +6,9 @@ module LaunchDarkly
       #
       # @param flag [Object] the feature flag
       # @param rule [Object] the rule
-      # @param user [Object] the user properties
+      # @param context [LDContext] the context properties
       # @return [Number] the variation index, or nil if there is an error
-      def self.variation_index_for_user(flag, rule, user)
+      def self.variation_index_for_context(flag, rule, context)
 
         variation = rule[:variation]
         return variation, false if !variation.nil? # fixed variation
@@ -20,7 +19,7 @@ module LaunchDarkly
           bucket_by = rollout[:bucketBy].nil? ? "key" : rollout[:bucketBy]
 
           seed = rollout[:seed]
-          bucket = bucket_user(user, flag[:key], bucket_by, flag[:salt], seed) # may not be present
+          bucket = bucket_context(context, flag[:key], bucket_by, flag[:salt], seed) # may not be present
           sum = 0;
           variations.each do |variate|
             if rollout[:kind] == "experiment" && !variate[:untracked]
@@ -32,11 +31,11 @@ module LaunchDarkly
               return variate[:variation], !!in_experiment
             end
           end
-          # The user's bucket value was greater than or equal to the end of the last bucket. This could happen due
+          # The context's bucket value was greater than or equal to the end of the last bucket. This could happen due
           # to a rounding error, or due to the fact that we are scaling to 100000 rather than 99999, or the flag
           # data could contain buckets that don't actually add up to 100000. Rather than returning an error in
-          # this case (or changing the scaling, which would potentially change the results for *all* users), we
-          # will simply put the user in the last bucket.
+          # this case (or changing the scaling, which would potentially change the results for *all* contexts), we
+          # will simply put the context in the last bucket.
           last_variation = variations[-1]
           in_experiment = rollout[:kind] == "experiment" && !last_variation[:untracked]
 
@@ -46,23 +45,23 @@ module LaunchDarkly
         end
       end
 
-      # Returns a user's bucket value as a floating-point value in `[0, 1)`.
+      # Returns a context's bucket value as a floating-point value in `[0, 1)`.
       #
-      # @param user [Object] the user properties
+      # @param context [LDContext] the context properties
       # @param key [String] the feature flag key (or segment key, if this is for a segment rule)
-      # @param bucket_by [String|Symbol] the name of the user attribute to be used for bucketing
+      # @param bucket_by [String|Symbol] the name of the context attribute to be used for bucketing
       # @param salt [String] the feature flag's or segment's salt value
       # @return [Number] the bucket value, from 0 inclusive to 1 exclusive
-      def self.bucket_user(user, key, bucket_by, salt, seed)
-        return nil unless user[:key]
+      def self.bucket_context(context, key, bucket_by, salt, seed)
+        return nil unless context.key
 
-        id_hash = bucketable_string_value(EvaluatorOperators.user_value(user, bucket_by))
+        id_hash = bucketable_string_value(context.get_value(bucket_by))
         if id_hash.nil?
           return 0.0
         end
 
-        if user[:secondary]
-          id_hash += "." + user[:secondary].to_s
+        if context.get_value(:secondary)
+          id_hash += "." + context.get_value(:secondary).to_s
         end
 
         if seed

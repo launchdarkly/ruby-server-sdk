@@ -10,7 +10,7 @@ module LaunchDarkly
         it "segment is not matched if there is no way to query it" do
           segment = factory.segment({
             key: 'test',
-            included: [ user[:key] ],  # included should be ignored for a big segment
+            included: [ user.key ],  # included should be ignored for a big segment
             version: 1,
             unbounded: true,
             generation: 1,
@@ -27,7 +27,7 @@ module LaunchDarkly
         it "segment with no generation is not matched" do
           segment = factory.segment({
             key: 'test',
-            included: [ user[:key] ],  # included should be ignored for a big segment
+            included: [ user.key ],  # included should be ignored for a big segment
             version: 1,
             unbounded: true,
           })
@@ -152,7 +152,7 @@ module LaunchDarkly
           expect(result.detail.value).to be true
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
 
-          expect(queries).to eq([ user[:key] ])
+          expect(queries).to eq([ user.key ])
         end
       end
     end

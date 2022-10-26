@@ -33,20 +33,20 @@ module LaunchDarkly
 
         it 'explicitly includes user' do
           segment = make_segment('segkey')
-          segment[:included] = [ user[:key] ]
+          segment[:included] = [ user.key ]
           expect(test_segment_match(factory, segment)).to be true
         end
 
         it 'explicitly excludes user' do
           segment = make_segment('segkey')
-          segment[:excluded] = [ user[:key] ]
+          segment[:excluded] = [ user.key ]
           expect(test_segment_match(factory, segment)).to be false
         end
 
         it 'both includes and excludes user; include takes priority' do
           segment = make_segment('segkey')
-          segment[:included] = [ user[:key] ]
-          segment[:excluded] = [ user[:key] ]
+          segment[:included] = [ user.key ]
+          segment[:excluded] = [ user.key ]
           expect(test_segment_match(factory, segment)).to be true
         end
 

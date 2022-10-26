@@ -15,9 +15,9 @@ module LaunchDarkly
             fallthrough: { variation: 0 },
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new('b', 1, EvaluationReason::off)
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -29,9 +29,9 @@ module LaunchDarkly
             fallthrough: { variation: 0 },
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::off)
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -45,10 +45,10 @@ module LaunchDarkly
               fallthrough: { variation: 0 },
               variations: ['a', 'b', 'c'],
             })
-            user = { key: 'x' }
+            context = LDContext.create({ key: 'x' })
             detail = EvaluationDetail.new('b', 1, EvaluationReason::off)
-            result1 = basic_evaluator.evaluate(flag, user)
-            result2 = basic_evaluator.evaluate(flag, user)
+            result1 = basic_evaluator.evaluate(flag, context)
+            result2 = basic_evaluator.evaluate(flag, context)
             expect(result1.detail).to eq(detail)
             expect(result2.detail).to be(result1.detail)
           end
@@ -62,10 +62,10 @@ module LaunchDarkly
             fallthrough: { variation: 0 },
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new(nil, nil,
             EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -78,10 +78,10 @@ module LaunchDarkly
             fallthrough: { variation: 0 },
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new(nil, nil,
             EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -95,10 +95,10 @@ module LaunchDarkly
             offVariation: 1,
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('badfeature'))
           e = EvaluatorBuilder.new(logger).with_unknown_flag('badfeature').build
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -113,11 +113,11 @@ module LaunchDarkly
               offVariation: 1,
               variations: ['a', 'b', 'c'],
             })
-            user = { key: 'x' }
+            context = LDContext.create({ key: 'x' })
             e = EvaluatorBuilder.new(logger).with_unknown_flag('badfeature').build
-            result1 = e.evaluate(flag, user)
+            result1 = e.evaluate(flag, context)
             expect(result1.detail.reason).to eq EvaluationReason::prerequisite_failed('badfeature')
-            result2 = e.evaluate(flag, user)
+            result2 = e.evaluate(flag, context)
             expect(result2.detail).to be result1.detail
           end
         end
@@ -140,13 +140,13 @@ module LaunchDarkly
             variations: ['d', 'e'],
             version: 2,
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
           expected_prereqs = [
             PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new(nil, nil, EvaluationReason::prerequisite_failed('feature2'))),
           ]
           e = EvaluatorBuilder.new(logger).with_flag(flag1).with_unknown_flag('feature2').build
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(expected_prereqs)
         end
@@ -170,13 +170,13 @@ module LaunchDarkly
             variations: ['d', 'e'],
             version: 2,
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
           expected_prereqs = [
             PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::off)),
           ]
           e = EvaluatorBuilder.new(logger).with_flag(flag1).build
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(expected_prereqs)
         end
@@ -198,13 +198,13 @@ module LaunchDarkly
             variations: ['d', 'e'],
             version: 2,
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
           expected_prereqs = [
             PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough)),
           ]
           e = EvaluatorBuilder.new(logger).with_flag(flag1).build
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(expected_prereqs)
         end
@@ -226,13 +226,13 @@ module LaunchDarkly
             variations: ['d', 'e'],
             version: 2,
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new('a', 0, EvaluationReason::fallthrough)
           expected_prereqs = [
             PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::fallthrough)),
           ]
           e = EvaluatorBuilder.new(logger).with_flag(flag1).build
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(expected_prereqs)
         end
@@ -249,9 +249,9 @@ module LaunchDarkly
               { variation: 2, clauses: [ { attribute: "key", op: "in", values: ["zzz"] } ] },
             ],
           })
-          user = { key: 'x' }
+          context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new('a', 0, EvaluationReason::fallthrough)
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -269,10 +269,10 @@ module LaunchDarkly
                 { variation: 2, clauses: [ { attribute: "key", op: "in", values: ["zzz"] } ] },
               ],
             })
-            user = { key: 'x' }
+            context = LDContext.create({ key: 'x' })
             detail = EvaluationDetail.new('a', 0, EvaluationReason::fallthrough)
-            result1 = basic_evaluator.evaluate(flag, user)
-            result2 = basic_evaluator.evaluate(flag, user)
+            result1 = basic_evaluator.evaluate(flag, context)
+            result2 = basic_evaluator.evaluate(flag, context)
             expect(result1.detail).to eq(detail)
             expect(result2.detail).to be(result1.detail)
           end
@@ -286,9 +286,9 @@ module LaunchDarkly
             offVariation: 1,
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'userkey' }
+          context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -301,9 +301,9 @@ module LaunchDarkly
             offVariation: 1,
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'userkey' }
+          context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -316,9 +316,9 @@ module LaunchDarkly
             offVariation: 1,
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'userkey' }
+          context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -331,14 +331,14 @@ module LaunchDarkly
             offVariation: 1,
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'userkey' }
+          context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
 
-        it "matches user from targets" do
+        it "matches context from targets" do
           flag = factory.flag({
             key: 'feature',
             on: true,
@@ -349,9 +349,9 @@ module LaunchDarkly
             offVariation: 1,
             variations: ['a', 'b', 'c'],
           })
-          user = { key: 'userkey' }
+          context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new('c', 2, EvaluationReason::target_match)
-          result = basic_evaluator.evaluate(flag, user)
+          result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -368,10 +368,10 @@ module LaunchDarkly
               offVariation: 1,
               variations: ['a', 'b', 'c'],
             })
-            user = { key: 'userkey' }
+            context = LDContext.create({ key: 'userkey' })
             detail = EvaluationDetail.new('c', 2, EvaluationReason::target_match)
-            result1 = basic_evaluator.evaluate(flag, user)
-            result2 = basic_evaluator.evaluate(flag, user)
+            result1 = basic_evaluator.evaluate(flag, context)
+            result2 = basic_evaluator.evaluate(flag, context)
             expect(result1.detail).to eq(detail)
             expect(result2.detail).to be(result1.detail)
           end
@@ -387,9 +387,9 @@ module LaunchDarkly
               variations: ['a', 'b', 'c'],
               version: 1,
             })
-            user = { key: 'x' }
+            context = LDContext.create({ key: 'x' })
             detail = EvaluationDetail.new('b', 1, EvaluationReason::fallthrough)
-            result = basic_evaluator.evaluate(flag, user)
+            result = basic_evaluator.evaluate(flag, context)
             expect(result.detail).to eq(detail)
             expect(result.prereq_evals).to eq(nil)
           end
@@ -404,10 +404,10 @@ module LaunchDarkly
                 variations: ['a', 'b', 'c'],
                 version: 1,
               })
-              user = { key: 'x' }
+              context = LDContext.create({ key: 'x' })
               detail = EvaluationDetail.new('b', 1, EvaluationReason::fallthrough)
-              result1 = basic_evaluator.evaluate(flag, user)
-              result2 = basic_evaluator.evaluate(flag, user)
+              result1 = basic_evaluator.evaluate(flag, context)
+              result2 = basic_evaluator.evaluate(flag, context)
               expect(result1.detail).to eq(detail)
               expect(result2.detail).to be(result1.detail)
             end
@@ -421,8 +421,8 @@ module LaunchDarkly
               offVariation: 1,
               variations: ['a', 'b', 'c'],
             })
-            user = { key: 'userkey' }
-            result = basic_evaluator.evaluate(flag, user)
+            context = LDContext.create({ key: 'userkey' })
+            result = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(true)
           end
@@ -435,8 +435,8 @@ module LaunchDarkly
               offVariation: 1,
               variations: ['a', 'b', 'c'],
             })
-            user = { key: 'userkey' }
-            result = basic_evaluator.evaluate(flag, user)
+            context = LDContext.create({ key: 'userkey' })
+            result = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)
           end
@@ -449,8 +449,8 @@ module LaunchDarkly
               offVariation: 1,
               variations: ['a', 'b', 'c'],
             })
-            user = { key: 'userkey' }
-            result = basic_evaluator.evaluate(flag, user)
+            context = LDContext.create({ key: 'userkey' })
+            result = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)
           end

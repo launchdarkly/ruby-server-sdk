@@ -120,18 +120,6 @@ module LaunchDarkly
     end
 
     #
-    # @param key [String] the feature flag key
-    # @param user [Hash] the user properties
-    # @param default [Boolean] (false) the value to use if the flag cannot be evaluated
-    # @return [Boolean] the flag value
-    # @deprecated Use {#variation} instead.
-    #
-    def toggle?(key, user, default = false)
-      @config.logger.warn { "[LDClient] toggle? is deprecated. Use variation instead" }
-      variation(key, user, default)
-    end
-
-    #
     # Creates a hash string that can be used by the JavaScript SDK to identify a user.
     # For more information, see [Secure mode](https://docs.launchdarkly.com/sdk/features/secure-mode#ruby).
     #
@@ -165,6 +153,8 @@ module LaunchDarkly
     end
 
     #
+    # TODO: TKTK
+    #
     # Determines the variation of a feature flag to present to a user.
     #
     # At a minimum, the user hash should contain a `:key`, which should be the unique
@@ -191,16 +181,18 @@ module LaunchDarkly
     #
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
-    # @param user [Hash] a hash containing parameters for the end user requesting the flag
+    # @param context [Hash, LDContext] a hash or LDContext instance describing the context requesting the flag
     # @param default the default value of the flag; this is used if there is an error
     #   condition making it impossible to find or evaluate the flag
     #
     # @return the variation to show the user, or the default value if there's an an error
     #
-    def variation(key, user, default)
-      evaluate_internal(key, user, default, false).value
+    def variation(key, context, default)
+      evaluate_internal(key, context, default, false).value
     end
 
+    #
+    # TODO: TKTK
     #
     # Determines the variation of a feature flag for a user, like {#variation}, but also
     # provides additional information about how this value was calculated.
@@ -218,14 +210,14 @@ module LaunchDarkly
     #
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
-    # @param user [Hash] a hash containing parameters for the end user requesting the flag
+    # @param context [Hash, LDContext] a hash or object describing the context requesting the flag,
     # @param default the default value of the flag; this is used if there is an error
     #   condition making it impossible to find or evaluate the flag
     #
     # @return [EvaluationDetail] an object describing the result
     #
-    def variation_detail(key, user, default)
-      evaluate_internal(key, user, default, true)
+    def variation_detail(key, context, default)
+      evaluate_internal(key, context, default, true)
     end
 
     #
@@ -284,25 +276,11 @@ module LaunchDarkly
     end
 
     #
-    # Returns all feature flag values for the given user.
-    #
-    # @deprecated Please use {#all_flags_state} instead. Current versions of the
-    #   client-side SDK will not generate analytics events correctly if you pass the
-    #   result of `all_flags`.
-    #
-    # @param user [Hash] The end user requesting the feature flags
-    # @return [Hash] a hash of feature flag keys to values
-    #
-    def all_flags(user)
-      all_flags_state(user).values_map
-    end
-
-    #
-    # Returns a {FeatureFlagsState} object that encapsulates the state of all feature flags for a given user,
+    # Returns a {FeatureFlagsState} object that encapsulates the state of all feature flags for a given context,
     # including the flag values and also metadata that can be used on the front end. This method does not
     # send analytics events back to LaunchDarkly.
     #
-    # @param user [Hash] The end user requesting the feature flags
+    # @param context [Hash, LDContext] a hash or object describing the context requesting the flags,
     # @param options [Hash] Optional parameters to control how the state is generated
     # @option options [Boolean] :client_side_only (false) True if only flags marked for use with the
     #   client-side SDK should be included in the state. By default, all flags are included.
@@ -314,7 +292,7 @@ module LaunchDarkly
     #   of the JSON data if you are passing the flag state to the front end.
     # @return [FeatureFlagsState] a {FeatureFlagsState} object which can be serialized to JSON
     #
-    def all_flags_state(user, options={})
+    def all_flags_state(context, options={})
       return FeatureFlagsState.new(false) if @config.offline?
 
       if !initialized?
@@ -326,8 +304,9 @@ module LaunchDarkly
         end
       end
 
-      unless user && !user[:key].nil?
-        @config.logger.error { "[LDClient] User and user key must be specified in all_flags_state" }
+      context = Impl::Context::make_context(context)
+      unless context.valid?
+        @config.logger.error { "[LDClient] Context was invalid for all_flags_state (#{context.error})" }
         return FeatureFlagsState.new(false)
       end
 
@@ -347,7 +326,7 @@ module LaunchDarkly
           next
         end
         begin
-          detail = @evaluator.evaluate(f, user).detail
+          detail = @evaluator.evaluate(f, context).detail
         rescue => exn
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
@@ -408,20 +387,22 @@ module LaunchDarkly
       end
     end
 
+    # @param context [Hash, LDContext]
     # @return [EvaluationDetail]
-    def evaluate_internal(key, user, default, with_reasons)
+    def evaluate_internal(key, context, default, with_reasons)
       if @config.offline?
         return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
       end
 
-      unless user
-        @config.logger.error { "[LDClient] Must specify user" }
+      if context.nil?
+        @config.logger.error { "[LDClient] Must specify context" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
         return detail
       end
 
-      if user[:key].nil?
-        @config.logger.warn { "[LDClient] Variation called with nil user key; returning default value" }
+      context = Impl::Context::make_context(context)
+      unless context.valid?
+        @config.logger.error { "[LDClient] Context was invalid for flag evaluation (#{context.error}); returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
         return detail
       end
@@ -432,7 +413,8 @@ module LaunchDarkly
         else
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
           detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
-          record_unknown_flag_eval(key, user, default, detail.reason, with_reasons)
+          # TODO: Address when working on u2c events
+          # record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
           return detail
         end
       end
@@ -442,27 +424,31 @@ module LaunchDarkly
       if feature.nil?
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_FLAG_NOT_FOUND, default)
-        record_unknown_flag_eval(key, user, default, detail.reason, with_reasons)
+        # TODO: Address when working on u2c events
+        # record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
         return detail
       end
 
       begin
-        res = @evaluator.evaluate(feature, user)
+        res = @evaluator.evaluate(feature, context)
         if !res.prereq_evals.nil?
           res.prereq_evals.each do |prereq_eval|
-            record_prereq_flag_eval(prereq_eval.prereq_flag, prereq_eval.prereq_of_flag, user, prereq_eval.detail, with_reasons)
+            # TODO: Address when working on u2c events
+            # record_prereq_flag_eval(prereq_eval.prereq_flag, prereq_eval.prereq_of_flag, context, prereq_eval.detail, with_reasons)
           end
         end
         detail = res.detail
         if detail.default_value?
           detail = EvaluationDetail.new(default, nil, detail.reason)
         end
-        record_flag_eval(feature, user, detail, default, with_reasons)
+        # TODO: Address when working on u2c events
+        # record_flag_eval(feature, context, detail, default, with_reasons)
         return detail
       rescue => exn
         Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
-        record_flag_eval_error(feature, user, default, detail.reason, with_reasons)
+        # TODO: Address when working on u2c events
+        # record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
         return detail
       end
     end

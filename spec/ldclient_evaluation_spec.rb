@@ -44,7 +44,7 @@ module LaunchDarkly
 
       it "can evaluate a flag that references a segment" do
         td = Integrations::TestData.data_source
-        segment = SegmentBuilder.new("segmentkey").included(basic_user[:key]).build
+        segment = SegmentBuilder.new("segmentkey").included(basic_user.key).build
         td.use_preconfigured_segment(segment)
         td.use_preconfigured_flag(
           FlagBuilder.new("flagkey").on(true).variations(true, false).rule(
@@ -66,7 +66,7 @@ module LaunchDarkly
           ).build)
 
         segstore = MockBigSegmentStore.new
-        segstore.setup_segment_for_user(basic_user[:key], segment, true)
+        segstore.setup_segment_for_user(basic_user.key, segment, true)
         big_seg_config = BigSegmentsConfig.new(store: segstore)
 
         with_client(test_config(data_source: td, big_segments: big_seg_config)) do |client|
@@ -132,7 +132,7 @@ module LaunchDarkly
           ).build)
 
         segstore = MockBigSegmentStore.new
-        segstore.setup_segment_for_user(basic_user[:key], segment, true)
+        segstore.setup_segment_for_user(basic_user.key, segment, true)
         segstore.setup_metadata(Time.now)
         big_seg_config = BigSegmentsConfig.new(store: segstore)
 
@@ -140,45 +140,6 @@ module LaunchDarkly
           result = client.variation_detail("flagkey", basic_user, false)
           expect(result.value).to be true
           expect(result.reason.big_segments_status).to eq(BigSegmentsStatus::HEALTHY)
-        end
-      end
-    end
-
-    describe "all_flags" do
-      let(:flag1) { { key: "key1", offVariation: 0, variations: [ 'value1' ] } }
-      let(:flag2) { { key: "key2", offVariation: 0, variations: [ 'value2' ] } }
-      let(:test_data) {
-        td = Integrations::TestData.data_source
-        td.use_preconfigured_flag(flag1)
-        td.use_preconfigured_flag(flag2)
-        td
-      }
-
-      it "returns flag values" do
-        with_client(test_config(data_source: test_data)) do |client|
-          result = client.all_flags({ key: 'userkey' })
-          expect(result).to eq({ 'key1' => 'value1', 'key2' => 'value2' })
-        end
-      end
-
-      it "returns empty map for nil user" do
-        with_client(test_config(data_source: test_data)) do |client|
-          result = client.all_flags(nil)
-          expect(result).to eq({})
-        end
-      end
-
-      it "returns empty map for nil user key" do
-        with_client(test_config(data_source: test_data)) do |client|
-          result = client.all_flags({})
-          expect(result).to eq({})
-        end
-      end
-
-      it "returns empty map if offline" do
-        with_client(test_config(data_source: test_data, offline: true)) do |offline_client|
-          result = offline_client.all_flags(nil)
-          expect(result).to eq({})
         end
       end
     end

@@ -57,16 +57,11 @@ module LaunchDarkly
       # default value. Error conditions produce a result with a nil value and an error reason, not an exception.
       #
       # @param flag [Object] the flag
-      # @param user [Object] the user properties
+      # @param context [LDContext] the context properties
       # @return [EvalResult] the evaluation result
-      def evaluate(flag, user)
+      def evaluate(flag, context)
         result = EvalResult.new
-        if user.nil? || user[:key].nil?
-          result.detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED)
-          return result
-        end
-
-        detail = eval_internal(flag, user, result)
+        detail = eval_internal(flag, context, result)
         if !result.big_segments_status.nil?
           # If big_segments_status is non-nil at the end of the evaluation, it means a query was done at
           # some point and we will want to include the status in the evaluation reason.
@@ -86,18 +81,18 @@ module LaunchDarkly
 
       private
 
-      def eval_internal(flag, user, state)
+      def eval_internal(flag, context, state)
         if !flag[:on]
           return EvaluatorHelpers.off_result(flag)
         end
 
-        prereq_failure_result = check_prerequisites(flag, user, state)
+        prereq_failure_result = check_prerequisites(flag, context, state)
         return prereq_failure_result if !prereq_failure_result.nil?
 
-        # Check user target matches
+        # Check context target matches
         (flag[:targets] || []).each do |target|
           (target[:values] || []).each do |value|
-            if value == user[:key]
+            if value == context.key
               return EvaluatorHelpers.target_match_result(target, flag)
             end
           end
@@ -107,24 +102,24 @@ module LaunchDarkly
         rules = flag[:rules] || []
         rules.each_index do |i|
           rule = rules[i]
-          if rule_match_user(rule, user, state)
+          if rule_match_context(rule, context, state)
             reason = rule[:_reason]  # try to use cached reason for this rule
             reason = EvaluationReason::rule_match(i, rule[:id]) if reason.nil?
-            return get_value_for_variation_or_rollout(flag, rule, user, reason,
+            return get_value_for_variation_or_rollout(flag, rule, context, reason,
               EvaluatorHelpers.rule_precomputed_results(rule))
           end
         end
 
         # Check the fallthrough rule
         if !flag[:fallthrough].nil?
-          return get_value_for_variation_or_rollout(flag, flag[:fallthrough], user, EvaluationReason::fallthrough,
+          return get_value_for_variation_or_rollout(flag, flag[:fallthrough], context, EvaluationReason::fallthrough,
             EvaluatorHelpers.fallthrough_precomputed_results(flag))
         end
 
         return EvaluationDetail.new(nil, nil, EvaluationReason::fallthrough)
       end
 
-      def check_prerequisites(flag, user, state)
+      def check_prerequisites(flag, context, state)
         (flag[:prerequisites] || []).each do |prerequisite|
           prereq_ok = true
           prereq_key = prerequisite[:key]
@@ -135,7 +130,7 @@ module LaunchDarkly
             prereq_ok = false
           else
             begin
-              prereq_res = eval_internal(prereq_flag, user, state)
+              prereq_res = eval_internal(prereq_flag, context, state)
               # Note that if the prerequisite flag is off, we don't consider it a match no matter what its
               # off variation was. But we still need to evaluate it in order to generate an event.
               if !prereq_flag[:on] || prereq_res.variation_index != prerequisite[:variation]
@@ -156,32 +151,32 @@ module LaunchDarkly
         nil
       end
 
-      def rule_match_user(rule, user, state)
+      def rule_match_context(rule, context, state)
         return false if !rule[:clauses]
 
         (rule[:clauses] || []).each do |clause|
-          return false if !clause_match_user(clause, user, state)
+          return false if !clause_match_context(clause, context, state)
         end
 
         return true
       end
 
-      def clause_match_user(clause, user, state)
-        # In the case of a segment match operator, we check if the user is in any of the segments,
+      def clause_match_context(clause, context, state)
+        # In the case of a segment match operator, we check if the context is in any of the segments,
         # and possibly negate
         if clause[:op].to_sym == :segmentMatch
           result = (clause[:values] || []).any? { |v|
             segment = @get_segment.call(v)
-            !segment.nil? && segment_match_user(segment, user, state)
+            !segment.nil? && segment_match_context(segment, context, state)
           }
           clause[:negate] ? !result : result
         else
-          clause_match_user_no_segments(clause, user)
+          clause_match_context_no_segments(clause, context)
         end
       end
 
-      def clause_match_user_no_segments(clause, user)
-        user_val = EvaluatorOperators.user_value(user, clause[:attribute])
+      def clause_match_context_no_segments(clause, context)
+        user_val = context.get_value(clause[:attribute])
         return false if user_val.nil?
 
         op = clause[:op].to_sym
@@ -194,12 +189,12 @@ module LaunchDarkly
         clause[:negate] ? !result : result
       end
 
-      def segment_match_user(segment, user, state)
-        return false unless user[:key]
-        segment[:unbounded] ? big_segment_match_user(segment, user, state) : simple_segment_match_user(segment, user, true)
+      def segment_match_context(segment, context, state)
+        return false unless context.key
+        segment[:unbounded] ? big_segment_match_context(segment, context, state) : simple_segment_match_context(segment, context, true)
       end
 
-      def big_segment_match_user(segment, user, state)
+      def big_segment_match_context(segment, context, state)
         if !segment[:generation]
           # Big segment queries can only be done if the generation is known. If it's unset,
           # that probably means the data store was populated by an older SDK that doesn't know
@@ -209,7 +204,7 @@ module LaunchDarkly
           return false
         end
         if !state.big_segments_status
-          result = @get_big_segments_membership.nil? ? nil : @get_big_segments_membership.call(user[:key])
+          result = @get_big_segments_membership.nil? ? nil : @get_big_segments_membership.call(context.key)
           if result
             state.big_segments_membership = result.membership
             state.big_segments_status = result.status
@@ -222,40 +217,40 @@ module LaunchDarkly
         membership = state.big_segments_membership
         included = membership.nil? ? nil : membership[segment_ref]
         return included if !included.nil?
-        simple_segment_match_user(segment, user, false)
+        simple_segment_match_context(segment, context, false)
       end
 
-      def simple_segment_match_user(segment, user, use_includes_and_excludes)
+      def simple_segment_match_context(segment, context, use_includes_and_excludes)
         if use_includes_and_excludes
-          return true if segment[:included].include?(user[:key])
-          return false if segment[:excluded].include?(user[:key])
+          return true if segment[:included].include?(context.key)
+          return false if segment[:excluded].include?(context.key)
         end
 
         (segment[:rules] || []).each do |r|
-          return true if segment_rule_match_user(r, user, segment[:key], segment[:salt])
+          return true if segment_rule_match_context(r, context, segment[:key], segment[:salt])
         end
 
         return false
       end
 
-      def segment_rule_match_user(rule, user, segment_key, salt)
+      def segment_rule_match_context(rule, context, segment_key, salt)
         (rule[:clauses] || []).each do |c|
-          return false unless clause_match_user_no_segments(c, user)
+          return false unless clause_match_context_no_segments(c, context)
         end
 
         # If the weight is absent, this rule matches
         return true if !rule[:weight]
 
         # All of the clauses are met. See if the user buckets in
-        bucket = EvaluatorBucketing.bucket_user(user, segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt, nil)
+        bucket = EvaluatorBucketing.bucket_context(context, segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt, nil)
         weight = rule[:weight].to_f / 100000.0
         return bucket < weight
       end
 
       private
 
-      def get_value_for_variation_or_rollout(flag, vr, user, reason, precomputed_results)
-        index, in_experiment = EvaluatorBucketing.variation_index_for_user(flag, vr, user)
+      def get_value_for_variation_or_rollout(flag, vr, context, reason, precomputed_results)
+        index, in_experiment = EvaluatorBucketing.variation_index_for_context(flag, vr, context)
         if index.nil?
           @logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": variation/rollout object with no variation or rollout")
           return Evaluator.error_result(EvaluationReason::ERROR_MALFORMED_FLAG)

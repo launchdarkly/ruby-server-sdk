@@ -43,6 +43,19 @@ describe LaunchDarkly::LDContext do
         expect(subject.create({}).valid?).to be_falsey
       end
 
+      it "anonymous is required to be a boolean or nil" do
+        expect(subject.create({ key: "" }).valid?).to be_truthy
+        expect(subject.create({ key: "", anonymous: true }).valid?).to be_truthy
+        expect(subject.create({ key: "", anonymous: false }).valid?).to be_truthy
+        expect(subject.create({ key: "", anonymous: 0 }).valid?).to be_falsey
+      end
+
+      it "name is required to be a string or nil" do
+        expect(subject.create({ key: "" }).valid?).to be_truthy
+        expect(subject.create({ key: "", name: "My Name" }).valid?).to be_truthy
+        expect(subject.create({ key: "", name: 0 }).valid?).to be_falsey
+      end
+
       it "requires privateAttributeNames to be an array" do
         context = {
           key: "user-key",
@@ -91,6 +104,19 @@ describe LaunchDarkly::LDContext do
         expect(subject.create({ kind: "user", key: "" }).valid?).to be_falsey
         expect(subject.create({ kind: "user", key: nil }).valid?).to be_falsey
         expect(subject.create({ kind: "user" }).valid?).to be_falsey
+      end
+
+      it "anonymous is required to be a boolean or nil" do
+        expect(subject.create({ key: "key", kind: "user" }).valid?).to be_truthy
+        expect(subject.create({ key: "key", kind: "user", anonymous: true }).valid?).to be_truthy
+        expect(subject.create({ key: "key", kind: "user", anonymous: false }).valid?).to be_truthy
+        expect(subject.create({ key: "key", kind: "user", anonymous: 0 }).valid?).to be_falsey
+      end
+
+      it "name is required to be a string or nil" do
+        expect(subject.create({ key: "key", kind: "user" }).valid?).to be_truthy
+        expect(subject.create({ key: "key", kind: "user", name: "My Name" }).valid?).to be_truthy
+        expect(subject.create({ key: "key", kind: "user", name: 0 }).valid?).to be_falsey
       end
 
       it "require privateAttributes to be an array" do
