@@ -233,7 +233,6 @@ module LaunchDarkly
       end
 
       def segment_match_context(segment, context, state)
-        return false unless context.key
         segment[:unbounded] ? big_segment_match_context(segment, context, state) : simple_segment_match_context(segment, context, true)
       end
 
@@ -265,8 +264,37 @@ module LaunchDarkly
 
       def simple_segment_match_context(segment, context, use_includes_and_excludes)
         if use_includes_and_excludes
-          return true if segment[:included].include?(context.key)
-          return false if segment[:excluded].include?(context.key)
+          if EvaluatorHelpers.context_key_in_target_list(context, nil, segment[:included])
+            return true
+          end
+
+          # @type [Enumerable<Hash>]
+          included_contexts = segment[:includedContexts]
+          if included_contexts.is_a?(Enumerable)
+            included_contexts.each do |ctx|
+              return false unless ctx.is_a? Hash
+
+              if EvaluatorHelpers.context_key_in_target_list(context, ctx[:contextKind], ctx[:values])
+                return true
+              end
+            end
+          end
+
+          if EvaluatorHelpers.context_key_in_target_list(context, nil, segment[:excluded])
+            return false
+          end
+
+          # @type [Enumerable<Hash>]
+          excluded_contexts = segment[:excludedContexts]
+          if excluded_contexts.is_a?(Enumerable)
+            excluded_contexts.each do |ctx|
+              return false unless ctx.is_a? Hash
+
+              if EvaluatorHelpers.context_key_in_target_list(context, ctx[:contextKind], ctx[:values])
+                return false
+              end
+            end
+          end
         end
 
         (segment[:rules] || []).each do |r|

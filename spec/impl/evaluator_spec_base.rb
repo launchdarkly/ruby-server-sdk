@@ -112,6 +112,7 @@ module LaunchDarkly
           op: :in,
           values: [ user.get_value(attr) ],
           negate: false,
+          contextKind: user.individual_context(0).kind,
         }
       end
 
@@ -125,11 +126,12 @@ module LaunchDarkly
         }
       end
 
-      def make_segment_match_clause(segment)
+      def make_segment_match_clause(segment, kind = nil)
         {
           op: :segmentMatch,
           values: [ segment[:key] ],
           negate: false,
+          contextKind: kind || LaunchDarkly::LDContext::KIND_DEFAULT,
         }
       end
     end

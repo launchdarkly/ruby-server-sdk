@@ -5,11 +5,11 @@ module LaunchDarkly
   module Impl
     evaluator_tests_with_and_without_preprocessing "Evaluator (segments)" do |desc, factory|
       describe "#{desc} - evaluate", :evaluator_spec_base => true do
-        def test_segment_match(factory, segment)
-          clause = make_segment_match_clause(segment)
+        def test_segment_match(factory, segment, context)
+          clause = make_segment_match_clause(segment, context.individual_context(0).kind)
           flag = factory.boolean_flag_with_clauses([clause])
           e = EvaluatorBuilder.new(logger).with_segment(segment).build
-          e.evaluate(flag, user).detail.value
+          e.evaluate(flag, context).detail.value
         end
 
         it "retrieves segment from segment store for segmentMatch operator" do
@@ -34,20 +34,50 @@ module LaunchDarkly
         it 'explicitly includes user' do
           segment = make_segment('segkey')
           segment[:included] = [ user.key ]
-          expect(test_segment_match(factory, segment)).to be true
+          expect(test_segment_match(factory, segment, user)).to be true
+        end
+
+        it 'explicitly includes a specific context kind' do
+          org_context = LDContext::create({ key: "orgkey", kind: "org" })
+          device_context = LDContext::create({ key: "devicekey", kind: "device" })
+          multi_context = LDContext::create_multi([org_context, device_context])
+
+          segment = make_segment('segkey')
+          segment[:includedContexts] = [{ contextKind: "org", values: ["orgkey"] }]
+
+          expect(test_segment_match(factory, segment, org_context)).to be true
+          expect(test_segment_match(factory, segment, device_context)).to be false
+          expect(test_segment_match(factory, segment, multi_context)).to be true
         end
 
         it 'explicitly excludes user' do
           segment = make_segment('segkey')
           segment[:excluded] = [ user.key ]
-          expect(test_segment_match(factory, segment)).to be false
+          expect(test_segment_match(factory, segment, user)).to be false
+        end
+
+        it 'explicitly excludes a specific context kind' do
+          org_context = LDContext::create({ key: "orgkey", kind: "org" })
+          device_context = LDContext::create({ key: "devicekey", kind: "device" })
+          multi_context = LDContext::create_multi([org_context, device_context])
+
+          segment = make_segment('segkey')
+          segment[:excludedContexts] = [{ contextKind: "org", values: ["orgkey"] }]
+
+          org_clause = make_user_matching_clause(org_context, :key)
+          device_clause = make_user_matching_clause(device_context, :key)
+          segment[:rules] = [ { clauses: [ org_clause ] }, { clauses: [ device_clause ] } ]
+
+          expect(test_segment_match(factory, segment, org_context)).to be false
+          expect(test_segment_match(factory, segment, device_context)).to be true
+          expect(test_segment_match(factory, segment, multi_context)).to be false
         end
 
         it 'both includes and excludes user; include takes priority' do
           segment = make_segment('segkey')
           segment[:included] = [ user.key ]
           segment[:excluded] = [ user.key ]
-          expect(test_segment_match(factory, segment)).to be true
+          expect(test_segment_match(factory, segment, user)).to be true
         end
 
         it 'matches user by rule when weight is absent' do
@@ -57,7 +87,7 @@ module LaunchDarkly
           }
           segment = make_segment('segkey')
           segment[:rules] = [ segRule ]
-          expect(test_segment_match(factory, segment)).to be true
+          expect(test_segment_match(factory, segment, user)).to be true
         end
 
         it 'matches user by rule when weight is nil' do
@@ -68,7 +98,7 @@ module LaunchDarkly
           }
           segment = make_segment('segkey')
           segment[:rules] = [ segRule ]
-          expect(test_segment_match(factory, segment)).to be true
+          expect(test_segment_match(factory, segment, user)).to be true
         end
 
         it 'matches user with full rollout' do
@@ -79,7 +109,7 @@ module LaunchDarkly
           }
           segment = make_segment('segkey')
           segment[:rules] = [ segRule ]
-          expect(test_segment_match(factory, segment)).to be true
+          expect(test_segment_match(factory, segment, user)).to be true
         end
 
         it "doesn't match user with zero rollout" do
@@ -90,7 +120,7 @@ module LaunchDarkly
           }
           segment = make_segment('segkey')
           segment[:rules] = [ segRule ]
-          expect(test_segment_match(factory, segment)).to be false
+          expect(test_segment_match(factory, segment, user)).to be false
         end
 
         it "matches user with multiple clauses" do
@@ -101,7 +131,7 @@ module LaunchDarkly
           }
           segment = make_segment('segkey')
           segment[:rules] = [ segRule ]
-          expect(test_segment_match(factory, segment)).to be true
+          expect(test_segment_match(factory, segment, user)).to be true
         end
 
         it "doesn't match user with multiple clauses if a clause doesn't match" do
@@ -113,7 +143,7 @@ module LaunchDarkly
           }
           segment = make_segment('segkey')
           segment[:rules] = [ segRule ]
-          expect(test_segment_match(factory, segment)).to be false
+          expect(test_segment_match(factory, segment, user)).to be false
         end
       end
     end
