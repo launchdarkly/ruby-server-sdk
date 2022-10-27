@@ -11,7 +11,6 @@ TEST_HARNESS_PARAMS := $(TEST_HARNESS_PARAMS) \
 	-skip 'evaluation/bucketing/selection of context' \
 	-skip 'evaluation/parameterized/attribute references' \
 	-skip 'evaluation/parameterized/bad attribute reference errors' \
-	-skip 'evaluation/parameterized/clause kind matching' \
 	-skip 'evaluation/parameterized/prerequisites' \
 	-skip 'evaluation/parameterized/segment match/included list is specific to user kind' \
 	-skip 'evaluation/parameterized/segment match/includedContexts' \

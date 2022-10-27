@@ -106,6 +106,13 @@ describe LaunchDarkly::LDContext do
         expect(subject.create({ kind: "user" }).valid?).to be_falsey
       end
 
+      it "does not allow reserved names or empty values for kind" do
+        expect(subject.create({ kind: true, key: "key" }).valid?).to be_falsey
+        expect(subject.create({ kind: "", key: "key" }).valid?).to be_falsey
+        expect(subject.create({ kind: "kind", key: "key" }).valid?).to be_falsey
+        expect(subject.create({ kind: "multi", key: "key" }).valid?).to be_falsey
+      end
+
       it "anonymous is required to be a boolean or nil" do
         expect(subject.create({ key: "key", kind: "user" }).valid?).to be_truthy
         expect(subject.create({ key: "key", kind: "user", anonymous: true }).valid?).to be_truthy
@@ -157,6 +164,16 @@ describe LaunchDarkly::LDContext do
         expect(multi_context.valid?).to be_truthy
       end
 
+      it "can be created from a hash" do
+        data = {kind: "multi", user: {key: "user-key"}, org: {key: "org-key"}}
+        multi_context = subject.create(data)
+
+        expect(multi_context).to be_a(LaunchDarkly::LDContext)
+        expect(multi_context.key).to be_nil
+        expect(multi_context.kind).to eq(LaunchDarkly::LDContext::KIND_MULTI)
+        expect(multi_context.valid?).to be_truthy
+      end
+
       it "will return the single kind context if only one is provided" do
         user_context = subject.create({ key: "user-key" })
         multi_context = subject.create_multi([user_context])
@@ -189,6 +206,67 @@ describe LaunchDarkly::LDContext do
         expect(invalid_context.valid?).to be_falsey
         expect(multi_context.valid?).to be_falsey
       end
+    end
+  end
+
+  describe "context counts" do
+    it "invalid contexts have a size of 0" do
+      context = subject.create({})
+
+      expect(context.valid?).to be_falsey
+      expect(context.individual_context_count).to eq(0)
+    end
+
+    it "individual contexts have a size of 1" do
+      context = subject.create({ kind: "user", key: "user-key" })
+      expect(context.individual_context_count).to eq(1)
+    end
+
+    it "multi-kind contexts have a size equal to the single-kind contexts" do
+      user_context = subject.create({ key: "user-key", kind: "user" })
+      org_context = subject.create({ key: "org-key", kind: "org" })
+      multi_context = subject.create_multi([user_context, org_context])
+
+      expect(multi_context.individual_context_count).to eq(2)
+    end
+  end
+
+  describe "retrieving specific contexts" do
+    it "invalid contexts always return nil" do
+      context = subject.create({kind: "user"})
+
+      expect(context.valid?).to be_falsey
+      expect(context.individual_context(-1)).to be_nil
+      expect(context.individual_context(0)).to be_nil
+      expect(context.individual_context(1)).to be_nil
+
+      expect(context.individual_context("user")).to be_nil
+    end
+
+    it "single contexts can retrieve themselves" do
+      context = subject.create({key: "user-key", kind: "user"})
+
+      expect(context.valid?).to be_truthy
+      expect(context.individual_context(-1)).to be_nil
+      expect(context.individual_context(0)).to eq(context)
+      expect(context.individual_context(1)).to be_nil
+
+      expect(context.individual_context("user")).to eq(context)
+      expect(context.individual_context("org")).to be_nil
+    end
+
+    it "multi-kind contexts can return nested contexts" do
+      user_context = subject.create({ key: "user-key", kind: "user" })
+      org_context = subject.create({ key: "org-key", kind: "org" })
+      multi_context = subject.create_multi([user_context, org_context])
+
+      expect(multi_context.valid?).to be_truthy
+      expect(multi_context.individual_context(-1)).to be_nil
+      expect(multi_context.individual_context(0)).to eq(user_context)
+      expect(multi_context.individual_context(1)).to eq(org_context)
+
+      expect(multi_context.individual_context("user")).to eq(user_context)
+      expect(multi_context.individual_context("org")).to eq(org_context)
     end
   end
 

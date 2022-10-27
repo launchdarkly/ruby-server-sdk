@@ -19,12 +19,12 @@ module LaunchDarkly
   # {LDContext#error}
   class LDContext
     KIND_DEFAULT = "user"
-    private_constant :KIND_DEFAULT
+    KIND_MULTI = "multi"
 
-    # @return [String] Returns the key for this context
+    # @return [String, nil] Returns the key for this context
     attr_reader :key
 
-    # @return [String] Returns the kind for this context
+    # @return [String, nil] Returns the kind for this context
     attr_reader :kind
 
     # @return [String, nil] Returns the error associated with this LDContext if invalid
@@ -32,8 +32,8 @@ module LaunchDarkly
 
     #
     # @private
-    # @param key [String]
-    # @param kind [String]
+    # @param key [String, nil]
+    # @param kind [String, nil]
     # @param name [String, nil]
     # @param anonymous [Boolean, nil]
     # @param secondary [String, nil]
@@ -78,12 +78,9 @@ module LaunchDarkly
     # For a single-kind context, the attribute name can be any custom attribute.
     # It can also be one of the built-in ones like "kind", "key", or "name".
     #
-    # TODO: Update this paragraph once we implement these methods in ruby
-    #
     # For a multi-kind context, the only supported attribute name is "kind".
-    # Use individual_context_by_index(), individual_context_by_name(), or
-    # get_all_individual_contexts() to inspect a Context for a particular kind
-    # and then get its attributes.
+    # Use {#individual_context} to inspect a Context for a particular kind and
+    # then get its attributes.
     #
     # This method does not support complex expressions for getting individual
     # values out of JSON objects or arrays, such as "/address/street". Use
@@ -113,12 +110,9 @@ module LaunchDarkly
     # slash-delimited path using a JSON-Pointer-like syntax. See {Reference}
     # for more details.
     #
-    # TODO: Update this paragraph once we implement these methods in ruby
-    #
     # For a multi-kind context, the only supported attribute name is "kind".
-    # Use individual_context_by_index(), individual_context_by_name(), or
-    # get_all_individual_contexts() to inspect a Context for a particular kind
-    # and then get its attributes.
+    # Use {#individual_context} to inspect a Context for a particular kind and
+    # then get its attributes.
     #
     # If the value is found, the return value is the attribute value;
     # otherwise, it is nil.
@@ -132,6 +126,7 @@ module LaunchDarkly
       return nil unless reference.error.nil?
 
       first_component = reference.component(0)
+      return nil if first_component.nil?
 
       if multi_kind?
         if reference.depth == 1 && first_component == :kind
@@ -155,6 +150,69 @@ module LaunchDarkly
       end
 
       value
+    end
+
+    #
+    # Returns the number of context kinds in this context.
+    #
+    # For a valid individual context, this returns 1. For a multi-context, it
+    # returns the number of context kinds. For an invalid context, it returns
+    # zero.
+    #
+    # @return [Integer] the number of context kinds
+    #
+    def individual_context_count
+      return 0 unless valid?
+      return 1 if @contexts.nil?
+      @contexts.count
+    end
+
+    #
+    # Returns the single-kind LDContext corresponding to one of the kinds in
+    # this context.
+    #
+    # The `kind` parameter can be either a number representing a zero-based
+    # index, or a string representing a context kind.
+    #
+    # If this method is called on a single-kind LDContext, then the only
+    # allowable value for `kind` is either zero or the same value as {#kind},
+    # and the return value on success is the same LDContext.
+    #
+    # If the method is called on a multi-context, and `kind` is a number, it
+    # must be a non-negative index that is less than the number of kinds (that
+    # is, less than the return value of {#individual_context_count}, and the
+    # return value on success is one of the individual LDContexts within. Or,
+    # if `kind` is a string, it must match the context kind of one of the
+    # individual contexts.
+    #
+    # If there is no context corresponding to `kind`, the method returns nil.
+    #
+    # @param kind [Integer, String] the index or string value of a context kind
+    # @return [LDContext, nil] the context corresponding to that index or kind,
+    #   or null if none.
+    #
+    def individual_context(kind)
+      return nil unless valid?
+
+      if kind.is_a?(Integer)
+        unless multi_kind?
+          return kind == 0 ? self : nil
+        end
+
+        return kind >= 0 && kind < @contexts.count ? @contexts[kind] : nil
+      end
+
+      return nil unless kind.is_a?(String)
+
+      unless multi_kind?
+        return self.kind == kind ? self : nil
+      end
+
+      @contexts.each do |context|
+        return context if context.kind == kind
+      end
+
+      nil
     end
 
     #
@@ -209,11 +267,130 @@ module LaunchDarkly
     #
     def self.create(data)
       return create_invalid_context("Cannot create an LDContext. Provided data is not a hash.") unless data.is_a?(Hash)
-      return create_context_from_legacy_data(data) unless data.has_key?(:kind)
+      return create_legacy_context(data) unless data.has_key?(:kind)
 
       kind = data[:kind]
+      if kind == KIND_MULTI
+        contexts = []
+        data.each do |key, value|
+          next if key == :kind
+          contexts << create_single_context(value, key.to_s)
+        end
+
+        return create_multi(contexts)
+      end
+
+      create_single_context(data, kind)
+    end
+
+    #
+    # Create a multi-kind context from the array of LDContexts provided.
+    #
+    # A multi-kind context is comprised of two or more single kind contexts.
+    # You cannot include a multi-kind context instead another multi-kind
+    # context.
+    #
+    # Additionally, the kind of each single-kind context must be unique. For
+    # instance, you cannot create a multi-kind context that includes two user
+    # kind contexts.
+    #
+    # If you attempt to create a multi-kind context from one single-kind
+    # context, this method will return the single-kind context instead of a new
+    # multi-kind context wrapping that one single-kind.
+    #
+    # @param contexts [Array<LDContext>]
+    # @return [LDContext]
+    #
+    def self.create_multi(contexts)
+      return create_invalid_context("Multi-kind context requires an array of LDContexts") unless contexts.is_a?(Array)
+      return create_invalid_context("Multi-kind context requires at least one context") if contexts.empty?
+
+      kinds = Set.new
+      contexts.each do |context|
+        if !context.is_a?(LDContext)
+          return create_invalid_context("Provided context is not an instance of LDContext")
+        elsif !context.valid?
+          return create_invalid_context("Provided context #{context.key} is invalid")
+        elsif context.multi_kind?
+          return create_invalid_context("Provided context #{context.key} is a multi-kind context")
+        elsif kinds.include? context.kind
+          return create_invalid_context("Kind #{context.kind} cannot occur twice in the same multi-kind context")
+        end
+
+        kinds.add(context.kind)
+      end
+
+      return contexts[0] if contexts.length == 1
+
+      new(nil, "multi", nil, false, nil, nil, nil, nil, contexts)
+    end
+
+    #
+    # @param error [String]
+    # @return [LDContext]
+    #
+    private_class_method def self.create_invalid_context(error)
+      return new(nil, nil, nil, false, nil, nil, nil, error)
+    end
+
+    #
+    # @param data [Hash]
+    # @return [LDContext]
+    #
+    private_class_method def self.create_legacy_context(data)
+      key = data[:key]
+
+      # Legacy users are allowed to have "" as a key but they cannot have nil as a key.
+      return create_invalid_context("The key for the context was not valid") if key.nil?
+
+      name = data[:name]
+      unless LaunchDarkly::Impl::Context.validate_name(name)
+        return create_invalid_context("The name value was set to a non-string value.")
+      end
+
+      anonymous = data[:anonymous]
+      unless LaunchDarkly::Impl::Context.validate_anonymous(anonymous)
+        return create_invalid_context("The anonymous value was set to a non-boolean value.")
+      end
+
+      custom = data[:custom]
+      unless custom.nil? || custom.is_a?(Hash)
+        return create_invalid_context("The custom value was set to a non-hash value.")
+      end
+
+      # We only need to create an attribute hash if one of these keys exist.
+      # Everything else is stored in dedicated instance variables.
+      attributes = custom.clone
+      data.each do |k, v|
+        case k
+        when :ip, :email, :avatar, :firstName, :lastName, :country
+          attributes ||= {}
+          attributes[k] = v.clone
+        else
+          next
+        end
+      end
+
+      private_attributes = data[:privateAttributeNames]
+      if private_attributes && !private_attributes.is_a?(Array)
+        return create_invalid_context("The provided private attributes are not an array")
+      end
+
+      return new(key.to_s, KIND_DEFAULT, name, anonymous, data[:secondary], attributes, private_attributes)
+    end
+
+    #
+    # @param data [Hash]
+    # @param kind [String]
+    # @return [LaunchDarkly::LDContext]
+    #
+    private_class_method def self.create_single_context(data, kind)
+      unless data.is_a?(Hash)
+        return create_invalid_context("The provided data was not a hash")
+      end
+
       unless LaunchDarkly::Impl::Context.validate_kind(kind)
-        create_invalid_context("The kind (#{kind || 'nil'}) was not valid for the provided context.")
+        return create_invalid_context("The kind (#{kind || 'nil'}) was not valid for the provided context.")
       end
 
       key = data[:key]
@@ -254,102 +431,6 @@ module LaunchDarkly
       end
 
       new(key.to_s, kind, name, anonymous, meta[:secondary], attributes, private_attributes)
-    end
-
-    #
-    # Create a multi-kind context from the array of LDContexts provided.
-    #
-    # A multi-kind context is comprised of two or more single kind contexts.
-    # You cannot include a multi-kind context instead another multi-kind
-    # context.
-    #
-    # Additionally, the kind of each single-kind context must be unique. For
-    # instance, you cannot create a multi-kind context that includes two user
-    # kind contexts.
-    #
-    # If you attempt to create a multi-kind context from one single-kind
-    # context, this method will return the single-kind context instead of a new
-    # multi-kind context wrapping that one single-kind.
-    #
-    # @param contexts [Array<String>]
-    # @return LDContext
-    #
-    def self.create_multi(contexts)
-      return create_invalid_context("Multi-kind context requires an array of LDContexts") unless contexts.is_a?(Array)
-      return create_invalid_context("Multi-kind context requires at least one context") if contexts.empty?
-
-      kinds = Set.new
-      contexts.each do |context|
-        if !context.is_a?(LDContext)
-          return create_invalid_context("Provided context is not an instance of LDContext")
-        elsif !context.valid?
-          return create_invalid_context("Provided context #{context.key} is invalid")
-        elsif context.multi_kind?
-          return create_invalid_context("Provided context #{context.key} is a multi-kind context")
-        elsif kinds.include? context.kind
-          return create_invalid_context("Kind #{context.kind} cannot occur twice in the same multi-kind context")
-        end
-
-        kinds.add(context.kind)
-      end
-
-      return contexts[0] if contexts.length == 1
-
-      new(nil, "multi", nil, false, nil, nil, nil, nil, contexts)
-    end
-
-    #
-    # @param error [String]
-    # @return LDContext
-    #
-    private_class_method def self.create_invalid_context(error)
-      return new(nil, nil, nil, false, nil, nil, nil, "Cannot create an LDContext. Provided data is not a hash.")
-    end
-
-    #
-    # @param data [Hash]
-    # @return LDContext
-    #
-    private_class_method def self.create_context_from_legacy_data(data)
-      key = data[:key]
-
-      # Legacy users are allowed to have "" as a key but they cannot have nil as a key.
-      return create_invalid_context("The key for the context was not valid") if key.nil?
-
-      name = data[:name]
-      unless LaunchDarkly::Impl::Context.validate_name(name)
-        return create_invalid_context("The name value was set to a non-string value.")
-      end
-
-      anonymous = data[:anonymous]
-      unless LaunchDarkly::Impl::Context.validate_anonymous(anonymous)
-        return create_invalid_context("The anonymous value was set to a non-boolean value.")
-      end
-
-      custom = data[:custom]
-      unless custom.nil? || custom.is_a?(Hash)
-        return create_invalid_context("The custom value was set to a non-hash value.")
-      end
-
-      # We only need to create an attribute hash if one of these keys exist.
-      # Everything else is stored in dedicated instance variables.
-      attributes = custom.clone
-      data.each do |k, v|
-        case k
-        when :ip, :email, :avatar, :firstName, :lastName, :country
-          attributes ||= {}
-          attributes[k] = v.clone
-        else
-          next
-        end
-      end
-
-      private_attributes = data[:privateAttributeNames]
-      if private_attributes && !private_attributes.is_a?(Array)
-        return create_invalid_context("The provided private attributes are not an array")
-      end
-
-      return new(key.to_s, KIND_DEFAULT, name, anonymous, data[:secondary], attributes, private_attributes)
     end
   end
 end

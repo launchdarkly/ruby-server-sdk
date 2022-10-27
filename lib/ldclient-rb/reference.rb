@@ -171,7 +171,7 @@ module LaunchDarkly
     # treats the whole string as a literal as long as it does not start with a
     # slash), or to Reference.create("/a~1b").
     #
-    # @param value [String, String]
+    # @param value [String, Symbol]
     # @return [Reference]
     #
     def self.create_literal(value)

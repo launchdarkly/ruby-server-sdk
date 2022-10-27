@@ -175,16 +175,59 @@ module LaunchDarkly
         end
       end
 
+      #
+      # @param clause [Hash]
+      # @param context_value [any]
+      # @return [Boolean]
+      #
+      private def match_any_clause_value(clause, context_value)
+        op = clause[:op].to_sym
+        clause[:values].any? { |cv| EvaluatorOperators.apply(op, context_value, cv) }
+      end
+
+      #
+      # @param clause [Hash]
+      # @param context [LaunchDarkly::LDContext]
+      # @return [Boolean]
+      #
+      private def clause_match_by_kind(clause, context)
+        # If attribute is "kind", then we treat operator and values as a match
+        # expression against a list of all individual kinds in the context.
+        # That is, for a multi-kind context with kinds of "org" and "user", it
+        # is a match if either of those strings is a match with Operator and
+        # Values.
+
+        (0...context.individual_context_count).each do |i|
+          c = context.individual_context(i)
+          if !c.nil? && match_any_clause_value(clause, c.kind)
+            return true
+          end
+        end
+
+        false
+      end
+
+      #
+      # @param clause [Hash]
+      # @param context [LaunchDarkly::LDContext]
+      # @return [Boolean]
+      #
       def clause_match_context_no_segments(clause, context)
-        user_val = context.get_value(clause[:attribute])
+        if clause[:attribute] == "kind"
+          result = clause_match_by_kind(clause, context)
+          return clause[:negate] ? !result : result
+        end
+
+        matched_context = context.individual_context(clause[:contextKind] || LaunchDarkly::LDContext::KIND_DEFAULT)
+        return false if matched_context.nil?
+
+        user_val = matched_context.get_value(clause[:attribute])
         return false if user_val.nil?
 
-        op = clause[:op].to_sym
-        clause_vals = clause[:values]
         result = if user_val.is_a? Enumerable
-          user_val.any? { |uv| clause_vals.any? { |cv| EvaluatorOperators.apply(op, uv, cv) } }
+          user_val.any? { |uv| match_any_clause_value(clause, uv) }
         else
-          clause_vals.any? { |cv| EvaluatorOperators.apply(op, user_val, cv) }
+          match_any_clause_value(clause, user_val)
         end
         clause[:negate] ? !result : result
       end

@@ -49,6 +49,39 @@ module LaunchDarkly
           flag = factory.boolean_flag_with_clauses([clause])
           expect(basic_evaluator.evaluate(flag, context).detail.value).to be false
         end
+
+        it "clause match uses context kind" do
+          clause = { contextKind: 'company', attribute: 'name', op: 'in', values: ['Catco'] }
+
+          context1 = LDContext.create({ key: 'cc', kind: 'company', name: 'Catco'})
+          context2 = LDContext.create({ key: 'l', kind: 'user', name: 'Lucy' })
+          context3 = LDContext.create_multi([context1, context2])
+
+          flag = factory.boolean_flag_with_clauses([clause])
+
+          expect(basic_evaluator.evaluate(flag, context1).detail.value).to be true
+          expect(basic_evaluator.evaluate(flag, context2).detail.value).to be false
+          expect(basic_evaluator.evaluate(flag, context3).detail.value).to be true
+        end
+
+        it "clause match by kind attribute" do
+          clause = { attribute: 'kind', op: 'startsWith', values: ['a'] }
+
+          context1 = LDContext.create({ key: 'key' })
+          context2 = LDContext.create({ key: 'key', kind: 'ab' })
+          context3 = LDContext.create_multi(
+            [
+              LDContext.create({ key: 'key', kind: 'cd' }),
+              LDContext.create({ key: 'key', kind: 'ab' }),
+            ]
+          )
+
+          flag = factory.boolean_flag_with_clauses([clause])
+
+          expect(basic_evaluator.evaluate(flag, context1).detail.value).to be false
+          expect(basic_evaluator.evaluate(flag, context2).detail.value).to be true
+          expect(basic_evaluator.evaluate(flag, context3).detail.value).to be true
+        end
       end
     end
   end
