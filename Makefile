@@ -7,7 +7,6 @@ TEMP_TEST_OUTPUT=/tmp/contract-test-service.log
 # - "events": These test suites will be unavailable until more of the U2C implementation is done.
 TEST_HARNESS_PARAMS := $(TEST_HARNESS_PARAMS) \
 	-skip 'evaluation/bucketing/bucket by non-key attribute/in rollouts/string value/complex attribute reference' \
-	-skip 'evaluation/bucketing/secondary' \
 	-skip 'evaluation/parameterized/attribute references' \
 	-skip 'evaluation/parameterized/bad attribute reference errors' \
 	-skip 'evaluation/parameterized/prerequisites' \

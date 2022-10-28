@@ -13,9 +13,9 @@ describe LaunchDarkly::EventProcessor do
   let(:default_config) { LaunchDarkly::Config.new(default_config_opts) }
   let(:user) { { key: "userkey", name: "Red" } }
   let(:filtered_user) { { key: "userkey", privateAttrs: [ "name" ] } }
-  let(:numeric_user) { { key: 1, secondary: 2, ip: 3, country: 4, email: 5, firstName: 6, lastName: 7,
+  let(:numeric_user) { { key: 1, ip: 3, country: 4, email: 5, firstName: 6, lastName: 7,
     avatar: 8, name: 9, anonymous: false, custom: { age: 99 } } }
-  let(:stringified_numeric_user) { { key: '1', secondary: '2', ip: '3', country: '4', email: '5', firstName: '6',
+  let(:stringified_numeric_user) { { key: '1', ip: '3', country: '4', email: '5', firstName: '6',
     lastName: '7', avatar: '8', name: '9', anonymous: false, custom: { age: 99 } } }
 
   def with_processor_and_sender(config)

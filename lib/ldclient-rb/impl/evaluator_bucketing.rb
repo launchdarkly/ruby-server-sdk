@@ -60,10 +60,6 @@ module LaunchDarkly
         id_hash = bucketable_string_value(context_value)
         return 0.0 if id_hash.nil?
 
-        if matched_context.get_value(:secondary)
-          id_hash += "." + matched_context.get_value(:secondary).to_s
-        end
-
         if seed
           hash_key = "%d.%s" % [seed, id_hash]
         else

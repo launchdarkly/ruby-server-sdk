@@ -67,16 +67,16 @@ describe LaunchDarkly::LDContext do
       it "overwrite custom properties with built-ins when collisons occur" do
         context = {
           key: "user-key",
-          secondary: "secondary",
+          ip: "192.168.1.1",
           avatar: "avatar",
           custom: {
-            secondary: "custom secondary",
+            ip: "127.0.0.1",
             avatar: "custom avatar",
           },
         }
 
         result = subject.create(context)
-        expect(result.get_value(:secondary)).to eq("secondary")
+        expect(result.get_value(:ip)).to eq("192.168.1.1")
         expect(result.get_value(:avatar)).to eq("avatar")
       end
     end
@@ -135,20 +135,6 @@ describe LaunchDarkly::LDContext do
           },
         }
         expect(subject.create(context).valid?).to be false
-      end
-
-      it "overwrite secondary property if also specified at top level" do
-        context = {
-          key: "user-key",
-          kind: "user",
-          secondary: "invalid secondary",
-          _meta: {
-            secondary: "real secondary",
-          },
-        }
-
-        result = subject.create(context)
-        expect(result.get_value(:secondary)).to eq("real secondary")
       end
     end
 

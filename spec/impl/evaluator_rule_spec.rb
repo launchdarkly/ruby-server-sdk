@@ -81,17 +81,6 @@ module LaunchDarkly
           expect(result.detail.value).to eq(true)
         end
 
-        it "coerces secondary key to a string for evaluation" do
-          # We can't really verify that the rollout calculation works correctly, but we can at least
-          # make sure it doesn't error out if there's a non-string secondary value (ch35189)
-          rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }],
-            rollout: { salt: '', variations: [ { weight: 100000, variation: 1 } ] } }
-          flag = factory.boolean_flag_with_rules([rule])
-          context = LDContext.create({ key: "userkey", secondary: 999 })
-          result = basic_evaluator.evaluate(flag, context)
-          expect(result.detail.reason).to eq(EvaluationReason::rule_match(0, 'ruleid'))
-        end
-
         describe "rule experiment/rollout behavior" do
           it "evaluates rollout for rule" do
             rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }],
@@ -122,7 +111,7 @@ module LaunchDarkly
             rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }],
               rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: false } ] } }
             flag = factory.boolean_flag_with_rules([rule])
-            context = LDContext.create({ key: "userkey", secondary: 999 })
+            context = LDContext.create({ key: "userkey" })
             result = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(true)
@@ -132,7 +121,7 @@ module LaunchDarkly
             rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }],
               rollout: { kind: 'rollout', variations: [ { weight: 100000, variation: 1, untracked: false } ] } }
             flag = factory.boolean_flag_with_rules([rule])
-            context = LDContext.create({ key: "userkey", secondary: 999 })
+            context = LDContext.create({ key: "userkey" })
             result = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)
@@ -142,7 +131,7 @@ module LaunchDarkly
             rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }],
               rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: true } ] } }
             flag = factory.boolean_flag_with_rules([rule])
-            context = LDContext.create({ key: "userkey", secondary: 999 })
+            context = LDContext.create({ key: "userkey" })
             result = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)

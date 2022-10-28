@@ -62,7 +62,7 @@ module LaunchDarkly
   end
 
   MAX_FLUSH_WORKERS = 5
-  USER_ATTRS_TO_STRINGIFY_FOR_EVENTS = [ :key, :secondary, :ip, :country, :email, :firstName, :lastName,
+  USER_ATTRS_TO_STRINGIFY_FOR_EVENTS = [ :key, :ip, :country, :email, :firstName, :lastName,
     :avatar, :name ]
 
   private_constant :MAX_FLUSH_WORKERS

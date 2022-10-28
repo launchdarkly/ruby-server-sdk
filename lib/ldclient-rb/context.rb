@@ -36,18 +36,16 @@ module LaunchDarkly
     # @param kind [String, nil]
     # @param name [String, nil]
     # @param anonymous [Boolean, nil]
-    # @param secondary [String, nil]
     # @param attributes [Hash, nil]
     # @param private_attributes [Array<String>, nil]
     # @param error [String, nil]
     # @param contexts [Array<LDContext>, nil]
     #
-    def initialize(key, kind, name = nil, anonymous = nil, secondary = nil, attributes = nil, private_attributes = nil, error = nil, contexts = nil)
+    def initialize(key, kind, name = nil, anonymous = nil, attributes = nil, private_attributes = nil, error = nil, contexts = nil)
       @key = key
       @kind = kind
       @name = name
       @anonymous = anonymous || false
-      @secondary = secondary
       @attributes = attributes
       @private_attributes = private_attributes
       @error = error
@@ -235,8 +233,6 @@ module LaunchDarkly
         @name
       when :anonymous
         @anonymous
-      when :secondary
-        @secondary
       else
         @attributes&.fetch(name, nil)
       end
@@ -322,7 +318,7 @@ module LaunchDarkly
 
       return contexts[0] if contexts.length == 1
 
-      new(nil, "multi", nil, false, nil, nil, nil, nil, contexts)
+      new(nil, "multi", nil, false, nil, nil, nil, contexts)
     end
 
     #
@@ -330,7 +326,7 @@ module LaunchDarkly
     # @return [LDContext]
     #
     private_class_method def self.create_invalid_context(error)
-      new(nil, nil, nil, false, nil, nil, nil, error)
+      new(nil, nil, nil, false, nil, nil, error)
     end
 
     #
@@ -376,7 +372,7 @@ module LaunchDarkly
         return create_invalid_context("The provided private attributes are not an array")
       end
 
-      new(key.to_s, KIND_DEFAULT, name, anonymous, data[:secondary], attributes, private_attributes)
+      new(key.to_s, KIND_DEFAULT, name, anonymous, attributes, private_attributes)
     end
 
     #
@@ -416,13 +412,10 @@ module LaunchDarkly
 
       # We only need to create an attribute hash if there are keys set outside
       # of the ones we store in dedicated instance variables.
-      #
-      # :secondary is not a supported top level key in the new schema.
-      # However, someone could still include it so we need to ignore it.
       attributes = nil
       data.each do |k, v|
         case k
-        when :kind, :key, :name, :anonymous, :secondary, :_meta
+        when :kind, :key, :name, :anonymous, :_meta
           next
         else
           attributes ||= {}
@@ -430,7 +423,7 @@ module LaunchDarkly
         end
       end
 
-      new(key.to_s, kind, name, anonymous, meta[:secondary], attributes, private_attributes)
+      new(key.to_s, kind, name, anonymous, attributes, private_attributes)
     end
   end
 end
