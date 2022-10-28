@@ -7,7 +7,7 @@ module LaunchDarkly
       # @param flag [Object] the feature flag
       # @param rule [Object] the rule
       # @param context [LDContext] the context properties
-      # @return [Number] the variation index, or nil if there is an error
+      # @return [Array<[Number, nil], Boolean>] the variation index, or nil if there is an error
       def self.variation_index_for_context(flag, rule, context)
 
         variation = rule[:variation]
@@ -16,19 +16,18 @@ module LaunchDarkly
         return nil, false if rollout.nil?
         variations = rollout[:variations]
         if !variations.nil? && variations.length > 0 # percentage rollout
-          bucket_by = rollout[:bucketBy].nil? ? "key" : rollout[:bucketBy]
+          rollout_is_experiment = rollout[:kind] == "experiment"
+          bucket_by = rollout_is_experiment ? nil : rollout[:bucketBy]
+          bucket_by = 'key' if bucket_by.nil?
 
           seed = rollout[:seed]
-          bucket = bucket_context(context, flag[:key], bucket_by, flag[:salt], seed) # may not be present
+          bucket = bucket_context(context, rollout[:contextKind], flag[:key], bucket_by, flag[:salt], seed) # may not be present
+          in_experiment = rollout_is_experiment && !bucket.nil?
           sum = 0;
           variations.each do |variate|
-            if rollout[:kind] == "experiment" && !variate[:untracked]
-              in_experiment = true
-            end
-
             sum += variate[:weight].to_f / 100000.0
-            if bucket < sum
-              return variate[:variation], !!in_experiment
+            if bucket.nil? || bucket < sum
+              return variate[:variation], in_experiment && !variate[:untracked]
             end
           end
           # The context's bucket value was greater than or equal to the end of the last bucket. This could happen due
@@ -37,9 +36,7 @@ module LaunchDarkly
           # this case (or changing the scaling, which would potentially change the results for *all* contexts), we
           # will simply put the context in the last bucket.
           last_variation = variations[-1]
-          in_experiment = rollout[:kind] == "experiment" && !last_variation[:untracked]
-
-          [last_variation[:variation], in_experiment]
+          [last_variation[:variation], in_experiment && !last_variation[:untracked]]
         else # the rule isn't well-formed
           [nil, false]
         end
@@ -48,20 +45,23 @@ module LaunchDarkly
       # Returns a context's bucket value as a floating-point value in `[0, 1)`.
       #
       # @param context [LDContext] the context properties
+      # @param context_kind [String, nil] the context kind to match against
       # @param key [String] the feature flag key (or segment key, if this is for a segment rule)
       # @param bucket_by [String|Symbol] the name of the context attribute to be used for bucketing
       # @param salt [String] the feature flag's or segment's salt value
-      # @return [Number] the bucket value, from 0 inclusive to 1 exclusive
-      def self.bucket_context(context, key, bucket_by, salt, seed)
-        return nil unless context.key
+      # @return [Float, nil] the bucket value, from 0 inclusive to 1 exclusive
+      def self.bucket_context(context, context_kind, key, bucket_by, salt, seed)
+        matched_context = context.individual_context(context_kind || LaunchDarkly::LDContext::KIND_DEFAULT)
+        return nil if matched_context.nil?
 
-        id_hash = bucketable_string_value(context.get_value(bucket_by))
-        if id_hash.nil?
-          return 0.0
-        end
+        context_value = matched_context.get_value(bucket_by)
+        return 0.0 if context_value.nil?
 
-        if context.get_value(:secondary)
-          id_hash += "." + context.get_value(:secondary).to_s
+        id_hash = bucketable_string_value(context_value)
+        return 0.0 if id_hash.nil?
+
+        if matched_context.get_value(:secondary)
+          id_hash += "." + matched_context.get_value(:secondary).to_s
         end
 
         if seed

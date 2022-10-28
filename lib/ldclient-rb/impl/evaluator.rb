@@ -313,9 +313,9 @@ module LaunchDarkly
         return true if !rule[:weight]
 
         # All of the clauses are met. See if the user buckets in
-        bucket = EvaluatorBucketing.bucket_context(context, segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt, nil)
+        bucket = EvaluatorBucketing.bucket_context(context, rule[:rolloutContextKind], segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt, nil)
         weight = rule[:weight].to_f / 100000.0
-        return bucket < weight
+        return bucket.nil? || bucket < weight
       end
 
       private

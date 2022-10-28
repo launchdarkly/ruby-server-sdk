@@ -8,54 +8,54 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
       let(:seed) { 61 }
       it "returns the expected bucket values for seed" do
         user = LaunchDarkly::LDContext.create({ key: "userKeyA" })
-        bucket = subject.bucket_context(user, "hashKey", "key", "saltyA", seed)
+        bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", seed)
         expect(bucket).to be_within(0.0000001).of(0.09801207);
 
         user = LaunchDarkly::LDContext.create({ key: "userKeyB" })
-        bucket = subject.bucket_context(user, "hashKey", "key", "saltyA", seed)
+        bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", seed)
         expect(bucket).to be_within(0.0000001).of(0.14483777);
 
         user = LaunchDarkly::LDContext.create({ key: "userKeyC" })
-        bucket = subject.bucket_context(user, "hashKey", "key", "saltyA", seed)
+        bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", seed)
         expect(bucket).to be_within(0.0000001).of(0.9242641);
       end
 
       it "returns the same bucket regardless of hashKey and salt" do
         user = LaunchDarkly::LDContext.create({ key: "userKeyA" })
-        bucket1 = subject.bucket_context(user, "hashKey", "key", "saltyA", seed)
-        bucket2 = subject.bucket_context(user, "hashKey1", "key", "saltyB", seed)
-        bucket3 = subject.bucket_context(user, "hashKey2", "key", "saltyC", seed)
+        bucket1 = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", seed)
+        bucket2 = subject.bucket_context(user, user.kind, "hashKey1", "key", "saltyB", seed)
+        bucket3 = subject.bucket_context(user, user.kind, "hashKey2", "key", "saltyC", seed)
         expect(bucket1).to eq(bucket2)
         expect(bucket2).to eq(bucket3)
       end
 
       it "returns a different bucket if the seed is not the same" do
         user = LaunchDarkly::LDContext.create({ key: "userKeyA" })
-        bucket1 = subject.bucket_context(user, "hashKey", "key", "saltyA", seed)
-        bucket2 = subject.bucket_context(user, "hashKey1", "key", "saltyB", seed+1)
+        bucket1 = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", seed)
+        bucket2 = subject.bucket_context(user, user.kind, "hashKey1", "key", "saltyB", seed+1)
         expect(bucket1).to_not eq(bucket2)
       end
 
       it "returns a different bucket if the user is not the same" do
         user1 = LaunchDarkly::LDContext.create({ key: "userKeyA" })
         user2 = LaunchDarkly::LDContext.create({ key: "userKeyB" })
-        bucket1 = subject.bucket_context(user1, "hashKey", "key", "saltyA", seed)
-        bucket2 = subject.bucket_context(user2, "hashKey1", "key", "saltyB", seed)
+        bucket1 = subject.bucket_context(user1, user1.kind, "hashKey", "key", "saltyA", seed)
+        bucket2 = subject.bucket_context(user2, user2.kind, "hashKey1", "key", "saltyB", seed)
         expect(bucket1).to_not eq(bucket2)
       end
     end
 
     it "gets expected bucket values for specific keys" do
       user = LaunchDarkly::LDContext.create({ key: "userKeyA" })
-      bucket = subject.bucket_context(user, "hashKey", "key", "saltyA", nil)
+      bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", nil)
       expect(bucket).to be_within(0.0000001).of(0.42157587);
 
       user = LaunchDarkly::LDContext.create({ key: "userKeyB" })
-      bucket = subject.bucket_context(user, "hashKey", "key", "saltyA", nil)
+      bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", nil)
       expect(bucket).to be_within(0.0000001).of(0.6708485);
 
       user = LaunchDarkly::LDContext.create({ key: "userKeyC" })
-      bucket = subject.bucket_context(user, "hashKey", "key", "saltyA", nil)
+      bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", nil)
       expect(bucket).to be_within(0.0000001).of(0.10343106);
     end
 
@@ -67,8 +67,8 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
           intAttr: 33333,
         },
       })
-      stringResult = subject.bucket_context(user, "hashKey", "stringAttr", "saltyA", nil)
-      intResult = subject.bucket_context(user, "hashKey", "intAttr", "saltyA", nil)
+      stringResult = subject.bucket_context(user, user.kind, "hashKey", "stringAttr", "saltyA", nil)
+      intResult = subject.bucket_context(user, user.kind, "hashKey", "intAttr", "saltyA", nil)
 
       expect(intResult).to be_within(0.0000001).of(0.54771423)
       expect(intResult).to eq(stringResult)
@@ -81,7 +81,7 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
           floatAttr: 33.5,
         },
       })
-      result = subject.bucket_context(user, "hashKey", "floatAttr", "saltyA", nil)
+      result = subject.bucket_context(user, user.kind, "hashKey", "floatAttr", "saltyA", nil)
       expect(result).to eq(0.0)
     end
 
@@ -93,7 +93,7 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
           boolAttr: true,
         },
       })
-      result = subject.bucket_context(user, "hashKey", "boolAttr", "saltyA", nil)
+      result = subject.bucket_context(user, user.kind, "hashKey", "boolAttr", "saltyA", nil)
       expect(result).to eq(0.0)
     end
   end
@@ -107,7 +107,7 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
 
         # First verify that with our test inputs, the bucket value will be greater than zero and less than 100000,
         # so we can construct a rollout whose second bucket just barely contains that value
-        bucket_value = (subject.bucket_context(user, flag_key, "key", salt, nil) * 100000).truncate()
+        bucket_value = (subject.bucket_context(user, user.kind, flag_key, "key", salt, nil) * 100000).truncate()
         expect(bucket_value).to be > 0
         expect(bucket_value).to be < 100000
 
@@ -135,7 +135,7 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
         flag_key = "flagkey"
         salt = "salt"
 
-        bucket_value = (subject.bucket_context(user, flag_key, "key", salt, nil) * 100000).truncate()
+        bucket_value = (subject.bucket_context(user, user.kind, flag_key, "key", salt, nil) * 100000).truncate()
 
         # We'll construct a list of variations that stops right at the target bucket value
         rule = {
@@ -194,7 +194,7 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
       salt = "salt"
       seed = 61
 
-      bucket_value = (subject.bucket_context(user, flag_key, "key", salt, seed) * 100000).truncate()
+      bucket_value = (subject.bucket_context(user, user.kind, flag_key, "key", salt, seed) * 100000).truncate()
 
       # We'll construct a list of variations that stops right at the target bucket value
       rule = {
