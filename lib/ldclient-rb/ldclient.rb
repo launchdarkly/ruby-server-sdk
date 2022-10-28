@@ -295,7 +295,7 @@ module LaunchDarkly
     def all_flags_state(context, options={})
       return FeatureFlagsState.new(false) if @config.offline?
 
-      if !initialized?
+      unless initialized?
         if @store.initialized?
             @config.logger.warn { "Called all_flags_state before client initialization; using last known values from data store" }
         else
@@ -407,7 +407,7 @@ module LaunchDarkly
         return detail
       end
 
-      if !initialized?
+      unless initialized?
         if @store.initialized?
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
         else
@@ -431,7 +431,7 @@ module LaunchDarkly
 
       begin
         res = @evaluator.evaluate(feature, context)
-        if !res.prereq_evals.nil?
+        unless res.prereq_evals.nil?
           res.prereq_evals.each do |prereq_eval|
             # TODO: Address when working on u2c events
             # record_prereq_flag_eval(prereq_eval.prereq_flag, prereq_eval.prereq_of_flag, context, prereq_eval.detail, with_reasons)
@@ -443,13 +443,13 @@ module LaunchDarkly
         end
         # TODO: Address when working on u2c events
         # record_flag_eval(feature, context, detail, default, with_reasons)
-        return detail
+        detail
       rescue => exn
         Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
         # TODO: Address when working on u2c events
         # record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
-        return detail
+        detail
       end
     end
 
@@ -496,7 +496,7 @@ module LaunchDarkly
     end
 
     private def experiment?(flag, reason)
-      return false if !reason
+      return false unless reason
 
       if reason.in_experiment
         return true
@@ -505,7 +505,7 @@ module LaunchDarkly
       case reason[:kind]
       when 'RULE_MATCH'
         index = reason[:ruleIndex]
-        if !index.nil?
+        unless index.nil?
           rules = flag[:rules] || []
           return index >= 0 && index < rules.length && rules[index][:trackEvents]
         end

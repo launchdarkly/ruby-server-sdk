@@ -120,7 +120,7 @@ module LaunchDarkly
         end
 
         def preprocess_all_items!(kind, items_map)
-          return items_map if !items_map
+          return items_map unless items_map
           items_map.each do |key, item|
             preprocess_item!(kind, item)
           end

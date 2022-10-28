@@ -228,15 +228,15 @@ module LaunchDarkly
     private def get_top_level_addressable_attribute_single_kind(name)
       case name
       when :kind
-        return kind
+        kind
       when :key
-        return key
+        key
       when :name
-        return @name
+        @name
       when :anonymous
-        return @anonymous
+        @anonymous
       when :secondary
-        return @secondary
+        @secondary
       else
         @attributes&.fetch(name, nil)
       end
@@ -330,7 +330,7 @@ module LaunchDarkly
     # @return [LDContext]
     #
     private_class_method def self.create_invalid_context(error)
-      return new(nil, nil, nil, false, nil, nil, nil, error)
+      new(nil, nil, nil, false, nil, nil, nil, error)
     end
 
     #
@@ -376,7 +376,7 @@ module LaunchDarkly
         return create_invalid_context("The provided private attributes are not an array")
       end
 
-      return new(key.to_s, KIND_DEFAULT, name, anonymous, data[:secondary], attributes, private_attributes)
+      new(key.to_s, KIND_DEFAULT, name, anonymous, data[:secondary], attributes, private_attributes)
     end
 
     #

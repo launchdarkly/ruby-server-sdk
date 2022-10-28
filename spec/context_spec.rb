@@ -6,7 +6,7 @@ describe LaunchDarkly::LDContext do
   it "returns nil for any value if invalid" do
     result = subject.create({ key: "", kind: "user", name: "testing" })
 
-    expect(result.valid?).to be_falsey
+    expect(result.valid?).to be false
 
     expect(result.key).to be_nil
     expect(result.get_value(:key)).to be_nil
@@ -34,26 +34,26 @@ describe LaunchDarkly::LDContext do
         expect(result).to be_a(LaunchDarkly::LDContext)
         expect(result.key).to eq("user-key")
         expect(result.kind).to eq("user")
-        expect(result.valid?).to be_truthy
+        expect(result.valid?).to be true
       end
 
       it "allows an empty string for a key, but it cannot be missing or nil" do
-        expect(subject.create({ key: "" }).valid?).to be_truthy
-        expect(subject.create({ key: nil }).valid?).to be_falsey
-        expect(subject.create({}).valid?).to be_falsey
+        expect(subject.create({ key: "" }).valid?).to be true
+        expect(subject.create({ key: nil }).valid?).to be false
+        expect(subject.create({}).valid?).to be false
       end
 
       it "anonymous is required to be a boolean or nil" do
-        expect(subject.create({ key: "" }).valid?).to be_truthy
-        expect(subject.create({ key: "", anonymous: true }).valid?).to be_truthy
-        expect(subject.create({ key: "", anonymous: false }).valid?).to be_truthy
-        expect(subject.create({ key: "", anonymous: 0 }).valid?).to be_falsey
+        expect(subject.create({ key: "" }).valid?).to be true
+        expect(subject.create({ key: "", anonymous: true }).valid?).to be true
+        expect(subject.create({ key: "", anonymous: false }).valid?).to be true
+        expect(subject.create({ key: "", anonymous: 0 }).valid?).to be false
       end
 
       it "name is required to be a string or nil" do
-        expect(subject.create({ key: "" }).valid?).to be_truthy
-        expect(subject.create({ key: "", name: "My Name" }).valid?).to be_truthy
-        expect(subject.create({ key: "", name: 0 }).valid?).to be_falsey
+        expect(subject.create({ key: "" }).valid?).to be true
+        expect(subject.create({ key: "", name: "My Name" }).valid?).to be true
+        expect(subject.create({ key: "", name: 0 }).valid?).to be false
       end
 
       it "requires privateAttributeNames to be an array" do
@@ -61,7 +61,7 @@ describe LaunchDarkly::LDContext do
           key: "user-key",
           privateAttributeNames: "not an array",
         }
-        expect(subject.create(context).valid?).to be_falsey
+        expect(subject.create(context).valid?).to be false
       end
 
       it "overwrite custom properties with built-ins when collisons occur" do
@@ -97,33 +97,33 @@ describe LaunchDarkly::LDContext do
         expect(result).to be_a(LaunchDarkly::LDContext)
         expect(result.key).to eq("launchdarkly")
         expect(result.kind).to eq("org")
-        expect(result.valid?).to be_truthy
+        expect(result.valid?).to be true
       end
 
       it "do not allow empty strings or nil values for keys" do
-        expect(subject.create({ kind: "user", key: "" }).valid?).to be_falsey
-        expect(subject.create({ kind: "user", key: nil }).valid?).to be_falsey
-        expect(subject.create({ kind: "user" }).valid?).to be_falsey
+        expect(subject.create({ kind: "user", key: "" }).valid?).to be false
+        expect(subject.create({ kind: "user", key: nil }).valid?).to be false
+        expect(subject.create({ kind: "user" }).valid?).to be false
       end
 
       it "does not allow reserved names or empty values for kind" do
-        expect(subject.create({ kind: true, key: "key" }).valid?).to be_falsey
-        expect(subject.create({ kind: "", key: "key" }).valid?).to be_falsey
-        expect(subject.create({ kind: "kind", key: "key" }).valid?).to be_falsey
-        expect(subject.create({ kind: "multi", key: "key" }).valid?).to be_falsey
+        expect(subject.create({ kind: true, key: "key" }).valid?).to be false
+        expect(subject.create({ kind: "", key: "key" }).valid?).to be false
+        expect(subject.create({ kind: "kind", key: "key" }).valid?).to be false
+        expect(subject.create({ kind: "multi", key: "key" }).valid?).to be false
       end
 
       it "anonymous is required to be a boolean or nil" do
-        expect(subject.create({ key: "key", kind: "user" }).valid?).to be_truthy
-        expect(subject.create({ key: "key", kind: "user", anonymous: true }).valid?).to be_truthy
-        expect(subject.create({ key: "key", kind: "user", anonymous: false }).valid?).to be_truthy
-        expect(subject.create({ key: "key", kind: "user", anonymous: 0 }).valid?).to be_falsey
+        expect(subject.create({ key: "key", kind: "user" }).valid?).to be true
+        expect(subject.create({ key: "key", kind: "user", anonymous: true }).valid?).to be true
+        expect(subject.create({ key: "key", kind: "user", anonymous: false }).valid?).to be true
+        expect(subject.create({ key: "key", kind: "user", anonymous: 0 }).valid?).to be false
       end
 
       it "name is required to be a string or nil" do
-        expect(subject.create({ key: "key", kind: "user" }).valid?).to be_truthy
-        expect(subject.create({ key: "key", kind: "user", name: "My Name" }).valid?).to be_truthy
-        expect(subject.create({ key: "key", kind: "user", name: 0 }).valid?).to be_falsey
+        expect(subject.create({ key: "key", kind: "user" }).valid?).to be true
+        expect(subject.create({ key: "key", kind: "user", name: "My Name" }).valid?).to be true
+        expect(subject.create({ key: "key", kind: "user", name: 0 }).valid?).to be false
       end
 
       it "require privateAttributes to be an array" do
@@ -134,7 +134,7 @@ describe LaunchDarkly::LDContext do
             privateAttributes: "not an array",
           },
         }
-        expect(subject.create(context).valid?).to be_falsey
+        expect(subject.create(context).valid?).to be false
       end
 
       it "overwrite secondary property if also specified at top level" do
@@ -161,7 +161,7 @@ describe LaunchDarkly::LDContext do
         expect(multi_context).to be_a(LaunchDarkly::LDContext)
         expect(multi_context.key).to be_nil
         expect(multi_context.kind).to eq("multi")
-        expect(multi_context.valid?).to be_truthy
+        expect(multi_context.valid?).to be true
       end
 
       it "can be created from a hash" do
@@ -171,7 +171,7 @@ describe LaunchDarkly::LDContext do
         expect(multi_context).to be_a(LaunchDarkly::LDContext)
         expect(multi_context.key).to be_nil
         expect(multi_context.kind).to eq(LaunchDarkly::LDContext::KIND_MULTI)
-        expect(multi_context.valid?).to be_truthy
+        expect(multi_context.valid?).to be true
       end
 
       it "will return the single kind context if only one is provided" do
@@ -189,12 +189,12 @@ describe LaunchDarkly::LDContext do
         multi_context = subject.create_multi([embedded_multi_context])
 
         expect(multi_context).to be_a(LaunchDarkly::LDContext)
-        expect(multi_context.valid?).to be_falsey
+        expect(multi_context.valid?).to be false
       end
 
       it "are invalid if no contexts are provided" do
         multi_context = subject.create_multi([])
-        expect(multi_context.valid?).to be_falsey
+        expect(multi_context.valid?).to be false
       end
 
       it "are invalid if a single context is invalid" do
@@ -202,9 +202,9 @@ describe LaunchDarkly::LDContext do
         invalid_context = subject.create({ kind: "org" })
         multi_context = subject.create_multi([valid_context, invalid_context])
 
-        expect(valid_context.valid?).to be_truthy
-        expect(invalid_context.valid?).to be_falsey
-        expect(multi_context.valid?).to be_falsey
+        expect(valid_context.valid?).to be true
+        expect(invalid_context.valid?).to be false
+        expect(multi_context.valid?).to be false
       end
     end
   end
@@ -213,7 +213,7 @@ describe LaunchDarkly::LDContext do
     it "invalid contexts have a size of 0" do
       context = subject.create({})
 
-      expect(context.valid?).to be_falsey
+      expect(context.valid?).to be false
       expect(context.individual_context_count).to eq(0)
     end
 
@@ -235,7 +235,7 @@ describe LaunchDarkly::LDContext do
     it "invalid contexts always return nil" do
       context = subject.create({kind: "user"})
 
-      expect(context.valid?).to be_falsey
+      expect(context.valid?).to be false
       expect(context.individual_context(-1)).to be_nil
       expect(context.individual_context(0)).to be_nil
       expect(context.individual_context(1)).to be_nil
@@ -246,7 +246,7 @@ describe LaunchDarkly::LDContext do
     it "single contexts can retrieve themselves" do
       context = subject.create({key: "user-key", kind: "user"})
 
-      expect(context.valid?).to be_truthy
+      expect(context.valid?).to be true
       expect(context.individual_context(-1)).to be_nil
       expect(context.individual_context(0)).to eq(context)
       expect(context.individual_context(1)).to be_nil
@@ -260,7 +260,7 @@ describe LaunchDarkly::LDContext do
       org_context = subject.create({ key: "org-key", kind: "org" })
       multi_context = subject.create_multi([user_context, org_context])
 
-      expect(multi_context.valid?).to be_truthy
+      expect(multi_context.valid?).to be true
       expect(multi_context.individual_context(-1)).to be_nil
       expect(multi_context.individual_context(0)).to eq(user_context)
       expect(multi_context.individual_context(1)).to eq(org_context)

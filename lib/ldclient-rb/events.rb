@@ -139,7 +139,7 @@ module LaunchDarkly
       @inbox_full = Concurrent::AtomicBoolean.new(false)
 
       event_sender = (test_properties || {})[:event_sender] ||
-        Impl::EventSender.new(sdk_key, config, client ? client : Util.new_http_client(config.events_uri, config))
+        Impl::EventSender.new(sdk_key, config, client || Util.new_http_client(config.events_uri, config))
 
       @timestamp_fn = (test_properties || {})[:timestamp_fn] || proc { Impl::Util.current_time_millis }
 
@@ -180,7 +180,7 @@ module LaunchDarkly
       if @stopped.make_true
         @flush_task.shutdown
         @users_flush_task.shutdown
-        @diagnostic_event_task.shutdown if !@diagnostic_event_task.nil?
+        @diagnostic_event_task.shutdown unless @diagnostic_event_task.nil?
         # Note that here we are not calling post_to_inbox, because we *do* want to wait if the inbox
         # is full; an orderly shutdown can't happen unless these messages are received.
         @inbox << FlushMessage.new
@@ -282,7 +282,7 @@ module LaunchDarkly
     def do_shutdown(flush_workers, diagnostic_event_workers)
       flush_workers.shutdown
       flush_workers.wait_for_termination
-      if !diagnostic_event_workers.nil?
+      unless diagnostic_event_workers.nil?
         diagnostic_event_workers.shutdown
         diagnostic_event_workers.wait_for_termination
       end
@@ -292,7 +292,7 @@ module LaunchDarkly
     def synchronize_for_testing(flush_workers, diagnostic_event_workers)
       # Used only by unit tests. Wait until all active flush workers have finished.
       flush_workers.wait_all
-      diagnostic_event_workers.wait_all if !diagnostic_event_workers.nil?
+      diagnostic_event_workers.wait_all unless diagnostic_event_workers.nil?
     end
 
     def dispatch_event(event, outbox)
@@ -316,14 +316,14 @@ module LaunchDarkly
 
       # For each user we haven't seen before, we add an index event - unless this is already
       # an identify event for that user.
-      if !(will_add_full_event && @config.inline_users_in_events)
+      unless will_add_full_event && @config.inline_users_in_events
         if !event.user.nil? && !notice_user(event.user) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
           outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.user))
         end
       end
 
       outbox.add_event(event) if will_add_full_event
-      outbox.add_event(debug_event) if !debug_event.nil?
+      outbox.add_event(debug_event) unless debug_event.nil?
     end
 
     # Add to the set of users we've noticed, and return true if the user was already known to us.
@@ -362,7 +362,7 @@ module LaunchDarkly
             events_out = @formatter.make_output_events(payload.events, payload.summary)
             result = @event_sender.send_event_data(events_out.to_json, "#{events_out.length} events", false)
             @disabled.value = true if result.must_shutdown
-            if !result.time_from_server.nil?
+            unless result.time_from_server.nil?
               @last_known_past_time.value = (result.time_from_server.to_f * 1000).to_i
             end
           rescue => e
@@ -417,7 +417,7 @@ module LaunchDarkly
         @capacity_exceeded = false
       else
         @dropped_events += 1
-        if !@capacity_exceeded
+        unless @capacity_exceeded
           @capacity_exceeded = true
           @logger.warn { "[LDClient] Exceeded event queue capacity. Increase capacity to avoid dropping events." }
         end
@@ -429,7 +429,7 @@ module LaunchDarkly
     end
 
     def get_payload
-      return FlushPayload.new(@events, @summarizer.snapshot)
+      FlushPayload.new(@events, @summarizer.snapshot)
     end
 
     def get_and_clear_dropped_count
@@ -462,7 +462,7 @@ module LaunchDarkly
     # Transforms events into the format used for event sending.
     def make_output_events(events, summary)
       events_out = events.map { |e| make_output_event(e) }
-      if !summary.counters.empty?
+      unless summary.counters.empty?
         events_out.push(make_summary_event(summary))
       end
       events_out
@@ -478,13 +478,13 @@ module LaunchDarkly
           key: event.key,
           value: event.value,
         }
-        out[:default] = event.default if !event.default.nil?
-        out[:variation] = event.variation if !event.variation.nil?
-        out[:version] = event.version if !event.version.nil?
-        out[:prereqOf] = event.prereq_of if !event.prereq_of.nil?
+        out[:default] = event.default unless event.default.nil?
+        out[:variation] = event.variation unless event.variation.nil?
+        out[:version] = event.version unless event.version.nil?
+        out[:prereqOf] = event.prereq_of unless event.prereq_of.nil?
         set_opt_context_kind(out, event.user)
         set_user_or_user_key(out, event.user)
-        out[:reason] = event.reason if !event.reason.nil?
+        out[:reason] = event.reason unless event.reason.nil?
         out
 
       when LaunchDarkly::Impl::IdentifyEvent
@@ -501,9 +501,9 @@ module LaunchDarkly
           creationDate: event.timestamp,
           key: event.key,
         }
-        out[:data] = event.data if !event.data.nil?
+        out[:data] = event.data unless event.data.nil?
         set_user_or_user_key(out, event.user)
-        out[:metricValue] = event.metric_value if !event.metric_value.nil?
+        out[:metricValue] = event.metric_value unless event.metric_value.nil?
         set_opt_context_kind(out, event.user)
         out
 
@@ -523,12 +523,12 @@ module LaunchDarkly
           user: process_user(original.user),
           value: original.value,
         }
-        out[:default] = original.default if !original.default.nil?
-        out[:variation] = original.variation if !original.variation.nil?
-        out[:version] = original.version if !original.version.nil?
-        out[:prereqOf] = original.prereq_of if !original.prereq_of.nil?
+        out[:default] = original.default unless original.default.nil?
+        out[:variation] = original.variation unless original.variation.nil?
+        out[:version] = original.version unless original.version.nil?
+        out[:prereqOf] = original.prereq_of unless original.prereq_of.nil?
         set_opt_context_kind(out, original.user)
-        out[:reason] = original.reason if !original.reason.nil?
+        out[:reason] = original.reason unless original.reason.nil?
         out
 
       else
@@ -547,7 +547,7 @@ module LaunchDarkly
               value: counter.value,
               count: counter.count,
             }
-            c[:variation] = variation if !variation.nil?
+            c[:variation] = variation unless variation.nil?
             if version.nil?
               c[:unknown] = true
             else

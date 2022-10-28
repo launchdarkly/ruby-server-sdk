@@ -60,7 +60,7 @@ module LaunchDarkly
             status = err.status
             message = Util.http_error_message(status, "streaming connection", "will retry")
             @config.logger.error { "[LDClient] #{message}" }
-            if !Util.http_error_recoverable?(status)
+            unless Util.http_error_recoverable?(status)
               @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
               stop
             end

@@ -12,7 +12,7 @@ module LaunchDarkly
     # @raise [ArgumentError] if `variation_index` or `reason` is not of the correct type
     def initialize(value, variation_index, reason)
       raise ArgumentError.new("variation_index must be a number") if !variation_index.nil? && !(variation_index.is_a? Numeric)
-      raise ArgumentError.new("reason must be an EvaluationReason") if !(reason.is_a? EvaluationReason)
+      raise ArgumentError.new("reason must be an EvaluationReason") unless reason.is_a? EvaluationReason
       @value = value
       @variation_index = variation_index
       @reason = reason
@@ -176,7 +176,7 @@ module LaunchDarkly
     # @return [EvaluationReason]
     # @raise [ArgumentError] if `rule_index` is not a number or `rule_id` is not a string
     def self.rule_match(rule_index, rule_id, in_experiment=false)
-      raise ArgumentError.new("rule_index must be a number") if !(rule_index.is_a? Numeric)
+      raise ArgumentError.new("rule_index must be a number") unless rule_index.is_a? Numeric
       raise ArgumentError.new("rule_id must be a string") if !rule_id.nil? && !(rule_id.is_a? String) # in test data, ID could be nil
 
       if in_experiment
@@ -193,7 +193,7 @@ module LaunchDarkly
     # @return [EvaluationReason]
     # @raise [ArgumentError] if `prerequisite_key` is nil or not a string
     def self.prerequisite_failed(prerequisite_key)
-      raise ArgumentError.new("prerequisite_key must be a string") if !(prerequisite_key.is_a? String)
+      raise ArgumentError.new("prerequisite_key must be a string") unless prerequisite_key.is_a? String
       new(:PREREQUISITE_FAILED, nil, nil, prerequisite_key, nil)
     end
 
@@ -203,7 +203,7 @@ module LaunchDarkly
     # @return [EvaluationReason]
     # @raise [ArgumentError] if `error_kind` is not a symbol
     def self.error(error_kind)
-      raise ArgumentError.new("error_kind must be a symbol") if !(error_kind.is_a? Symbol)
+      raise ArgumentError.new("error_kind must be a symbol") unless error_kind.is_a? Symbol
       e = @@error_instances[error_kind]
       e.nil? ? make_error(error_kind) : e
     end
@@ -279,7 +279,7 @@ module LaunchDarkly
       else
         { kind: @kind }
       end
-      if !@big_segments_status.nil?
+      unless @big_segments_status.nil?
         ret[:bigSegmentsStatus] = @big_segments_status
       end
       ret
@@ -327,9 +327,9 @@ module LaunchDarkly
       @kind = kind.to_sym
       @rule_index = rule_index
       @rule_id = rule_id
-      @rule_id.freeze if !rule_id.nil?
+      @rule_id.freeze unless rule_id.nil?
       @prerequisite_key = prerequisite_key
-      @prerequisite_key.freeze if !prerequisite_key.nil?
+      @prerequisite_key.freeze unless prerequisite_key.nil?
       @error_kind = error_kind
       @in_experiment = in_experiment
       @big_segments_status = big_segments_status

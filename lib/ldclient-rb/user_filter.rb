@@ -16,7 +16,7 @@ module LaunchDarkly
 
       filtered_user_props, removed = filter_values(user_props, user_private_attrs, ALLOWED_TOP_LEVEL_KEYS, IGNORED_TOP_LEVEL_KEYS)
       custom = user_props[:custom]
-      if !custom.nil?
+      unless custom.nil?
         filtered_user_props[:custom], removed_custom = filter_values(custom, user_private_attrs)
         removed.merge(removed_custom)
       end
@@ -25,7 +25,7 @@ module LaunchDarkly
         # note, :privateAttributeNames is what the developer sets; :privateAttrs is what we send to the server
         filtered_user_props[:privateAttrs] = removed.to_a.sort.map { |s| s.to_s }
       end
-      return filtered_user_props
+      filtered_user_props
     end
 
     private

@@ -52,7 +52,7 @@ describe LaunchDarkly::Requestor do
           server.setup_ok_response("/", { flags: { x: { key: "y" } } }.to_json)
           expect do
             requestor.request_all_data()
-          end.to output(/\[LDClient\] Got response from uri\:/).to_stdout_from_any_process
+          end.to output(/\[LDClient\] Got response from uri:/).to_stdout_from_any_process
         end
       end
     end

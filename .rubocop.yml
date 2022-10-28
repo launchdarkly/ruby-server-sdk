@@ -6,6 +6,7 @@ AllCops:
     - lib/**/*.rb
     - spec/**/*.rb
     - contract-tests/**/*.rb
+  NewCops: disable
 
 Naming/AccessorMethodName:
   Description: Check the naming of accessor methods for get_/set_.
@@ -228,12 +229,12 @@ Style/NegatedIf:
                  Favor unless over if for negative conditions
                  (or control flow or).
   StyleGuide: 'https://github.com/bbatsov/ruby-style-guide#unless-for-negatives'
-  Enabled: false
+  Enabled: true
 
 Style/NegatedWhile:
   Description: 'Favor until over while for negative conditions.'
   StyleGuide: 'https://github.com/bbatsov/ruby-style-guide#until-for-negatives'
-  Enabled: false
+  Enabled: true
 
 Style/Next:
   Description: 'Use `next` to skip iteration instead of a condition at the end.'
@@ -829,7 +830,7 @@ Style/RedundantBegin:
   Enabled: false
 
 Style/RedundantCondition:
-  Enabled: false
+  Enabled: true
 
 Style/RedundantException:
   Enabled: false
@@ -838,13 +839,13 @@ Style/RedundantFileExtensionInRequire:
   Enabled: false
 
 Style/RedundantParentheses:
-  Enabled: false
+  Enabled: true
 
 Style/RedundantRegexpEscape:
   Enabled: false
 
 Style/RedundantReturn:
-  Enabled: false
+  Enabled: true
 
 Style/RedundantSelf:
   Enabled: false
@@ -856,7 +857,8 @@ Style/SafeNavigation:
   Enabled: false
 
 Style/Semicolon:
-  Enabled: false
+  Enabled: true
+  AllowAsExpressionSeparator: true
 
 Style/SlicingWithRange:
   Enabled: false

@@ -48,8 +48,8 @@ module LaunchDarkly
       def initialize(timestamp, user, key, data = nil, metric_value = nil)
         super(timestamp, user)
         @key = key
-        @data = data if !data.nil?
-        @metric_value = metric_value if !metric_value.nil?
+        @data = data unless data.nil?
+        @metric_value = metric_value unless metric_value.nil?
       end
 
       attr_reader :key

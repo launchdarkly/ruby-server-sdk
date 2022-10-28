@@ -34,11 +34,11 @@ module LaunchDarkly
         meta[:reason] = reason
       end
 
-      if !omit_details
+      unless omit_details
         meta[:version] = flag_state[:version]
       end
 
-      meta[:variation] = flag_state[:variation] if !flag_state[:variation].nil?
+      meta[:variation] = flag_state[:variation] unless flag_state[:variation].nil?
       meta[:trackEvents] = true if flag_state[:trackEvents]
       meta[:trackReason] = true if flag_state[:trackReason]
       meta[:debugEventsUntilDate] = flag_state[:debugEventsUntilDate] if flag_state[:debugEventsUntilDate]

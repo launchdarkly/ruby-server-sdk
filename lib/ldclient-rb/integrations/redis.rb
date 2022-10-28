@@ -59,7 +59,7 @@ module LaunchDarkly
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
       def self.new_feature_store(opts = {})
-        return RedisFeatureStore.new(opts)
+        RedisFeatureStore.new(opts)
       end
 
       #
@@ -91,7 +91,7 @@ module LaunchDarkly
       # @return [LaunchDarkly::Interfaces::BigSegmentStore]  a Big Segment store object
       #
       def self.new_big_segment_store(opts)
-        return LaunchDarkly::Impl::Integrations::Redis::RedisBigSegmentStore.new(opts)
+        LaunchDarkly::Impl::Integrations::Redis::RedisBigSegmentStore.new(opts)
       end
     end
   end

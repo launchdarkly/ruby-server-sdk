@@ -43,7 +43,7 @@ module LaunchDarkly
               headers = {}
               headers["content-type"] = "application/json"
               Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| headers[k] = v }
-              if !is_diagnostic
+              unless is_diagnostic
                 headers["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
                 headers["X-LaunchDarkly-Payload-ID"] = payload_id
               end
@@ -60,7 +60,7 @@ module LaunchDarkly
             body = response.to_s
             if status >= 200 && status < 300
               res_time = nil
-              if !response.headers["date"].nil?
+              unless response.headers["date"].nil?
                 begin
                   res_time = Time.httpdate(response.headers["date"])
                 rescue ArgumentError
@@ -77,7 +77,7 @@ module LaunchDarkly
             end
           end
           # used up our retries
-          return EventSenderResult.new(false, false, nil)
+          EventSenderResult.new(false, false, nil)
         ensure
           @http_client_pool.release(http_client)
         end

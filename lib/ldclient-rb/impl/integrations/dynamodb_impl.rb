@@ -21,7 +21,7 @@ module LaunchDarkly
           SORT_KEY = "key"
 
           def initialize(table_name, opts)
-            if !AWS_SDK_ENABLED
+            unless AWS_SDK_ENABLED
               raise RuntimeError.new("can't use #{description} without the aws-sdk or aws-sdk-dynamodb gem")
             end
 
@@ -223,11 +223,11 @@ module LaunchDarkly
         end
 
         class DynamoDBBigSegmentStore < DynamoDBStoreImplBase
-          KEY_METADATA = 'big_segments_metadata';
-          KEY_USER_DATA = 'big_segments_user';
-          ATTR_SYNC_TIME = 'synchronizedOn';
-          ATTR_INCLUDED = 'included';
-          ATTR_EXCLUDED = 'excluded';
+          KEY_METADATA = 'big_segments_metadata'
+          KEY_USER_DATA = 'big_segments_user'
+          ATTR_SYNC_TIME = 'synchronizedOn'
+          ATTR_INCLUDED = 'included'
+          ATTR_EXCLUDED = 'excluded'
 
           def initialize(table_name, opts)
             super(table_name, opts)
@@ -258,7 +258,7 @@ module LaunchDarkly
                 PARTITION_KEY => @prefix + KEY_USER_DATA,
                 SORT_KEY => user_hash,
               })
-            return nil if !data.item
+            return nil unless data.item
             excluded_refs = data.item[ATTR_EXCLUDED] || []
             included_refs = data.item[ATTR_INCLUDED] || []
             if excluded_refs.empty? && included_refs.empty?

@@ -15,7 +15,7 @@ module LaunchDarkly
           end
 
           def initialize(opts)
-            if !REDIS_ENABLED
+            unless REDIS_ENABLED
               raise RuntimeError.new("can't use #{description} because one of these gems is missing: redis, connection_pool")
             end
 
@@ -55,11 +55,11 @@ module LaunchDarkly
             if opts[:redis_url]
               redis_opts[:url] = opts[:redis_url]
             end
-            if !redis_opts.include?(:url)
+            unless redis_opts.include?(:url)
               redis_opts[:url] = LaunchDarkly::Integrations::Redis::default_redis_url
             end
             max_connections = opts[:max_connections] || 16
-            return opts[:pool] || ConnectionPool.new(size: max_connections) do
+            opts[:pool] || ConnectionPool.new(size: max_connections) do
               ::Redis.new(redis_opts)
             end
           end
@@ -152,7 +152,7 @@ module LaunchDarkly
           private
 
           def before_update_transaction(base_key, key)
-            @test_hook.before_update_transaction(base_key, key) if !@test_hook.nil?
+            @test_hook.before_update_transaction(base_key, key) unless @test_hook.nil?
           end
 
           def items_key(kind)

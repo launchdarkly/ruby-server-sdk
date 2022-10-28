@@ -38,7 +38,7 @@ module LaunchDarkly
       #
       def self.new_feature_store(opts = {})
         core = LaunchDarkly::Impl::Integrations::Consul::ConsulFeatureStoreCore.new(opts)
-        return LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
+        LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
       end
     end
   end

@@ -62,14 +62,14 @@ module LaunchDarkly
       def evaluate(flag, context)
         result = EvalResult.new
         detail = eval_internal(flag, context, result)
-        if !result.big_segments_status.nil?
+        unless result.big_segments_status.nil?
           # If big_segments_status is non-nil at the end of the evaluation, it means a query was done at
           # some point and we will want to include the status in the evaluation reason.
           detail = EvaluationDetail.new(detail.value, detail.variation_index,
             detail.reason.with_big_segments_status(result.big_segments_status))
         end
         result.detail = detail
-        return result
+        result
       end
 
       def self.make_big_segment_ref(segment)  # method is visible for testing
@@ -82,12 +82,12 @@ module LaunchDarkly
       private
 
       def eval_internal(flag, context, state)
-        if !flag[:on]
+        unless flag[:on]
           return EvaluatorHelpers.off_result(flag)
         end
 
         prereq_failure_result = check_prerequisites(flag, context, state)
-        return prereq_failure_result if !prereq_failure_result.nil?
+        return prereq_failure_result unless prereq_failure_result.nil?
 
         # Check context target matches
         (flag[:targets] || []).each do |target|
@@ -111,12 +111,12 @@ module LaunchDarkly
         end
 
         # Check the fallthrough rule
-        if !flag[:fallthrough].nil?
+        unless flag[:fallthrough].nil?
           return get_value_for_variation_or_rollout(flag, flag[:fallthrough], context, EvaluationReason::fallthrough,
             EvaluatorHelpers.fallthrough_precomputed_results(flag))
         end
 
-        return EvaluationDetail.new(nil, nil, EvaluationReason::fallthrough)
+        EvaluationDetail.new(nil, nil, EvaluationReason::fallthrough)
       end
 
       def check_prerequisites(flag, context, state)
@@ -144,7 +144,7 @@ module LaunchDarkly
               prereq_ok = false
             end
           end
-          if !prereq_ok
+          unless prereq_ok
             return EvaluatorHelpers.prerequisite_failed_result(prerequisite, flag)
           end
         end
@@ -152,13 +152,13 @@ module LaunchDarkly
       end
 
       def rule_match_context(rule, context, state)
-        return false if !rule[:clauses]
+        return false unless rule[:clauses]
 
         (rule[:clauses] || []).each do |clause|
-          return false if !clause_match_context(clause, context, state)
+          return false unless clause_match_context(clause, context, state)
         end
 
-        return true
+        true
       end
 
       def clause_match_context(clause, context, state)
@@ -237,7 +237,7 @@ module LaunchDarkly
       end
 
       def big_segment_match_context(segment, context, state)
-        if !segment[:generation]
+        unless segment[:generation]
           # Big segment queries can only be done if the generation is known. If it's unset,
           # that probably means the data store was populated by an older SDK that doesn't know
           # about the generation property and therefore dropped it from the JSON data. We'll treat
@@ -245,7 +245,7 @@ module LaunchDarkly
           state.big_segments_status = BigSegmentsStatus::NOT_CONFIGURED
           return false
         end
-        if !state.big_segments_status
+        unless state.big_segments_status
           result = @get_big_segments_membership.nil? ? nil : @get_big_segments_membership.call(context.key)
           if result
             state.big_segments_membership = result.membership
@@ -258,7 +258,7 @@ module LaunchDarkly
         segment_ref = Evaluator.make_big_segment_ref(segment)
         membership = state.big_segments_membership
         included = membership.nil? ? nil : membership[segment_ref]
-        return included if !included.nil?
+        return included unless included.nil?
         simple_segment_match_context(segment, context, false)
       end
 
@@ -301,7 +301,7 @@ module LaunchDarkly
           return true if segment_rule_match_context(r, context, segment[:key], segment[:salt])
         end
 
-        return false
+        false
       end
 
       def segment_rule_match_context(rule, context, segment_key, salt)
@@ -310,12 +310,12 @@ module LaunchDarkly
         end
 
         # If the weight is absent, this rule matches
-        return true if !rule[:weight]
+        return true unless rule[:weight]
 
         # All of the clauses are met. See if the user buckets in
         bucket = EvaluatorBucketing.bucket_context(context, rule[:rolloutContextKind], segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt, nil)
         weight = rule[:weight].to_f / 100000.0
-        return bucket.nil? || bucket < weight
+        bucket.nil? || bucket < weight
       end
 
       private
@@ -327,7 +327,7 @@ module LaunchDarkly
           return Evaluator.error_result(EvaluationReason::ERROR_MALFORMED_FLAG)
         end
         if precomputed_results
-          return precomputed_results.for_variation(index, in_experiment)
+          precomputed_results.for_variation(index, in_experiment)
         else
           #if in experiment is true, set reason to a different reason instance/singleton with in_experiment set
           if in_experiment
@@ -337,7 +337,7 @@ module LaunchDarkly
               reason = EvaluationReason::rule_match(reason.rule_index, reason.rule_id, in_experiment)
             end
           end
-          return EvaluatorHelpers.evaluation_detail_for_variation(flag, index, reason)
+          EvaluatorHelpers.evaluation_detail_for_variation(flag, index, reason)
         end
       end
     end

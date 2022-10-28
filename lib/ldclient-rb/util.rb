@@ -11,7 +11,7 @@ module LaunchDarkly
       attrs.each do |attr|
         value = hash[attr]
         if !value.nil? && !value.is_a?(String)
-          ret = hash.clone if !changed
+          ret = hash.clone unless changed
           ret[attr] = value.to_s
           changed = true
         end
@@ -25,7 +25,7 @@ module LaunchDarkly
         http_client_options["socket_class"] = config.socket_factory
       end
       proxy = URI.parse(uri_s).find_proxy
-      if !proxy.nil?
+      unless proxy.nil?
         http_client_options["proxy"] = {
           proxy_address: proxy.host,
           proxy_port: proxy.port,
@@ -33,7 +33,7 @@ module LaunchDarkly
           proxy_password: proxy.password,
         }
       end
-      return HTTP::Client.new(http_client_options)
+      HTTP::Client.new(http_client_options)
         .timeout({
           read: config.read_timeout,
           connect: config.connect_timeout,

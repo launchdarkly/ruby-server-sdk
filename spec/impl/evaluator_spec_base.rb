@@ -51,7 +51,7 @@ module LaunchDarkly
 
       def with_big_segment_for_user(user, segment, included)
         user_key = user.key
-        @big_segment_memberships[user_key] = {} if !@big_segment_memberships.has_key?(user_key)
+        @big_segment_memberships[user_key] = {} unless @big_segment_memberships.has_key?(user_key)
         @big_segment_memberships[user_key][Evaluator.make_big_segment_ref(segment)] = included
         self
       end
@@ -73,17 +73,17 @@ module LaunchDarkly
       end
 
       private def get_flag(key)
-        raise "should not have requested flag #{key}" if !@flags.has_key?(key)
+        raise "should not have requested flag #{key}" unless @flags.has_key?(key)
         @flags[key]
       end
 
       private def get_segment(key)
-        raise "should not have requested segment #{key}" if !@segments.has_key?(key)
+        raise "should not have requested segment #{key}" unless @segments.has_key?(key)
         @segments[key]
       end
 
       private def get_big_segments(user_key)
-        raise "should not have requested big segments for #{user_key}" if !@big_segment_memberships.has_key?(user_key)
+        raise "should not have requested big segments for #{user_key}" unless @big_segment_memberships.has_key?(user_key)
         @big_segments_queries << user_key
         BigSegmentMembershipResult.new(@big_segment_memberships[user_key], @big_segments_status)
       end

@@ -16,14 +16,14 @@ module LaunchDarkly
           end
 
           def initialize(opts)
-            if !CONSUL_ENABLED
+            unless CONSUL_ENABLED
               raise RuntimeError.new("can't use Consul feature store without the 'diplomat' gem")
             end
 
             @prefix = (opts[:prefix] || LaunchDarkly::Integrations::Consul.default_prefix) + '/'
             @logger = opts[:logger] || Config.default_logger
-            Diplomat.configuration = opts[:consul_config] if !opts[:consul_config].nil?
-            Diplomat.configuration.url = opts[:url] if !opts[:url].nil?
+            Diplomat.configuration = opts[:consul_config] unless opts[:consul_config].nil?
+            Diplomat.configuration.url = opts[:url] unless opts[:url].nil?
             @logger.info("ConsulFeatureStore: using Consul host at #{Diplomat.configuration.url}")
           end
 
@@ -70,7 +70,7 @@ module LaunchDarkly
             results = Diplomat::Kv.get(kind_key(kind), { recurse: true }, :return)
             (results == "" ? [] : results).each do |result|
               value = result[:value]
-              if !value.nil?
+              unless value.nil?
                 item = Model.deserialize(kind, value)
                 items_out[item[:key].to_sym] = item
               end

@@ -14,13 +14,13 @@ class ClientEntity
 
     if config[:streaming]
       streaming = config[:streaming]
-      opts[:stream_uri] = streaming[:baseUri] if !streaming[:baseUri].nil?
-      opts[:initial_reconnect_delay] = streaming[:initialRetryDelayMs] / 1_000.0 if !streaming[:initialRetryDelayMs].nil?
+      opts[:stream_uri] = streaming[:baseUri] unless streaming[:baseUri].nil?
+      opts[:initial_reconnect_delay] = streaming[:initialRetryDelayMs] / 1_000.0 unless streaming[:initialRetryDelayMs].nil?
     elsif config[:polling]
       polling = config[:polling]
       opts[:stream] = false
-      opts[:base_uri] = polling[:baseUri] if !polling[:baseUri].nil?
-      opts[:poll_interval] = polling[:pollIntervalMs] / 1_000.0 if !polling[:pollIntervalMs].nil?
+      opts[:base_uri] = polling[:baseUri] unless polling[:baseUri].nil?
+      opts[:poll_interval] = polling[:pollIntervalMs] / 1_000.0 unless polling[:pollIntervalMs].nil?
     end
 
     if config[:events]
@@ -30,7 +30,7 @@ class ClientEntity
       opts[:diagnostic_opt_out] = !events[:enableDiagnostics]
       opts[:all_attributes_private]  = !!events[:allAttributesPrivate]
       opts[:private_attribute_names] = events[:globalPrivateAttributes]
-      opts[:flush_interval] = (events[:flushIntervalMs] / 1_000) if !events[:flushIntervalMs].nil?
+      opts[:flush_interval] = (events[:flushIntervalMs] / 1_000) unless events[:flushIntervalMs].nil?
       opts[:inline_users_in_events] = events[:inlineUsers] || false
     else
       opts[:send_events] = false

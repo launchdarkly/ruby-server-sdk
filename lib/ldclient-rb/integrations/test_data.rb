@@ -172,7 +172,7 @@ module LaunchDarkly
         key = item[:key].to_sym
         @lock.with_write_lock do
           old_item = current[key]
-          if !old_item.nil? then
+          unless old_item.nil? then
             item = item.clone
             item[:version] = old_item[:version] + 1
           end

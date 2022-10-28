@@ -25,7 +25,7 @@ module LaunchDarkly
 
       def dispose_all
         @lock.synchronize {
-          @pool.map { |instance| @instance_destructor.call(instance) } if !@instance_destructor.nil?
+          @pool.map { |instance| @instance_destructor.call(instance) } unless @instance_destructor.nil?
           @pool.clear()
         }
       end

@@ -65,7 +65,7 @@ module LaunchDarkly
         end
 
         def stop
-          @listener.stop if !@listener.nil?
+          @listener.stop unless @listener.nil?
         end
 
         private
@@ -123,7 +123,7 @@ module LaunchDarkly
           items = all_data[kind]
           raise ArgumentError, "Received unknown item kind #{kind} in add_data" if items.nil? # shouldn't be possible since we preinitialize the hash
           key = item[:key].to_sym
-          if !items[key].nil?
+          unless items[key].nil?
             raise ArgumentError, "#{kind[:namespace]} key \"#{item[:key]}\" was used more than once"
           end
           items[key] = item

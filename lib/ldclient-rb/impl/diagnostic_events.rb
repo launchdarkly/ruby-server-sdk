@@ -25,7 +25,7 @@ module LaunchDarkly
       end
 
       def create_init_event(config)
-        return {
+        {
           kind: 'diagnostic-init',
           creationDate: Util.current_time_millis,
           id: @id,

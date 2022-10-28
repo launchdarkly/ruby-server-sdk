@@ -15,7 +15,7 @@ class BigSegmentStoreFixture
     response = HTTP.post("#{@uri}/getMembership", :json => {:userHash => user_hash})
     json = response.parse(:json)
 
-    return json['values']
+    json['values']
   end
 
   def stop

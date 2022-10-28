@@ -22,7 +22,7 @@ module LaunchDarkly
         @logger = logger
         @last_status = nil
 
-        if !@store.nil?
+        unless @store.nil?
           @cache = ExpiringCache.new(big_segments_config.user_cache_size, big_segments_config.user_cache_time)
           @poll_worker = RepeatingTask.new(big_segments_config.status_poll_interval, 0, -> { poll_store_and_update_status }, logger)
           @poll_worker.start
@@ -32,14 +32,14 @@ module LaunchDarkly
       attr_reader :status_provider
 
       def stop
-        @poll_worker.stop if !@poll_worker.nil?
-        @store.stop if !@store.nil?
+        @poll_worker.stop unless @poll_worker.nil?
+        @store.stop unless @store.nil?
       end
 
       def get_user_membership(user_key)
-        return nil if !@store
+        return nil unless @store
         membership = @cache[user_key]
-        if !membership
+        unless membership
           begin
             membership = @store.get_membership(BigSegmentStoreManager.hash_for_user_key(user_key))
             membership = EMPTY_MEMBERSHIP if membership.nil?
@@ -49,8 +49,8 @@ module LaunchDarkly
             return BigSegmentMembershipResult.new(nil, BigSegmentsStatus::STORE_ERROR)
           end
         end
-        poll_store_and_update_status if !@last_status
-        if !@last_status.available
+        poll_store_and_update_status unless @last_status
+        unless @last_status.available
           return BigSegmentMembershipResult.new(membership, BigSegmentsStatus::STORE_ERROR)
         end
         BigSegmentMembershipResult.new(membership, @last_status.stale ? BigSegmentsStatus::STALE : BigSegmentsStatus::HEALTHY)
@@ -62,7 +62,7 @@ module LaunchDarkly
 
       def poll_store_and_update_status
         new_status = Interfaces::BigSegmentStoreStatus.new(false, false) # default to "unavailable" if we don't get a new status below
-        if !@store.nil?
+        unless @store.nil?
           begin
             metadata = @store.get_metadata
             new_status = Interfaces::BigSegmentStoreStatus.new(true, !metadata || stale?(metadata.last_up_to_date))

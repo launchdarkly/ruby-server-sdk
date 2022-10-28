@@ -29,7 +29,7 @@ module LaunchDarkly
           task.start
           3.times do
             time = queue.pop
-            if !last.nil?
+            unless last.nil?
               expect(time.to_f - last.to_f).to be >=(0.05)
             end
             last = time

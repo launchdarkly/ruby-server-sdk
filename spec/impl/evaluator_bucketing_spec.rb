@@ -9,15 +9,15 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
       it "returns the expected bucket values for seed" do
         user = LaunchDarkly::LDContext.create({ key: "userKeyA" })
         bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", seed)
-        expect(bucket).to be_within(0.0000001).of(0.09801207);
+        expect(bucket).to be_within(0.0000001).of(0.09801207)
 
         user = LaunchDarkly::LDContext.create({ key: "userKeyB" })
         bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", seed)
-        expect(bucket).to be_within(0.0000001).of(0.14483777);
+        expect(bucket).to be_within(0.0000001).of(0.14483777)
 
         user = LaunchDarkly::LDContext.create({ key: "userKeyC" })
         bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", seed)
-        expect(bucket).to be_within(0.0000001).of(0.9242641);
+        expect(bucket).to be_within(0.0000001).of(0.9242641)
       end
 
       it "returns the same bucket regardless of hashKey and salt" do
@@ -48,15 +48,15 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
     it "gets expected bucket values for specific keys" do
       user = LaunchDarkly::LDContext.create({ key: "userKeyA" })
       bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", nil)
-      expect(bucket).to be_within(0.0000001).of(0.42157587);
+      expect(bucket).to be_within(0.0000001).of(0.42157587)
 
       user = LaunchDarkly::LDContext.create({ key: "userKeyB" })
       bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", nil)
-      expect(bucket).to be_within(0.0000001).of(0.6708485);
+      expect(bucket).to be_within(0.0000001).of(0.6708485)
 
       user = LaunchDarkly::LDContext.create({ key: "userKeyC" })
       bucket = subject.bucket_context(user, user.kind, "hashKey", "key", "saltyA", nil)
-      expect(bucket).to be_within(0.0000001).of(0.10343106);
+      expect(bucket).to be_within(0.0000001).of(0.10343106)
     end
 
     it "can bucket by int value (equivalent to string)" do

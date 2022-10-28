@@ -497,7 +497,7 @@ describe LaunchDarkly::EventProcessor do
   end
 
   def debug_event(flag, user, variation, value, timestamp = starting_timestamp)
-    out = {
+    {
       kind: 'debug',
       creationDate: timestamp,
       key: flag[:key],
@@ -506,7 +506,6 @@ describe LaunchDarkly::EventProcessor do
       value: value,
       user: user,
     }
-    out
   end
 
   def custom_event(user, key, data, metric_value, inline_user = false, timestamp = starting_timestamp)
@@ -515,13 +514,13 @@ describe LaunchDarkly::EventProcessor do
       creationDate: timestamp,
       key: key,
     }
-    out[:data] = data if !data.nil?
+    out[:data] = data unless data.nil?
     if inline_user
       out[:user] = user
     else
       out[:userKey] = user[:key]
     end
-    out[:metricValue] = metric_value if !metric_value.nil?
+    out[:metricValue] = metric_value unless metric_value.nil?
     out
   end
 

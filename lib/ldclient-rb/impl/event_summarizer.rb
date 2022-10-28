@@ -22,7 +22,7 @@ module LaunchDarkly
 
       # Adds this event to our counters, if it is a type of event we need to count.
       def summarize_event(event)
-        return if !event.is_a?(LaunchDarkly::Impl::EvalEvent)
+        return unless event.is_a?(LaunchDarkly::Impl::EvalEvent)
 
         counters_for_flag = @counters[event.key]
         if counters_for_flag.nil?
@@ -41,7 +41,7 @@ module LaunchDarkly
           variation_counter.count = variation_counter.count + 1
         end
         time = event.timestamp
-        if !time.nil?
+        unless time.nil?
           @start_date = time if @start_date == 0 || time < @start_date
           @end_date = time if time > @end_date
         end
@@ -49,8 +49,7 @@ module LaunchDarkly
 
       # Returns a snapshot of the current summarized event data, and resets this state.
       def snapshot
-        ret = EventSummary.new(@start_date, @end_date, @counters)
-        ret
+        EventSummary.new(@start_date, @end_date, @counters)
       end
 
       def clear

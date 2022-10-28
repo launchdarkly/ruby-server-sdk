@@ -100,7 +100,7 @@ module LaunchDarkly
       # @return an object that can be stored in {Config#data_source}
       #
       def self.data_source(options={})
-        return lambda { |sdk_key, config|
+        lambda { |sdk_key, config|
           Impl::Integrations::FileDataSourceImpl.new(config.feature_store, config.logger, options) }
       end
     end

@@ -11,7 +11,7 @@ module LaunchDarkly
       def self.variation_index_for_context(flag, rule, context)
 
         variation = rule[:variation]
-        return variation, false if !variation.nil? # fixed variation
+        return variation, false unless variation.nil? # fixed variation
         rollout = rule[:rollout]
         return nil, false if rollout.nil?
         variations = rollout[:variations]
@@ -23,7 +23,7 @@ module LaunchDarkly
           seed = rollout[:seed]
           bucket = bucket_context(context, rollout[:contextKind], flag[:key], bucket_by, flag[:salt], seed) # may not be present
           in_experiment = rollout_is_experiment && !bucket.nil?
-          sum = 0;
+          sum = 0
           variations.each do |variate|
             sum += variate[:weight].to_f / 100000.0
             if bucket.nil? || bucket < sum
@@ -70,7 +70,7 @@ module LaunchDarkly
           hash_key = "%s.%s.%s" % [key, salt, id_hash]
         end
 
-        hash_val = (Digest::SHA1.hexdigest(hash_key))[0..14]
+        hash_val = Digest::SHA1.hexdigest(hash_key)[0..14]
         hash_val.to_i(16) / Float(0xFFFFFFFFFFFFFFF)
       end
 

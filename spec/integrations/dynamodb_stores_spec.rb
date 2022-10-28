@@ -115,7 +115,7 @@ class DynamoDBStoreTester
       $DynamoDBBigSegmentStore::ATTR_EXCLUDED => Set.new(excludes),
     }
     sets.each do |attr_name, values|
-      if !values.empty?
+      unless values.empty?
         client.update_item(
           table_name: TABLE_NAME,
           key: {

@@ -58,7 +58,7 @@ module LaunchDarkly
     end
 
     def get_metadata
-      raise @metadata_error if !@metadata_error.nil?
+      raise @metadata_error unless @metadata_error.nil?
       @metadata
     end
 
