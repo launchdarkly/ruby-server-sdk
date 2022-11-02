@@ -49,10 +49,10 @@ class RedisStoreTester
   def set_big_segments(user_hash, includes, excludes)
     with_redis_test_client do |client|
       includes.each do |ref|
-        client.sadd(@actual_prefix + $RedisBigSegmentStore::KEY_USER_INCLUDE + user_hash, ref)
+        client.sadd?(@actual_prefix + $RedisBigSegmentStore::KEY_USER_INCLUDE + user_hash, ref)
       end
       excludes.each do |ref|
-        client.sadd(@actual_prefix + $RedisBigSegmentStore::KEY_USER_EXCLUDE + user_hash, ref)
+        client.sadd?(@actual_prefix + $RedisBigSegmentStore::KEY_USER_EXCLUDE + user_hash, ref)
       end
     end
   end

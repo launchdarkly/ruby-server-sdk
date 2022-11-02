@@ -36,8 +36,6 @@ module LaunchDarkly
     # @option opts [Float] :user_keys_flush_interval (300) See {#user_keys_flush_interval}.
     # @option opts [Boolean] :inline_users_in_events (false) See {#inline_users_in_events}.
     # @option opts [Object] :data_source See {#data_source}.
-    # @option opts [Object] :update_processor Obsolete synonym for `data_source`.
-    # @option opts [Object] :update_processor_factory Obsolete synonym for `data_source`.
     # @option opts [Boolean] :diagnostic_opt_out (false) See {#diagnostic_opt_out?}.
     # @option opts [Float] :diagnostic_recording_interval (900) See {#diagnostic_recording_interval}.
     # @option opts [String] :wrapper_name See {#wrapper_name}.
@@ -68,9 +66,7 @@ module LaunchDarkly
       @user_keys_capacity = opts[:user_keys_capacity] || Config.default_user_keys_capacity
       @user_keys_flush_interval = opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
       @inline_users_in_events = opts[:inline_users_in_events] || false
-      @data_source = opts[:data_source] || opts[:update_processor] || opts[:update_processor_factory]
-      @update_processor = opts[:update_processor]
-      @update_processor_factory = opts[:update_processor_factory]
+      @data_source = opts[:data_source]
       @diagnostic_opt_out = opts.has_key?(:diagnostic_opt_out) && opts[:diagnostic_opt_out]
       @diagnostic_recording_interval = opts.has_key?(:diagnostic_recording_interval) && opts[:diagnostic_recording_interval] > Config.minimum_diagnostic_recording_interval ?
         opts[:diagnostic_recording_interval] : Config.default_diagnostic_recording_interval
@@ -303,12 +299,6 @@ module LaunchDarkly
     # @return [Hash]
     #
     attr_reader :application
-
-    # @deprecated This is replaced by {#data_source}.
-    attr_reader :update_processor
-
-    # @deprecated This is replaced by {#data_source}.
-    attr_reader :update_processor_factory
 
     #
     # Set to true to opt out of sending diagnostics data.

@@ -1,4 +1,4 @@
-require "ldclient-rb/redis_store"  # eventually we will just refer to impl/integrations/redis_impl directly
+require "ldclient-rb/impl/integrations/redis_impl"
 
 module LaunchDarkly
   module Integrations
@@ -59,7 +59,7 @@ module LaunchDarkly
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
       def self.new_feature_store(opts = {})
-        RedisFeatureStore.new(opts)
+        LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStore.new(opts)
       end
 
       #
