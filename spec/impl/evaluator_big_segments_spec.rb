@@ -5,10 +5,10 @@ require "impl/evaluator_spec_base"
 
 module LaunchDarkly
   module Impl
-    evaluator_tests_with_and_without_preprocessing "Evaluator (big segments)" do |desc, factory|
-      describe "#{desc} - evaluate", :evaluator_spec_base => true do
+    describe "Evaluator (big segments)" do
+      describe "evaluate", :evaluator_spec_base => true do
         it "segment is not matched if there is no way to query it" do
-          segment = factory.segment({
+          segment = Segments.from_hash({
             key: 'test',
             included: [ user.key ],  # included should be ignored for a big segment
             version: 1,
@@ -18,14 +18,14 @@ module LaunchDarkly
           e = EvaluatorBuilder.new(logger)
             .with_segment(segment)
             .build
-          flag = factory.boolean_flag_with_clauses([make_segment_match_clause(segment)])
+          flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
           result = e.evaluate(flag, user)
           expect(result.detail.value).to be false
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::NOT_CONFIGURED)
         end
 
         it "segment with no generation is not matched" do
-          segment = factory.segment({
+          segment = Segments.from_hash({
             key: 'test',
             included: [ user.key ],  # included should be ignored for a big segment
             version: 1,
@@ -34,14 +34,14 @@ module LaunchDarkly
           e = EvaluatorBuilder.new(logger)
             .with_segment(segment)
             .build
-          flag = factory.boolean_flag_with_clauses([make_segment_match_clause(segment)])
+          flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
           result = e.evaluate(flag, user)
           expect(result.detail.value).to be false
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::NOT_CONFIGURED)
         end
 
         it "matched with include" do
-          segment = factory.segment({
+          segment = Segments.from_hash({
             key: 'test',
             version: 1,
             unbounded: true,
@@ -51,54 +51,54 @@ module LaunchDarkly
             .with_segment(segment)
             .with_big_segment_for_user(user, segment, true)
             .build
-          flag = factory.boolean_flag_with_clauses([make_segment_match_clause(segment)])
+          flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
           result = e.evaluate(flag, user)
           expect(result.detail.value).to be true
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
         end
 
         it "matched with rule" do
-          segment = factory.segment({
+          segment = Segments.from_hash({
             key: 'test',
             version: 1,
             unbounded: true,
             generation: 2,
             rules: [
-              { clauses: [ make_user_matching_clause(user) ] },
+              { clauses: [ Clauses.match_user(user) ] },
             ],
           })
           e = EvaluatorBuilder.new(logger)
             .with_segment(segment)
             .with_big_segment_for_user(user, segment, nil)
             .build
-          flag = factory.boolean_flag_with_clauses([make_segment_match_clause(segment)])
+          flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
           result = e.evaluate(flag, user)
           expect(result.detail.value).to be true
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
         end
 
         it "unmatched by exclude regardless of rule" do
-          segment = factory.segment({
+          segment = Segments.from_hash({
             key: 'test',
             version: 1,
             unbounded: true,
             generation: 2,
             rules: [
-              { clauses: [ make_user_matching_clause(user) ] },
+              { clauses: [ Clauses.match_user(user) ] },
             ],
           })
           e = EvaluatorBuilder.new(logger)
             .with_segment(segment)
             .with_big_segment_for_user(user, segment, false)
             .build
-          flag = factory.boolean_flag_with_clauses([make_segment_match_clause(segment)])
+          flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
           result = e.evaluate(flag, user)
           expect(result.detail.value).to be false
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
         end
 
         it "status is returned from provider" do
-          segment = factory.segment({
+          segment = Segments.from_hash({
             key: 'test',
             version: 1,
             unbounded: true,
@@ -109,33 +109,33 @@ module LaunchDarkly
             .with_big_segment_for_user(user, segment, true)
             .with_big_segments_status(BigSegmentsStatus::STALE)
             .build
-          flag = factory.boolean_flag_with_clauses([make_segment_match_clause(segment)])
+          flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
           result = e.evaluate(flag, user)
           expect(result.detail.value).to be true
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::STALE)
         end
 
         it "queries state only once per user even if flag references multiple segments" do
-          segment1 = factory.segment({
+          segment1 = Segments.from_hash({
             key: 'segmentkey1',
             version: 1,
             unbounded: true,
             generation: 2,
           })
-          segment2 = factory.segment({
+          segment2 = Segments.from_hash({
             key: 'segmentkey2',
             version: 1,
             unbounded: true,
             generation: 3,
           })
-          flag = factory.flag({
+          flag = Flags.from_hash({
             key: 'key',
             on: true,
             fallthrough: { variation: 0 },
             variations: [ false, true ],
             rules: [
-              { variation: 1, clauses: [ make_segment_match_clause(segment1) ]},
-              { variation: 1, clauses: [ make_segment_match_clause(segment2) ]},
+              { variation: 1, clauses: [ Clauses.match_segment(segment1) ]},
+              { variation: 1, clauses: [ Clauses.match_segment(segment2) ]},
             ],
           })
 

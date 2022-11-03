@@ -2,6 +2,8 @@ require "ldclient-rb/evaluation_detail"
 require "ldclient-rb/impl/evaluator_bucketing"
 require "ldclient-rb/impl/evaluator_helpers"
 require "ldclient-rb/impl/evaluator_operators"
+require "ldclient-rb/impl/model/feature_flag"
+require "ldclient-rb/impl/model/segment"
 
 module LaunchDarkly
   module Impl
@@ -56,8 +58,8 @@ module LaunchDarkly
       # any events that were generated for prerequisite flags; its `value` will be `nil` if the flag returns the
       # default value. Error conditions produce a result with a nil value and an error reason, not an exception.
       #
-      # @param flag [Object] the flag
-      # @param context [LDContext] the context properties
+      # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] the flag
+      # @param context [LaunchDarkly::LDContext] the evaluation context
       # @return [EvalResult] the evaluation result
       def evaluate(flag, context)
         result = EvalResult.new
@@ -72,124 +74,125 @@ module LaunchDarkly
         result
       end
 
+      # @param segment [LaunchDarkly::Impl::Model::Segment]
       def self.make_big_segment_ref(segment)  # method is visible for testing
         # The format of Big Segment references is independent of what store implementation is being
         # used; the store implementation receives only this string and does not know the details of
         # the data model. The Relay Proxy will use the same format when writing to the store.
-        "#{segment[:key]}.g#{segment[:generation]}"
+        "#{segment.key}.g#{segment.generation}"
       end
 
       private
 
+      # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] the flag
+      # @param context [LaunchDarkly::LDContext] the evaluation context
+      # @param state [EvalResult]
       def eval_internal(flag, context, state)
-        unless flag[:on]
-          return EvaluatorHelpers.off_result(flag)
+        unless flag.on
+          return flag.off_result
         end
 
         prereq_failure_result = check_prerequisites(flag, context, state)
         return prereq_failure_result unless prereq_failure_result.nil?
 
         # Check context target matches
-        (flag[:targets] || []).each do |target|
-          (target[:values] || []).each do |value|
+        flag.targets.each do |target|
+          target.values.each do |value|
             if value == context.key
-              return EvaluatorHelpers.target_match_result(target, flag)
+              return target.match_result
             end
           end
         end
 
         # Check custom rules
-        rules = flag[:rules] || []
-        rules.each_index do |i|
-          rule = rules[i]
+        flag.rules.each do |rule|
           if rule_match_context(rule, context, state)
-            reason = rule[:_reason]  # try to use cached reason for this rule
-            reason = EvaluationReason::rule_match(i, rule[:id]) if reason.nil?
-            return get_value_for_variation_or_rollout(flag, rule, context, reason,
-              EvaluatorHelpers.rule_precomputed_results(rule))
+            return get_value_for_variation_or_rollout(flag, rule, context, rule.match_results)
           end
         end
 
         # Check the fallthrough rule
-        unless flag[:fallthrough].nil?
-          return get_value_for_variation_or_rollout(flag, flag[:fallthrough], context, EvaluationReason::fallthrough,
-            EvaluatorHelpers.fallthrough_precomputed_results(flag))
+        unless flag.fallthrough.nil?
+          return get_value_for_variation_or_rollout(flag, flag.fallthrough, context, flag.fallthrough_results)
         end
 
         EvaluationDetail.new(nil, nil, EvaluationReason::fallthrough)
       end
 
+      # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] the flag
+      # @param context [LaunchDarkly::LDContext] the evaluation context
+      # @param state [EvalResult]
       def check_prerequisites(flag, context, state)
-        (flag[:prerequisites] || []).each do |prerequisite|
+        flag.prerequisites.each do |prerequisite|
           prereq_ok = true
-          prereq_key = prerequisite[:key]
+          prereq_key = prerequisite.key
           prereq_flag = @get_flag.call(prereq_key)
 
           if prereq_flag.nil?
-            @logger.error { "[LDClient] Could not retrieve prerequisite flag \"#{prereq_key}\" when evaluating \"#{flag[:key]}\"" }
+            @logger.error { "[LDClient] Could not retrieve prerequisite flag \"#{prereq_key}\" when evaluating \"#{flag.key}\"" }
             prereq_ok = false
           else
             begin
               prereq_res = eval_internal(prereq_flag, context, state)
               # Note that if the prerequisite flag is off, we don't consider it a match no matter what its
               # off variation was. But we still need to evaluate it in order to generate an event.
-              if !prereq_flag[:on] || prereq_res.variation_index != prerequisite[:variation]
+              if !prereq_flag.on || prereq_res.variation_index != prerequisite.variation
                 prereq_ok = false
               end
               prereq_eval = PrerequisiteEvalRecord.new(prereq_flag, flag, prereq_res)
               state.prereq_evals = [] if state.prereq_evals.nil?
               state.prereq_evals.push(prereq_eval)
             rescue => exn
-              Util.log_exception(@logger, "Error evaluating prerequisite flag \"#{prereq_key}\" for flag \"#{flag[:key]}\"", exn)
+              Util.log_exception(@logger, "Error evaluating prerequisite flag \"#{prereq_key}\" for flag \"#{flag.key}\"", exn)
               prereq_ok = false
             end
           end
           unless prereq_ok
-            return EvaluatorHelpers.prerequisite_failed_result(prerequisite, flag)
+            return prerequisite.failure_result
           end
         end
         nil
       end
 
+      # @param rule [LaunchDarkly::Impl::Model::FlagRule]
+      # @param context [LaunchDarkly::LDContext]
+      # @param state [EvalResult]
       def rule_match_context(rule, context, state)
-        return false unless rule[:clauses]
-
-        (rule[:clauses] || []).each do |clause|
+        rule.clauses.each do |clause|
           return false unless clause_match_context(clause, context, state)
         end
 
         true
       end
 
+      # @param clause [LaunchDarkly::Impl::Model::Clause]
+      # @param context [LaunchDarkly::LDContext]
+      # @param state [EvalResult]
       def clause_match_context(clause, context, state)
         # In the case of a segment match operator, we check if the context is in any of the segments,
         # and possibly negate
-        if clause[:op].to_sym == :segmentMatch
-          result = (clause[:values] || []).any? { |v|
+        if clause.op == :segmentMatch
+          result = clause.values.any? { |v|
             segment = @get_segment.call(v)
             !segment.nil? && segment_match_context(segment, context, state)
           }
-          clause[:negate] ? !result : result
+          clause.negate ? !result : result
         else
           clause_match_context_no_segments(clause, context)
         end
       end
 
-      #
-      # @param clause [Hash]
+      # @param clause [LaunchDarkly::Impl::Model::Clause]
       # @param context_value [any]
       # @return [Boolean]
-      #
       private def match_any_clause_value(clause, context_value)
-        op = clause[:op].to_sym
-        clause[:values].any? { |cv| EvaluatorOperators.apply(op, context_value, cv) }
+        op = clause.op
+        clause.values.any? { |cv| EvaluatorOperators.apply(op, context_value, cv) }
       end
 
-      #
-      # @param clause [Hash]
+      # @param clause [LaunchDarkly::Impl::Model::Clause]
       # @param context [LaunchDarkly::LDContext]
       # @return [Boolean]
-      #
       private def clause_match_by_kind(clause, context)
         # If attribute is "kind", then we treat operator and values as a match
         # expression against a list of all individual kinds in the context.
@@ -207,21 +210,19 @@ module LaunchDarkly
         false
       end
 
-      #
-      # @param clause [Hash]
+      # @param clause [LaunchDarkly::Impl::Model::Clause]
       # @param context [LaunchDarkly::LDContext]
       # @return [Boolean]
-      #
       def clause_match_context_no_segments(clause, context)
-        if clause[:attribute] == "kind"
+        if clause.attribute == "kind"
           result = clause_match_by_kind(clause, context)
-          return clause[:negate] ? !result : result
+          return clause.negate ? !result : result
         end
 
-        matched_context = context.individual_context(clause[:contextKind] || LaunchDarkly::LDContext::KIND_DEFAULT)
+        matched_context = context.individual_context(clause.context_kind || LaunchDarkly::LDContext::KIND_DEFAULT)
         return false if matched_context.nil?
 
-        user_val = matched_context.get_value(clause[:attribute])
+        user_val = matched_context.get_value(clause.attribute)
         return false if user_val.nil?
 
         result = if user_val.is_a? Enumerable
@@ -229,15 +230,21 @@ module LaunchDarkly
         else
           match_any_clause_value(clause, user_val)
         end
-        clause[:negate] ? !result : result
+        clause.negate ? !result : result
       end
 
+      # @param segment [LaunchDarkly::Impl::Model::Segment]
+      # @param context [LaunchDarkly::LDContext]
+      # @return [Boolean]
       def segment_match_context(segment, context, state)
-        segment[:unbounded] ? big_segment_match_context(segment, context, state) : simple_segment_match_context(segment, context, true)
+        segment.unbounded ? big_segment_match_context(segment, context, state) : simple_segment_match_context(segment, context, true)
       end
 
+      # @param segment [LaunchDarkly::Impl::Model::Segment]
+      # @param context [LaunchDarkly::LDContext]
+      # @return [Boolean]
       def big_segment_match_context(segment, context, state)
-        unless segment[:generation]
+        unless segment.generation
           # Big segment queries can only be done if the generation is known. If it's unset,
           # that probably means the data store was populated by an older SDK that doesn't know
           # about the generation property and therefore dropped it from the JSON data. We'll treat
@@ -262,83 +269,68 @@ module LaunchDarkly
         simple_segment_match_context(segment, context, false)
       end
 
+      # @param segment [LaunchDarkly::Impl::Model::Segment]
+      # @param context [LaunchDarkly::LDContext]
+      # @param use_includes_and_excludes [Boolean]
+      # @return [Boolean]
       def simple_segment_match_context(segment, context, use_includes_and_excludes)
         if use_includes_and_excludes
-          if EvaluatorHelpers.context_key_in_target_list(context, nil, segment[:included])
+          if EvaluatorHelpers.context_key_in_target_list(context, nil, segment.included)
             return true
           end
 
-          # @type [Enumerable<Hash>]
-          included_contexts = segment[:includedContexts]
-          if included_contexts.is_a?(Enumerable)
-            included_contexts.each do |ctx|
-              return false unless ctx.is_a? Hash
-
-              if EvaluatorHelpers.context_key_in_target_list(context, ctx[:contextKind], ctx[:values])
-                return true
-              end
+          segment.included_contexts.each do |target|
+            if EvaluatorHelpers.context_key_in_target_list(context, target.context_kind, target.values)
+              return true
             end
           end
 
-          if EvaluatorHelpers.context_key_in_target_list(context, nil, segment[:excluded])
+          if EvaluatorHelpers.context_key_in_target_list(context, nil, segment.excluded)
             return false
           end
 
-          # @type [Enumerable<Hash>]
-          excluded_contexts = segment[:excludedContexts]
-          if excluded_contexts.is_a?(Enumerable)
-            excluded_contexts.each do |ctx|
-              return false unless ctx.is_a? Hash
-
-              if EvaluatorHelpers.context_key_in_target_list(context, ctx[:contextKind], ctx[:values])
-                return false
-              end
+          segment.excluded_contexts.each do |target|
+            if EvaluatorHelpers.context_key_in_target_list(context, target.context_kind, target.values)
+              return false
             end
           end
         end
 
-        (segment[:rules] || []).each do |r|
-          return true if segment_rule_match_context(r, context, segment[:key], segment[:salt])
+        segment.rules.each do |r|
+          return true if segment_rule_match_context(r, context, segment.key, segment.salt)
         end
 
         false
       end
 
+      # @param rule [LaunchDarkly::Impl::Model::SegmentRule]
+      # @param context [LaunchDarkly::LDContext]
+      # @param segment_key [String]
+      # @param salt [String]
+      # @return [Boolean]
       def segment_rule_match_context(rule, context, segment_key, salt)
-        (rule[:clauses] || []).each do |c|
+        rule.clauses.each do |c|
           return false unless clause_match_context_no_segments(c, context)
         end
 
         # If the weight is absent, this rule matches
-        return true unless rule[:weight]
+        return true unless rule.weight
 
         # All of the clauses are met. See if the user buckets in
-        bucket = EvaluatorBucketing.bucket_context(context, rule[:rolloutContextKind], segment_key, rule[:bucketBy].nil? ? "key" : rule[:bucketBy], salt, nil)
-        weight = rule[:weight].to_f / 100000.0
+        bucket = EvaluatorBucketing.bucket_context(context, rule.rollout_context_kind, segment_key, rule.bucket_by || "key", salt, nil)
+        weight = rule.weight.to_f / 100000.0
         bucket.nil? || bucket < weight
       end
 
       private
 
-      def get_value_for_variation_or_rollout(flag, vr, context, reason, precomputed_results)
+      def get_value_for_variation_or_rollout(flag, vr, context, precomputed_results)
         index, in_experiment = EvaluatorBucketing.variation_index_for_context(flag, vr, context)
         if index.nil?
-          @logger.error("[LDClient] Data inconsistency in feature flag \"#{flag[:key]}\": variation/rollout object with no variation or rollout")
+          @logger.error("[LDClient] Data inconsistency in feature flag \"#{flag.key}\": variation/rollout object with no variation or rollout")
           return Evaluator.error_result(EvaluationReason::ERROR_MALFORMED_FLAG)
         end
-        if precomputed_results
-          precomputed_results.for_variation(index, in_experiment)
-        else
-          #if in experiment is true, set reason to a different reason instance/singleton with in_experiment set
-          if in_experiment
-            if reason.kind == :FALLTHROUGH
-              reason = EvaluationReason::fallthrough(in_experiment)
-            elsif reason.kind == :RULE_MATCH
-              reason = EvaluationReason::rule_match(reason.rule_index, reason.rule_id, in_experiment)
-            end
-          end
-          EvaluatorHelpers.evaluation_detail_for_variation(flag, index, reason)
-        end
+        precomputed_results.for_variation(index, in_experiment)
       end
     end
   end

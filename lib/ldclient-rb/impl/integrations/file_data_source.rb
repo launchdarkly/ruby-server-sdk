@@ -121,12 +121,12 @@ module LaunchDarkly
 
         def add_item(all_data, kind, item)
           items = all_data[kind]
-          raise ArgumentError, "Received unknown item kind #{kind} in add_data" if items.nil? # shouldn't be possible since we preinitialize the hash
+          raise ArgumentError, "Received unknown item kind #{kind[:namespace]} in add_data" if items.nil? # shouldn't be possible since we preinitialize the hash
           key = item[:key].to_sym
           unless items[key].nil?
             raise ArgumentError, "#{kind[:namespace]} key \"#{item[:key]}\" was used more than once"
           end
-          items[key] = item
+          items[key] = Model.deserialize(kind, item)
         end
 
         def make_flag_with_value(key, value)
