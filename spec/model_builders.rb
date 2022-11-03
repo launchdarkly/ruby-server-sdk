@@ -240,18 +240,18 @@ class DataSetBuilder
   def to_store_data
     {
       LaunchDarkly::FEATURES => @flags,
-      LaunchDarkly::SEGMENTS => @segments
+      LaunchDarkly::SEGMENTS => @segments,
     }
   end
 
   def to_hash
     {
       flags: @flags,
-      segments: @segments
+      segments: @segments,
     }
   end
 
-  def to_json
+  def to_json(*)
     to_hash.to_json
   end
 end

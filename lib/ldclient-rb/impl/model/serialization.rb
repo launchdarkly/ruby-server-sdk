@@ -35,9 +35,9 @@ module LaunchDarkly
 
       # Translates a { flags: ..., segments: ... } object received from LaunchDarkly to the data store format.
       def self.make_all_store_data(received_data, logger = nil)
-        return {
+        {
           FEATURES => (received_data[:flags] || {}).transform_values { |data| FeatureFlag.new(data, logger) },
-          SEGMENTS => (received_data[:segments] || {}).transform_values { |data| Segment.new(data, logger) }
+          SEGMENTS => (received_data[:segments] || {}).transform_values { |data| Segment.new(data, logger) },
         }
       end
     end

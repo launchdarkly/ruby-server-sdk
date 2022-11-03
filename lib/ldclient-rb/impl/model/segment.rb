@@ -62,9 +62,9 @@ module LaunchDarkly
         end
 
         def ==(other)
-            other.is_a?(Segment) && other.data == self.data
-          end
-  
+          other.is_a?(Segment) && other.data == self.data
+        end
+
         def as_json(*) # parameter is unused, but may be passed if we're using the json gem
           @data
         end
