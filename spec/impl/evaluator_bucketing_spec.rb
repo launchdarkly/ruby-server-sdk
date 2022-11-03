@@ -202,7 +202,7 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
             { variation: 0, weight: bucket_value, untracked: false },
           ],
         })
-        flag = Flags.from_hash({ key: flag_key, salt: salt })
+      flag = Flags.from_hash({ key: flag_key, salt: salt })
 
       result_variation, inExperiment = subject.variation_index_for_context(flag, vr, user)
       expect(result_variation).to be 0
