@@ -1,6 +1,8 @@
 require "ldclient-rb/impl/model/clause"
 require "ldclient-rb/impl/model/preprocessed_data"
 
+# See serialization.rb for implementation notes on the data model classes.
+
 module LaunchDarkly
   module Impl
     module Model

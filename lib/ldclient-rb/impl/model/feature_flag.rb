@@ -1,6 +1,8 @@
 require "ldclient-rb/impl/evaluator_helpers"
 require "ldclient-rb/impl/model/clause"
 
+# See serialization.rb for implementation notes on the data model classes.
+
 module LaunchDarkly
   module Impl
     module Model
@@ -140,12 +142,6 @@ module LaunchDarkly
         attr_reader :clauses
         # @return [LaunchDarkly::Impl::Model::EvalResultFactoryMultiVariations]
         attr_reader :match_results
-
-        # This method allows us to read properties of the object as if it's just a hash; we can remove it if we
-        # migrate entirely to using attributes of the class
-        def [](key)
-          @data[key]
-        end
 
         def as_json
           @data

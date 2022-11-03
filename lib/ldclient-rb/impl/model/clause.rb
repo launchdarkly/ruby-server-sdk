@@ -1,4 +1,6 @@
 
+# See serialization.rb for implementation notes on the data model classes.
+
 module LaunchDarkly
   module Impl
     module Model
