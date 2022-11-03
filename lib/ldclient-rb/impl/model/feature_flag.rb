@@ -117,12 +117,6 @@ module LaunchDarkly
         # @return [LaunchDarkly::EvaluationDetail]
         attr_reader :match_result
 
-        # This method allows us to read properties of the object as if it's just a hash; we can remove it if we
-        # migrate entirely to using attributes of the class
-        def [](key)
-          @data[key]
-        end
-
         def as_json
           @data
         end

@@ -25,10 +25,6 @@ module LaunchDarkly
         # @return [Boolean]
         attr_reader :negate
 
-        def [](key)
-          @data[key]
-        end
-
         def as_json
           @data
         end
