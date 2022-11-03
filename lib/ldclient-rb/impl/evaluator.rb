@@ -107,7 +107,7 @@ module LaunchDarkly
         # Check custom rules
         flag.rules.each do |rule|
           if rule_match_context(rule, context, state)
-            return get_value_for_variation_or_rollout(flag, rule, context, rule.match_results)
+            return get_value_for_variation_or_rollout(flag, rule.variation_or_rollout, context, rule.match_results)
           end
         end
 

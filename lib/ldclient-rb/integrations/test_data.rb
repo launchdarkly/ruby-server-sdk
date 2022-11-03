@@ -121,7 +121,7 @@ module LaunchDarkly
           if @current_flags[flag_key] then
             version = @current_flags[flag_key][:version]
           end
-          new_flag = Impl::Model::FeatureFlag.new(flag_builder.build(version+1))
+          new_flag = Impl::Model.deserialize(FEATURES, flag_builder.build(version+1))
           @current_flags[flag_key] = new_flag
         end
         update_item(FEATURES, new_flag)

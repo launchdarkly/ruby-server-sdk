@@ -1,3 +1,4 @@
+require "model_builders"
 require "spec_helper"
 
 describe LaunchDarkly::Impl::EvaluatorBucketing do
@@ -114,18 +115,17 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
         bad_variation_a = 0
         matched_variation = 1
         bad_variation_b = 2
-        rule = {
-          rollout: {
+        vr = LaunchDarkly::Impl::Model::VariationOrRollout.new(nil,
+          {
             variations: [
               { variation: bad_variation_a, weight: bucket_value }, # end of bucket range is not inclusive, so it will *not* match the target value
               { variation: matched_variation, weight: 1 }, # size of this bucket is 1, so it only matches that specific value
               { variation: bad_variation_b, weight: 100000 - (bucket_value + 1) },
             ],
-          },
-        }
-        flag = { key: flag_key, salt: salt }
+          })
+        flag = Flags.from_hash({ key: flag_key, salt: salt })
 
-        result_variation, inExperiment = subject.variation_index_for_context(flag, rule, user)
+        result_variation, inExperiment = subject.variation_index_for_context(flag, vr, user)
         expect(result_variation).to be matched_variation
         expect(inExperiment).to be(false)
       end
@@ -138,16 +138,15 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
         bucket_value = (subject.bucket_context(user, user.kind, flag_key, "key", salt, nil) * 100000).truncate()
 
         # We'll construct a list of variations that stops right at the target bucket value
-        rule = {
-          rollout: {
+        vr = LaunchDarkly::Impl::Model::VariationOrRollout.new(nil,
+          {
             variations: [
               { variation: 0, weight: bucket_value },
             ],
-          },
-        }
-        flag = { key: flag_key, salt: salt }
+          })
+        flag = Flags.from_hash({ key: flag_key, salt: salt })
 
-        result_variation, inExperiment = subject.variation_index_for_context(flag, rule, user)
+        result_variation, inExperiment = subject.variation_index_for_context(flag, vr, user)
         expect(result_variation).to be 0
         expect(inExperiment).to be(false)
       end
@@ -163,9 +162,8 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
       salt = "salt"
       seed = 61
 
-
-      rule = {
-        rollout: {
+      vr = LaunchDarkly::Impl::Model::VariationOrRollout.new(nil,
+        {
           seed: seed,
           kind: 'experiment',
           variations: [
@@ -173,17 +171,16 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
             { variation: 2, weight: 20000, untracked: false },
             { variation: 0, weight: 70000 , untracked: true },
           ],
-        },
-      }
-      flag = { key: flag_key, salt: salt }
+        })
+      flag = Flags.from_hash({ key: flag_key, salt: salt })
 
-      result_variation, inExperiment = subject.variation_index_for_context(flag, rule, user1)
+      result_variation, inExperiment = subject.variation_index_for_context(flag, vr, user1)
       expect(result_variation).to be(0)
       expect(inExperiment).to be(true)
-      result_variation, inExperiment = subject.variation_index_for_context(flag, rule, user2)
+      result_variation, inExperiment = subject.variation_index_for_context(flag, vr, user2)
       expect(result_variation).to be(2)
       expect(inExperiment).to be(true)
-      result_variation, inExperiment = subject.variation_index_for_context(flag, rule, user3)
+      result_variation, inExperiment = subject.variation_index_for_context(flag, vr, user3)
       expect(result_variation).to be(0)
       expect(inExperiment).to be(false)
     end
@@ -197,18 +194,17 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
       bucket_value = (subject.bucket_context(user, user.kind, flag_key, "key", salt, seed) * 100000).truncate()
 
       # We'll construct a list of variations that stops right at the target bucket value
-      rule = {
-        rollout: {
+      vr = LaunchDarkly::Impl::Model::VariationOrRollout.new(nil,
+        {
           seed: seed,
           kind: 'experiment',
           variations: [
             { variation: 0, weight: bucket_value, untracked: false },
           ],
-        },
-      }
-      flag = { key: flag_key, salt: salt }
+        })
+        flag = Flags.from_hash({ key: flag_key, salt: salt })
 
-      result_variation, inExperiment = subject.variation_index_for_context(flag, rule, user)
+      result_variation, inExperiment = subject.variation_index_for_context(flag, vr, user)
       expect(result_variation).to be 0
       expect(inExperiment).to be(true)
     end

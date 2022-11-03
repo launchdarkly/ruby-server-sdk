@@ -18,11 +18,9 @@ module LaunchDarkly
           return if @deleted
           @variations = data[:variations] || []
           @on = !!data[:on]
-          @fallthrough = data[:fallthrough]
+          fallthrough = data[:fallthrough] || {}
+          @fallthrough = VariationOrRollout.new(fallthrough[:variation], fallthrough[:rollout])
           @off_variation = data[:offVariation]
-          @off_result = EvaluatorHelpers.evaluation_detail_for_off_variation(self, EvaluationReason::off, logger)
-          @fallthrough_results = Preprocessor.precompute_multi_variation_results(self,
-              EvaluationReason::fallthrough(false), EvaluationReason::fallthrough(true))
           @prerequisites = (data[:prerequisites] || []).map do |prereq_data|
             Prerequisite.new(prereq_data, self, logger)
           end
@@ -32,6 +30,10 @@ module LaunchDarkly
           @rules = (data[:rules] || []).map.with_index do |rule_data, index|
             FlagRule.new(rule_data, index, self)
           end
+          @salt = data[:salt]
+          @off_result = EvaluatorHelpers.evaluation_detail_for_off_variation(self, EvaluationReason::off, logger)
+          @fallthrough_results = Preprocessor.precompute_multi_variation_results(self,
+              EvaluationReason::fallthrough(false), EvaluationReason::fallthrough(true))
         end
 
         # @return [Hash]
@@ -48,7 +50,7 @@ module LaunchDarkly
         attr_reader :on
         # @return [Integer|nil]
         attr_reader :off_variation
-        # @return [Hash]
+        # @return [LaunchDarkly::Impl::Model::VariationOrRollout]
         attr_reader :fallthrough
         # @return [LaunchDarkly::EvaluationDetail]
         attr_reader :off_result
@@ -60,9 +62,12 @@ module LaunchDarkly
         attr_reader :targets
         # @return [Array<LaunchDarkly::Impl::Model::FlagRule>]
         attr_reader :rules
+        # @return [String]
+        attr_reader :salt
 
-        # This method allows us to read properties of the object as if it's just a hash; we can remove it if we
-        # migrate entirely to using attributes of the class
+        # This method allows us to read properties of the object as if it's just a hash. Currently this is
+        # necessary because some data store logic is still written to expect hashes; we can remove it once
+        # we migrate entirely to using attributes of the class.
         def [](key)
           @data[key]
         end
@@ -98,10 +103,6 @@ module LaunchDarkly
         attr_reader :variation
         # @return [LaunchDarkly::EvaluationDetail]
         attr_reader :failure_result
-
-        def as_json
-          @data
-        end
       end
 
       class Target
@@ -118,10 +119,6 @@ module LaunchDarkly
         attr_reader :values
         # @return [LaunchDarkly::EvaluationDetail]
         attr_reader :match_result
-
-        def as_json
-          @data
-        end
       end
 
       class FlagRule
@@ -130,6 +127,7 @@ module LaunchDarkly
           @clauses = (data[:clauses] || []).map do |clause_data|
             Clause.new(clause_data)
           end
+          @variation_or_rollout = VariationOrRollout.new(data[:variation], data[:rollout])
           rule_id = data[:id]
           match_reason = EvaluationReason::rule_match(rule_index, rule_id)
           match_reason_in_experiment = EvaluationReason::rule_match(rule_index, rule_id, true)
@@ -142,10 +140,59 @@ module LaunchDarkly
         attr_reader :clauses
         # @return [LaunchDarkly::Impl::Model::EvalResultFactoryMultiVariations]
         attr_reader :match_results
+        # @return [LaunchDarkly::Impl::Model::VariationOrRollout]
+        attr_reader :variation_or_rollout
+      end
 
-        def as_json
-          @data
+      class VariationOrRollout
+        def initialize(variation, rollout_data)
+          @variation = variation
+          @rollout = rollout_data.nil? ? nil : Rollout.new(rollout_data)
         end
+
+        # @return [Integer|nil]
+        attr_reader :variation
+        # @return [Rollout|nil] currently we do not have a model class for the rollout
+        attr_reader :rollout
+      end
+
+      class Rollout
+        def initialize(data)
+          @context_kind = data[:contextKind]
+          @variations = (data[:variations] || []).map { |v| WeightedVariation.new(v) }
+          @bucket_by = data[:bucketBy]
+          @kind = data[:kind]
+          @is_experiment = @kind == "experiment"
+          @seed = data[:seed]
+        end
+
+        # @return [String|nil]
+        attr_reader :context_kind
+        # @return [Array<WeightedVariation>]
+        attr_reader :variations
+        # @return [String|nil]
+        attr_reader :bucket_by
+        # @return [String|nil]
+        attr_reader :kind
+        # @return [Boolean]
+        attr_reader :is_experiment
+        # @return [Integer|nil]
+        attr_reader :seed
+      end
+
+      class WeightedVariation
+        def initialize(data)
+          @variation = data[:variation]
+          @weight = data[:weight]
+          @untracked = !!data[:untracked]
+        end
+
+        # @return [Integer]
+        attr_reader :variation
+        # @return [Integer]
+        attr_reader :weight
+        # @return [Boolean]
+        attr_reader :untracked
       end
 
       # Clause is defined in its own file because clauses are used by both flags and segments

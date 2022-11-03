@@ -57,8 +57,9 @@ module LaunchDarkly
         # @return [String]
         attr_reader :salt
 
-        # This method allows us to read properties of the object as if it's just a hash; we can remove it if we
-        # migrate entirely to using attributes of the class
+        # This method allows us to read properties of the object as if it's just a hash. Currently this is
+        # necessary because some data store logic is still written to expect hashes; we can remove it once
+        # we migrate entirely to using attributes of the class.
         def [](key)
           @data[key]
         end

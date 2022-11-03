@@ -5,29 +5,28 @@ module LaunchDarkly
       # Applies either a fixed variation or a rollout for a rule (or the fallthrough rule).
       #
       # @param flag [Object] the feature flag
-      # @param rule [Object] the rule
-      # @param context [LDContext] the context properties
+      # @param vr [LaunchDarkly::Impl::Model::VariationOrRollout] the variation/rollout properties
+      # @param context [LaunchDarkly::LDContext] the context properties
       # @return [Array<[Number, nil], Boolean>] the variation index, or nil if there is an error
-      def self.variation_index_for_context(flag, rule, context)
-
-        variation = rule[:variation]
+      def self.variation_index_for_context(flag, vr, context)
+        variation = vr.variation
         return variation, false unless variation.nil? # fixed variation
-        rollout = rule[:rollout]
+        rollout = vr.rollout
         return nil, false if rollout.nil?
-        variations = rollout[:variations]
+        variations = rollout.variations
         if !variations.nil? && variations.length > 0 # percentage rollout
-          rollout_is_experiment = rollout[:kind] == "experiment"
-          bucket_by = rollout_is_experiment ? nil : rollout[:bucketBy]
+          rollout_is_experiment = rollout.is_experiment
+          bucket_by = rollout_is_experiment ? nil : rollout.bucket_by
           bucket_by = 'key' if bucket_by.nil?
 
-          seed = rollout[:seed]
-          bucket = bucket_context(context, rollout[:contextKind], flag[:key], bucket_by, flag[:salt], seed) # may not be present
+          seed = rollout.seed
+          bucket = bucket_context(context, rollout.context_kind, flag.key, bucket_by, flag.salt, seed) # may not be present
           in_experiment = rollout_is_experiment && !bucket.nil?
           sum = 0
           variations.each do |variate|
-            sum += variate[:weight].to_f / 100000.0
+            sum += variate.weight.to_f / 100000.0
             if bucket.nil? || bucket < sum
-              return variate[:variation], in_experiment && !variate[:untracked]
+              return variate.variation, in_experiment && !variate.untracked
             end
           end
           # The context's bucket value was greater than or equal to the end of the last bucket. This could happen due
@@ -36,7 +35,7 @@ module LaunchDarkly
           # this case (or changing the scaling, which would potentially change the results for *all* contexts), we
           # will simply put the context in the last bucket.
           last_variation = variations[-1]
-          [last_variation[:variation], in_experiment && !last_variation[:untracked]]
+          [last_variation.variation, in_experiment && !last_variation.untracked]
         else # the rule isn't well-formed
           [nil, false]
         end
