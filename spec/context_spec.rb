@@ -115,6 +115,7 @@ describe LaunchDarkly::LDContext do
 
       it "anonymous is required to be a boolean or nil" do
         expect(subject.create({ key: "key", kind: "user" }).valid?).to be true
+        expect(subject.create({ key: "key", kind: "user", anonymous: nil }).valid?).to be false
         expect(subject.create({ key: "key", kind: "user", anonymous: true }).valid?).to be true
         expect(subject.create({ key: "key", kind: "user", anonymous: false }).valid?).to be true
         expect(subject.create({ key: "key", kind: "user", anonymous: 0 }).valid?).to be false

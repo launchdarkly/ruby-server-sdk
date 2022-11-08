@@ -44,10 +44,11 @@ module LaunchDarkly
 
       #
       # @param anonymous [any]
+      # @param allow_nil [Boolean]
       # @return [Boolean]
       #
-      def self.validate_anonymous(anonymous)
-        return true if anonymous.nil?
+      def self.validate_anonymous(anonymous, allow_nil)
+        return true if anonymous.nil? && allow_nil
         [true, false].include? anonymous
       end
     end

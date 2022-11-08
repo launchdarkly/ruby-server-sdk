@@ -345,7 +345,7 @@ module LaunchDarkly
       end
 
       anonymous = data[:anonymous]
-      unless LaunchDarkly::Impl::Context.validate_anonymous(anonymous)
+      unless LaunchDarkly::Impl::Context.validate_anonymous(anonymous, true)
         return create_invalid_context("The anonymous value was set to a non-boolean value.")
       end
 
@@ -399,8 +399,8 @@ module LaunchDarkly
         return create_invalid_context("The name value was set to a non-string value.")
       end
 
-      anonymous = data[:anonymous]
-      unless LaunchDarkly::Impl::Context.validate_anonymous(anonymous)
+      anonymous = data.fetch(:anonymous, false)
+      unless LaunchDarkly::Impl::Context.validate_anonymous(anonymous, false)
         return create_invalid_context("The anonymous value was set to a non-boolean value.")
       end
 
