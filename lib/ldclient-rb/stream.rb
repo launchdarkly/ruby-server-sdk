@@ -96,9 +96,8 @@ module LaunchDarkly
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, data[:path])
           if key
-            data = data[:data]
-            Impl::DataModelPreprocessing::Preprocessor.new(@config.logger).preprocess_item!(kind, data)
-            @feature_store.upsert(kind, data)
+            item = Impl::Model.deserialize(kind, data[:data], @config.logger)
+            @feature_store.upsert(kind, item)
             break
           end
         end

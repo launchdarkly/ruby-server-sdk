@@ -1,4 +1,6 @@
 require 'ldclient-rb/impl/integrations/test_data/test_data_source'
+require 'ldclient-rb/impl/model/feature_flag'
+require 'ldclient-rb/impl/model/segment'
 require 'ldclient-rb/integrations/test_data/flag_builder'
 
 require 'concurrent/atomics'
@@ -119,7 +121,7 @@ module LaunchDarkly
           if @current_flags[flag_key] then
             version = @current_flags[flag_key][:version]
           end
-          new_flag = flag_builder.build(version+1)
+          new_flag = Impl::Model.deserialize(FEATURES, flag_builder.build(version+1))
           @current_flags[flag_key] = new_flag
         end
         update_item(FEATURES, new_flag)
@@ -169,12 +171,14 @@ module LaunchDarkly
       end
 
       private def use_preconfigured_item(kind, item, current)
-        key = item[:key].to_sym
+        item = Impl::Model.deserialize(kind, item)
+        key = item.key.to_sym
         @lock.with_write_lock do
           old_item = current[key]
           unless old_item.nil? then
-            item = item.clone
-            item[:version] = old_item[:version] + 1
+            data = item.as_json
+            data[:version] = old_item.version + 1
+            item = Impl::Model.deserialize(kind, data)
           end
           current[key] = item
         end

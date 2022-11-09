@@ -1,10 +1,6 @@
+require "ldclient-rb/impl/model/feature_flag"
 require "model_builders"
 require "spec_helper"
-
-def strip_preprocessed_nulls(json)
-  # currently we can't avoid emitting these null properties - we just don't want to see anything other than null there
-  json.gsub('"_preprocessed":null,', '').gsub(',"_preprocessed":null', '')
-end
 
 module LaunchDarkly
   module Impl
@@ -33,10 +29,9 @@ module LaunchDarkly
               },
             ],
           }
-          flag = clone_json_object(original_flag)
-          Preprocessor.new().preprocess_flag!(flag)
+          flag = Model::FeatureFlag.new(original_flag)
           json = Model.serialize(FEATURES, flag)
-          parsed = JSON.parse(strip_preprocessed_nulls(json), symbolize_names: true)
+          parsed = JSON.parse(json, symbolize_names: true)
           expect(parsed).to eq(original_flag)
         end
       end
