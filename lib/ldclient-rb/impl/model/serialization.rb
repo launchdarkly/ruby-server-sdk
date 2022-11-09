@@ -14,7 +14,7 @@ require "ldclient-rb/impl/model/segment"
 # if a flag rule refers to variation index 5, but there are only 2 variations in the flag), does
 # not prevent the flag from being parsed and stored. It does cause a warning to be logged, if a
 # logger was passed to the constructor.
-# - If a value's that is completely invalid for the schema, the constructor may throw an
+# - If a value is completely invalid for the schema, the constructor may throw an
 # exception, causing the whole data set to be rejected. This is consistent with the behavior of
 # the strongly-typed SDKs.
 #
