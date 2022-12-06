@@ -40,6 +40,6 @@ Gem::Specification.new do |spec|
   # Please keep ld-eventsource dependency as an exact version so that bugfixes to
   # that LD library are always associated with a new SDK version.
 
-  spec.add_runtime_dependency "json", "~> 2.3"
+  spec.add_runtime_dependency "json", ">= 2.3"
   spec.add_runtime_dependency "http", ">= 4.4.0", "< 6.0.0"
 end
