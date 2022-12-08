@@ -14,6 +14,67 @@ module LaunchDarkly
       :detail           # the EvaluationDetail representing the evaluation result
     )
 
+    class EvaluationException < StandardError
+      def initialize(msg, error_kind)
+        super(msg)
+        @error_kind = error_kind
+      end
+
+      # @return [Symbol]
+      attr_reader :error_kind
+    end
+
+    #
+    # A helper class for managing cycle detection.
+    #
+    # Each time a method sees a new flag or segment, they can push that
+    # object's key onto the stack. Once processing for that object has
+    # finished, you can call pop to remove it.
+    #
+    # Because the most common use case would be a flag or segment without ANY
+    # prerequisites, this stack has a small optimization in place-- the stack
+    # is not created until absolutely necessary.
+    #
+    class EvaluatorStack
+      # @param original [String]
+      def initialize(original)
+        @original = original
+        # @type [Array<String>, nil]
+        @stack = nil
+      end
+
+      # @param key [String]
+      def push(key)
+        # No need to store the key if we already have a record in our instance
+        # variable.
+        return if @original == key
+
+        # The common use case is that flags/segments won't have prereqs, so we
+        # don't allocate the stack memory until we absolutely must.
+        if @stack.nil?
+          @stack = []
+        end
+
+        @stack.push(key)
+      end
+
+      def pop
+        return if @stack.nil? || @stack.empty?
+        @stack.pop
+      end
+
+      #
+      # @param key [String]
+      # @return [Boolean]
+      #
+      def include?(key)
+        return true if key == @original
+        return false if @stack.nil?
+
+        @stack.include? key
+      end
+    end
+
     # Encapsulates the feature flag evaluation logic. The Evaluator has no knowledge of the rest of the SDK environment;
     # if it needs to retrieve flags or segments that are referenced by a flag, it does so through a simple function that
     # is provided in the constructor. It also produces feature requests as appropriate for any referenced prerequisite
@@ -62,8 +123,21 @@ module LaunchDarkly
       # @param context [LaunchDarkly::LDContext] the evaluation context
       # @return [EvalResult] the evaluation result
       def evaluate(flag, context)
+        stack = EvaluatorStack.new(flag.key)
+
         result = EvalResult.new
-        detail = eval_internal(flag, context, result)
+        begin
+          detail = eval_internal(flag, context, result, stack)
+        rescue EvaluationException => exn
+          LaunchDarkly::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
+          result.detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(exn.error_kind))
+          return result
+        rescue => exn
+          LaunchDarkly::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
+          result.detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
+          return result
+        end
+
         unless result.big_segments_status.nil?
           # If big_segments_status is non-nil at the end of the evaluation, it means a query was done at
           # some point and we will want to include the status in the evaluation reason.
@@ -87,12 +161,14 @@ module LaunchDarkly
       # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] the flag
       # @param context [LaunchDarkly::LDContext] the evaluation context
       # @param state [EvalResult]
-      def eval_internal(flag, context, state)
+      # @param stack [EvaluatorStack]
+      # @raise [EvaluationException]
+      def eval_internal(flag, context, state, stack)
         unless flag.on
           return flag.off_result
         end
 
-        prereq_failure_result = check_prerequisites(flag, context, state)
+        prereq_failure_result = check_prerequisites(flag, context, state, stack)
         return prereq_failure_result unless prereq_failure_result.nil?
 
         # Check context target matches
@@ -122,18 +198,32 @@ module LaunchDarkly
       # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] the flag
       # @param context [LaunchDarkly::LDContext] the evaluation context
       # @param state [EvalResult]
-      def check_prerequisites(flag, context, state)
-        flag.prerequisites.each do |prerequisite|
-          prereq_ok = true
-          prereq_key = prerequisite.key
-          prereq_flag = @get_flag.call(prereq_key)
+      # @param stack [EvaluatorStack]
+      # @raise [EvaluationException]
+      def check_prerequisites(flag, context, state, stack)
+        return if flag.prerequisites.empty?
 
-          if prereq_flag.nil?
-            @logger.error { "[LDClient] Could not retrieve prerequisite flag \"#{prereq_key}\" when evaluating \"#{flag.key}\"" }
-            prereq_ok = false
-          else
-            begin
-              prereq_res = eval_internal(prereq_flag, context, state)
+        stack.push(flag.key)
+
+        begin
+          flag.prerequisites.each do |prerequisite|
+            prereq_ok = true
+            prereq_key = prerequisite.key
+
+            if stack.include?(prereq_key)
+              raise LaunchDarkly::Impl::EvaluationException.new(
+                "prerequisite relationship to \"#{prereq_key}\" caused a circular reference; this is probably a temporary condition due to an incomplete update",
+                EvaluationReason::ERROR_MALFORMED_FLAG
+              )
+            end
+
+            prereq_flag = @get_flag.call(prereq_key)
+
+            if prereq_flag.nil?
+              @logger.error { "[LDClient] Could not retrieve prerequisite flag \"#{prereq_key}\" when evaluating \"#{flag.key}\"" }
+              prereq_ok = false
+            else
+              prereq_res = eval_internal(prereq_flag, context, state, stack)
               # Note that if the prerequisite flag is off, we don't consider it a match no matter what its
               # off variation was. But we still need to evaluate it in order to generate an event.
               if !prereq_flag.on || prereq_res.variation_index != prerequisite.variation
@@ -142,15 +232,16 @@ module LaunchDarkly
               prereq_eval = PrerequisiteEvalRecord.new(prereq_flag, flag, prereq_res)
               state.prereq_evals = [] if state.prereq_evals.nil?
               state.prereq_evals.push(prereq_eval)
-            rescue => exn
-              Util.log_exception(@logger, "Error evaluating prerequisite flag \"#{prereq_key}\" for flag \"#{flag.key}\"", exn)
-              prereq_ok = false
+            end
+
+            unless prereq_ok
+              return prerequisite.failure_result
             end
           end
-          unless prereq_ok
-            return prerequisite.failure_result
-          end
+        ensure
+          stack.pop
         end
+
         nil
       end
 

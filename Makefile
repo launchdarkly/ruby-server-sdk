@@ -9,7 +9,6 @@ TEST_HARNESS_PARAMS := $(TEST_HARNESS_PARAMS) \
 	-skip 'evaluation/bucketing/bucket by non-key attribute/in rollouts/string value/complex attribute reference' \
 	-skip 'evaluation/parameterized/attribute references' \
 	-skip 'evaluation/parameterized/bad attribute reference errors' \
-	-skip 'evaluation/parameterized/prerequisites' \
 	-skip 'evaluation/parameterized/segment recursion' \
 	-skip 'evaluation/parameterized/target match/context targets' \
 	-skip 'evaluation/parameterized/target match/multi-kind' \
