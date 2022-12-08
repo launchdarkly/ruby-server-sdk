@@ -28,7 +28,7 @@ module LaunchDarkly
             Target.new(target_data, self, logger)
           end
           @rules = (data[:rules] || []).map.with_index do |rule_data, index|
-            FlagRule.new(rule_data, index, self)
+            FlagRule.new(rule_data, index, self, logger)
           end
           @salt = data[:salt]
           @off_result = EvaluatorHelpers.evaluation_detail_for_off_variation(self, EvaluationReason::off, logger)
@@ -122,10 +122,10 @@ module LaunchDarkly
       end
 
       class FlagRule
-        def initialize(data, rule_index, flag)
+        def initialize(data, rule_index, flag, logger)
           @data = data
           @clauses = (data[:clauses] || []).map do |clause_data|
-            Clause.new(clause_data)
+            Clause.new(clause_data, logger)
           end
           @variation_or_rollout = VariationOrRollout.new(data[:variation], data[:rollout])
           rule_id = data[:id]

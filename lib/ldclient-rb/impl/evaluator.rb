@@ -15,13 +15,16 @@ module LaunchDarkly
     )
 
     class EvaluationException < StandardError
-      def initialize(msg, error_kind)
+      def initialize(msg, error_kind = EvaluationReason::ERROR_MALFORMED_FLAG)
         super(msg)
         @error_kind = error_kind
       end
 
       # @return [Symbol]
       attr_reader :error_kind
+    end
+
+    class InvalidReferenceException < EvaluationException
     end
 
     #
@@ -199,7 +202,7 @@ module LaunchDarkly
       # @param context [LaunchDarkly::LDContext] the evaluation context
       # @param state [EvalResult]
       # @param stack [EvaluatorStack]
-      # @raise [EvaluationException]
+      # @raise [EvaluationException] if a flag prereq cycle is detected
       def check_prerequisites(flag, context, state, stack)
         return if flag.prerequisites.empty?
 
@@ -212,8 +215,7 @@ module LaunchDarkly
 
             if stack.include?(prereq_key)
               raise LaunchDarkly::Impl::EvaluationException.new(
-                "prerequisite relationship to \"#{prereq_key}\" caused a circular reference; this is probably a temporary condition due to an incomplete update",
-                EvaluationReason::ERROR_MALFORMED_FLAG
+                "prerequisite relationship to \"#{prereq_key}\" caused a circular reference; this is probably a temporary condition due to an incomplete update"
               )
             end
 
@@ -248,6 +250,8 @@ module LaunchDarkly
       # @param rule [LaunchDarkly::Impl::Model::FlagRule]
       # @param context [LaunchDarkly::LDContext]
       # @param state [EvalResult]
+      # @return [Boolean]
+      # @raise [InvalidReferenceException]
       def rule_match_context(rule, context, state)
         rule.clauses.each do |clause|
           return false unless clause_match_context(clause, context, state)
@@ -259,6 +263,8 @@ module LaunchDarkly
       # @param clause [LaunchDarkly::Impl::Model::Clause]
       # @param context [LaunchDarkly::LDContext]
       # @param state [EvalResult]
+      # @return [Boolean]
+      # @raise [InvalidReferenceException]
       def clause_match_context(clause, context, state)
         # In the case of a segment match operator, we check if the context is in any of the segments,
         # and possibly negate
@@ -304,8 +310,11 @@ module LaunchDarkly
       # @param clause [LaunchDarkly::Impl::Model::Clause]
       # @param context [LaunchDarkly::LDContext]
       # @return [Boolean]
+      # @raise [InvalidReferenceException] Raised if the clause.attribute is an invalid reference
       def clause_match_context_no_segments(clause, context)
-        if clause.attribute == "kind"
+        raise InvalidReferenceException.new(clause.attribute.error) unless clause.attribute.error.nil?
+
+        if clause.attribute.depth == 1 && clause.attribute.component(0) == :kind
           result = clause_match_by_kind(clause, context)
           return clause.negate ? !result : result
         end
@@ -313,7 +322,7 @@ module LaunchDarkly
         matched_context = context.individual_context(clause.context_kind || LaunchDarkly::LDContext::KIND_DEFAULT)
         return false if matched_context.nil?
 
-        user_val = matched_context.get_value(clause.attribute)
+        user_val = matched_context.get_value_for_reference(clause.attribute)
         return false if user_val.nil?
 
         result = if user_val.is_a? Enumerable
@@ -399,6 +408,7 @@ module LaunchDarkly
       # @param segment_key [String]
       # @param salt [String]
       # @return [Boolean]
+      # @raise [InvalidReferenceException]
       def segment_rule_match_context(rule, context, segment_key, salt)
         rule.clauses.each do |c|
           return false unless clause_match_context_no_segments(c, context)
@@ -408,7 +418,12 @@ module LaunchDarkly
         return true unless rule.weight
 
         # All of the clauses are met. See if the user buckets in
-        bucket = EvaluatorBucketing.bucket_context(context, rule.rollout_context_kind, segment_key, rule.bucket_by || "key", salt, nil)
+        begin
+          bucket = EvaluatorBucketing.bucket_context(context, rule.rollout_context_kind, segment_key, rule.bucket_by || "key", salt, nil)
+        rescue InvalidReferenceException
+          return false
+        end
+
         weight = rule.weight.to_f / 100000.0
         bucket.nil? || bucket < weight
       end
@@ -417,6 +432,7 @@ module LaunchDarkly
 
       def get_value_for_variation_or_rollout(flag, vr, context, precomputed_results)
         index, in_experiment = EvaluatorBucketing.variation_index_for_context(flag, vr, context)
+
         if index.nil?
           @logger.error("[LDClient] Data inconsistency in feature flag \"#{flag.key}\": variation/rollout object with no variation or rollout")
           return Evaluator.error_result(EvaluationReason::ERROR_MALFORMED_FLAG)

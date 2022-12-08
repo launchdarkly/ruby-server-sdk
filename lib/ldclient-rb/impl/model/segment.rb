@@ -25,7 +25,7 @@ module LaunchDarkly
             SegmentTarget.new(target_data)
           end
           @rules = (data[:rules] || []).map do |rule_data|
-            SegmentRule.new(rule_data)
+            SegmentRule.new(rule_data, logger)
           end
           @unbounded = !!data[:unbounded]
           @generation = data[:generation]
@@ -94,10 +94,10 @@ module LaunchDarkly
       end
 
       class SegmentRule
-        def initialize(data)
+        def initialize(data, logger)
           @data = data
           @clauses = (data[:clauses] || []).map do |clause_data|
-            Clause.new(clause_data)
+            Clause.new(clause_data, logger)
           end
           @weight = data[:weight]
           @bucket_by = data[:bucketBy]

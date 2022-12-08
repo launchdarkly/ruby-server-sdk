@@ -8,6 +8,7 @@ module LaunchDarkly
       # @param vr [LaunchDarkly::Impl::Model::VariationOrRollout] the variation/rollout properties
       # @param context [LaunchDarkly::LDContext] the context properties
       # @return [Array<[Number, nil], Boolean>] the variation index, or nil if there is an error
+      # @raise [InvalidReferenceException]
       def self.variation_index_for_context(flag, vr, context)
         variation = vr.variation
         return variation, false unless variation.nil? # fixed variation
@@ -49,11 +50,15 @@ module LaunchDarkly
       # @param bucket_by [String|Symbol] the name of the context attribute to be used for bucketing
       # @param salt [String] the feature flag's or segment's salt value
       # @return [Float, nil] the bucket value, from 0 inclusive to 1 exclusive
+      # @raise [InvalidReferenceException] Raised if the clause.attribute is an invalid reference
       def self.bucket_context(context, context_kind, key, bucket_by, salt, seed)
         matched_context = context.individual_context(context_kind || LaunchDarkly::LDContext::KIND_DEFAULT)
         return nil if matched_context.nil?
 
-        context_value = matched_context.get_value(bucket_by)
+        reference = (context_kind.nil? || context_kind.empty?) ? Reference.create_literal(bucket_by) : Reference.create(bucket_by)
+        raise InvalidReferenceException.new(reference.error) unless reference.error.nil?
+
+        context_value = matched_context.get_value_for_reference(reference)
         return 0.0 if context_value.nil?
 
         id_hash = bucketable_string_value(context_value)

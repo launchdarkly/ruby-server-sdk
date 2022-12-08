@@ -60,6 +60,15 @@ describe LaunchDarkly::Impl::EvaluatorBucketing do
       expect(bucket).to be_within(0.0000001).of(0.10343106)
     end
 
+    it "treats the bucket by attribute as a reference when a context kind isn't specified" do
+      user = LaunchDarkly::LDContext.create({ key: "userKeyB", kind: "user", address: { street: "123 Easy St", city: "Anytown" } })
+      bucket = subject.bucket_context(user, user.kind, "hashKey", "/address/street", "saltyA", nil)
+      expect(bucket).to be_within(0.0000001).of(0.56809287)
+
+      bucket = subject.bucket_context(user, nil, "hashKey", "/address/street", "saltyA", nil)
+      expect(bucket).to be_within(0.0000001).of(0)
+    end
+
     it "can bucket by int value (equivalent to string)" do
       user = LaunchDarkly::LDContext.create({
         key: "userkey",
