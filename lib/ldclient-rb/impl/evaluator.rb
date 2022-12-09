@@ -27,6 +27,17 @@ module LaunchDarkly
     class InvalidReferenceException < EvaluationException
     end
 
+    class EvaluatorState
+      # @param original_flag [LaunchDarkly::Impl::Model::FeatureFlag]
+      def initialize(original_flag)
+        @prereq_stack = EvaluatorStack.new(original_flag.key)
+        @segment_stack = EvaluatorStack.new(nil)
+      end
+
+      attr_reader :prereq_stack
+      attr_reader :segment_stack
+    end
+
     #
     # A helper class for managing cycle detection.
     #
@@ -39,7 +50,7 @@ module LaunchDarkly
     # is not created until absolutely necessary.
     #
     class EvaluatorStack
-      # @param original [String]
+      # @param original [String, nil]
       def initialize(original)
         @original = original
         # @type [Array<String>, nil]
@@ -126,11 +137,11 @@ module LaunchDarkly
       # @param context [LaunchDarkly::LDContext] the evaluation context
       # @return [EvalResult] the evaluation result
       def evaluate(flag, context)
-        stack = EvaluatorStack.new(flag.key)
+        state = EvaluatorState.new(flag)
 
         result = EvalResult.new
         begin
-          detail = eval_internal(flag, context, result, stack)
+          detail = eval_internal(flag, context, result, state)
         rescue EvaluationException => exn
           LaunchDarkly::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
           result.detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(exn.error_kind))
@@ -163,15 +174,15 @@ module LaunchDarkly
 
       # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] the flag
       # @param context [LaunchDarkly::LDContext] the evaluation context
-      # @param state [EvalResult]
-      # @param stack [EvaluatorStack]
+      # @param eval_result [EvalResult]
+      # @param state [EvaluatorState]
       # @raise [EvaluationException]
-      def eval_internal(flag, context, state, stack)
+      def eval_internal(flag, context, eval_result, state)
         unless flag.on
           return flag.off_result
         end
 
-        prereq_failure_result = check_prerequisites(flag, context, state, stack)
+        prereq_failure_result = check_prerequisites(flag, context, eval_result, state)
         return prereq_failure_result unless prereq_failure_result.nil?
 
         # Check context target matches
@@ -185,7 +196,7 @@ module LaunchDarkly
 
         # Check custom rules
         flag.rules.each do |rule|
-          if rule_match_context(rule, context, state)
+          if rule_match_context(rule, context, eval_result, state)
             return get_value_for_variation_or_rollout(flag, rule.variation_or_rollout, context, rule.match_results)
           end
         end
@@ -200,20 +211,20 @@ module LaunchDarkly
 
       # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] the flag
       # @param context [LaunchDarkly::LDContext] the evaluation context
-      # @param state [EvalResult]
-      # @param stack [EvaluatorStack]
+      # @param eval_result [EvalResult]
+      # @param state [EvaluatorState]
       # @raise [EvaluationException] if a flag prereq cycle is detected
-      def check_prerequisites(flag, context, state, stack)
+      def check_prerequisites(flag, context, eval_result, state)
         return if flag.prerequisites.empty?
 
-        stack.push(flag.key)
+        state.prereq_stack.push(flag.key)
 
         begin
           flag.prerequisites.each do |prerequisite|
             prereq_ok = true
             prereq_key = prerequisite.key
 
-            if stack.include?(prereq_key)
+            if state.prereq_stack.include?(prereq_key)
               raise LaunchDarkly::Impl::EvaluationException.new(
                 "prerequisite relationship to \"#{prereq_key}\" caused a circular reference; this is probably a temporary condition due to an incomplete update"
               )
@@ -225,15 +236,15 @@ module LaunchDarkly
               @logger.error { "[LDClient] Could not retrieve prerequisite flag \"#{prereq_key}\" when evaluating \"#{flag.key}\"" }
               prereq_ok = false
             else
-              prereq_res = eval_internal(prereq_flag, context, state, stack)
+              prereq_res = eval_internal(prereq_flag, context, eval_result, state)
               # Note that if the prerequisite flag is off, we don't consider it a match no matter what its
               # off variation was. But we still need to evaluate it in order to generate an event.
               if !prereq_flag.on || prereq_res.variation_index != prerequisite.variation
                 prereq_ok = false
               end
               prereq_eval = PrerequisiteEvalRecord.new(prereq_flag, flag, prereq_res)
-              state.prereq_evals = [] if state.prereq_evals.nil?
-              state.prereq_evals.push(prereq_eval)
+              eval_result.prereq_evals = [] if eval_result.prereq_evals.nil?
+              eval_result.prereq_evals.push(prereq_eval)
             end
 
             unless prereq_ok
@@ -241,7 +252,7 @@ module LaunchDarkly
             end
           end
         ensure
-          stack.pop
+          state.prereq_stack.pop
         end
 
         nil
@@ -249,12 +260,12 @@ module LaunchDarkly
 
       # @param rule [LaunchDarkly::Impl::Model::FlagRule]
       # @param context [LaunchDarkly::LDContext]
-      # @param state [EvalResult]
-      # @return [Boolean]
+      # @param eval_result [EvalResult]
+      # @param state [EvaluatorState]
       # @raise [InvalidReferenceException]
-      def rule_match_context(rule, context, state)
+      def rule_match_context(rule, context, eval_result, state)
         rule.clauses.each do |clause|
-          return false unless clause_match_context(clause, context, state)
+          return false unless clause_match_context(clause, context, eval_result, state)
         end
 
         true
@@ -262,16 +273,22 @@ module LaunchDarkly
 
       # @param clause [LaunchDarkly::Impl::Model::Clause]
       # @param context [LaunchDarkly::LDContext]
-      # @param state [EvalResult]
-      # @return [Boolean]
+      # @param eval_result [EvalResult]
+      # @param state [EvaluatorState]
       # @raise [InvalidReferenceException]
-      def clause_match_context(clause, context, state)
+      def clause_match_context(clause, context, eval_result, state)
         # In the case of a segment match operator, we check if the context is in any of the segments,
         # and possibly negate
         if clause.op == :segmentMatch
           result = clause.values.any? { |v|
+            if state.segment_stack.include?(v)
+              raise LaunchDarkly::Impl::EvaluationException.new(
+                "segment rule referencing segment \"#{v}\" caused a circular reference; this is probably a temporary condition due to an incomplete update"
+              )
+            end
+
             segment = @get_segment.call(v)
-            !segment.nil? && segment_match_context(segment, context, state)
+            !segment.nil? && segment_match_context(segment, context, eval_result, state)
           }
           clause.negate ? !result : result
         else
@@ -335,45 +352,52 @@ module LaunchDarkly
 
       # @param segment [LaunchDarkly::Impl::Model::Segment]
       # @param context [LaunchDarkly::LDContext]
+      # @param eval_result [EvalResult]
+      # @param state [EvaluatorState]
       # @return [Boolean]
-      def segment_match_context(segment, context, state)
-        segment.unbounded ? big_segment_match_context(segment, context, state) : simple_segment_match_context(segment, context, true)
+      def segment_match_context(segment, context, eval_result, state)
+        return big_segment_match_context(segment, context, eval_result, state) if segment.unbounded
+
+        simple_segment_match_context(segment, context, true, eval_result, state)
       end
 
       # @param segment [LaunchDarkly::Impl::Model::Segment]
       # @param context [LaunchDarkly::LDContext]
+      # @param eval_result [EvalResult]
+      # @param state [EvaluatorState]
       # @return [Boolean]
-      def big_segment_match_context(segment, context, state)
+      def big_segment_match_context(segment, context, eval_result, state)
         unless segment.generation
           # Big segment queries can only be done if the generation is known. If it's unset,
           # that probably means the data store was populated by an older SDK that doesn't know
           # about the generation property and therefore dropped it from the JSON data. We'll treat
           # that as a "not configured" condition.
-          state.big_segments_status = BigSegmentsStatus::NOT_CONFIGURED
+          eval_result.big_segments_status = BigSegmentsStatus::NOT_CONFIGURED
           return false
         end
-        unless state.big_segments_status
+        unless eval_result.big_segments_status
           result = @get_big_segments_membership.nil? ? nil : @get_big_segments_membership.call(context.key)
           if result
-            state.big_segments_membership = result.membership
-            state.big_segments_status = result.status
+            eval_result.big_segments_membership = result.membership
+            eval_result.big_segments_status = result.status
           else
-            state.big_segments_membership = nil
-            state.big_segments_status = BigSegmentsStatus::NOT_CONFIGURED
+            eval_result.big_segments_membership = nil
+            eval_result.big_segments_status = BigSegmentsStatus::NOT_CONFIGURED
           end
         end
         segment_ref = Evaluator.make_big_segment_ref(segment)
-        membership = state.big_segments_membership
+        membership = eval_result.big_segments_membership
         included = membership.nil? ? nil : membership[segment_ref]
         return included unless included.nil?
-        simple_segment_match_context(segment, context, false)
+        simple_segment_match_context(segment, context, false, eval_result, state)
       end
 
       # @param segment [LaunchDarkly::Impl::Model::Segment]
       # @param context [LaunchDarkly::LDContext]
       # @param use_includes_and_excludes [Boolean]
+      # @param state [EvaluatorState]
       # @return [Boolean]
-      def simple_segment_match_context(segment, context, use_includes_and_excludes)
+      def simple_segment_match_context(segment, context, use_includes_and_excludes, eval_result, state)
         if use_includes_and_excludes
           if EvaluatorHelpers.context_key_in_target_list(context, nil, segment.included)
             return true
@@ -396,8 +420,15 @@ module LaunchDarkly
           end
         end
 
-        segment.rules.each do |r|
-          return true if segment_rule_match_context(r, context, segment.key, segment.salt)
+        rules = segment.rules
+        state.segment_stack.push(segment.key) unless rules.empty?
+
+        begin
+          rules.each do |r|
+            return true if segment_rule_match_context(r, context, segment.key, segment.salt, eval_result, state)
+          end
+        ensure
+          state.segment_stack.pop
         end
 
         false
@@ -409,9 +440,9 @@ module LaunchDarkly
       # @param salt [String]
       # @return [Boolean]
       # @raise [InvalidReferenceException]
-      def segment_rule_match_context(rule, context, segment_key, salt)
+      def segment_rule_match_context(rule, context, segment_key, salt, eval_result, state)
         rule.clauses.each do |c|
-          return false unless clause_match_context_no_segments(c, context)
+          return false unless clause_match_context(c, context, eval_result, state)
         end
 
         # If the weight is absent, this rule matches

@@ -6,7 +6,6 @@ TEMP_TEST_OUTPUT=/tmp/contract-test-service.log
 # - various other "evaluation" subtests: These tests require context kind support.
 # - "events": These test suites will be unavailable until more of the U2C implementation is done.
 TEST_HARNESS_PARAMS := $(TEST_HARNESS_PARAMS) \
-	-skip 'evaluation/parameterized/segment recursion' \
 	-skip 'evaluation/parameterized/target match/context targets' \
 	-skip 'evaluation/parameterized/target match/multi-kind' \
 	-skip 'context type' \

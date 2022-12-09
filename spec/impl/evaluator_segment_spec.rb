@@ -138,6 +138,60 @@ module LaunchDarkly
           segment = SegmentBuilder.new('segkey').rule(segRule).build
           expect(test_segment_match(segment, user)).to be false
         end
+
+        (1..4).each do |depth|
+          it "can handle segments referencing other segments" do
+            context = LDContext.with_key("context")
+            segments = []
+            (0...depth).each do |i|
+              builder = SegmentBuilder.new("segmentkey#{i}")
+              if i == depth - 1
+                builder.included(context.key)
+              else
+                clause = Clauses.match_segment("segmentkey#{i + 1}")
+                builder.rule(
+                  SegmentRuleBuilder.new.clause(clause)
+                )
+              end
+
+              segments << builder.build
+            end
+
+            flag = Flags.boolean_flag_with_clauses(Clauses.match_segment("segmentkey0"))
+
+            builder = EvaluatorBuilder.new(logger)
+            segments.each { |segment| builder.with_segment(segment) }
+
+            evaluator = builder.build
+            result = evaluator.evaluate(flag, context)
+            expect(result.detail.value).to be(true)
+
+          end
+
+          it "will detect cycles in segments" do
+            context = LDContext.with_key("context")
+            segments = []
+            (0...depth).each do |i|
+              clause = Clauses.match_segment("segmentkey#{(i + 1) % depth}")
+              builder = SegmentBuilder.new("segmentkey#{i}")
+              builder.rule(
+                SegmentRuleBuilder.new.clause(clause)
+              )
+
+              segments << builder.build
+            end
+
+            flag = Flags.boolean_flag_with_clauses(Clauses.match_segment("segmentkey0"))
+
+            builder = EvaluatorBuilder.new(logger)
+            segments.each { |segment| builder.with_segment(segment) }
+
+            evaluator = builder.build
+            result = evaluator.evaluate(flag, context)
+            reason = EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG)
+            expect(result.detail.reason).to eq(reason)
+          end
+        end
       end
     end
   end
