@@ -30,6 +30,7 @@ get '/' do
       'all-flags-with-reasons',
       'all-flags-client-side-only',
       'all-flags-details-only-for-tracked-flags',
+      'user-type',
       'tags',
     ],
   }.to_json

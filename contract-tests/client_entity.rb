@@ -76,12 +76,12 @@ class ClientEntity
     response = {}
 
     if params[:detail]
-      detail = @client.variation_detail(params[:flagKey], params[:context], params[:defaultValue])
+      detail = @client.variation_detail(params[:flagKey], params[:context] || params[:user], params[:defaultValue])
       response[:value] = detail.value
       response[:variationIndex] = detail.variation_index
       response[:reason] = detail.reason
     else
-      response[:value] = @client.variation(params[:flagKey], params[:context], params[:defaultValue])
+      response[:value] = @client.variation(params[:flagKey], params[:context] || params[:user], params[:defaultValue])
     end
 
     response
@@ -93,15 +93,15 @@ class ClientEntity
     opts[:with_reasons] = params[:withReasons] || false
     opts[:details_only_for_tracked_flags] = params[:detailsOnlyForTrackedFlags] || false
 
-    @client.all_flags_state(params[:context], opts)
+    @client.all_flags_state(params[:context] || params[:user], opts)
   end
 
   def track(params)
-    @client.track(params[:eventKey], params[:context], params[:data], params[:metricValue])
+    @client.track(params[:eventKey], params[:context] || params[:user], params[:data], params[:metricValue])
   end
 
   def identify(params)
-    @client.identify(params[:context])
+    @client.identify(params[:context] || params[:user])
   end
 
   def flush_events
