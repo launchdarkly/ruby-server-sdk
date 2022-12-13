@@ -34,7 +34,6 @@ module LaunchDarkly
     # @option opts [Boolean] :send_events (true) See {#send_events}.
     # @option opts [Integer] :user_keys_capacity (1000) See {#user_keys_capacity}.
     # @option opts [Float] :user_keys_flush_interval (300) See {#user_keys_flush_interval}.
-    # @option opts [Boolean] :inline_users_in_events (false) See {#inline_users_in_events}.
     # @option opts [Object] :data_source See {#data_source}.
     # @option opts [Boolean] :diagnostic_opt_out (false) See {#diagnostic_opt_out?}.
     # @option opts [Float] :diagnostic_recording_interval (900) See {#diagnostic_recording_interval}.
@@ -65,7 +64,6 @@ module LaunchDarkly
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
       @user_keys_capacity = opts[:user_keys_capacity] || Config.default_user_keys_capacity
       @user_keys_flush_interval = opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
-      @inline_users_in_events = opts[:inline_users_in_events] || false
       @data_source = opts[:data_source]
       @diagnostic_opt_out = opts.has_key?(:diagnostic_opt_out) && opts[:diagnostic_opt_out]
       @diagnostic_recording_interval = opts.has_key?(:diagnostic_recording_interval) && opts[:diagnostic_recording_interval] > Config.minimum_diagnostic_recording_interval ?
@@ -248,14 +246,6 @@ module LaunchDarkly
     # @see #user_keys_capacity
     #
     attr_reader :user_keys_flush_interval
-
-    #
-    # Whether to include full user details in every analytics event. By default, events will only
-    # include the user key, except for one "index" event that provides the full details for the user.
-    # The only reason to change this is if you are using the Analytics Data Stream.
-    # @return [Boolean]
-    #
-    attr_reader :inline_users_in_events
 
     #
     # An object that is responsible for receiving feature flag data from LaunchDarkly. By default,

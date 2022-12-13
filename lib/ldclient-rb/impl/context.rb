@@ -1,3 +1,5 @@
+require "erb"
+
 module LaunchDarkly
   module Impl
     module Context

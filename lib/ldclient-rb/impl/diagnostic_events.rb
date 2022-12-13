@@ -73,7 +73,6 @@ module LaunchDarkly
           diagnosticRecordingIntervalMillis: self.seconds_to_millis(config.diagnostic_recording_interval),
           eventsCapacity: config.capacity,
           eventsFlushIntervalMillis: self.seconds_to_millis(config.flush_interval),
-          inlineUsersInEvents: config.inline_users_in_events,
           pollingIntervalMillis: self.seconds_to_millis(config.poll_interval),
           socketTimeoutMillis: self.seconds_to_millis(config.read_timeout),
           streamingDisabled: !config.stream?,

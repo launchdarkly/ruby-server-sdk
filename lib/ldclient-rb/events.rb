@@ -311,12 +311,10 @@ module LaunchDarkly
         will_add_full_event = true
       end
 
-      # For each user we haven't seen before, we add an index event - unless this is already
-      # an identify event for that user.
-      unless will_add_full_event && @config.inline_users_in_events
-        if !event.context.nil? && !notice_context(event.context) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
-          outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.context))
-        end
+      # For each context we haven't seen before, we add an index event - unless this is already
+      # an identify event for that context.
+      if !event.context.nil? && !notice_context(event.context) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
+        outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.context))
       end
 
       outbox.add_event(event) if will_add_full_event
@@ -453,7 +451,6 @@ module LaunchDarkly
     ANONYMOUS_USER_CONTEXT_KIND = 'anonymousUser'
 
     def initialize(config)
-      @inline_users = config.inline_users_in_events
       @context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attribute_names)
     end
 
@@ -559,19 +556,6 @@ module LaunchDarkly
         endDate: summary[:end_date],
         features: flags,
       }
-    end
-
-    private def set_opt_context_kind(out, user)
-      out[:contextKind] = ANONYMOUS_USER_CONTEXT_KIND if !user.nil? && user[:anonymous]
-    end
-
-    private def set_user_or_user_key(out, user)
-      if @inline_users
-        out[:user] = @context_filter.filter(user)
-      else
-        key = user[:key]
-        out[:userKey] = key.is_a?(String) ? key : key.to_s
-      end
     end
   end
 end

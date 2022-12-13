@@ -80,27 +80,15 @@ describe LaunchDarkly::EventProcessor do
   end
 
   it "filters context in feature event" do
-    config = LaunchDarkly::Config.new(default_config_opts.merge(all_attributes_private: true, inline_users_in_events: true))
+    config = LaunchDarkly::Config.new(default_config_opts.merge(all_attributes_private: true))
     with_processor_and_sender(config) do |ep, sender|
       flag = { key: "flagkey", version: 11 }
       ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, true)
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(feature_event(flag, context, 1, 'value', true)),
-        include(:kind => "summary")
-      )
-    end
-  end
-
-  it "still generates index event if inline_users is true but feature event was not tracked" do
-    config = LaunchDarkly::Config.new(default_config_opts.merge(inline_users_in_events: true))
-    with_processor_and_sender(config) do |ep, sender|
-      ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, false)
-
-      output = flush_and_get_events(ep, sender)
-      expect(output).to contain_exactly(
         eq(index_event(config, context)),
+        eq(feature_event(flag, context, 1, 'value')),
         include(:kind => "summary")
       )
     end
@@ -197,8 +185,8 @@ describe LaunchDarkly::EventProcessor do
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
         eq(index_event(default_config, context)),
-        eq(feature_event(flag1, context, 1, 'value', false, starting_timestamp)),
-        eq(feature_event(flag2, context, 1, 'value', false, starting_timestamp + 1)),
+        eq(feature_event(flag1, context, 1, 'value', starting_timestamp)),
+        eq(feature_event(flag2, context, 1, 'value', starting_timestamp + 1)),
         include(:kind => "summary")
       )
     end
@@ -250,13 +238,14 @@ describe LaunchDarkly::EventProcessor do
   end
 
   it "filters context in custom event" do
-    config = LaunchDarkly::Config.new(default_config_opts.merge(all_attributes_private: true, inline_users_in_events: true))
+    config = LaunchDarkly::Config.new(default_config_opts.merge(all_attributes_private: true))
     with_processor_and_sender(config) do |ep, sender|
       ep.record_custom_event(context, 'eventkey')
 
       output = flush_and_get_events(ep, sender)
       expect(output).to contain_exactly(
-        eq(custom_event(context, 'eventkey', nil, nil, true))
+        eq(index_event(config, context)),
+        eq(custom_event(context, 'eventkey', nil, nil))
       )
     end
   end
@@ -421,7 +410,7 @@ describe LaunchDarkly::EventProcessor do
   # @param timestamp [Integer]
   # @return [Hash]
   #
-  def feature_event(flag, context, variation, value, inline_user = false, timestamp = starting_timestamp)
+  def feature_event(flag, context, variation, value, timestamp = starting_timestamp)
     out = {
       kind: 'feature',
       creationDate: timestamp,
@@ -462,13 +451,12 @@ describe LaunchDarkly::EventProcessor do
   # @param key [String]
   # @param data [any]
   # @param metric_value [any]
-  # @param timestamp [Integer]
   # @return [Hash]
   #
-  def custom_event(context, key, data, metric_value, inline_user = false, timestamp = starting_timestamp)
+  def custom_event(context, key, data, metric_value)
     out = {
       kind: "custom",
-      creationDate: timestamp,
+      creationDate: starting_timestamp,
       contextKeys: context.keys,
       key: key,
     }
