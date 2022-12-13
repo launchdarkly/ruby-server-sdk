@@ -27,6 +27,9 @@ module LaunchDarkly
           @targets = (data[:targets] || []).map do |target_data|
             Target.new(target_data, self, logger)
           end
+          @context_targets = (data[:contextTargets] || []).map do |target_data|
+            Target.new(target_data, self, logger)
+          end
           @rules = (data[:rules] || []).map.with_index do |rule_data, index|
             FlagRule.new(rule_data, index, self, logger)
           end
@@ -60,6 +63,8 @@ module LaunchDarkly
         attr_reader :prerequisites
         # @return [Array<LaunchDarkly::Impl::Model::Target>]
         attr_reader :targets
+        # @return [Array<LaunchDarkly::Impl::Model::Target>]
+        attr_reader :context_targets
         # @return [Array<LaunchDarkly::Impl::Model::FlagRule>]
         attr_reader :rules
         # @return [String]
@@ -107,16 +112,22 @@ module LaunchDarkly
 
       class Target
         def initialize(data, flag, logger)
+          @kind = data[:contextKind] || LDContext::KIND_DEFAULT
           @data = data
           @values = data[:values] || []
+          @variation = data[:variation]
           @match_result = EvaluatorHelpers.evaluation_detail_for_variation(flag,
             data[:variation], EvaluationReason::target_match, logger)
         end
 
+        # @return [String]
+        attr_reader :kind
         # @return [Hash]
         attr_reader :data
         # @return [Array]
         attr_reader :values
+        # @return [Integer]
+        attr_reader :variation
         # @return [LaunchDarkly::EvaluationDetail]
         attr_reader :match_result
       end

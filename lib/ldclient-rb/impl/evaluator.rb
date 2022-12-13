@@ -170,14 +170,12 @@ module LaunchDarkly
         "#{segment.key}.g#{segment.generation}"
       end
 
-      private
-
       # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] the flag
       # @param context [LaunchDarkly::LDContext] the evaluation context
       # @param eval_result [EvalResult]
       # @param state [EvaluatorState]
       # @raise [EvaluationException]
-      def eval_internal(flag, context, eval_result, state)
+      private def eval_internal(flag, context, eval_result, state)
         unless flag.on
           return flag.off_result
         end
@@ -186,13 +184,8 @@ module LaunchDarkly
         return prereq_failure_result unless prereq_failure_result.nil?
 
         # Check context target matches
-        flag.targets.each do |target|
-          target.values.each do |value|
-            if value == context.key
-              return target.match_result
-            end
-          end
-        end
+        target_result = check_targets(context, flag)
+        return target_result unless target_result.nil?
 
         # Check custom rules
         flag.rules.each do |rule|
@@ -214,7 +207,7 @@ module LaunchDarkly
       # @param eval_result [EvalResult]
       # @param state [EvaluatorState]
       # @raise [EvaluationException] if a flag prereq cycle is detected
-      def check_prerequisites(flag, context, eval_result, state)
+      private def check_prerequisites(flag, context, eval_result, state)
         return if flag.prerequisites.empty?
 
         state.prereq_stack.push(flag.key)
@@ -263,7 +256,7 @@ module LaunchDarkly
       # @param eval_result [EvalResult]
       # @param state [EvaluatorState]
       # @raise [InvalidReferenceException]
-      def rule_match_context(rule, context, eval_result, state)
+      private def rule_match_context(rule, context, eval_result, state)
         rule.clauses.each do |clause|
           return false unless clause_match_context(clause, context, eval_result, state)
         end
@@ -276,7 +269,7 @@ module LaunchDarkly
       # @param eval_result [EvalResult]
       # @param state [EvaluatorState]
       # @raise [InvalidReferenceException]
-      def clause_match_context(clause, context, eval_result, state)
+      private def clause_match_context(clause, context, eval_result, state)
         # In the case of a segment match operator, we check if the context is in any of the segments,
         # and possibly negate
         if clause.op == :segmentMatch
@@ -328,7 +321,7 @@ module LaunchDarkly
       # @param context [LaunchDarkly::LDContext]
       # @return [Boolean]
       # @raise [InvalidReferenceException] Raised if the clause.attribute is an invalid reference
-      def clause_match_context_no_segments(clause, context)
+      private def clause_match_context_no_segments(clause, context)
         raise InvalidReferenceException.new(clause.attribute.error) unless clause.attribute.error.nil?
 
         if clause.attribute.depth == 1 && clause.attribute.component(0) == :kind
@@ -355,7 +348,7 @@ module LaunchDarkly
       # @param eval_result [EvalResult]
       # @param state [EvaluatorState]
       # @return [Boolean]
-      def segment_match_context(segment, context, eval_result, state)
+      private def segment_match_context(segment, context, eval_result, state)
         return big_segment_match_context(segment, context, eval_result, state) if segment.unbounded
 
         simple_segment_match_context(segment, context, true, eval_result, state)
@@ -366,7 +359,7 @@ module LaunchDarkly
       # @param eval_result [EvalResult]
       # @param state [EvaluatorState]
       # @return [Boolean]
-      def big_segment_match_context(segment, context, eval_result, state)
+      private def big_segment_match_context(segment, context, eval_result, state)
         unless segment.generation
           # Big segment queries can only be done if the generation is known. If it's unset,
           # that probably means the data store was populated by an older SDK that doesn't know
@@ -397,7 +390,7 @@ module LaunchDarkly
       # @param use_includes_and_excludes [Boolean]
       # @param state [EvaluatorState]
       # @return [Boolean]
-      def simple_segment_match_context(segment, context, use_includes_and_excludes, eval_result, state)
+      private def simple_segment_match_context(segment, context, use_includes_and_excludes, eval_result, state)
         if use_includes_and_excludes
           if EvaluatorHelpers.context_key_in_target_list(context, nil, segment.included)
             return true
@@ -440,7 +433,7 @@ module LaunchDarkly
       # @param salt [String]
       # @return [Boolean]
       # @raise [InvalidReferenceException]
-      def segment_rule_match_context(rule, context, segment_key, salt, eval_result, state)
+      private def segment_rule_match_context(rule, context, segment_key, salt, eval_result, state)
         rule.clauses.each do |c|
           return false unless clause_match_context(c, context, eval_result, state)
         end
@@ -459,9 +452,7 @@ module LaunchDarkly
         bucket.nil? || bucket < weight
       end
 
-      private
-
-      def get_value_for_variation_or_rollout(flag, vr, context, precomputed_results)
+      private def get_value_for_variation_or_rollout(flag, vr, context, precomputed_results)
         index, in_experiment = EvaluatorBucketing.variation_index_for_context(flag, vr, context)
 
         if index.nil?
@@ -469,6 +460,50 @@ module LaunchDarkly
           return Evaluator.error_result(EvaluationReason::ERROR_MALFORMED_FLAG)
         end
         precomputed_results.for_variation(index, in_experiment)
+      end
+
+      # @param [LaunchDarkly::LDContext] context
+      # @param [LaunchDarkly::Impl::Model::FeatureFlag] flag
+      # @return [LaunchDarkly::EvaluationDetail, nil]
+      private def check_targets(context, flag)
+        user_targets = flag.targets
+        context_targets = flag.context_targets
+
+        if context_targets.empty?
+          unless user_targets.empty?
+            user_context = context.individual_context(LDContext::KIND_DEFAULT)
+            return nil if user_context.nil?
+
+            user_targets.each do |target|
+              if target.values.include?(user_context.key) # rubocop:disable Performance/InefficientHashSearch
+                return target.match_result
+              end
+            end
+          end
+
+          return nil
+        end
+
+        context_targets.each do |target|
+          if target.kind == LDContext::KIND_DEFAULT
+            user_context = context.individual_context(LDContext::KIND_DEFAULT)
+            next if user_context.nil?
+
+            user_key = user_context.key
+            user_targets.each do |user_target|
+              if user_target.variation == target.variation
+                if user_target.values.include?(user_key) # rubocop:disable Performance/InefficientHashSearch
+                  return target.match_result
+                end
+                break
+              end
+            end
+          elsif EvaluatorHelpers.context_key_in_target_list(context, target.kind, target.values)
+            return target.match_result
+          end
+        end
+
+        nil
       end
     end
   end
