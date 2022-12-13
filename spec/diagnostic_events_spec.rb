@@ -34,8 +34,8 @@ module LaunchDarkly
             pollingIntervalMillis: Config.default_poll_interval * 1000,
             socketTimeoutMillis: Config.default_read_timeout * 1000,
             streamingDisabled: false,
-            userKeysCapacity: Config.default_user_keys_capacity,
-            userKeysFlushIntervalMillis: Config.default_user_keys_flush_interval * 1000,
+            userKeysCapacity: Config.default_context_keys_capacity,
+            userKeysFlushIntervalMillis: Config.default_context_keys_flush_interval * 1000,
             usingProxy: false,
             usingRelayDaemon: false,
           }
@@ -66,8 +66,8 @@ module LaunchDarkly
             [ { poll_interval: 999 }, { pollingIntervalMillis: 999000 } ],
             [ { read_timeout: 46 }, { socketTimeoutMillis: 46000 } ],
             [ { stream: false }, { streamingDisabled: true } ],
-            [ { user_keys_capacity: 999 }, { userKeysCapacity: 999 } ],
-            [ { user_keys_flush_interval: 999 }, { userKeysFlushIntervalMillis: 999000 } ],
+            [ { context_keys_capacity: 999 }, { userKeysCapacity: 999 } ],
+            [ { context_keys_flush_interval: 999 }, { userKeysFlushIntervalMillis: 999000 } ],
             [ { use_ldd: true }, { usingRelayDaemon: true } ],
           ]
           changes_and_expected.each do |config_values, expected_values|

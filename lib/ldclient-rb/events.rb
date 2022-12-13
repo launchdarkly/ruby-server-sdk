@@ -117,10 +117,10 @@ module LaunchDarkly
         post_to_inbox(FlushMessage.new)
       end
       @flush_task.execute
-      @users_flush_task = Concurrent::TimerTask.new(execution_interval: config.user_keys_flush_interval) do
+      @contexts_flush_task = Concurrent::TimerTask.new(execution_interval: config.context_keys_flush_interval) do
         post_to_inbox(FlushUsersMessage.new)
       end
-      @users_flush_task.execute
+      @contexts_flush_task.execute
       if !diagnostic_accumulator.nil?
         interval = test_properties && test_properties.has_key?(:diagnostic_recording_interval) ?
           test_properties[:diagnostic_recording_interval] :
@@ -176,7 +176,7 @@ module LaunchDarkly
       # final shutdown, which includes a final flush, is done synchronously
       if @stopped.make_true
         @flush_task.shutdown
-        @users_flush_task.shutdown
+        @contexts_flush_task.shutdown
         @diagnostic_event_task.shutdown unless @diagnostic_event_task.nil?
         # Note that here we are not calling post_to_inbox, because we *do* want to wait if the inbox
         # is full; an orderly shutdown can't happen unless these messages are received.
@@ -225,7 +225,7 @@ module LaunchDarkly
       @diagnostic_accumulator = config.diagnostic_opt_out? ? nil : diagnostic_accumulator
       @event_sender = event_sender
 
-      @context_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
+      @context_keys = SimpleLRUCacheSet.new(config.context_keys_capacity)
       @formatter = EventOutputFormatter.new(config)
       @disabled = Concurrent::AtomicBoolean.new(false)
       @last_known_past_time = Concurrent::AtomicReference.new(0)

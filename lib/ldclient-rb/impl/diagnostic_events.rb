@@ -76,8 +76,8 @@ module LaunchDarkly
           pollingIntervalMillis: self.seconds_to_millis(config.poll_interval),
           socketTimeoutMillis: self.seconds_to_millis(config.read_timeout),
           streamingDisabled: !config.stream?,
-          userKeysCapacity: config.user_keys_capacity,
-          userKeysFlushIntervalMillis: self.seconds_to_millis(config.user_keys_flush_interval),
+          userKeysCapacity: config.context_keys_capacity,
+          userKeysFlushIntervalMillis: self.seconds_to_millis(config.context_keys_flush_interval),
           usingProxy: ENV.has_key?('http_proxy') || ENV.has_key?('https_proxy') || ENV.has_key?('HTTP_PROXY') || ENV.has_key?('HTTPS_PROXY'),
           usingRelayDaemon: config.use_ldd?,
         }

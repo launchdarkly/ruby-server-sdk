@@ -13,6 +13,14 @@ module LaunchDarkly
     #
     # Constructor for creating custom LaunchDarkly configurations.
     #
+    # `user_keys_capacity` and `user_keys_flush_interval` are deprecated
+    # configuration options. They exist to maintain backwards compatibility
+    # with previous configurations. Newer code should prefer their replacement
+    # options -- `context_keys_capacity` and `context_keys_flush_interval`.
+    #
+    # In the event both the user and context variations are provided, the
+    # context specific configuration option will take precedence.
+    #
     # @param opts [Hash] the configuration options
     # @option opts [Logger] :logger See {#logger}.
     # @option opts [String] :base_uri ("https://sdk.launchdarkly.com") See {#base_uri}.
@@ -33,7 +41,9 @@ module LaunchDarkly
     # @option opts [Array] :private_attribute_names See {#private_attribute_names}.
     # @option opts [Boolean] :send_events (true) See {#send_events}.
     # @option opts [Integer] :user_keys_capacity (1000) See {#user_keys_capacity}.
+    # @option opts [Integer] :context_keys_capacity (1000) See {#context_keys_capacity}.
     # @option opts [Float] :user_keys_flush_interval (300) See {#user_keys_flush_interval}.
+    # @option opts [Float] :context_keys_flush_interval (300) See {#context_keys_flush_interval}.
     # @option opts [Object] :data_source See {#data_source}.
     # @option opts [Boolean] :diagnostic_opt_out (false) See {#diagnostic_opt_out?}.
     # @option opts [Float] :diagnostic_recording_interval (900) See {#diagnostic_recording_interval}.
@@ -62,8 +72,8 @@ module LaunchDarkly
       @all_attributes_private = opts[:all_attributes_private] || false
       @private_attribute_names = opts[:private_attribute_names] || []
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
-      @user_keys_capacity = opts[:user_keys_capacity] || Config.default_user_keys_capacity
-      @user_keys_flush_interval = opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
+      @context_keys_capacity = opts[:context_keys_capacity] || opts[:user_keys_capacity] || Config.default_context_keys_capacity
+      @context_keys_flush_interval = opts[:context_keys_flush_interval] || opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
       @data_source = opts[:data_source]
       @diagnostic_opt_out = opts.has_key?(:diagnostic_opt_out) && opts[:diagnostic_opt_out]
       @diagnostic_recording_interval = opts.has_key?(:diagnostic_recording_interval) && opts[:diagnostic_recording_interval] > Config.minimum_diagnostic_recording_interval ?
@@ -233,19 +243,35 @@ module LaunchDarkly
     attr_reader :send_events
 
     #
-    # The number of user keys that the event processor can remember at any one time. This reduces the
-    # amount of duplicate user details sent in analytics events.
+    # The number of context keys that the event processor can remember at any one time. This reduces the
+    # amount of duplicate context details sent in analytics events.
     # @return [Integer]
-    # @see #user_keys_flush_interval
+    # @see #context_keys_flush_interval
     #
-    attr_reader :user_keys_capacity
+    attr_reader :context_keys_capacity
 
     #
-    # The interval in seconds at which the event processor will reset its set of known user keys.
-    # @return [Float]
-    # @see #user_keys_capacity
+    # @deprecated Backwards compatibility alias for #context_keys_capacity.
     #
-    attr_reader :user_keys_flush_interval
+    # @return [Integer]
+    # @see #context_keys_flush_interval
+    #
+    alias :user_keys_capacity :context_keys_capacity
+
+    #
+    # The interval in seconds at which the event processor will reset its set of known context keys.
+    # @return [Float]
+    # @see #context_keys_capacity
+    #
+    attr_reader :context_keys_flush_interval
+
+    #
+    # @deprecated Backwards compatibility alias for #context_keys_flush_interval.
+    #
+    # @return [Integer]
+    # @see #context_keys_flush_interval
+    #
+    alias :user_keys_flush_interval :context_keys_flush_interval
 
     #
     # An object that is responsible for receiving feature flag data from LaunchDarkly. By default,
@@ -483,19 +509,31 @@ module LaunchDarkly
     end
 
     #
-    # The default value for {#user_keys_capacity}.
+    # The default value for {#context_keys_capacity}.
     # @return [Integer] 1000
     #
-    def self.default_user_keys_capacity
+    def self.default_context_keys_capacity
       1000
     end
 
     #
-    # The default value for {#user_keys_flush_interval}.
+    # The default value for {#context_keys_flush_interval}.
     # @return [Float] 300
     #
-    def self.default_user_keys_flush_interval
+    def self.default_context_keys_flush_interval
       300
+    end
+
+    class << self
+      #
+      # @deprecated Backwards compatibility alias for #default_context_keys_capacity
+      #
+      alias :default_user_keys_capacity :default_context_keys_capacity
+
+      #
+      # @deprecated Backwards compatibility alias for #default_context_keys_flush_interval
+      #
+      alias :default_user_keys_flush_interval :default_context_keys_flush_interval
     end
 
     #

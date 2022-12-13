@@ -93,4 +93,30 @@ describe LaunchDarkly::Config do
       end
     end
   end
+
+  describe "context and user aliases" do
+    it "default values are aliased correctly" do
+      expect(LaunchDarkly::Config.default_context_keys_capacity).to eq LaunchDarkly::Config.default_user_keys_capacity
+      expect(LaunchDarkly::Config.default_context_keys_flush_interval).to eq LaunchDarkly::Config.default_user_keys_flush_interval
+    end
+
+    it "context options are reflected in user options" do
+      config = subject.new(context_keys_capacity: 50, context_keys_flush_interval: 25)
+      expect(config.context_keys_capacity).to eq config.user_keys_capacity
+      expect(config.context_keys_flush_interval).to eq config.user_keys_flush_interval
+    end
+
+    it "context options can be set by user options" do
+      config = subject.new(user_keys_capacity: 50, user_keys_flush_interval: 25)
+      expect(config.context_keys_capacity).to eq config.user_keys_capacity
+      expect(config.context_keys_flush_interval).to eq config.user_keys_flush_interval
+    end
+
+    it "context options take precedence" do
+      config = subject.new(context_keys_capacity: 100, user_keys_capacity: 50, context_keys_flush_interval: 100, user_keys_flush_interval: 50)
+
+      expect(config.context_keys_capacity).to eq 100
+      expect(config.context_keys_flush_interval).to eq 100
+    end
+  end
 end
