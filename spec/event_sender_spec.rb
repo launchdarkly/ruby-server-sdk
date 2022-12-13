@@ -43,7 +43,7 @@ module LaunchDarkly
             "authorization" => [ sdk_key ],
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
-            "x-launchdarkly-event-schema" => [ "3" ],
+            "x-launchdarkly-event-schema" => [ "4" ],
             "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
             "connection" => [ "Keep-Alive" ],
           })

@@ -1,10 +1,11 @@
 require "ldclient-rb/impl/event_types"
+require "set"
 
 module LaunchDarkly
   module Impl
     EventSummary = Struct.new(:start_date, :end_date, :counters)
 
-    EventSummaryFlagInfo = Struct.new(:default, :versions)
+    EventSummaryFlagInfo = Struct.new(:default, :versions, :context_kinds)
 
     EventSummaryFlagVariationCounter = Struct.new(:value, :count)
 
@@ -26,20 +27,25 @@ module LaunchDarkly
 
         counters_for_flag = @counters[event.key]
         if counters_for_flag.nil?
-          counters_for_flag = EventSummaryFlagInfo.new(event.default, Hash.new)
+          counters_for_flag = EventSummaryFlagInfo.new(event.default, Hash.new, Set.new)
           @counters[event.key] = counters_for_flag
         end
+
         counters_for_flag_version = counters_for_flag.versions[event.version]
         if counters_for_flag_version.nil?
           counters_for_flag_version = Hash.new
           counters_for_flag.versions[event.version] = counters_for_flag_version
         end
+
+        counters_for_flag.context_kinds.merge(event.context.kinds)
+
         variation_counter = counters_for_flag_version[event.variation]
         if variation_counter.nil?
           counters_for_flag_version[event.variation] = EventSummaryFlagVariationCounter.new(event.value, 1)
         else
           variation_counter.count = variation_counter.count + 1
         end
+
         time = event.timestamp
         unless time.nil?
           @start_date = time if @start_date == 0 || time < @start_date

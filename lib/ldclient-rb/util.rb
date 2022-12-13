@@ -4,21 +4,6 @@ require "http"
 module LaunchDarkly
   # @private
   module Util
-    def self.stringify_attrs(hash, attrs)
-      return hash if hash.nil?
-      ret = hash
-      changed = false
-      attrs.each do |attr|
-        value = hash[attr]
-        if !value.nil? && !value.is_a?(String)
-          ret = hash.clone unless changed
-          ret[attr] = value.to_s
-          changed = true
-        end
-      end
-      ret
-    end
-
     def self.new_http_client(uri_s, config)
       http_client_options = {}
       if config.socket_factory

@@ -9,14 +9,14 @@ module LaunchDarkly
     context "variation" do
       it "returns the default value if the client is offline" do
         with_client(test_config(offline: true)) do |offline_client|
-          result = offline_client.variation("doesntmatter", basic_user, "default")
+          result = offline_client.variation("doesntmatter", basic_context, "default")
           expect(result).to eq "default"
         end
       end
 
       it "returns the default value for an unknown feature" do
         with_client(test_config) do |client|
-          expect(client.variation("badkey", basic_user, "default")).to eq "default"
+          expect(client.variation("badkey", basic_context, "default")).to eq "default"
         end
       end
 
@@ -25,7 +25,7 @@ module LaunchDarkly
         td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
 
         with_client(test_config(data_source: td)) do |client|
-          expect(client.variation("flagkey", basic_user, "default")).to eq "value"
+          expect(client.variation("flagkey", basic_context, "default")).to eq "value"
         end
       end
 
@@ -38,13 +38,13 @@ module LaunchDarkly
         })
 
         with_client(test_config(data_source: td)) do |client|
-          expect(client.variation("flagkey", basic_user, "default")).to eq "default"
+          expect(client.variation("flagkey", basic_context, "default")).to eq "default"
         end
       end
 
       it "can evaluate a flag that references a segment" do
         td = Integrations::TestData.data_source
-        segment = SegmentBuilder.new("segmentkey").included(basic_user.key).build
+        segment = SegmentBuilder.new("segmentkey").included(basic_context.key).build
         td.use_preconfigured_segment(segment)
         td.use_preconfigured_flag(
           FlagBuilder.new("flagkey").on(true).variations(true, false).rule(
@@ -52,7 +52,7 @@ module LaunchDarkly
           ).build)
 
         with_client(test_config(data_source: td)) do |client|
-          expect(client.variation("flagkey", basic_user, false)).to be true
+          expect(client.variation("flagkey", basic_context, false)).to be true
         end
       end
 
@@ -66,11 +66,11 @@ module LaunchDarkly
           ).build)
 
         segstore = MockBigSegmentStore.new
-        segstore.setup_segment_for_user(basic_user.key, segment, true)
+        segstore.setup_segment_for_user(basic_context.key, segment, true)
         big_seg_config = BigSegmentsConfig.new(store: segstore)
 
         with_client(test_config(data_source: td, big_segments: big_seg_config)) do |client|
-          expect(client.variation("flagkey", basic_user, false)).to be true
+          expect(client.variation("flagkey", basic_context, false)).to be true
         end
       end
     end
@@ -81,7 +81,7 @@ module LaunchDarkly
 
       it "returns the default value if the client is offline" do
         with_client(test_config(offline: true)) do |offline_client|
-          result = offline_client.variation_detail("doesntmatter", basic_user, "default")
+          result = offline_client.variation_detail("doesntmatter", basic_context, "default")
           expected = EvaluationDetail.new("default", nil, EvaluationReason::error(EvaluationReason::ERROR_CLIENT_NOT_READY))
           expect(result).to eq expected
         end
@@ -89,7 +89,7 @@ module LaunchDarkly
 
       it "returns the default value for an unknown feature" do
         with_client(test_config) do |client|
-          result = client.variation_detail("badkey", basic_user, "default")
+          result = client.variation_detail("badkey", basic_context, "default")
           expected = EvaluationDetail.new("default", nil, EvaluationReason::error(EvaluationReason::ERROR_FLAG_NOT_FOUND))
           expect(result).to eq expected
         end
@@ -100,7 +100,7 @@ module LaunchDarkly
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
 
         with_client(test_config(data_source: td)) do |client|
-          result = client.variation_detail("flagkey", basic_user, "default")
+          result = client.variation_detail("flagkey", basic_context, "default")
           expected = EvaluationDetail.new("value", 0, EvaluationReason::off)
           expect(result).to eq expected
         end
@@ -115,7 +115,7 @@ module LaunchDarkly
         })
 
         with_client(test_config(data_source: td)) do |client|
-          result = client.variation_detail("flagkey", basic_user, "default")
+          result = client.variation_detail("flagkey", basic_context, "default")
           expected = EvaluationDetail.new("default", nil, EvaluationReason::off)
           expect(result).to eq expected
           expect(result.default_value?).to be true
@@ -132,12 +132,12 @@ module LaunchDarkly
           ).build)
 
         segstore = MockBigSegmentStore.new
-        segstore.setup_segment_for_user(basic_user.key, segment, true)
+        segstore.setup_segment_for_user(basic_context.key, segment, true)
         segstore.setup_metadata(Time.now)
         big_seg_config = BigSegmentsConfig.new(store: segstore)
 
         with_client(test_config(data_source: td, big_segments: big_seg_config)) do |client|
-          result = client.variation_detail("flagkey", basic_user, false)
+          result = client.variation_detail("flagkey", basic_context, false)
           expect(result.value).to be true
           expect(result.reason.big_segments_status).to eq(BigSegmentsStatus::HEALTHY)
         end

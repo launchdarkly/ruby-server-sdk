@@ -8,9 +8,7 @@ TEMP_TEST_OUTPUT=/tmp/contract-test-service.log
 TEST_HARNESS_PARAMS := $(TEST_HARNESS_PARAMS) \
 	-skip 'evaluation/parameterized/target match/context targets' \
 	-skip 'evaluation/parameterized/target match/multi-kind' \
-	-skip 'context type' \
-	-skip 'big segments' \
-	-skip 'events'
+	-skip 'big segments'
 
 build-contract-tests:
 	@cd contract-tests && bundle _2.2.33_ install

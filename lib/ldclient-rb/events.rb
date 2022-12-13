@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/context_filter"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/event_sender"
 require "ldclient-rb/impl/event_summarizer"
@@ -30,7 +31,7 @@ require "time"
 module LaunchDarkly
   module EventProcessorMethods
     def record_eval_event(
-      user,
+      context,
       key,
       version = nil,
       variation = nil,
@@ -62,11 +63,7 @@ module LaunchDarkly
   end
 
   MAX_FLUSH_WORKERS = 5
-  USER_ATTRS_TO_STRINGIFY_FOR_EVENTS = [ :key, :ip, :country, :email, :firstName, :lastName,
-    :avatar, :name ]
-
   private_constant :MAX_FLUSH_WORKERS
-  private_constant :USER_ATTRS_TO_STRINGIFY_FOR_EVENTS
 
   # @private
   class NullEventProcessor
@@ -147,7 +144,7 @@ module LaunchDarkly
     end
 
     def record_eval_event(
-      user,
+      context,
       key,
       version = nil,
       variation = nil,
@@ -158,7 +155,7 @@ module LaunchDarkly
       debug_until = nil,
       prereq_of = nil
     )
-      post_to_inbox(LaunchDarkly::Impl::EvalEvent.new(timestamp, user, key, version, variation, value, reason,
+      post_to_inbox(LaunchDarkly::Impl::EvalEvent.new(timestamp, context, key, version, variation, value, reason,
         default, track_events, debug_until, prereq_of))
     end
 
@@ -228,11 +225,11 @@ module LaunchDarkly
       @diagnostic_accumulator = config.diagnostic_opt_out? ? nil : diagnostic_accumulator
       @event_sender = event_sender
 
-      @user_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
+      @context_keys = SimpleLRUCacheSet.new(config.user_keys_capacity)
       @formatter = EventOutputFormatter.new(config)
       @disabled = Concurrent::AtomicBoolean.new(false)
       @last_known_past_time = Concurrent::AtomicReference.new(0)
-      @deduplicated_users = 0
+      @deduplicated_contexts = 0
       @events_in_last_batch = 0
 
       outbox = EventBuffer.new(config.capacity, config.logger)
@@ -260,7 +257,7 @@ module LaunchDarkly
           when FlushMessage
             trigger_flush(outbox, flush_workers)
           when FlushUsersMessage
-            @user_keys.clear
+            @context_keys.clear
           when DiagnosticEventMessage
             send_and_reset_diagnostics(outbox, diagnostic_event_workers)
           when TestSyncMessage
@@ -317,8 +314,8 @@ module LaunchDarkly
       # For each user we haven't seen before, we add an index event - unless this is already
       # an identify event for that user.
       unless will_add_full_event && @config.inline_users_in_events
-        if !event.user.nil? && !notice_user(event.user) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
-          outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.user))
+        if !event.context.nil? && !notice_context(event.context) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
+          outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.context))
         end
       end
 
@@ -326,15 +323,16 @@ module LaunchDarkly
       outbox.add_event(debug_event) unless debug_event.nil?
     end
 
-    # Add to the set of users we've noticed, and return true if the user was already known to us.
-    def notice_user(user)
-      if user.nil? || !user.has_key?(:key)
-        true
-      else
-        known = @user_keys.add(user[:key].to_s)
-        @deduplicated_users += 1 if known
-        known
-      end
+    #
+    # Add to the set of contexts we've noticed, and return true if the context
+    # was already known to us.
+    # @param context [LaunchDarkly::LDContext]
+    # @return [Boolean]
+    #
+    def notice_context(context)
+      known = @context_keys.add(context.fully_qualified_key)
+      @deduplicated_contexts += 1 if known
+      known
     end
 
     def should_debug_event(event)
@@ -378,8 +376,8 @@ module LaunchDarkly
     def send_and_reset_diagnostics(outbox, diagnostic_event_workers)
       return if @diagnostic_accumulator.nil?
       dropped_count = outbox.get_and_clear_dropped_count
-      event = @diagnostic_accumulator.create_periodic_event_and_reset(dropped_count, @deduplicated_users, @events_in_last_batch)
-      @deduplicated_users = 0
+      event = @diagnostic_accumulator.create_periodic_event_and_reset(dropped_count, @deduplicated_contexts, @events_in_last_batch)
+      @deduplicated_contexts = 0
       @events_in_last_batch = 0
       send_diagnostic_event(event, diagnostic_event_workers)
     end
@@ -456,7 +454,7 @@ module LaunchDarkly
 
     def initialize(config)
       @inline_users = config.inline_users_in_events
-      @user_filter = UserFilter.new(config)
+      @context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attribute_names)
     end
 
     # Transforms events into the format used for event sending.
@@ -482,8 +480,7 @@ module LaunchDarkly
         out[:variation] = event.variation unless event.variation.nil?
         out[:version] = event.version unless event.version.nil?
         out[:prereqOf] = event.prereq_of unless event.prereq_of.nil?
-        set_opt_context_kind(out, event.user)
-        set_user_or_user_key(out, event.user)
+        out[:contextKeys] = event.context.keys
         out[:reason] = event.reason unless event.reason.nil?
         out
 
@@ -491,8 +488,8 @@ module LaunchDarkly
         {
           kind: IDENTIFY_KIND,
           creationDate: event.timestamp,
-          key: event.user[:key].to_s,
-          user: process_user(event.user),
+          key: event.context.fully_qualified_key,
+          context: @context_filter.filter(event.context),
         }
 
       when LaunchDarkly::Impl::CustomEvent
@@ -502,16 +499,15 @@ module LaunchDarkly
           key: event.key,
         }
         out[:data] = event.data unless event.data.nil?
-        set_user_or_user_key(out, event.user)
+        out[:contextKeys] = event.context.keys
         out[:metricValue] = event.metric_value unless event.metric_value.nil?
-        set_opt_context_kind(out, event.user)
         out
 
       when LaunchDarkly::Impl::IndexEvent
         {
           kind: INDEX_KIND,
           creationDate: event.timestamp,
-          user: process_user(event.user),
+          context: @context_filter.filter(event.context),
         }
 
       when LaunchDarkly::Impl::DebugEvent
@@ -520,14 +516,13 @@ module LaunchDarkly
           kind: DEBUG_KIND,
           creationDate: original.timestamp,
           key: original.key,
-          user: process_user(original.user),
+          context: @context_filter.filter(original.context),
           value: original.value,
         }
         out[:default] = original.default unless original.default.nil?
         out[:variation] = original.variation unless original.variation.nil?
         out[:version] = original.version unless original.version.nil?
         out[:prereqOf] = original.prereq_of unless original.prereq_of.nil?
-        set_opt_context_kind(out, original.user)
         out[:reason] = original.reason unless original.reason.nil?
         out
 
@@ -556,7 +551,7 @@ module LaunchDarkly
             counters.push(c)
           end
         end
-        flags[flagKey] = { default: flagInfo.default, counters: counters }
+        flags[flagKey] = { default: flagInfo.default, counters: counters, contextKinds: flagInfo.context_kinds.to_a }
       end
       {
         kind: SUMMARY_KIND,
@@ -572,16 +567,11 @@ module LaunchDarkly
 
     private def set_user_or_user_key(out, user)
       if @inline_users
-        out[:user] = process_user(user)
+        out[:user] = @context_filter.filter(user)
       else
         key = user[:key]
         out[:userKey] = key.is_a?(String) ? key : key.to_s
       end
-    end
-
-    private def process_user(user)
-      filtered = @user_filter.transform_user_props(user)
-      Util.stringify_attrs(filtered, USER_ATTRS_TO_STRINGIFY_FOR_EVENTS)
     end
   end
 end

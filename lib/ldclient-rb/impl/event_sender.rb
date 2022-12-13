@@ -8,7 +8,7 @@ module LaunchDarkly
     EventSenderResult = Struct.new(:success, :must_shutdown, :time_from_server)
 
     class EventSender
-      CURRENT_SCHEMA_VERSION = 3
+      CURRENT_SCHEMA_VERSION = 4
       DEFAULT_RETRY_INTERVAL = 1
 
       def initialize(sdk_key, config, http_client = nil, retry_interval = DEFAULT_RETRY_INTERVAL)

@@ -56,6 +56,10 @@ describe LaunchDarkly::LDContext do
         expect(subject.create({ key: "", name: 0 }).valid?).to be false
       end
 
+      it "creates the correct fully qualified key" do
+        expect(subject.create({ key: "user-key" }).fully_qualified_key).to eq("user-key")
+      end
+
       it "requires privateAttributeNames to be an array" do
         context = {
           key: "user-key",
@@ -137,6 +141,11 @@ describe LaunchDarkly::LDContext do
         }
         expect(subject.create(context).valid?).to be false
       end
+
+      it "creates the correct fully qualified key" do
+        expect(subject.create({ key: "user-key", kind: "user" }).fully_qualified_key).to eq("user-key")
+        expect(subject.create({ key: "org-key", kind: "org" }).fully_qualified_key).to eq("org:org-key")
+      end
     end
 
     describe "multi-kind contexts" do
@@ -192,6 +201,17 @@ describe LaunchDarkly::LDContext do
         expect(valid_context.valid?).to be true
         expect(invalid_context.valid?).to be false
         expect(multi_context.valid?).to be false
+      end
+
+      it "creates the correct fully qualified key" do
+        user_context = subject.create({ key: "a-user-key" })
+        org_context = subject.create({ key: "b-org-key", kind: "org" })
+        user_first = subject.create_multi([user_context, org_context])
+        org_first = subject.create_multi([org_context, user_context])
+
+        # Verify we are sorting contexts by kind when generating the canonical key
+        expect(user_first.fully_qualified_key).to eq("org:b-org-key:user:a-user-key")
+        expect(org_first.fully_qualified_key).to eq("org:b-org-key:user:a-user-key")
       end
     end
   end

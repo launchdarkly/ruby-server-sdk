@@ -75,6 +75,20 @@ module LaunchDarkly
 
         ERR_ANONYMOUS_NON_BOOLEAN
       end
+
+      #
+      # @param kind [String]
+      # @param key [String]
+      # @return [String]
+      #
+      def self.canonicalize_key_for_kind(kind, key)
+        # When building a FullyQualifiedKey, ':' and '%' are percent-escaped;
+        # we do not use a full URL-encoding function because implementations of
+        # this are inconsistent across platforms.
+        encoded = key.gsub("%", "%25").gsub(":", "%3A")
+
+        "#{kind}:#{encoded}"
+      end
     end
   end
 end

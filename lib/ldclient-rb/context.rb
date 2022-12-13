@@ -40,15 +40,22 @@ module LaunchDarkly
     # @return [String, nil] Returns the key for this context
     attr_reader :key
 
+    # @return [String, nil] Returns the fully qualified key for this context
+    attr_reader :fully_qualified_key
+
     # @return [String, nil] Returns the kind for this context
     attr_reader :kind
 
     # @return [String, nil] Returns the error associated with this LDContext if invalid
     attr_reader :error
 
+    # @return [Array<Reference>] Returns the private attributes associated with this LDContext
+    attr_reader :private_attributes
+
     #
     # @private
     # @param key [String, nil]
+    # @param fully_qualified_key [String, nil]
     # @param kind [String, nil]
     # @param name [String, nil]
     # @param anonymous [Boolean, nil]
@@ -57,13 +64,18 @@ module LaunchDarkly
     # @param error [String, nil]
     # @param contexts [Array<LDContext>, nil]
     #
-    def initialize(key, kind, name = nil, anonymous = nil, attributes = nil, private_attributes = nil, error = nil, contexts = nil)
+    def initialize(key, fully_qualified_key, kind, name = nil, anonymous = nil, attributes = nil, private_attributes = nil, error = nil, contexts = nil)
       @key = key
+      @fully_qualified_key = fully_qualified_key
       @kind = kind
       @name = name
       @anonymous = anonymous || false
       @attributes = attributes
-      @private_attributes = private_attributes
+      @private_attributes = []
+      (private_attributes || []).each do |attribute|
+        reference = Reference.create(attribute)
+        @private_attributes << reference if reference.error.nil?
+      end
       @error = error
       @contexts = contexts
       @is_multi = !contexts.nil?
@@ -82,6 +94,41 @@ module LaunchDarkly
     #
     def valid?
       @error.nil?
+    end
+
+    #
+    # Returns a hash mapping each context's kind to its key.
+    #
+    # @return [Hash<Symbol, String>]
+    #
+    def keys
+      return {} unless valid?
+      return Hash[kind, key] unless multi_kind?
+
+      @contexts.map { |c| [c.kind, c.key] }.to_h
+    end
+
+    #
+    # Returns an array of context kinds.
+    #
+    # @return [Array<String>]
+    #
+    def kinds
+      return [] unless valid?
+      return [kind] unless multi_kind?
+
+      @contexts.map { |c| c.kind }
+    end
+
+    #
+    # Return an array of top level attribute keys (excluding built-in attributes)
+    #
+    # @return [Array<Symbol>]
+    #
+    def get_custom_attribute_names
+      return [] if @attributes.nil?
+
+      @attributes.keys
     end
 
     #
@@ -334,7 +381,11 @@ module LaunchDarkly
 
       return contexts[0] if contexts.length == 1
 
-      new(nil, "multi", nil, false, nil, nil, nil, contexts)
+      full_key = contexts.sort_by(&:kind)
+                         .map { |c| LaunchDarkly::Impl::Context::canonicalize_key_for_kind(c.kind, c.key) }
+                         .join(":")
+
+      new(nil, full_key, "multi", nil, false, nil, nil, nil, contexts)
     end
 
     #
@@ -342,7 +393,7 @@ module LaunchDarkly
     # @return [LDContext]
     #
     private_class_method def self.create_invalid_context(error)
-      new(nil, nil, nil, false, nil, nil, error)
+      new(nil, nil, nil, nil, false, nil, nil, error)
     end
 
     #
@@ -386,7 +437,7 @@ module LaunchDarkly
         return create_invalid_context(ERR_PRIVATE_NON_ARRAY)
       end
 
-      new(key.to_s, KIND_DEFAULT, name, anonymous, attributes, private_attributes)
+      new(key.to_s, key.to_s, KIND_DEFAULT, name, anonymous, attributes, private_attributes)
     end
 
     #
@@ -433,7 +484,8 @@ module LaunchDarkly
         end
       end
 
-      new(key.to_s, kind, name, anonymous, attributes, private_attributes)
+      full_key = kind == LDContext::KIND_DEFAULT ? key.to_s : LaunchDarkly::Impl::Context::canonicalize_key_for_kind(kind, key.to_s)
+      new(key.to_s, full_key, kind, name, anonymous, attributes, private_attributes)
     end
   end
 end
