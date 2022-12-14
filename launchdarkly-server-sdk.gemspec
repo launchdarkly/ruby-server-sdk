@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.10"
   spec.add_development_dependency "diplomat", "~> 2.6"
   spec.add_development_dependency "redis", "~> 5.0"
-  spec.add_development_dependency "connection_pool", "~> 2.2.3"
+  spec.add_development_dependency "connection_pool", "~> 2.3"
   spec.add_development_dependency "rspec_junit_formatter", "~> 0.4"
   spec.add_development_dependency "timecop", "~> 0.9"
   spec.add_development_dependency "listen", "~> 3.3" # see file_data_source.rb
