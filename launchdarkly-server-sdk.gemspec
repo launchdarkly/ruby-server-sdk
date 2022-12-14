@@ -33,8 +33,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "webrick", "~> 1.7"
   spec.add_development_dependency "rubocop", "~> 1.37"
   spec.add_development_dependency "rubocop-performance", "~> 1.15"
-  # required by dynamodb
-  spec.add_development_dependency "oga", "~> 2.2"
 
   spec.add_runtime_dependency "semantic", "~> 1.6"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.1"
