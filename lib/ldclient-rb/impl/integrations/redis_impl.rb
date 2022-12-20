@@ -270,10 +270,10 @@ module LaunchDarkly
             Interfaces::BigSegmentStoreMetadata.new(value.nil? ? nil : value.to_i)
           end
 
-          def get_membership(user_hash)
+          def get_membership(context_hash)
             with_connection do |redis|
-              included_refs = redis.smembers(@prefix + KEY_USER_INCLUDE + user_hash)
-              excluded_refs = redis.smembers(@prefix + KEY_USER_EXCLUDE + user_hash)
+              included_refs = redis.smembers(@prefix + KEY_USER_INCLUDE + context_hash)
+              excluded_refs = redis.smembers(@prefix + KEY_USER_EXCLUDE + context_hash)
               if !included_refs && !excluded_refs
                 nil
               else

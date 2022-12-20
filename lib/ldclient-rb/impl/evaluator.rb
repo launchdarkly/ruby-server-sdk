@@ -368,20 +368,37 @@ module LaunchDarkly
           eval_result.big_segments_status = BigSegmentsStatus::NOT_CONFIGURED
           return false
         end
-        unless eval_result.big_segments_status
-          result = @get_big_segments_membership.nil? ? nil : @get_big_segments_membership.call(context.key)
+
+        matched_context = context.individual_context(segment.unbounded_context_kind)
+        return false if matched_context.nil?
+
+        membership = eval_result.big_segments_membership.nil? ? nil : eval_result.big_segments_membership[matched_context.key]
+
+        if membership.nil?
+          # Note that this query is just by key; the context kind doesn't matter because any given
+          # Big Segment can only reference one context kind. So if segment A for the "user" kind
+          # includes a "user" context with key X, and segment B for the "org" kind includes an "org"
+          # context with the same key X, it is fine to say that the membership for key X is
+          # segment A and segment B-- there is no ambiguity.
+          result = @get_big_segments_membership.nil? ? nil : @get_big_segments_membership.call(matched_context.key)
           if result
-            eval_result.big_segments_membership = result.membership
             eval_result.big_segments_status = result.status
+
+            membership = result.membership
+            eval_result.big_segments_membership = {} if eval_result.big_segments_membership.nil?
+            eval_result.big_segments_membership[matched_context.key] = membership
           else
-            eval_result.big_segments_membership = nil
             eval_result.big_segments_status = BigSegmentsStatus::NOT_CONFIGURED
           end
         end
-        segment_ref = Evaluator.make_big_segment_ref(segment)
-        membership = eval_result.big_segments_membership
-        included = membership.nil? ? nil : membership[segment_ref]
-        return included unless included.nil?
+
+        membership_result = nil
+        unless membership.nil?
+          segment_ref = Evaluator.make_big_segment_ref(segment)
+          membership_result = membership.nil? ? nil : membership[segment_ref]
+        end
+
+        return membership_result unless membership_result.nil?
         simple_segment_match_context(segment, context, false, eval_result, state)
       end
 

@@ -29,6 +29,7 @@ module LaunchDarkly
             SegmentRule.new(rule_data, logger)
           end
           @unbounded = !!data[:unbounded]
+          @unbounded_context_kind = data[:unboundedContextKind] || LDContext::KIND_DEFAULT
           @generation = data[:generation]
           @salt = data[:salt]
         end
@@ -53,6 +54,8 @@ module LaunchDarkly
         attr_reader :rules
         # @return [Boolean]
         attr_reader :unbounded
+        # @return [String]
+        attr_reader :unbounded_context_kind
         # @return [Integer|nil]
         attr_reader :generation
         # @return [String]

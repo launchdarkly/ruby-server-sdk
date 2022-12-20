@@ -62,8 +62,8 @@ module LaunchDarkly
       @metadata
     end
 
-    def get_membership(user_hash)
-      @memberships[user_hash]
+    def get_membership(context_hash)
+      @memberships[context_hash]
     end
 
     def stop

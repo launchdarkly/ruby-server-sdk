@@ -251,12 +251,12 @@ module LaunchDarkly
             LaunchDarkly::Interfaces::BigSegmentStoreMetadata.new(timestamp)
           end
 
-          def get_membership(user_hash)
+          def get_membership(context_hash)
             data = @client.get_item(
               table_name: @table_name,
               key: {
                 PARTITION_KEY => @prefix + KEY_USER_DATA,
-                SORT_KEY => user_hash,
+                SORT_KEY => context_hash,
               })
             return nil unless data.item
             excluded_refs = data.item[ATTR_EXCLUDED] || []

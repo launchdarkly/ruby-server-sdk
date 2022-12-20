@@ -2,11 +2,7 @@ TEMP_TEST_OUTPUT=/tmp/contract-test-service.log
 
 # TEST_HARNESS_PARAMS can be set to add -skip parameters for any contract tests that cannot yet pass
 # Explanation of current skips:
-# - "evaluation/parameterized/prerequisites": Can't pass yet because prerequisite cycle detection is not implemented.
-# - various other "evaluation" subtests: These tests require context kind support.
-# - "events": These test suites will be unavailable until more of the U2C implementation is done.
-TEST_HARNESS_PARAMS := $(TEST_HARNESS_PARAMS) \
-	-skip 'big segments'
+TEST_HARNESS_PARAMS=
 
 build-contract-tests:
 	@cd contract-tests && bundle _2.2.33_ install
