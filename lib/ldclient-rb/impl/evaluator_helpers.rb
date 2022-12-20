@@ -33,7 +33,7 @@ module LaunchDarkly
       #
       # @param context [LaunchDarkly::LDContext]
       # @param kind [String, nil]
-      # @param keys [Array<String>]
+      # @param keys [Enumerable<String>]
       # @return [Boolean]
       #
       def self.context_key_in_target_list(context, kind, keys)

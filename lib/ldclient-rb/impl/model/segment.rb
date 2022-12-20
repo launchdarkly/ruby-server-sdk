@@ -1,5 +1,6 @@
 require "ldclient-rb/impl/model/clause"
 require "ldclient-rb/impl/model/preprocessed_data"
+require "set"
 
 # See serialization.rb for implementation notes on the data model classes.
 
@@ -82,14 +83,14 @@ module LaunchDarkly
         def initialize(data)
           @data = data
           @context_kind = data[:contextKind]
-          @values = data[:values] || []
+          @values = Set.new(data[:values] || [])
         end
 
         # @return [Hash]
         attr_reader :data
         # @return [String]
         attr_reader :context_kind
-        # @return [Array]
+        # @return [Set]
         attr_reader :values
       end
 

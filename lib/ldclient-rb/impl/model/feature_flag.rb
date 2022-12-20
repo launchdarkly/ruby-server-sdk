@@ -1,5 +1,6 @@
 require "ldclient-rb/impl/evaluator_helpers"
 require "ldclient-rb/impl/model/clause"
+require "set"
 
 # See serialization.rb for implementation notes on the data model classes.
 
@@ -114,7 +115,7 @@ module LaunchDarkly
         def initialize(data, flag, logger)
           @kind = data[:contextKind] || LDContext::KIND_DEFAULT
           @data = data
-          @values = data[:values] || []
+          @values = Set.new(data[:values] || [])
           @variation = data[:variation]
           @match_result = EvaluatorHelpers.evaluation_detail_for_variation(flag,
             data[:variation], EvaluationReason::target_match, logger)
@@ -124,7 +125,7 @@ module LaunchDarkly
         attr_reader :kind
         # @return [Hash]
         attr_reader :data
-        # @return [Array]
+        # @return [Set]
         attr_reader :values
         # @return [Integer]
         attr_reader :variation
