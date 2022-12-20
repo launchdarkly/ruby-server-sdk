@@ -127,6 +127,6 @@ class SocketFactoryFromHash
   end
 
   def open(uri, timeout)
-    TCPSocket.new 'localhost', @ports[uri]
+    TCPSocket.new '127.0.0.1', @ports[uri]
   end
 end
