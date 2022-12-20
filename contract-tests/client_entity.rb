@@ -95,6 +95,10 @@ class ClientEntity
     @client.all_flags_state(params[:context] || params[:user], opts)
   end
 
+  def secure_mode_hash(params)
+    @client.secure_mode_hash(params[:context] || params[:user])
+  end
+
   def track(params)
     @client.track(params[:eventKey], params[:context] || params[:user], params[:data], params[:metricValue])
   end

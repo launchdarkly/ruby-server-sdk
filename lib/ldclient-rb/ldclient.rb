@@ -120,14 +120,20 @@ module LaunchDarkly
     end
 
     #
-    # Creates a hash string that can be used by the JavaScript SDK to identify a user.
+    # Creates a hash string that can be used by the JavaScript SDK to identify a context.
     # For more information, see [Secure mode](https://docs.launchdarkly.com/sdk/features/secure-mode#ruby).
     #
-    # @param user [Hash] the user properties
-    # @return [String] a hash string
+    # @param context [Hash, LDContext]
+    # @return [String, nil] a hash string or nil if the provided context was invalid
     #
-    def secure_mode_hash(user)
-      OpenSSL::HMAC.hexdigest("sha256", @sdk_key, user[:key].to_s)
+    def secure_mode_hash(context)
+      context = Impl::Context::make_context(context)
+      unless context.valid?
+        @config.logger.warn("secure_mode_hash called with invalid context: #{context.error}")
+        return nil
+      end
+
+      OpenSSL::HMAC.hexdigest("sha256", @sdk_key, context.fully_qualified_key)
     end
 
     #
