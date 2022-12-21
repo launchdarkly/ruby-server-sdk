@@ -9,24 +9,24 @@ module LaunchDarkly
       # Applies an operator to produce a boolean result.
       #
       # @param op [Symbol] one of the supported LaunchDarkly operators, as a symbol
-      # @param user_value the value of the user attribute that is referenced in the current clause (left-hand
+      # @param context_value the value of the context attribute that is referenced in the current clause (left-hand
       #   side of the expression)
-      # @param clause_value the constant value that `user_value` is being compared to (right-hand side of the
+      # @param clause_value the constant value that `context_value` is being compared to (right-hand side of the
       #   expression)
       # @return [Boolean] true if the expression should be considered a match; false if it is not a match, or
       #   if the values cannot be compared because they are of the wrong types, or if the operator is unknown
-      def self.apply(op, user_value, clause_value)
+      def self.apply(op, context_value, clause_value)
         case op
         when :in
-          user_value == clause_value
+          context_value == clause_value
         when :startsWith
-          string_op(user_value, clause_value, lambda { |a, b| a.start_with? b })
+          string_op(context_value, clause_value, lambda { |a, b| a.start_with? b })
         when :endsWith
-          string_op(user_value, clause_value, lambda { |a, b| a.end_with? b })
+          string_op(context_value, clause_value, lambda { |a, b| a.end_with? b })
         when :contains
-          string_op(user_value, clause_value, lambda { |a, b| a.include? b })
+          string_op(context_value, clause_value, lambda { |a, b| a.include? b })
         when :matches
-          string_op(user_value, clause_value, lambda { |a, b|
+          string_op(context_value, clause_value, lambda { |a, b|
             begin
               re = Regexp.new b
               !re.match(a).nil?
@@ -35,26 +35,26 @@ module LaunchDarkly
             end
           })
         when :lessThan
-          numeric_op(user_value, clause_value, lambda { |a, b| a < b })
+          numeric_op(context_value, clause_value, lambda { |a, b| a < b })
         when :lessThanOrEqual
-          numeric_op(user_value, clause_value, lambda { |a, b| a <= b })
+          numeric_op(context_value, clause_value, lambda { |a, b| a <= b })
         when :greaterThan
-          numeric_op(user_value, clause_value, lambda { |a, b| a > b })
+          numeric_op(context_value, clause_value, lambda { |a, b| a > b })
         when :greaterThanOrEqual
-          numeric_op(user_value, clause_value, lambda { |a, b| a >= b })
+          numeric_op(context_value, clause_value, lambda { |a, b| a >= b })
         when :before
-          date_op(user_value, clause_value, lambda { |a, b| a < b })
+          date_op(context_value, clause_value, lambda { |a, b| a < b })
         when :after
-          date_op(user_value, clause_value, lambda { |a, b| a > b })
+          date_op(context_value, clause_value, lambda { |a, b| a > b })
         when :semVerEqual
-          semver_op(user_value, clause_value, lambda { |a, b| a == b })
+          semver_op(context_value, clause_value, lambda { |a, b| a == b })
         when :semVerLessThan
-          semver_op(user_value, clause_value, lambda { |a, b| a < b })
+          semver_op(context_value, clause_value, lambda { |a, b| a < b })
         when :semVerGreaterThan
-          semver_op(user_value, clause_value, lambda { |a, b| a > b })
+          semver_op(context_value, clause_value, lambda { |a, b| a > b })
         when :segmentMatch
           # We should never reach this; it can't be evaluated based on just two parameters, because it requires
-          # looking up the segment from the data store. Instead, we special-case this operator in clause_match_user.
+          # looking up the segment from the data store. Instead, we special-case this operator in clause_match_context.
           false
         else
           false
@@ -66,16 +66,16 @@ module LaunchDarkly
       NUMERIC_VERSION_COMPONENTS_REGEX = Regexp.new("^[0-9.]*")
       private_constant :NUMERIC_VERSION_COMPONENTS_REGEX
 
-      def self.string_op(user_value, clause_value, fn)
-        (user_value.is_a? String) && (clause_value.is_a? String) && fn.call(user_value, clause_value)
+      def self.string_op(context_value, clause_value, fn)
+        (context_value.is_a? String) && (clause_value.is_a? String) && fn.call(context_value, clause_value)
       end
 
-      def self.numeric_op(user_value, clause_value, fn)
-        (user_value.is_a? Numeric) && (clause_value.is_a? Numeric) && fn.call(user_value, clause_value)
+      def self.numeric_op(context_value, clause_value, fn)
+        (context_value.is_a? Numeric) && (clause_value.is_a? Numeric) && fn.call(context_value, clause_value)
       end
 
-      def self.date_op(user_value, clause_value, fn)
-        ud = to_date(user_value)
+      def self.date_op(context_value, clause_value, fn)
+        ud = to_date(context_value)
         if !ud.nil?
           cd = to_date(clause_value)
           !cd.nil? && fn.call(ud, cd)
@@ -84,8 +84,8 @@ module LaunchDarkly
         end
       end
 
-      def self.semver_op(user_value, clause_value, fn)
-        uv = to_semver(user_value)
+      def self.semver_op(context_value, clause_value, fn)
+        uv = to_semver(context_value)
         if !uv.nil?
           cv = to_semver(clause_value)
           !cv.nil? && fn.call(uv, cv)

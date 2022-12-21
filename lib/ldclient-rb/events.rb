@@ -21,7 +21,7 @@ require "time"
 # On a separate worker thread, EventDispatcher consumes events from the inbox. These are considered
 # "input events" because they may or may not actually be sent to LaunchDarkly; most flag evaluation
 # events are not sent, but are counted and the counters become part of a single summary event.
-# EventDispatcher updates those counters, creates "index" events for any users that have not been seen
+# EventDispatcher updates those counters, creates "index" events for any contexts that have not been seen
 # recently, and places any events that will be sent to LaunchDarkly into the "outbox" queue.
 #
 # When it is time to flush events to LaunchDarkly, the contents of the outbox are handed off to
@@ -44,11 +44,11 @@ module LaunchDarkly
     )
     end
 
-    def record_identify_event(user)
+    def record_identify_event(context)
     end
 
     def record_custom_event(
-      user,
+      context,
       key,
       data = nil,
       metric_value = nil
@@ -75,7 +75,7 @@ module LaunchDarkly
   end
 
   # @private
-  class FlushUsersMessage
+  class FlushContextsMessage
   end
 
   # @private
@@ -118,7 +118,7 @@ module LaunchDarkly
       end
       @flush_task.execute
       @contexts_flush_task = Concurrent::TimerTask.new(execution_interval: config.context_keys_flush_interval) do
-        post_to_inbox(FlushUsersMessage.new)
+        post_to_inbox(FlushContextsMessage.new)
       end
       @contexts_flush_task.execute
       if !diagnostic_accumulator.nil?
@@ -159,12 +159,12 @@ module LaunchDarkly
         default, track_events, debug_until, prereq_of))
     end
 
-    def record_identify_event(user)
-      post_to_inbox(LaunchDarkly::Impl::IdentifyEvent.new(timestamp, user))
+    def record_identify_event(context)
+      post_to_inbox(LaunchDarkly::Impl::IdentifyEvent.new(timestamp, context))
     end
 
-    def record_custom_event(user, key, data = nil, metric_value = nil)
-      post_to_inbox(LaunchDarkly::Impl::CustomEvent.new(timestamp, user, key, data, metric_value))
+    def record_custom_event(context, key, data = nil, metric_value = nil)
+      post_to_inbox(LaunchDarkly::Impl::CustomEvent.new(timestamp, context, key, data, metric_value))
     end
 
     def flush
@@ -211,10 +211,6 @@ module LaunchDarkly
         end
       end
     end
-
-    private def user_to_context_kind(user)
-      (user.nil? || !user[:anonymous]) ? 'user' : 'anonymousUser'
-    end
   end
 
   # @private
@@ -256,7 +252,7 @@ module LaunchDarkly
           case message
           when FlushMessage
             trigger_flush(outbox, flush_workers)
-          when FlushUsersMessage
+          when FlushContextsMessage
             @context_keys.clear
           when DiagnosticEventMessage
             send_and_reset_diagnostics(outbox, diagnostic_event_workers)
@@ -448,7 +444,6 @@ module LaunchDarkly
     INDEX_KIND = 'index'
     DEBUG_KIND = 'debug'
     SUMMARY_KIND = 'summary'
-    ANONYMOUS_USER_CONTEXT_KIND = 'anonymousUser'
 
     def initialize(config)
       @context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attribute_names)

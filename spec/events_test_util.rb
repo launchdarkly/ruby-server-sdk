@@ -6,10 +6,10 @@ def make_eval_event(timestamp, context, key, version = nil, variation = nil, val
     default, track_events, debug_until, prereq_of)
 end
 
-def make_identify_event(timestamp, user)
-  LaunchDarkly::Impl::IdentifyEvent.new(timestamp, user)
+def make_identify_event(timestamp, context)
+  LaunchDarkly::Impl::IdentifyEvent.new(timestamp, context)
 end
 
-def make_custom_event(timestamp, user, key, data = nil, metric_value = nil)
-  LaunchDarkly::Impl::CustomEvent.new(timestamp, user, key, data, metric_value)
+def make_custom_event(timestamp, context, key, data = nil, metric_value = nil)
+  LaunchDarkly::Impl::CustomEvent.new(timestamp, context, key, data, metric_value)
 end

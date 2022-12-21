@@ -99,7 +99,7 @@ module LaunchDarkly
       # @param get_flag [Function] called if the Evaluator needs to query a different flag from the one that it is
       #   currently evaluating (i.e. a prerequisite flag); takes a single parameter, the flag key, and returns the
       #   flag data - or nil if the flag is unknown or deleted
-      # @param get_segment [Function] similar to `get_flag`, but is used to query a user segment.
+      # @param get_segment [Function] similar to `get_flag`, but is used to query a context segment.
       # @param logger [Logger] the client's logger
       def initialize(get_flag, get_segment, get_big_segments_membership, logger)
         @get_flag = get_flag
@@ -114,8 +114,8 @@ module LaunchDarkly
       # or retaining it anywhere, we don't have to be quite as strict about immutability.
       #
       # The big_segments_status and big_segments_membership properties are not used by the caller; they are used
-      # during an evaluation to cache the result of any Big Segments query that we've done for this user, because
-      # we don't want to do multiple queries for the same user if multiple Big Segments are referenced in the same
+      # during an evaluation to cache the result of any Big Segments query that we've done for this context, because
+      # we don't want to do multiple queries for the same context if multiple Big Segments are referenced in the same
       # evaluation.
       EvalResult = Struct.new(
         :detail,  # the EvaluationDetail representing the evaluation result
@@ -332,13 +332,13 @@ module LaunchDarkly
         matched_context = context.individual_context(clause.context_kind || LaunchDarkly::LDContext::KIND_DEFAULT)
         return false if matched_context.nil?
 
-        user_val = matched_context.get_value_for_reference(clause.attribute)
-        return false if user_val.nil?
+        context_val = matched_context.get_value_for_reference(clause.attribute)
+        return false if context_val.nil?
 
-        result = if user_val.is_a? Enumerable
-          user_val.any? { |uv| match_any_clause_value(clause, uv) }
+        result = if context_val.is_a? Enumerable
+          context_val.any? { |uv| match_any_clause_value(clause, uv) }
         else
-          match_any_clause_value(clause, user_val)
+          match_any_clause_value(clause, context_val)
         end
         clause.negate ? !result : result
       end
@@ -483,15 +483,15 @@ module LaunchDarkly
       # @param [LaunchDarkly::Impl::Model::FeatureFlag] flag
       # @return [LaunchDarkly::EvaluationDetail, nil]
       private def check_targets(context, flag)
-        user_targets = flag.targets
+        targets = flag.targets
         context_targets = flag.context_targets
 
         if context_targets.empty?
-          unless user_targets.empty?
+          unless targets.empty?
             user_context = context.individual_context(LDContext::KIND_DEFAULT)
             return nil if user_context.nil?
 
-            user_targets.each do |target|
+            targets.each do |target|
               if target.values.include?(user_context.key) # rubocop:disable Performance/InefficientHashSearch
                 return target.match_result
               end
@@ -507,7 +507,7 @@ module LaunchDarkly
             next if user_context.nil?
 
             user_key = user_context.key
-            user_targets.each do |user_target|
+            targets.each do |user_target|
               if user_target.variation == target.variation
                 if user_target.values.include?(user_key) # rubocop:disable Performance/InefficientHashSearch
                   return target.match_result

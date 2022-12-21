@@ -6,8 +6,6 @@ module LaunchDarkly
   # LDContext is a collection of attributes that can be referenced in flag
   # evaluations and analytics events.
   #
-  # (TKTK - some conceptual text here, and/or a link to a docs page)
-  #
   # To create an LDContext of a single kind, such as a user, you may use
   # {LDContext#create} or {LDContext#with_key}.
   #
@@ -318,8 +316,6 @@ module LaunchDarkly
     # The provided hash must match the format as outlined in the
     # {https://docs.launchdarkly.com/sdk/features/user-config SDK
     # documentation}.
-    #
-    # TKTK: Update this link once we know what the new one will be.
     #
     # @param data [Hash]
     # @return [LDContext]

@@ -33,12 +33,12 @@ class Clauses
     }
   end
 
-  def self.match_user(user, attr = :key)
+  def self.match_context(context, attr = :key)
     {
       "attribute": attr.to_s,
       "op": "in",
-      "values": [ user.get_value(attr) ],
-      "contextKind": user.individual_context(0).kind,
+      "values": [ context.get_value(attr) ],
+      "contextKind": context.individual_context(0).kind,
     }
   end
 end

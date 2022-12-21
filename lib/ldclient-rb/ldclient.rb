@@ -59,7 +59,7 @@ module LaunchDarkly
 
       get_flag = lambda { |key| @store.get(FEATURES, key) }
       get_segment = lambda { |key| @store.get(SEGMENTS, key) }
-      get_big_segments_membership = lambda { |key| @big_segment_store_manager.get_user_membership(key) }
+      get_big_segments_membership = lambda { |key| @big_segment_store_manager.get_context_membership(key) }
       @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, get_big_segments_membership, @config.logger)
 
       if !@config.offline? && @config.send_events && !@config.diagnostic_opt_out?
@@ -230,8 +230,8 @@ module LaunchDarkly
     end
 
     #
-    # Tracks that a user performed an event. This method creates a "custom" analytics event
-    # containing the specified event name (key), user properties, and optional data.
+    # Tracks that a context performed an event. This method creates a "custom" analytics event
+    # containing the specified event name (key), context properties, and optional data.
     #
     # Note that event delivery is asynchronous, so the event may not actually be sent
     # until later; see {#flush}.

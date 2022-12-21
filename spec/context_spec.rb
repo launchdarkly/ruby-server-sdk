@@ -68,7 +68,7 @@ describe LaunchDarkly::LDContext do
         expect(subject.create(context).valid?).to be false
       end
 
-      it "overwrite custom properties with built-ins when collisons occur" do
+      it "overwrite custom properties with built-ins when collisions occur" do
         context = {
           key: "user-key",
           ip: "192.168.1.1",
@@ -161,7 +161,7 @@ describe LaunchDarkly::LDContext do
       end
 
       it "can be created from a hash" do
-        data = {kind: "multi", user: {key: "user-key"}, org: {key: "org-key"}}
+        data = { kind: "multi", user_context: { key: "user-key"}, org: { key: "org-key"}}
         multi_context = subject.create(data)
 
         expect(multi_context).to be_a(LaunchDarkly::LDContext)

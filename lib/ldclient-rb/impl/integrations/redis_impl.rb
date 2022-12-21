@@ -109,7 +109,7 @@ module LaunchDarkly
             @logger = opts[:logger] || Config.default_logger
             @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
 
-            @stopped = Concurrent::AtomicBoolean.new(false)
+            @stopped = Concurrent::AtomicBoolean.new()
 
             with_connection do |redis|
               @logger.info("#{description}: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} and prefix: #{@prefix}")
@@ -140,9 +140,7 @@ module LaunchDarkly
               redis_opts[:url] = LaunchDarkly::Integrations::Redis::default_redis_url
             end
             max_connections = opts[:max_connections] || 16
-            opts[:pool] || ConnectionPool.new(size: max_connections) do
-              ::Redis.new(redis_opts)
-            end
+            opts[:pool] || ConnectionPool.new(size: max_connections) { ::Redis.new(redis_opts) }
           end
         end
 
@@ -258,8 +256,8 @@ module LaunchDarkly
         #
         class RedisBigSegmentStore < RedisStoreImplBase
           KEY_LAST_UP_TO_DATE = ':big_segments_synchronized_on'
-          KEY_USER_INCLUDE = ':big_segment_include:'
-          KEY_USER_EXCLUDE = ':big_segment_exclude:'
+          KEY_CONTEXT_INCLUDE = ':big_segment_include:'
+          KEY_CONTEXT_EXCLUDE = ':big_segment_exclude:'
 
           def description
             "RedisBigSegmentStore"
@@ -272,8 +270,8 @@ module LaunchDarkly
 
           def get_membership(context_hash)
             with_connection do |redis|
-              included_refs = redis.smembers(@prefix + KEY_USER_INCLUDE + context_hash)
-              excluded_refs = redis.smembers(@prefix + KEY_USER_EXCLUDE + context_hash)
+              included_refs = redis.smembers(@prefix + KEY_CONTEXT_INCLUDE + context_hash)
+              excluded_refs = redis.smembers(@prefix + KEY_CONTEXT_EXCLUDE + context_hash)
               if !included_refs && !excluded_refs
                 nil
               else

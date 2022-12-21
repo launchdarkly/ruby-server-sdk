@@ -41,7 +41,7 @@ module LaunchDarkly
         end
       end
 
-      it "does not send event, and logs error, if user is nil" do
+      it "does not send event, and logs error, if context is nil" do
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
 
@@ -54,7 +54,7 @@ module LaunchDarkly
         end
       end
 
-      it "does not send event, and logs error, if user key is nil" do
+      it "does not send event, and logs error, if context key is nil" do
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
 
@@ -73,7 +73,7 @@ module LaunchDarkly
         td.use_preconfigured_flag(
           FlagBuilder.new("flagkey").version(100).on(true).variations("value")
             .rule(RuleBuilder.new.variation(0).id("id").track_events(true)
-              .clause(Clauses.match_user(basic_context)))
+              .clause(Clauses.match_context(basic_context)))
             .build
         )
 
@@ -132,7 +132,7 @@ module LaunchDarkly
         end
       end
 
-      it "does not send event, and logs error, if user is nil" do
+      it "does not send event, and logs error, if context is nil" do
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
 
@@ -145,7 +145,7 @@ module LaunchDarkly
         end
       end
 
-      it "does not send event, and logs warning, if user key is nil" do
+      it "does not send event, and logs warning, if context key is nil" do
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
 
@@ -168,7 +168,7 @@ module LaunchDarkly
         end
       end
 
-      it "does not send event, and logs warning, if user is nil" do
+      it "does not send event, and logs warning, if context is nil" do
         logger = double().as_null_object
 
         with_client(test_config(logger: logger)) do |client|
@@ -178,7 +178,7 @@ module LaunchDarkly
         end
       end
 
-      it "does not send event, and logs warning, if user key is blank" do
+      it "does not send event, and logs warning, if context key is blank" do
         logger = double().as_null_object
 
         with_client(test_config(logger: logger)) do |client|
@@ -210,7 +210,7 @@ module LaunchDarkly
         end
       end
 
-      it "does not send event, and logs a warning, if user is nil" do
+      it "does not send event, and logs a warning, if context is nil" do
         logger = double().as_null_object
 
         with_client(test_config(logger: logger)) do |client|
@@ -220,7 +220,7 @@ module LaunchDarkly
         end
       end
 
-      it "does not send event, and logs warning, if user key is nil" do
+      it "does not send event, and logs warning, if context key is nil" do
         logger = double().as_null_object
 
         with_client(test_config(logger: logger)) do |client|

@@ -36,14 +36,14 @@ module LaunchDarkly
         @store.stop unless @store.nil?
       end
 
-      def get_user_membership(user_key)
+      def get_context_membership(context_key)
         return nil unless @store
-        membership = @cache[user_key]
+        membership = @cache[context_key]
         unless membership
           begin
-            membership = @store.get_membership(BigSegmentStoreManager.hash_for_user_key(user_key))
+            membership = @store.get_membership(BigSegmentStoreManager.hash_for_context_key(context_key))
             membership = EMPTY_MEMBERSHIP if membership.nil?
-            @cache[user_key] = membership
+            @cache[context_key] = membership
           rescue => e
             LaunchDarkly::Util.log_exception(@logger, "Big Segment store membership query returned error", e)
             return BigSegmentMembershipResult.new(nil, BigSegmentsStatus::STORE_ERROR)
@@ -80,8 +80,8 @@ module LaunchDarkly
         !timestamp || ((Impl::Util.current_time_millis - timestamp) >= @stale_after_millis)
       end
 
-      def self.hash_for_user_key(user_key)
-        Digest::SHA256.base64digest(user_key)
+      def self.hash_for_context_key(context_key)
+        Digest::SHA256.base64digest(context_key)
       end
     end
 

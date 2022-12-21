@@ -77,13 +77,8 @@ module LaunchDarkly
       @metadata_error = ex
     end
 
-    def setup_membership(user_key, membership)
-      user_hash = Impl::BigSegmentStoreManager.hash_for_user_key(user_key)
-      @memberships[user_hash] = membership
-    end
-
-    def setup_segment_for_user(user_key, segment, included)
-      user_hash = Impl::BigSegmentStoreManager.hash_for_user_key(user_key)
+    def setup_segment_for_context(user_key, segment, included)
+      user_hash = Impl::BigSegmentStoreManager.hash_for_context_key(user_key)
       @memberships[user_hash] ||= {}
       @memberships[user_hash][Impl::Evaluator.make_big_segment_ref(segment)] = included
     end

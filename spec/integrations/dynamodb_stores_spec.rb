@@ -108,7 +108,7 @@ class DynamoDBStoreTester
     )
   end
 
-  def set_big_segments(user_hash, includes, excludes)
+  def set_big_segments(context_hash, includes, excludes)
     client = self.class.create_test_client
     sets = {
       $DynamoDBBigSegmentStore::ATTR_INCLUDED => Set.new(includes),
@@ -119,8 +119,8 @@ class DynamoDBStoreTester
         client.update_item(
           table_name: TABLE_NAME,
           key: {
-            "namespace" => @actual_prefix + $DynamoDBBigSegmentStore::KEY_USER_DATA,
-            "key" => user_hash,
+            "namespace" => @actual_prefix + $DynamoDBBigSegmentStore::KEY_CONTEXT_DATA,
+            "key" => context_hash,
           },
           update_expression: "ADD #{attr_name} :value",
           expression_attribute_values: {

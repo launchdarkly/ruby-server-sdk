@@ -22,19 +22,19 @@ module LaunchDarkly
           }
           e = EvaluatorBuilder.new(logger).with_segment(segment).build
           flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
-          expect(e.evaluate(flag, user).detail.value).to be true
+          expect(e.evaluate(flag, user_context).detail.value).to be true
         end
 
         it "falls through with no errors if referenced segment is not found" do
           e = EvaluatorBuilder.new(logger).with_unknown_segment('segkey').build
           clause = { attribute: '', op: 'segmentMatch', values: ['segkey'] }
           flag = Flags.boolean_flag_with_clauses(clause)
-          expect(e.evaluate(flag, user).detail.value).to be false
+          expect(e.evaluate(flag, user_context).detail.value).to be false
         end
 
-        it 'explicitly includes user' do
-          segment = SegmentBuilder.new('segkey').included(user.key).build
-          expect(test_segment_match(segment, user)).to be true
+        it 'explicitly includes context' do
+          segment = SegmentBuilder.new('segkey').included(user_context.key).build
+          expect(test_segment_match(segment, user_context)).to be true
         end
 
         it 'explicitly includes a specific context kind' do
@@ -51,9 +51,9 @@ module LaunchDarkly
           expect(test_segment_match(segment, multi_context)).to be true
         end
 
-        it 'explicitly excludes user' do
-          segment = SegmentBuilder.new('segkey').excluded(user.key).build
-          expect(test_segment_match(segment, user)).to be false
+        it 'explicitly excludes context' do
+          segment = SegmentBuilder.new('segkey').excluded(user_context.key).build
+          expect(test_segment_match(segment, user_context)).to be false
         end
 
         it 'explicitly excludes a specific context kind' do
@@ -61,8 +61,8 @@ module LaunchDarkly
           device_context = LDContext::create({ key: "devicekey", kind: "device" })
           multi_context = LDContext::create_multi([org_context, device_context])
 
-          org_clause = Clauses.match_user(org_context, :key)
-          device_clause = Clauses.match_user(device_context, :key)
+          org_clause = Clauses.match_context(org_context, :key)
+          device_clause = Clauses.match_context(device_context, :key)
           segment = SegmentBuilder.new('segkey')
             .excluded_contexts("org", "orgkey")
             .rule({ clauses: [ org_clause ]})
@@ -74,69 +74,69 @@ module LaunchDarkly
           expect(test_segment_match(segment, multi_context)).to be false
         end
 
-        it 'both includes and excludes user; include takes priority' do
-          segment = SegmentBuilder.new('segkey').included(user.key).excluded(user.key).build
-          expect(test_segment_match(segment, user)).to be true
+        it 'both includes and excludes context; include takes priority' do
+          segment = SegmentBuilder.new('segkey').included(user_context.key).excluded(user_context.key).build
+          expect(test_segment_match(segment, user_context)).to be true
         end
 
-        it 'matches user by rule when weight is absent' do
-          segClause = Clauses.match_user(user, :email)
+        it 'matches context by rule when weight is absent' do
+          segClause = Clauses.match_context(user_context, :email)
           segRule = {
             clauses: [ segClause ],
           }
           segment = SegmentBuilder.new('segkey').rule(segRule).build
-          expect(test_segment_match(segment, user)).to be true
+          expect(test_segment_match(segment, user_context)).to be true
         end
 
-        it 'matches user by rule when weight is nil' do
-          segClause = Clauses.match_user(user, :email)
+        it 'matches context by rule when weight is nil' do
+          segClause = Clauses.match_context(user_context, :email)
           segRule = {
             clauses: [ segClause ],
             weight: nil,
           }
           segment = SegmentBuilder.new('segkey').rule(segRule).build
-          expect(test_segment_match(segment, user)).to be true
+          expect(test_segment_match(segment, user_context)).to be true
         end
 
-        it 'matches user with full rollout' do
-          segClause = Clauses.match_user(user, :email)
+        it 'matches context with full rollout' do
+          segClause = Clauses.match_context(user_context, :email)
           segRule = {
             clauses: [ segClause ],
             weight: 100000,
           }
           segment = SegmentBuilder.new('segkey').rule(segRule).build
-          expect(test_segment_match(segment, user)).to be true
+          expect(test_segment_match(segment, user_context)).to be true
         end
 
-        it "doesn't match user with zero rollout" do
-          segClause = Clauses.match_user(user, :email)
+        it "doesn't match context with zero rollout" do
+          segClause = Clauses.match_context(user_context, :email)
           segRule = {
             clauses: [ segClause ],
             weight: 0,
           }
           segment = SegmentBuilder.new('segkey').rule(segRule).build
-          expect(test_segment_match(segment, user)).to be false
+          expect(test_segment_match(segment, user_context)).to be false
         end
 
-        it "matches user with multiple clauses" do
-          segClause1 = Clauses.match_user(user, :email)
-          segClause2 = Clauses.match_user(user, :name)
+        it "matches context with multiple clauses" do
+          segClause1 = Clauses.match_context(user_context, :email)
+          segClause2 = Clauses.match_context(user_context, :name)
           segRule = {
             clauses: [ segClause1, segClause2 ],
           }
           segment = SegmentBuilder.new('segkey').rule(segRule).build
-          expect(test_segment_match(segment, user)).to be true
+          expect(test_segment_match(segment, user_context)).to be true
         end
 
-        it "doesn't match user with multiple clauses if a clause doesn't match" do
-          segClause1 = Clauses.match_user(user, :email)
-          segClause2 = Clauses.match_user(user, :name)
+        it "doesn't match context with multiple clauses if a clause doesn't match" do
+          segClause1 = Clauses.match_context(user_context, :email)
+          segClause2 = Clauses.match_context(user_context, :name)
           segClause2[:values] = [ 'wrong' ]
           segRule = {
             clauses: [ segClause1, segClause2 ],
           }
           segment = SegmentBuilder.new('segkey').rule(segRule).build
-          expect(test_segment_match(segment, user)).to be false
+          expect(test_segment_match(segment, user_context)).to be false
         end
 
         (1..4).each do |depth|

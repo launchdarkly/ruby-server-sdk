@@ -36,10 +36,10 @@ module LaunchDarkly
         self
       end
 
-      def with_big_segment_for_user(user, segment, included)
-        user_key = user.key
-        @big_segment_memberships[user_key] = {} unless @big_segment_memberships.has_key?(user_key)
-        @big_segment_memberships[user_key][Evaluator.make_big_segment_ref(segment)] = included
+      def with_big_segment_for_context(context, segment, included)
+        context_key = context.key
+        @big_segment_memberships[context_key] = {} unless @big_segment_memberships.has_key?(context_key)
+        @big_segment_memberships[context_key][Evaluator.make_big_segment_ref(segment)] = included
         self
       end
 
@@ -77,7 +77,7 @@ module LaunchDarkly
     end
 
     module EvaluatorSpecBase
-      def user
+      def user_context
         LDContext::create({
           key: "userkey",
           email: "test@example.com",

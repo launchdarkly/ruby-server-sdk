@@ -10,7 +10,7 @@ module LaunchDarkly
         it "segment is not matched if there is no way to query it" do
           segment = Segments.from_hash({
             key: 'test',
-            included: [ user.key ],  # included should be ignored for a big segment
+            included: [user_context.key ], # included should be ignored for a big segment
             version: 1,
             unbounded: true,
             generation: 1,
@@ -19,7 +19,7 @@ module LaunchDarkly
             .with_segment(segment)
             .build
           flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, user_context)
           expect(result.detail.value).to be false
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::NOT_CONFIGURED)
         end
@@ -27,7 +27,7 @@ module LaunchDarkly
         it "segment with no generation is not matched" do
           segment = Segments.from_hash({
             key: 'test',
-            included: [ user.key ],  # included should be ignored for a big segment
+            included: [user_context.key ], # included should be ignored for a big segment
             version: 1,
             unbounded: true,
           })
@@ -35,7 +35,7 @@ module LaunchDarkly
             .with_segment(segment)
             .build
           flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, user_context)
           expect(result.detail.value).to be false
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::NOT_CONFIGURED)
         end
@@ -49,10 +49,10 @@ module LaunchDarkly
           })
           e = EvaluatorBuilder.new(logger)
             .with_segment(segment)
-            .with_big_segment_for_user(user, segment, true)
+            .with_big_segment_for_context(user_context, segment, true)
             .build
           flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, user_context)
           expect(result.detail.value).to be true
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
         end
@@ -64,15 +64,15 @@ module LaunchDarkly
             unbounded: true,
             generation: 2,
             rules: [
-              { clauses: [ Clauses.match_user(user) ] },
+              { clauses: [ Clauses.match_context(user_context) ] },
             ],
           })
           e = EvaluatorBuilder.new(logger)
             .with_segment(segment)
-            .with_big_segment_for_user(user, segment, nil)
+            .with_big_segment_for_context(user_context, segment, nil)
             .build
           flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, user_context)
           expect(result.detail.value).to be true
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
         end
@@ -84,15 +84,15 @@ module LaunchDarkly
             unbounded: true,
             generation: 2,
             rules: [
-              { clauses: [ Clauses.match_user(user) ] },
+              { clauses: [ Clauses.match_context(user_context) ] },
             ],
           })
           e = EvaluatorBuilder.new(logger)
             .with_segment(segment)
-            .with_big_segment_for_user(user, segment, false)
+            .with_big_segment_for_context(user_context, segment, false)
             .build
           flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, user_context)
           expect(result.detail.value).to be false
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
         end
@@ -106,11 +106,11 @@ module LaunchDarkly
           })
           e = EvaluatorBuilder.new(logger)
             .with_segment(segment)
-            .with_big_segment_for_user(user, segment, true)
+            .with_big_segment_for_context(user_context, segment, true)
             .with_big_segments_status(BigSegmentsStatus::STALE)
             .build
           flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, user_context)
           expect(result.detail.value).to be true
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::STALE)
         end
@@ -142,17 +142,17 @@ module LaunchDarkly
           queries = []
           e = EvaluatorBuilder.new(logger)
             .with_segment(segment1).with_segment(segment2)
-            .with_big_segment_for_user(user, segment2, true)
+            .with_big_segment_for_context(user_context, segment2, true)
             .record_big_segments_queries(queries)
             .build
           # The membership deliberately does not include segment1, because we want the first rule to be
           # a non-match so that it will continue on and check segment2 as well.
 
-          result = e.evaluate(flag, user)
+          result = e.evaluate(flag, user_context)
           expect(result.detail.value).to be true
           expect(result.detail.reason.big_segments_status).to be(BigSegmentsStatus::HEALTHY)
 
-          expect(queries).to eq([ user.key ])
+          expect(queries).to eq([user_context.key ])
         end
       end
     end

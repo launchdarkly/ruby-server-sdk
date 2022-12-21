@@ -224,7 +224,7 @@ module LaunchDarkly
 
         class DynamoDBBigSegmentStore < DynamoDBStoreImplBase
           KEY_METADATA = 'big_segments_metadata'
-          KEY_USER_DATA = 'big_segments_user'
+          KEY_CONTEXT_DATA = 'big_segments_user'
           ATTR_SYNC_TIME = 'synchronizedOn'
           ATTR_INCLUDED = 'included'
           ATTR_EXCLUDED = 'excluded'
@@ -255,7 +255,7 @@ module LaunchDarkly
             data = @client.get_item(
               table_name: @table_name,
               key: {
-                PARTITION_KEY => @prefix + KEY_USER_DATA,
+                PARTITION_KEY => @prefix + KEY_CONTEXT_DATA,
                 SORT_KEY => context_hash,
               })
             return nil unless data.item

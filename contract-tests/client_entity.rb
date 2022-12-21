@@ -39,14 +39,14 @@ class ClientEntity
       big_segments = config[:bigSegments]
 
       store = BigSegmentStoreFixture.new(config[:bigSegments][:callbackUri])
-      user_cache_time = big_segments[:userCacheTimeMs].nil? ? nil : big_segments[:userCacheTimeMs] / 1_000
+      context_cache_time = big_segments[:userCacheTimeMs].nil? ? nil : big_segments[:userCacheTimeMs] / 1_000
       status_poll_interval_ms = big_segments[:statusPollIntervalMs].nil? ? nil : big_segments[:statusPollIntervalMs] / 1_000
       stale_after_ms = big_segments[:staleAfterMs].nil? ? nil : big_segments[:staleAfterMs] / 1_000
 
       opts[:big_segments] = LaunchDarkly::BigSegmentsConfig.new(
         store: store,
-        user_cache_size: big_segments[:userCacheSize],
-        user_cache_time: user_cache_time,
+        context_cache_size: big_segments[:userCacheSize],
+        context_cache_time: context_cache_time,
         status_poll_interval: status_poll_interval_ms,
         stale_after: stale_after_ms
       )

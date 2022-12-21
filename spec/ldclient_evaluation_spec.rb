@@ -66,7 +66,7 @@ module LaunchDarkly
           ).build)
 
         segstore = MockBigSegmentStore.new
-        segstore.setup_segment_for_user(basic_context.key, segment, true)
+        segstore.setup_segment_for_context(basic_context.key, segment, true)
         big_seg_config = BigSegmentsConfig.new(store: segstore)
 
         with_client(test_config(data_source: td, big_segments: big_seg_config)) do |client|
@@ -132,7 +132,7 @@ module LaunchDarkly
           ).build)
 
         segstore = MockBigSegmentStore.new
-        segstore.setup_segment_for_user(basic_context.key, segment, true)
+        segstore.setup_segment_for_context(basic_context.key, segment, true)
         segstore.setup_metadata(Time.now)
         big_seg_config = BigSegmentsConfig.new(store: segstore)
 
@@ -239,7 +239,7 @@ module LaunchDarkly
         end
       end
 
-      it "returns empty state for nil user" do
+      it "returns empty state for nil context" do
         with_client(test_config(data_source: test_data)) do |client|
           state = client.all_flags_state(nil)
           expect(state.valid?).to be false
@@ -247,7 +247,7 @@ module LaunchDarkly
         end
       end
 
-      it "returns empty state for nil user key" do
+      it "returns empty state for nil context key" do
         with_client(test_config(data_source: test_data)) do |client|
           state = client.all_flags_state({})
           expect(state.valid?).to be false

@@ -10,7 +10,7 @@ module LaunchDarkly
     EventSummaryFlagVariationCounter = Struct.new(:value, :count)
 
     # Manages the state of summarizable information for the EventProcessor, including the
-    # event counters and user deduplication. Note that the methods of this class are
+    # event counters and context deduplication. Note that the methods of this class are
     # deliberately not thread-safe; the EventProcessor is responsible for enforcing
     # synchronization across both the summarizer and the event queue.
     class EventSummarizer

@@ -213,7 +213,7 @@ module LaunchDarkly
     attr_reader :feature_store
 
     #
-    # True if all user attributes (other than the key) should be considered private. This means
+    # True if all context attributes (other than the key) should be considered private. This means
     # that the attribute values will not be sent to LaunchDarkly in analytics events and will not
     # appear on the LaunchDarkly dashboard.
     # @return [Boolean]
@@ -222,13 +222,14 @@ module LaunchDarkly
     attr_reader :all_attributes_private
 
     #
-    # A list of user attribute names that should always be considered private. This means that the
+    # A list of context attribute names that should always be considered private. This means that the
     # attribute values will not be sent to LaunchDarkly in analytics events and will not appear on
     # the LaunchDarkly dashboard.
     #
-    # You can also specify the same behavior for an individual flag evaluation by storing an array
-    # of attribute names in the `:privateAttributeNames` property (note camelcase name) of the
-    # user object.
+    # You can also specify the same behavior for an individual flag evaluation
+    # by providing the context object with a list of private attributes.
+    #
+    # @see https://docs.launchdarkly.com/sdk/features/user-context-config#using-private-attributes
     #
     # @return [Array<String>]
     # @see #all_attributes_private
@@ -291,7 +292,7 @@ module LaunchDarkly
     #
     # Configuration options related to Big Segments.
     #
-    # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+    # Big Segments are a specific type of segments. For more information, read the LaunchDarkly
     # documentation: https://docs.launchdarkly.com/home/users/big-segments
     #
     # @return [BigSegmentsConfig]
@@ -556,7 +557,7 @@ module LaunchDarkly
   #
   # Configuration options related to Big Segments.
   #
-  # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+  # Big Segments are a specific type of segments. For more information, read the LaunchDarkly
   # documentation: https://docs.launchdarkly.com/home/users/big-segments
   #
   # If your application uses Big Segments, you will need to create a `BigSegmentsConfig` that at a
@@ -570,8 +571,8 @@ module LaunchDarkly
   #     client = LaunchDarkly::LDClient.new(my_sdk_key, config)
   #
   class BigSegmentsConfig
-    DEFAULT_USER_CACHE_SIZE = 1000
-    DEFAULT_USER_CACHE_TIME = 5
+    DEFAULT_CONTEXT_CACHE_SIZE = 1000
+    DEFAULT_CONTEXT_CACHE_TIME = 5
     DEFAULT_STATUS_POLL_INTERVAL = 5
     DEFAULT_STALE_AFTER = 2 * 60
 
@@ -579,15 +580,15 @@ module LaunchDarkly
     # Constructor for setting Big Segments options.
     #
     # @param store [LaunchDarkly::Interfaces::BigSegmentStore] the data store implementation
-    # @param user_cache_size [Integer] See {#user_cache_size}.
-    # @param user_cache_time [Float] See {#user_cache_time}.
+    # @param context_cache_size [Integer] See {#context_cache_size}.
+    # @param context_cache_time [Float] See {#context_cache_time}.
     # @param status_poll_interval [Float] See {#status_poll_interval}.
     # @param stale_after [Float] See {#stale_after}.
     #
-    def initialize(store:, user_cache_size: nil, user_cache_time: nil, status_poll_interval: nil, stale_after: nil)
+    def initialize(store:, context_cache_size: nil, context_cache_time: nil, status_poll_interval: nil, stale_after: nil)
       @store = store
-      @user_cache_size = user_cache_size.nil? ? DEFAULT_USER_CACHE_SIZE : user_cache_size
-      @user_cache_time = user_cache_time.nil? ? DEFAULT_USER_CACHE_TIME : user_cache_time
+      @context_cache_size = context_cache_size.nil? ? DEFAULT_CONTEXT_CACHE_SIZE : context_cache_size
+      @context_cache_time = context_cache_time.nil? ? DEFAULT_CONTEXT_CACHE_TIME : context_cache_time
       @status_poll_interval = status_poll_interval.nil? ? DEFAULT_STATUS_POLL_INTERVAL : status_poll_interval
       @stale_after = stale_after.nil? ? DEFAULT_STALE_AFTER : stale_after
     end
@@ -597,14 +598,28 @@ module LaunchDarkly
     # @return [LaunchDarkly::Interfaces::BigSegmentStore]
     attr_reader :store
 
-    # The maximum number of users whose Big Segment state will be cached by the SDK at any given time.
+    # The maximum number of contexts whose Big Segment state will be cached by the SDK at any given time.
     # @return [Integer]
-    attr_reader :user_cache_size
+    attr_reader :context_cache_size
 
-    # The maximum length of time (in seconds) that the Big Segment state for a user will be cached
+    #
+    # @deprecated Backwards compatibility alias for #context_cache_size
+    #
+    # @return [Integer]
+    #
+    alias :user_cache_size :context_cache_size
+
+    # The maximum length of time (in seconds) that the Big Segment state for a context will be cached
     # by the SDK.
     # @return [Float]
-    attr_reader :user_cache_time
+    attr_reader :context_cache_time
+
+    #
+    # @deprecated Backwards compatibility alias for #context_cache_time
+    #
+    # @return [Float]
+    #
+    alias :user_cache_time :context_cache_time
 
     # The interval (in seconds) at which the SDK will poll the Big Segment store to make sure it is
     # available and to determine how long ago it was updated.

@@ -25,7 +25,7 @@ module LaunchDarkly
     #
     # - `flags`: Feature flag definitions.
     # - `flagValues`: Simplified feature flags that contain only a value.
-    # - `segments`: User segment definitions.
+    # - `segments`: Context segment definitions.
     #
     # The format of the data in `flags` and `segments` is defined by the LaunchDarkly application
     # and is subject to change. Rather than trying to construct these objects yourself, it is simpler

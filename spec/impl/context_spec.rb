@@ -5,7 +5,7 @@ describe LaunchDarkly::Impl::Context do
 
   it "can validate kind correctly" do
     test_cases = [
-      [:user, LaunchDarkly::Impl::Context::ERR_KIND_NON_STRING],
+      [:user_context, LaunchDarkly::Impl::Context::ERR_KIND_NON_STRING],
       ["kind", LaunchDarkly::Impl::Context::ERR_KIND_CANNOT_BE_KIND],
       ["multi", LaunchDarkly::Impl::Context::ERR_KIND_CANNOT_BE_MULTI],
       ["user@type", LaunchDarkly::Impl::Context::ERR_KIND_INVALID_CHARS],

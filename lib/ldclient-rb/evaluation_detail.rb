@@ -71,13 +71,13 @@ module LaunchDarkly
     # Value for {#kind} indicating that the flag was off and therefore returned its configured off value.
     OFF = :OFF
 
-    # Value for {#kind} indicating that the flag was on but the user did not match any targets or rules.
+    # Value for {#kind} indicating that the flag was on but the context did not match any targets or rules.
     FALLTHROUGH = :FALLTHROUGH
 
-    # Value for {#kind} indicating that the user key was specifically targeted for this flag.
+    # Value for {#kind} indicating that the context key was specifically targeted for this flag.
     TARGET_MATCH = :TARGET_MATCH
 
-    # Value for {#kind} indicating that the user matched one of the flag's rules.
+    # Value for {#kind} indicating that the context matched one of the flag's rules.
     RULE_MATCH = :RULE_MATCH
 
     # Value for {#kind} indicating that the flag was considered off because it had at least one
@@ -100,8 +100,8 @@ module LaunchDarkly
     # a rule specified a nonexistent  variation. An error message will always be logged in this case.
     ERROR_MALFORMED_FLAG = :MALFORMED_FLAG
 
-    # Value for {#error_kind} indicating that the caller passed `nil` for the user parameter, or the
-    # user lacked a key.
+    # Value for {#error_kind} indicating that the caller passed `nil` for the context parameter, or the
+    # context was invalid.
     ERROR_USER_NOT_SPECIFIED = :USER_NOT_SPECIFIED
 
     # Value for {#error_kind} indicating that an unexpected exception stopped flag evaluation. An error
@@ -141,7 +141,7 @@ module LaunchDarkly
     # querying at least one Big Segment. Otherwise it returns `nil`. Possible values are defined by
     # {BigSegmentsStatus}.
     #
-    # Big Segments are a specific kind of user segments. For more information, read the LaunchDarkly
+    # Big Segments are a specific kind of context segments. For more information, read the LaunchDarkly
     # documentation: https://docs.launchdarkly.com/home/users/big-segments
     # @return [Symbol]
     attr_reader :big_segments_status
