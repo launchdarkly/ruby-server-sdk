@@ -376,7 +376,7 @@ describe LaunchDarkly::EventProcessor do
   # @return [Hash]
   #
   def index_event(config, context, timestamp = starting_timestamp)
-    context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attribute_names)
+    context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes)
     out = {
       kind: "index",
       creationDate: timestamp,
@@ -392,7 +392,7 @@ describe LaunchDarkly::EventProcessor do
   # @return [Hash]
   #
   def identify_event(config, context, timestamp = starting_timestamp)
-    context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attribute_names)
+    context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes)
     out = {
       kind: "identify",
       creationDate: timestamp,
@@ -433,7 +433,7 @@ describe LaunchDarkly::EventProcessor do
   # @return [Hash]
   #
   def debug_event(config, flag, context, variation, value, timestamp = starting_timestamp)
-    context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attribute_names)
+    context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes)
     out = {
       kind: 'debug',
       creationDate: timestamp,

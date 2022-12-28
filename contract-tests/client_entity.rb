@@ -28,8 +28,8 @@ class ClientEntity
       opts[:events_uri] = events[:baseUri] if events[:baseUri]
       opts[:capacity] = events[:capacity] if events[:capacity]
       opts[:diagnostic_opt_out] = !events[:enableDiagnostics]
-      opts[:all_attributes_private]  = !!events[:allAttributesPrivate]
-      opts[:private_attribute_names] = events[:globalPrivateAttributes]
+      opts[:all_attributes_private] = !!events[:allAttributesPrivate]
+      opts[:private_attributes] = events[:globalPrivateAttributes]
       opts[:flush_interval] = (events[:flushIntervalMs] / 1_000) unless events[:flushIntervalMs].nil?
     else
       opts[:send_events] = false

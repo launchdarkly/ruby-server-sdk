@@ -21,6 +21,10 @@ module LaunchDarkly
     # In the event both the user and context variations are provided, the
     # context specific configuration option will take precedence.
     #
+    # Similarly, `private_attribute_names` is deprecated. Newer code should
+    # prefer `private_attributes`. If both are provided, `private_attributes`
+    # will take precedence.
+    #
     # @param opts [Hash] the configuration options
     # @option opts [Logger] :logger See {#logger}.
     # @option opts [String] :base_uri ("https://sdk.launchdarkly.com") See {#base_uri}.
@@ -39,6 +43,7 @@ module LaunchDarkly
     # @option opts [Boolean] :stream (true) See {#stream?}.
     # @option opts [Boolean] all_attributes_private (false) See {#all_attributes_private}.
     # @option opts [Array] :private_attribute_names See {#private_attribute_names}.
+    # @option opts [Array] :private_attributes See {#private_attributes}.
     # @option opts [Boolean] :send_events (true) See {#send_events}.
     # @option opts [Integer] :user_keys_capacity (1000) See {#user_keys_capacity}.
     # @option opts [Integer] :context_keys_capacity (1000) See {#context_keys_capacity}.
@@ -70,7 +75,7 @@ module LaunchDarkly
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > Config.default_poll_interval ? opts[:poll_interval] : Config.default_poll_interval
       @all_attributes_private = opts[:all_attributes_private] || false
-      @private_attribute_names = opts[:private_attribute_names] || []
+      @private_attributes = opts[:private_attributes] || opts[:private_attribute_names] || []
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
       @context_keys_capacity = opts[:context_keys_capacity] || opts[:user_keys_capacity] || Config.default_context_keys_capacity
       @context_keys_flush_interval = opts[:context_keys_flush_interval] || opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
@@ -217,7 +222,7 @@ module LaunchDarkly
     # that the attribute values will not be sent to LaunchDarkly in analytics events and will not
     # appear on the LaunchDarkly dashboard.
     # @return [Boolean]
-    # @see #private_attribute_names
+    # @see #private_attributes
     #
     attr_reader :all_attributes_private
 
@@ -234,7 +239,15 @@ module LaunchDarkly
     # @return [Array<String>]
     # @see #all_attributes_private
     #
-    attr_reader :private_attribute_names
+    attr_reader :private_attributes
+
+    #
+    # @deprecated Backwards compatibility alias for #private_attributes.
+    #
+    # @return [Integer]
+    # @see #private_attributes
+    #
+    alias :private_attribute_names :private_attributes
 
     #
     # Whether to send events back to LaunchDarkly. This differs from {#offline?} in that it affects
