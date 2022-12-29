@@ -30,7 +30,7 @@ module LaunchDarkly
 
       it "known flag" do
         td = Integrations::TestData.data_source
-        td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
+        td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
         context = basic_context
         with_client(test_config(data_source: td)) do |client|
@@ -43,7 +43,7 @@ module LaunchDarkly
 
       it "does not send event, and logs error, if context is nil" do
         td = Integrations::TestData.data_source
-        td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
+        td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
         logger = double().as_null_object
 
@@ -56,7 +56,7 @@ module LaunchDarkly
 
       it "does not send event, and logs error, if context key is nil" do
         td = Integrations::TestData.data_source
-        td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
+        td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
         logger = double().as_null_object
         keyless_user = { key: nil }

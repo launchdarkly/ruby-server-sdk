@@ -22,7 +22,7 @@ module LaunchDarkly
 
       it "returns the value for an existing feature" do
         td = Integrations::TestData.data_source
-        td.update(td.flag("flagkey").variations("value").variation_for_all_users(0))
+        td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
         with_client(test_config(data_source: td)) do |client|
           expect(client.variation("flagkey", basic_context, "default")).to eq "value"

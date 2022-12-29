@@ -52,7 +52,7 @@ module LaunchDarkly
           version: 1,
         })
 
-        td.update(td.flag('flag').variation_for_all_users(false))
+        td.update(td.flag('flag').variation_for_all(false))
 
         expect(config.feature_store.get(FEATURES, 'flag').data).to eql({
           key: 'flag',
@@ -115,11 +115,11 @@ module LaunchDarkly
 
       it 'TestData.flag returns a copy of the existing flag if it exists' do
         td = TestData.new
-        td.update(td.flag('flag').variation_for_all_users(true))
+        td.update(td.flag('flag').variation_for_all(true))
         expect(td.flag('flag').build(0)[:fallthrough][:variation]).to eq(0)
 
         #modify the flag but dont call update
-        td.flag('flag').variation_for_all_users(false).build(0)
+        td.flag('flag').variation_for_all(false).build(0)
 
         expect(td.flag('flag').build(0)[:fallthrough][:variation]).to eq(0)
       end
@@ -172,7 +172,7 @@ module LaunchDarkly
         end
 
         it 'can set variation for all users' do
-          f = TestData::FlagBuilder.new('flag').variation_for_all_users(true).build(1)
+          f = TestData::FlagBuilder.new('flag').variation_for_all(true).build(1)
           expect(f[:rules]).to be_nil
           expect(f[:targets]).to be_nil
           expect(f[:fallthrough][:variation]).to be(0)
@@ -183,7 +183,7 @@ module LaunchDarkly
                           .if_match('name', 'ben')
                           .then_return(false)
                           .variation_for_user('ben', false)
-                          .variation_for_all_users(true).build(1)
+                          .variation_for_all(true).build(1)
           expect(f.keys).to_not include(:rules)
           expect(f.keys).to_not include(:targets)
           expect(f[:fallthrough][:variation]).to be(0)
@@ -199,10 +199,10 @@ module LaunchDarkly
         end
 
         it 'can make an immutable copy of its self' do
-          fb = TestData::FlagBuilder.new('flag').variation_for_all_users(true)
+          fb = TestData::FlagBuilder.new('flag').variation_for_all(true)
           expect(fb.build(0)).to eql(fb.clone.build(0))
 
-          fcopy = fb.clone.variation_for_all_users(false).build(0)
+          fcopy = fb.clone.variation_for_all(false).build(0)
           f = fb.build(0)
 
           expect(f[:key]).to eql(fcopy[:key])
@@ -221,12 +221,14 @@ module LaunchDarkly
                                     id: "rule0",
                                     variation: 0,
                                     clauses: [{
+                                        contextKind: "user",
                                         attribute: 'name',
                                         op: 'in',
                                         values: ['ben'],
                                         negate: false,
                                       },
                                       {
+                                        contextKind: "user",
                                         attribute: 'country',
                                         op: 'in',
                                         values: ['fr'],
