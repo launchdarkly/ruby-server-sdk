@@ -8,3 +8,5 @@ gem 'sinatra', '~> 2.1'
 gem 'glassfish', :platforms => :jruby
 gem 'thin', :platforms => :ruby
 gem 'json'
+gem 'rubocop', '~> 1.37', group: 'development'
+gem 'rubocop-performance', '~> 1.15', group: 'development'

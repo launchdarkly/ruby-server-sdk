@@ -43,9 +43,9 @@ module LaunchDarkly
             "authorization" => [ sdk_key ],
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
-            "x-launchdarkly-event-schema" => [ "3" ],
+            "x-launchdarkly-event-schema" => [ "4" ],
             "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
-            "connection" => [ "Keep-Alive" ]
+            "connection" => [ "Keep-Alive" ],
           })
           expect(req.header['x-launchdarkly-payload-id']).not_to eq []
         end
@@ -102,7 +102,7 @@ module LaunchDarkly
             "authorization" => [ sdk_key ],
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
-            "connection" => [ "Keep-Alive" ]
+            "connection" => [ "Keep-Alive" ],
           })
           expect(req.header['x-launchdarkly-event-schema']).to eq []
           expect(req.header['x-launchdarkly-payload-id']).to eq []

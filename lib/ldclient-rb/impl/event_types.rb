@@ -1,20 +1,23 @@
 module LaunchDarkly
   module Impl
     class Event
-      def initialize(timestamp, user)
+      # @param timestamp [Integer]
+      # @param context [LaunchDarkly::LDContext]
+      def initialize(timestamp, context)
         @timestamp = timestamp
-        @user = user
+        @context = context
       end
 
+      # @return [Integer]
       attr_reader :timestamp
-      attr_reader :kind
-      attr_reader :user
+      # @return [LaunchDarkly::LDContext]
+      attr_reader :context
     end
 
     class EvalEvent < Event
-      def initialize(timestamp, user, key, version = nil, variation = nil, value = nil, reason = nil, default = nil,
+      def initialize(timestamp, context, key, version = nil, variation = nil, value = nil, reason = nil, default = nil,
         track_events = false, debug_until = nil, prereq_of = nil)
-        super(timestamp, user)
+        super(timestamp, context)
         @key = key
         @version = version
         @variation = variation
@@ -39,17 +42,17 @@ module LaunchDarkly
     end
 
     class IdentifyEvent < Event
-      def initialize(timestamp, user)
-        super(timestamp, user)
+      def initialize(timestamp, context)
+        super(timestamp, context)
       end
     end
 
     class CustomEvent < Event
-      def initialize(timestamp, user, key, data = nil, metric_value = nil)
-        super(timestamp, user)
+      def initialize(timestamp, context, key, data = nil, metric_value = nil)
+        super(timestamp, context)
         @key = key
-        @data = data if !data.nil?
-        @metric_value = metric_value if !metric_value.nil?
+        @data = data unless data.nil?
+        @metric_value = metric_value unless metric_value.nil?
       end
 
       attr_reader :key
@@ -57,30 +60,15 @@ module LaunchDarkly
       attr_reader :metric_value
     end
 
-    class AliasEvent < Event
-      def initialize(timestamp, key, context_kind, previous_key, previous_context_kind)
-        super(timestamp, nil)
-        @key = key
-        @context_kind = context_kind
-        @previous_key = previous_key
-        @previous_context_kind = previous_context_kind
-      end
-
-      attr_reader :key
-      attr_reader :context_kind
-      attr_reader :previous_key
-      attr_reader :previous_context_kind
-    end
-
     class IndexEvent < Event
-      def initialize(timestamp, user)
-        super(timestamp, user)
+      def initialize(timestamp, context)
+        super(timestamp, context)
       end
     end
 
     class DebugEvent < Event
       def initialize(eval_event)
-        super(eval_event.timestamp, eval_event.user)
+        super(eval_event.timestamp, eval_event.context)
         @eval_event = eval_event
       end
 

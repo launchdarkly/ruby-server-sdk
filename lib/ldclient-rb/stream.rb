@@ -17,7 +17,7 @@ module LaunchDarkly
   # @private
   KEY_PATHS = {
     FEATURES => "/flags/",
-    SEGMENTS => "/segments/"
+    SEGMENTS => "/segments/",
   }
 
   # @private
@@ -41,14 +41,14 @@ module LaunchDarkly
       return @ready unless @started.make_true
 
       @config.logger.info { "[LDClient] Initializing stream connection" }
-      
+
       headers = Impl::Util.default_http_headers(@sdk_key, @config)
       opts = {
         headers: headers,
         read_timeout: READ_TIMEOUT_SECONDS,
         logger: @config.logger,
         socket_factory: @config.socket_factory,
-        reconnect_time: @config.initial_reconnect_delay
+        reconnect_time: @config.initial_reconnect_delay,
       }
       log_connection_started
       @es = SSE::Client.new(@config.stream_uri + "/all", **opts) do |conn|
@@ -60,14 +60,14 @@ module LaunchDarkly
             status = err.status
             message = Util.http_error_message(status, "streaming connection", "will retry")
             @config.logger.error { "[LDClient] #{message}" }
-            if !Util.http_error_recoverable?(status)
+            unless Util.http_error_recoverable?(status)
               @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
               stop
             end
           end
         }
       end
-      
+
       @ready
     end
 
@@ -96,9 +96,8 @@ module LaunchDarkly
         for kind in [FEATURES, SEGMENTS]
           key = key_for_path(kind, data[:path])
           if key
-            data = data[:data]
-            Impl::DataModelPreprocessing::Preprocessor.new(@config.logger).preprocess_item!(kind, data)
-            @feature_store.upsert(kind, data)
+            item = Impl::Model.deserialize(kind, data[:data], @config.logger)
+            @feature_store.upsert(kind, item)
             break
           end
         end

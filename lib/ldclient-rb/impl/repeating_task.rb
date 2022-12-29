@@ -19,7 +19,7 @@ module LaunchDarkly
           if @start_delay
             sleep(@start_delay)
           end
-          while !@stopped.value do
+          until @stopped.value do
             started_at = Time.now
             begin
               @task.call

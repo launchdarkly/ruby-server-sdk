@@ -1,4 +1,3 @@
-
 module LaunchDarkly
   module Impl
     # Encapsulates the logic for percentage rollouts.
@@ -6,64 +5,64 @@ module LaunchDarkly
       # Applies either a fixed variation or a rollout for a rule (or the fallthrough rule).
       #
       # @param flag [Object] the feature flag
-      # @param rule [Object] the rule
-      # @param user [Object] the user properties
-      # @return [Number] the variation index, or nil if there is an error
-      def self.variation_index_for_user(flag, rule, user)
-
-        variation = rule[:variation]
-        return variation, false if !variation.nil? # fixed variation
-        rollout = rule[:rollout]
+      # @param vr [LaunchDarkly::Impl::Model::VariationOrRollout] the variation/rollout properties
+      # @param context [LaunchDarkly::LDContext] the context properties
+      # @return [Array<[Number, nil], Boolean>] the variation index, or nil if there is an error
+      # @raise [InvalidReferenceException]
+      def self.variation_index_for_context(flag, vr, context)
+        variation = vr.variation
+        return variation, false unless variation.nil? # fixed variation
+        rollout = vr.rollout
         return nil, false if rollout.nil?
-        variations = rollout[:variations]
+        variations = rollout.variations
         if !variations.nil? && variations.length > 0 # percentage rollout
-          bucket_by = rollout[:bucketBy].nil? ? "key" : rollout[:bucketBy]
+          rollout_is_experiment = rollout.is_experiment
+          bucket_by = rollout_is_experiment ? nil : rollout.bucket_by
+          bucket_by = 'key' if bucket_by.nil?
 
-          seed = rollout[:seed]
-          bucket = bucket_user(user, flag[:key], bucket_by, flag[:salt], seed) # may not be present
-          sum = 0;
+          seed = rollout.seed
+          bucket = bucket_context(context, rollout.context_kind, flag.key, bucket_by, flag.salt, seed) # may not be present
+          in_experiment = rollout_is_experiment && !bucket.nil?
+          sum = 0
           variations.each do |variate|
-            if rollout[:kind] == "experiment" && !variate[:untracked]
-              in_experiment = true
-            end
-
-            sum += variate[:weight].to_f / 100000.0
-            if bucket < sum
-              return variate[:variation], !!in_experiment
+            sum += variate.weight.to_f / 100000.0
+            if bucket.nil? || bucket < sum
+              return variate.variation, in_experiment && !variate.untracked
             end
           end
-          # The user's bucket value was greater than or equal to the end of the last bucket. This could happen due
+          # The context's bucket value was greater than or equal to the end of the last bucket. This could happen due
           # to a rounding error, or due to the fact that we are scaling to 100000 rather than 99999, or the flag
           # data could contain buckets that don't actually add up to 100000. Rather than returning an error in
-          # this case (or changing the scaling, which would potentially change the results for *all* users), we
-          # will simply put the user in the last bucket.
+          # this case (or changing the scaling, which would potentially change the results for *all* contexts), we
+          # will simply put the context in the last bucket.
           last_variation = variations[-1]
-          in_experiment = rollout[:kind] == "experiment" && !last_variation[:untracked]
-
-          [last_variation[:variation], in_experiment]
+          [last_variation.variation, in_experiment && !last_variation.untracked]
         else # the rule isn't well-formed
           [nil, false]
         end
       end
 
-      # Returns a user's bucket value as a floating-point value in `[0, 1)`.
+      # Returns a context's bucket value as a floating-point value in `[0, 1)`.
       #
-      # @param user [Object] the user properties
+      # @param context [LDContext] the context properties
+      # @param context_kind [String, nil] the context kind to match against
       # @param key [String] the feature flag key (or segment key, if this is for a segment rule)
-      # @param bucket_by [String|Symbol] the name of the user attribute to be used for bucketing
+      # @param bucket_by [String|Symbol] the name of the context attribute to be used for bucketing
       # @param salt [String] the feature flag's or segment's salt value
-      # @return [Number] the bucket value, from 0 inclusive to 1 exclusive
-      def self.bucket_user(user, key, bucket_by, salt, seed)
-        return nil unless user[:key]
+      # @return [Float, nil] the bucket value, from 0 inclusive to 1 exclusive
+      # @raise [InvalidReferenceException] Raised if the clause.attribute is an invalid reference
+      def self.bucket_context(context, context_kind, key, bucket_by, salt, seed)
+        matched_context = context.individual_context(context_kind || LaunchDarkly::LDContext::KIND_DEFAULT)
+        return nil if matched_context.nil?
 
-        id_hash = bucketable_string_value(EvaluatorOperators.user_value(user, bucket_by))
-        if id_hash.nil?
-          return 0.0
-        end
+        reference = (context_kind.nil? || context_kind.empty?) ? Reference.create_literal(bucket_by) : Reference.create(bucket_by)
+        raise InvalidReferenceException.new(reference.error) unless reference.error.nil?
 
-        if user[:secondary]
-          id_hash += "." + user[:secondary].to_s
-        end
+        context_value = matched_context.get_value_for_reference(reference)
+        return 0.0 if context_value.nil?
+
+        id_hash = bucketable_string_value(context_value)
+        return 0.0 if id_hash.nil?
 
         if seed
           hash_key = "%d.%s" % [seed, id_hash]
@@ -71,7 +70,7 @@ module LaunchDarkly
           hash_key = "%s.%s.%s" % [key, salt, id_hash]
         end
 
-        hash_val = (Digest::SHA1.hexdigest(hash_key))[0..14]
+        hash_val = Digest::SHA1.hexdigest(hash_key)[0..14]
         hash_val.to_i(16) / Float(0xFFFFFFFFFFFFFFF)
       end
 

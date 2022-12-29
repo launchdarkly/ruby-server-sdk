@@ -1,4 +1,4 @@
-require "ldclient-rb/redis_store"  # eventually we will just refer to impl/integrations/redis_impl directly
+require "ldclient-rb/impl/integrations/redis_impl"
 
 module LaunchDarkly
   module Integrations
@@ -59,13 +59,13 @@ module LaunchDarkly
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
       def self.new_feature_store(opts = {})
-        return RedisFeatureStore.new(opts)
+        LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStore.new(opts)
       end
 
       #
       # Creates a Redis-backed Big Segment store.
       #
-      # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+      # Big Segments are a specific type of segments. For more information, read the LaunchDarkly
       # documentation: https://docs.launchdarkly.com/home/users/big-segments
       #
       # To use this method, you must first have the `redis` and `connection-pool` gems installed. Then,
@@ -91,7 +91,7 @@ module LaunchDarkly
       # @return [LaunchDarkly::Interfaces::BigSegmentStore]  a Big Segment store object
       #
       def self.new_big_segment_store(opts)
-        return LaunchDarkly::Impl::Integrations::Redis::RedisBigSegmentStore.new(opts)
+        LaunchDarkly::Impl::Integrations::Redis::RedisBigSegmentStore.new(opts)
       end
     end
   end

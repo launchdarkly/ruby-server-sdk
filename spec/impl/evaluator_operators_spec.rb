@@ -40,16 +40,16 @@ describe LaunchDarkly::Impl::EvaluatorOperators do
       [ :contains,   "y",   "xyz", false ],
 
       # mixed strings and numbers
-      [ :in,                 "99", 99, false ],
+      [ :in,                  "99", 99, false ],
       [ :in,                  99, "99", false ],
-      [ :contains,           "99", 99, false ],
-      [ :startsWith,         "99", 99, false ],
-      [ :endsWith,           "99", 99, false ],
-      [ :lessThanOrEqual,    "99", 99, false ],
-      [ :lessThanOrEqual,    99, "99", false ],
-      [ :greaterThanOrEqual, "99", 99, false ],
-      [ :greaterThanOrEqual, 99, "99", false ],
-      
+      [ :contains,            "99", 99, false ],
+      [ :startsWith,          "99", 99, false ],
+      [ :endsWith,            "99", 99, false ],
+      [ :lessThanOrEqual,     "99", 99, false ],
+      [ :lessThanOrEqual,     99, "99", false ],
+      [ :greaterThanOrEqual,  "99", 99, false ],
+      [ :greaterThanOrEqual,  99, "99", false ],
+
       # regex
       [ :matches, "hello world", "hello.*rld",     true ],
       [ :matches, "hello world", "hello.*orl",     true ],
@@ -90,7 +90,7 @@ describe LaunchDarkly::Impl::EvaluatorOperators do
       [ :semVerGreaterThan, "2.0",   "2.0.1", false ],
       [ :semVerGreaterThan, "2.0.0-rc.1", "2.0.0-rc.0", true ],
       [ :semVerLessThan,    "2.0.1", "xbad%ver", false ],
-      [ :semVerGreaterThan, "2.0.1", "xbad%ver", false ]
+      [ :semVerGreaterThan, "2.0.1", "xbad%ver", false ],
     ]
 
     operatorTests.each do |params|
@@ -101,41 +101,6 @@ describe LaunchDarkly::Impl::EvaluatorOperators do
       it "should return #{shouldBe} for #{value1} #{op} #{value2}" do
         expect(subject::apply(op, value1, value2)).to be shouldBe
       end
-    end
-  end
-
-  describe "user_value" do
-    [:key, :secondary, :ip, :country, :email, :firstName, :lastName, :avatar, :name, :anonymous, :some_custom_attr].each do |attr|
-      it "returns nil if property #{attr} is not defined" do
-        expect(subject::user_value({}, attr)).to be nil
-      end
-    end
-
-    [:key, :secondary, :ip, :country, :email, :firstName, :lastName, :avatar, :name].each do |attr|
-      it "gets string value of string property #{attr}" do
-        expect(subject::user_value({ attr => 'x' }, attr)).to eq 'x'
-      end
-
-      it "coerces non-string value of property #{attr} to string" do
-        expect(subject::user_value({ attr => 3 }, attr)).to eq '3'
-      end
-    end
-
-    it "gets boolean value of property anonymous" do
-      expect(subject::user_value({ anonymous: true }, :anonymous)).to be true
-      expect(subject::user_value({ anonymous: false }, :anonymous)).to be false
-    end
-
-    it "does not coerces non-boolean value of property anonymous" do
-      expect(subject::user_value({ anonymous: 3 }, :anonymous)).to eq 3
-    end
-
-    it "gets string value of custom property" do
-      expect(subject::user_value({ custom: { some_custom_attr: 'x' } }, :some_custom_attr)).to eq 'x'
-    end
-
-    it "gets non-string value of custom property" do
-      expect(subject::user_value({ custom: { some_custom_attr: 3 } }, :some_custom_attr)).to eq 3
     end
   end
 end

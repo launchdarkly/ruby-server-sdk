@@ -10,7 +10,7 @@ describe LaunchDarkly::ExpiringCache do
   after(:each) do
     Timecop.return
   end
-  
+
   it "evicts entries based on TTL" do
     c = subject.new(3, 300)
     c[:a] = 1
@@ -45,7 +45,7 @@ describe LaunchDarkly::ExpiringCache do
 
     expect(c[:a]).to be nil
     expect(c[:b]).to eq 2
-    expect(c[:c]).to eq 3    
+    expect(c[:c]).to eq 3
   end
 
   it "resets LRU on put" do
@@ -57,7 +57,7 @@ describe LaunchDarkly::ExpiringCache do
 
     expect(c[:a]).to eq 1
     expect(c[:b]).to be nil
-    expect(c[:c]).to eq 3    
+    expect(c[:c]).to eq 3
   end
 
   it "resets TTL on put" do

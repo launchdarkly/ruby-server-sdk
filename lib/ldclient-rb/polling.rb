@@ -43,8 +43,8 @@ module LaunchDarkly
         end
       rescue UnexpectedResponseError => e
         message = Util.http_error_message(e.status, "polling request", "will retry")
-        @config.logger.error { "[LDClient] #{message}" };
-        if !Util.http_error_recoverable?(e.status)
+        @config.logger.error { "[LDClient] #{message}" }
+        unless Util.http_error_recoverable?(e.status)
           @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
           stop
         end

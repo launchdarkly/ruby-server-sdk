@@ -14,7 +14,7 @@ module LaunchDarkly
 
     def get
       @mutex.synchronize do
-        if !@inited
+        unless @inited
           @value = @generator.call
           @inited = true
         end

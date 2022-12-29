@@ -30,8 +30,10 @@ get '/' do
       'all-flags-with-reasons',
       'all-flags-client-side-only',
       'all-flags-details-only-for-tracked-flags',
+      'secure-mode-hash',
+      'user-type',
       'tags',
-    ]
+    ],
   }.to_json
 end
 
@@ -84,14 +86,14 @@ post '/clients/:id' do |clientId|
   when "evaluateAll"
     response = {:state => client.evaluate_all(params[:evaluateAll])}
     return [200, nil, response.to_json]
+  when "secureModeHash"
+    response = {:result => client.secure_mode_hash(params[:secureModeHash])}
+    return [200, nil, response.to_json]
   when "customEvent"
     client.track(params[:customEvent])
     return 201
   when "identifyEvent"
     client.identify(params[:identifyEvent])
-    return 201
-  when "aliasEvent"
-    client.alias(params[:aliasEvent])
     return 201
   when "flushEvents"
     client.flush_events

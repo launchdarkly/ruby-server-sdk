@@ -48,7 +48,7 @@ module LaunchDarkly
 
         def start
           ready = Concurrent::Event.new
-          
+
           # We will return immediately regardless of whether the file load succeeded or failed -
           # the difference can be detected by checking "initialized?"
           ready.set
@@ -63,9 +63,9 @@ module LaunchDarkly
 
           ready
         end
-        
+
         def stop
-          @listener.stop if !@listener.nil?
+          @listener.stop unless @listener.nil?
         end
 
         private
@@ -73,7 +73,7 @@ module LaunchDarkly
         def load_all
           all_data = {
             FEATURES => {},
-            SEGMENTS => {}
+            SEGMENTS => {},
           }
           @paths.each do |path|
             begin
@@ -121,12 +121,12 @@ module LaunchDarkly
 
         def add_item(all_data, kind, item)
           items = all_data[kind]
-          raise ArgumentError, "Received unknown item kind #{kind} in add_data" if items.nil? # shouldn't be possible since we preinitialize the hash
+          raise ArgumentError, "Received unknown item kind #{kind[:namespace]} in add_data" if items.nil? # shouldn't be possible since we preinitialize the hash
           key = item[:key].to_sym
-          if !items[key].nil?
+          unless items[key].nil?
             raise ArgumentError, "#{kind[:namespace]} key \"#{item[:key]}\" was used more than once"
           end
-          items[key] = item
+          items[key] = Model.deserialize(kind, item)
         end
 
         def make_flag_with_value(key, value)
@@ -134,7 +134,7 @@ module LaunchDarkly
             key: key,
             on: true,
             fallthrough: { variation: 0 },
-            variations: [ value ]
+            variations: [ value ],
           }
         end
 

@@ -69,7 +69,7 @@ module LaunchDarkly
               expect(reason).not_to eq values[j][0]
             end
           end
-          if !unequal_values.nil?
+          unless unequal_values.nil?
             unequal_values.each do |v|
               expect(reason).not_to eq v
             end

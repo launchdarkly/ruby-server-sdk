@@ -238,7 +238,7 @@ describe LaunchDarkly::Integrations::Util::CachingStoreWrapper do
     attr_accessor :inited
 
     def force_set(kind, item)
-      @data[kind] = {} if !@data.has_key?(kind)
+      @data[kind] = {} unless @data.has_key?(kind)
       @data[kind][item[:key]] = item
     end
 
@@ -261,7 +261,7 @@ describe LaunchDarkly::Integrations::Util::CachingStoreWrapper do
     end
 
     def upsert_internal(kind, item)
-      @data[kind] = {} if !@data.has_key?(kind)
+      @data[kind] = {} unless @data.has_key?(kind)
       old_item = @data[kind][item[:key]]
       return old_item if !old_item.nil? && old_item[:version] >= item[:version]
       @data[kind][item[:key]] = item

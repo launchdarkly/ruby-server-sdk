@@ -8,7 +8,7 @@ module LaunchDarkly
     EventSenderResult = Struct.new(:success, :must_shutdown, :time_from_server)
 
     class EventSender
-      CURRENT_SCHEMA_VERSION = 3
+      CURRENT_SCHEMA_VERSION = 4
       DEFAULT_RETRY_INTERVAL = 1
 
       def initialize(sdk_key, config, http_client = nil, retry_interval = DEFAULT_RETRY_INTERVAL)
@@ -33,7 +33,7 @@ module LaunchDarkly
         begin
           http_client = @http_client_pool.acquire()
           response = nil
-          (0..1).each do |attempt|
+          2.times do |attempt|
             if attempt > 0
               @logger.warn { "[LDClient] Will retry posting events after #{@retry_interval} second" }
               sleep(@retry_interval)
@@ -43,13 +43,13 @@ module LaunchDarkly
               headers = {}
               headers["content-type"] = "application/json"
               Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| headers[k] = v }
-              if !is_diagnostic
+              unless is_diagnostic
                 headers["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
                 headers["X-LaunchDarkly-Payload-ID"] = payload_id
               end
               response = http_client.request("POST", uri, {
                 headers: headers,
-                body: event_data
+                body: event_data,
               })
             rescue StandardError => exn
               @logger.warn { "[LDClient] Error sending events: #{exn.inspect}." }
@@ -60,7 +60,7 @@ module LaunchDarkly
             body = response.to_s
             if status >= 200 && status < 300
               res_time = nil
-              if !response.headers["date"].nil?
+              unless response.headers["date"].nil?
                 begin
                   res_time = Time.httpdate(response.headers["date"])
                 rescue ArgumentError
@@ -77,7 +77,7 @@ module LaunchDarkly
             end
           end
           # used up our retries
-          return EventSenderResult.new(false, false, nil)
+          EventSenderResult.new(false, false, nil)
         ensure
           @http_client_pool.release(http_client)
         end

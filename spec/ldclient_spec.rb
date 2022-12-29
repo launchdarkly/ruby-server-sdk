@@ -63,11 +63,11 @@ module LaunchDarkly
             c: { key: "c" },
             d: { key: "d" },
             e: { key: "e" },
-            f: { key: "f" }
+            f: { key: "f" },
           },
           SEGMENTS => {
-            o: { key: "o" }
-          }
+            o: { key: "o" },
+          },
         }
       }
 
@@ -76,12 +76,12 @@ module LaunchDarkly
         td = Integrations::TestData.data_source
         dependency_ordering_test_data[FEATURES].each { |key, flag| td.use_preconfigured_flag(flag) }
         dependency_ordering_test_data[SEGMENTS].each { |key, segment| td.use_preconfigured_segment(segment) }
-        
+
         with_client(test_config(feature_store: store, data_source: td)) do |client|
           data = store.received_data
           expect(data).not_to be_nil
           expect(data.count).to eq(2)
-          
+
           # Segments should always come first
           expect(data.keys[0]).to be(SEGMENTS)
           expect(data.values[0].count).to eq(dependency_ordering_test_data[SEGMENTS].count)
