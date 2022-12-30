@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly::Integrations::FileData
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -109,7 +109,7 @@ properties:</p>
 <ul>
 <li><code>flags</code>: Feature flag definitions.</li>
 <li><code>flagValues</code>: Simplified feature flags that contain only a value.</li>
-<li><code>segments</code>: User segment definitions.</li>
+<li><code>segments</code>: Context segment definitions.</li>
 </ul>
 
 <p>The format of the data in <code>flags</code> and <code>segments</code> is defined by the LaunchDarkly application
@@ -346,7 +346,7 @@ mechanism from &#39;listen&#39; is not being used. The default value is 1 second
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/file_data.rb', line 102</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_data_source'>data_source</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+  <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
     <span class='const'>Impl</span><span class='op'>::</span><span class='const'>Integrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/FileDataSourceImpl.html" title="LaunchDarkly::Impl::Integrations::FileDataSourceImpl (class)">FileDataSourceImpl</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Impl/Integrations/FileDataSourceImpl.html#initialize-instance_method" title="LaunchDarkly::Impl::Integrations::FileDataSourceImpl#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_feature_store'>feature_store</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -359,9 +359,9 @@ mechanism from &#39;listen&#39; is not being used. The default value is 1 second
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:52 2022 by
+  Generated on Fri Dec 30 20:15:40 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>

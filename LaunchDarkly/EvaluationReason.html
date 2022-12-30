@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::EvaluationReason
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -145,7 +145,7 @@ Use <code>as_json</code> or <code>to_json</code> to convert to this representati
         <dt id="FALLTHROUGH-constant" class="">FALLTHROUGH =
           <div class="docstring">
   <div class="discussion">
-    <p>Value for <span class='object_link'><a href="#kind-instance_method" title="LaunchDarkly::EvaluationReason#kind (method)">#kind</a></span> indicating that the flag was on but the user did not match any targets or rules.</p>
+    <p>Value for <span class='object_link'><a href="#kind-instance_method" title="LaunchDarkly::EvaluationReason#kind (method)">#kind</a></span> indicating that the flag was on but the context did not match any targets or rules.</p>
 
 
   </div>
@@ -160,7 +160,7 @@ Use <code>as_json</code> or <code>to_json</code> to convert to this representati
         <dt id="TARGET_MATCH-constant" class="">TARGET_MATCH =
           <div class="docstring">
   <div class="discussion">
-    <p>Value for <span class='object_link'><a href="#kind-instance_method" title="LaunchDarkly::EvaluationReason#kind (method)">#kind</a></span> indicating that the user key was specifically targeted for this flag.</p>
+    <p>Value for <span class='object_link'><a href="#kind-instance_method" title="LaunchDarkly::EvaluationReason#kind (method)">#kind</a></span> indicating that the context key was specifically targeted for this flag.</p>
 
 
   </div>
@@ -175,7 +175,7 @@ Use <code>as_json</code> or <code>to_json</code> to convert to this representati
         <dt id="RULE_MATCH-constant" class="">RULE_MATCH =
           <div class="docstring">
   <div class="discussion">
-    <p>Value for <span class='object_link'><a href="#kind-instance_method" title="LaunchDarkly::EvaluationReason#kind (method)">#kind</a></span> indicating that the user matched one of the flag&#39;s rules.</p>
+    <p>Value for <span class='object_link'><a href="#kind-instance_method" title="LaunchDarkly::EvaluationReason#kind (method)">#kind</a></span> indicating that the context matched one of the flag&#39;s rules.</p>
 
 
   </div>
@@ -270,8 +270,8 @@ a rule specified a nonexistent  variation. An error message will always be logge
         <dt id="ERROR_USER_NOT_SPECIFIED-constant" class="">ERROR_USER_NOT_SPECIFIED =
           <div class="docstring">
   <div class="discussion">
-    <p>Value for <span class='object_link'><a href="#error_kind-instance_method" title="LaunchDarkly::EvaluationReason#error_kind (method)">#error_kind</a></span> indicating that the caller passed <code>nil</code> for the user parameter, or the
-user lacked a key.</p>
+    <p>Value for <span class='object_link'><a href="#error_kind-instance_method" title="LaunchDarkly::EvaluationReason#error_kind (method)">#error_kind</a></span> indicating that the caller passed <code>nil</code> for the context parameter, or the
+context was invalid.</p>
 
 
   </div>
@@ -327,7 +327,7 @@ message will always be logged in this case.</p>
   <span class='const'><span class='object_link'><a href="#ERROR_FLAG_NOT_FOUND-constant" title="LaunchDarkly::EvaluationReason::ERROR_FLAG_NOT_FOUND (constant)">ERROR_FLAG_NOT_FOUND</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_make_error'>make_error</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#ERROR_FLAG_NOT_FOUND-constant" title="LaunchDarkly::EvaluationReason::ERROR_FLAG_NOT_FOUND (constant)">ERROR_FLAG_NOT_FOUND</a></span></span><span class='rparen'>)</span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="#ERROR_MALFORMED_FLAG-constant" title="LaunchDarkly::EvaluationReason::ERROR_MALFORMED_FLAG (constant)">ERROR_MALFORMED_FLAG</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_make_error'>make_error</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#ERROR_MALFORMED_FLAG-constant" title="LaunchDarkly::EvaluationReason::ERROR_MALFORMED_FLAG (constant)">ERROR_MALFORMED_FLAG</a></span></span><span class='rparen'>)</span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="#ERROR_USER_NOT_SPECIFIED-constant" title="LaunchDarkly::EvaluationReason::ERROR_USER_NOT_SPECIFIED (constant)">ERROR_USER_NOT_SPECIFIED</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_make_error'>make_error</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#ERROR_USER_NOT_SPECIFIED-constant" title="LaunchDarkly::EvaluationReason::ERROR_USER_NOT_SPECIFIED (constant)">ERROR_USER_NOT_SPECIFIED</a></span></span><span class='rparen'>)</span><span class='comma'>,</span>
-  <span class='const'><span class='object_link'><a href="#ERROR_EXCEPTION-constant" title="LaunchDarkly::EvaluationReason::ERROR_EXCEPTION (constant)">ERROR_EXCEPTION</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_make_error'>make_error</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#ERROR_EXCEPTION-constant" title="LaunchDarkly::EvaluationReason::ERROR_EXCEPTION (constant)">ERROR_EXCEPTION</a></span></span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="#ERROR_EXCEPTION-constant" title="LaunchDarkly::EvaluationReason::ERROR_EXCEPTION (constant)">ERROR_EXCEPTION</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_make_error'>make_error</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#ERROR_EXCEPTION-constant" title="LaunchDarkly::EvaluationReason::ERROR_EXCEPTION (constant)">ERROR_EXCEPTION</a></span></span><span class='rparen'>)</span><span class='comma'>,</span>
 <span class='rbrace'>}</span></pre></dd>
       
     </dl>
@@ -932,9 +932,9 @@ but should use class methods like #off to avoid creating unnecessary instances.<
   <span class='ivar'>@kind</span> <span class='op'>=</span> <span class='id identifier rubyid_kind'>kind</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span>
   <span class='ivar'>@rule_index</span> <span class='op'>=</span> <span class='id identifier rubyid_rule_index'>rule_index</span>
   <span class='ivar'>@rule_id</span> <span class='op'>=</span> <span class='id identifier rubyid_rule_id'>rule_id</span>
-  <span class='ivar'>@rule_id</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span> <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_rule_id'>rule_id</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@rule_id</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span> <span class='kw'>unless</span> <span class='id identifier rubyid_rule_id'>rule_id</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
   <span class='ivar'>@prerequisite_key</span> <span class='op'>=</span> <span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span>
-  <span class='ivar'>@prerequisite_key</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span> <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@prerequisite_key</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span> <span class='kw'>unless</span> <span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
   <span class='ivar'>@error_kind</span> <span class='op'>=</span> <span class='id identifier rubyid_error_kind'>error_kind</span>
   <span class='ivar'>@in_experiment</span> <span class='op'>=</span> <span class='id identifier rubyid_in_experiment'>in_experiment</span>
   <span class='ivar'>@big_segments_status</span> <span class='op'>=</span> <span class='id identifier rubyid_big_segments_status'>big_segments_status</span>
@@ -966,7 +966,7 @@ but should use class methods like #off to avoid creating unnecessary instances.<
 querying at least one Big Segment. Otherwise it returns <code>nil</code>. Possible values are defined by
 <span class='object_link'><a href="BigSegmentsStatus.html" title="LaunchDarkly::BigSegmentsStatus (module)">BigSegmentsStatus</a></span>.</p>
 
-<p>Big Segments are a specific kind of user segments. For more information, read the LaunchDarkly
+<p>Big Segments are a specific kind of context segments. For more information, read the LaunchDarkly
 documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">https://docs.launchdarkly.com/home/users/big-segments</a></p>
 
 
@@ -1435,7 +1435,7 @@ or deleted. If <span class='object_link'><a href="#kind-instance_method" title="
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 205</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='id identifier rubyid_error_kind'>error_kind</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>error_kind must be a symbol</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='op'>!</span><span class='lparen'>(</span><span class='id identifier rubyid_error_kind'>error_kind</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Symbol</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>error_kind must be a symbol</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_error_kind'>error_kind</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Symbol</span>
   <span class='id identifier rubyid_e'>e</span> <span class='op'>=</span> <span class='cvar'>@@error_instances</span><span class='lbracket'>[</span><span class='id identifier rubyid_error_kind'>error_kind</span><span class='rbracket'>]</span>
   <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='id identifier rubyid_make_error'>make_error</span><span class='lparen'>(</span><span class='id identifier rubyid_error_kind'>error_kind</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_e'>e</span>
 <span class='kw'>end</span></pre>
@@ -1641,7 +1641,7 @@ or deleted. If <span class='object_link'><a href="#kind-instance_method" title="
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 195</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_prerequisite_failed'>prerequisite_failed</span><span class='lparen'>(</span><span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>prerequisite_key must be a string</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='op'>!</span><span class='lparen'>(</span><span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>String</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>prerequisite_key must be a string</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>String</span>
   <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='symbol'>:PREREQUISITE_FAILED</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1755,9 +1755,9 @@ the feature flag)</p>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 178</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rule_match'>rule_match</span><span class='lparen'>(</span><span class='id identifier rubyid_rule_index'>rule_index</span><span class='comma'>,</span> <span class='id identifier rubyid_rule_id'>rule_id</span><span class='comma'>,</span> <span class='id identifier rubyid_in_experiment'>in_experiment</span><span class='op'>=</span><span class='kw'>false</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rule_index must be a number</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='op'>!</span><span class='lparen'>(</span><span class='id identifier rubyid_rule_index'>rule_index</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Numeric</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rule_index must be a number</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_rule_index'>rule_index</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Numeric</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rule_id must be a string</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_rule_id'>rule_id</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='lparen'>(</span><span class='id identifier rubyid_rule_id'>rule_id</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>String</span><span class='rparen'>)</span> <span class='comment'># in test data, ID could be nil
-</span>  
+</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_in_experiment'>in_experiment</span>
     <span class='id identifier rubyid_er'>er</span> <span class='op'>=</span> <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='symbol'>:RULE_MATCH</span><span class='comma'>,</span> <span class='id identifier rubyid_rule_index'>rule_index</span><span class='comma'>,</span> <span class='id identifier rubyid_rule_id'>rule_id</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
   <span class='kw'>else</span>
@@ -2049,7 +2049,7 @@ in LaunchDarkly analytics events.</p>
   <span class='kw'>else</span>
     <span class='lbrace'>{</span> <span class='label'>kind:</span> <span class='ivar'>@kind</span> <span class='rbrace'>}</span>
   <span class='kw'>end</span>
-  <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@big_segments_status</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>unless</span> <span class='ivar'>@big_segments_status</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='id identifier rubyid_ret'>ret</span><span class='lbracket'>[</span><span class='symbol'>:bigSegmentsStatus</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='ivar'>@big_segments_status</span>
   <span class='kw'>end</span>
   <span class='id identifier rubyid_ret'>ret</span>
@@ -2287,9 +2287,9 @@ for debugging.</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:53 2022 by
+  Generated on Fri Dec 30 20:15:41 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>

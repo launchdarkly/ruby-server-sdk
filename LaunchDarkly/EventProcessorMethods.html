@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly::EventProcessorMethods
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -123,7 +123,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#record_alias_event-instance_method" title="#record_alias_event (instance method)">#<strong>record_alias_event</strong>(user, previous_user)  &#x21d2; Object </a>
+      <a href="#record_custom_event-instance_method" title="#record_custom_event (instance method)">#<strong>record_custom_event</strong>(context, key, data = nil, metric_value = nil)  &#x21d2; Object </a>
     
 
     
@@ -145,7 +145,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#record_custom_event-instance_method" title="#record_custom_event (instance method)">#<strong>record_custom_event</strong>(user, key, data = nil, metric_value = nil)  &#x21d2; Object </a>
+      <a href="#record_eval_event-instance_method" title="#record_eval_event (instance method)">#<strong>record_eval_event</strong>(context, key, version = nil, variation = nil, value = nil, reason = nil, default = nil, track_events = false, debug_until = nil, prereq_of = nil)  &#x21d2; Object </a>
     
 
     
@@ -167,29 +167,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#record_eval_event-instance_method" title="#record_eval_event (instance method)">#<strong>record_eval_event</strong>(user, key, version = nil, variation = nil, value = nil, reason = nil, default = nil, track_events = false, debug_until = nil, prereq_of = nil)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#record_identify_event-instance_method" title="#record_identify_event (instance method)">#<strong>record_identify_event</strong>(user)  &#x21d2; Object </a>
+      <a href="#record_identify_event-instance_method" title="#record_identify_event (instance method)">#<strong>record_identify_event</strong>(context)  &#x21d2; Object </a>
     
 
     
@@ -254,11 +232,11 @@
       <pre class="lines">
 
 
-60
-61</pre>
+58
+59</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 60</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 58</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flush'>flush</span>
 <span class='kw'>end</span></pre>
@@ -268,37 +246,9 @@
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="record_alias_event-instance_method">
-  
-    #<strong>record_alias_event</strong>(user, previous_user)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-57
-58</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 57</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_record_alias_event'>record_alias_event</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='comma'>,</span> <span class='id identifier rubyid_previous_user'>previous_user</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
   <h3 class="signature " id="record_custom_event-instance_method">
   
-    #<strong>record_custom_event</strong>(user, key, data = nil, metric_value = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>record_custom_event</strong>(context, key, data = nil, metric_value = nil)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -310,19 +260,19 @@
       <pre class="lines">
 
 
-49
 50
 51
 52
 53
 54
-55</pre>
+55
+56</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 49</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 50</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_record_custom_event'>record_custom_event</span><span class='lparen'>(</span>
-  <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span>
+  <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span>
   <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span>
   <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span>
   <span class='id identifier rubyid_metric_value'>metric_value</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -336,7 +286,7 @@
       <div class="method_details ">
   <h3 class="signature " id="record_eval_event-instance_method">
   
-    #<strong>record_eval_event</strong>(user, key, version = nil, variation = nil, value = nil, reason = nil, default = nil, track_events = false, debug_until = nil, prereq_of = nil)  &#x21d2; <tt>Object</tt> 
+    #<strong>record_eval_event</strong>(context, key, version = nil, variation = nil, value = nil, reason = nil, default = nil, track_events = false, debug_until = nil, prereq_of = nil)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -348,7 +298,6 @@
       <pre class="lines">
 
 
-32
 33
 34
 35
@@ -360,13 +309,14 @@
 41
 42
 43
-44</pre>
+44
+45</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 32</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 33</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_record_eval_event'>record_eval_event</span><span class='lparen'>(</span>
-  <span class='id identifier rubyid_user'>user</span><span class='comma'>,</span>
+  <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span>
   <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span>
   <span class='id identifier rubyid_version'>version</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span>
   <span class='id identifier rubyid_variation'>variation</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -386,7 +336,7 @@
       <div class="method_details ">
   <h3 class="signature " id="record_identify_event-instance_method">
   
-    #<strong>record_identify_event</strong>(user)  &#x21d2; <tt>Object</tt> 
+    #<strong>record_identify_event</strong>(context)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -398,13 +348,13 @@
       <pre class="lines">
 
 
-46
-47</pre>
+47
+48</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 46</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 47</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_record_identify_event'>record_identify_event</span><span class='lparen'>(</span><span class='id identifier rubyid_user'>user</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_record_identify_event'>record_identify_event</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -426,11 +376,11 @@
       <pre class="lines">
 
 
-63
-64</pre>
+61
+62</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 63</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 61</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
 <span class='kw'>end</span></pre>
@@ -444,9 +394,9 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:52 2022 by
+  Generated on Fri Dec 30 20:15:40 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>

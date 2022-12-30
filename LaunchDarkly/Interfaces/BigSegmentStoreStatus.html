@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Interfaces::BigSegmentStoreStatus
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -103,7 +103,7 @@
   <div class="discussion">
     <p>Information about the status of a Big Segment store, provided by <span class='object_link'><a href="BigSegmentStoreStatusProvider.html" title="LaunchDarkly::Interfaces::BigSegmentStoreStatusProvider (module)">BigSegmentStoreStatusProvider</a></span>.</p>
 
-<p>Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+<p>Big Segments are a specific type of segments. For more information, read the LaunchDarkly
 documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">https://docs.launchdarkly.com/home/users/big-segments</a></p>
 
 
@@ -141,7 +141,7 @@ documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">h
   
 
   
-    <span class="summary_desc"><div class='inline'><p>True if the Big Segment store is able to respond to queries, so that the SDK can evaluate whether a user is in a segment or not.</p>
+    <span class="summary_desc"><div class='inline'><p>True if the Big Segment store is able to respond to queries, so that the SDK can evaluate whether a context is in a segment or not.</p>
 </div></span>
   
 </li>
@@ -302,11 +302,11 @@ documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">h
 </h3><div class="docstring">
   <div class="discussion">
     <p>True if the Big Segment store is able to respond to queries, so that the SDK can evaluate
-whether a user is in a segment or not.</p>
+whether a context is in a segment or not.</p>
 
 <p>If this property is false, the store is not able to make queries (for instance, it may not have
 a valid database connection). In this case, the SDK will treat any reference to a Big Segment
-as if no users are included in that segment. Also, the <span class='object_link'><a href="../EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span> associated with
+as if no contexts are included in that segment. Also, the <span class='object_link'><a href="../EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span> associated with
 with any flag evaluation that references a Big Segment when the store is not available will
 have a <code>big_segments_status</code> of <code>STORE_ERROR</code>.</p>
 
@@ -454,9 +454,9 @@ of date. Also, the <span class='object_link'><a href="../EvaluationReason.html" 
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:53 2022 by
+  Generated on Fri Dec 30 20:15:41 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>

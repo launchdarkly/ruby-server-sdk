@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly::Integrations::Redis
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -385,7 +385,7 @@ Redis running at <code>localhost</code> with its default port.</p>
   <div class="discussion">
     <p>Creates a Redis-backed Big Segment store.</p>
 
-<p>Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+<p>Big Segments are a specific type of segments. For more information, read the LaunchDarkly
 documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">https://docs.launchdarkly.com/home/users/big-segments</a></p>
 
 <p>To use this method, you must first have the <code>redis</code> and <code>connection-pool</code> gems installed. Then,
@@ -578,7 +578,7 @@ lifecycle to be independent of the SDK client</p>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/redis.rb', line 93</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_big_segment_store'>new_big_segment_store</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Integrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Redis.html" title="LaunchDarkly::Impl::Integrations::Redis (module)">Redis</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Redis/RedisBigSegmentStore.html" title="LaunchDarkly::Impl::Integrations::Redis::RedisBigSegmentStore (class)">RedisBigSegmentStore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Impl/Integrations/Redis/RedisStoreImplBase.html#initialize-instance_method" title="LaunchDarkly::Impl::Integrations::Redis::RedisStoreImplBase#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Integrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Redis.html" title="LaunchDarkly::Impl::Integrations::Redis (module)">Redis</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Redis/RedisBigSegmentStore.html" title="LaunchDarkly::Impl::Integrations::Redis::RedisBigSegmentStore (class)">RedisBigSegmentStore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Impl/Integrations/Redis/RedisStoreImplBase.html#initialize-instance_method" title="LaunchDarkly::Impl::Integrations::Redis::RedisStoreImplBase#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -821,7 +821,7 @@ lifecycle to be independent of the SDK client</p>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/redis.rb', line 61</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_feature_store'>new_feature_store</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="../RedisFeatureStore.html" title="LaunchDarkly::RedisFeatureStore (class)">RedisFeatureStore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../RedisFeatureStore.html#initialize-instance_method" title="LaunchDarkly::RedisFeatureStore#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Integrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Redis.html" title="LaunchDarkly::Impl::Integrations::Redis (module)">Redis</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/Redis/RedisFeatureStore.html" title="LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStore (class)">RedisFeatureStore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Impl/Integrations/Redis/RedisFeatureStore.html#initialize-instance_method" title="LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStore#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -833,9 +833,9 @@ lifecycle to be independent of the SDK client</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:53 2022 by
+  Generated on Fri Dec 30 20:15:40 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>

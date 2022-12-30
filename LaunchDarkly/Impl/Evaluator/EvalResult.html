@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Evaluator::EvalResult
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -109,8 +109,8 @@ trying to use a pure functional approach, and since we&#39;re not exposing this 
 or retaining it anywhere, we don&#39;t have to be quite as strict about immutability.</p>
 
 <p>The big_segments_status and big_segments_membership properties are not used by the caller; they are used
-during an evaluation to cache the result of any Big Segments query that we&#39;ve done for this user, because
-we don&#39;t want to do multiple queries for the same user if multiple Big Segments are referenced in the same
+during an evaluation to cache the result of any Big Segments query that we&#39;ve done for this context, because
+we don&#39;t want to do multiple queries for the same context if multiple Big Segments are referenced in the same
 evaluation.</p>
 
 
@@ -299,12 +299,12 @@ evaluation.</p>
       <pre class="lines">
 
 
-43
-44
-45</pre>
+120
+121
+122</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 43</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 120</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_big_segments_membership'>big_segments_membership</span>
   <span class='ivar'>@big_segments_membership</span>
@@ -358,12 +358,12 @@ evaluation.</p>
       <pre class="lines">
 
 
-43
-44
-45</pre>
+120
+121
+122</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 43</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 120</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_big_segments_status'>big_segments_status</span>
   <span class='ivar'>@big_segments_status</span>
@@ -417,12 +417,12 @@ evaluation.</p>
       <pre class="lines">
 
 
-43
-44
-45</pre>
+120
+121
+122</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 43</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 120</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_detail'>detail</span>
   <span class='ivar'>@detail</span>
@@ -476,12 +476,12 @@ evaluation.</p>
       <pre class="lines">
 
 
-43
-44
-45</pre>
+120
+121
+122</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 43</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 120</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_prereq_evals'>prereq_evals</span>
   <span class='ivar'>@prereq_evals</span>
@@ -497,9 +497,9 @@ evaluation.</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:53 2022 by
+  Generated on Fri Dec 30 20:15:41 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>

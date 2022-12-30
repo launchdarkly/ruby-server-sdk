@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Integrations::Util::CachingStoreWrapper
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -549,13 +549,13 @@ implementation object.</p>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 79</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
-  <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>unless</span> <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='id identifier rubyid_items'>items</span> <span class='op'>=</span> <span class='ivar'>@cache</span><span class='lbracket'>[</span><span class='id identifier rubyid_all_cache_key'>all_cache_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='rbracket'>]</span>
-    <span class='kw'>return</span> <span class='id identifier rubyid_items'>items</span> <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_items'>items</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='kw'>return</span> <span class='id identifier rubyid_items'>items</span> <span class='kw'>unless</span> <span class='id identifier rubyid_items'>items</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
   <span class='kw'>end</span>
 
   <span class='id identifier rubyid_items'>items</span> <span class='op'>=</span> <span class='id identifier rubyid_items_if_not_deleted'>items_if_not_deleted</span><span class='lparen'>(</span><span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_get_all_internal'>get_all_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='rparen'>)</span>
-  <span class='ivar'>@cache</span><span class='lbracket'>[</span><span class='id identifier rubyid_all_cache_key'>all_cache_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_items'>items</span> <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@cache</span><span class='lbracket'>[</span><span class='id identifier rubyid_all_cache_key'>all_cache_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_items'>items</span> <span class='kw'>unless</span> <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
   <span class='id identifier rubyid_items'>items</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -676,15 +676,15 @@ implementation object.</p>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 63</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
-  <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>unless</span> <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='id identifier rubyid_cache_key'>cache_key</span> <span class='op'>=</span> <span class='id identifier rubyid_item_cache_key'>item_cache_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_cached'>cached</span> <span class='op'>=</span> <span class='ivar'>@cache</span><span class='lbracket'>[</span><span class='id identifier rubyid_cache_key'>cache_key</span><span class='rbracket'>]</span> <span class='comment'># note, item entries in the cache are wrapped in an array so we can cache nil values
-</span>    <span class='kw'>return</span> <span class='id identifier rubyid_item_if_not_deleted'>item_if_not_deleted</span><span class='lparen'>(</span><span class='id identifier rubyid_cached'>cached</span><span class='lbracket'>[</span><span class='int'>0</span><span class='rbracket'>]</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_cached'>cached</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+</span>    <span class='kw'>return</span> <span class='id identifier rubyid_item_if_not_deleted'>item_if_not_deleted</span><span class='lparen'>(</span><span class='id identifier rubyid_cached'>cached</span><span class='lbracket'>[</span><span class='int'>0</span><span class='rbracket'>]</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_cached'>cached</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
   <span class='kw'>end</span>
 
   <span class='id identifier rubyid_item'>item</span> <span class='op'>=</span> <span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_get_internal'>get_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
 
-  <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>unless</span> <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='ivar'>@cache</span><span class='lbracket'>[</span><span class='id identifier rubyid_cache_key'>cache_key</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_item'>item</span><span class='rbracket'>]</span>
   <span class='kw'>end</span>
 
@@ -756,7 +756,7 @@ implementation object.</p>
   <span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_init_internal'>init_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='rparen'>)</span>
   <span class='ivar'>@inited</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
 
-  <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>unless</span> <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_clear'>clear</span>
     <span class='id identifier rubyid_all_data'>all_data</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_items'>items</span><span class='op'>|</span>
       <span class='ivar'>@cache</span><span class='lbracket'>[</span><span class='id identifier rubyid_kind'>kind</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_items_if_not_deleted'>items_if_not_deleted</span><span class='lparen'>(</span><span class='id identifier rubyid_items'>items</span><span class='rparen'>)</span>
@@ -972,7 +972,7 @@ implementation object.</p>
 <span class='kw'>def</span> <span class='id identifier rubyid_upsert'>upsert</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_new_state'>new_state</span> <span class='op'>=</span> <span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_upsert_internal'>upsert_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
 
-  <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='kw'>unless</span> <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='ivar'>@cache</span><span class='lbracket'>[</span><span class='id identifier rubyid_item_cache_key'>item_cache_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_new_state'>new_state</span><span class='rbracket'>]</span>
     <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_delete'>delete</span><span class='lparen'>(</span><span class='id identifier rubyid_all_cache_key'>all_cache_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
@@ -987,9 +987,9 @@ implementation object.</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:54 2022 by
+  Generated on Fri Dec 30 20:15:42 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>

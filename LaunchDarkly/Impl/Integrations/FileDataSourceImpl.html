@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::FileDataSourceImpl
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -515,7 +515,7 @@ gem has been provided by the host app.</p>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start'>start</span>
   <span class='id identifier rubyid_ready'>ready</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>Event</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
-  
+
   <span class='comment'># We will return immediately regardless of whether the file load succeeded or failed -
 </span>  <span class='comment'># the difference can be detected by checking &quot;initialized?&quot;
 </span>  <span class='id identifier rubyid_ready'>ready</span><span class='period'>.</span><span class='id identifier rubyid_set'>set</span>
@@ -582,7 +582,7 @@ gem has been provided by the host app.</p>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 67</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
-  <span class='ivar'>@listener</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span> <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@listener</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='ivar'>@listener</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span> <span class='kw'>unless</span> <span class='ivar'>@listener</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -594,9 +594,9 @@ gem has been provided by the host app.</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:53 2022 by
+  Generated on Fri Dec 30 20:15:41 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>

@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -717,7 +717,7 @@
     <span class='id identifier rubyid_del_item'>del_item</span> <span class='op'>=</span> <span class='id identifier rubyid_make_keys_hash'>make_keys_hash</span><span class='lparen'>(</span><span class='id identifier rubyid_tuple'>tuple</span><span class='lbracket'>[</span><span class='int'>0</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_tuple'>tuple</span><span class='lbracket'>[</span><span class='int'>1</span><span class='rbracket'>]</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_requests'>requests</span><span class='period'>.</span><span class='id identifier rubyid_push'>push</span><span class='lparen'>(</span><span class='lbrace'>{</span> <span class='label'>delete_request:</span> <span class='lbrace'>{</span> <span class='label'>key:</span> <span class='id identifier rubyid_del_item'>del_item</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
-    
+
   <span class='comment'># Now set the special key that we check in initialized_internal?
 </span>  <span class='id identifier rubyid_inited_item'>inited_item</span> <span class='op'>=</span> <span class='id identifier rubyid_make_keys_hash'>make_keys_hash</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='comma'>,</span> <span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_requests'>requests</span><span class='period'>.</span><span class='id identifier rubyid_push'>push</span><span class='lparen'>(</span><span class='lbrace'>{</span> <span class='label'>put_request:</span> <span class='lbrace'>{</span> <span class='label'>item:</span> <span class='id identifier rubyid_inited_item'>inited_item</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
@@ -876,11 +876,11 @@
       <span class='label'>expression_attribute_names:</span> <span class='lbrace'>{</span>
         <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>#namespace</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='const'><span class='object_link'><a href="DynamoDBStoreImplBase.html#PARTITION_KEY-constant" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBStoreImplBase::PARTITION_KEY (constant)">PARTITION_KEY</a></span></span><span class='comma'>,</span>
         <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>#key</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='const'><span class='object_link'><a href="DynamoDBStoreImplBase.html#SORT_KEY-constant" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBStoreImplBase::SORT_KEY (constant)">SORT_KEY</a></span></span><span class='comma'>,</span>
-        <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>#version</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='const'><span class='object_link'><a href="#VERSION_ATTRIBUTE-constant" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore::VERSION_ATTRIBUTE (constant)">VERSION_ATTRIBUTE</a></span></span>
+        <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>#version</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='const'><span class='object_link'><a href="#VERSION_ATTRIBUTE-constant" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore::VERSION_ATTRIBUTE (constant)">VERSION_ATTRIBUTE</a></span></span><span class='comma'>,</span>
       <span class='rbrace'>}</span><span class='comma'>,</span>
       <span class='label'>expression_attribute_values:</span> <span class='lbrace'>{</span>
-        <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>:version</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span>
-      <span class='rbrace'>}</span>
+        <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>:version</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span><span class='comma'>,</span>
+      <span class='rbrace'>}</span><span class='comma'>,</span>
     <span class='rbrace'>}</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_new_item'>new_item</span>
   <span class='kw'>rescue</span> <span class='const'>Aws</span><span class='op'>::</span><span class='const'>DynamoDB</span><span class='op'>::</span><span class='const'>Errors</span><span class='op'>::</span><span class='const'>ConditionalCheckFailedException</span>
@@ -899,9 +899,9 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:53 2022 by
+  Generated on Fri Dec 30 20:15:41 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>

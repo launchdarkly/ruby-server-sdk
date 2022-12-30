@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::BigSegmentsConfig
   
-    &mdash; LaunchDarkly Ruby SDK (6.4.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.0)
   
 </title>
 
@@ -103,7 +103,7 @@
   <div class="discussion">
     <p>Configuration options related to Big Segments.</p>
 
-<p>Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+<p>Big Segments are a specific type of segments. For more information, read the LaunchDarkly
 documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">https://docs.launchdarkly.com/home/users/big-segments</a></p>
 
 <p>If your application uses Big Segments, you will need to create a <code>BigSegmentsConfig</code> that at a
@@ -139,12 +139,12 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
 
     <dl class="constants">
       
-        <dt id="DEFAULT_USER_CACHE_SIZE-constant" class="">DEFAULT_USER_CACHE_SIZE =
+        <dt id="DEFAULT_CONTEXT_CACHE_SIZE-constant" class="">DEFAULT_CONTEXT_CACHE_SIZE =
           
         </dt>
         <dd><pre class="code"><span class='int'>1000</span></pre></dd>
       
-        <dt id="DEFAULT_USER_CACHE_TIME-constant" class="">DEFAULT_USER_CACHE_TIME =
+        <dt id="DEFAULT_CONTEXT_CACHE_TIME-constant" class="">DEFAULT_CONTEXT_CACHE_TIME =
           
         </dt>
         <dd><pre class="code"><span class='int'>5</span></pre></dd>
@@ -167,6 +167,66 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
 
   <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
   <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#context_cache_size-instance_method" title="#context_cache_size (instance method)">#<strong>context_cache_size</strong>  &#x21d2; Integer </a>
+    
+
+    
+      (also: #user_cache_size)
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The maximum number of contexts whose Big Segment state will be cached by the SDK at any given time.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#context_cache_time-instance_method" title="#context_cache_time (instance method)">#<strong>context_cache_time</strong>  &#x21d2; Float </a>
+    
+
+    
+      (also: #user_cache_time)
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The maximum length of time (in seconds) that the Big Segment state for a context will be cached by the SDK.</p>
+</div></span>
+  
+</li>
+
     
       <li class="public ">
   <span class="summary_signature">
@@ -252,62 +312,6 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
 </li>
 
     
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#user_cache_size-instance_method" title="#user_cache_size (instance method)">#<strong>user_cache_size</strong>  &#x21d2; Integer </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'><p>The maximum number of users whose Big Segment state will be cached by the SDK at any given time.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#user_cache_time-instance_method" title="#user_cache_time (instance method)">#<strong>user_cache_time</strong>  &#x21d2; Float </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'><p>The maximum length of time (in seconds) that the Big Segment state for a user will be cached by the SDK.</p>
-</div></span>
-  
-</li>
-
-    
   </ul>
 
 
@@ -324,7 +328,7 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(store:, user_cache_size: nil, user_cache_time: nil, status_poll_interval: nil, stale_after: nil)  &#x21d2; BigSegmentsConfig </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(store:, context_cache_size: nil, context_cache_time: nil, status_poll_interval: nil, stale_after: nil)  &#x21d2; BigSegmentsConfig </a>
     
 
     
@@ -355,7 +359,7 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(store:, user_cache_size: nil, user_cache_time: nil, status_poll_interval: nil, stale_after: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::BigSegmentsConfig (class)">BigSegmentsConfig</a></span></tt> 
+    #<strong>initialize</strong>(store:, context_cache_size: nil, context_cache_time: nil, status_poll_interval: nil, stale_after: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::BigSegmentsConfig (class)">BigSegmentsConfig</a></span></tt> 
   
 
   
@@ -389,7 +393,7 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
   
     <li>
       
-        <span class='name'>user_cache_size</span>
+        <span class='name'>context_cache_size</span>
       
       
         <span class='type'>(<tt>Integer</tt>)</span>
@@ -399,14 +403,14 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
       
       
         &mdash;
-        <div class='inline'><p>See <span class='object_link'><a href="#user_cache_size-instance_method" title="LaunchDarkly::BigSegmentsConfig#user_cache_size (method)">#user_cache_size</a></span>.</p>
+        <div class='inline'><p>See <span class='object_link'><a href="#context_cache_size-instance_method" title="LaunchDarkly::BigSegmentsConfig#context_cache_size (method)">#context_cache_size</a></span>.</p>
 </div>
       
     </li>
   
     <li>
       
-        <span class='name'>user_cache_time</span>
+        <span class='name'>context_cache_time</span>
       
       
         <span class='type'>(<tt>Float</tt>)</span>
@@ -416,7 +420,7 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
       
       
         &mdash;
-        <div class='inline'><p>See <span class='object_link'><a href="#user_cache_time-instance_method" title="LaunchDarkly::BigSegmentsConfig#user_cache_time (method)">#user_cache_time</a></span>.</p>
+        <div class='inline'><p>See <span class='object_link'><a href="#context_cache_time-instance_method" title="LaunchDarkly::BigSegmentsConfig#context_cache_time (method)">#context_cache_time</a></span>.</p>
 </div>
       
     </li>
@@ -464,21 +468,21 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
       <pre class="lines">
 
 
-569
-570
-571
-572
-573
-574
-575</pre>
+601
+602
+603
+604
+605
+606
+607</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 569</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 601</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>store:</span><span class='comma'>,</span> <span class='label'>user_cache_size:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>user_cache_time:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>status_poll_interval:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>stale_after:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>store:</span><span class='comma'>,</span> <span class='label'>context_cache_size:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>context_cache_time:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>status_poll_interval:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>stale_after:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@store</span> <span class='op'>=</span> <span class='id identifier rubyid_store'>store</span>
-  <span class='ivar'>@user_cache_size</span> <span class='op'>=</span> <span class='id identifier rubyid_user_cache_size'>user_cache_size</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_USER_CACHE_SIZE-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_USER_CACHE_SIZE (constant)">DEFAULT_USER_CACHE_SIZE</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_user_cache_size'>user_cache_size</span>
-  <span class='ivar'>@user_cache_time</span> <span class='op'>=</span> <span class='id identifier rubyid_user_cache_time'>user_cache_time</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_USER_CACHE_TIME-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_USER_CACHE_TIME (constant)">DEFAULT_USER_CACHE_TIME</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_user_cache_time'>user_cache_time</span>
+  <span class='ivar'>@context_cache_size</span> <span class='op'>=</span> <span class='id identifier rubyid_context_cache_size'>context_cache_size</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_CONTEXT_CACHE_SIZE-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_CONTEXT_CACHE_SIZE (constant)">DEFAULT_CONTEXT_CACHE_SIZE</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_context_cache_size'>context_cache_size</span>
+  <span class='ivar'>@context_cache_time</span> <span class='op'>=</span> <span class='id identifier rubyid_context_cache_time'>context_cache_time</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_CONTEXT_CACHE_TIME-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_CONTEXT_CACHE_TIME (constant)">DEFAULT_CONTEXT_CACHE_TIME</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_context_cache_time'>context_cache_time</span>
   <span class='ivar'>@status_poll_interval</span> <span class='op'>=</span> <span class='id identifier rubyid_status_poll_interval'>status_poll_interval</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_STATUS_POLL_INTERVAL-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_STATUS_POLL_INTERVAL (constant)">DEFAULT_STATUS_POLL_INTERVAL</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_status_poll_interval'>status_poll_interval</span>
   <span class='ivar'>@stale_after</span> <span class='op'>=</span> <span class='id identifier rubyid_stale_after'>stale_after</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_STALE_AFTER-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_STALE_AFTER (constant)">DEFAULT_STALE_AFTER</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_stale_after'>stale_after</span>
 <span class='kw'>end</span></pre>
@@ -495,7 +499,126 @@ object as the <code>big_segments</code> parameter when creating a <span class='o
       
       <span id=""></span>
       <div class="method_details first">
-  <h3 class="signature first" id="stale_after-instance_method">
+  <h3 class="signature first" id="context_cache_size-instance_method">
+  
+    #<strong>context_cache_size</strong>  &#x21d2; <tt>Integer</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='user_cache_size-instance_method'>user_cache_size</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The maximum number of contexts whose Big Segment state will be cached by the SDK at any given time.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+616
+617
+618</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 616</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_context_cache_size'>context_cache_size</span>
+  <span class='ivar'>@context_cache_size</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="context_cache_time-instance_method">
+  
+    #<strong>context_cache_time</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='user_cache_time-instance_method'>user_cache_time</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The maximum length of time (in seconds) that the Big Segment state for a context will be cached
+by the SDK.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+628
+629
+630</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 628</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_context_cache_time'>context_cache_time</span>
+  <span class='ivar'>@context_cache_time</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="stale_after-instance_method">
   
     #<strong>stale_after</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
   
@@ -533,12 +656,12 @@ considered out of date.</p>
       <pre class="lines">
 
 
-599
-600
-601</pre>
+645
+646
+647</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 599</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 645</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stale_after'>stale_after</span>
   <span class='ivar'>@stale_after</span>
@@ -589,12 +712,12 @@ available and to determine how long ago it was updated.</p>
       <pre class="lines">
 
 
-594
-595
-596</pre>
+640
+641
+642</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 594</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 640</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_status_poll_interval'>status_poll_interval</span>
   <span class='ivar'>@status_poll_interval</span>
@@ -645,126 +768,15 @@ query the Big Segments database.</p>
       <pre class="lines">
 
 
-580
-581
-582</pre>
+612
+613
+614</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 580</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 612</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_store'>store</span>
   <span class='ivar'>@store</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="user_cache_size-instance_method">
-  
-    #<strong>user_cache_size</strong>  &#x21d2; <tt>Integer</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    <p>The maximum number of users whose Big Segment state will be cached by the SDK at any given time.</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>Integer</tt>)</span>
-      
-      
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-584
-585
-586</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 584</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_user_cache_size'>user_cache_size</span>
-  <span class='ivar'>@user_cache_size</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="user_cache_time-instance_method">
-  
-    #<strong>user_cache_time</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    <p>The maximum length of time (in seconds) that the Big Segment state for a user will be cached
-by the SDK.</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>Float</tt>)</span>
-      
-      
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-589
-590
-591</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 589</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_user_cache_time'>user_cache_time</span>
-  <span class='ivar'>@user_cache_time</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -777,9 +789,9 @@ by the SDK.</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Sep  7 23:36:53 2022 by
+  Generated on Fri Dec 30 20:15:40 2022 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.28 (ruby-2.5.9).
+  0.9.28 (ruby-2.7.7).
 </div>
 
     </div>
