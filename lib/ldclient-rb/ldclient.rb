@@ -59,7 +59,7 @@ module LaunchDarkly
 
       get_flag = lambda { |key| @store.get(FEATURES, key) }
       get_segment = lambda { |key| @store.get(SEGMENTS, key) }
-      get_big_segments_membership = lambda { |key| @big_segment_store_manager.get_user_membership(key) }
+      get_big_segments_membership = lambda { |key| @big_segment_store_manager.get_context_membership(key) }
       @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, get_big_segments_membership, @config.logger)
 
       if !@config.offline? && @config.send_events && !@config.diagnostic_opt_out?
@@ -120,26 +120,20 @@ module LaunchDarkly
     end
 
     #
-    # @param key [String] the feature flag key
-    # @param user [Hash] the user properties
-    # @param default [Boolean] (false) the value to use if the flag cannot be evaluated
-    # @return [Boolean] the flag value
-    # @deprecated Use {#variation} instead.
-    #
-    def toggle?(key, user, default = false)
-      @config.logger.warn { "[LDClient] toggle? is deprecated. Use variation instead" }
-      variation(key, user, default)
-    end
-
-    #
-    # Creates a hash string that can be used by the JavaScript SDK to identify a user.
+    # Creates a hash string that can be used by the JavaScript SDK to identify a context.
     # For more information, see [Secure mode](https://docs.launchdarkly.com/sdk/features/secure-mode#ruby).
     #
-    # @param user [Hash] the user properties
-    # @return [String] a hash string
+    # @param context [Hash, LDContext]
+    # @return [String, nil] a hash string or nil if the provided context was invalid
     #
-    def secure_mode_hash(user)
-      OpenSSL::HMAC.hexdigest("sha256", @sdk_key, user[:key].to_s)
+    def secure_mode_hash(context)
+      context = Impl::Context::make_context(context)
+      unless context.valid?
+        @config.logger.warn("secure_mode_hash called with invalid context: #{context.error}")
+        return nil
+      end
+
+      OpenSSL::HMAC.hexdigest("sha256", @sdk_key, context.fully_qualified_key)
     end
 
     #
@@ -165,44 +159,22 @@ module LaunchDarkly
     end
 
     #
-    # Determines the variation of a feature flag to present to a user.
-    #
-    # At a minimum, the user hash should contain a `:key`, which should be the unique
-    # identifier for your user (or, for an anonymous user, a session identifier or
-    # cookie).
-    #
-    # Other supported user attributes include IP address, country code, and an arbitrary hash of
-    # custom attributes. For more about the supported user properties and how they work in
-    # LaunchDarkly, see [Targeting users](https://docs.launchdarkly.com/home/flags/targeting-users).
-    #
-    # The optional `:privateAttributeNames` user property allows you to specify a list of
-    # attribute names that should not be sent back to LaunchDarkly.
-    # [Private attributes](https://docs.launchdarkly.com/home/users/attributes#creating-private-user-attributes)
-    # can also be configured globally in {Config}.
-    #
-    # @example Basic user hash
-    #   {key: "my-user-id"}
-    #
-    # @example More complete user hash
-    #   {key: "my-user-id", ip: "127.0.0.1", country: "US", custom: {customer_rank: 1000}}
-    #
-    # @example User with a private attribute
-    #   {key: "my-user-id", email: "email@example.com", privateAttributeNames: ["email"]}
+    # Determines the variation of a feature flag to present for a context.
     #
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
-    # @param user [Hash] a hash containing parameters for the end user requesting the flag
+    # @param context [Hash, LDContext] a hash or LDContext instance describing the context requesting the flag
     # @param default the default value of the flag; this is used if there is an error
     #   condition making it impossible to find or evaluate the flag
     #
-    # @return the variation to show the user, or the default value if there's an an error
+    # @return the variation for the provided context, or the default value if there's an an error
     #
-    def variation(key, user, default)
-      evaluate_internal(key, user, default, false).value
+    def variation(key, context, default)
+      evaluate_internal(key, context, default, false).value
     end
 
     #
-    # Determines the variation of a feature flag for a user, like {#variation}, but also
+    # Determines the variation of a feature flag for a context, like {#variation}, but also
     # provides additional information about how this value was calculated.
     #
     # The return value of `variation_detail` is an {EvaluationDetail} object, which has
@@ -218,43 +190,48 @@ module LaunchDarkly
     #
     # @param key [String] the unique feature key for the feature flag, as shown
     #   on the LaunchDarkly dashboard
-    # @param user [Hash] a hash containing parameters for the end user requesting the flag
+    # @param context [Hash, LDContext] a hash or object describing the context requesting the flag,
     # @param default the default value of the flag; this is used if there is an error
     #   condition making it impossible to find or evaluate the flag
     #
     # @return [EvaluationDetail] an object describing the result
     #
-    def variation_detail(key, user, default)
-      evaluate_internal(key, user, default, true)
+    def variation_detail(key, context, default)
+      evaluate_internal(key, context, default, true)
     end
 
     #
-    # Registers the user. This method simply creates an analytics event containing the user
-    # properties, so that LaunchDarkly will know about that user if it does not already.
+    # Registers the context. This method simply creates an analytics event containing the context
+    # properties, so that LaunchDarkly will know about that context if it does not already.
     #
-    # Calling {#variation} or {#variation_detail} also sends the user information to
+    # Calling {#variation} or {#variation_detail} also sends the context information to
     # LaunchDarkly (if events are enabled), so you only need to use {#identify} if you
-    # want to identify the user without evaluating a flag.
+    # want to identify the context without evaluating a flag.
     #
     # Note that event delivery is asynchronous, so the event may not actually be sent
     # until later; see {#flush}.
     #
-    # @param user [Hash] The user to register; this can have all the same user properties
-    #   described in {#variation}
+    # @param context [Hash, LDContext] a hash or object describing the context to register
     # @return [void]
     #
-    def identify(user)
-      if !user || user[:key].nil? || user[:key].empty?
-        @config.logger.warn("Identify called with nil user or empty user key!")
+    def identify(context)
+      context = LaunchDarkly::Impl::Context.make_context(context)
+      unless context.valid?
+        @config.logger.warn("Identify called with invalid context: #{context.error}")
         return
       end
-      sanitize_user(user)
-      @event_processor.record_identify_event(user)
+
+      if context.key == ""
+        @config.logger.warn("Identify called with empty key")
+        return
+      end
+
+      @event_processor.record_identify_event(context)
     end
 
     #
-    # Tracks that a user performed an event. This method creates a "custom" analytics event
-    # containing the specified event name (key), user properties, and optional data.
+    # Tracks that a context performed an event. This method creates a "custom" analytics event
+    # containing the specified event name (key), context properties, and optional data.
     #
     # Note that event delivery is asynchronous, so the event may not actually be sent
     # until later; see {#flush}.
@@ -265,8 +242,7 @@ module LaunchDarkly
     # for the latest status.
     #
     # @param event_name [String] The name of the event
-    # @param user [Hash] The user to register; this can have all the same user properties
-    #   described in {#variation}
+    # @param context [Hash, LDContext] a hash or object describing the context to track
     # @param data [Hash] An optional hash containing any additional data associated with the event
     # @param metric_value [Number] A numeric value used by the LaunchDarkly experimentation
     #   feature in numeric custom metrics. Can be omitted if this event is used by only
@@ -274,52 +250,22 @@ module LaunchDarkly
     #   for Data Export.
     # @return [void]
     #
-    def track(event_name, user, data = nil, metric_value = nil)
-      if !user || user[:key].nil?
-        @config.logger.warn("Track called with nil user or nil user key!")
+    def track(event_name, context, data = nil, metric_value = nil)
+      context = LaunchDarkly::Impl::Context.make_context(context)
+      unless context.valid?
+        @config.logger.warn("Track called with invalid context: #{context.error}")
         return
       end
-      sanitize_user(user)
-      @event_processor.record_custom_event(user, event_name, data, metric_value)
+
+      @event_processor.record_custom_event(context, event_name, data, metric_value)
     end
 
     #
-    # Associates a new and old user object for analytics purposes via an alias event.
-    #
-    # @param current_context [Hash] The current version of a user.
-    # @param previous_context [Hash] The previous version of a user.
-    # @return [void]
-    #
-    def alias(current_context, previous_context)
-      if !current_context || current_context[:key].nil? || !previous_context || previous_context[:key].nil?
-        @config.logger.warn("Alias called with nil user or nil user key!")
-        return
-      end
-      sanitize_user(current_context)
-      sanitize_user(previous_context)
-      @event_processor.record_alias_event(current_context, previous_context)
-    end
-
-    #
-    # Returns all feature flag values for the given user.
-    #
-    # @deprecated Please use {#all_flags_state} instead. Current versions of the
-    #   client-side SDK will not generate analytics events correctly if you pass the
-    #   result of `all_flags`.
-    #
-    # @param user [Hash] The end user requesting the feature flags
-    # @return [Hash] a hash of feature flag keys to values
-    #
-    def all_flags(user)
-      all_flags_state(user).values_map
-    end
-
-    #
-    # Returns a {FeatureFlagsState} object that encapsulates the state of all feature flags for a given user,
+    # Returns a {FeatureFlagsState} object that encapsulates the state of all feature flags for a given context,
     # including the flag values and also metadata that can be used on the front end. This method does not
     # send analytics events back to LaunchDarkly.
     #
-    # @param user [Hash] The end user requesting the feature flags
+    # @param context [Hash, LDContext] a hash or object describing the context requesting the flags,
     # @param options [Hash] Optional parameters to control how the state is generated
     # @option options [Boolean] :client_side_only (false) True if only flags marked for use with the
     #   client-side SDK should be included in the state. By default, all flags are included.
@@ -331,10 +277,10 @@ module LaunchDarkly
     #   of the JSON data if you are passing the flag state to the front end.
     # @return [FeatureFlagsState] a {FeatureFlagsState} object which can be serialized to JSON
     #
-    def all_flags_state(user, options={})
+    def all_flags_state(context, options={})
       return FeatureFlagsState.new(false) if @config.offline?
 
-      if !initialized?
+      unless initialized?
         if @store.initialized?
             @config.logger.warn { "Called all_flags_state before client initialization; using last known values from data store" }
         else
@@ -343,8 +289,9 @@ module LaunchDarkly
         end
       end
 
-      unless user && !user[:key].nil?
-        @config.logger.error { "[LDClient] User and user key must be specified in all_flags_state" }
+      context = Impl::Context::make_context(context)
+      unless context.valid?
+        @config.logger.error { "[LDClient] Context was invalid for all_flags_state (#{context.error})" }
         return FeatureFlagsState.new(false)
       end
 
@@ -364,13 +311,13 @@ module LaunchDarkly
           next
         end
         begin
-          detail = @evaluator.evaluate(f, user).detail
+          detail = @evaluator.evaluate(f, context).detail
         rescue => exn
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
         end
 
-        requires_experiment_data = is_experiment(f, detail.reason)
+        requires_experiment_data = experiment?(f, detail.reason)
         flag_state = {
           key: f[:key],
           value: detail.value,
@@ -425,32 +372,34 @@ module LaunchDarkly
       end
     end
 
+    # @param context [Hash, LDContext]
     # @return [EvaluationDetail]
-    def evaluate_internal(key, user, default, with_reasons)
+    def evaluate_internal(key, context, default, with_reasons)
       if @config.offline?
         return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
       end
 
-      unless user
-        @config.logger.error { "[LDClient] Must specify user" }
+      if context.nil?
+        @config.logger.error { "[LDClient] Must specify context" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
         return detail
       end
 
-      if user[:key].nil?
-        @config.logger.warn { "[LDClient] Variation called with nil user key; returning default value" }
+      context = Impl::Context::make_context(context)
+      unless context.valid?
+        @config.logger.error { "[LDClient] Context was invalid for flag evaluation (#{context.error}); returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
         return detail
       end
 
-      if !initialized?
+      unless initialized?
         if @store.initialized?
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
         else
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
           detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
-          record_unknown_flag_eval(key, user, default, detail.reason, with_reasons)
-          return  detail
+          record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
+          return detail
         end
       end
 
@@ -459,35 +408,35 @@ module LaunchDarkly
       if feature.nil?
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_FLAG_NOT_FOUND, default)
-        record_unknown_flag_eval(key, user, default, detail.reason, with_reasons)
+        record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
         return detail
       end
 
       begin
-        res = @evaluator.evaluate(feature, user)
-        if !res.prereq_evals.nil?
+        res = @evaluator.evaluate(feature, context)
+        unless res.prereq_evals.nil?
           res.prereq_evals.each do |prereq_eval|
-            record_prereq_flag_eval(prereq_eval.prereq_flag, prereq_eval.prereq_of_flag, user, prereq_eval.detail, with_reasons)
+            record_prereq_flag_eval(prereq_eval.prereq_flag, prereq_eval.prereq_of_flag, context, prereq_eval.detail, with_reasons)
           end
         end
         detail = res.detail
         if detail.default_value?
           detail = EvaluationDetail.new(default, nil, detail.reason)
         end
-        record_flag_eval(feature, user, detail, default, with_reasons)
-        return detail
+        record_flag_eval(feature, context, detail, default, with_reasons)
+        detail
       rescue => exn
         Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
-        record_flag_eval_error(feature, user, default, detail.reason, with_reasons)
-        return detail
+        record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
+        detail
       end
     end
 
-    private def record_flag_eval(flag, user, detail, default, with_reasons)
-      add_experiment_data = is_experiment(flag, detail.reason)
+    private def record_flag_eval(flag, context, detail, default, with_reasons)
+      add_experiment_data = experiment?(flag, detail.reason)
       @event_processor.record_eval_event(
-        user,
+        context,
         flag[:key],
         flag[:version],
         detail.variation_index,
@@ -499,11 +448,11 @@ module LaunchDarkly
         nil
       )
     end
-    
-    private def record_prereq_flag_eval(prereq_flag, prereq_of_flag, user, detail, with_reasons)
-      add_experiment_data = is_experiment(prereq_flag, detail.reason)
+
+    private def record_prereq_flag_eval(prereq_flag, prereq_of_flag, context, detail, with_reasons)
+      add_experiment_data = experiment?(prereq_flag, detail.reason)
       @event_processor.record_eval_event(
-        user,
+        context,
         prereq_flag[:key],
         prereq_flag[:version],
         detail.variation_index,
@@ -515,19 +464,26 @@ module LaunchDarkly
         prereq_of_flag[:key]
       )
     end
-    
-    private def record_flag_eval_error(flag, user, default, reason, with_reasons)
-      @event_processor.record_eval_event(user, flag[:key], flag[:version], nil, default, with_reasons ? reason : nil, default,
+
+    private def record_flag_eval_error(flag, context, default, reason, with_reasons)
+      @event_processor.record_eval_event(context, flag[:key], flag[:version], nil, default, with_reasons ? reason : nil, default,
         flag[:trackEvents], flag[:debugEventsUntilDate], nil)
     end
 
-    private def record_unknown_flag_eval(flag_key, user, default, reason, with_reasons)
-      @event_processor.record_eval_event(user, flag_key, nil, nil, default, with_reasons ? reason : nil, default,
+    #
+    # @param flag_key [String]
+    # @param context [LaunchDarkly::LDContext]
+    # @param default [any]
+    # @param reason [LaunchDarkly::EvaluationReason]
+    # @param with_reasons [Boolean]
+    #
+    private def record_unknown_flag_eval(flag_key, context, default, reason, with_reasons)
+      @event_processor.record_eval_event(context, flag_key, nil, nil, default, with_reasons ? reason : nil, default,
         false, nil, nil)
     end
 
-    private def is_experiment(flag, reason)
-      return false if !reason
+    private def experiment?(flag, reason)
+      return false unless reason
 
       if reason.in_experiment
         return true
@@ -536,7 +492,7 @@ module LaunchDarkly
       case reason[:kind]
       when 'RULE_MATCH'
         index = reason[:ruleIndex]
-        if !index.nil?
+        unless index.nil?
           rules = flag[:rules] || []
           return index >= 0 && index < rules.length && rules[index][:trackEvents]
         end
@@ -544,12 +500,6 @@ module LaunchDarkly
         return !!flag[:trackEventsFallthrough]
       end
       false
-    end
-
-    private def sanitize_user(user)
-      if user[:key]
-        user[:key] = user[:key].to_s
-      end
     end
   end
 

@@ -15,7 +15,7 @@ class StubHTTPServer
         Port: @port,
         AccessLog: [],
         Logger: NullLogger.new,
-        RequestCallback: method(:record_request)
+        RequestCallback: method(:record_request),
       }
       @server = create_server(@port, base_opts)
     rescue Errno::EADDRINUSE
@@ -62,7 +62,7 @@ class StubHTTPServer
   def setup_ok_response(uri_path, body, content_type=nil, headers={})
     setup_response(uri_path) do |req, res|
       res.status = 200
-      res.content_type = content_type if !content_type.nil?
+      res.content_type = content_type unless content_type.nil?
       res.body = body
       headers.each { |n, v| res[n] = v }
     end
@@ -80,7 +80,7 @@ class StubHTTPServer
 
   def await_request_with_body
     r = @requests_queue.pop
-    return r[0], r[1]
+    [r[0], r[1]]
   end
 end
 
@@ -96,11 +96,11 @@ class StubProxyServer < StubHTTPServer
   def create_server(port, base_opts)
     WEBrick::HTTPProxyServer.new(base_opts.merge({
       ProxyContentHandler: proc do |req,res|
-        if !@connect_status.nil?
+        unless @connect_status.nil?
           res.status = @connect_status
         end
         @request_count += 1
-      end
+      end,
     }))
   end
 end
@@ -127,6 +127,6 @@ class SocketFactoryFromHash
   end
 
   def open(uri, timeout)
-    TCPSocket.new 'localhost', @ports[uri]
+    TCPSocket.new '127.0.0.1', @ports[uri]
   end
 end

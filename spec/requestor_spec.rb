@@ -5,8 +5,6 @@ require "spec_helper"
 $sdk_key = "secret"
 
 describe LaunchDarkly::Requestor do
-  factory = DataItemFactory.new(true)  # true = enable the usual preprocessing logic
-
   def with_requestor(base_uri, opts = {})
     r = LaunchDarkly::Requestor.new($sdk_key, LaunchDarkly::Config.new({ base_uri: base_uri, application: {id: "id", version: "version"} }.merge(opts)))
     begin
@@ -34,12 +32,12 @@ describe LaunchDarkly::Requestor do
     end
 
     it "parses response" do
-      expected_data = { flags: { x: factory.flag({ key: "x" }) } }
+      expected_data = DataSetBuilder.new.flag(FlagBuilder.new("x").build)
       with_server do |server|
         with_requestor(server.base_uri.to_s) do |requestor|
           server.setup_ok_response("/", expected_data.to_json)
           data = requestor.request_all_data()
-          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data)
+          expect(data).to eq expected_data.to_store_data
         end
       end
     end
@@ -49,10 +47,10 @@ describe LaunchDarkly::Requestor do
       logger.level = ::Logger::DEBUG
       with_server do |server|
         with_requestor(server.base_uri.to_s, { logger: logger }) do |requestor|
-          server.setup_ok_response("/", { flags: { x: { key: "y" } } }.to_json)
+          server.setup_ok_response("/", FlagBuilder.new("x").build.to_json)
           expect do
             requestor.request_all_data()
-          end.to output(/\[LDClient\] Got response from uri\:/).to_stdout_from_any_process
+          end.to output(/\[LDClient\] Got response from uri:/).to_stdout_from_any_process
         end
       end
     end
@@ -83,7 +81,7 @@ describe LaunchDarkly::Requestor do
           requestor.request_all_data()
           expect(server.requests.count).to eq 1
           expect(server.requests[0].header).to include({
-            "x-launchdarkly-wrapper" => [ "MyWrapper/1.0" ]
+            "x-launchdarkly-wrapper" => [ "MyWrapper/1.0" ],
           })
         end
       end
@@ -91,7 +89,7 @@ describe LaunchDarkly::Requestor do
 
     it "can reuse cached data" do
       etag = "xyz"
-      expected_data = { flags: { x: factory.flag({ key: "x" }) } }
+      expected_data = DataSetBuilder.new.flag(FlagBuilder.new("x").build)
       with_server do |server|
         with_requestor(server.base_uri.to_s) do |requestor|
           server.setup_response("/") do |req, res|
@@ -108,7 +106,7 @@ describe LaunchDarkly::Requestor do
           data = requestor.request_all_data()
           expect(server.requests.count).to eq 2
           expect(server.requests[1].header).to include({ "if-none-match" => [ etag ] })
-          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data)
+          expect(data).to eq expected_data.to_store_data
         end
       end
     end
@@ -116,8 +114,8 @@ describe LaunchDarkly::Requestor do
     it "replaces cached data with new data" do
       etag1 = "abc"
       etag2 = "xyz"
-      expected_data1 = { flags: { x: factory.flag({ key: "x" }) } }
-      expected_data2 = { flags: { y: factory.flag({ key: "y" }) } }
+      expected_data1 = DataSetBuilder.new.flag(FlagBuilder.new("x").build)
+      expected_data2 = DataSetBuilder.new.flag(FlagBuilder.new("y").build)
       with_server do |server|
         with_requestor(server.base_uri.to_s) do |requestor|
           server.setup_response("/") do |req, res|
@@ -126,14 +124,14 @@ describe LaunchDarkly::Requestor do
             res["ETag"] = etag1
           end
           data = requestor.request_all_data()
-          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data1)
+          expect(data).to eq expected_data1.to_store_data
           expect(server.requests.count).to eq 1
 
           server.setup_response("/") do |req, res|
             res.status = 304
           end
           data = requestor.request_all_data()
-          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data1)
+          expect(data).to eq expected_data1.to_store_data
           expect(server.requests.count).to eq 2
           expect(server.requests[1].header).to include({ "if-none-match" => [ etag1 ] })
 
@@ -143,7 +141,7 @@ describe LaunchDarkly::Requestor do
             res["ETag"] = etag2
           end
           data = requestor.request_all_data()
-          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data2)
+          expect(data).to eq expected_data2.to_store_data
           expect(server.requests.count).to eq 3
           expect(server.requests[2].header).to include({ "if-none-match" => [ etag1 ] })
 
@@ -151,7 +149,7 @@ describe LaunchDarkly::Requestor do
             res.status = 304
           end
           data = requestor.request_all_data()
-          expect(data).to eq LaunchDarkly::Impl::Model.make_all_store_data(expected_data2)
+          expect(data).to eq expected_data2.to_store_data
           expect(server.requests.count).to eq 4
           expect(server.requests[3].header).to include({ "if-none-match" => [ etag2 ] })
         end
@@ -159,24 +157,24 @@ describe LaunchDarkly::Requestor do
     end
 
     it "uses UTF-8 encoding by default" do
-      content = '{"flags": {"flagkey": {"key": "flagkey", "variations": ["blue", "grėeń"]}}}'
+      expected_data = DataSetBuilder.new.flag(FlagBuilder.new("flagkey").variations("blue", "grėeń").build)
       with_server do |server|
-        server.setup_ok_response("/sdk/latest-all", content, "application/json")
+        server.setup_ok_response("/sdk/latest-all", expected_data.to_json, "application/json")
         with_requestor(server.base_uri.to_s) do |requestor|
           data = requestor.request_all_data
-          expect(data).to eq(LaunchDarkly::Impl::Model.make_all_store_data(JSON.parse(content, symbolize_names: true)))
+          expect(data).to eq expected_data.to_store_data
         end
       end
     end
 
     it "detects other encodings from Content-Type" do
-      content = '{"flags": {"flagkey": {"key": "flagkey", "variations": ["proszę", "dziękuję"]}}}'
+      expected_data = DataSetBuilder.new.flag(FlagBuilder.new("flagkey").variations("proszę", "dziękuję").build)
       with_server do |server|
-        server.setup_ok_response("/sdk/latest-all", content.encode(Encoding::ISO_8859_2),
+        server.setup_ok_response("/sdk/latest-all", expected_data.to_json.encode(Encoding::ISO_8859_2),
           "text/plain; charset=ISO-8859-2")
         with_requestor(server.base_uri.to_s) do |requestor|
           data = requestor.request_all_data
-          expect(data).to eq(LaunchDarkly::Impl::Model.make_all_store_data(JSON.parse(content, symbolize_names: true)))
+          expect(data).to eq expected_data.to_store_data
         end
       end
     end
@@ -200,14 +198,14 @@ describe LaunchDarkly::Requestor do
       # use a real proxy that really forwards requests to another test server, because
       # that test server would be at localhost, and proxy environment variables are
       # ignored if the target is localhost.
-      expected_data = { flags: { flagkey: factory.flag({ key: "flagkey" }) } }
+      expected_data = DataSetBuilder.new.flag(FlagBuilder.new("x").build)
       with_server do |proxy|
         proxy.setup_ok_response("/sdk/latest-all", expected_data.to_json, "application/json", { "etag" => "x" })
         begin
           ENV["http_proxy"] = proxy.base_uri.to_s
           with_requestor(fake_target_uri) do |requestor|
             data = requestor.request_all_data
-            expect(data).to eq(LaunchDarkly::Impl::Model.make_all_store_data(expected_data))
+            expect(data).to eq expected_data.to_store_data
           end
         ensure
           ENV["http_proxy"] = nil

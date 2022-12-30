@@ -1,4 +1,6 @@
 require 'ldclient-rb/impl/integrations/test_data/test_data_source'
+require 'ldclient-rb/impl/model/feature_flag'
+require 'ldclient-rb/impl/model/segment'
 require 'ldclient-rb/integrations/test_data/flag_builder'
 
 require 'concurrent/atomics'
@@ -14,12 +16,12 @@ module LaunchDarkly
     #
     # @example
     #     td = LaunchDarkly::Integrations::TestData.data_source
-    #     td.update(td.flag("flag-key-1").variation_for_all_users(true))
+    #     td.update(td.flag("flag-key-1").variation_for_all(true))
     #     config = LaunchDarkly::Config.new(data_source: td)
     #     client = LaunchDarkly::LDClient.new('sdkKey', config)
     #     # flags can be updated at any time:
     #     td.update(td.flag("flag-key-2")
-    #                 .variation_for_user("some-user-key", true)
+    #                 .variation_for_key("user", some-user-key", true)
     #                 .fallthrough_variation(false))
     #
     # The above example uses a simple boolean flag, but more complex configurations are possible using
@@ -77,7 +79,7 @@ module LaunchDarkly
       # starts with the same configuration that was last provided for this flag.
       #
       # Otherwise, it starts with a new default configuration in which the flag has `true` and
-      # `false` variations, is `true` for all users when targeting is turned on and
+      # `false` variations, is `true` for all contexts when targeting is turned on and
       # `false` otherwise, and currently has targeting turned on. You can change any of those
       # properties, and provide more complex behavior, using the {FlagBuilder} methods.
       #
@@ -119,7 +121,7 @@ module LaunchDarkly
           if @current_flags[flag_key] then
             version = @current_flags[flag_key][:version]
           end
-          new_flag = flag_builder.build(version+1)
+          new_flag = Impl::Model.deserialize(FEATURES, flag_builder.build(version+1))
           @current_flags[flag_key] = new_flag
         end
         update_item(FEATURES, new_flag)
@@ -149,15 +151,15 @@ module LaunchDarkly
       end
 
       #
-      # Copies a full user segment data model object into the test data.
+      # Copies a full segment data model object into the test data.
       #
       # It immediately propagates the change to any `LDClient` instance(s) that you have already
       # configured to use this `TestData`. If no `LDClient` has been started yet, it simply adds
       # this segment to the test data which will be provided to any LDClient that you subsequently
       # configure.
       #
-      # This method is currently the only way to inject user segment data, since there is no builder
-      # API for segments. It is mainly intended for the SDK's own tests of user segment functionality,
+      # This method is currently the only way to inject segment data, since there is no builder
+      # API for segments. It is mainly intended for the SDK's own tests of segment functionality,
       # since application tests that need to produce a desired evaluation state could do so more easily
       # by just setting flag values.
       #
@@ -169,12 +171,14 @@ module LaunchDarkly
       end
 
       private def use_preconfigured_item(kind, item, current)
-        key = item[:key].to_sym
+        item = Impl::Model.deserialize(kind, item)
+        key = item.key.to_sym
         @lock.with_write_lock do
           old_item = current[key]
-          if !old_item.nil? then
-            item = item.clone
-            item[:version] = old_item[:version] + 1
+          unless old_item.nil? then
+            data = item.as_json
+            data[:version] = old_item.version + 1
+            item = Impl::Model.deserialize(kind, data)
           end
           current[key] = item
         end
@@ -195,7 +199,7 @@ module LaunchDarkly
         @lock.with_read_lock do
           {
             FEATURES => @current_flags.clone,
-            SEGMENTS => @current_segments.clone
+            SEGMENTS => @current_segments.clone,
           }
         end
       end

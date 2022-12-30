@@ -10,7 +10,7 @@ module LaunchDarkly
       def null_logger
         double().as_null_object
       end
-      
+
       it "does not start when created" do
         signal = Concurrent::Event.new
         task = RepeatingTask.new(0.01, 0, -> { signal.set }, null_logger)
@@ -29,7 +29,7 @@ module LaunchDarkly
           task.start
           3.times do
             time = queue.pop
-            if !last.nil?
+            unless last.nil?
               expect(time.to_f - last.to_f).to be >=(0.05)
             end
             last = time

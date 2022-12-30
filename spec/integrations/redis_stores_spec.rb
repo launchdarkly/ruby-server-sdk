@@ -38,7 +38,7 @@ class RedisStoreTester
   def create_big_segment_store
     LaunchDarkly::Integrations::Redis.new_big_segment_store(@options)
   end
-  
+
   def set_big_segments_metadata(metadata)
     with_redis_test_client do |client|
       client.set(@actual_prefix + $RedisBigSegmentStore::KEY_LAST_UP_TO_DATE,
@@ -46,13 +46,13 @@ class RedisStoreTester
     end
   end
 
-  def set_big_segments(user_hash, includes, excludes)
+  def set_big_segments(context_hash, includes, excludes)
     with_redis_test_client do |client|
       includes.each do |ref|
-        client.sadd(@actual_prefix + $RedisBigSegmentStore::KEY_USER_INCLUDE + user_hash, ref)
+        client.sadd?(@actual_prefix + $RedisBigSegmentStore::KEY_CONTEXT_INCLUDE + context_hash, ref)
       end
       excludes.each do |ref|
-        client.sadd(@actual_prefix + $RedisBigSegmentStore::KEY_USER_EXCLUDE + user_hash, ref)
+        client.sadd?(@actual_prefix + $RedisBigSegmentStore::KEY_CONTEXT_EXCLUDE + context_hash, ref)
       end
     end
   end
@@ -85,7 +85,7 @@ describe "Redis feature store" do
       flag = { key: "foo", version: 1 }
       test_hook = make_concurrent_modifier_test_hook(other_client, flag, 2, 4)
       tester = RedisStoreTester.new({ test_hook: test_hook, logger: $null_logger })
-      
+
       ensure_stop(tester.create_feature_store) do |store|
         store.init(LaunchDarkly::FEATURES => { flag[:key] => flag })
 

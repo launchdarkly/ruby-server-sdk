@@ -1,43 +1,45 @@
-require "ldclient-rb/impl/model/preprocessed_data"
+require "ldclient-rb/impl/model/feature_flag"
+require "ldclient-rb/impl/model/segment"
 require "json"
 
-def clone_json_object(o)
-  JSON.parse(o.to_json, symbolize_names: true)
+class Flags
+  def self.from_hash(data)
+    LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::FEATURES, data)
+  end
+
+  def self.boolean_flag_with_rules(*rules)
+    builder = FlagBuilder.new("feature").on(true).variations(false, true).fallthrough_variation(0)
+    rules.each { |r| builder.rule(r) }
+    builder.build
+  end
+
+  def self.boolean_flag_with_clauses(*clauses)
+    self.boolean_flag_with_rules({ id: 'ruleid', clauses: clauses, variation: 1 })
+  end
 end
 
-class DataItemFactory
-  def initialize(with_preprocessing)
-    @with_preprocessing = with_preprocessing
+class Segments
+  def self.from_hash(data)
+    LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::SEGMENTS, data)
+  end
+end
+
+class Clauses
+  def self.match_segment(segment)
+    {
+      "attribute": "",
+      "op": "segmentMatch",
+      "values": [ segment.is_a?(String) ? segment : segment[:key] ],
+    }
   end
 
-  def flag(flag_data)
-    @with_preprocessing ? preprocessed_flag(flag_data) : flag_data
-  end
-
-  def segment(segment_data)
-    @with_preprocessing ? preprocessed_segment(segment_data) : segment_data
-  end
-
-  def boolean_flag_with_rules(rules)
-    flag({ key: 'feature', on: true, rules: rules, fallthrough: { variation: 0 }, variations: [ false, true ] })
-  end
-
-  def boolean_flag_with_clauses(clauses)
-    flag(boolean_flag_with_rules([{ id: 'ruleid', clauses: clauses, variation: 1 }]))
-  end
-
-  attr_reader :with_preprocessing
-
-  private def preprocessed_flag(o)
-    ret = clone_json_object(o)
-    LaunchDarkly::Impl::DataModelPreprocessing::Preprocessor.new().preprocess_flag!(ret)
-    ret
-  end
-
-  private def preprocessed_segment(o)
-    ret = clone_json_object(o)
-    LaunchDarkly::Impl::DataModelPreprocessing::Preprocessor.new().preprocess_segment!(ret)
-    ret
+  def self.match_context(context, attr = :key)
+    {
+      "attribute": attr.to_s,
+      "op": "in",
+      "values": [ context.get_value(attr) ],
+      "contextKind": context.individual_context(0).kind,
+    }
   end
 end
 
@@ -47,12 +49,12 @@ class FlagBuilder
       key: key,
       version: 1,
       variations: [ false ],
-      rules: []
+      rules: [],
     }
   end
 
   def build
-    DataItemFactory.new(true).flag(@flag)
+    Flags.from_hash(@flag)
   end
 
   def version(value)
@@ -69,9 +71,9 @@ class FlagBuilder
     @flag[:on] = value
     self
   end
-  
+
   def rule(r)
-    @flag[:rules].append(r.build)
+    @flag[:rules].append(r.is_a?(RuleBuilder) ? r.build : r)
     self
   end
 
@@ -113,7 +115,7 @@ class RuleBuilder
     @rule = {
       id: "",
       variation: 0,
-      clauses: []
+      clauses: [],
     }
   end
 
@@ -142,27 +144,67 @@ class RuleBuilder
   end
 end
 
+class SegmentRuleBuilder
+  def initialize()
+    @rule = {
+      clauses: [],
+    }
+  end
+
+  def build
+    @rule.clone
+  end
+
+  def clause(c)
+    @rule[:clauses].append(c)
+    self
+  end
+end
+
 class SegmentBuilder
   def initialize(key)
     @segment = {
       key: key,
       version: 1,
-    included: [],
-    excluded: []
+      included: [],
+      excluded: [],
+      includedContexts: [],
+      excludedContexts: [],
+      rules: [],
     }
   end
 
   def build
-    DataItemFactory.new(true).segment(@segment)
+    Segments.from_hash(@segment)
   end
-  
+
+  def version(value)
+    @segment[:version] = value
+    self
+  end
+
   def included(*keys)
     @segment[:included] = keys
     self
   end
 
+  def included_contexts(kind, *keys)
+    @segment[:includedContexts].append({ contextKind: kind, values: keys })
+    self
+  end
+
+  def excluded_contexts(kind, *keys)
+    @segment[:excludedContexts].append({ contextKind: kind, values: keys })
+    self
+  end
+
   def excluded(*keys)
     @segment[:excluded] = keys
+    self
+  end
+
+  def rule(r)
+    @segment[:rules].append(r.is_a?(SegmentRuleBuilder) ? r.build : r)
     self
   end
 
@@ -177,20 +219,39 @@ class SegmentBuilder
   end
 end
 
-class Clauses
-  def self.match_segment(segment)
+class DataSetBuilder
+  def initialize
+    @flags = {}
+    @segments = {}
+  end
+
+  def flag(data)
+    f = LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::FEATURES, data)
+    @flags[f.key.to_sym] = f
+    self
+  end
+
+  def segment(data)
+    s = LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::SEGMENTS, data)
+    @segments[s.key.to_sym] = s
+    self
+  end
+
+  def to_store_data
     {
-      "attribute": "",
-      "op": "segmentMatch",
-      "values": [ segment.is_a?(Hash) ? segment[:key] : segment ]
+      LaunchDarkly::FEATURES => @flags,
+      LaunchDarkly::SEGMENTS => @segments,
     }
   end
 
-  def self.match_user(user)
+  def to_hash
     {
-      "attribute": "key",
-      "op": "in",
-      "values": [ user[:key] ]
+      flags: @flags,
+      segments: @segments,
     }
+  end
+
+  def to_json(*)
+    to_hash.to_json
   end
 end

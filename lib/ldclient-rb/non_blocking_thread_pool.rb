@@ -17,7 +17,7 @@ module LaunchDarkly
     # Attempts to submit a job, but only if a worker is available. Unlike the regular post method,
     # this returns a value: true if the job was submitted, false if all workers are busy.
     def post
-      if !@semaphore.try_acquire(1)
+      unless @semaphore.try_acquire(1)
         return
       end
       @pool.post do

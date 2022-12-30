@@ -4,39 +4,24 @@ require "http"
 module LaunchDarkly
   # @private
   module Util
-    def self.stringify_attrs(hash, attrs)
-      return hash if hash.nil?
-      ret = hash
-      changed = false
-      attrs.each do |attr|
-        value = hash[attr]
-        if !value.nil? && !value.is_a?(String)
-          ret = hash.clone if !changed
-          ret[attr] = value.to_s
-          changed = true
-        end
-      end
-      ret
-    end
-
     def self.new_http_client(uri_s, config)
       http_client_options = {}
       if config.socket_factory
         http_client_options["socket_class"] = config.socket_factory
       end
       proxy = URI.parse(uri_s).find_proxy
-      if !proxy.nil?
+      unless proxy.nil?
         http_client_options["proxy"] = {
           proxy_address: proxy.host,
           proxy_port: proxy.port,
           proxy_username: proxy.user,
-          proxy_password: proxy.password
+          proxy_password: proxy.password,
         }
       end
-      return HTTP::Client.new(http_client_options)
+      HTTP::Client.new(http_client_options)
         .timeout({
           read: config.read_timeout,
-          connect: config.connect_timeout
+          connect: config.connect_timeout,
         })
         .persistent(uri_s)
     end

@@ -163,30 +163,30 @@ module LaunchDarkly
       end
 
       #
-      # Queries the store for a snapshot of the current segment state for a specific user.
+      # Queries the store for a snapshot of the current segment state for a specific context.
       #
-      # The user_hash is a base64-encoded string produced by hashing the user key as defined by
+      # The context_hash is a base64-encoded string produced by hashing the context key as defined by
       # the Big Segments specification; the store implementation does not need to know the details
       # of how this is done, because it deals only with already-hashed keys, but the string can be
       # assumed to only contain characters that are valid in base64.
       #
-      # The return value should be either a Hash, or nil if the user is not referenced in any big
+      # The return value should be either a Hash, or nil if the context is not referenced in any big
       # segments. Each key in the Hash is a "segment reference", which is how segments are
       # identified in Big Segment data. This string is not identical to the segment key-- the SDK
       # will add other information. The store implementation should not be concerned with the
-      # format of the string. Each value in the Hash is true if the user is explicitly included in
-      # the segment, false if the user is explicitly excluded from the segment-- and is not also
+      # format of the string. Each value in the Hash is true if the context is explicitly included in
+      # the segment, false if the context is explicitly excluded from the segment-- and is not also
       # explicitly included (that is, if both an include and an exclude existed in the data, the
-      # include would take precedence). If the user's status in a particular segment is undefined,
+      # include would take precedence). If the context's status in a particular segment is undefined,
       # there should be no key or value for that segment.
       #
       # This Hash may be cached by the SDK, so it should not be modified after it is created. It
       # is a snapshot of the segment membership state at one point in time.
       #
-      # @param user_hash [String]
-      # @return [Hash] true/false values for Big Segments that reference this user
+      # @param context_hash [String]
+      # @return [Hash] true/false values for Big Segments that reference this context
       #
-      def get_membership(user_hash)
+      def get_membership(context_hash)
       end
 
       #
@@ -216,7 +216,7 @@ module LaunchDarkly
     #
     # Information about the status of a Big Segment store, provided by {BigSegmentStoreStatusProvider}.
     #
-    # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+    # Big Segments are a specific type of segments. For more information, read the LaunchDarkly
     # documentation: https://docs.launchdarkly.com/home/users/big-segments
     #
     class BigSegmentStoreStatus
@@ -226,11 +226,11 @@ module LaunchDarkly
       end
 
       # True if the Big Segment store is able to respond to queries, so that the SDK can evaluate
-      # whether a user is in a segment or not.
+      # whether a context is in a segment or not.
       #
       # If this property is false, the store is not able to make queries (for instance, it may not have
       # a valid database connection). In this case, the SDK will treat any reference to a Big Segment
-      # as if no users are included in that segment. Also, the {EvaluationReason} associated with
+      # as if no contexts are included in that segment. Also, the {EvaluationReason} associated with
       # with any flag evaluation that references a Big Segment when the store is not available will
       # have a `big_segments_status` of `STORE_ERROR`.
       #
@@ -259,14 +259,14 @@ module LaunchDarkly
     #
     # The Big Segment store is the component that receives information about Big Segments, normally
     # from a database populated by the LaunchDarkly Relay Proxy. Big Segments are a specific type
-    # of user segments. For more information, read the LaunchDarkly documentation:
+    # of segments. For more information, read the LaunchDarkly documentation:
     # https://docs.launchdarkly.com/home/users/big-segments
     #
     # An implementation of this interface is returned by {LDClient#big_segment_store_status_provider}.
     # Application code never needs to implement this interface.
     #
     # There are two ways to interact with the status. One is to simply get the current status; if its
-    # `available` property is true, then the SDK is able to evaluate user membership in Big Segments,
+    # `available` property is true, then the SDK is able to evaluate context membership in Big Segments,
     # and the `stale`` property indicates whether the data might be out of date.
     #
     # The other way is to subscribe to status change notifications. Applications may wish to know if

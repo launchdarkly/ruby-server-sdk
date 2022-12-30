@@ -16,13 +16,13 @@ module LaunchDarkly
         td.update(td.flag('flag'))
         config = Config.new(send_events: false, data_source: td)
         client = LDClient.new('sdkKey', config)
-        expect(config.feature_store.get(FEATURES, 'flag')).to eql({
+        expect(config.feature_store.get(FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 0 },
           offVariation: 1,
           on: true,
-          version: 1
+          version: 1,
         })
         client.close
       end
@@ -35,40 +35,40 @@ module LaunchDarkly
         config2 = Config.new(send_events: false, data_source: td)
         client2 = LDClient.new('sdkKey', config2)
 
-        expect(config.feature_store.get(FEATURES, 'flag')).to eql({
+        expect(config.feature_store.get(FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 0 },
           offVariation: 1,
           on: true,
-          version: 1
+          version: 1,
         })
-        expect(config2.feature_store.get(FEATURES, 'flag')).to eql({
+        expect(config2.feature_store.get(FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 0 },
           offVariation: 1,
           on: true,
-          version: 1
+          version: 1,
         })
 
-        td.update(td.flag('flag').variation_for_all_users(false))
+        td.update(td.flag('flag').variation_for_all(false))
 
-        expect(config.feature_store.get(FEATURES, 'flag')).to eql({
+        expect(config.feature_store.get(FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 1 },
           offVariation: 1,
           on: true,
-          version: 2
+          version: 2,
         })
-        expect(config2.feature_store.get(FEATURES, 'flag')).to eql({
+        expect(config2.feature_store.get(FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 1 },
           offVariation: 1,
           on: true,
-          version: 2
+          version: 2,
         })
 
         client.close
@@ -83,22 +83,22 @@ module LaunchDarkly
         config = Config.new(send_events: false, data_source: td)
         client = LDClient.new('sdkKey', config)
 
-        expect(config.feature_store.get(FEATURES, 'my-flag')).to eql({
+        expect(config.feature_store.get(FEATURES, 'my-flag').data).to eql({
           key: 'my-flag', version: 1000, on: true
         })
-        expect(config.feature_store.get(SEGMENTS, 'my-segment')).to eql({
+        expect(config.feature_store.get(SEGMENTS, 'my-segment').data).to eql({
           key: 'my-segment', version: 2000
         })
 
         td.use_preconfigured_flag({ key: 'my-flag', on: false })
 
-        expect(config.feature_store.get(FEATURES, 'my-flag')).to eql({
+        expect(config.feature_store.get(FEATURES, 'my-flag').data).to eql({
           key: 'my-flag', version: 1001, on: false
         })
 
         td.use_preconfigured_segment({ key: 'my-segment', included: [ 'x' ] })
 
-        expect(config.feature_store.get(SEGMENTS, 'my-segment')).to eql({
+        expect(config.feature_store.get(SEGMENTS, 'my-segment').data).to eql({
           key: 'my-segment', version: 2001, included: [ 'x' ]
         })
 
@@ -115,11 +115,11 @@ module LaunchDarkly
 
       it 'TestData.flag returns a copy of the existing flag if it exists' do
         td = TestData.new
-        td.update(td.flag('flag').variation_for_all_users(true))
+        td.update(td.flag('flag').variation_for_all(true))
         expect(td.flag('flag').build(0)[:fallthrough][:variation]).to eq(0)
 
         #modify the flag but dont call update
-        td.flag('flag').variation_for_all_users(false).build(0)
+        td.flag('flag').variation_for_all(false).build(0)
 
         expect(td.flag('flag').build(0)[:fallthrough][:variation]).to eq(0)
       end
@@ -172,7 +172,7 @@ module LaunchDarkly
         end
 
         it 'can set variation for all users' do
-          f = TestData::FlagBuilder.new('flag').variation_for_all_users(true).build(1)
+          f = TestData::FlagBuilder.new('flag').variation_for_all(true).build(1)
           expect(f[:rules]).to be_nil
           expect(f[:targets]).to be_nil
           expect(f[:fallthrough][:variation]).to be(0)
@@ -183,7 +183,7 @@ module LaunchDarkly
                           .if_match('name', 'ben')
                           .then_return(false)
                           .variation_for_user('ben', false)
-                          .variation_for_all_users(true).build(1)
+                          .variation_for_all(true).build(1)
           expect(f.keys).to_not include(:rules)
           expect(f.keys).to_not include(:targets)
           expect(f[:fallthrough][:variation]).to be(0)
@@ -199,10 +199,10 @@ module LaunchDarkly
         end
 
         it 'can make an immutable copy of its self' do
-          fb = TestData::FlagBuilder.new('flag').variation_for_all_users(true)
+          fb = TestData::FlagBuilder.new('flag').variation_for_all(true)
           expect(fb.build(0)).to eql(fb.clone.build(0))
 
-          fcopy = fb.clone.variation_for_all_users(false).build(0)
+          fcopy = fb.clone.variation_for_all(false).build(0)
           f = fb.build(0)
 
           expect(f[:key]).to eql(fcopy[:key])
@@ -221,18 +221,20 @@ module LaunchDarkly
                                     id: "rule0",
                                     variation: 0,
                                     clauses: [{
+                                        contextKind: "user",
                                         attribute: 'name',
                                         op: 'in',
                                         values: ['ben'],
                                         negate: false,
                                       },
                                       {
+                                        contextKind: "user",
                                         attribute: 'country',
                                         op: 'in',
                                         values: ['fr'],
                                         negate: true,
-                                      }
-                                    ]
+                                      },
+                                    ],
                                   }])
         end
       end

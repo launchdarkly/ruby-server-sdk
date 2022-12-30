@@ -20,11 +20,11 @@ describe LaunchDarkly::PollingProcessor do
     segment = { key: 'segkey', version: 1 }
     all_data = {
       LaunchDarkly::FEATURES => {
-        flagkey: flag
+        flagkey: flag,
       },
       LaunchDarkly::SEGMENTS => {
-        segkey: segment
-      }
+        segkey: segment,
+      },
     }
 
     it 'puts feature data in store' do

@@ -33,7 +33,7 @@ module LaunchDarkly
         return input if dependency_fn.nil? || input.empty?
         remaining_items = input.clone
         items_out = {}
-        while !remaining_items.empty?
+        until remaining_items.empty?
           # pick a random item that hasn't been updated yet
           key, item = remaining_items.first
           self.add_with_dependencies_first(item, dependency_fn, remaining_items, items_out)
@@ -46,7 +46,7 @@ module LaunchDarkly
         remaining_items.delete(item_key)  # we won't need to visit this item again
         dependency_fn.call(item).each do |dep_key|
           dep_item = remaining_items[dep_key.to_sym]
-          self.add_with_dependencies_first(dep_item, dependency_fn, remaining_items, items_out) if !dep_item.nil?
+          self.add_with_dependencies_first(dep_item, dependency_fn, remaining_items, items_out) unless dep_item.nil?
         end
         items_out[item_key] = item
       end

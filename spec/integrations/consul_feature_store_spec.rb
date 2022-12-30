@@ -7,7 +7,7 @@ require "spec_helper"
 
 $consul_base_opts = {
   prefix: $my_prefix,
-  logger: $null_log
+  logger: $null_log,
 }
 
 class ConsulStoreTester
@@ -28,7 +28,7 @@ end
 
 describe "Consul feature store" do
   break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
-  
+
   include_examples "persistent_feature_store", ConsulStoreTester
 end
 

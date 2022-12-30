@@ -11,8 +11,8 @@ module LaunchDarkly
     describe BigSegmentStoreManager do
       subject { BigSegmentStoreManager }
 
-      let(:user_key) { 'userkey' }
-      let(:user_hash) { subject.hash_for_user_key(user_key) }
+      let(:context_key) { 'contextkey' }
+      let(:context_hash) { subject.hash_for_context_key(context_key) }
       let(:null_logger) { double.as_null_object }
 
       def always_up_to_date
@@ -37,12 +37,12 @@ module LaunchDarkly
           expected_membership = { 'key1' => true, 'key2' => true }
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
-          expect(store).to receive(:get_membership).with(user_hash).and_return(expected_membership)
+          expect(store).to receive(:get_membership).with(context_hash).and_return(expected_membership)
           allow(store).to receive(:stop)
 
           with_manager(BigSegmentsConfig.new(store: store)) do |m|
             expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::HEALTHY)
-            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_context_membership(context_key)).to eq(expected_result)
           end
         end
 
@@ -50,28 +50,28 @@ module LaunchDarkly
           expected_membership = { 'key1' => true, 'key2' => true }
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
-          expect(store).to receive(:get_membership).with(user_hash).once.and_return(expected_membership)
+          expect(store).to receive(:get_membership).with(context_hash).once.and_return(expected_membership)
           # the ".once" on this mock expectation is what verifies that the cache is working; there should only be one query
           allow(store).to receive(:stop)
 
           with_manager(BigSegmentsConfig.new(store: store)) do |m|
             expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::HEALTHY)
-            expect(m.get_user_membership(user_key)).to eq(expected_result)
-            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_context_membership(context_key)).to eq(expected_result)
+            expect(m.get_context_membership(context_key)).to eq(expected_result)
           end
         end
 
         it "can cache a nil result" do
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
-          expect(store).to receive(:get_membership).with(user_hash).once.and_return(nil)
+          expect(store).to receive(:get_membership).with(context_hash).once.and_return(nil)
           # the ".once" on this mock expectation is what verifies that the cache is working; there should only be one query
           allow(store).to receive(:stop)
 
           with_manager(BigSegmentsConfig.new(store: store)) do |m|
             expected_result = BigSegmentMembershipResult.new({}, BigSegmentsStatus::HEALTHY)
-            expect(m.get_user_membership(user_key)).to eq(expected_result)
-            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_context_membership(context_key)).to eq(expected_result)
+            expect(m.get_context_membership(context_key)).to eq(expected_result)
           end
         end
 
@@ -79,15 +79,15 @@ module LaunchDarkly
           expected_membership = { 'key1' => true, 'key2' => true }
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
-          expect(store).to receive(:get_membership).with(user_hash).twice.and_return(expected_membership)
+          expect(store).to receive(:get_membership).with(context_hash).twice.and_return(expected_membership)
           # the ".twice" on this mock expectation is what verifies that the cached result expired
           allow(store).to receive(:stop)
 
-          with_manager(BigSegmentsConfig.new(store: store, user_cache_time: 0.01)) do |m|
+          with_manager(BigSegmentsConfig.new(store: store, context_cache_time: 0.01)) do |m|
             expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::HEALTHY)
-            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_context_membership(context_key)).to eq(expected_result)
             sleep(0.1)
-            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_context_membership(context_key)).to eq(expected_result)
           end
         end
 
@@ -95,12 +95,12 @@ module LaunchDarkly
           expected_membership = { 'key1' => true, 'key2' => true }
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(always_stale)
-          expect(store).to receive(:get_membership).with(user_hash).and_return(expected_membership)
+          expect(store).to receive(:get_membership).with(context_hash).and_return(expected_membership)
           allow(store).to receive(:stop)
 
           with_manager(BigSegmentsConfig.new(store: store)) do |m|
             expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::STALE)
-            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_context_membership(context_key)).to eq(expected_result)
           end
         end
 
@@ -108,58 +108,58 @@ module LaunchDarkly
           expected_membership = { 'key1' => true, 'key2' => true }
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(nil)
-          expect(store).to receive(:get_membership).with(user_hash).and_return(expected_membership)
+          expect(store).to receive(:get_membership).with(context_hash).and_return(expected_membership)
           allow(store).to receive(:stop)
 
           with_manager(BigSegmentsConfig.new(store: store)) do |m|
             expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::STALE)
-            expect(m.get_user_membership(user_key)).to eq(expected_result)
+            expect(m.get_context_membership(context_key)).to eq(expected_result)
           end
         end
 
-        it "least recent user is evicted from cache" do
-          user_key_1, user_key_2, user_key_3 = 'userkey1', 'userkey2', 'userkey3'
-          user_hash_1, user_hash_2, user_hash_3 = subject.hash_for_user_key(user_key_1),
-            subject.hash_for_user_key(user_key_2), subject.hash_for_user_key(user_key_3)
+        it "least recent context is evicted from cache" do
+          context_key_1, context_key_2, context_key_3 = 'contextkey1', 'contextkey2', 'contextkey3'
+          context_hash_1, context_hash_2, context_hash_3 = subject.hash_for_context_key(context_key_1),
+            subject.hash_for_context_key(context_key_2), subject.hash_for_context_key(context_key_3)
           memberships = {
-            user_hash_1 => { 'seg1': true },
-            user_hash_2 => { 'seg2': true },
-            user_hash_3 => { 'seg3': true }
+            context_hash_1 => { 'seg1': true },
+            context_hash_2 => { 'seg2': true },
+            context_hash_3 => { 'seg3': true },
           }
-          queried_users = []
+          queries_contexts = []
           store = double
           expect(store).to receive(:get_metadata).at_least(:once).and_return(always_up_to_date)
           expect(store).to receive(:get_membership).exactly(4).times do |key|
-            queried_users << key
+            queries_contexts << key
             memberships[key]
           end
           allow(store).to receive(:stop)
 
-          with_manager(BigSegmentsConfig.new(store: store, user_cache_size: 2)) do |m|
-            result1 = m.get_user_membership(user_key_1)
-            result2 = m.get_user_membership(user_key_2)
-            result3 = m.get_user_membership(user_key_3)
-            expect(result1).to eq(BigSegmentMembershipResult.new(memberships[user_hash_1], BigSegmentsStatus::HEALTHY))
-            expect(result2).to eq(BigSegmentMembershipResult.new(memberships[user_hash_2], BigSegmentsStatus::HEALTHY))
-            expect(result3).to eq(BigSegmentMembershipResult.new(memberships[user_hash_3], BigSegmentsStatus::HEALTHY))
-            
-            expect(queried_users).to eq([user_hash_1, user_hash_2, user_hash_3])
+          with_manager(BigSegmentsConfig.new(store: store, context_cache_size: 2)) do |m|
+            result1 = m.get_context_membership(context_key_1)
+            result2 = m.get_context_membership(context_key_2)
+            result3 = m.get_context_membership(context_key_3)
+            expect(result1).to eq(BigSegmentMembershipResult.new(memberships[context_hash_1], BigSegmentsStatus::HEALTHY))
+            expect(result2).to eq(BigSegmentMembershipResult.new(memberships[context_hash_2], BigSegmentsStatus::HEALTHY))
+            expect(result3).to eq(BigSegmentMembershipResult.new(memberships[context_hash_3], BigSegmentsStatus::HEALTHY))
 
-            # Since the capacity is only 2 and user_key_1 was the least recently used, that key should be
-            # evicted by the user_key_3 query. Now only user_key_2 and user_key_3 are in the cache, and
+            expect(queries_contexts).to eq([context_hash_1, context_hash_2, context_hash_3])
+
+            # Since the capacity is only 2 and context_key_1 was the least recently used, that key should be
+            # evicted by the context_key_3 query. Now only context_key_2 and context_key_3 are in the cache, and
             # querying them again should not cause a new query to the store.
 
-            result2a = m.get_user_membership(user_key_2)
-            result3a = m.get_user_membership(user_key_3)
+            result2a = m.get_context_membership(context_key_2)
+            result3a = m.get_context_membership(context_key_3)
             expect(result2a).to eq(result2)
             expect(result3a).to eq(result3)
 
-            expect(queried_users).to eq([user_hash_1, user_hash_2, user_hash_3])
+            expect(queries_contexts).to eq([context_hash_1, context_hash_2, context_hash_3])
 
-            result1a = m.get_user_membership(user_key_1)
+            result1a = m.get_context_membership(context_key_1)
             expect(result1a).to eq(result1)
-            
-            expect(queried_users).to eq([user_hash_1, user_hash_2, user_hash_3, user_hash_1])
+
+            expect(queries_contexts).to eq([context_hash_1, context_hash_2, context_hash_3, context_hash_1])
           end
         end
       end
