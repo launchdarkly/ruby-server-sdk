@@ -2,6 +2,39 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.0.0] - 2022-12-30
+The latest version of this SDK supports LaunchDarkly's new custom contexts feature. Contexts are an evolution of a previously-existing concept, "users." Contexts let you create targeting rules for feature flags based on a variety of different information, including attributes pertaining to users, organizations, devices, and more. You can even combine contexts to create "multi-contexts."
+
+This feature is only available to members of LaunchDarkly's Early Access Program (EAP). If you're in the EAP, you can use contexts by updating your SDK to the latest version and, if applicable, updating your Relay Proxy. Outdated SDK versions do not support contexts, and will cause unpredictable flag evaluation behavior.
+
+If you are not in the EAP, only use single contexts of kind "user", or continue to use the user type if available. If you try to create contexts, the context will be sent to LaunchDarkly, but any data not related to the user object will be ignored.
+
+For detailed information about this version, please refer to the list below. For information on how to upgrade from the previous version, please read the [migration guide](https://docs.launchdarkly.com/sdk/server-side/ruby/migration-6-to-7).
+
+### Added:
+- The type `LaunchDarkly::LDContext` defines the new context model.
+- All SDK methods that took a hash representing the user now also accept an `LDContext`.
+
+### Changed _(breaking changes from 6.x)_:
+- The `secondary` attribute which existed in the user hash is no longer a supported feature. If you set an attribute with that name in `LDContext`, it will simply be a custom attribute like any other.
+- Analytics event data now uses a new JSON schema due to differences between the context model and the old user model.
+
+### Changed (requirements/dependencies/build):
+- The minimum language version is now Ruby 2.7, or jRuby 9.4.
+
+### Changed (behavioral changes):
+- Several optimizations within the flag evaluation logic have improved the performance of evaluations. For instance, target lists are now stored internally as sets for faster matching.
+
+### Removed:
+- Removed support for the `secondary` meta-attribute in the user hash.
+- The `alias` method no longer exists because alias events are not needed in the new context model.
+- The `inline_users_in_events` option no longer exists because it is not relevant in the new context model.
+- Removed all types and options that were deprecated as of the most recent 6.x release.
+
+### Deprecated:
+- Config options `user_keys_capacity` and `user_keys_flush_interval` are being replaced with `context_keys_capacity` and `context_keys_flush_interval`.
+- Config constants `default_user_keys_capacity` and `default_user_keys_flush_interval` are being replaced with `default_context_keys_capacity` and `default_context_keys_flush_interval`.
+
 ## [6.4.0] - 2022-09-07
 ### Added:
 - New `Config` property `application_info`, for configuration of application metadata that may be used in LaunchDarkly analytics or other product features. This does not affect feature flag evaluations.
