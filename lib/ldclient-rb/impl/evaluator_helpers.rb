@@ -10,9 +10,9 @@ module LaunchDarkly
       # @param flag [LaunchDarkly::Impl::Model::FeatureFlag]
       # @param reason [LaunchDarkly::EvaluationReason]
       #
-      def self.evaluation_detail_for_off_variation(flag, reason, logger = nil)
+      def self.evaluation_detail_for_off_variation(flag, reason)
         index = flag.off_variation
-        index.nil? ? EvaluationDetail.new(nil, nil, reason) : evaluation_detail_for_variation(flag, index, reason, logger)
+        index.nil? ? EvaluationDetail.new(nil, nil, reason) : evaluation_detail_for_variation(flag, index, reason)
       end
 
       #
@@ -20,11 +20,11 @@ module LaunchDarkly
       # @param index [Integer]
       # @param reason [LaunchDarkly::EvaluationReason]
       #
-      def self.evaluation_detail_for_variation(flag, index, reason, logger = nil)
+      def self.evaluation_detail_for_variation(flag, index, reason)
         vars = flag.variations
         if index < 0 || index >= vars.length
-          logger.error("[LDClient] Data inconsistency in feature flag \"#{flag.key}\": invalid variation index") unless logger.nil?
           EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
+          # This error condition has already been logged at the time we received the flag data - see model/feature_flag.rb
         else
           EvaluationDetail.new(vars[index], index, reason)
         end

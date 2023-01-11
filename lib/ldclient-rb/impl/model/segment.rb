@@ -12,6 +12,7 @@ module LaunchDarkly
         # @param logger [Logger|nil]
         def initialize(data, logger = nil)
           raise ArgumentError, "expected hash but got #{data.class}" unless data.is_a?(Hash)
+          errors = []
           @data = data
           @key = data[:key]
           @version = data[:version]
@@ -26,12 +27,17 @@ module LaunchDarkly
             SegmentTarget.new(target_data)
           end
           @rules = (data[:rules] || []).map do |rule_data|
-            SegmentRule.new(rule_data, logger)
+            SegmentRule.new(rule_data, errors)
           end
           @unbounded = !!data[:unbounded]
           @unbounded_context_kind = data[:unboundedContextKind] || LDContext::KIND_DEFAULT
           @generation = data[:generation]
           @salt = data[:salt]
+          unless logger.nil?
+            errors.each do |message|
+              logger.error("[LDClient] Data inconsistency in segment \"#{@key}\": #{message}")
+            end
+          end
         end
 
         # @return [Hash]
@@ -98,10 +104,10 @@ module LaunchDarkly
       end
 
       class SegmentRule
-        def initialize(data, logger)
+        def initialize(data, errors_out = nil)
           @data = data
           @clauses = (data[:clauses] || []).map do |clause_data|
-            Clause.new(clause_data, logger)
+            Clause.new(clause_data, errors_out)
           end
           @weight = data[:weight]
           @bucket_by = data[:bucketBy]
