@@ -4,6 +4,14 @@ require "set"
 
 # See serialization.rb for implementation notes on the data model classes.
 
+def check_variation_range(flag, errors_out, variation, description)
+  unless flag.nil? || errors_out.nil? || variation.nil?
+    if variation < 0 || variation >= flag.variations.length
+      errors_out << "#{description} has invalid variation index"
+    end
+  end
+end
+
 module LaunchDarkly
   module Impl
     module Model
@@ -12,6 +20,7 @@ module LaunchDarkly
         # @param logger [Logger|nil]
         def initialize(data, logger = nil)
           raise ArgumentError, "expected hash but got #{data.class}" unless data.is_a?(Hash)
+          errors = []
           @data = data
           @key = data[:key]
           @version = data[:version]
@@ -20,24 +29,30 @@ module LaunchDarkly
           @variations = data[:variations] || []
           @on = !!data[:on]
           fallthrough = data[:fallthrough] || {}
-          @fallthrough = VariationOrRollout.new(fallthrough[:variation], fallthrough[:rollout])
+          @fallthrough = VariationOrRollout.new(fallthrough[:variation], fallthrough[:rollout], self, errors, "fallthrough")
           @off_variation = data[:offVariation]
+          check_variation_range(self, errors, @off_variation, "off variation")
           @prerequisites = (data[:prerequisites] || []).map do |prereq_data|
-            Prerequisite.new(prereq_data, self, logger)
+            Prerequisite.new(prereq_data, self, errors)
           end
           @targets = (data[:targets] || []).map do |target_data|
-            Target.new(target_data, self, logger)
+            Target.new(target_data, self, errors)
           end
           @context_targets = (data[:contextTargets] || []).map do |target_data|
-            Target.new(target_data, self, logger)
+            Target.new(target_data, self, errors)
           end
           @rules = (data[:rules] || []).map.with_index do |rule_data, index|
-            FlagRule.new(rule_data, index, self, logger)
+            FlagRule.new(rule_data, index, self, errors)
           end
           @salt = data[:salt]
-          @off_result = EvaluatorHelpers.evaluation_detail_for_off_variation(self, EvaluationReason::off, logger)
+          @off_result = EvaluatorHelpers.evaluation_detail_for_off_variation(self, EvaluationReason::off)
           @fallthrough_results = Preprocessor.precompute_multi_variation_results(self,
               EvaluationReason::fallthrough(false), EvaluationReason::fallthrough(true))
+          unless logger.nil?
+            errors.each do |message|
+              logger.error("[LDClient] Data inconsistency in feature flag \"#{@key}\": #{message}")
+            end
+          end
         end
 
         # @return [Hash]
@@ -93,12 +108,13 @@ module LaunchDarkly
       end
 
       class Prerequisite
-        def initialize(data, flag, logger)
+        def initialize(data, flag, errors_out = nil)
           @data = data
           @key = data[:key]
           @variation = data[:variation]
           @failure_result = EvaluatorHelpers.evaluation_detail_for_off_variation(flag,
-            EvaluationReason::prerequisite_failed(@key), logger)
+            EvaluationReason::prerequisite_failed(@key))
+          check_variation_range(flag, errors_out, @variation, "prerequisite")
         end
 
         # @return [Hash]
@@ -112,13 +128,14 @@ module LaunchDarkly
       end
 
       class Target
-        def initialize(data, flag, logger)
+        def initialize(data, flag, errors_out = nil)
           @kind = data[:contextKind] || LDContext::KIND_DEFAULT
           @data = data
           @values = Set.new(data[:values] || [])
           @variation = data[:variation]
           @match_result = EvaluatorHelpers.evaluation_detail_for_variation(flag,
-            data[:variation], EvaluationReason::target_match, logger)
+            data[:variation], EvaluationReason::target_match)
+          check_variation_range(flag, errors_out, @variation, "target")
         end
 
         # @return [String]
@@ -134,12 +151,12 @@ module LaunchDarkly
       end
 
       class FlagRule
-        def initialize(data, rule_index, flag, logger)
+        def initialize(data, rule_index, flag, errors_out = nil)
           @data = data
           @clauses = (data[:clauses] || []).map do |clause_data|
-            Clause.new(clause_data, logger)
+            Clause.new(clause_data, errors_out)
           end
-          @variation_or_rollout = VariationOrRollout.new(data[:variation], data[:rollout])
+          @variation_or_rollout = VariationOrRollout.new(data[:variation], data[:rollout], flag, errors_out, 'rule')
           rule_id = data[:id]
           match_reason = EvaluationReason::rule_match(rule_index, rule_id)
           match_reason_in_experiment = EvaluationReason::rule_match(rule_index, rule_id, true)
@@ -157,9 +174,10 @@ module LaunchDarkly
       end
 
       class VariationOrRollout
-        def initialize(variation, rollout_data)
+        def initialize(variation, rollout_data, flag = nil, errors_out = nil, description = nil)
           @variation = variation
-          @rollout = rollout_data.nil? ? nil : Rollout.new(rollout_data)
+          check_variation_range(flag, errors_out, variation, description)
+          @rollout = rollout_data.nil? ? nil : Rollout.new(rollout_data, flag, errors_out, description)
         end
 
         # @return [Integer|nil]
@@ -169,9 +187,9 @@ module LaunchDarkly
       end
 
       class Rollout
-        def initialize(data)
+        def initialize(data, flag = nil, errors_out = nil, description = nil)
           @context_kind = data[:contextKind]
-          @variations = (data[:variations] || []).map { |v| WeightedVariation.new(v) }
+          @variations = (data[:variations] || []).map { |v| WeightedVariation.new(v, flag, errors_out, description) }
           @bucket_by = data[:bucketBy]
           @kind = data[:kind]
           @is_experiment = @kind == "experiment"
@@ -193,10 +211,11 @@ module LaunchDarkly
       end
 
       class WeightedVariation
-        def initialize(data)
+        def initialize(data, flag = nil, errors_out = nil, description = nil)
           @variation = data[:variation]
           @weight = data[:weight]
           @untracked = !!data[:untracked]
+          check_variation_range(flag, errors_out, @variation, description)
         end
 
         # @return [Integer]

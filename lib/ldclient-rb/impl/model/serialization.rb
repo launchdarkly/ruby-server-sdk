@@ -37,7 +37,7 @@ module LaunchDarkly
       # @param kind [Hash] normally either FEATURES or SEGMENTS
       # @param input [object] a JSON string or a parsed hash (or a data model object, in which case
       #  we'll just return the original object)
-      # @param logger [Logger|nil] logs warnings if there are any data validation problems
+      # @param logger [Logger|nil] logs errors if there are any data validation problems
       # @return [Object] the flag or segment (or, for an unknown data kind, the data as a hash)
       def self.deserialize(kind, input, logger = nil)
         return nil if input.nil?
