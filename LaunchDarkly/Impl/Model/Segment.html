@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Model::Segment
   
-    &mdash; LaunchDarkly Ruby SDK (7.0.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.1)
   
 </title>
 
@@ -719,13 +719,20 @@
 32
 33
 34
-35</pre>
+35
+36
+37
+38
+39
+40
+41</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 13</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>expected hash but got </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_errors'>errors</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='ivar'>@data</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span>
   <span class='ivar'>@key</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span>
   <span class='ivar'>@version</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span>
@@ -740,12 +747,17 @@
     <span class='const'><span class='object_link'><a href="SegmentTarget.html" title="LaunchDarkly::Impl::Model::SegmentTarget (class)">SegmentTarget</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SegmentTarget.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::SegmentTarget#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_target_data'>target_data</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
   <span class='ivar'>@rules</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:rules</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_rule_data'>rule_data</span><span class='op'>|</span>
-    <span class='const'><span class='object_link'><a href="SegmentRule.html" title="LaunchDarkly::Impl::Model::SegmentRule (class)">SegmentRule</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SegmentRule.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::SegmentRule#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_rule_data'>rule_data</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+    <span class='const'><span class='object_link'><a href="SegmentRule.html" title="LaunchDarkly::Impl::Model::SegmentRule (class)">SegmentRule</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="SegmentRule.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::SegmentRule#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_rule_data'>rule_data</span><span class='comma'>,</span> <span class='id identifier rubyid_errors'>errors</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
   <span class='ivar'>@unbounded</span> <span class='op'>=</span> <span class='op'>!</span><span class='op'>!</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:unbounded</span><span class='rbracket'>]</span>
   <span class='ivar'>@unbounded_context_kind</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:unboundedContextKind</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span>
   <span class='ivar'>@generation</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:generation</span><span class='rbracket'>]</span>
   <span class='ivar'>@salt</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:salt</span><span class='rbracket'>]</span>
+  <span class='kw'>unless</span> <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='id identifier rubyid_errors'>errors</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_message'>message</span><span class='op'>|</span>
+      <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] Data inconsistency in segment \&quot;</span><span class='embexpr_beg'>#{</span><span class='ivar'>@key</span><span class='embexpr_end'>}</span><span class='tstring_content'>\&quot;: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -811,12 +823,12 @@
       <pre class="lines">
 
 
-38
-39
-40</pre>
+44
+45
+46</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 38</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 44</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data'>data</span>
   <span class='ivar'>@data</span>
@@ -880,12 +892,12 @@
       <pre class="lines">
 
 
-44
-45
-46</pre>
+50
+51
+52</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 44</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 50</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_deleted'>deleted</span>
   <span class='ivar'>@deleted</span>
@@ -949,12 +961,12 @@
       <pre class="lines">
 
 
-48
-49
-50</pre>
+54
+55
+56</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 48</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 54</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_excluded'>excluded</span>
   <span class='ivar'>@excluded</span>
@@ -1018,12 +1030,12 @@
       <pre class="lines">
 
 
-52
-53
-54</pre>
+58
+59
+60</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 52</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 58</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_excluded_contexts'>excluded_contexts</span>
   <span class='ivar'>@excluded_contexts</span>
@@ -1087,12 +1099,12 @@
       <pre class="lines">
 
 
-60
-61
-62</pre>
+66
+67
+68</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 60</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 66</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_generation'>generation</span>
   <span class='ivar'>@generation</span>
@@ -1156,12 +1168,12 @@
       <pre class="lines">
 
 
-46
-47
-48</pre>
+52
+53
+54</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 46</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 52</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_included'>included</span>
   <span class='ivar'>@included</span>
@@ -1225,12 +1237,12 @@
       <pre class="lines">
 
 
-50
-51
-52</pre>
+56
+57
+58</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 50</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 56</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_included_contexts'>included_contexts</span>
   <span class='ivar'>@included_contexts</span>
@@ -1294,12 +1306,12 @@
       <pre class="lines">
 
 
-40
-41
-42</pre>
+46
+47
+48</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 40</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 46</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_key'>key</span>
   <span class='ivar'>@key</span>
@@ -1363,12 +1375,12 @@
       <pre class="lines">
 
 
-54
-55
-56</pre>
+60
+61
+62</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 54</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 60</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rules'>rules</span>
   <span class='ivar'>@rules</span>
@@ -1432,12 +1444,12 @@
       <pre class="lines">
 
 
-62
-63
-64</pre>
+68
+69
+70</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 62</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 68</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_salt'>salt</span>
   <span class='ivar'>@salt</span>
@@ -1501,12 +1513,12 @@
       <pre class="lines">
 
 
-56
-57
-58</pre>
+62
+63
+64</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 56</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 62</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_unbounded'>unbounded</span>
   <span class='ivar'>@unbounded</span>
@@ -1570,12 +1582,12 @@
       <pre class="lines">
 
 
-58
-59
-60</pre>
+64
+65
+66</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 58</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 64</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_unbounded_context_kind'>unbounded_context_kind</span>
   <span class='ivar'>@unbounded_context_kind</span>
@@ -1639,12 +1651,12 @@
       <pre class="lines">
 
 
-42
-43
-44</pre>
+48
+49
+50</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 42</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 48</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_version'>version</span>
   <span class='ivar'>@version</span>
@@ -1700,12 +1712,12 @@
       <pre class="lines">
 
 
-71
-72
-73</pre>
+77
+78
+79</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 71</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 77</span>
 
 <span class='kw'>def</span> <span class='op'>==</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Impl::Model::Segment (class)">Segment</a></span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_data'>data</span> <span class='op'>==</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_data'>data</span>
@@ -1757,12 +1769,12 @@ we migrate entirely to using attributes of the class.</p>
       <pre class="lines">
 
 
-67
-68
-69</pre>
+73
+74
+75</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 67</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 73</span>
 
 <span class='kw'>def</span> <span class='op'>[]</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='ivar'>@data</span><span class='lbracket'>[</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span>
@@ -1812,12 +1824,12 @@ we migrate entirely to using attributes of the class.</p>
       <pre class="lines">
 
 
-75
-76
-77</pre>
+81
+82
+83</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 75</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 81</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_as_json'>as_json</span><span class='lparen'>(</span><span class='op'>*</span><span class='rparen'>)</span> <span class='comment'># parameter is unused, but may be passed if we&#39;re using the json gem
 </span>  <span class='ivar'>@data</span>
@@ -1867,12 +1879,12 @@ we migrate entirely to using attributes of the class.</p>
       <pre class="lines">
 
 
-80
-81
-82</pre>
+86
+87
+88</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 80</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 86</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_a'>a</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_as_json'>as_json</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='id identifier rubyid_a'>a</span><span class='rparen'>)</span>
@@ -1887,7 +1899,7 @@ we migrate entirely to using attributes of the class.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Dec 30 20:15:42 2022 by
+  Generated on Thu Jan 19 21:26:40 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.28 (ruby-2.7.7).
 </div>

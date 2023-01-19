@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Model::SegmentRule
   
-    &mdash; LaunchDarkly Ruby SDK (7.0.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.1)
   
 </title>
 
@@ -281,7 +281,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(data, logger)  &#x21d2; SegmentRule </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(data, errors_out = nil)  &#x21d2; SegmentRule </a>
     
 
     
@@ -312,7 +312,7 @@
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(data, logger)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::Model::SegmentRule (class)">SegmentRule</a></span></tt> 
+    #<strong>initialize</strong>(data, errors_out = nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::Model::SegmentRule (class)">SegmentRule</a></span></tt> 
   
 
   
@@ -349,23 +349,23 @@
       <pre class="lines">
 
 
-101
-102
-103
-104
-105
-106
 107
 108
-109</pre>
+109
+110
+111
+112
+113
+114
+115</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 101</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 107</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='id identifier rubyid_errors_out'>errors_out</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@data</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span>
   <span class='ivar'>@clauses</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:clauses</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_clause_data'>clause_data</span><span class='op'>|</span>
-    <span class='const'><span class='object_link'><a href="Clause.html" title="LaunchDarkly::Impl::Model::Clause (class)">Clause</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Clause.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Clause#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_clause_data'>clause_data</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+    <span class='const'><span class='object_link'><a href="Clause.html" title="LaunchDarkly::Impl::Model::Clause (class)">Clause</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Clause.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Clause#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_clause_data'>clause_data</span><span class='comma'>,</span> <span class='id identifier rubyid_errors_out'>errors_out</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
   <span class='ivar'>@weight</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:weight</span><span class='rbracket'>]</span>
   <span class='ivar'>@bucket_by</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:bucketBy</span><span class='rbracket'>]</span>
@@ -435,12 +435,12 @@
       <pre class="lines">
 
 
-118
-119
-120</pre>
+124
+125
+126</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 118</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 124</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_bucket_by'>bucket_by</span>
   <span class='ivar'>@bucket_by</span>
@@ -504,12 +504,12 @@
       <pre class="lines">
 
 
-114
-115
-116</pre>
+120
+121
+122</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 114</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 120</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_clauses'>clauses</span>
   <span class='ivar'>@clauses</span>
@@ -573,12 +573,12 @@
       <pre class="lines">
 
 
-112
-113
-114</pre>
+118
+119
+120</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 112</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 118</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data'>data</span>
   <span class='ivar'>@data</span>
@@ -642,12 +642,12 @@
       <pre class="lines">
 
 
-120
-121
-122</pre>
+126
+127
+128</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 120</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 126</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rollout_context_kind'>rollout_context_kind</span>
   <span class='ivar'>@rollout_context_kind</span>
@@ -711,12 +711,12 @@
       <pre class="lines">
 
 
-116
-117
-118</pre>
+122
+123
+124</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 116</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/segment.rb', line 122</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_weight'>weight</span>
   <span class='ivar'>@weight</span>
@@ -732,7 +732,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Dec 30 20:15:42 2022 by
+  Generated on Thu Jan 19 21:26:40 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.28 (ruby-2.7.7).
 </div>

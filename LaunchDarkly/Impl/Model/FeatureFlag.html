@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Model::FeatureFlag
   
-    &mdash; LaunchDarkly Ruby SDK (7.0.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.1)
   
 </title>
 
@@ -751,14 +751,6 @@
       <pre class="lines">
 
 
-13
-14
-15
-16
-17
-18
-19
-20
 21
 22
 23
@@ -779,13 +771,29 @@
 38
 39
 40
-41</pre>
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 13</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 21</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>expected hash but got </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_errors'>errors</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='ivar'>@data</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span>
   <span class='ivar'>@key</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span>
   <span class='ivar'>@version</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span>
@@ -794,24 +802,30 @@
   <span class='ivar'>@variations</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:variations</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='ivar'>@on</span> <span class='op'>=</span> <span class='op'>!</span><span class='op'>!</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:on</span><span class='rbracket'>]</span>
   <span class='id identifier rubyid_fallthrough'>fallthrough</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:fallthrough</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
-  <span class='ivar'>@fallthrough</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="VariationOrRollout.html" title="LaunchDarkly::Impl::Model::VariationOrRollout (class)">VariationOrRollout</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="VariationOrRollout.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::VariationOrRollout#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_fallthrough'>fallthrough</span><span class='lbracket'>[</span><span class='symbol'>:variation</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_fallthrough'>fallthrough</span><span class='lbracket'>[</span><span class='symbol'>:rollout</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='ivar'>@fallthrough</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="VariationOrRollout.html" title="LaunchDarkly::Impl::Model::VariationOrRollout (class)">VariationOrRollout</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="VariationOrRollout.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::VariationOrRollout#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_fallthrough'>fallthrough</span><span class='lbracket'>[</span><span class='symbol'>:variation</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_fallthrough'>fallthrough</span><span class='lbracket'>[</span><span class='symbol'>:rollout</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_errors'>errors</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>fallthrough</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='ivar'>@off_variation</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:offVariation</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_check_variation_range'><span class='object_link'><a href="../../../top-level-namespace.html#check_variation_range-instance_method" title="#check_variation_range (method)">check_variation_range</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_errors'>errors</span><span class='comma'>,</span> <span class='ivar'>@off_variation</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>off variation</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='ivar'>@prerequisites</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:prerequisites</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_prereq_data'>prereq_data</span><span class='op'>|</span>
-    <span class='const'><span class='object_link'><a href="Prerequisite.html" title="LaunchDarkly::Impl::Model::Prerequisite (class)">Prerequisite</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Prerequisite.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Prerequisite#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_prereq_data'>prereq_data</span><span class='comma'>,</span> <span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+    <span class='const'><span class='object_link'><a href="Prerequisite.html" title="LaunchDarkly::Impl::Model::Prerequisite (class)">Prerequisite</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Prerequisite.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Prerequisite#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_prereq_data'>prereq_data</span><span class='comma'>,</span> <span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_errors'>errors</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
   <span class='ivar'>@targets</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:targets</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_target_data'>target_data</span><span class='op'>|</span>
-    <span class='const'><span class='object_link'><a href="Target.html" title="LaunchDarkly::Impl::Model::Target (class)">Target</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Target.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Target#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_target_data'>target_data</span><span class='comma'>,</span> <span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+    <span class='const'><span class='object_link'><a href="Target.html" title="LaunchDarkly::Impl::Model::Target (class)">Target</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Target.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Target#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_target_data'>target_data</span><span class='comma'>,</span> <span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_errors'>errors</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
   <span class='ivar'>@context_targets</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:contextTargets</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_target_data'>target_data</span><span class='op'>|</span>
-    <span class='const'><span class='object_link'><a href="Target.html" title="LaunchDarkly::Impl::Model::Target (class)">Target</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Target.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Target#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_target_data'>target_data</span><span class='comma'>,</span> <span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+    <span class='const'><span class='object_link'><a href="Target.html" title="LaunchDarkly::Impl::Model::Target (class)">Target</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Target.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Target#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_target_data'>target_data</span><span class='comma'>,</span> <span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_errors'>errors</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
   <span class='ivar'>@rules</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:rules</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='period'>.</span><span class='id identifier rubyid_with_index'>with_index</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_rule_data'>rule_data</span><span class='comma'>,</span> <span class='id identifier rubyid_index'>index</span><span class='op'>|</span>
-    <span class='const'><span class='object_link'><a href="FlagRule.html" title="LaunchDarkly::Impl::Model::FlagRule (class)">FlagRule</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FlagRule.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::FlagRule#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_rule_data'>rule_data</span><span class='comma'>,</span> <span class='id identifier rubyid_index'>index</span><span class='comma'>,</span> <span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+    <span class='const'><span class='object_link'><a href="FlagRule.html" title="LaunchDarkly::Impl::Model::FlagRule (class)">FlagRule</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FlagRule.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::FlagRule#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_rule_data'>rule_data</span><span class='comma'>,</span> <span class='id identifier rubyid_index'>index</span><span class='comma'>,</span> <span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_errors'>errors</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
   <span class='ivar'>@salt</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:salt</span><span class='rbracket'>]</span>
-  <span class='ivar'>@off_result</span> <span class='op'>=</span> <span class='const'>EvaluatorHelpers</span><span class='period'>.</span><span class='id identifier rubyid_evaluation_detail_for_off_variation'>evaluation_detail_for_off_variation</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='id identifier rubyid_off'><span class='object_link'><a href="../../EvaluationReason.html#off-class_method" title="LaunchDarkly::EvaluationReason.off (method)">off</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+  <span class='ivar'>@off_result</span> <span class='op'>=</span> <span class='const'>EvaluatorHelpers</span><span class='period'>.</span><span class='id identifier rubyid_evaluation_detail_for_off_variation'>evaluation_detail_for_off_variation</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='id identifier rubyid_off'><span class='object_link'><a href="../../EvaluationReason.html#off-class_method" title="LaunchDarkly::EvaluationReason.off (method)">off</a></span></span><span class='rparen'>)</span>
   <span class='ivar'>@fallthrough_results</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Preprocessor.html" title="LaunchDarkly::Impl::Model::Preprocessor (class)">Preprocessor</a></span></span><span class='period'>.</span><span class='id identifier rubyid_precompute_multi_variation_results'><span class='object_link'><a href="Preprocessor.html#precompute_multi_variation_results-class_method" title="LaunchDarkly::Impl::Model::Preprocessor.precompute_multi_variation_results (method)">precompute_multi_variation_results</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span>
       <span class='const'><span class='object_link'><a href="../../EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='id identifier rubyid_fallthrough'><span class='object_link'><a href="../../EvaluationReason.html#fallthrough-class_method" title="LaunchDarkly::EvaluationReason.fallthrough (method)">fallthrough</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../../EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='id identifier rubyid_fallthrough'><span class='object_link'><a href="../../EvaluationReason.html#fallthrough-class_method" title="LaunchDarkly::EvaluationReason.fallthrough (method)">fallthrough</a></span></span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='kw'>unless</span> <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='id identifier rubyid_errors'>errors</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_message'>message</span><span class='op'>|</span>
+      <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] Data inconsistency in feature flag \&quot;</span><span class='embexpr_beg'>#{</span><span class='ivar'>@key</span><span class='embexpr_end'>}</span><span class='tstring_content'>\&quot;: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -877,12 +891,12 @@
       <pre class="lines">
 
 
-68
-69
-70</pre>
+83
+84
+85</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 68</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 83</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_context_targets'>context_targets</span>
   <span class='ivar'>@context_targets</span>
@@ -946,12 +960,12 @@
       <pre class="lines">
 
 
-44
-45
-46</pre>
+59
+60
+61</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 44</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 59</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data'>data</span>
   <span class='ivar'>@data</span>
@@ -1015,12 +1029,12 @@
       <pre class="lines">
 
 
-50
-51
-52</pre>
+65
+66
+67</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 50</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 65</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_deleted'>deleted</span>
   <span class='ivar'>@deleted</span>
@@ -1084,12 +1098,12 @@
       <pre class="lines">
 
 
-58
-59
-60</pre>
+73
+74
+75</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 58</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 73</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_fallthrough'>fallthrough</span>
   <span class='ivar'>@fallthrough</span>
@@ -1153,12 +1167,12 @@
       <pre class="lines">
 
 
-62
-63
-64</pre>
+77
+78
+79</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 62</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 77</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_fallthrough_results'>fallthrough_results</span>
   <span class='ivar'>@fallthrough_results</span>
@@ -1222,12 +1236,12 @@
       <pre class="lines">
 
 
-46
-47
-48</pre>
+61
+62
+63</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 46</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 61</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_key'>key</span>
   <span class='ivar'>@key</span>
@@ -1291,12 +1305,12 @@
       <pre class="lines">
 
 
-60
-61
-62</pre>
+75
+76
+77</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 60</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 75</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_off_result'>off_result</span>
   <span class='ivar'>@off_result</span>
@@ -1360,12 +1374,12 @@
       <pre class="lines">
 
 
-56
-57
-58</pre>
+71
+72
+73</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 56</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 71</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_off_variation'>off_variation</span>
   <span class='ivar'>@off_variation</span>
@@ -1429,12 +1443,12 @@
       <pre class="lines">
 
 
-54
-55
-56</pre>
+69
+70
+71</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 54</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 69</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_on'>on</span>
   <span class='ivar'>@on</span>
@@ -1498,12 +1512,12 @@
       <pre class="lines">
 
 
-64
-65
-66</pre>
+79
+80
+81</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 64</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 79</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_prerequisites'>prerequisites</span>
   <span class='ivar'>@prerequisites</span>
@@ -1567,12 +1581,12 @@
       <pre class="lines">
 
 
-70
-71
-72</pre>
+85
+86
+87</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 70</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 85</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rules'>rules</span>
   <span class='ivar'>@rules</span>
@@ -1636,12 +1650,12 @@
       <pre class="lines">
 
 
-72
-73
-74</pre>
+87
+88
+89</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 72</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 87</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_salt'>salt</span>
   <span class='ivar'>@salt</span>
@@ -1705,12 +1719,12 @@
       <pre class="lines">
 
 
-66
-67
-68</pre>
+81
+82
+83</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 66</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 81</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_targets'>targets</span>
   <span class='ivar'>@targets</span>
@@ -1774,12 +1788,12 @@
       <pre class="lines">
 
 
-52
-53
-54</pre>
+67
+68
+69</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 52</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 67</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variations'>variations</span>
   <span class='ivar'>@variations</span>
@@ -1843,12 +1857,12 @@
       <pre class="lines">
 
 
-48
-49
-50</pre>
+63
+64
+65</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 48</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 63</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_version'>version</span>
   <span class='ivar'>@version</span>
@@ -1904,12 +1918,12 @@
       <pre class="lines">
 
 
-81
-82
-83</pre>
+96
+97
+98</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 81</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 96</span>
 
 <span class='kw'>def</span> <span class='op'>==</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Impl::Model::FeatureFlag (class)">FeatureFlag</a></span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_data'>data</span> <span class='op'>==</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_data'>data</span>
@@ -1961,12 +1975,12 @@ we migrate entirely to using attributes of the class.</p>
       <pre class="lines">
 
 
-77
-78
-79</pre>
+92
+93
+94</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 77</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 92</span>
 
 <span class='kw'>def</span> <span class='op'>[]</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='ivar'>@data</span><span class='lbracket'>[</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span>
@@ -2016,12 +2030,12 @@ we migrate entirely to using attributes of the class.</p>
       <pre class="lines">
 
 
-85
-86
-87</pre>
+100
+101
+102</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 100</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_as_json'>as_json</span><span class='lparen'>(</span><span class='op'>*</span><span class='rparen'>)</span> <span class='comment'># parameter is unused, but may be passed if we&#39;re using the json gem
 </span>  <span class='ivar'>@data</span>
@@ -2071,12 +2085,12 @@ we migrate entirely to using attributes of the class.</p>
       <pre class="lines">
 
 
-90
-91
-92</pre>
+105
+106
+107</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 90</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 105</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_a'>a</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_as_json'>as_json</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='id identifier rubyid_a'>a</span><span class='rparen'>)</span>
@@ -2091,7 +2105,7 @@ we migrate entirely to using attributes of the class.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Dec 30 20:15:41 2022 by
+  Generated on Thu Jan 19 21:26:40 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.28 (ruby-2.7.7).
 </div>

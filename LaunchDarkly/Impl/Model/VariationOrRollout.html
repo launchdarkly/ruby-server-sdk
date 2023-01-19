@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Model::VariationOrRollout
   
-    &mdash; LaunchDarkly Ruby SDK (7.0.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.1)
   
 </title>
 
@@ -201,7 +201,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(variation, rollout_data)  &#x21d2; VariationOrRollout </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(variation, rollout_data, flag = nil, errors_out = nil, description = nil)  &#x21d2; VariationOrRollout </a>
     
 
     
@@ -232,7 +232,7 @@
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(variation, rollout_data)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::Model::VariationOrRollout (class)">VariationOrRollout</a></span></tt> 
+    #<strong>initialize</strong>(variation, rollout_data, flag = nil, errors_out = nil, description = nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::Model::VariationOrRollout (class)">VariationOrRollout</a></span></tt> 
   
 
   
@@ -269,17 +269,19 @@
       <pre class="lines">
 
 
-160
-161
-162
-163</pre>
+177
+178
+179
+180
+181</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 160</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 177</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='comma'>,</span> <span class='id identifier rubyid_rollout_data'>rollout_data</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='comma'>,</span> <span class='id identifier rubyid_rollout_data'>rollout_data</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_errors_out'>errors_out</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_description'>description</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@variation</span> <span class='op'>=</span> <span class='id identifier rubyid_variation'>variation</span>
-  <span class='ivar'>@rollout</span> <span class='op'>=</span> <span class='id identifier rubyid_rollout_data'>rollout_data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="Rollout.html" title="LaunchDarkly::Impl::Model::Rollout (class)">Rollout</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Rollout.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Rollout#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_rollout_data'>rollout_data</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_check_variation_range'><span class='object_link'><a href="../../../top-level-namespace.html#check_variation_range-instance_method" title="#check_variation_range (method)">check_variation_range</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='id identifier rubyid_errors_out'>errors_out</span><span class='comma'>,</span> <span class='id identifier rubyid_variation'>variation</span><span class='comma'>,</span> <span class='id identifier rubyid_description'>description</span><span class='rparen'>)</span>
+  <span class='ivar'>@rollout</span> <span class='op'>=</span> <span class='id identifier rubyid_rollout_data'>rollout_data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="Rollout.html" title="LaunchDarkly::Impl::Model::Rollout (class)">Rollout</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Rollout.html#initialize-instance_method" title="LaunchDarkly::Impl::Model::Rollout#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_rollout_data'>rollout_data</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='id identifier rubyid_errors_out'>errors_out</span><span class='comma'>,</span> <span class='id identifier rubyid_description'>description</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -350,12 +352,12 @@
       <pre class="lines">
 
 
-168
-169
-170</pre>
+186
+187
+188</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 168</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 186</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_rollout'>rollout</span>
   <span class='ivar'>@rollout</span>
@@ -419,12 +421,12 @@
       <pre class="lines">
 
 
-166
-167
-168</pre>
+184
+185
+186</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 166</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 184</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation'>variation</span>
   <span class='ivar'>@variation</span>
@@ -440,7 +442,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Dec 30 20:15:41 2022 by
+  Generated on Thu Jan 19 21:26:40 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.28 (ruby-2.7.7).
 </div>

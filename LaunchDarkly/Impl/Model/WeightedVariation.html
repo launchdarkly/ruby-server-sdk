@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Model::WeightedVariation
   
-    &mdash; LaunchDarkly Ruby SDK (7.0.0)
+    &mdash; LaunchDarkly Ruby SDK (7.0.1)
   
 </title>
 
@@ -227,7 +227,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(data)  &#x21d2; WeightedVariation </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(data, flag = nil, errors_out = nil, description = nil)  &#x21d2; WeightedVariation </a>
     
 
     
@@ -258,7 +258,7 @@
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(data)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::Model::WeightedVariation (class)">WeightedVariation</a></span></tt> 
+    #<strong>initialize</strong>(data, flag = nil, errors_out = nil, description = nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::Model::WeightedVariation (class)">WeightedVariation</a></span></tt> 
   
 
   
@@ -295,19 +295,21 @@
       <pre class="lines">
 
 
-196
-197
-198
-199
-200</pre>
+214
+215
+216
+217
+218
+219</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 196</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 214</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_errors_out'>errors_out</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_description'>description</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@variation</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:variation</span><span class='rbracket'>]</span>
   <span class='ivar'>@weight</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:weight</span><span class='rbracket'>]</span>
   <span class='ivar'>@untracked</span> <span class='op'>=</span> <span class='op'>!</span><span class='op'>!</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:untracked</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_check_variation_range'><span class='object_link'><a href="../../../top-level-namespace.html#check_variation_range-instance_method" title="#check_variation_range (method)">check_variation_range</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='id identifier rubyid_errors_out'>errors_out</span><span class='comma'>,</span> <span class='ivar'>@variation</span><span class='comma'>,</span> <span class='id identifier rubyid_description'>description</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -373,12 +375,12 @@
       <pre class="lines">
 
 
-207
-208
-209</pre>
+226
+227
+228</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 207</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 226</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_untracked'>untracked</span>
   <span class='ivar'>@untracked</span>
@@ -442,12 +444,12 @@
       <pre class="lines">
 
 
-203
-204
-205</pre>
+222
+223
+224</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 203</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 222</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation'>variation</span>
   <span class='ivar'>@variation</span>
@@ -511,12 +513,12 @@
       <pre class="lines">
 
 
-205
-206
-207</pre>
+224
+225
+226</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 205</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/model/feature_flag.rb', line 224</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_weight'>weight</span>
   <span class='ivar'>@weight</span>
@@ -532,7 +534,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Dec 30 20:15:42 2022 by
+  Generated on Thu Jan 19 21:26:40 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.28 (ruby-2.7.7).
 </div>
