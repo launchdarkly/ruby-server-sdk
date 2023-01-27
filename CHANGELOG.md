@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.0.2] - 2023-01-27
+### Fixed:
+- Fixed JSON serialization error on internal models.
+
 ## [7.0.1] - 2023-01-19
 ### Changed:
 - Improved logging of feature flag data validation errors so that they are logged once at the time the SDK receives the data, rather than during each evaluation of the flag.
