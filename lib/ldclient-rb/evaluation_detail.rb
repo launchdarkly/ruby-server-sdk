@@ -288,7 +288,7 @@ module LaunchDarkly
     # Same as {#as_json}, but converts the JSON structure into a string.
     # @return [String]
     def to_json(*a)
-      as_json.to_json(a)
+      as_json.to_json(*a)
     end
 
     # Allows this object to be treated as a hash corresponding to its JSON representation. For

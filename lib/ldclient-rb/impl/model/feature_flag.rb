@@ -103,7 +103,7 @@ module LaunchDarkly
 
         # Same as as_json, but converts the JSON structure into a string.
         def to_json(*a)
-          as_json.to_json(a)
+          as_json.to_json(*a)
         end
       end
 
