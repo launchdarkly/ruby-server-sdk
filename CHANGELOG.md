@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.0.3] - 2023-03-17
+### Changed:
+- Updated underlying event source library to address issue with `Content-Type` header detection in some customer environments.
+
 ## [7.0.2] - 2023-01-27
 ### Fixed:
 - Fixed JSON serialization error on internal models.
