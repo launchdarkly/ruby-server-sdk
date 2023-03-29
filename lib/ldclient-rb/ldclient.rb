@@ -387,7 +387,7 @@ module LaunchDarkly
 
       context = Impl::Context::make_context(context)
       unless context.valid?
-        @config.logger.error { "[LDClient] Context was invalid for flag evaluation (#{context.error}); returning default value" }
+        @config.logger.error { "[LDClient] Context was invalid for flag evaluation of key '#{key}' (#{context.error}); returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
         return detail
       end
