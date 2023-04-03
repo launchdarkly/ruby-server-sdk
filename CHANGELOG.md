@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.0.4] - 2023-04-03
+### Added:
+- Added flag key to log message to ease debugging. (Thanks, [matt-dutchie](https://github.com/launchdarkly/ruby-server-sdk/pull/214)!)
+
 ## [7.0.3] - 2023-03-17
 ### Changed:
 - Updated underlying event source library to address issue with `Content-Type` header detection in some customer environments.
