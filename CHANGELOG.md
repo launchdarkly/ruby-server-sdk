@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.1.0] - 2023-04-13
+### Added:
+- Support for Payload Filtering in streaming and polling modes. Payload Filtering is a beta feature that allows SDKs to download a subset of environment data, rather than full environments.
+
 ## [7.0.4] - 2023-04-03
 ### Added:
 - Added flag key to log message to ease debugging. (Thanks, [matt-dutchie](https://github.com/launchdarkly/ruby-server-sdk/pull/214)!)
