@@ -51,7 +51,9 @@ module LaunchDarkly
         reconnect_time: @config.initial_reconnect_delay,
       }
       log_connection_started
-      @es = SSE::Client.new(@config.stream_uri + "/all", **opts) do |conn|
+
+      uri = Util.add_payload_filter_key(@config.stream_uri + "/all", @config)
+      @es = SSE::Client.new(uri, **opts) do |conn|
         conn.on_event { |event| process_message(event) }
         conn.on_error { |err|
           log_connection_result(false)

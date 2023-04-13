@@ -15,11 +15,13 @@ class ClientEntity
     if config[:streaming]
       streaming = config[:streaming]
       opts[:stream_uri] = streaming[:baseUri] unless streaming[:baseUri].nil?
+      opts[:payload_filter_key] = streaming[:filter] unless streaming[:filter].nil?
       opts[:initial_reconnect_delay] = streaming[:initialRetryDelayMs] / 1_000.0 unless streaming[:initialRetryDelayMs].nil?
     elsif config[:polling]
       polling = config[:polling]
       opts[:stream] = false
       opts[:base_uri] = polling[:baseUri] unless polling[:baseUri].nil?
+      opts[:payload_filter_key] = polling[:filter] unless polling[:filter].nil?
       opts[:poll_interval] = polling[:pollIntervalMs] / 1_000.0 unless polling[:pollIntervalMs].nil?
     end
 

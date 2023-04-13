@@ -57,6 +57,7 @@ module LaunchDarkly
     # @option opts [#open] :socket_factory See {#socket_factory}.
     # @option opts [BigSegmentsConfig] :big_segments See {#big_segments}.
     # @option opts [Hash] :application See {#application}
+    # @option opts [String] :payload_filter_key See {#payload_filter_key}
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -88,6 +89,7 @@ module LaunchDarkly
       @socket_factory = opts[:socket_factory]
       @big_segments = opts[:big_segments] || BigSegmentsConfig.new(store: nil)
       @application = LaunchDarkly::Impl::Util.validate_application_info(opts[:application] || {}, @logger)
+      @payload_filter_key = opts[:payload_filter_key]
     end
 
     #
@@ -329,6 +331,21 @@ module LaunchDarkly
     # @return [Hash]
     #
     attr_reader :application
+
+    #
+    # LaunchDarkly Server SDKs historically downloaded all flag configuration and segments for a particular environment
+    # during initialization.
+    #
+    # For some customers, this is an unacceptably large amount of data, and has contributed to performance issues within
+    # their products.
+    #
+    # Filtered environments aim to solve this problem. By allowing customers to specify subsets of an environment's
+    # flags using a filter key, SDKs will initialize faster and use less memory.
+    #
+    # This payload filter key only applies to the default streaming and polling data sources. It will not affect TestData or FileData
+    # data sources, nor will it be applied to any data source provided through the {#data_source} config property.
+    #
+    attr_reader :payload_filter_key
 
     #
     # Set to true to opt out of sending diagnostics data.

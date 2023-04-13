@@ -43,12 +43,10 @@ module LaunchDarkly
 
     private
 
-    def request_single_item(kind, path)
-      Impl::Model.deserialize(kind, make_request(path), @config.logger)
-    end
-
     def make_request(path)
-      uri = URI(@config.base_uri + path)
+      uri = URI(
+        Util.add_payload_filter_key(@config.base_uri + path, @config)
+      )
       headers = {}
       Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| headers[k] = v }
       headers["Connection"] = "keep-alive"

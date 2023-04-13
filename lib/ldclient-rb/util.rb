@@ -4,6 +4,32 @@ require "http"
 module LaunchDarkly
   # @private
   module Util
+    #
+    # Append the payload filter key query parameter to the provided URI.
+    #
+    # @param uri [String]
+    # @param config [Config]
+    # @return [String]
+    #
+    def self.add_payload_filter_key(uri, config)
+      return uri if config.payload_filter_key.nil?
+
+      unless config.payload_filter_key.is_a?(String) && !config.payload_filter_key.empty?
+        config.logger.warn { "[LDClient] Filter key must be a non-empty string. No filtering will be applied." }
+        return uri
+      end
+
+      begin
+        parsed = URI.parse(uri)
+        new_query_params = URI.decode_www_form(String(parsed.query)) << ["filter", config.payload_filter_key]
+        parsed.query = URI.encode_www_form(new_query_params)
+        parsed.to_s
+      rescue URI::InvalidURIError
+        config.logger.warn { "[LDClient] URI could not be parsed. No filtering will be applied." }
+        uri
+      end
+    end
+
     def self.new_http_client(uri_s, config)
       http_client_options = {}
       if config.socket_factory
