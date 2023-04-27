@@ -30,7 +30,7 @@ To run all unit tests:
 bundle exec rspec spec
 ```
 
-By default, the full unit test suite includes live tests of the integrations for Consul, DynamoDB, and Redis. Those tests expect you to have instances of all of those databases running locally. To skip them, set the environment variable `LD_SKIP_DATABASE_TESTS=1` before running the tests.
+The full unit test suite includes live tests of the integrations for Consul, DynamoDB, and Redis. Those tests expect you to have instances of all of those databases running locally. By default, these tests will be skipped. To run them, set the environment variable `LD_SKIP_DATABASE_TESTS=0` before running the tests.
 
 ### Building documentation
 

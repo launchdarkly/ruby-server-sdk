@@ -4,7 +4,7 @@ require "aws-sdk-dynamodb"
 require "spec_helper"
 
 # These tests will all fail if there isn't a local DynamoDB instance running.
-# They can be disabled with LD_SKIP_DATABASE_TESTS=1
+# They can be enabled with LD_SKIP_DATABASE_TESTS=0
 
 $DynamoDBBigSegmentStore = LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBBigSegmentStore
 
@@ -134,7 +134,7 @@ end
 
 
 describe "DynamoDB feature store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
 
   DynamoDBStoreTester.create_table_if_necessary
 
@@ -142,7 +142,7 @@ describe "DynamoDB feature store" do
 end
 
 describe "DynamoDB big segment store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
 
   DynamoDBStoreTester.create_table_if_necessary
 

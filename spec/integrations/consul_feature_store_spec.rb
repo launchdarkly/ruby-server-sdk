@@ -3,7 +3,7 @@ require "diplomat"
 require "spec_helper"
 
 # These tests will all fail if there isn't a local Consul instance running.
-# They can be disabled with LD_SKIP_DATABASE_TESTS=1
+# They can be enabled with LD_SKIP_DATABASE_TESTS=0
 
 $consul_base_opts = {
   prefix: $my_prefix,
@@ -27,7 +27,7 @@ end
 
 
 describe "Consul feature store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
 
   include_examples "persistent_feature_store", ConsulStoreTester
 end

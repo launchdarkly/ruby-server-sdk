@@ -30,6 +30,9 @@ jobs:
   build-test-windows:
     executor: win/default
 
+    environment:
+      LD_SKIP_DATABASE_TESTS=0
+
     steps:
       - checkout
 
@@ -98,6 +101,9 @@ jobs:
       - image: consul
       - image: redis
       - image: amazon/dynamodb-local
+
+    environment:
+      LD_SKIP_DATABASE_TESTS=0
 
     steps:
       - checkout

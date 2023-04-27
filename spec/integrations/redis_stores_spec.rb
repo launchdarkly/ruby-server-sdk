@@ -7,7 +7,7 @@ require "spec_helper"
 require "redis"
 
 # These tests will all fail if there isn't a local Redis instance running.
-# They can be disabled with LD_SKIP_DATABASE_TESTS=1
+# They can be enabled with LD_SKIP_DATABASE_TESTS=0
 
 $RedisBigSegmentStore = LaunchDarkly::Impl::Integrations::Redis::RedisBigSegmentStore
 
@@ -60,7 +60,7 @@ end
 
 
 describe "Redis feature store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
 
   include_examples "persistent_feature_store", RedisStoreTester
 
@@ -146,7 +146,7 @@ describe "Redis feature store" do
 end
 
 describe "Redis big segment store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
 
   include_examples "big_segment_store", RedisStoreTester
 end
