@@ -3,10 +3,22 @@ require 'ostruct'
 
 describe LaunchDarkly::PollingProcessor do
   subject { LaunchDarkly::PollingProcessor }
+  let(:executor) { SynchronousExecutor.new }
+  let(:broadcaster) { LaunchDarkly::Impl::Broadcaster.new(executor, $null_log) }
   let(:requestor) { double() }
 
-  def with_processor(store)
+  def with_processor(store, initialize_to_valid = false)
     config = LaunchDarkly::Config.new(feature_store: store, logger: $null_log)
+    config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(store, broadcaster)
+
+    if initialize_to_valid
+      # If the update sink receives an interrupted signal when the state is
+      # still initializing, it will continue staying in the initializing phase.
+      # Therefore, we set the state to valid before this test so we can
+      # determine if the interrupted signal is actually generated.
+      config.data_source_update_sink.update_status(LaunchDarkly::Interfaces::DataSource::Status::VALID, nil)
+    end
+
     processor = subject.new(config, requestor)
     begin
       yield processor
@@ -48,6 +60,23 @@ describe LaunchDarkly::PollingProcessor do
         expect(store.initialized?).to be true
       end
     end
+
+    it 'status is set to valid when data is received' do
+      allow(requestor).to receive(:request_all_data).and_return(all_data)
+      listener = ListenerSpy.new
+      broadcaster.add_listener(listener)
+
+      store = LaunchDarkly::InMemoryFeatureStore.new
+      with_processor(store) do |processor|
+        ready = processor.start
+        ready.wait
+        expect(store.get(LaunchDarkly::FEATURES, "flagkey")).to eq(flag)
+        expect(store.get(LaunchDarkly::SEGMENTS, "segkey")).to eq(segment)
+
+        expect(listener.statuses.count).to eq(1)
+        expect(listener.statuses[0].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+      end
+    end
   end
 
   describe 'connection error' do
@@ -67,21 +96,39 @@ describe LaunchDarkly::PollingProcessor do
   describe 'HTTP errors' do
     def verify_unrecoverable_http_error(status)
       allow(requestor).to receive(:request_all_data).and_raise(LaunchDarkly::UnexpectedResponseError.new(status))
+      listener = ListenerSpy.new
+      broadcaster.add_listener(listener)
+
       with_processor(LaunchDarkly::InMemoryFeatureStore.new) do |processor|
         ready = processor.start
         finished = ready.wait(0.2)
         expect(finished).to be true
         expect(processor.initialized?).to be false
+
+        expect(listener.statuses.count).to eq(1)
+
+        s = listener.statuses[0]
+        expect(s.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+        expect(s.last_error.status_code).to eq(status)
       end
     end
 
     def verify_recoverable_http_error(status)
       allow(requestor).to receive(:request_all_data).and_raise(LaunchDarkly::UnexpectedResponseError.new(status))
-      with_processor(LaunchDarkly::InMemoryFeatureStore.new) do |processor|
+      listener = ListenerSpy.new
+      broadcaster.add_listener(listener)
+
+      with_processor(LaunchDarkly::InMemoryFeatureStore.new, true) do |processor|
         ready = processor.start
         finished = ready.wait(0.2)
         expect(finished).to be false
         expect(processor.initialized?).to be false
+
+        expect(listener.statuses.count).to eq(2)
+
+        s = listener.statuses[1]
+        expect(s.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+        expect(s.last_error.status_code).to eq(status)
       end
     end
 
@@ -108,12 +155,18 @@ describe LaunchDarkly::PollingProcessor do
 
   describe 'stop' do
     it 'stops promptly rather than continuing to wait for poll interval' do
+      listener = ListenerSpy.new
+      broadcaster.add_listener(listener)
+
       with_processor(LaunchDarkly::InMemoryFeatureStore.new) do |processor|
         sleep(1)  # somewhat arbitrary, but should ensure that it has started polling
         start_time = Time.now
         processor.stop
         end_time = Time.now
         expect(end_time - start_time).to be <(LaunchDarkly::Config.default_poll_interval - 5)
+
+        expect(listener.statuses.count).to eq(1)
+        expect(listener.statuses[0].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
       end
     end
   end

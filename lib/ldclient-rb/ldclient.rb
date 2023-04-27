@@ -1,4 +1,6 @@
 require "ldclient-rb/impl/big_segments"
+require "ldclient-rb/impl/broadcaster"
+require "ldclient-rb/impl/data_source"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/store_client_wrapper"
@@ -78,6 +80,14 @@ module LaunchDarkly
         @config.logger.info { "[LDClient] Started LaunchDarkly Client in LDD mode" }
         return  # requestor and update processor are not used in this mode
       end
+
+      @shared_executor = Concurrent::SingleThreadExecutor.new
+      data_source_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @config.logger)
+
+      # Make the update sink available on the config so that our data source factory can access the sink with a shared executor.
+      @config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(@store, data_source_broadcaster)
+
+      @data_source_status_provider = LaunchDarkly::Impl::DataSource::StatusProvider.new(data_source_broadcaster, @config.data_source_update_sink)
 
       data_source_or_factory = @config.data_source || self.method(:create_default_data_source)
       if data_source_or_factory.respond_to? :call
@@ -345,6 +355,7 @@ module LaunchDarkly
       @event_processor.stop
       @big_segment_store_manager.stop
       @store.stop
+      @shared_executor.shutdown
     end
 
     #
@@ -354,6 +365,19 @@ module LaunchDarkly
     # is (as far as the SDK knows) currently operational and tracking changes in this status.
     #
     attr_reader :big_segment_store_status_provider
+
+    #
+    # Returns an interface for tracking the status of the data source.
+    #
+    # The data source is the mechanism that the SDK uses to get feature flag
+    # configurations, such as a streaming connection (the default) or poll
+    # requests. The {LaunchDarkly::Interfaces::DataSource::StatusProvider} has
+    # methods for checking whether the data source is (as far as the SDK knows)
+    # currently operational and tracking changes in this status.
+    #
+    # @return [LaunchDarkly::Interfaces::DataSource::StatusProvider]
+    #
+    attr_reader :data_source_status_provider
 
     private
 

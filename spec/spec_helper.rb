@@ -19,6 +19,25 @@ def ensure_stop(thing)
   end
 end
 
+class SynchronousExecutor
+  def post
+    yield
+  end
+end
+
+class ListenerSpy
+  attr_reader :statuses
+
+  def initialize
+    @statuses = []
+  end
+
+  def update(status)
+    @statuses << status
+  end
+end
+
+
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
     expectations.max_formatted_output_length = 1000 # otherwise rspec tends to abbreviate our failure output and make it unreadable

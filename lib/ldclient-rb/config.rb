@@ -90,7 +90,22 @@ module LaunchDarkly
       @big_segments = opts[:big_segments] || BigSegmentsConfig.new(store: nil)
       @application = LaunchDarkly::Impl::Util.validate_application_info(opts[:application] || {}, @logger)
       @payload_filter_key = opts[:payload_filter_key]
+      @data_source_update_sink = nil
     end
+
+    #
+    # Returns the component that allows a data source to push data into the SDK.
+    #
+    # This property should only be set by the SDK. Long term access of this
+    # property is not supported; it is temporarily being exposed to maintain
+    # backwards compatibility while the SDK structure is updated.
+    #
+    # Custom data source implementations should integrate with this sink if
+    # they want to provide support for data source status listeners.
+    #
+    # @private
+    #
+    attr_accessor :data_source_update_sink
 
     #
     # The base URL for the LaunchDarkly server. This is configurable mainly for testing
