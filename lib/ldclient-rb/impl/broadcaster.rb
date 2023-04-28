@@ -40,6 +40,10 @@ module LaunchDarkly
         listeners.delete(listener)
       end
 
+      def has_listeners?
+        !listeners.empty?
+      end
+
       #
       # Broadcast the provided event to all registered listeners.
       #

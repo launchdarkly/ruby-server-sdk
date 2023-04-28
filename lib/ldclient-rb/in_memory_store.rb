@@ -23,6 +23,9 @@ module LaunchDarkly
     priority: 0,
   }.freeze
 
+  # @private
+  ALL_KINDS = [FEATURES, SEGMENTS].freeze
+
   #
   # Default implementation of the LaunchDarkly client's feature store, using an in-memory
   # cache.  This object holds feature flags and related data received from LaunchDarkly.

@@ -100,8 +100,9 @@ EOF
     @store = @config.feature_store
 
     @executor = SynchronousExecutor.new
-    @broadcaster = LaunchDarkly::Impl::Broadcaster.new(@executor, $null_log)
-    @config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(@store, @broadcaster)
+    @status_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@executor, $null_log)
+    @flag_change_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@executor, $null_log)
+    @config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(@store, @status_broadcaster, @flag_change_broadcaster)
 
     @tmp_dir = Dir.mktmpdir
   end
@@ -152,7 +153,7 @@ EOF
     file = make_temp_file(all_properties_json)
     with_data_source({ paths: [ file.path ] }) do |ds|
       listener = ListenerSpy.new
-      @broadcaster.add_listener(listener)
+      @status_broadcaster.add_listener(listener)
 
       ds.start
       expect(@store.initialized?).to eq(true)
@@ -221,7 +222,7 @@ EOF
     file2 = make_temp_file(invalid_json)
     with_data_source({ paths: [ file1.path, file2.path ] }, true) do |ds|
       listener = ListenerSpy.new
-      @broadcaster.add_listener(listener)
+      @status_broadcaster.add_listener(listener)
 
       ds.start
       expect(@store.initialized?).to eq(false)

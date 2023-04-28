@@ -1,15 +1,18 @@
-require "spec_helper"
+require "ldclient-rb/impl/model/feature_flag"
+require "ldclient-rb/impl/model/segment"
 require 'ostruct'
+require "spec_helper"
 
 describe LaunchDarkly::PollingProcessor do
   subject { LaunchDarkly::PollingProcessor }
   let(:executor) { SynchronousExecutor.new }
-  let(:broadcaster) { LaunchDarkly::Impl::Broadcaster.new(executor, $null_log) }
+  let(:status_broadcaster) { LaunchDarkly::Impl::Broadcaster.new(executor, $null_log) }
+  let(:flag_change_broadcaster) { LaunchDarkly::Impl::Broadcaster.new(executor, $null_log) }
   let(:requestor) { double() }
 
   def with_processor(store, initialize_to_valid = false)
     config = LaunchDarkly::Config.new(feature_store: store, logger: $null_log)
-    config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(store, broadcaster)
+    config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(store, status_broadcaster, flag_change_broadcaster)
 
     if initialize_to_valid
       # If the update sink receives an interrupted signal when the state is
@@ -28,8 +31,8 @@ describe LaunchDarkly::PollingProcessor do
   end
 
   describe 'successful request' do
-    flag = { key: 'flagkey', version: 1 }
-    segment = { key: 'segkey', version: 1 }
+    flag = LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flagkey', version: 1 })
+    segment = LaunchDarkly::Impl::Model::Segment.new({ key: 'segkey', version: 1 })
     all_data = {
       LaunchDarkly::FEATURES => {
         flagkey: flag,
@@ -64,7 +67,7 @@ describe LaunchDarkly::PollingProcessor do
     it 'status is set to valid when data is received' do
       allow(requestor).to receive(:request_all_data).and_return(all_data)
       listener = ListenerSpy.new
-      broadcaster.add_listener(listener)
+      status_broadcaster.add_listener(listener)
 
       store = LaunchDarkly::InMemoryFeatureStore.new
       with_processor(store) do |processor|
@@ -97,7 +100,7 @@ describe LaunchDarkly::PollingProcessor do
     def verify_unrecoverable_http_error(status)
       allow(requestor).to receive(:request_all_data).and_raise(LaunchDarkly::UnexpectedResponseError.new(status))
       listener = ListenerSpy.new
-      broadcaster.add_listener(listener)
+      status_broadcaster.add_listener(listener)
 
       with_processor(LaunchDarkly::InMemoryFeatureStore.new) do |processor|
         ready = processor.start
@@ -116,7 +119,7 @@ describe LaunchDarkly::PollingProcessor do
     def verify_recoverable_http_error(status)
       allow(requestor).to receive(:request_all_data).and_raise(LaunchDarkly::UnexpectedResponseError.new(status))
       listener = ListenerSpy.new
-      broadcaster.add_listener(listener)
+      status_broadcaster.add_listener(listener)
 
       with_processor(LaunchDarkly::InMemoryFeatureStore.new, true) do |processor|
         ready = processor.start
@@ -156,7 +159,7 @@ describe LaunchDarkly::PollingProcessor do
   describe 'stop' do
     it 'stops promptly rather than continuing to wait for poll interval' do
       listener = ListenerSpy.new
-      broadcaster.add_listener(listener)
+      status_broadcaster.add_listener(listener)
 
       with_processor(LaunchDarkly::InMemoryFeatureStore.new) do |processor|
         sleep(1)  # somewhat arbitrary, but should ensure that it has started polling

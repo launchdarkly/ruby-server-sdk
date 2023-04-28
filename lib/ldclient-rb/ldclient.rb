@@ -3,6 +3,7 @@ require "ldclient-rb/impl/broadcaster"
 require "ldclient-rb/impl/data_source"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
+require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/store_client_wrapper"
 require "concurrent/atomics"
 require "digest/sha1"
@@ -82,10 +83,13 @@ module LaunchDarkly
       end
 
       @shared_executor = Concurrent::SingleThreadExecutor.new
+      flag_tracker_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @config.logger)
+      @flag_tracker = LaunchDarkly::Impl::FlagTracker.new(flag_tracker_broadcaster, lambda { |key, context| variation(key, context, nil) })
+
       data_source_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @config.logger)
 
       # Make the update sink available on the config so that our data source factory can access the sink with a shared executor.
-      @config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(@store, data_source_broadcaster)
+      @config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(@store, data_source_broadcaster, flag_tracker_broadcaster)
 
       @data_source_status_provider = LaunchDarkly::Impl::DataSource::StatusProvider.new(data_source_broadcaster, @config.data_source_update_sink)
 
@@ -361,7 +365,7 @@ module LaunchDarkly
     #
     # Returns an interface for tracking the status of a Big Segment store.
     #
-    # The {BigSegmentStoreStatusProvider} has methods for checking whether the Big Segment store
+    # The {Interfaces::BigSegmentStoreStatusProvider} has methods for checking whether the Big Segment store
     # is (as far as the SDK knows) currently operational and tracking changes in this status.
     #
     attr_reader :big_segment_store_status_provider
@@ -378,6 +382,15 @@ module LaunchDarkly
     # @return [LaunchDarkly::Interfaces::DataSource::StatusProvider]
     #
     attr_reader :data_source_status_provider
+
+    #
+    # Returns an interface for tracking changes in feature flag configurations.
+    #
+    # The {LaunchDarkly::Interfaces::FlagTracker} contains methods for
+    # requesting notifications about feature flag changes using an event
+    # listener model.
+    #
+    attr_reader :flag_tracker
 
     private
 

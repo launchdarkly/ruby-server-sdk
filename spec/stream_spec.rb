@@ -5,10 +5,11 @@ require "spec_helper"
 describe LaunchDarkly::StreamProcessor do
   subject { LaunchDarkly::StreamProcessor }
   let(:executor) { SynchronousExecutor.new }
-  let(:broadcaster) { LaunchDarkly::Impl::Broadcaster.new(executor, $null_log) }
+  let(:status_broadcaster) { LaunchDarkly::Impl::Broadcaster.new(executor, $null_log) }
+  let(:flag_change_broadcaster) { LaunchDarkly::Impl::Broadcaster.new(executor, $null_log) }
   let(:config) {
     config = LaunchDarkly::Config.new
-    config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(config.feature_store, broadcaster)
+    config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(config.feature_store, status_broadcaster, flag_change_broadcaster)
     config.data_source_update_sink.update_status(LaunchDarkly::Interfaces::DataSource::Status::VALID, nil)
     config
   }
@@ -51,7 +52,7 @@ describe LaunchDarkly::StreamProcessor do
     end
     it "status listener will trigger error when JSON is invalid" do
       listener = ListenerSpy.new
-      broadcaster.add_listener(listener)
+      status_broadcaster.add_listener(listener)
 
       begin
         processor.send(:process_message, invalid_message)
