@@ -1,3 +1,5 @@
+require "simplecov" if ENV['LD_ENABLE_CODE_COVERAGE'] == '1'
+
 require "ldclient-rb"
 
 $null_log = ::Logger.new($stdout)

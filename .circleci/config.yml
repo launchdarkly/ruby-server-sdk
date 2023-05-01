@@ -31,7 +31,8 @@ jobs:
     executor: win/default
 
     environment:
-      LD_SKIP_DATABASE_TESTS=0
+      LD_SKIP_DATABASE_TESTS: 0
+      LD_ENABLE_CODE_COVERAGE: 1
 
     steps:
       - checkout
@@ -82,6 +83,7 @@ jobs:
       - run: bundle _2.2.33_ install
       - run: mkdir /tmp/circle-artifacts
       - run: bundle _2.2.33_ exec rspec --format documentation --format RspecJunitFormatter -o /tmp/circle-artifacts/rspec.xml spec
+      - run: mv coverage /tmp/circle-artifacts/
 
       - store_test_results:
           path: /tmp/circle-artifacts
@@ -103,7 +105,8 @@ jobs:
       - image: amazon/dynamodb-local
 
     environment:
-      LD_SKIP_DATABASE_TESTS=0
+      LD_SKIP_DATABASE_TESTS: 0
+      LD_ENABLE_CODE_COVERAGE: 1
 
     steps:
       - checkout
@@ -122,6 +125,7 @@ jobs:
       - run: bundle _2.2.33_ install
       - run: mkdir /tmp/circle-artifacts
       - run: bundle _2.2.33_ exec rspec --format documentation --format RspecJunitFormatter -o /tmp/circle-artifacts/rspec.xml spec
+      - run: mv coverage /tmp/circle-artifacts/
 
       - when:
           condition:
