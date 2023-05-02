@@ -119,6 +119,18 @@ module LaunchDarkly
             end
           end
 
+          def available?
+            # Most implementations use the initialized_internal? method as a
+            # proxy for this check. However, since `initialized_internal?`
+            # catches a KeyNotFound exception, and that exception can be raised
+            # when the server goes away, we have to modify our behavior
+            # slightly.
+            Diplomat::Kv.get(inited_key, {}, :return, :return)
+            true
+          rescue
+            false
+          end
+
           def stop
             # There's no Consul client instance to dispose of
           end

@@ -13,15 +13,15 @@ module LaunchDarkly
         extend Forwardable
         def_delegators :@status_broadcaster, :add_listener, :remove_listener
 
-        def initialize(status_broadcaster, updates_sink)
+        def initialize(status_broadcaster, update_sink)
           # @type [Broadcaster]
           @status_broadcaster = status_broadcaster
           # @type [UpdateSink]
-          @data_source_updates_sink = updates_sink
+          @data_source_update_sink = update_sink
         end
 
         def status
-          @data_source_updates_sink.current_status
+          @data_source_update_sink.current_status
         end
       end
 

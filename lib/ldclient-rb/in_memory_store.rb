@@ -40,6 +40,10 @@ module LaunchDarkly
       @initialized = Concurrent::AtomicBoolean.new(false)
     end
 
+    def monitoring_enabled?
+      false
+    end
+
     def get(kind, key)
       @lock.with_read_lock do
         coll = @items[kind]

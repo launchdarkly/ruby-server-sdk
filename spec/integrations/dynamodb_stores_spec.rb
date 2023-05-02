@@ -23,7 +23,7 @@ class DynamoDBStoreTester
 
   def initialize(options = {})
     @options = options.clone
-    @options[:dynamodb_opts] = DYNAMODB_OPTS
+    @options[:dynamodb_opts] = DYNAMODB_OPTS unless @options.key? :dynamodb_opts
     @actual_prefix = options[:prefix] ? "#{options[:prefix]}:" : ""
   end
 
@@ -139,6 +139,29 @@ describe "DynamoDB feature store" do
   DynamoDBStoreTester.create_table_if_necessary
 
   include_examples "persistent_feature_store", DynamoDBStoreTester
+
+  it "should have monitoring enabled and defaults to available" do
+    tester = DynamoDBStoreTester.new({ logger: $null_logger })
+
+    ensure_stop(tester.create_feature_store) do |store|
+      expect(store.monitoring_enabled?).to be true
+      expect(store.available?).to be true
+    end
+  end
+
+  it "can detect that a non-existent store is not available" do
+    options = DynamoDBStoreTester::DYNAMODB_OPTS.clone
+    options[:endpoint] = 'http://i-mean-what-are-the-odds:13579'
+    options[:retry_limit] = 0
+    options[:http_open_timeout] = 0.1
+
+    # Short timeout so we don't delay the tests too long
+    tester = DynamoDBStoreTester.new({ dynamodb_opts: options, logger: $null_logger })
+
+    ensure_stop(tester.create_feature_store) do |store|
+      expect(store.available?).to be false
+    end
+  end
 end
 
 describe "DynamoDB big segment store" do

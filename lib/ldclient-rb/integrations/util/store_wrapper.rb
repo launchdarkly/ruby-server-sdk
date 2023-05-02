@@ -43,6 +43,17 @@ module LaunchDarkly
           end
 
           @inited = Concurrent::AtomicBoolean.new(false)
+          @has_available_method = @core.respond_to? :available?
+        end
+
+        def monitoring_enabled?
+          @has_available_method
+        end
+
+        def available?
+          return false unless @has_available_method
+
+          @core.available?
         end
 
         def init(all_data)

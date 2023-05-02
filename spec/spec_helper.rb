@@ -27,6 +27,16 @@ class SynchronousExecutor
   end
 end
 
+class CallbackListener
+  def initialize(callable)
+    @callable = callable
+  end
+
+  def update(status)
+    @callable.call(status)
+  end
+end
+
 class ListenerSpy
   attr_reader :statuses
 

@@ -5,6 +5,25 @@ describe LaunchDarkly::Integrations::Util::CachingStoreWrapper do
 
   THINGS = { namespace: "things" }
 
+  it "monitoring enabled if available is defined" do
+    [true, false].each do |expected|
+      core = double
+      allow(core).to receive(:available?).and_return(expected)
+      wrapper = subject.new(core, {})
+
+      expect(wrapper.monitoring_enabled?).to be true
+      expect(wrapper.available?).to be expected
+    end
+  end
+
+  it "available is false if core doesn't support monitoring" do
+    core = double
+    wrapper = subject.new(core, {})
+
+    expect(wrapper.monitoring_enabled?).to be false
+    expect(wrapper.available?).to be false
+  end
+
   shared_examples "tests" do |cached|
     opts = cached ? { expiration: 30 } : { expiration: 0 }
 

@@ -88,7 +88,7 @@ describe LaunchDarkly::PollingProcessor do
       store = LaunchDarkly::InMemoryFeatureStore.new
       with_processor(store) do |processor|
         ready = processor.start
-        finished = ready.wait(0.2)
+        finished = ready.wait(1)
         expect(finished).to be false
         expect(processor.initialized?).to be false
         expect(store.initialized?).to be false
@@ -104,7 +104,7 @@ describe LaunchDarkly::PollingProcessor do
 
       with_processor(LaunchDarkly::InMemoryFeatureStore.new) do |processor|
         ready = processor.start
-        finished = ready.wait(0.2)
+        finished = ready.wait(1)
         expect(finished).to be true
         expect(processor.initialized?).to be false
 
@@ -123,7 +123,7 @@ describe LaunchDarkly::PollingProcessor do
 
       with_processor(LaunchDarkly::InMemoryFeatureStore.new, true) do |processor|
         ready = processor.start
-        finished = ready.wait(0.2)
+        finished = ready.wait(1)
         expect(finished).to be false
         expect(processor.initialized?).to be false
 

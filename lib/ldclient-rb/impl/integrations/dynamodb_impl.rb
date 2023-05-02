@@ -62,6 +62,14 @@ module LaunchDarkly
             "DynamoDBFeatureStore"
           end
 
+          def available?
+            resp = get_item_by_keys(inited_key, inited_key)
+            !resp.item.nil? && resp.item.length > 0
+            true
+          rescue
+            false
+          end
+
           def init_internal(all_data)
             # Start by reading the existing keys; we will later delete any of these that weren't in all_data.
             unused_old_keys = read_existing_keys(all_data.keys)
