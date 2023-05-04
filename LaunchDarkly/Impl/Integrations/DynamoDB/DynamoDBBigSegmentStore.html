@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBBigSegmentStore
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -435,12 +435,12 @@
       <pre class="lines">
 
 
-232
-233
-234</pre>
+240
+241
+242</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 232</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 240</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_table_name'>table_name</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
   <span class='kw'>super</span><span class='lparen'>(</span><span class='id identifier rubyid_table_name'>table_name</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
@@ -496,12 +496,12 @@
       <pre class="lines">
 
 
-236
-237
-238</pre>
+244
+245
+246</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 236</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 244</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_description'>description</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>DynamoDBBigSegmentStore</span><span class='tstring_end'>&quot;</span></span>
@@ -550,14 +550,6 @@
       <pre class="lines">
 
 
-254
-255
-256
-257
-258
-259
-260
-261
 262
 263
 264
@@ -568,10 +560,18 @@
 269
 270
 271
-272</pre>
+272
+273
+274
+275
+276
+277
+278
+279
+280</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 254</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 262</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_membership'>get_membership</span><span class='lparen'>(</span><span class='id identifier rubyid_context_hash'>context_hash</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='ivar'>@client</span><span class='period'>.</span><span class='id identifier rubyid_get_item'>get_item</span><span class='lparen'>(</span>
@@ -636,22 +636,22 @@
       <pre class="lines">
 
 
-240
-241
-242
-243
-244
-245
-246
-247
 248
 249
 250
 251
-252</pre>
+252
+253
+254
+255
+256
+257
+258
+259
+260</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 240</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 248</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_metadata'>get_metadata</span>
   <span class='id identifier rubyid_key'>key</span> <span class='op'>=</span> <span class='ivar'>@prefix</span> <span class='op'>+</span> <span class='const'><span class='object_link'><a href="#KEY_METADATA-constant" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBBigSegmentStore::KEY_METADATA (constant)">KEY_METADATA</a></span></span>
@@ -676,7 +676,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:05 2023 by
+  Generated on Thu May  4 12:47:45 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

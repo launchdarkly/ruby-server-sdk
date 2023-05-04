@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Interfaces::BigSegmentStoreStatus
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -266,13 +266,13 @@ documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">h
       <pre class="lines">
 
 
-223
-224
-225
-226</pre>
+486
+487
+488
+489</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 223</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 486</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_available'>available</span><span class='comma'>,</span> <span class='id identifier rubyid_stale'>stale</span><span class='rparen'>)</span>
   <span class='ivar'>@available</span> <span class='op'>=</span> <span class='id identifier rubyid_available'>available</span>
@@ -335,12 +335,12 @@ have a <code>big_segments_status</code> of <code>STORE_ERROR</code>.</p>
       <pre class="lines">
 
 
-238
-239
-240</pre>
+501
+502
+503</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 238</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 501</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_available'>available</span>
   <span class='ivar'>@available</span>
@@ -397,12 +397,12 @@ of date. Also, the <span class='object_link'><a href="../EvaluationReason.html" 
       <pre class="lines">
 
 
-250
-251
-252</pre>
+513
+514
+515</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 250</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 513</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stale'>stale</span>
   <span class='ivar'>@stale</span>
@@ -434,12 +434,12 @@ of date. Also, the <span class='object_link'><a href="../EvaluationReason.html" 
       <pre class="lines">
 
 
-252
-253
-254</pre>
+515
+516
+517</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 252</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 515</span>
 
 <span class='kw'>def</span> <span class='op'>==</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
   <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_available'>available</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_available'>available</span> <span class='op'>&amp;&amp;</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_stale'>stale</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_stale'>stale</span>
@@ -454,7 +454,7 @@ of date. Also, the <span class='object_link'><a href="../EvaluationReason.html" 
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:04 2023 by
+  Generated on Thu May  4 12:47:44 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

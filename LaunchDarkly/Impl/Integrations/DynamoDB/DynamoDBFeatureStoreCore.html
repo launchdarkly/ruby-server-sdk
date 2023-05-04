@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -209,6 +209,28 @@
     </h2>
 
     <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#available%3F-instance_method" title="#available? (instance method)">#<strong>available?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
       
         <li class="public ">
   <span class="summary_signature">
@@ -438,7 +460,82 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="description-instance_method">
+  <h3 class="signature first" id="available?-instance_method">
+  
+    #<strong>available?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+65
+66
+67
+68
+69
+70
+71</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 65</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_available?'>available?</span>
+  <span class='id identifier rubyid_resp'>resp</span> <span class='op'>=</span> <span class='id identifier rubyid_get_item_by_keys'>get_item_by_keys</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='comma'>,</span> <span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span>
+  <span class='op'>!</span><span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_item'>item</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_item'>item</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>&gt;</span> <span class='int'>0</span>
+  <span class='kw'>true</span>
+<span class='kw'>rescue</span>
+  <span class='kw'>false</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="description-instance_method">
   
     #<strong>description</strong>  &#x21d2; <tt>Object</tt> 
   
@@ -530,23 +627,23 @@
       <pre class="lines">
 
 
-101
-102
-103
-104
-105
-106
-107
-108
 109
 110
 111
 112
 113
-114</pre>
+114
+115
+116
+117
+118
+119
+120
+121
+122</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 101</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 109</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_all_internal'>get_all_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_items_out'>items_out</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
@@ -606,13 +703,13 @@
       <pre class="lines">
 
 
-96
-97
-98
-99</pre>
+104
+105
+106
+107</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 96</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 104</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_internal'>get_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_resp'>resp</span> <span class='op'>=</span> <span class='id identifier rubyid_get_item_by_keys'>get_item_by_keys</span><span class='lparen'>(</span><span class='id identifier rubyid_namespace_for_kind'>namespace_for_kind</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
@@ -662,14 +759,6 @@
       <pre class="lines">
 
 
-65
-66
-67
-68
-69
-70
-71
-72
 73
 74
 75
@@ -691,10 +780,18 @@
 91
 92
 93
-94</pre>
+94
+95
+96
+97
+98
+99
+100
+101
+102</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 65</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 73</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_init_internal'>init_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='rparen'>)</span>
   <span class='comment'># Start by reading the existing keys; we will later delete any of these that weren&#39;t in all_data.
@@ -783,13 +880,13 @@
       <pre class="lines">
 
 
-140
-141
-142
-143</pre>
+148
+149
+150
+151</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 140</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 148</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized_internal?'>initialized_internal?</span>
   <span class='id identifier rubyid_resp'>resp</span> <span class='op'>=</span> <span class='id identifier rubyid_get_item_by_keys'>get_item_by_keys</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='comma'>,</span> <span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span>
@@ -839,14 +936,6 @@
       <pre class="lines">
 
 
-116
-117
-118
-119
-120
-121
-122
-123
 124
 125
 126
@@ -861,10 +950,18 @@
 135
 136
 137
-138</pre>
+138
+139
+140
+141
+142
+143
+144
+145
+146</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 116</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 124</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_upsert_internal'>upsert_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_encoded_item'>encoded_item</span> <span class='op'>=</span> <span class='id identifier rubyid_marshal_item'>marshal_item</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='rparen'>)</span>
@@ -899,7 +996,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:05 2023 by
+  Generated on Thu May  4 12:47:45 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

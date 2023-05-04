@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::Redis::RedisStoreImplBase
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -235,14 +235,6 @@
       <pre class="lines">
 
 
-98
-99
-100
-101
-102
-103
-104
-105
 106
 107
 108
@@ -254,10 +246,18 @@
 114
 115
 116
-117</pre>
+117
+118
+119
+120
+121
+122
+123
+124
+125</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 98</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 106</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='const'>REDIS_ENABLED</span>
@@ -330,15 +330,15 @@
       <pre class="lines">
 
 
-119
-120
-121
-122
-123
-124</pre>
+127
+128
+129
+130
+131
+132</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 119</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 127</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='kw'>if</span> <span class='ivar'>@stopped</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
@@ -356,7 +356,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:05 2023 by
+  Generated on Thu May  4 12:47:45 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

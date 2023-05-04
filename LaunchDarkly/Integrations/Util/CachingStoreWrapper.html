@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Integrations::Util::CachingStoreWrapper
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -176,6 +176,28 @@ implementation object.</p>
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#available%3F-instance_method" title="#available? (instance method)">#<strong>available?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#delete-instance_method" title="#delete (instance method)">#<strong>delete</strong>(kind, key, version)  &#x21d2; Object </a>
     
 
@@ -268,6 +290,28 @@ implementation object.</p>
   <span class="summary_signature">
     
       <a href="#initialized%3F-instance_method" title="#initialized? (instance method)">#<strong>initialized?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#monitoring_enabled%3F-instance_method" title="#monitoring_enabled? (instance method)">#<strong>monitoring_enabled?</strong>  &#x21d2; Boolean </a>
     
 
     
@@ -465,7 +509,8 @@ implementation object.</p>
 43
 44
 45
-46</pre>
+46
+47</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 34</span>
@@ -482,6 +527,7 @@ implementation object.</p>
   <span class='kw'>end</span>
 
   <span class='ivar'>@inited</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>AtomicBoolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='ivar'>@has_available_method</span> <span class='op'>=</span> <span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span> <span class='symbol'>:available?</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -534,19 +580,19 @@ implementation object.</p>
       <pre class="lines">
 
 
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88</pre>
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 90</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -557,6 +603,77 @@ implementation object.</p>
   <span class='id identifier rubyid_items'>items</span> <span class='op'>=</span> <span class='id identifier rubyid_items_if_not_deleted'>items_if_not_deleted</span><span class='lparen'>(</span><span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_get_all_internal'>get_all_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='rparen'>)</span>
   <span class='ivar'>@cache</span><span class='lbracket'>[</span><span class='id identifier rubyid_all_cache_key'>all_cache_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_items'>items</span> <span class='kw'>unless</span> <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
   <span class='id identifier rubyid_items'>items</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="available?-instance_method">
+  
+    #<strong>available?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+53
+54
+55
+56
+57</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 53</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_available?'>available?</span>
+  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='ivar'>@has_available_method</span>
+
+  <span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_available?'>available?</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -602,12 +719,12 @@ implementation object.</p>
       <pre class="lines">
 
 
-99
-100
-101</pre>
+110
+111
+112</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 99</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 110</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_delete'>delete</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_version'>version</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_upsert'>upsert</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='lbrace'>{</span> <span class='label'>key:</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='label'>version:</span> <span class='id identifier rubyid_version'>version</span><span class='comma'>,</span> <span class='label'>deleted:</span> <span class='kw'>true</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
@@ -656,24 +773,24 @@ implementation object.</p>
       <pre class="lines">
 
 
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
 74
 75
 76
-77</pre>
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 63</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 74</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -734,23 +851,23 @@ implementation object.</p>
       <pre class="lines">
 
 
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
 59
 60
-61</pre>
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 48</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 59</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_init'>init</span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='rparen'>)</span>
   <span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_init_internal'>init_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='rparen'>)</span>
@@ -823,25 +940,25 @@ implementation object.</p>
       <pre class="lines">
 
 
-103
-104
-105
-106
-107
-108
-109
-110
-111
-112
-113
 114
 115
 116
 117
-118</pre>
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 103</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 114</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='kw'>return</span> <span class='kw'>true</span> <span class='kw'>if</span> <span class='ivar'>@inited</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
@@ -858,6 +975,73 @@ implementation object.</p>
 
   <span class='ivar'>@inited</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span> <span class='kw'>if</span> <span class='id identifier rubyid_result'>result</span>
   <span class='id identifier rubyid_result'>result</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="monitoring_enabled?-instance_method">
+  
+    #<strong>monitoring_enabled?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+49
+50
+51</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 49</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_monitoring_enabled?'>monitoring_enabled?</span>
+  <span class='ivar'>@has_available_method</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -903,12 +1087,12 @@ implementation object.</p>
       <pre class="lines">
 
 
-120
-121
-122</pre>
+131
+132
+133</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 120</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 131</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span>
@@ -957,17 +1141,17 @@ implementation object.</p>
       <pre class="lines">
 
 
-90
-91
-92
-93
-94
-95
-96
-97</pre>
+101
+102
+103
+104
+105
+106
+107
+108</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 90</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/util/store_wrapper.rb', line 101</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_upsert'>upsert</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_new_state'>new_state</span> <span class='op'>=</span> <span class='ivar'>@core</span><span class='period'>.</span><span class='id identifier rubyid_upsert_internal'>upsert_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
@@ -987,7 +1171,7 @@ implementation object.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:06 2023 by
+  Generated on Thu May  4 12:47:46 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

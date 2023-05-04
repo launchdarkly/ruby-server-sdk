@@ -6,7 +6,7 @@
 <title>
   Module: LaunchDarkly::Interfaces::DataSource
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -78,7 +78,9 @@
   
   <dl>
     <dt>Defined in:</dt>
-    <dd>lib/ldclient-rb/interfaces.rb</dd>
+    <dd>lib/ldclient-rb/interfaces.rb<span class="defines">,<br />
+  lib/ldclient-rb/interfaces.rb</span>
+</dd>
   </dl>
   
 </div>
@@ -100,7 +102,19 @@ and <span class='object_link'><a href="../Integrations/TestData.html" title="Lau
 <div class="tags">
   
 
-</div>
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+      <strong class="modules">Modules:</strong> <span class='object_link'><a href="DataSource/StatusProvider.html" title="LaunchDarkly::Interfaces::DataSource::StatusProvider (module)">StatusProvider</a></span>, <span class='object_link'><a href="DataSource/UpdateSink.html" title="LaunchDarkly::Interfaces::DataSource::UpdateSink (module)">UpdateSink</a></span>
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="DataSource/ErrorInfo.html" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo (class)">ErrorInfo</a></span>, <span class='object_link'><a href="DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span>
+    
+  
+</p>
+
 
 
 
@@ -236,11 +250,11 @@ once it has received one complete data set from LaunchDarkly.</p>
       <pre class="lines">
 
 
-134
-135</pre>
+397
+398</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 134</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 397</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
 <span class='kw'>end</span></pre>
@@ -293,11 +307,11 @@ should simply return the same value as the first call.</p>
       <pre class="lines">
 
 
-144
-145</pre>
+407
+408</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 144</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 407</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start'>start</span>
 <span class='kw'>end</span></pre>
@@ -332,11 +346,11 @@ This state should be considered permanent (<code>start</code> does not have to w
       <pre class="lines">
 
 
-151
-152</pre>
+414
+415</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 151</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 414</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
 <span class='kw'>end</span></pre>
@@ -350,7 +364,7 @@ This state should be considered permanent (<code>start</code> does not have to w
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:04 2023 by
+  Generated on Thu May  4 12:47:43 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

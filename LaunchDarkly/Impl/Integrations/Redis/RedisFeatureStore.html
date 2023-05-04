@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStore
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -231,6 +231,28 @@ of your client configuration.</p>
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#available%3F-instance_method" title="#available? (instance method)">#<strong>available?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#delete-instance_method" title="#delete (instance method)">#<strong>delete</strong>(kind, key, version)  &#x21d2; Object </a>
     
 
@@ -323,6 +345,28 @@ of your client configuration.</p>
   <span class="summary_signature">
     
       <a href="#initialized%3F-instance_method" title="#initialized? (instance method)">#<strong>initialized?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#monitoring_enabled%3F-instance_method" title="#monitoring_enabled? (instance method)">#<strong>monitoring_enabled?</strong>  &#x21d2; Boolean </a>
     
 
     
@@ -635,12 +679,12 @@ of your client configuration.</p>
       <pre class="lines">
 
 
-56
-57
-58</pre>
+64
+65
+66</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 56</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 64</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_prefix'>default_prefix</span>
   <span class='const'><span class='object_link'><a href="../../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../../Integrations/Redis.html" title="LaunchDarkly::Integrations::Redis (module)">Redis</a></span></span><span class='op'>::</span><span class='id identifier rubyid_default_prefix'><span class='object_link'><a href="../../../Integrations/Redis.html#default_prefix-class_method" title="LaunchDarkly::Integrations::Redis.default_prefix (method)">default_prefix</a></span></span>
@@ -691,12 +735,12 @@ running at <code>localhost</code> with its default port.</p>
       <pre class="lines">
 
 
-49
-50
-51</pre>
+57
+58
+59</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 49</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 57</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_redis_url'>default_redis_url</span>
   <span class='const'><span class='object_link'><a href="../../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../../Integrations/Redis.html" title="LaunchDarkly::Integrations::Redis (module)">Redis</a></span></span><span class='op'>::</span><span class='id identifier rubyid_default_redis_url'><span class='object_link'><a href="../../../Integrations/Redis.html#default_redis_url-class_method" title="LaunchDarkly::Integrations::Redis.default_redis_url (method)">default_redis_url</a></span></span>
@@ -751,15 +795,82 @@ running at <code>localhost</code> with its default port.</p>
       <pre class="lines">
 
 
-64
-65
-66</pre>
+72
+73
+74</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 64</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 72</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
   <span class='ivar'>@wrapper</span><span class='period'>.</span><span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="available?-instance_method">
+  
+    #<strong>available?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+49
+50
+51</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 49</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_available?'>available?</span>
+  <span class='ivar'>@wrapper</span><span class='period'>.</span><span class='id identifier rubyid_available?'>available?</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -805,12 +916,12 @@ running at <code>localhost</code> with its default port.</p>
       <pre class="lines">
 
 
-68
-69
-70</pre>
+76
+77
+78</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 68</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 76</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_delete'>delete</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_version'>version</span><span class='rparen'>)</span>
   <span class='ivar'>@wrapper</span><span class='period'>.</span><span class='id identifier rubyid_delete'>delete</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_version'>version</span><span class='rparen'>)</span>
@@ -859,12 +970,12 @@ running at <code>localhost</code> with its default port.</p>
       <pre class="lines">
 
 
-60
-61
-62</pre>
+68
+69
+70</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 60</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 68</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='ivar'>@wrapper</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
@@ -913,12 +1024,12 @@ running at <code>localhost</code> with its default port.</p>
       <pre class="lines">
 
 
-72
-73
-74</pre>
+80
+81
+82</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 72</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 80</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_init'>init</span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='rparen'>)</span>
   <span class='ivar'>@wrapper</span><span class='period'>.</span><span class='id identifier rubyid_init'>init</span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='rparen'>)</span>
@@ -980,15 +1091,82 @@ running at <code>localhost</code> with its default port.</p>
       <pre class="lines">
 
 
-80
-81
-82</pre>
+88
+89
+90</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 80</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 88</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='ivar'>@wrapper</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="monitoring_enabled?-instance_method">
+  
+    #<strong>monitoring_enabled?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+45
+46
+47</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 45</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_monitoring_enabled?'>monitoring_enabled?</span>
+  <span class='kw'>true</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1034,12 +1212,12 @@ running at <code>localhost</code> with its default port.</p>
       <pre class="lines">
 
 
-84
-85
-86</pre>
+92
+93
+94</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 84</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 92</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='ivar'>@wrapper</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span>
@@ -1088,12 +1266,12 @@ running at <code>localhost</code> with its default port.</p>
       <pre class="lines">
 
 
-76
-77
-78</pre>
+84
+85
+86</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 76</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 84</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_upsert'>upsert</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
   <span class='ivar'>@wrapper</span><span class='period'>.</span><span class='id identifier rubyid_upsert'>upsert</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
@@ -1108,7 +1286,7 @@ running at <code>localhost</code> with its default port.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:05 2023 by
+  Generated on Thu May  4 12:47:45 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

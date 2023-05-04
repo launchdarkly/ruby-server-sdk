@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::FileDataSourceImpl::FileDataSourcePoller
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -232,18 +232,6 @@
       <pre class="lines">
 
 
-168
-169
-170
-171
-172
-173
-174
-175
-176
-177
-178
-179
 180
 181
 182
@@ -266,10 +254,22 @@
 199
 200
 201
-202</pre>
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 168</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 180</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_resolved_paths'>resolved_paths</span><span class='comma'>,</span> <span class='id identifier rubyid_interval'>interval</span><span class='comma'>,</span> <span class='id identifier rubyid_reloader'>reloader</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
   <span class='ivar'>@stopped</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>AtomicBoolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
@@ -357,13 +357,13 @@
       <pre class="lines">
 
 
-204
-205
-206
-207</pre>
+216
+217
+218
+219</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 204</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 216</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='ivar'>@stopped</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
@@ -379,7 +379,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:05 2023 by
+  Generated on Thu May  4 12:47:45 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

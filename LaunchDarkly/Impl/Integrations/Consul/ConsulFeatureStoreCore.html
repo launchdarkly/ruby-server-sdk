@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::Consul::ConsulFeatureStoreCore
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -138,6 +138,28 @@
     </h2>
 
     <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#available%3F-instance_method" title="#available? (instance method)">#<strong>available?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
       
         <li class="public ">
   <span class="summary_signature">
@@ -381,7 +403,90 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="get_all_internal-instance_method">
+  <h3 class="signature first" id="available?-instance_method">
+  
+    #<strong>available?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/consul_impl.rb', line 122</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_available?'>available?</span>
+  <span class='comment'># Most implementations use the initialized_internal? method as a
+</span>  <span class='comment'># proxy for this check. However, since `initialized_internal?`
+</span>  <span class='comment'># catches a KeyNotFound exception, and that exception can be raised
+</span>  <span class='comment'># when the server goes away, we have to modify our behavior
+</span>  <span class='comment'># slightly.
+</span>  <span class='const'>Diplomat</span><span class='op'>::</span><span class='const'>Kv</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='comma'>,</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='symbol'>:return</span><span class='comma'>,</span> <span class='symbol'>:return</span><span class='rparen'>)</span>
+  <span class='kw'>true</span>
+<span class='kw'>rescue</span>
+  <span class='kw'>false</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="get_all_internal-instance_method">
   
     #<strong>get_all_internal</strong>(kind)  &#x21d2; <tt>Object</tt> 
   
@@ -740,12 +845,12 @@
       <pre class="lines">
 
 
-122
-123
-124</pre>
+134
+135
+136</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/consul_impl.rb', line 122</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/consul_impl.rb', line 134</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='comment'># There&#39;s no Consul client instance to dispose of
@@ -866,7 +971,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:05 2023 by
+  Generated on Thu May  4 12:47:45 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

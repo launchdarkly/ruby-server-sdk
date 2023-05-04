@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::InMemoryFeatureStore
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -269,6 +269,28 @@ Database-backed implementations are available in <span class='object_link'><a hr
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#monitoring_enabled%3F-instance_method" title="#monitoring_enabled? (instance method)">#<strong>monitoring_enabled?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#stop-instance_method" title="#stop (instance method)">#<strong>stop</strong>  &#x21d2; Object </a>
     
 
@@ -343,14 +365,14 @@ Database-backed implementations are available in <span class='object_link'><a hr
       <pre class="lines">
 
 
-34
-35
-36
 37
-38</pre>
+38
+39
+40
+41</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 34</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 37</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
   <span class='ivar'>@items</span> <span class='op'>=</span> <span class='const'>Hash</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
@@ -384,15 +406,15 @@ Database-backed implementations are available in <span class='object_link'><a hr
       <pre class="lines">
 
 
-48
-49
-50
-51
-52
-53</pre>
+55
+56
+57
+58
+59
+60</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 48</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 55</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_read_lock'>with_read_lock</span> <span class='kw'>do</span>
@@ -420,23 +442,23 @@ Database-backed implementations are available in <span class='object_link'><a hr
       <pre class="lines">
 
 
-55
-56
-57
-58
-59
-60
-61
 62
 63
 64
 65
 66
 67
-68</pre>
+68
+69
+70
+71
+72
+73
+74
+75</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 55</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 62</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_delete'>delete</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_version'>version</span><span class='rparen'>)</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_write_lock'>with_write_lock</span> <span class='kw'>do</span>
@@ -472,16 +494,16 @@ Database-backed implementations are available in <span class='object_link'><a hr
       <pre class="lines">
 
 
-40
-41
-42
-43
-44
-45
-46</pre>
+47
+48
+49
+50
+51
+52
+53</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 40</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 47</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_read_lock'>with_read_lock</span> <span class='kw'>do</span>
@@ -510,15 +532,15 @@ Database-backed implementations are available in <span class='object_link'><a hr
       <pre class="lines">
 
 
-70
-71
-72
-73
-74
-75</pre>
+77
+78
+79
+80
+81
+82</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 70</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 77</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_init'>init</span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='rparen'>)</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_write_lock'>with_write_lock</span> <span class='kw'>do</span>
@@ -568,15 +590,67 @@ Database-backed implementations are available in <span class='object_link'><a hr
       <pre class="lines">
 
 
-92
-93
-94</pre>
+99
+100
+101</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 92</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 99</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='ivar'>@initialized</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="monitoring_enabled?-instance_method">
+  
+    #<strong>monitoring_enabled?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+43
+44
+45</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 43</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_monitoring_enabled?'>monitoring_enabled?</span>
+  <span class='kw'>false</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -598,12 +672,12 @@ Database-backed implementations are available in <span class='object_link'><a hr
       <pre class="lines">
 
 
-96
-97
-98</pre>
+103
+104
+105</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 96</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 103</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='comment'># nothing to do
@@ -628,23 +702,23 @@ Database-backed implementations are available in <span class='object_link'><a hr
       <pre class="lines">
 
 
-77
-78
-79
-80
-81
-82
-83
 84
 85
 86
 87
 88
 89
-90</pre>
+90
+91
+92
+93
+94
+95
+96
+97</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 77</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/in_memory_store.rb', line 84</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_upsert'>upsert</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_write_lock'>with_write_lock</span> <span class='kw'>do</span>
@@ -670,7 +744,7 @@ Database-backed implementations are available in <span class='object_link'><a hr
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:04 2023 by
+  Generated on Thu May  4 12:47:44 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

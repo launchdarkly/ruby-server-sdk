@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::FileDataSourceImpl
   
-    &mdash; LaunchDarkly Ruby SDK (7.1.0)
+    &mdash; LaunchDarkly Ruby SDK (7.2.0)
   
 </title>
 
@@ -194,7 +194,7 @@ gem has been provided by the host app.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(feature_store, logger, options = {})  &#x21d2; FileDataSourceImpl </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(data_store, data_source_update_sink, logger, options = {})  &#x21d2; FileDataSourceImpl </a>
     
 
     
@@ -291,7 +291,7 @@ gem has been provided by the host app.</p>
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(feature_store, logger, options = {})  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::Integrations::FileDataSourceImpl (class)">FileDataSourceImpl</a></span></tt> 
+    #<strong>initialize</strong>(data_store, data_source_update_sink, logger, options = {})  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::Integrations::FileDataSourceImpl (class)">FileDataSourceImpl</a></span></tt> 
   
 
   
@@ -305,7 +305,61 @@ gem has been provided by the host app.</p>
   </div>
 </div>
 <div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
   
+    <li>
+      
+        <span class='name'>data_store</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../Interfaces/FeatureStore.html" title="LaunchDarkly::Interfaces::FeatureStore (module)">LaunchDarkly::Interfaces::FeatureStore</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>data_source_update_sink</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../Interfaces/DataSource/UpdateSink.html" title="LaunchDarkly::Interfaces::DataSource::UpdateSink (module)">LaunchDarkly::Interfaces::DataSource::UpdateSink</a></span></tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Might be nil for backwards compatibility reasons.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>logger</span>
+      
+      
+        <span class='type'>(<tt>Logger</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+    </li>
+  
+</ul>
+
 <p class="tag_title">Since:</p>
 <ul class="since">
   
@@ -328,12 +382,6 @@ gem has been provided by the host app.</p>
       <pre class="lines">
 
 
-23
-24
-25
-26
-27
-28
 29
 30
 31
@@ -348,13 +396,21 @@ gem has been provided by the host app.</p>
 40
 41
 42
-43</pre>
+43
+44
+45
+46
+47
+48
+49
+50</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 23</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 29</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_feature_store'>feature_store</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
-  <span class='ivar'>@feature_store</span> <span class='op'>=</span> <span class='id identifier rubyid_feature_store'>feature_store</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_data_store'>data_store</span><span class='comma'>,</span> <span class='id identifier rubyid_data_source_update_sink'>data_source_update_sink</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='ivar'>@data_store</span> <span class='op'>=</span> <span class='id identifier rubyid_data_source_update_sink'>data_source_update_sink</span> <span class='op'>||</span> <span class='id identifier rubyid_data_store'>data_store</span>
+  <span class='ivar'>@data_source_update_sink</span> <span class='op'>=</span> <span class='id identifier rubyid_data_source_update_sink'>data_source_update_sink</span>
   <span class='ivar'>@logger</span> <span class='op'>=</span> <span class='id identifier rubyid_logger'>logger</span>
   <span class='ivar'>@paths</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:paths</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='kw'>if</span> <span class='ivar'>@paths</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>String</span>
@@ -438,12 +494,12 @@ gem has been provided by the host app.</p>
       <pre class="lines">
 
 
-45
-46
-47</pre>
+52
+53
+54</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 45</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 52</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='ivar'>@initialized</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
@@ -492,13 +548,6 @@ gem has been provided by the host app.</p>
       <pre class="lines">
 
 
-49
-50
-51
-52
-53
-54
-55
 56
 57
 58
@@ -508,10 +557,17 @@ gem has been provided by the host app.</p>
 62
 63
 64
-65</pre>
+65
+66
+67
+68
+69
+70
+71
+72</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 49</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 56</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start'>start</span>
   <span class='id identifier rubyid_ready'>ready</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>Event</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
@@ -574,12 +630,12 @@ gem has been provided by the host app.</p>
       <pre class="lines">
 
 
-67
-68
-69</pre>
+74
+75
+76</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 67</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 74</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='ivar'>@listener</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span> <span class='kw'>unless</span> <span class='ivar'>@listener</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -594,7 +650,7 @@ gem has been provided by the host app.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 13 19:43:05 2023 by
+  Generated on Thu May  4 12:47:45 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>
