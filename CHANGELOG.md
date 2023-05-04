@@ -2,6 +2,12 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.2.0] - 2023-05-04
+### Added:
+- You can monitor the status of the SDK's data source (which normally means the streaming connection to the LaunchDarkly service) with `LaunchDarkly::LDClient.data_source_status_provider`. This allows you to check the current connection status, and to be notified if this status changes.
+- You can monitor the status of a data store with `LaunchDarkly::LDClient.data_store_status_provider`. This allows you to check whether updates are succeeding and to be notified if this status changes.
+- You can tell the SDK to notify you whenever a feature flag's configuration has changed (either in general, or in terms of its result for a specific context), using `LaunchDarkly::LDClient.flag_tracker`.
+
 ## [7.1.0] - 2023-04-13
 ### Added:
 - Support for Payload Filtering in streaming and polling modes. Payload Filtering is a beta feature that allows SDKs to download a subset of environment data, rather than full environments.

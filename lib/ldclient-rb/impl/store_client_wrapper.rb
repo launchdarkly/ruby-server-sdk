@@ -15,7 +15,7 @@ module LaunchDarkly
         # @type [LaunchDarkly::Interfaces::FeatureStore]
         @store = store
 
-        @monitoring_enabled = monitoring_enabled?
+        @monitoring_enabled = does_store_support_monitoring?
 
         # @type [LaunchDarkly::Impl::DataStore::UpdateSink]
         @store_update_sink = store_update_sink
@@ -59,6 +59,10 @@ module LaunchDarkly
           @poller.stop
           @poller = nil
         end
+      end
+
+      def monitoring_enabled?
+        @monitoring_enabled
       end
 
       private def wrapper()
@@ -126,7 +130,7 @@ module LaunchDarkly
       # These extra checks won't be necessary once `available` becomes a part
       # of the core interface requirements and this class no longer wraps every
       # feature store.
-      private def monitoring_enabled?
+      private def does_store_support_monitoring?
         return false unless @store.respond_to? :monitoring_enabled?
         return false unless @store.respond_to? :available?
 
