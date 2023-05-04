@@ -18,6 +18,7 @@ describe LaunchDarkly::Integrations::FileData do
   let(:full_segment_1_key) { "seg1" }
   let(:all_segment_keys) { [ full_segment_1_key.to_sym ] }
 
+  let(:invalid_json) { "My invalid JSON" }
   let(:flag_only_json) { <<-EOF
   {
     "flags": {
@@ -97,6 +98,12 @@ EOF
   before do
     @config = LaunchDarkly::Config.new(logger: $null_log)
     @store = @config.feature_store
+
+    @executor = SynchronousExecutor.new
+    @status_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@executor, $null_log)
+    @flag_change_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@executor, $null_log)
+    @config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(@store, @status_broadcaster, @flag_change_broadcaster)
+
     @tmp_dir = Dir.mktmpdir
   end
 
@@ -113,9 +120,19 @@ EOF
     file
   end
 
-  def with_data_source(options)
+  def with_data_source(options, initialize_to_valid = false)
     factory = LaunchDarkly::Integrations::FileData.data_source(options)
+
+    if initialize_to_valid
+      # If the update sink receives an interrupted signal when the state is
+      # still initializing, it will continue staying in the initializing phase.
+      # Therefore, we set the state to valid before this test so we can
+      # determine if the interrupted signal is actually generated.
+      @config.data_source_update_sink.update_status(LaunchDarkly::Interfaces::DataSource::Status::VALID, nil)
+    end
+
     ds = factory.call('', @config)
+
     begin
       yield ds
     ensure
@@ -135,10 +152,16 @@ EOF
   it "loads flags on start - from JSON" do
     file = make_temp_file(all_properties_json)
     with_data_source({ paths: [ file.path ] }) do |ds|
+      listener = ListenerSpy.new
+      @status_broadcaster.add_listener(listener)
+
       ds.start
       expect(@store.initialized?).to eq(true)
       expect(@store.all(LaunchDarkly::FEATURES).keys).to eq(all_flag_keys)
       expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq(all_segment_keys)
+
+      expect(listener.statuses.count).to eq(1)
+      expect(listener.statuses[0].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
     end
   end
 
@@ -191,6 +214,20 @@ EOF
       expect(@store.initialized?).to eq(true)
       expect(@store.all(LaunchDarkly::FEATURES).keys).to eq([ full_flag_1_key.to_sym ])
       expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq([ full_segment_1_key.to_sym ])
+    end
+  end
+
+  it "file loading failure results in interrupted status" do
+    file1 = make_temp_file(flag_only_json)
+    file2 = make_temp_file(invalid_json)
+    with_data_source({ paths: [ file1.path, file2.path ] }, true) do |ds|
+      listener = ListenerSpy.new
+      @status_broadcaster.add_listener(listener)
+
+      ds.start
+      expect(@store.initialized?).to eq(false)
+      expect(listener.statuses.count).to eq(1)
+      expect(listener.statuses[0].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
     end
   end
 

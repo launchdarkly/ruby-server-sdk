@@ -42,6 +42,14 @@ module LaunchDarkly
             @wrapper = LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
           end
 
+          def monitoring_enabled?
+            true
+          end
+
+          def available?
+            @wrapper.available?
+          end
+
           #
           # Default value for the `redis_url` constructor parameter; points to an instance of Redis
           # running at `localhost` with its default port.
@@ -152,6 +160,14 @@ module LaunchDarkly
             super(opts)
 
             @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
+          end
+
+          def available?
+            # We don't care what the status is, only that we can connect
+            initialized_internal?
+            true
+          rescue
+            false
           end
 
           def description

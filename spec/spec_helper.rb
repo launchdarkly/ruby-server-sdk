@@ -1,3 +1,5 @@
+require "simplecov" if ENV['LD_ENABLE_CODE_COVERAGE'] == '1'
+
 require "ldclient-rb"
 
 $null_log = ::Logger.new($stdout)
@@ -18,6 +20,35 @@ def ensure_stop(thing)
     thing.stop
   end
 end
+
+class SynchronousExecutor
+  def post
+    yield
+  end
+end
+
+class CallbackListener
+  def initialize(callable)
+    @callable = callable
+  end
+
+  def update(status)
+    @callable.call(status)
+  end
+end
+
+class ListenerSpy
+  attr_reader :statuses
+
+  def initialize
+    @statuses = []
+  end
+
+  def update(status)
+    @statuses << status
+  end
+end
+
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|

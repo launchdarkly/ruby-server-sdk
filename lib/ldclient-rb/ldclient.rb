@@ -1,6 +1,10 @@
 require "ldclient-rb/impl/big_segments"
+require "ldclient-rb/impl/broadcaster"
+require "ldclient-rb/impl/data_source"
+require "ldclient-rb/impl/data_store"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
+require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/store_client_wrapper"
 require "concurrent/atomics"
 require "digest/sha1"
@@ -45,14 +49,21 @@ module LaunchDarkly
 
       @sdk_key = sdk_key
 
+      @shared_executor = Concurrent::SingleThreadExecutor.new
+
+      data_store_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, config.logger)
+      store_sink = LaunchDarkly::Impl::DataStore::UpdateSink.new(data_store_broadcaster)
+
       # We need to wrap the feature store object with a FeatureStoreClientWrapper in order to add
       # some necessary logic around updates. Unfortunately, we have code elsewhere that accesses
       # the feature store through the Config object, so we need to make a new Config that uses
       # the wrapped store.
-      @store = Impl::FeatureStoreClientWrapper.new(config.feature_store)
+      @store = Impl::FeatureStoreClientWrapper.new(config.feature_store, store_sink, config.logger)
       updated_config = config.clone
       updated_config.instance_variable_set(:@feature_store, @store)
       @config = updated_config
+
+      @data_store_status_provider = LaunchDarkly::Impl::DataStore::StatusProvider.new(@store, store_sink)
 
       @big_segment_store_manager = Impl::BigSegmentStoreManager.new(config.big_segments, @config.logger)
       @big_segment_store_status_provider = @big_segment_store_manager.status_provider
@@ -78,6 +89,16 @@ module LaunchDarkly
         @config.logger.info { "[LDClient] Started LaunchDarkly Client in LDD mode" }
         return  # requestor and update processor are not used in this mode
       end
+
+      flag_tracker_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @config.logger)
+      @flag_tracker = LaunchDarkly::Impl::FlagTracker.new(flag_tracker_broadcaster, lambda { |key, context| variation(key, context, nil) })
+
+      data_source_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @config.logger)
+
+      # Make the update sink available on the config so that our data source factory can access the sink with a shared executor.
+      @config.data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(@store, data_source_broadcaster, flag_tracker_broadcaster)
+
+      @data_source_status_provider = LaunchDarkly::Impl::DataSource::StatusProvider.new(data_source_broadcaster, @config.data_source_update_sink)
 
       data_source_or_factory = @config.data_source || self.method(:create_default_data_source)
       if data_source_or_factory.respond_to? :call
@@ -345,15 +366,52 @@ module LaunchDarkly
       @event_processor.stop
       @big_segment_store_manager.stop
       @store.stop
+      @shared_executor.shutdown
     end
 
     #
     # Returns an interface for tracking the status of a Big Segment store.
     #
-    # The {BigSegmentStoreStatusProvider} has methods for checking whether the Big Segment store
+    # The {Interfaces::BigSegmentStoreStatusProvider} has methods for checking whether the Big Segment store
     # is (as far as the SDK knows) currently operational and tracking changes in this status.
     #
     attr_reader :big_segment_store_status_provider
+
+    #
+    # Returns an interface for tracking the status of a persistent data store.
+    #
+    # The {LaunchDarkly::Interfaces::DataStore::StatusProvider} has methods for
+    # checking whether the data store is (as far as the SDK knows) currently
+    # operational, tracking changes in this status, and getting cache
+    # statistics. These are only relevant for a persistent data store; if you
+    # are using an in-memory data store, then this method will return a stub
+    # object that provides no information.
+    #
+    # @return [LaunchDarkly::Interfaces::DataStore::StatusProvider]
+    #
+    attr_reader :data_store_status_provider
+
+    #
+    # Returns an interface for tracking the status of the data source.
+    #
+    # The data source is the mechanism that the SDK uses to get feature flag
+    # configurations, such as a streaming connection (the default) or poll
+    # requests. The {LaunchDarkly::Interfaces::DataSource::StatusProvider} has
+    # methods for checking whether the data source is (as far as the SDK knows)
+    # currently operational and tracking changes in this status.
+    #
+    # @return [LaunchDarkly::Interfaces::DataSource::StatusProvider]
+    #
+    attr_reader :data_source_status_provider
+
+    #
+    # Returns an interface for tracking changes in feature flag configurations.
+    #
+    # The {LaunchDarkly::Interfaces::FlagTracker} contains methods for
+    # requesting notifications about feature flag changes using an event
+    # listener model.
+    #
+    attr_reader :flag_tracker
 
     private
 
@@ -403,7 +461,11 @@ module LaunchDarkly
         end
       end
 
-      feature = @store.get(FEATURES, key)
+      begin
+        feature = @store.get(FEATURES, key)
+      rescue
+        # Ignored
+      end
 
       if feature.nil?
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }

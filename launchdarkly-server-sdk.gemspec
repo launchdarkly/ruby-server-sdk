@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "aws-sdk-dynamodb", "~> 1.57"
   spec.add_development_dependency "bundler", "2.2.33"
+  spec.add_development_dependency "simplecov", "~> 0.21"
   spec.add_development_dependency "rspec", "~> 3.10"
   spec.add_development_dependency "diplomat", "~> 2.6"
   spec.add_development_dependency "redis", "~> 5.0"

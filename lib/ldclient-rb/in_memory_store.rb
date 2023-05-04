@@ -23,6 +23,9 @@ module LaunchDarkly
     priority: 0,
   }.freeze
 
+  # @private
+  ALL_KINDS = [FEATURES, SEGMENTS].freeze
+
   #
   # Default implementation of the LaunchDarkly client's feature store, using an in-memory
   # cache.  This object holds feature flags and related data received from LaunchDarkly.
@@ -35,6 +38,10 @@ module LaunchDarkly
       @items = Hash.new
       @lock = Concurrent::ReadWriteLock.new
       @initialized = Concurrent::AtomicBoolean.new(false)
+    end
+
+    def monitoring_enabled?
+      false
     end
 
     def get(kind, key)

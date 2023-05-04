@@ -16,9 +16,8 @@ module LaunchDarkly
 
       def start
         @worker = Thread.new do
-          if @start_delay
-            sleep(@start_delay)
-          end
+          sleep(@start_delay) unless @start_delay.nil? || @start_delay == 0
+
           until @stopped.value do
             started_at = Time.now
             begin

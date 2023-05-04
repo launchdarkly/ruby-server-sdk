@@ -20,8 +20,15 @@ module LaunchDarkly
         rescue LoadError
         end
 
-        def initialize(feature_store, logger, options={})
-          @feature_store = feature_store
+        #
+        # @param data_store [LaunchDarkly::Interfaces::FeatureStore]
+        # @param data_source_update_sink [LaunchDarkly::Interfaces::DataSource::UpdateSink, nil] Might be nil for backwards compatibility reasons.
+        # @param logger [Logger]
+        # @param options [Hash]
+        #
+        def initialize(data_store, data_source_update_sink, logger, options={})
+          @data_store = data_source_update_sink || data_store
+          @data_source_update_sink = data_source_update_sink
           @logger = logger
           @paths = options[:paths] || []
           if @paths.is_a? String
@@ -80,10 +87,15 @@ module LaunchDarkly
               load_file(path, all_data)
             rescue => exn
               LaunchDarkly::Util.log_exception(@logger, "Unable to load flag data from \"#{path}\"", exn)
+              @data_source_update_sink&.update_status(
+                LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
+                LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA, 0, exn.to_s, Time.now)
+              )
               return
             end
           end
-          @feature_store.init(all_data)
+          @data_store.init(all_data)
+          @data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::VALID, nil)
           @initialized.make_true
         end
 

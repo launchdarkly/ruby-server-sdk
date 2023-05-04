@@ -20,8 +20,6 @@ jobs:
       image: ruby:2.7-buster
     template:
       name: ruby
-    env:
-      LD_SKIP_DATABASE_TESTS: "1"  # Don't run Redis/Consul/DynamoDB tests in release; they are run in CI
 
 documentation:
   gitHubPages: true

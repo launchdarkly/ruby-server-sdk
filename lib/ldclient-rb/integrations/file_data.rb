@@ -101,7 +101,7 @@ module LaunchDarkly
       #
       def self.data_source(options={})
         lambda { |sdk_key, config|
-          Impl::Integrations::FileDataSourceImpl.new(config.feature_store, config.logger, options) }
+          Impl::Integrations::FileDataSourceImpl.new(config.feature_store, config.data_source_update_sink, config.logger, options) }
       end
     end
   end

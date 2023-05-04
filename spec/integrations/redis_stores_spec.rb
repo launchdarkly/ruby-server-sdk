@@ -7,7 +7,7 @@ require "spec_helper"
 require "redis"
 
 # These tests will all fail if there isn't a local Redis instance running.
-# They can be disabled with LD_SKIP_DATABASE_TESTS=1
+# They can be enabled with LD_SKIP_DATABASE_TESTS=0
 
 $RedisBigSegmentStore = LaunchDarkly::Impl::Integrations::Redis::RedisBigSegmentStore
 
@@ -60,7 +60,7 @@ end
 
 
 describe "Redis feature store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
 
   include_examples "persistent_feature_store", RedisStoreTester
 
@@ -79,6 +79,24 @@ describe "Redis feature store" do
   end
 
   tester = RedisStoreTester.new({ logger: $null_logger })
+
+  it "should have monitoring enabled and defaults to available" do
+    tester = RedisStoreTester.new({ logger: $null_logger })
+
+    ensure_stop(tester.create_feature_store) do |store|
+      expect(store.monitoring_enabled?).to be true
+      expect(store.available?).to be true
+    end
+  end
+
+  it "can detect that a non-existent store is not available" do
+    # Short timeout so we don't delay the tests too long
+    tester = RedisStoreTester.new({ redis_opts: { url: "redis://i-mean-what-are-the-odds:13579", timeout: 0.1 }, logger: $null_logger })
+
+    ensure_stop(tester.create_feature_store) do |store|
+      expect(store.available?).to be false
+    end
+  end
 
   it "handles upsert race condition against external client with lower version" do
     with_redis_test_client do |other_client|
@@ -146,7 +164,7 @@ describe "Redis feature store" do
 end
 
 describe "Redis big segment store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
 
   include_examples "big_segment_store", RedisStoreTester
 end
