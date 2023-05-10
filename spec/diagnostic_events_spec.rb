@@ -77,7 +77,7 @@ module LaunchDarkly
           end
         end
 
-        ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY'].each do |name|
+        %w[http_proxy https_proxy HTTP_PROXY HTTPS_PROXY].each do |name|
           it "detects proxy #{name}" do
             begin
               ENV[name] = 'http://my-proxy'
@@ -91,7 +91,7 @@ module LaunchDarkly
 
         it "has expected SDK data" do
           event = default_acc.create_init_event(Config.new)
-          expect(event[:sdk]).to eq ({
+          expect(event[:sdk]).to eq({
             name: 'ruby-server-sdk',
             version: LaunchDarkly::VERSION,
           })
@@ -99,7 +99,7 @@ module LaunchDarkly
 
         it "has expected SDK data with wrapper" do
           event = default_acc.create_init_event(Config.new(wrapper_name: 'my-wrapper', wrapper_version: '2.0'))
-          expect(event[:sdk]).to eq ({
+          expect(event[:sdk]).to eq({
             name: 'ruby-server-sdk',
             version: LaunchDarkly::VERSION,
             wrapperName: 'my-wrapper',
@@ -109,7 +109,7 @@ module LaunchDarkly
 
         it "has expected platform data" do
           event = default_acc.create_init_event(Config.new)
-          expect(event[:platform]).to include ({
+          expect(event[:platform]).to include({
             name: 'ruby',
           })
         end
@@ -143,13 +143,13 @@ module LaunchDarkly
           acc.record_stream_init(1000, false, 2000)
           event1 = acc.create_periodic_event_and_reset(2, 3, 4)
           event2 = acc.create_periodic_event_and_reset(5, 6, 7)
-          expect(event1).to include ({
+          expect(event1).to include({
             droppedEvents: 2,
             deduplicatedUsers: 3,
             eventsInLastBatch: 4,
             streamInits: [{ timestamp: 1000, failed: false, durationMillis: 2000 }],
           })
-          expect(event2).to include ({
+          expect(event2).to include({
             dataSinceDate: event1[:creationDate],
             droppedEvents: 5,
             deduplicatedUsers: 6,

@@ -13,7 +13,7 @@ module LaunchDarkly
             on: false,
             offVariation: 1,
             fallthrough: { variation: 0 },
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new('b', 1, EvaluationReason::off)
@@ -27,7 +27,7 @@ module LaunchDarkly
             key: 'feature',
             on: false,
             fallthrough: { variation: 0 },
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::off)
@@ -42,7 +42,7 @@ module LaunchDarkly
             on: false,
             offVariation: 1,
             fallthrough: { variation: 0 },
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new('b', 1, EvaluationReason::off)
@@ -58,7 +58,7 @@ module LaunchDarkly
             on: false,
             offVariation: 999,
             fallthrough: { variation: 0 },
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new(nil, nil,
@@ -74,7 +74,7 @@ module LaunchDarkly
             on: false,
             offVariation: -1,
             fallthrough: { variation: 0 },
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'x' })
           detail = EvaluationDetail.new(nil, nil,
@@ -90,7 +90,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { variation: 0 },
             offVariation: 1,
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
             version: 1,
             rules: [
               { variation: 2, clauses: [ { attribute: "key", op: "in", values: ["zzz"] } ] },
@@ -109,7 +109,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { variation: 0 },
             offVariation: 1,
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
             version: 1,
             rules: [
               { variation: 2, clauses: [ { attribute: "key", op: "in", values: ["zzz"] } ] },
@@ -129,7 +129,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { variation: 999 },
             offVariation: 1,
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
@@ -144,7 +144,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { variation: -1 },
             offVariation: 1,
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
@@ -159,7 +159,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { },
             offVariation: 1,
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
@@ -174,7 +174,7 @@ module LaunchDarkly
             on: true,
             fallthrough: { rollout: { variations: [] } },
             offVariation: 1,
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
@@ -188,11 +188,11 @@ module LaunchDarkly
             key: 'feature',
             on: true,
             targets: [
-              { values: [ 'whoever', 'userkey' ], variation: 2 },
+              { values: %w[whoever userkey], variation: 2 },
             ],
             fallthrough: { variation: 0 },
             offVariation: 1,
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new('c', 2, EvaluationReason::target_match)
@@ -206,11 +206,11 @@ module LaunchDarkly
             key: 'feature',
             on: true,
             targets: [
-              { values: [ 'whoever', 'userkey' ], variation: 2 },
+              { values: %w[whoever userkey], variation: 2 },
             ],
             fallthrough: { variation: 0 },
             offVariation: 1,
-            variations: ['a', 'b', 'c'],
+            variations: %w[a b c],
           })
           context = LDContext.create({ key: 'userkey' })
           detail = EvaluationDetail.new('c', 2, EvaluationReason::target_match)
@@ -227,7 +227,7 @@ module LaunchDarkly
               on: true,
               fallthrough: { rollout: { variations: [ { weight: 100000, variation: 1, untracked: false } ] } },
               offVariation: 1,
-              variations: ['a', 'b', 'c'],
+              variations: %w[a b c],
               version: 1,
             })
             context = LDContext.create({ key: 'x' })
@@ -243,7 +243,7 @@ module LaunchDarkly
               on: true,
               fallthrough: { rollout: { variations: [ { weight: 100000, variation: 1, untracked: false } ] } },
               offVariation: 1,
-              variations: ['a', 'b', 'c'],
+              variations: %w[a b c],
               version: 1,
             })
             context = LDContext.create({ key: 'x' })
@@ -260,7 +260,7 @@ module LaunchDarkly
               on: true,
               fallthrough: { rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: false } ] } },
               offVariation: 1,
-              variations: ['a', 'b', 'c'],
+              variations: %w[a b c],
             })
             context = LDContext.create({ key: 'userkey' })
             result = basic_evaluator.evaluate(flag, context)
@@ -274,7 +274,7 @@ module LaunchDarkly
               on: true,
               fallthrough: { rollout: { kind: 'rollout', variations: [ { weight: 100000, variation: 1, untracked: false } ] } },
               offVariation: 1,
-              variations: ['a', 'b', 'c'],
+              variations: %w[a b c],
             })
             context = LDContext.create({ key: 'userkey' })
             result = basic_evaluator.evaluate(flag, context)
@@ -288,7 +288,7 @@ module LaunchDarkly
               on: true,
               fallthrough: { rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: true } ] } },
               offVariation: 1,
-              variations: ['a', 'b', 'c'],
+              variations: %w[a b c],
             })
             context = LDContext.create({ key: 'userkey' })
             result = basic_evaluator.evaluate(flag, context)

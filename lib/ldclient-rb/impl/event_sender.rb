@@ -64,6 +64,7 @@ module LaunchDarkly
                 begin
                   res_time = Time.httpdate(response.headers["date"])
                 rescue ArgumentError
+                  # Ignored
                 end
               end
               return EventSenderResult.new(true, false, res_time)

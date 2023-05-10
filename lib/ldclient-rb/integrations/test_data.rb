@@ -90,7 +90,7 @@ module LaunchDarkly
       #
       def flag(key)
         existing_builder = @lock.with_read_lock { @flag_builders[key] }
-        if existing_builder.nil? then
+        if existing_builder.nil?
           FlagBuilder.new(key).boolean_flag
         else
           existing_builder.clone
@@ -118,7 +118,7 @@ module LaunchDarkly
           @flag_builders[flag_builder.key] = flag_builder
           version = 0
           flag_key = flag_builder.key.to_sym
-          if @current_flags[flag_key] then
+          if @current_flags[flag_key]
             version = @current_flags[flag_key][:version]
           end
           new_flag = Impl::Model.deserialize(FEATURES, flag_builder.build(version+1))
@@ -175,7 +175,7 @@ module LaunchDarkly
         key = item.key.to_sym
         @lock.with_write_lock do
           old_item = current[key]
-          unless old_item.nil? then
+          unless old_item.nil?
             data = item.as_json
             data[:version] = old_item.version + 1
             item = Impl::Model.deserialize(kind, data)

@@ -132,7 +132,7 @@ module LaunchDarkly
             ENV["http_proxy"] = nil
           end
 
-          req, body = proxy.await_request_with_body
+          _, body = proxy.await_request_with_body
           expect(body).to eq fake_data
         end
       end
@@ -141,7 +141,7 @@ module LaunchDarkly
         it "handles recoverable error #{status}" do
           with_sender_and_server do |es, server|
             req_count = 0
-            server.setup_response("/bulk") do |req, res|
+            server.setup_response("/bulk") do |_, res|
               req_count = req_count + 1
               res.status = req_count == 2 ? 200 : status
             end
@@ -166,7 +166,7 @@ module LaunchDarkly
         it "only retries error #{status} once" do
           with_sender_and_server do |es, server|
             req_count = 0
-            server.setup_response("/bulk") do |req, res|
+            server.setup_response("/bulk") do |_, res|
               req_count = req_count + 1
               res.status = req_count == 3 ? 200 : status
             end
@@ -190,7 +190,7 @@ module LaunchDarkly
       [401, 403].each do |status|
         it "gives up after unrecoverable error #{status}" do
           with_sender_and_server do |es, server|
-            server.setup_response("/bulk") do |req, res|
+            server.setup_response("/bulk") do |_, res|
               res.status = status
             end
 

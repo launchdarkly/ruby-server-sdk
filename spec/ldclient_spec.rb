@@ -74,10 +74,10 @@ module LaunchDarkly
       it "passes data set to feature store in correct order on init" do
         store = CapturingFeatureStore.new
         td = Integrations::TestData.data_source
-        dependency_ordering_test_data[FEATURES].each { |key, flag| td.use_preconfigured_flag(flag) }
-        dependency_ordering_test_data[SEGMENTS].each { |key, segment| td.use_preconfigured_segment(segment) }
+        dependency_ordering_test_data[FEATURES].each { |_, flag| td.use_preconfigured_flag(flag) }
+        dependency_ordering_test_data[SEGMENTS].each { |_, segment| td.use_preconfigured_segment(segment) }
 
-        with_client(test_config(feature_store: store, data_source: td)) do |client|
+        with_client(test_config(feature_store: store, data_source: td)) do |_|
           data = store.received_data
           expect(data).not_to be_nil
           expect(data.count).to eq(2)

@@ -8,7 +8,7 @@ module LaunchDarkly
   module Impl
     describe RepeatingTask do
       def null_logger
-        double().as_null_object
+        double.as_null_object
       end
 
       it "does not start when created" do

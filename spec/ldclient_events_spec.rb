@@ -45,7 +45,7 @@ module LaunchDarkly
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
-        logger = double().as_null_object
+        logger = double.as_null_object
 
         with_client(test_config(data_source: td, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_eval_event)
@@ -58,7 +58,7 @@ module LaunchDarkly
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
-        logger = double().as_null_object
+        logger = double.as_null_object
         keyless_user = { key: nil }
 
         with_client(test_config(data_source: td, logger: logger)) do |client|
@@ -136,7 +136,7 @@ module LaunchDarkly
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
 
-        logger = double().as_null_object
+        logger = double.as_null_object
 
         with_client(test_config(data_source: td, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_eval_event)
@@ -149,7 +149,7 @@ module LaunchDarkly
         td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
 
-        logger = double().as_null_object
+        logger = double.as_null_object
 
         with_client(test_config(data_source: td, logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_eval_event)
@@ -169,7 +169,7 @@ module LaunchDarkly
       end
 
       it "does not send event, and logs warning, if context is nil" do
-        logger = double().as_null_object
+        logger = double.as_null_object
 
         with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_identify_event)
@@ -179,7 +179,7 @@ module LaunchDarkly
       end
 
       it "does not send event, and logs warning, if context key is blank" do
-        logger = double().as_null_object
+        logger = double.as_null_object
 
         with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_identify_event)
@@ -211,7 +211,7 @@ module LaunchDarkly
       end
 
       it "does not send event, and logs a warning, if context is nil" do
-        logger = double().as_null_object
+        logger = double.as_null_object
 
         with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_custom_event)
@@ -221,7 +221,7 @@ module LaunchDarkly
       end
 
       it "does not send event, and logs warning, if context key is nil" do
-        logger = double().as_null_object
+        logger = double.as_null_object
 
         with_client(test_config(logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_custom_event)

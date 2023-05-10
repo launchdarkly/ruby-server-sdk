@@ -30,7 +30,7 @@ module LaunchDarkly
 
           store.setup_metadata_error(StandardError.new("sorry"))
 
-          status2 = statuses.pop()
+          status2 = statuses.pop
           expect(status2.available).to be(false)
           expect(status2.stale).to be(false)
 
