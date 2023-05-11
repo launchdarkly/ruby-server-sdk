@@ -7,7 +7,7 @@ require "time"
 
 module LaunchDarkly
   module Impl
-    describe EventSender do
+    describe EventSender, flaky: true do
       subject { EventSender }
 
       let(:sdk_key) { "sdk_key" }

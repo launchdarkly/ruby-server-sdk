@@ -84,27 +84,6 @@ class StubHTTPServer
   end
 end
 
-class StubProxyServer < StubHTTPServer
-  attr_reader :request_count
-  attr_accessor :connect_status
-
-  def initialize
-    super
-    @request_count = 0
-  end
-
-  def create_server(port, base_opts)
-    WEBrick::HTTPProxyServer.new(base_opts.merge({
-      ProxyContentHandler: proc do |req,res|
-        unless @connect_status.nil?
-          res.status = @connect_status
-        end
-        @request_count += 1
-      end,
-    }))
-  end
-end
-
 class NullLogger
   def method_missing(*)
     self

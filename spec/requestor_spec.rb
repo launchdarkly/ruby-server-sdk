@@ -15,7 +15,7 @@ module LaunchDarkly
       end
     end
 
-    describe "request_all_flags" do
+    describe "request_all_flags", flaky: true do
       it "uses expected URI and headers" do
         with_server do |server|
           with_requestor(server.base_uri.to_s) do |requestor|

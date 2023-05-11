@@ -14,7 +14,7 @@ module LaunchDarkly
   # Note that we can't do end-to-end tests in streaming mode until we have a test server that can do streaming
   # responses, which is difficult in WEBrick.
 
-  describe "LDClient end-to-end" do
+  describe "LDClient end-to-end", flaky: true do
     it "starts in polling mode" do
       with_server do |poll_server|
         poll_server.setup_ok_response("/sdk/latest-all", DATA_WITH_ALWAYS_TRUE_FLAG.to_json, "application/json")
