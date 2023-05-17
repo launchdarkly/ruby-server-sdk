@@ -22,7 +22,7 @@ module LaunchDarkly
       #
       class CachingStoreWrapper
         include LaunchDarkly::Interfaces::FeatureStore
-        
+
         #
         # Creates a new store wrapper instance.
         #
@@ -43,13 +43,24 @@ module LaunchDarkly
           end
 
           @inited = Concurrent::AtomicBoolean.new(false)
+          @has_available_method = @core.respond_to? :available?
+        end
+
+        def monitoring_enabled?
+          @has_available_method
+        end
+
+        def available?
+          return false unless @has_available_method
+
+          @core.available?
         end
 
         def init(all_data)
           @core.init_internal(all_data)
           @inited.make_true
 
-          if !@cache.nil?
+          unless @cache.nil?
             @cache.clear
             all_data.each do |kind, items|
               @cache[kind] = items_if_not_deleted(items)
@@ -61,15 +72,15 @@ module LaunchDarkly
         end
 
         def get(kind, key)
-          if !@cache.nil?
+          unless @cache.nil?
             cache_key = item_cache_key(kind, key)
             cached = @cache[cache_key] # note, item entries in the cache are wrapped in an array so we can cache nil values
-            return item_if_not_deleted(cached[0]) if !cached.nil?
+            return item_if_not_deleted(cached[0]) unless cached.nil?
           end
 
           item = @core.get_internal(kind, key)
 
-          if !@cache.nil?
+          unless @cache.nil?
             @cache[cache_key] = [item]
           end
 
@@ -77,20 +88,20 @@ module LaunchDarkly
         end
 
         def all(kind)
-          if !@cache.nil?
+          unless @cache.nil?
             items = @cache[all_cache_key(kind)]
-            return items if !items.nil?
+            return items unless items.nil?
           end
 
           items = items_if_not_deleted(@core.get_all_internal(kind))
-          @cache[all_cache_key(kind)] = items if !@cache.nil?
+          @cache[all_cache_key(kind)] = items unless @cache.nil?
           items
         end
 
         def upsert(kind, item)
           new_state = @core.upsert_internal(kind, item)
 
-          if !@cache.nil?
+          unless @cache.nil?
             @cache[item_cache_key(kind, item[:key])] = [new_state]
             @cache.delete(all_cache_key(kind))
           end

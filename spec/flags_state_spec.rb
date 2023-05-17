@@ -31,6 +31,7 @@ describe LaunchDarkly::FeatureFlagsState do
   it "can be converted to JSON structure" do
     state = subject.new(true)
     flag_state1 = { key: "key1", version: 100, trackEvents: false, value: 'value1', variation: 0, reason: LaunchDarkly::EvaluationReason.fallthrough(false) }
+    # rubocop:disable Layout/LineLength
     flag_state2 = { key: "key2", version: 200, trackEvents: true, debugEventsUntilDate: 1000, value: 'value2', variation: 1, reason: LaunchDarkly::EvaluationReason.fallthrough(false) }
     state.add_flag(flag_state1, false, false)
     state.add_flag(flag_state2, false, false)
@@ -42,22 +43,23 @@ describe LaunchDarkly::FeatureFlagsState do
       '$flagsState' => {
         'key1' => {
           :variation => 0,
-          :version => 100
+          :version => 100,
         },
         'key2' => {
           :variation => 1,
           :version => 200,
           :trackEvents => true,
-          :debugEventsUntilDate => 1000
-        }
+          :debugEventsUntilDate => 1000,
+        },
       },
-      '$valid' => true
+      '$valid' => true,
     })
   end
 
   it "can be converted to JSON string" do
     state = subject.new(true)
     flag_state1 = { key: "key1", version: 100, trackEvents: false, value: 'value1', variation: 0, reason: LaunchDarkly::EvaluationReason.fallthrough(false) }
+    # rubocop:disable Layout/LineLength
     flag_state2 = { key: "key2", version: 200, trackEvents: true, debugEventsUntilDate: 1000, value: 'value2', variation: 1, reason: LaunchDarkly::EvaluationReason.fallthrough(false) }
     state.add_flag(flag_state1, false, false)
     state.add_flag(flag_state2, false, false)
@@ -70,6 +72,7 @@ describe LaunchDarkly::FeatureFlagsState do
   it "uses our custom serializer with JSON.generate" do
     state = subject.new(true)
     flag_state1 = { key: "key1", version: 100, trackEvents: false, value: 'value1', variation: 0, reason: LaunchDarkly::EvaluationReason.fallthrough(false) }
+    # rubocop:disable Layout/LineLength
     flag_state2 = { key: "key2", version: 200, trackEvents: true, debugEventsUntilDate: 1000, value: 'value2', variation: 1, reason: LaunchDarkly::EvaluationReason.fallthrough(false) }
     state.add_flag(flag_state1, false, false)
     state.add_flag(flag_state2, false, false)

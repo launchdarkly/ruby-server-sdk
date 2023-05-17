@@ -31,14 +31,13 @@ module LaunchDarkly
             diagnosticRecordingIntervalMillis: Config.default_diagnostic_recording_interval * 1000,
             eventsCapacity: Config.default_capacity,
             eventsFlushIntervalMillis: Config.default_flush_interval * 1000,
-            inlineUsersInEvents: false,
             pollingIntervalMillis: Config.default_poll_interval * 1000,
             socketTimeoutMillis: Config.default_read_timeout * 1000,
             streamingDisabled: false,
-            userKeysCapacity: Config.default_user_keys_capacity,
-            userKeysFlushIntervalMillis: Config.default_user_keys_flush_interval * 1000,
+            userKeysCapacity: Config.default_context_keys_capacity,
+            userKeysFlushIntervalMillis: Config.default_context_keys_flush_interval * 1000,
             usingProxy: false,
-            usingRelayDaemon: false
+            usingRelayDaemon: false,
           }
         end
 
@@ -64,13 +63,12 @@ module LaunchDarkly
             [ { diagnostic_recording_interval: 9999 }, { diagnosticRecordingIntervalMillis: 9999000 } ],
             [ { capacity: 4000 }, { eventsCapacity: 4000 } ],
             [ { flush_interval: 46 }, { eventsFlushIntervalMillis: 46000 } ],
-            [ { inline_users_in_events: true }, { inlineUsersInEvents: true } ],
             [ { poll_interval: 999 }, { pollingIntervalMillis: 999000 } ],
             [ { read_timeout: 46 }, { socketTimeoutMillis: 46000 } ],
             [ { stream: false }, { streamingDisabled: true } ],
-            [ { user_keys_capacity: 999 }, { userKeysCapacity: 999 } ],
-            [ { user_keys_flush_interval: 999 }, { userKeysFlushIntervalMillis: 999000 } ],
-            [ { use_ldd: true }, { usingRelayDaemon: true } ]
+            [ { context_keys_capacity: 999 }, { userKeysCapacity: 999 } ],
+            [ { context_keys_flush_interval: 999 }, { userKeysFlushIntervalMillis: 999000 } ],
+            [ { use_ldd: true }, { usingRelayDaemon: true } ],
           ]
           changes_and_expected.each do |config_values, expected_values|
             config = Config.new(config_values)
@@ -95,7 +93,7 @@ module LaunchDarkly
           event = default_acc.create_init_event(Config.new)
           expect(event[:sdk]).to eq ({
             name: 'ruby-server-sdk',
-            version: LaunchDarkly::VERSION
+            version: LaunchDarkly::VERSION,
           })
         end
 
@@ -105,14 +103,14 @@ module LaunchDarkly
             name: 'ruby-server-sdk',
             version: LaunchDarkly::VERSION,
             wrapperName: 'my-wrapper',
-            wrapperVersion: '2.0'
+            wrapperVersion: '2.0',
           })
         end
 
         it "has expected platform data" do
           event = default_acc.create_init_event(Config.new)
           expect(event[:platform]).to include ({
-            name: 'ruby'
+            name: 'ruby',
           })
         end
       end
@@ -127,7 +125,7 @@ module LaunchDarkly
             droppedEvents: 2,
             deduplicatedUsers: 3,
             eventsInLastBatch: 4,
-            streamInits: []
+            streamInits: [],
           })
           expect(event[:creationDate]).not_to be_nil
           expect(event[:dataSinceDate]).not_to be_nil
@@ -149,14 +147,14 @@ module LaunchDarkly
             droppedEvents: 2,
             deduplicatedUsers: 3,
             eventsInLastBatch: 4,
-            streamInits: [{ timestamp: 1000, failed: false, durationMillis: 2000 }]
+            streamInits: [{ timestamp: 1000, failed: false, durationMillis: 2000 }],
           })
           expect(event2).to include ({
             dataSinceDate: event1[:creationDate],
             droppedEvents: 5,
             deduplicatedUsers: 6,
             eventsInLastBatch: 7,
-            streamInits: []
+            streamInits: [],
           })
         end
       end

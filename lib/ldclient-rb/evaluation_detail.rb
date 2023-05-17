@@ -12,7 +12,7 @@ module LaunchDarkly
     # @raise [ArgumentError] if `variation_index` or `reason` is not of the correct type
     def initialize(value, variation_index, reason)
       raise ArgumentError.new("variation_index must be a number") if !variation_index.nil? && !(variation_index.is_a? Numeric)
-      raise ArgumentError.new("reason must be an EvaluationReason") if !(reason.is_a? EvaluationReason)
+      raise ArgumentError.new("reason must be an EvaluationReason") unless reason.is_a? EvaluationReason
       @value = value
       @variation_index = variation_index
       @reason = reason
@@ -70,20 +70,20 @@ module LaunchDarkly
   class EvaluationReason
     # Value for {#kind} indicating that the flag was off and therefore returned its configured off value.
     OFF = :OFF
-    
-    # Value for {#kind} indicating that the flag was on but the user did not match any targets or rules.
+
+    # Value for {#kind} indicating that the flag was on but the context did not match any targets or rules.
     FALLTHROUGH = :FALLTHROUGH
-    
-    # Value for {#kind} indicating that the user key was specifically targeted for this flag.
+
+    # Value for {#kind} indicating that the context key was specifically targeted for this flag.
     TARGET_MATCH = :TARGET_MATCH
-    
-    # Value for {#kind} indicating that the user matched one of the flag's rules.
+
+    # Value for {#kind} indicating that the context matched one of the flag's rules.
     RULE_MATCH = :RULE_MATCH
-    
+
     # Value for {#kind} indicating that the flag was considered off because it had at least one
     # prerequisite flag that either was off or did not return the desired variation.
     PREREQUISITE_FAILED = :PREREQUISITE_FAILED
-    
+
     # Value for {#kind} indicating that the flag could not be evaluated, e.g. because it does not exist
     # or due to an unexpected error. In this case the result value will be the application default value
     # that the caller passed to the client. Check {#error_kind} for more details on the problem.
@@ -100,8 +100,8 @@ module LaunchDarkly
     # a rule specified a nonexistent  variation. An error message will always be logged in this case.
     ERROR_MALFORMED_FLAG = :MALFORMED_FLAG
 
-    # Value for {#error_kind} indicating that the caller passed `nil` for the user parameter, or the
-    # user lacked a key.
+    # Value for {#error_kind} indicating that the caller passed `nil` for the context parameter, or the
+    # context was invalid.
     ERROR_USER_NOT_SPECIFIED = :USER_NOT_SPECIFIED
 
     # Value for {#error_kind} indicating that an unexpected exception stopped flag evaluation. An error
@@ -141,7 +141,7 @@ module LaunchDarkly
     # querying at least one Big Segment. Otherwise it returns `nil`. Possible values are defined by
     # {BigSegmentsStatus}.
     #
-    # Big Segments are a specific kind of user segments. For more information, read the LaunchDarkly
+    # Big Segments are a specific kind of context segments. For more information, read the LaunchDarkly
     # documentation: https://docs.launchdarkly.com/home/users/big-segments
     # @return [Symbol]
     attr_reader :big_segments_status
@@ -176,9 +176,9 @@ module LaunchDarkly
     # @return [EvaluationReason]
     # @raise [ArgumentError] if `rule_index` is not a number or `rule_id` is not a string
     def self.rule_match(rule_index, rule_id, in_experiment=false)
-      raise ArgumentError.new("rule_index must be a number") if !(rule_index.is_a? Numeric)
+      raise ArgumentError.new("rule_index must be a number") unless rule_index.is_a? Numeric
       raise ArgumentError.new("rule_id must be a string") if !rule_id.nil? && !(rule_id.is_a? String) # in test data, ID could be nil
-      
+
       if in_experiment
         er = new(:RULE_MATCH, rule_index, rule_id, nil, nil, true)
       else
@@ -193,7 +193,7 @@ module LaunchDarkly
     # @return [EvaluationReason]
     # @raise [ArgumentError] if `prerequisite_key` is nil or not a string
     def self.prerequisite_failed(prerequisite_key)
-      raise ArgumentError.new("prerequisite_key must be a string") if !(prerequisite_key.is_a? String)
+      raise ArgumentError.new("prerequisite_key must be a string") unless prerequisite_key.is_a? String
       new(:PREREQUISITE_FAILED, nil, nil, prerequisite_key, nil)
     end
 
@@ -203,7 +203,7 @@ module LaunchDarkly
     # @return [EvaluationReason]
     # @raise [ArgumentError] if `error_kind` is not a symbol
     def self.error(error_kind)
-      raise ArgumentError.new("error_kind must be a symbol") if !(error_kind.is_a? Symbol)
+      raise ArgumentError.new("error_kind must be a symbol") unless error_kind.is_a? Symbol
       e = @@error_instances[error_kind]
       e.nil? ? make_error(error_kind) : e
     end
@@ -279,7 +279,7 @@ module LaunchDarkly
       else
         { kind: @kind }
       end
-      if !@big_segments_status.nil?
+      unless @big_segments_status.nil?
         ret[:bigSegmentsStatus] = @big_segments_status
       end
       ret
@@ -288,7 +288,7 @@ module LaunchDarkly
     # Same as {#as_json}, but converts the JSON structure into a string.
     # @return [String]
     def to_json(*a)
-      as_json.to_json(a)
+      as_json.to_json(*a)
     end
 
     # Allows this object to be treated as a hash corresponding to its JSON representation. For
@@ -327,9 +327,9 @@ module LaunchDarkly
       @kind = kind.to_sym
       @rule_index = rule_index
       @rule_id = rule_id
-      @rule_id.freeze if !rule_id.nil?
+      @rule_id.freeze unless rule_id.nil?
       @prerequisite_key = prerequisite_key
-      @prerequisite_key.freeze if !prerequisite_key.nil?
+      @prerequisite_key.freeze unless prerequisite_key.nil?
       @error_kind = error_kind
       @in_experiment = in_experiment
       @big_segments_status = big_segments_status
@@ -348,7 +348,7 @@ module LaunchDarkly
       ERROR_FLAG_NOT_FOUND => make_error(ERROR_FLAG_NOT_FOUND),
       ERROR_MALFORMED_FLAG => make_error(ERROR_MALFORMED_FLAG),
       ERROR_USER_NOT_SPECIFIED => make_error(ERROR_USER_NOT_SPECIFIED),
-      ERROR_EXCEPTION => make_error(ERROR_EXCEPTION)
+      ERROR_EXCEPTION => make_error(ERROR_EXCEPTION),
     }
   end
 

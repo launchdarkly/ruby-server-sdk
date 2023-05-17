@@ -7,6 +7,7 @@ repo:
 branches:
   - name: main
   - name: 5.x
+  - name: 6.x
 
 publications:
   - url: https://rubygems.org/gems/launchdarkly-server-sdk
@@ -16,11 +17,9 @@ publications:
 
 jobs:
   - docker:
-      image: ruby:2.5-buster
+      image: ruby:2.7-buster
     template:
       name: ruby
-    env:
-      LD_SKIP_DATABASE_TESTS: "1"  # Don't run Redis/Consul/DynamoDB tests in release; they are run in CI
 
 documentation:
   gitHubPages: true

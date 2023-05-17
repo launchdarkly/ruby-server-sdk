@@ -5,6 +5,25 @@ describe LaunchDarkly::Integrations::Util::CachingStoreWrapper do
 
   THINGS = { namespace: "things" }
 
+  it "monitoring enabled if available is defined" do
+    [true, false].each do |expected|
+      core = double
+      allow(core).to receive(:available?).and_return(expected)
+      wrapper = subject.new(core, {})
+
+      expect(wrapper.monitoring_enabled?).to be true
+      expect(wrapper.available?).to be expected
+    end
+  end
+
+  it "available is false if core doesn't support monitoring" do
+    core = double
+    wrapper = subject.new(core, {})
+
+    expect(wrapper.monitoring_enabled?).to be false
+    expect(wrapper.available?).to be false
+  end
+
   shared_examples "tests" do |cached|
     opts = cached ? { expiration: 30 } : { expiration: 0 }
 
@@ -238,7 +257,7 @@ describe LaunchDarkly::Integrations::Util::CachingStoreWrapper do
     attr_accessor :inited
 
     def force_set(kind, item)
-      @data[kind] = {} if !@data.has_key?(kind)
+      @data[kind] = {} unless @data.has_key?(kind)
       @data[kind][item[:key]] = item
     end
 
@@ -261,7 +280,7 @@ describe LaunchDarkly::Integrations::Util::CachingStoreWrapper do
     end
 
     def upsert_internal(kind, item)
-      @data[kind] = {} if !@data.has_key?(kind)
+      @data[kind] = {} unless @data.has_key?(kind)
       old_item = @data[kind][item[:key]]
       return old_item if !old_item.nil? && old_item[:version] >= item[:version]
       @data[kind][item[:key]] = item

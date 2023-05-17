@@ -4,7 +4,7 @@ require 'logger'
 require 'net/http'
 require 'sinatra'
 
-require './client_entity.rb'
+require './client_entity'
 
 configure :development do
   disable :show_exceptions
@@ -26,11 +26,15 @@ get '/' do
     capabilities: [
       'server-side',
       'server-side-polling',
+      'big-segments',
       'all-flags-with-reasons',
       'all-flags-client-side-only',
       'all-flags-details-only-for-tracked-flags',
+      'filtering',
+      'secure-mode-hash',
+      'user-type',
       'tags',
-    ]
+    ],
   }.to_json
 end
 
@@ -83,18 +87,21 @@ post '/clients/:id' do |clientId|
   when "evaluateAll"
     response = {:state => client.evaluate_all(params[:evaluateAll])}
     return [200, nil, response.to_json]
+  when "secureModeHash"
+    response = {:result => client.secure_mode_hash(params[:secureModeHash])}
+    return [200, nil, response.to_json]
   when "customEvent"
     client.track(params[:customEvent])
     return 201
   when "identifyEvent"
     client.identify(params[:identifyEvent])
     return 201
-  when "aliasEvent"
-    client.alias(params[:aliasEvent])
-    return 201
   when "flushEvents"
     client.flush_events
     return 201
+  when "getBigSegmentStoreStatus"
+    status = client.get_big_segment_store_status
+    return [200, nil, status.to_json]
   end
 
   return [400, nil, {:error => "Unknown command requested"}.to_json]

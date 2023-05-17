@@ -76,7 +76,7 @@ describe LaunchDarkly::Config do
     end
 
     it "will drop invalid values" do
-      [" ", "@", ":", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-a"]. each do |value|
+      [" ", "@", ":", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-a"].each do |value|
         expect(subject.new(logger: $null_log, application: { id: value, version: value }).application).to eq ({ id: "", version: "" })
       end
     end
@@ -86,11 +86,37 @@ describe LaunchDarkly::Config do
         { :id => "id", :version => "version", :expected => "application-id/id application-version/version" },
         { :id => "id", :version => "", :expected => "application-id/id" },
         { :id => "", :version => "version", :expected => "application-version/version" },
-        { :id => "", :version => "", :expected => "" }
+        { :id => "", :version => "", :expected => "" },
       ].each do |test_case|
         config = subject.new(application: { id: test_case[:id], version: test_case[:version] })
         expect(LaunchDarkly::Impl::Util.application_header_value(config.application)).to eq test_case[:expected]
       end
+    end
+  end
+
+  describe "context and user aliases" do
+    it "default values are aliased correctly" do
+      expect(LaunchDarkly::Config.default_context_keys_capacity).to eq LaunchDarkly::Config.default_user_keys_capacity
+      expect(LaunchDarkly::Config.default_context_keys_flush_interval).to eq LaunchDarkly::Config.default_user_keys_flush_interval
+    end
+
+    it "context options are reflected in user options" do
+      config = subject.new(context_keys_capacity: 50, context_keys_flush_interval: 25)
+      expect(config.context_keys_capacity).to eq config.user_keys_capacity
+      expect(config.context_keys_flush_interval).to eq config.user_keys_flush_interval
+    end
+
+    it "context options can be set by user options" do
+      config = subject.new(user_keys_capacity: 50, user_keys_flush_interval: 25)
+      expect(config.context_keys_capacity).to eq config.user_keys_capacity
+      expect(config.context_keys_flush_interval).to eq config.user_keys_flush_interval
+    end
+
+    it "context options take precedence" do
+      config = subject.new(context_keys_capacity: 100, user_keys_capacity: 50, context_keys_flush_interval: 100, user_keys_flush_interval: 50)
+
+      expect(config.context_keys_capacity).to eq 100
+      expect(config.context_keys_flush_interval).to eq 100
     end
   end
 end

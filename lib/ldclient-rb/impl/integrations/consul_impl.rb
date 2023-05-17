@@ -16,14 +16,14 @@ module LaunchDarkly
           end
 
           def initialize(opts)
-            if !CONSUL_ENABLED
+            unless CONSUL_ENABLED
               raise RuntimeError.new("can't use Consul feature store without the 'diplomat' gem")
             end
 
             @prefix = (opts[:prefix] || LaunchDarkly::Integrations::Consul.default_prefix) + '/'
             @logger = opts[:logger] || Config.default_logger
-            Diplomat.configuration = opts[:consul_config] if !opts[:consul_config].nil?
-            Diplomat.configuration.url = opts[:url] if !opts[:url].nil?
+            Diplomat.configuration = opts[:consul_config] unless opts[:consul_config].nil?
+            Diplomat.configuration.url = opts[:url] unless opts[:url].nil?
             @logger.info("ConsulFeatureStore: using Consul host at #{Diplomat.configuration.url}")
           end
 
@@ -51,10 +51,10 @@ module LaunchDarkly
             unused_old_keys.each do |key|
               ops.push({ 'KV' => { 'Verb' => 'delete', 'Key' => key } })
             end
-    
+
             # Now set the special key that we check in initialized_internal?
             ops.push({ 'KV' => { 'Verb' => 'set', 'Key' => inited_key, 'Value' => '' } })
-            
+
             ConsulUtil.batch_operations(ops)
 
             @logger.info { "Initialized database with #{num_items} items" }
@@ -70,7 +70,7 @@ module LaunchDarkly
             results = Diplomat::Kv.get(kind_key(kind), { recurse: true }, :return)
             (results == "" ? [] : results).each do |result|
               value = result[:value]
-              if !value.nil?
+              unless value.nil?
                 item = Model.deserialize(kind, value)
                 items_out[item[:key].to_sym] = item
               end
@@ -119,6 +119,18 @@ module LaunchDarkly
             end
           end
 
+          def available?
+            # Most implementations use the initialized_internal? method as a
+            # proxy for this check. However, since `initialized_internal?`
+            # catches a KeyNotFound exception, and that exception can be raised
+            # when the server goes away, we have to modify our behavior
+            # slightly.
+            Diplomat::Kv.get(inited_key, {}, :return, :return)
+            true
+          rescue
+            false
+          end
+
           def stop
             # There's no Consul client instance to dispose of
           end
@@ -132,7 +144,7 @@ module LaunchDarkly
           def kind_key(kind)
             @prefix + kind[:namespace] + '/'
           end
-          
+
           def inited_key
             @prefix + '$inited'
           end

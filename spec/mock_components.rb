@@ -20,7 +20,7 @@ def base_config
   {
     data_source: null_data,
     send_events: false,
-    logger: null_logger
+    logger: null_logger,
   }
 end
 
@@ -34,8 +34,8 @@ def with_client(config)
   end
 end
 
-def basic_user
-  { "key": "user-key" }
+def basic_context
+  LaunchDarkly::LDContext::create({ "key": "user-key" })
 end
 
 module LaunchDarkly
@@ -58,12 +58,12 @@ module LaunchDarkly
     end
 
     def get_metadata
-      raise @metadata_error if !@metadata_error.nil?
+      raise @metadata_error unless @metadata_error.nil?
       @metadata
     end
 
-    def get_membership(user_hash)
-      @memberships[user_hash]
+    def get_membership(context_hash)
+      @memberships[context_hash]
     end
 
     def stop
@@ -77,13 +77,8 @@ module LaunchDarkly
       @metadata_error = ex
     end
 
-    def setup_membership(user_key, membership)
-      user_hash = Impl::BigSegmentStoreManager.hash_for_user_key(user_key)
-      @memberships[user_hash] = membership
-    end
-
-    def setup_segment_for_user(user_key, segment, included)
-      user_hash = Impl::BigSegmentStoreManager.hash_for_user_key(user_key)
+    def setup_segment_for_context(user_key, segment, included)
+      user_hash = Impl::BigSegmentStoreManager.hash_for_context_key(user_key)
       @memberships[user_hash] ||= {}
       @memberships[user_hash][Impl::Evaluator.make_big_segment_ref(segment)] = included
     end

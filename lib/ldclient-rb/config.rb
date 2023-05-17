@@ -13,6 +13,18 @@ module LaunchDarkly
     #
     # Constructor for creating custom LaunchDarkly configurations.
     #
+    # `user_keys_capacity` and `user_keys_flush_interval` are deprecated
+    # configuration options. They exist to maintain backwards compatibility
+    # with previous configurations. Newer code should prefer their replacement
+    # options -- `context_keys_capacity` and `context_keys_flush_interval`.
+    #
+    # In the event both the user and context variations are provided, the
+    # context specific configuration option will take precedence.
+    #
+    # Similarly, `private_attribute_names` is deprecated. Newer code should
+    # prefer `private_attributes`. If both are provided, `private_attributes`
+    # will take precedence.
+    #
     # @param opts [Hash] the configuration options
     # @option opts [Logger] :logger See {#logger}.
     # @option opts [String] :base_uri ("https://sdk.launchdarkly.com") See {#base_uri}.
@@ -31,13 +43,13 @@ module LaunchDarkly
     # @option opts [Boolean] :stream (true) See {#stream?}.
     # @option opts [Boolean] all_attributes_private (false) See {#all_attributes_private}.
     # @option opts [Array] :private_attribute_names See {#private_attribute_names}.
+    # @option opts [Array] :private_attributes See {#private_attributes}.
     # @option opts [Boolean] :send_events (true) See {#send_events}.
     # @option opts [Integer] :user_keys_capacity (1000) See {#user_keys_capacity}.
+    # @option opts [Integer] :context_keys_capacity (1000) See {#context_keys_capacity}.
     # @option opts [Float] :user_keys_flush_interval (300) See {#user_keys_flush_interval}.
-    # @option opts [Boolean] :inline_users_in_events (false) See {#inline_users_in_events}.
+    # @option opts [Float] :context_keys_flush_interval (300) See {#context_keys_flush_interval}.
     # @option opts [Object] :data_source See {#data_source}.
-    # @option opts [Object] :update_processor Obsolete synonym for `data_source`.
-    # @option opts [Object] :update_processor_factory Obsolete synonym for `data_source`.
     # @option opts [Boolean] :diagnostic_opt_out (false) See {#diagnostic_opt_out?}.
     # @option opts [Float] :diagnostic_recording_interval (900) See {#diagnostic_recording_interval}.
     # @option opts [String] :wrapper_name See {#wrapper_name}.
@@ -45,6 +57,7 @@ module LaunchDarkly
     # @option opts [#open] :socket_factory See {#socket_factory}.
     # @option opts [BigSegmentsConfig] :big_segments See {#big_segments}.
     # @option opts [Hash] :application See {#application}
+    # @option opts [String] :payload_filter_key See {#payload_filter_key}
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -63,14 +76,11 @@ module LaunchDarkly
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > Config.default_poll_interval ? opts[:poll_interval] : Config.default_poll_interval
       @all_attributes_private = opts[:all_attributes_private] || false
-      @private_attribute_names = opts[:private_attribute_names] || []
+      @private_attributes = opts[:private_attributes] || opts[:private_attribute_names] || []
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
-      @user_keys_capacity = opts[:user_keys_capacity] || Config.default_user_keys_capacity
-      @user_keys_flush_interval = opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
-      @inline_users_in_events = opts[:inline_users_in_events] || false
-      @data_source = opts[:data_source] || opts[:update_processor] || opts[:update_processor_factory]
-      @update_processor = opts[:update_processor]
-      @update_processor_factory = opts[:update_processor_factory]
+      @context_keys_capacity = opts[:context_keys_capacity] || opts[:user_keys_capacity] || Config.default_context_keys_capacity
+      @context_keys_flush_interval = opts[:context_keys_flush_interval] || opts[:user_keys_flush_interval] || Config.default_user_keys_flush_interval
+      @data_source = opts[:data_source]
       @diagnostic_opt_out = opts.has_key?(:diagnostic_opt_out) && opts[:diagnostic_opt_out]
       @diagnostic_recording_interval = opts.has_key?(:diagnostic_recording_interval) && opts[:diagnostic_recording_interval] > Config.minimum_diagnostic_recording_interval ?
         opts[:diagnostic_recording_interval] : Config.default_diagnostic_recording_interval
@@ -79,7 +89,23 @@ module LaunchDarkly
       @socket_factory = opts[:socket_factory]
       @big_segments = opts[:big_segments] || BigSegmentsConfig.new(store: nil)
       @application = LaunchDarkly::Impl::Util.validate_application_info(opts[:application] || {}, @logger)
+      @payload_filter_key = opts[:payload_filter_key]
+      @data_source_update_sink = nil
     end
+
+    #
+    # Returns the component that allows a data source to push data into the SDK.
+    #
+    # This property should only be set by the SDK. Long term access of this
+    # property is not supported; it is temporarily being exposed to maintain
+    # backwards compatibility while the SDK structure is updated.
+    #
+    # Custom data source implementations should integrate with this sink if
+    # they want to provide support for data source status listeners.
+    #
+    # @private
+    #
+    attr_accessor :data_source_update_sink
 
     #
     # The base URL for the LaunchDarkly server. This is configurable mainly for testing
@@ -126,7 +152,7 @@ module LaunchDarkly
     def use_ldd?
       @use_ldd
     end
-    
+
     #
     # Whether the client should be initialized in offline mode. In offline mode, default values are
     # returned for all flags and no remote network requests are made.
@@ -209,28 +235,37 @@ module LaunchDarkly
     attr_reader :feature_store
 
     #
-    # True if all user attributes (other than the key) should be considered private. This means
+    # True if all context attributes (other than the key) should be considered private. This means
     # that the attribute values will not be sent to LaunchDarkly in analytics events and will not
     # appear on the LaunchDarkly dashboard.
     # @return [Boolean]
-    # @see #private_attribute_names
+    # @see #private_attributes
     #
     attr_reader :all_attributes_private
 
     #
-    # A list of user attribute names that should always be considered private. This means that the
+    # A list of context attribute names that should always be considered private. This means that the
     # attribute values will not be sent to LaunchDarkly in analytics events and will not appear on
     # the LaunchDarkly dashboard.
     #
-    # You can also specify the same behavior for an individual flag evaluation by storing an array
-    # of attribute names in the `:privateAttributeNames` property (note camelcase name) of the
-    # user object.
+    # You can also specify the same behavior for an individual flag evaluation
+    # by providing the context object with a list of private attributes.
+    #
+    # @see https://docs.launchdarkly.com/sdk/features/user-context-config#using-private-attributes
     #
     # @return [Array<String>]
     # @see #all_attributes_private
     #
-    attr_reader :private_attribute_names
-    
+    attr_reader :private_attributes
+
+    #
+    # @deprecated Backwards compatibility alias for #private_attributes.
+    #
+    # @return [Integer]
+    # @see #private_attributes
+    #
+    alias :private_attribute_names :private_attributes
+
     #
     # Whether to send events back to LaunchDarkly. This differs from {#offline?} in that it affects
     # only the sending of client-side events, not streaming or polling for events from the server.
@@ -239,27 +274,35 @@ module LaunchDarkly
     attr_reader :send_events
 
     #
-    # The number of user keys that the event processor can remember at any one time. This reduces the
-    # amount of duplicate user details sent in analytics events.
+    # The number of context keys that the event processor can remember at any one time. This reduces the
+    # amount of duplicate context details sent in analytics events.
     # @return [Integer]
-    # @see #user_keys_flush_interval
+    # @see #context_keys_flush_interval
     #
-    attr_reader :user_keys_capacity
+    attr_reader :context_keys_capacity
 
     #
-    # The interval in seconds at which the event processor will reset its set of known user keys.
+    # @deprecated Backwards compatibility alias for #context_keys_capacity.
+    #
+    # @return [Integer]
+    # @see #context_keys_flush_interval
+    #
+    alias :user_keys_capacity :context_keys_capacity
+
+    #
+    # The interval in seconds at which the event processor will reset its set of known context keys.
     # @return [Float]
-    # @see #user_keys_capacity
+    # @see #context_keys_capacity
     #
-    attr_reader :user_keys_flush_interval
+    attr_reader :context_keys_flush_interval
 
     #
-    # Whether to include full user details in every analytics event. By default, events will only
-    # include the user key, except for one "index" event that provides the full details for the user.
-    # The only reason to change this is if you are using the Analytics Data Stream.
-    # @return [Boolean]
+    # @deprecated Backwards compatibility alias for #context_keys_flush_interval.
     #
-    attr_reader :inline_users_in_events
+    # @return [Integer]
+    # @see #context_keys_flush_interval
+    #
+    alias :user_keys_flush_interval :context_keys_flush_interval
 
     #
     # An object that is responsible for receiving feature flag data from LaunchDarkly. By default,
@@ -279,7 +322,7 @@ module LaunchDarkly
     #
     # Configuration options related to Big Segments.
     #
-    # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+    # Big Segments are a specific type of segments. For more information, read the LaunchDarkly
     # documentation: https://docs.launchdarkly.com/home/users/big-segments
     #
     # @return [BigSegmentsConfig]
@@ -304,11 +347,20 @@ module LaunchDarkly
     #
     attr_reader :application
 
-    # @deprecated This is replaced by {#data_source}.
-    attr_reader :update_processor
-    
-    # @deprecated This is replaced by {#data_source}.
-    attr_reader :update_processor_factory
+    #
+    # LaunchDarkly Server SDKs historically downloaded all flag configuration and segments for a particular environment
+    # during initialization.
+    #
+    # For some customers, this is an unacceptably large amount of data, and has contributed to performance issues within
+    # their products.
+    #
+    # Filtered environments aim to solve this problem. By allowing customers to specify subsets of an environment's
+    # flags using a filter key, SDKs will initialize faster and use less memory.
+    #
+    # This payload filter key only applies to the default streaming and polling data sources. It will not affect TestData or FileData
+    # data sources, nor will it be applied to any data source provided through the {#data_source} config property.
+    #
+    attr_reader :payload_filter_key
 
     #
     # Set to true to opt out of sending diagnostics data.
@@ -446,8 +498,8 @@ module LaunchDarkly
     #
     def self.default_logger
       if defined?(Rails) && Rails.respond_to?(:logger)
-        Rails.logger 
-      else 
+        Rails.logger
+      else
         log = ::Logger.new($stdout)
         log.level = ::Logger::WARN
         log
@@ -503,19 +555,31 @@ module LaunchDarkly
     end
 
     #
-    # The default value for {#user_keys_capacity}.
+    # The default value for {#context_keys_capacity}.
     # @return [Integer] 1000
     #
-    def self.default_user_keys_capacity
+    def self.default_context_keys_capacity
       1000
     end
 
     #
-    # The default value for {#user_keys_flush_interval}.
+    # The default value for {#context_keys_flush_interval}.
     # @return [Float] 300
     #
-    def self.default_user_keys_flush_interval
+    def self.default_context_keys_flush_interval
       300
+    end
+
+    class << self
+      #
+      # @deprecated Backwards compatibility alias for #default_context_keys_capacity
+      #
+      alias :default_user_keys_capacity :default_context_keys_capacity
+
+      #
+      # @deprecated Backwards compatibility alias for #default_context_keys_flush_interval
+      #
+      alias :default_user_keys_flush_interval :default_context_keys_flush_interval
     end
 
     #
@@ -538,7 +602,7 @@ module LaunchDarkly
   #
   # Configuration options related to Big Segments.
   #
-  # Big Segments are a specific type of user segments. For more information, read the LaunchDarkly
+  # Big Segments are a specific type of segments. For more information, read the LaunchDarkly
   # documentation: https://docs.launchdarkly.com/home/users/big-segments
   #
   # If your application uses Big Segments, you will need to create a `BigSegmentsConfig` that at a
@@ -552,8 +616,8 @@ module LaunchDarkly
   #     client = LaunchDarkly::LDClient.new(my_sdk_key, config)
   #
   class BigSegmentsConfig
-    DEFAULT_USER_CACHE_SIZE = 1000
-    DEFAULT_USER_CACHE_TIME = 5
+    DEFAULT_CONTEXT_CACHE_SIZE = 1000
+    DEFAULT_CONTEXT_CACHE_TIME = 5
     DEFAULT_STATUS_POLL_INTERVAL = 5
     DEFAULT_STALE_AFTER = 2 * 60
 
@@ -561,15 +625,15 @@ module LaunchDarkly
     # Constructor for setting Big Segments options.
     #
     # @param store [LaunchDarkly::Interfaces::BigSegmentStore] the data store implementation
-    # @param user_cache_size [Integer] See {#user_cache_size}.
-    # @param user_cache_time [Float] See {#user_cache_time}.
+    # @param context_cache_size [Integer] See {#context_cache_size}.
+    # @param context_cache_time [Float] See {#context_cache_time}.
     # @param status_poll_interval [Float] See {#status_poll_interval}.
     # @param stale_after [Float] See {#stale_after}.
     #
-    def initialize(store:, user_cache_size: nil, user_cache_time: nil, status_poll_interval: nil, stale_after: nil)
+    def initialize(store:, context_cache_size: nil, context_cache_time: nil, status_poll_interval: nil, stale_after: nil)
       @store = store
-      @user_cache_size = user_cache_size.nil? ? DEFAULT_USER_CACHE_SIZE : user_cache_size
-      @user_cache_time = user_cache_time.nil? ? DEFAULT_USER_CACHE_TIME : user_cache_time
+      @context_cache_size = context_cache_size.nil? ? DEFAULT_CONTEXT_CACHE_SIZE : context_cache_size
+      @context_cache_time = context_cache_time.nil? ? DEFAULT_CONTEXT_CACHE_TIME : context_cache_time
       @status_poll_interval = status_poll_interval.nil? ? DEFAULT_STATUS_POLL_INTERVAL : status_poll_interval
       @stale_after = stale_after.nil? ? DEFAULT_STALE_AFTER : stale_after
     end
@@ -579,14 +643,28 @@ module LaunchDarkly
     # @return [LaunchDarkly::Interfaces::BigSegmentStore]
     attr_reader :store
 
-    # The maximum number of users whose Big Segment state will be cached by the SDK at any given time.
+    # The maximum number of contexts whose Big Segment state will be cached by the SDK at any given time.
     # @return [Integer]
-    attr_reader :user_cache_size
+    attr_reader :context_cache_size
 
-    # The maximum length of time (in seconds) that the Big Segment state for a user will be cached
+    #
+    # @deprecated Backwards compatibility alias for #context_cache_size
+    #
+    # @return [Integer]
+    #
+    alias :user_cache_size :context_cache_size
+
+    # The maximum length of time (in seconds) that the Big Segment state for a context will be cached
     # by the SDK.
     # @return [Float]
-    attr_reader :user_cache_time
+    attr_reader :context_cache_time
+
+    #
+    # @deprecated Backwards compatibility alias for #context_cache_time
+    #
+    # @return [Float]
+    #
+    alias :user_cache_time :context_cache_time
 
     # The interval (in seconds) at which the SDK will poll the Big Segment store to make sure it is
     # available and to determine how long ago it was updated.

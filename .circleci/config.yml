@@ -1,19 +1,17 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@4.1.1
+  rubocop: hanachin/rubocop@0.0.6
+  win: circleci/windows@5.0
 
 workflows:
   version: 2
   test:
     jobs:
+      - rubocop/rubocop:
+          after-install-rubocop:
+            - run: gem install rubocop-performance
       - build-test-windows
-      - build-test-linux:
-          name: Ruby 2.5
-          docker-image: cimg/ruby:2.5
-      - build-test-linux:
-          name: Ruby 2.6
-          docker-image: cimg/ruby:2.6
       - build-test-linux:
           name: Ruby 2.7
           docker-image: cimg/ruby:2.7
@@ -21,14 +19,20 @@ workflows:
           name: Ruby 3.0
           docker-image: cimg/ruby:3.0
       - build-test-linux:
-          name: JRuby 9.3
-          docker-image: jruby:9.3-jdk
+          name: Ruby 3.1
+          docker-image: cimg/ruby:3.1
+      - build-test-linux:
+          name: JRuby 9.4
+          docker-image: jruby:9.4-jdk
           jruby: true
 
 jobs:
   build-test-windows:
-    executor:
-      name: win/default
+    executor: win/default
+
+    environment:
+      LD_SKIP_DATABASE_TESTS: 0
+      LD_ENABLE_CODE_COVERAGE: 1
 
     steps:
       - checkout
@@ -48,15 +52,14 @@ jobs:
       - run:
           name: "Setup Consul"
           command: |
-            iwr -outf consul.zip https://releases.hashicorp.com/consul/1.4.2/consul_1.4.2_windows_amd64.zip
+            iwr -outf consul.zip https://releases.hashicorp.com/consul/1.14.3/consul_1.14.3_windows_amd64.zip
             mkdir consul
             Expand-Archive -Path consul.zip -DestinationPath consul
-            sc.exe create "Consul" binPath="C:/Users/circleci/project/consul/consul.exe agent -dev"
       - run:
           name: "Run Consul"
           background: true
           working_directory: consul
-          command: sc.exe start "Consul"
+          command: .\consul.exe agent -dev -client 0.0.0.0
 
       - run:
           name: "Setup Redis"
@@ -70,17 +73,17 @@ jobs:
           name: "Run Redis"
           background: true
           working_directory: redis
-          command: |
-            ./redis-server --service-start
+          command: ./redis-server --service-start
 
       - run: ruby -v
-      - run: choco install msys2 --allow-downgrade -y --version 20200903.0.0
-      - run: ridk.cmd exec pacman -S --noconfirm --needed base-devel mingw-w64-x86_64-toolchain
+      - run: choco install msys2 -y
+      - run: ridk.cmd install 3 # Install MINGW dev toolchain
 
       - run: gem install bundler -v 2.2.33
       - run: bundle _2.2.33_ install
       - run: mkdir /tmp/circle-artifacts
       - run: bundle _2.2.33_ exec rspec --format documentation --format RspecJunitFormatter -o /tmp/circle-artifacts/rspec.xml spec
+      - run: mv coverage /tmp/circle-artifacts/
 
       - store_test_results:
           path: /tmp/circle-artifacts
@@ -101,6 +104,10 @@ jobs:
       - image: redis
       - image: amazon/dynamodb-local
 
+    environment:
+      LD_SKIP_DATABASE_TESTS: 0
+      LD_ENABLE_CODE_COVERAGE: 1
+
     steps:
       - checkout
       - when:
@@ -118,6 +125,7 @@ jobs:
       - run: bundle _2.2.33_ install
       - run: mkdir /tmp/circle-artifacts
       - run: bundle _2.2.33_ exec rspec --format documentation --format RspecJunitFormatter -o /tmp/circle-artifacts/rspec.xml spec
+      - run: mv coverage /tmp/circle-artifacts/
 
       - when:
           condition:

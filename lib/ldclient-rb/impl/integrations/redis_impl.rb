@@ -5,6 +5,95 @@ module LaunchDarkly
   module Impl
     module Integrations
       module Redis
+        #
+        # An implementation of the LaunchDarkly client's feature store that uses a Redis
+        # instance.  This object holds feature flags and related data received from the
+        # streaming API.  Feature data can also be further cached in memory to reduce overhead
+        # of calls to Redis.
+        #
+        # To use this class, you must first have the `redis` and `connection-pool` gems
+        # installed.  Then, create an instance and store it in the `feature_store` property
+        # of your client configuration.
+        #
+        class RedisFeatureStore
+          include LaunchDarkly::Interfaces::FeatureStore
+
+          # Note that this class is now just a facade around CachingStoreWrapper, which is in turn delegating
+          # to RedisFeatureStoreCore where the actual database logic is. This class was retained for historical
+          # reasons, so that existing code can still call RedisFeatureStore.new. In the future, we will migrate
+          # away from exposing these concrete classes and use factory methods instead.
+
+          #
+          # Constructor for a RedisFeatureStore instance.
+          #
+          # @param opts [Hash] the configuration options
+          # @option opts [String] :redis_url  URL of the Redis instance (shortcut for omitting redis_opts)
+          # @option opts [Hash] :redis_opts  options to pass to the Redis constructor (if you want to specify more than just redis_url)
+          # @option opts [String] :prefix  namespace prefix to add to all hash keys used by LaunchDarkly
+          # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
+          # @option opts [Integer] :max_connections  size of the Redis connection pool
+          # @option opts [Integer] :expiration  expiration time for the in-memory cache, in seconds; 0 for no local caching
+          # @option opts [Integer] :capacity  maximum number of feature flags (or related objects) to cache locally
+          # @option opts [Object] :pool  custom connection pool, if desired
+          # @option opts [Boolean] :pool_shutdown_on_close whether calling `close` should shutdown the custom connection pool.
+          #
+          def initialize(opts = {})
+            core = RedisFeatureStoreCore.new(opts)
+            @wrapper = LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
+          end
+
+          def monitoring_enabled?
+            true
+          end
+
+          def available?
+            @wrapper.available?
+          end
+
+          #
+          # Default value for the `redis_url` constructor parameter; points to an instance of Redis
+          # running at `localhost` with its default port.
+          #
+          def self.default_redis_url
+            LaunchDarkly::Integrations::Redis::default_redis_url
+          end
+
+          #
+          # Default value for the `prefix` constructor parameter.
+          #
+          def self.default_prefix
+            LaunchDarkly::Integrations::Redis::default_prefix
+          end
+
+          def get(kind, key)
+            @wrapper.get(kind, key)
+          end
+
+          def all(kind)
+            @wrapper.all(kind)
+          end
+
+          def delete(kind, key, version)
+            @wrapper.delete(kind, key, version)
+          end
+
+          def init(all_data)
+            @wrapper.init(all_data)
+          end
+
+          def upsert(kind, item)
+            @wrapper.upsert(kind, item)
+          end
+
+          def initialized?
+            @wrapper.initialized?
+          end
+
+          def stop
+            @wrapper.stop
+          end
+        end
+
         class RedisStoreImplBase
           begin
             require "redis"
@@ -15,7 +104,7 @@ module LaunchDarkly
           end
 
           def initialize(opts)
-            if !REDIS_ENABLED
+            unless REDIS_ENABLED
               raise RuntimeError.new("can't use #{description} because one of these gems is missing: redis, connection_pool")
             end
 
@@ -28,7 +117,7 @@ module LaunchDarkly
             @logger = opts[:logger] || Config.default_logger
             @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
 
-            @stopped = Concurrent::AtomicBoolean.new(false)
+            @stopped = Concurrent::AtomicBoolean.new()
 
             with_connection do |redis|
               @logger.info("#{description}: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} and prefix: #{@prefix}")
@@ -55,13 +144,11 @@ module LaunchDarkly
             if opts[:redis_url]
               redis_opts[:url] = opts[:redis_url]
             end
-            if !redis_opts.include?(:url)
+            unless redis_opts.include?(:url)
               redis_opts[:url] = LaunchDarkly::Integrations::Redis::default_redis_url
             end
             max_connections = opts[:max_connections] || 16
-            return opts[:pool] || ConnectionPool.new(size: max_connections) do
-              ::Redis.new(redis_opts)
-            end
+            opts[:pool] || ConnectionPool.new(size: max_connections) { ::Redis.new(redis_opts) }
           end
         end
 
@@ -73,6 +160,14 @@ module LaunchDarkly
             super(opts)
 
             @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
+          end
+
+          def available?
+            # We don't care what the status is, only that we can connect
+            initialized_internal?
+            true
+          rescue
+            false
           end
 
           def description
@@ -135,6 +230,7 @@ module LaunchDarkly
                   else
                     final_item = old_item
                     action = new_item[:deleted] ? "delete" : "update"
+                    # rubocop:disable Layout/LineLength
                     @logger.warn { "RedisFeatureStore: attempted to #{action} #{key} version: #{old_item[:version]} in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:version]}" }
                   end
                   redis.unwatch
@@ -151,7 +247,7 @@ module LaunchDarkly
           private
 
           def before_update_transaction(base_key, key)
-            @test_hook.before_update_transaction(base_key, key) if !@test_hook.nil?
+            @test_hook.before_update_transaction(base_key, key) unless @test_hook.nil?
           end
 
           def items_key(kind)
@@ -176,8 +272,8 @@ module LaunchDarkly
         #
         class RedisBigSegmentStore < RedisStoreImplBase
           KEY_LAST_UP_TO_DATE = ':big_segments_synchronized_on'
-          KEY_USER_INCLUDE = ':big_segment_include:'
-          KEY_USER_EXCLUDE = ':big_segment_exclude:'
+          KEY_CONTEXT_INCLUDE = ':big_segment_include:'
+          KEY_CONTEXT_EXCLUDE = ':big_segment_exclude:'
 
           def description
             "RedisBigSegmentStore"
@@ -188,10 +284,10 @@ module LaunchDarkly
             Interfaces::BigSegmentStoreMetadata.new(value.nil? ? nil : value.to_i)
           end
 
-          def get_membership(user_hash)
+          def get_membership(context_hash)
             with_connection do |redis|
-              included_refs = redis.smembers(@prefix + KEY_USER_INCLUDE + user_hash)
-              excluded_refs = redis.smembers(@prefix + KEY_USER_EXCLUDE + user_hash)
+              included_refs = redis.smembers(@prefix + KEY_CONTEXT_INCLUDE + context_hash)
+              excluded_refs = redis.smembers(@prefix + KEY_CONTEXT_EXCLUDE + context_hash)
               if !included_refs && !excluded_refs
                 nil
               else

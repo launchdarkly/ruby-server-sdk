@@ -25,7 +25,7 @@ module LaunchDarkly
     #
     # - `flags`: Feature flag definitions.
     # - `flagValues`: Simplified feature flags that contain only a value.
-    # - `segments`: User segment definitions.
+    # - `segments`: Context segment definitions.
     #
     # The format of the data in `flags` and `segments` is defined by the LaunchDarkly application
     # and is subject to change. Rather than trying to construct these objects yourself, it is simpler
@@ -78,7 +78,7 @@ module LaunchDarkly
     # same flag key or segment key more than once, either in a single file or across multiple files.
     #
     # If the data source encounters any error in any file-- malformed content, a missing file, or a
-    # duplicate key-- it will not load flags from any of the files.      
+    # duplicate key-- it will not load flags from any of the files.
     #
     module FileData
       #
@@ -100,8 +100,8 @@ module LaunchDarkly
       # @return an object that can be stored in {Config#data_source}
       #
       def self.data_source(options={})
-        return lambda { |sdk_key, config|
-          Impl::Integrations::FileDataSourceImpl.new(config.feature_store, config.logger, options) }
+        lambda { |sdk_key, config|
+          Impl::Integrations::FileDataSourceImpl.new(config.feature_store, config.data_source_update_sink, config.logger, options) }
       end
     end
   end

@@ -2,6 +2,64 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.2.0] - 2023-05-04
+### Added:
+- You can monitor the status of the SDK's data source (which normally means the streaming connection to the LaunchDarkly service) with `LaunchDarkly::LDClient.data_source_status_provider`. This allows you to check the current connection status, and to be notified if this status changes.
+- You can monitor the status of a data store with `LaunchDarkly::LDClient.data_store_status_provider`. This allows you to check whether updates are succeeding and to be notified if this status changes.
+- You can tell the SDK to notify you whenever a feature flag's configuration has changed (either in general, or in terms of its result for a specific context), using `LaunchDarkly::LDClient.flag_tracker`.
+
+## [7.1.0] - 2023-04-13
+### Added:
+- Support for Payload Filtering in streaming and polling modes. Payload Filtering is a beta feature that allows SDKs to download a subset of environment data, rather than full environments.
+
+## [7.0.4] - 2023-04-03
+### Added:
+- Added flag key to log message to ease debugging. (Thanks, [matt-dutchie](https://github.com/launchdarkly/ruby-server-sdk/pull/214)!)
+
+## [7.0.3] - 2023-03-17
+### Changed:
+- Updated underlying event source library to address issue with `Content-Type` header detection in some customer environments.
+
+## [7.0.2] - 2023-01-27
+### Fixed:
+- Fixed JSON serialization error on internal models.
+
+## [7.0.1] - 2023-01-19
+### Changed:
+- Improved logging of feature flag data validation errors so that they are logged once at the time the SDK receives the data, rather than during each evaluation of the flag.
+
+### Fixed:
+- Removed a misleading error message about a missing attribute that was being logged when a flag rule used the "is in segment" operator.
+
+## [7.0.0] - 2022-12-30
+The latest version of this SDK supports LaunchDarkly's new custom contexts feature. Contexts are an evolution of a previously-existing concept, "users." Contexts let you create targeting rules for feature flags based on a variety of different information, including attributes pertaining to users, organizations, devices, and more. You can even combine contexts to create "multi-contexts."
+
+For detailed information about this version, please refer to the list below. For information on how to upgrade from the previous version, please read the [migration guide](https://docs.launchdarkly.com/sdk/server-side/ruby/migration-6-to-7).
+
+### Added:
+- The type `LaunchDarkly::LDContext` defines the new context model.
+- All SDK methods that took a hash representing the user now also accept an `LDContext`.
+
+### Changed _(breaking changes from 6.x)_:
+- The `secondary` attribute which existed in the user hash is no longer a supported feature. If you set an attribute with that name in `LDContext`, it will simply be a custom attribute like any other.
+- Analytics event data now uses a new JSON schema due to differences between the context model and the old user model.
+
+### Changed (requirements/dependencies/build):
+- The minimum language version is now Ruby 2.7, or jRuby 9.4.
+
+### Changed (behavioral changes):
+- Several optimizations within the flag evaluation logic have improved the performance of evaluations. For instance, target lists are now stored internally as sets for faster matching.
+
+### Removed:
+- Removed support for the `secondary` meta-attribute in the user hash.
+- The `alias` method no longer exists because alias events are not needed in the new context model.
+- The `inline_users_in_events` option no longer exists because it is not relevant in the new context model.
+- Removed all types and options that were deprecated as of the most recent 6.x release.
+
+### Deprecated:
+- Config options `user_keys_capacity` and `user_keys_flush_interval` are being replaced with `context_keys_capacity` and `context_keys_flush_interval`.
+- Config constants `default_user_keys_capacity` and `default_user_keys_flush_interval` are being replaced with `default_context_keys_capacity` and `default_context_keys_flush_interval`.
+
 ## [6.4.0] - 2022-09-07
 ### Added:
 - New `Config` property `application_info`, for configuration of application metadata that may be used in LaunchDarkly analytics or other product features. This does not affect feature flag evaluations.

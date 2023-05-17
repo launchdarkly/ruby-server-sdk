@@ -33,7 +33,7 @@ module LaunchDarkly
       all_data = JSON.parse(make_request("/sdk/latest-all"), symbolize_names: true)
       Impl::Model.make_all_store_data(all_data, @config.logger)
     end
-    
+
     def stop
       begin
         @http_client.close
@@ -43,21 +43,19 @@ module LaunchDarkly
 
     private
 
-    def request_single_item(kind, path)
-      Impl::Model.deserialize(kind, make_request(path), @config.logger)
-    end
-
     def make_request(path)
-      uri = URI(@config.base_uri + path)
+      uri = URI(
+        Util.add_payload_filter_key(@config.base_uri + path, @config)
+      )
       headers = {}
       Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| headers[k] = v }
       headers["Connection"] = "keep-alive"
       cached = @cache.read(uri)
-      if !cached.nil?
+      unless cached.nil?
         headers["If-None-Match"] = cached.etag
       end
       response = @http_client.request("GET", uri, {
-        headers: headers
+        headers: headers,
       })
       status = response.status.code
       # must fully read body for persistent connections
@@ -72,7 +70,7 @@ module LaunchDarkly
         end
         body = fix_encoding(body, response.headers["content-type"])
         etag = response.headers["etag"]
-        @cache.write(uri, CacheEntry.new(etag, body)) if !etag.nil?
+        @cache.write(uri, CacheEntry.new(etag, body)) unless etag.nil?
       end
       body
     end
@@ -96,7 +94,7 @@ module LaunchDarkly
           break
         end
       end
-      return [parts[0], charset]
+      [parts[0], charset]
     end
   end
 end

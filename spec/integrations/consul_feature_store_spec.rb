@@ -3,11 +3,11 @@ require "diplomat"
 require "spec_helper"
 
 # These tests will all fail if there isn't a local Consul instance running.
-# They can be disabled with LD_SKIP_DATABASE_TESTS=1
+# They can be enabled with LD_SKIP_DATABASE_TESTS=0
 
 $consul_base_opts = {
   prefix: $my_prefix,
-  logger: $null_log
+  logger: $null_log,
 }
 
 class ConsulStoreTester
@@ -27,9 +27,37 @@ end
 
 
 describe "Consul feature store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
-  
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
+
+  before do
+    Diplomat.configuration = Diplomat::Configuration.new
+  end
+
   include_examples "persistent_feature_store", ConsulStoreTester
+
+  it "should have monitoring enabled and defaults to available" do
+    tester = ConsulStoreTester.new({ logger: $null_logger })
+
+    ensure_stop(tester.create_feature_store) do |store|
+      expect(store.monitoring_enabled?).to be true
+      expect(store.available?).to be true
+    end
+  end
+
+  it "can detect that a non-existent store is not available" do
+    Diplomat.configure do |config|
+      config.url = 'http://i-mean-what-are-the-odds:13579'
+      config.options[:request] ||= {}
+      # Short timeout so we don't delay the tests too long
+      config.options[:request][:timeout] = 0.1
+    end
+    tester = ConsulStoreTester.new({ consul_config: Diplomat.configuration })
+
+    ensure_stop(tester.create_feature_store) do |store|
+      expect(store.available?).to be false
+    end
+  end
+
 end
 
 # There isn't a Big Segments integration for Consul.

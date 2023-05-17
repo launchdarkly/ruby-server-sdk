@@ -4,7 +4,7 @@ require "aws-sdk-dynamodb"
 require "spec_helper"
 
 # These tests will all fail if there isn't a local DynamoDB instance running.
-# They can be disabled with LD_SKIP_DATABASE_TESTS=1
+# They can be enabled with LD_SKIP_DATABASE_TESTS=0
 
 $DynamoDBBigSegmentStore = LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBBigSegmentStore
 
@@ -13,17 +13,17 @@ class DynamoDBStoreTester
   DYNAMODB_OPTS = {
     credentials: Aws::Credentials.new("key", "secret"),
     region: "us-east-1",
-    endpoint: "http://localhost:8000"
+    endpoint: "http://localhost:8000",
   }
   FEATURE_STORE_BASE_OPTS = {
     dynamodb_opts: DYNAMODB_OPTS,
     prefix: 'testprefix',
-    logger: $null_log
+    logger: $null_log,
   }
 
   def initialize(options = {})
     @options = options.clone
-    @options[:dynamodb_opts] = DYNAMODB_OPTS
+    @options[:dynamodb_opts] = DYNAMODB_OPTS unless @options.key? :dynamodb_opts
     @actual_prefix = options[:prefix] ? "#{options[:prefix]}:" : ""
   end
 
@@ -44,16 +44,16 @@ class DynamoDBStoreTester
       table_name: TABLE_NAME,
       key_schema: [
         { attribute_name: "namespace", key_type: "HASH" },
-        { attribute_name: "key", key_type: "RANGE" }
+        { attribute_name: "key", key_type: "RANGE" },
       ],
       attribute_definitions: [
         { attribute_name: "namespace", attribute_type: "S" },
-        { attribute_name: "key", attribute_type: "S" }
+        { attribute_name: "key", attribute_type: "S" },
       ],
       provisioned_throughput: {
         read_capacity_units: 1,
-        write_capacity_units: 1
-      }
+        write_capacity_units: 1,
+      },
     }
     client.create_table(req)
 
@@ -68,8 +68,8 @@ class DynamoDBStoreTester
       projection_expression: '#namespace, #key',
       expression_attribute_names: {
         '#namespace' => 'namespace',
-        '#key' => 'key'
-      }
+        '#key' => 'key',
+      },
     }
     while true
       resp = client.scan(req)
@@ -94,7 +94,7 @@ class DynamoDBStoreTester
   def create_big_segment_store
     LaunchDarkly::Integrations::DynamoDB::new_big_segment_store(TABLE_NAME, @options)
   end
-  
+
   def set_big_segments_metadata(metadata)
     client = self.class.create_test_client
     key = @actual_prefix + $DynamoDBBigSegmentStore::KEY_METADATA
@@ -103,28 +103,28 @@ class DynamoDBStoreTester
       item: {
         "namespace" => key,
         "key" => key,
-        $DynamoDBBigSegmentStore::ATTR_SYNC_TIME => metadata.last_up_to_date
+        $DynamoDBBigSegmentStore::ATTR_SYNC_TIME => metadata.last_up_to_date,
       }
     )
   end
 
-  def set_big_segments(user_hash, includes, excludes)
+  def set_big_segments(context_hash, includes, excludes)
     client = self.class.create_test_client
     sets = {
       $DynamoDBBigSegmentStore::ATTR_INCLUDED => Set.new(includes),
-      $DynamoDBBigSegmentStore::ATTR_EXCLUDED => Set.new(excludes)
+      $DynamoDBBigSegmentStore::ATTR_EXCLUDED => Set.new(excludes),
     }
     sets.each do |attr_name, values|
-      if !values.empty?
+      unless values.empty?
         client.update_item(
           table_name: TABLE_NAME,
           key: {
-            "namespace" => @actual_prefix + $DynamoDBBigSegmentStore::KEY_USER_DATA,
-            "key" => user_hash
+            "namespace" => @actual_prefix + $DynamoDBBigSegmentStore::KEY_CONTEXT_DATA,
+            "key" => context_hash,
           },
           update_expression: "ADD #{attr_name} :value",
           expression_attribute_values: {
-            ":value" => values
+            ":value" => values,
           }
         )
       end
@@ -134,15 +134,38 @@ end
 
 
 describe "DynamoDB feature store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
 
   DynamoDBStoreTester.create_table_if_necessary
 
   include_examples "persistent_feature_store", DynamoDBStoreTester
+
+  it "should have monitoring enabled and defaults to available" do
+    tester = DynamoDBStoreTester.new({ logger: $null_logger })
+
+    ensure_stop(tester.create_feature_store) do |store|
+      expect(store.monitoring_enabled?).to be true
+      expect(store.available?).to be true
+    end
+  end
+
+  it "can detect that a non-existent store is not available" do
+    options = DynamoDBStoreTester::DYNAMODB_OPTS.clone
+    options[:endpoint] = 'http://i-mean-what-are-the-odds:13579'
+    options[:retry_limit] = 0
+    options[:http_open_timeout] = 0.1
+
+    # Short timeout so we don't delay the tests too long
+    tester = DynamoDBStoreTester.new({ dynamodb_opts: options, logger: $null_logger })
+
+    ensure_stop(tester.create_feature_store) do |store|
+      expect(store.available?).to be false
+    end
+  end
 end
 
 describe "DynamoDB big segment store" do
-  break if ENV['LD_SKIP_DATABASE_TESTS'] == '1'
+  break unless ENV['LD_SKIP_DATABASE_TESTS'] == '0'
 
   DynamoDBStoreTester.create_table_if_necessary
 

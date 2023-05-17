@@ -14,14 +14,17 @@ module LaunchDarkly
   FEATURES = {
     namespace: "features",
     priority: 1,  # that is, features should be stored after segments
-    get_dependency_keys: lambda { |flag| (flag[:prerequisites] || []).map { |p| p[:key] } }
+    get_dependency_keys: lambda { |flag| (flag[:prerequisites] || []).map { |p| p[:key] } },
   }.freeze
 
   # @private
   SEGMENTS = {
     namespace: "segments",
-    priority: 0
+    priority: 0,
   }.freeze
+
+  # @private
+  ALL_KINDS = [FEATURES, SEGMENTS].freeze
 
   #
   # Default implementation of the LaunchDarkly client's feature store, using an in-memory
@@ -35,6 +38,10 @@ module LaunchDarkly
       @items = Hash.new
       @lock = Concurrent::ReadWriteLock.new
       @initialized = Concurrent::AtomicBoolean.new(false)
+    end
+
+    def monitoring_enabled?
+      false
     end
 
     def get(kind, key)

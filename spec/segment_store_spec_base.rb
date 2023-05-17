@@ -7,7 +7,7 @@ RSpec.shared_examples "segment_store" do |create_store_method|
       key: "test-segment",
       version: 11,
       salt: "718ea30a918a4eba8734b57ab1a93227",
-      rules: []
+      rules: [],
     }
   }
   let(:key0) { segment0[:key].to_sym }
