@@ -9,7 +9,7 @@ LaunchDarkly Server-side SDK for Ruby
 
 LaunchDarkly overview
 -------------------------
-[LaunchDarkly](https://www.launchdarkly.com) is a feature management platform that serves over 100 billion feature flags daily to help teams build better software, faster. [Get started](https://docs.launchdarkly.com/home/getting-started) using LaunchDarkly today!
+[LaunchDarkly](https://www.launchdarkly.com) is a feature management platform that serves trillions of feature flags daily to help teams build better software, faster. [Get started](https://docs.launchdarkly.com/home/getting-started) using LaunchDarkly today!
  
 [![Twitter Follow](https://img.shields.io/twitter/follow/launchdarkly.svg?style=social&label=Follow&maxAge=2592000)](https://twitter.com/intent/follow?screen_name=launchdarkly)
 
@@ -26,7 +26,7 @@ Refer to the [SDK documentation](https://docs.launchdarkly.com/sdk/server-side/r
 Learn more
 -----------
 
-Check out our [documentation](http://docs.launchdarkly.com) for in-depth instructions on configuring and using LaunchDarkly. You can also head straight to the [reference guide for this SDK](http://docs.launchdarkly.com/docs/ruby-sdk-reference).
+Read our [documentation](http://docs.launchdarkly.com) for in-depth instructions on configuring and using LaunchDarkly. You can also head straight to the [reference guide for this SDK](http://docs.launchdarkly.com/docs/ruby-sdk-reference).
 
 Generated API documentation for all versions of the SDK is on [RubyDoc.info](https://www.rubydoc.info/gems/launchdarkly-server-sdk). The API documentation for the latest version is also on [GitHub Pages](https://launchdarkly.github.io/ruby-server-sdk).
 
