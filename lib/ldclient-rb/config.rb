@@ -486,7 +486,7 @@ module LaunchDarkly
 
     #
     # The default value for {#connect_timeout}.
-    # @return [Float] 10
+    # @return [Float] 2
     #
     def self.default_connect_timeout
       2
