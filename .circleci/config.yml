@@ -41,6 +41,12 @@ jobs:
     steps:
       - checkout
 
+      # No idea what this is. But the win orb starts it up on port 8000 which
+      # conflicts with DynamoDB. So we will stop it.
+      - run:
+          name: "Shutdown IBXDashboard"
+          command: Stop-Service IBXDashboard
+
       - run:
           name: "Setup DynamoDB"
           command: |
@@ -107,7 +113,7 @@ jobs:
 
     docker:
       - image: <<parameters.docker-image>>
-      - image: consul
+      - image: hashicorp/consul
       - image: redis
       - image: amazon/dynamodb-local
 
