@@ -495,6 +495,10 @@ module LaunchDarkly
       end
     end
 
+    def track_migration_op(event)
+      # TODO(uc2-migrations): Fill this out in a separate task
+    end
+
     private def record_flag_eval(flag, context, detail, default, with_reasons)
       add_experiment_data = experiment?(flag, detail.reason)
       @event_processor.record_eval_event(

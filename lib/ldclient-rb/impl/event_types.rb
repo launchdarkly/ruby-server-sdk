@@ -1,3 +1,5 @@
+require 'set'
+
 module LaunchDarkly
   module Impl
     class Event
@@ -39,6 +41,46 @@ module LaunchDarkly
       attr_reader :track_events
       attr_reader :debug_until
       attr_reader :prereq_of
+    end
+
+    class MigrationOpEvent < Event
+      #
+      # A migration op event represents the results of a migration-assisted read or write operation.
+      #
+      # The event includes optional measurements reporting on consistency checks, error reporting, and operation latency
+      # values.
+      #
+      # @param timestamp [Integer]
+      # @param context [LaunchDarkly::LDContext]
+      # @param flag [LaunchDarkly::Impl::Model::FeatureFlag]
+      # @param operation [Symbol]
+      # @param default_stage [Symbol]
+      # @param evaluation [LaunchDarkly::EvaluationDetail]
+      # @param invoked [Set]
+      # @param consistency_check [Boolean, nil]
+      # @param errors [Set]
+      # @param latencies [Hash<Symbol, Float>]
+      #
+      def initialize(timestamp, context, flag, operation, default_stage, evaluation, invoked, consistency_check, errors, latencies)
+        super(timestamp, context)
+        @operation = operation
+        @flag_key = flag.key
+        @default = default_stage
+        @evaluation = evaluation
+        @consistency_check = consistency_check
+        @invoked = invoked
+        @errors = errors
+        @latencies = latencies
+      end
+
+      attr_reader :operation
+      attr_reader :flag_key
+      attr_reader :default
+      attr_reader :evaluation
+      attr_reader :consistency_check
+      attr_reader :invoked
+      attr_reader :errors
+      attr_reader :latencies
     end
 
     class IdentifyEvent < Event

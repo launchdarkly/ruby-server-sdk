@@ -788,5 +788,80 @@ module LaunchDarkly
         end
       end
     end
+
+    module Migration
+      ORIGIN_OLD = :old
+      ORIGIN_NEW = :new
+
+      OP_READ = :read
+      OP_WRITE = :write
+
+      STAGE_OFF = :off
+      STAGE_DUALWRITE = :dualwrite
+      STAGE_SHADOW = :shadow
+      STAGE_LIVE = :live
+      STAGE_RAMPDOWN = :rampdown
+      STAGE_COMPLETE = :complete
+
+      #
+      # An OpTracker is responsible for managing the collection of measurements that which a user might wish to record
+      # throughout a migration-assisted operation.
+      #
+      # Example measurements include latency, errors, and consistency.
+      #
+      module OpTracker
+        #
+        # Sets the migration related operation associated with these tracking measurements.
+        #
+        # @param [Symbol] op The read or write operation symbol.
+        #
+        def operation(op) end
+
+        #
+        # Allows recording which origins were called during a migration.
+        #
+        # @param [Symbol] origin Designation for the old or new origin.
+        #
+        def invoked(origin) end
+
+        #
+        # Allows recording the results of a consistency check.
+        #
+        # This method accepts a callable which should take no parameters and return a single boolean to represent the
+        # consistency check results for a read operation.
+        #
+        # A callable is provided in case sampling rules do not require consistency checking to run. In this case, we can
+        # avoid the overhead of a function by not using the callable.
+        #
+        # @param [#call] is_consistent closure to return result of comparison check
+        #
+        def consistent(is_consistent) end
+
+        #
+        # Allows recording whether an error occurred during the operation.
+        #
+        # @param [Symbol] origin Designation for the old or new origin.
+        #
+        def error(origin) end
+
+        #
+        # Allows tracking the recorded latency for an individual operation.
+        #
+        # @param [Symbol] origin Designation for the old or new origin.
+        # @param [Float] duration Duration measurement in milliseconds (ms).
+        #
+        def latency(origin, duration) end
+
+        #
+        # Creates an instance of {LaunchDarkly::Impl::MigrationOpEventData}. This event data can be provided to
+        # the {LaunchDarkly::LDClient.track_migration_op} method to rely this metric information upstream to LaunchDarkly
+        # services.
+        #
+        # @return [LaunchDarkly::Impl::MigrationOpEvent, String] A migration op event or a string describing the error.
+        # failure.
+        #
+        def build() end
+      end
+    end
   end
 end
