@@ -789,11 +789,18 @@ module LaunchDarkly
       end
     end
 
-    module Migration
+    #
+    # Namespace for feature-flag based technology migration support.
+    #
+    module Migrations
+      # Symbol representing the old origin, or the old technology source you are migrating away from.
       ORIGIN_OLD = :old
+      # Symbol representing the new origin, or the new technology source you are migrating towards.
       ORIGIN_NEW = :new
 
+      # Symbol defining a read-related operation
       OP_READ = :read
+      # Symbol defining a write-related operation
       OP_WRITE = :write
 
       STAGE_OFF = :off
@@ -802,6 +809,36 @@ module LaunchDarkly
       STAGE_LIVE = :live
       STAGE_RAMPDOWN = :rampdown
       STAGE_COMPLETE = :complete
+
+      #
+      # A migrator is the interface through which migration support is executed. A migrator is configured through the
+      # {LaunchDarkly::Impl::Migrations::MigratorBuilder} class.
+      #
+      module Migrator
+        #
+        # Uses the provided flag key and context to execute a migration-backed read operation.
+        #
+        # @param key [String]
+        # @param context [LaunchDarkly::LDContext]
+        # @param default_stage [Symbol]
+        # @param payload [Object, nil]
+        #
+        # @return [LaunchDarkly::Impl::Migrations::OperationResult]
+        #
+        def read(key, context, default_stage, payload) end
+
+        #
+        # Uses the provided flag key and context to execute a migration-backed write operation.
+        #
+        # @param key [String]
+        # @param context [LaunchDarkly::LDContext]
+        # @param default_stage [Symbol]
+        # @param payload [Object, nil]
+        #
+        # @return [LaunchDarkly::Impl::Migrations::WriteResult]
+        #
+        def write(key, context, default_stage, payload) end
+      end
 
       #
       # An OpTracker is responsible for managing the collection of measurements that which a user might wish to record

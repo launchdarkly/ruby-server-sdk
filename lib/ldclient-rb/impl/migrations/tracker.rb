@@ -2,11 +2,11 @@ require 'set'
 
 module LaunchDarkly
   module Impl
-    module Migration
+    module Migrations
       class OpTracker
-        include LaunchDarkly::Interfaces::Migration::OpTracker
+        include LaunchDarkly::Interfaces::Migrations::OpTracker
 
-        VALID_ORIGINS = [LaunchDarkly::Interfaces::Migration::ORIGIN_OLD, LaunchDarkly::Interfaces::Migration::ORIGIN_NEW]
+        VALID_ORIGINS = [LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW]
         private_constant :VALID_ORIGINS
 
         #
