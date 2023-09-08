@@ -141,6 +141,14 @@ module LaunchDarkly
         end
 
         describe "can handle build failures" do
+          it "without providing a flag" do
+            tracker = subject.new(nil, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
+            tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
+
+            event = tracker.build
+            expect(event).to eq("flag not provided")
+          end
+
           it "without calling invoked" do
             tracker = subject.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
             tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)

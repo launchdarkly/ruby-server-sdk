@@ -188,10 +188,11 @@ module LaunchDarkly
     # @param default the default value of the flag; this is used if there is an error
     #   condition making it impossible to find or evaluate the flag
     #
-    # @return the variation for the provided context, or the default value if there's an an error
+    # @return the variation for the provided context, or the default value if there's an error
     #
     def variation(key, context, default)
-      evaluate_internal(key, context, default, false).value
+      detail, _, _, = variation_with_flag(key, context, default)
+      detail.value
     end
 
     #
@@ -218,7 +219,39 @@ module LaunchDarkly
     # @return [EvaluationDetail] an object describing the result
     #
     def variation_detail(key, context, default)
-      evaluate_internal(key, context, default, true)
+      detail, _, _ = evaluate_internal(key, context, default, true)
+      detail
+    end
+
+    #
+    # This method returns the migration stage of the migration feature flag for the given evaluation context.
+    #
+    # This method returns the default stage if there is an error or the flag does not exist. If the default stage is not
+    # a valid stage, then a default stage of 'off' will be used instead.
+    #
+    # @param key [String]
+    # @param context [LDContext]
+    # @param default_stage [Symbol]
+    #
+    # @return [Array<Symbol, LaunchDarkly::Impl::Migrations::OpTracker, [String, nil]>]
+    #
+    def migration_variation(key, context, default_stage)
+      unless LaunchDarkly::Interfaces::Migrations::VALID_STAGES.include? default_stage
+        @config.logger.error { "[LDClient] default_stage #{default_stage} is not a valid stage; using 'off' instead" }
+        default_stage = LaunchDarkly::Interfaces::Migrations::STAGE_OFF
+      end
+
+      detail, flag, err = variation_with_flag(key, context, default_stage.to_s)
+      tracker = LaunchDarkly::Impl::Migrations::OpTracker.new(flag, context, detail, default_stage)
+
+      return default_stage, tracker, err unless err.nil?
+
+      stage = detail.value.to_sym
+      unless LaunchDarkly::Interfaces::Migrations::VALID_STAGES.include? stage
+        return default_stage, tracker, "value is not a valid stage; using default stage"
+      end
+
+      [stage, tracker, nil]
     end
 
     #
@@ -279,6 +312,10 @@ module LaunchDarkly
       end
 
       @event_processor.record_custom_event(context, event_name, data, metric_value)
+    end
+
+    def track_migration_op(event)
+      # TODO(uc2-migrations): Fill this out in a separate task
     end
 
     #
@@ -430,24 +467,41 @@ module LaunchDarkly
       end
     end
 
+    #
+    # @param key [String]
     # @param context [Hash, LDContext]
-    # @return [EvaluationDetail]
+    # @param default [Object]
+    #
+    # @return [Array<EvaluationDetail, [LaunchDarkly::Impl::Model::FeatureFlag, nil], [String, nil]>]
+    #
+    def variation_with_flag(key, context, default)
+      evaluate_internal(key, context, default, false)
+    end
+
+    #
+    # @param key [String]
+    # @param context [Hash, LDContext]
+    # @param default [Object]
+    # @param with_reasons [Boolean]
+    #
+    # @return [Array<EvaluationDetail, [LaunchDarkly::Impl::Model::FeatureFlag, nil], [String, nil]>]
+    #
     def evaluate_internal(key, context, default, with_reasons)
       if @config.offline?
-        return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
+        return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default), nil, nil
       end
 
       if context.nil?
         @config.logger.error { "[LDClient] Must specify context" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
-        return detail
+        return detail, nil, "no context provided"
       end
 
       context = Impl::Context::make_context(context)
       unless context.valid?
         @config.logger.error { "[LDClient] Context was invalid for evaluation of flag '#{key}' (#{context.error}); returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
-        return detail
+        return detail, nil, context.error
       end
 
       unless initialized?
@@ -457,7 +511,7 @@ module LaunchDarkly
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
           detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
           record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
-          return detail
+          return detail, nil, "client not initialized"
         end
       end
 
@@ -471,7 +525,7 @@ module LaunchDarkly
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_FLAG_NOT_FOUND, default)
         record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
-        return detail
+        return detail, nil, "feature flag not found"
       end
 
       begin
@@ -486,17 +540,13 @@ module LaunchDarkly
           detail = EvaluationDetail.new(default, nil, detail.reason)
         end
         record_flag_eval(feature, context, detail, default, with_reasons)
-        detail
+        [detail, feature, nil]
       rescue => exn
         Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
         record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
-        detail
+        [detail, feature, exn.to_s]
       end
-    end
-
-    def track_migration_op(event)
-      # TODO(uc2-migrations): Fill this out in a separate task
     end
 
     private def record_flag_eval(flag, context, detail, default, with_reasons)

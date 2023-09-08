@@ -810,6 +810,15 @@ module LaunchDarkly
       STAGE_RAMPDOWN = :rampdown
       STAGE_COMPLETE = :complete
 
+      VALID_STAGES = [
+        STAGE_OFF,
+        STAGE_DUALWRITE,
+        STAGE_SHADOW,
+        STAGE_LIVE,
+        STAGE_RAMPDOWN,
+        STAGE_COMPLETE,
+      ]
+
       #
       # A migrator is the interface through which migration support is executed. A migrator is configured through the
       # {LaunchDarkly::Impl::Migrations::MigratorBuilder} class.

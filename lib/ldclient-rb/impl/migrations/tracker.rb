@@ -77,6 +77,7 @@ module LaunchDarkly
 
         def build()
           @mutex.synchronize do
+            return "flag not provided" if @flag.nil?
             return "operation not provided" if @operation.nil?
             return "no origins were invoked" if @invoked.empty?
             return "provided context was invalid" unless @context.valid?
