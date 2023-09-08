@@ -1,3 +1,5 @@
+require 'thread'
+
 module LaunchDarkly
   module Impl
     module Migrations
@@ -56,7 +58,8 @@ module LaunchDarkly
         #
         attr_reader :error
 
-        private def initialize(value, error)
+        private def initialize(origin, value, error)
+          @origin = origin
           @value = value
           @error = error
         end
@@ -73,7 +76,7 @@ module LaunchDarkly
         # @param authoritative [OperationResult]
         # @param nonauthoritative [OperationResult, nil]
         #
-        def initialize(authoritative, nonauthoritative)
+        def initialize(authoritative, nonauthoritative = nil)
           @authoritative = authoritative
           @nonauthoritative = nonauthoritative
         end
@@ -269,6 +272,14 @@ module LaunchDarkly
       class Migrator
         include LaunchDarkly::Interfaces::Migrations::Migrator
 
+        #
+        # @param client [LaunchDarkly::LDClient]
+        # @param read_execution_order [Symbol]
+        # @param read_config [MigrationConfig]
+        # @param write_config [MigrationConfig]
+        # @param measure_latency [Boolean]
+        # @param measure_errors [Boolean]
+        #
         def initialize(client, read_execution_order, read_config, write_config, measure_latency, measure_errors)
           @client = client
           @read_execution_order = read_execution_order
@@ -278,12 +289,208 @@ module LaunchDarkly
           @measure_errors = measure_errors
         end
 
-        def read(key, context, default_stage, payload)
-          # TODO(uc2-migrations): Implement this logic
+        #
+        # Perform the configured read operations against the appropriate old and/or new origins.
+        #
+        # @param key [String] The migration-based flag key to use for determining migration stages
+        # @param context [LaunchDarkly::LDContext] The context to use for evaluating the migration flag
+        # @param default_stage [Symbol] The stage to fallback to if one could not be determined for the requested flag
+        # @param payload [String] An optional payload to pass through to the configured read operations.
+        #
+        def read(key, context, default_stage, payload = nil)
+          stage, tracker, err = @client.migration_variation(key, context, default_stage)
+          tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_READ)
+
+          unless err.nil?
+            @client.logger.error { "[Migrator] Error occurred determining migration stage for read; #{err}" }
+          end
+
+          old = Executor.new(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, @read_config.old, tracker, @measure_latency, @measure_errors, payload)
+          new = Executor.new(LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW, @read_config.new, tracker, @measure_latency, @measure_errors, payload)
+
+          case stage
+          when LaunchDarkly::Interfaces::Migrations::STAGE_OFF
+            result = old.run()
+          when LaunchDarkly::Interfaces::Migrations::STAGE_DUALWRITE
+            result = old.run()
+          when LaunchDarkly::Interfaces::Migrations::STAGE_SHADOW
+            result = read_both(old, new, @read_config.comparison, @read_execution_order, tracker)
+          when LaunchDarkly::Interfaces::Migrations::STAGE_LIVE
+            result = read_both(new, old, @read_config.comparison, @read_execution_order, tracker)
+          when LaunchDarkly::Interfaces::Migrations::STAGE_RAMPDOWN
+            result = new.run()
+          when LaunchDarkly::Interfaces::Migrations::STAGE_COMPLETE
+            result = new.run()
+          else
+            result = OperationResult.fail(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, "invalid stage #{stage}; cannot execute read")
+          end
+
+          event = tracker.build()
+          if event.is_a? String
+            @client.logger.error { "[Migrator] Error occurred generating migration op event; #{event}" }
+          else
+            @client.track_migration_op(event)
+          end
+
+          result
         end
 
-        def write(key, context, default_stage, payload)
-          # TODO(uc2-migrations): Implement this logic
+        #
+        # Perform the configured write operations against the appropriate old and/or new origins.
+        #
+        # @param key [String] The migration-based flag key to use for determining migration stages
+        # @param context [LaunchDarkly::LDContext] The context to use for evaluating the migration flag
+        # @param default_stage [Symbol] The stage to fallback to if one could not be determined for the requested flag
+        # @param payload [String] An optional payload to pass through to the configured write operations.
+        #
+        def write(key, context, default_stage, payload = nil)
+          stage, tracker, err = @client.migration_variation(key, context, default_stage)
+          tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_READ)
+
+          unless err.nil?
+            @client.logger.error { "[Migrator] Error occurred determining migration stage for write; #{err}" }
+          end
+
+          old = Executor.new(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, @write_config.old, tracker, @measure_latency, @measure_errors, payload)
+          new = Executor.new(LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW, @write_config.new, tracker, @measure_latency, @measure_errors, payload)
+
+          case stage
+          when LaunchDarkly::Interfaces::Migrations::STAGE_OFF
+            result = old.run()
+            write_result = WriteResult.new(result)
+          when LaunchDarkly::Interfaces::Migrations::STAGE_DUALWRITE
+            authoritative_result, nonauthoritative_result = write_both(old, new, tracker)
+            write_result = WriteResult.new(authoritative_result, nonauthoritative_result)
+          when LaunchDarkly::Interfaces::Migrations::STAGE_SHADOW
+            authoritative_result, nonauthoritative_result = write_both(old, new, tracker)
+            write_result = WriteResult.new(authoritative_result, nonauthoritative_result)
+          when LaunchDarkly::Interfaces::Migrations::STAGE_LIVE
+            authoritative_result, nonauthoritative_result = write_both(new, old, tracker)
+            write_result = WriteResult.new(authoritative_result, nonauthoritative_result)
+          when LaunchDarkly::Interfaces::Migrations::STAGE_RAMPDOWN
+            authoritative_result, nonauthoritative_result = write_both(new, old, tracker)
+            write_result = WriteResult.new(authoritative_result, nonauthoritative_result)
+          when LaunchDarkly::Interfaces::Migrations::STAGE_COMPLETE
+            result = new.run()
+            write_result = WriteResult.new(result)
+          else
+            result = OperationResult.fail(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, "invalid stage #{stage}; cannot execute write")
+            write_result = WriteResult.new(result)
+          end
+
+          event = tracker.build()
+          if event.is_a? String
+            @client.logger.error { "[Migrator] Error occurred generating migration op event; #{event}" }
+          else
+            @client.track_migration_op(event)
+          end
+
+          write_result
+        end
+
+        #
+        # Execute both read methods in accordance with the requested execution order.
+        #
+        # This method always returns the {OperationResult} from running the authoritative read operation. The
+        # non-authoritative executor may fail but it will not affect the return value.
+        #
+        # @param authoritative [Executor]
+        # @param nonauthoritative [Executor]
+        # @param comparison [#call]
+        # @param execution_order [Symbol]
+        # @param tracker [LaunchDarkly::Interfaces::Migrations::OpTracker]
+        #
+        # @return [OperationResult]
+        #
+        private def read_both(authoritative, nonauthoritative, comparison, execution_order, tracker)
+          case execution_order
+          when LaunchDarkly::Impl::Migrations::MigratorBuilder::EXECUTION_PARALLEL
+            auth_handler = Thread.new { authoritative_result = authoritative.run() }
+            nonauth_handler = Thread.new { nonauthoritative_result = nonauthoritative.run() }
+
+            auth_handler.join()
+            nonauth_handler.join()
+          when LaunchDarkly::Impl::Migrations::MigratorBuilder::EXECUTION_RANDOM && rand() > 0.5
+            nonauthoritative_result = nonauthoritative.run()
+            authoritative_result = authoritative.run()
+          else
+            authoritative_result = authoritative.run()
+            nonauthoritative_result = nonauthoritative.run()
+          end
+
+          unless comparison.nil?
+            tracker.consistent(->{ return comparison.call(authoritative_result, nonauthoritative_result) })
+          end
+
+          authoritative_result
+        end
+
+        #
+        # Execute both operations sequentially.
+        #
+        # If the authoritative executor fails, do not run the non-authoritative one. As a result, this method will
+        # always return an authoritative {OperationResult} as the first value, and optionally the non-authoritative
+        # {OperationResult} as the second value.
+        #
+        # @param authoritative [Executor]
+        # @param nonauthoritative [Executor]
+        # @param tracker [LaunchDarkly::Interfaces::Migrations::OpTracker]
+        #
+        # @return [Array<OperationResult, [OperationResult, nil]>]
+        #
+        private def write_both(authoritative, nonauthoritative, tracker)
+          authoritative_result = authoritative.run()
+          tracker.invoked(authoritative.origin)
+
+          return authoritative_result, nil unless authoritative_result.success?
+
+          nonauthoritative_result = nonauthoritative.run()
+          tracker.invoked(nonauthoritative.origin)
+
+          [authoritative_result, nonauthoritative_result]
+        end
+      end
+
+      #
+      # Utility class for executing migration operations while also tracking our built-in migration measurements.
+      #
+      class Executor
+        #
+        # @return [Symbol]
+        #
+        attr_reader :origin
+
+        #
+        # @param origin [Symbol]
+        # @param fn [#call]
+        # @param tracker [LaunchDarkly::Interfaces::Migrations::OpTracker]
+        # @param measure_latency [Boolean]
+        # @param measure_errors [Boolean]
+        # @param payload [Object, nil]
+        #
+        def initialize(origin, fn, tracker, measure_latency, measure_errors, payload)
+          @origin = origin
+          @fn = fn
+          @tracker = tracker
+          @measure_latency = measure_latency
+          @measure_errors = measure_errors
+          @payload = payload
+        end
+
+        #
+        # Execute the configured operation and track any available measurements.
+        #
+        # @return [OperationResult]
+        #
+        def run()
+          start = Time.now
+          result = @fn.call(@payload)
+
+          @tracker.latency(result.origin, (Time.now - start) * 1_000) if @measure_latency
+          @tracker.error(result.origin, result.error) if @measure_errors && !result.success?
+          @tracker.invoked(result.origin)
+
+          result
         end
       end
     end

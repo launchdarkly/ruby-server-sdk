@@ -834,7 +834,7 @@ module LaunchDarkly
         #
         # @return [LaunchDarkly::Impl::Migrations::OperationResult]
         #
-        def read(key, context, default_stage, payload) end
+        def read(key, context, default_stage, payload = nil) end
 
         #
         # Uses the provided flag key and context to execute a migration-backed write operation.
@@ -846,7 +846,7 @@ module LaunchDarkly
         #
         # @return [LaunchDarkly::Impl::Migrations::WriteResult]
         #
-        def write(key, context, default_stage, payload) end
+        def write(key, context, default_stage, payload = nil) end
       end
 
       #

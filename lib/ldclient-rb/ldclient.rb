@@ -8,6 +8,7 @@ require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/store_client_wrapper"
 require "concurrent/atomics"
 require "digest/sha1"
+require "forwardable"
 require "logger"
 require "benchmark"
 require "json"
@@ -20,6 +21,10 @@ module LaunchDarkly
   #
   class LDClient
     include Impl
+    extend Forwardable
+
+    def_delegators :@config, :logger
+
     #
     # Creates a new client instance that connects to LaunchDarkly. A custom
     # configuration parameter can also supplied to specify advanced options,
