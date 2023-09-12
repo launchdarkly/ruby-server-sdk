@@ -6,6 +6,7 @@ require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/store_client_wrapper"
+require "ldclient-rb/impl/migrations/tracker"
 require "concurrent/atomics"
 require "digest/sha1"
 require "forwardable"
@@ -319,8 +320,23 @@ module LaunchDarkly
       @event_processor.record_custom_event(context, event_name, data, metric_value)
     end
 
+    #
+    # Tracks the results of a migrations operation. This event includes measurements which can be used to enhance the
+    # observability of a migration within the LaunchDarkly UI.
+    #
+    # This event should be generated through {LaunchDarkly::Interfaces::Migrations::OpTracker}. If you are using the
+    # {LaunchDarkly::Impl::Migrations::Migrator} to handling migrations, this event will be created and emitted
+    # automatically.
+    #
+    # @param event [LaunchDarkly::Impl::MigrationOpEvent]
+    #
     def track_migration_op(event)
-      # TODO(uc2-migrations): Fill this out in a separate task
+      unless event.is_a? LaunchDarkly::Impl::MigrationOpEvent
+        @config.logger.error { "Tried to track migration op event by providing a non-event object. Ignoring." }
+        return
+      end
+
+      @event_processor.record_migration_op_event(event)
     end
 
     #

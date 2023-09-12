@@ -58,26 +58,31 @@ module LaunchDarkly
       # @param evaluation [LaunchDarkly::EvaluationDetail]
       # @param invoked [Set]
       # @param consistency_check [Boolean, nil]
+      # @param consistency_check_ratio [Integer, nil]
       # @param errors [Set]
       # @param latencies [Hash<Symbol, Float>]
       #
-      def initialize(timestamp, context, flag, operation, default_stage, evaluation, invoked, consistency_check, errors, latencies)
+      def initialize(timestamp, context, flag, operation, default_stage, evaluation, invoked, consistency_check, consistency_check_ratio, errors, latencies)
         super(timestamp, context)
         @operation = operation
-        @flag_key = flag.key
+        @key = flag.key
+        @sampling_ratio = flag.sampling_ratio
         @default = default_stage
         @evaluation = evaluation
         @consistency_check = consistency_check
+        @consistency_check_ratio = consistency_check_ratio
         @invoked = invoked
         @errors = errors
         @latencies = latencies
       end
 
       attr_reader :operation
-      attr_reader :flag_key
+      attr_reader :key
+      attr_reader :sampling_ratio
       attr_reader :default
       attr_reader :evaluation
       attr_reader :consistency_check
+      attr_reader :consistency_check_ratio
       attr_reader :invoked
       attr_reader :errors
       attr_reader :latencies

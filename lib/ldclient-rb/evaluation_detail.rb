@@ -1,4 +1,3 @@
-
 module LaunchDarkly
 # An object returned by {LDClient#variation_detail}, combining the result of a flag evaluation with
   # an explanation of how it was calculated.
@@ -13,6 +12,7 @@ module LaunchDarkly
     def initialize(value, variation_index, reason)
       raise ArgumentError.new("variation_index must be a number") if !variation_index.nil? && !(variation_index.is_a? Numeric)
       raise ArgumentError.new("reason must be an EvaluationReason") unless reason.is_a? EvaluationReason
+
       @value = value
       @variation_index = variation_index
       @reason = reason

@@ -14,26 +14,8 @@ module LaunchDarkly
     let(:default_config) { Config.new(default_config_opts) }
     let(:context) { LDContext.create({ kind: "user", key: "userkey", name: "Red" }) }
 
-    def with_processor_and_sender(config)
-      sender = FakeEventSender.new
-      timestamp = starting_timestamp
-      ep = subject.new("sdk_key", config, nil, nil, {
-        event_sender: sender,
-        timestamp_fn: proc {
-          t = timestamp
-          timestamp += 1
-          t
-        },
-      })
-      begin
-        yield ep, sender
-      ensure
-        ep.stop
-      end
-    end
-
     it "queues identify event" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         ep.record_identify_event(context)
 
         output = flush_and_get_events(ep, sender)
@@ -43,7 +25,7 @@ module LaunchDarkly
 
     it "filters context in identify event" do
       config = Config.new(default_config_opts.merge(all_attributes_private: true))
-      with_processor_and_sender(config) do |ep, sender|
+      with_processor_and_sender(config, starting_timestamp) do |ep, sender|
         ep.record_identify_event(context)
 
         output = flush_and_get_events(ep, sender)
@@ -52,7 +34,7 @@ module LaunchDarkly
     end
 
     it "queues individual feature event with index event" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         flag = { key: "flagkey", version: 11 }
         ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, true)
 
@@ -67,7 +49,7 @@ module LaunchDarkly
 
     it "filters context in index event" do
       config = Config.new(default_config_opts.merge(all_attributes_private: true))
-      with_processor_and_sender(config) do |ep, sender|
+      with_processor_and_sender(config, starting_timestamp) do |ep, sender|
         flag = { key: "flagkey", version: 11 }
         ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, true)
 
@@ -82,7 +64,7 @@ module LaunchDarkly
 
     it "filters context in feature event" do
       config = Config.new(default_config_opts.merge(all_attributes_private: true))
-      with_processor_and_sender(config) do |ep, sender|
+      with_processor_and_sender(config, starting_timestamp) do |ep, sender|
         flag = { key: "flagkey", version: 11 }
         ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, true)
 
@@ -96,7 +78,7 @@ module LaunchDarkly
     end
 
     it "sets event kind to debug if flag is temporarily in debug mode" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         flag = { key: "flagkey", version: 11 }
         future_time = (Time.now.to_f * 1000).to_i + 1000000
         ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, false, future_time)
@@ -111,7 +93,7 @@ module LaunchDarkly
     end
 
     it "can be both debugging and tracking an event" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         flag = { key: "flagkey", version: 11 }
         future_time = (Time.now.to_f * 1000).to_i + 1000000
         ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, true, future_time)
@@ -127,7 +109,7 @@ module LaunchDarkly
     end
 
     it "ends debug mode based on client time if client time is later than server time" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         # Pick a server time that is somewhat behind the client time
         server_time = Time.now - 20
 
@@ -151,7 +133,7 @@ module LaunchDarkly
     end
 
     it "ends debug mode based on server time if server time is later than client time" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         # Pick a server time that is somewhat ahead of the client time
         server_time = Time.now + 20
 
@@ -174,7 +156,7 @@ module LaunchDarkly
     end
 
     it "generates only one index event for multiple events with same context" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         flag1 = { key: "flagkey1", version: 11 }
         flag2 = { key: "flagkey2", version: 22 }
 
@@ -192,7 +174,7 @@ module LaunchDarkly
     end
 
     it "summarizes non-tracked events" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         ep.record_eval_event(context, 'flagkey1', 11, 1, 'value1', nil, 'default1', false)
         ep.record_eval_event(context, 'flagkey2', 22, 2, 'value2', nil, 'default2', false)
 
@@ -225,7 +207,7 @@ module LaunchDarkly
     end
 
     it "queues custom event with context" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         ep.record_custom_event(context, 'eventkey', { thing: 'stuff' }, 1.5)
 
         output = flush_and_get_events(ep, sender)
@@ -238,7 +220,7 @@ module LaunchDarkly
 
     it "filters context in custom event" do
       config = Config.new(default_config_opts.merge(all_attributes_private: true))
-      with_processor_and_sender(config) do |ep, sender|
+      with_processor_and_sender(config, starting_timestamp) do |ep, sender|
         ep.record_custom_event(context, 'eventkey')
 
         output = flush_and_get_events(ep, sender)
@@ -250,7 +232,7 @@ module LaunchDarkly
     end
 
     it "treats nil value for custom the same as an empty hash" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         user_with_nil_custom = LDContext.create({ key: "userkey", custom: nil })
         ep.record_identify_event(user_with_nil_custom)
 
@@ -260,7 +242,7 @@ module LaunchDarkly
     end
 
     it "does a final flush when shutting down" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         ep.record_identify_event(context)
 
         ep.stop
@@ -271,7 +253,7 @@ module LaunchDarkly
     end
 
     it "sends nothing if there are no events" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         ep.flush
         ep.wait_until_inactive
         expect(sender.analytics_payloads.empty?).to be true
@@ -279,7 +261,7 @@ module LaunchDarkly
     end
 
     it "stops posting events after unrecoverable error" do
-      with_processor_and_sender(default_config) do |ep, sender|
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         sender.result = Impl::EventSenderResult.new(false, true, nil)
         ep.record_identify_event(context)
         flush_and_get_events(ep, sender)
@@ -288,6 +270,170 @@ module LaunchDarkly
         ep.flush
         ep.wait_until_inactive
         expect(sender.analytics_payloads.empty?).to be true
+      end
+    end
+
+    describe "migration op events" do
+      it "have basic required fields" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          reason = EvaluationReason.off
+          evaluation = EvaluationDetail.new(true, 0, reason)
+          flag = LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]})
+
+          event = LaunchDarkly::Impl::MigrationOpEvent.new(
+            starting_timestamp+1,
+            context,
+            flag,
+            LaunchDarkly::Interfaces::Migrations::OP_READ,
+            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            evaluation,
+            Set.new,
+            nil,
+            nil,
+            Set.new,
+            {}
+          )
+          ep.record_migration_op_event(event)
+
+          output = flush_and_get_events(ep, sender)
+          expect(output).to contain_exactly(
+            eq(migration_op_event(flag, context, 0, true, LaunchDarkly::Interfaces::Migrations::STAGE_OFF, reason, starting_timestamp+1))
+          )
+        end
+      end
+
+      it "reports invoked" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          event = LaunchDarkly::Impl::MigrationOpEvent.new(
+            starting_timestamp+1,
+            context,
+            LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+            LaunchDarkly::Interfaces::Migrations::OP_READ,
+            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            EvaluationDetail.new(true, 0, EvaluationReason.off),
+            Set[LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW],
+            nil,
+            nil,
+            Set.new,
+            {}
+          )
+          ep.record_migration_op_event(event)
+
+          output = flush_and_get_events(ep, sender)
+          measurement = output[0][:measurements][0]
+
+          expect(measurement[:key]).to eq("invoked")
+          expect(measurement[:values]).to include("old")
+          expect(measurement[:values]).to include("new")
+        end
+      end
+
+      it "reports latency" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          event = LaunchDarkly::Impl::MigrationOpEvent.new(
+            starting_timestamp+1,
+            context,
+            LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+            LaunchDarkly::Interfaces::Migrations::OP_READ,
+            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            EvaluationDetail.new(true, 0, EvaluationReason.off),
+            Set.new,
+            nil,
+            nil,
+            Set.new,
+            {LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD => 12.3, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW => 10.8}
+          )
+          ep.record_migration_op_event(event)
+
+          output = flush_and_get_events(ep, sender)
+          measurement = output[0][:measurements][0]
+
+          expect(measurement[:key]).to eq("latency_ms")
+          expect(measurement[:values][:old]).to eq(12.3)
+          expect(measurement[:values][:new]).to eq(10.8)
+        end
+      end
+
+      it "reports errors" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          event = LaunchDarkly::Impl::MigrationOpEvent.new(
+            starting_timestamp+1,
+            context,
+            LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+            LaunchDarkly::Interfaces::Migrations::OP_READ,
+            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            EvaluationDetail.new(true, 0, EvaluationReason.off),
+            Set.new,
+            nil,
+            nil,
+            Set[LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW],
+            {}
+          )
+          ep.record_migration_op_event(event)
+
+          output = flush_and_get_events(ep, sender)
+          measurement = output[0][:measurements][0]
+
+          expect(measurement[:key]).to eq("error")
+          expect(measurement[:values]).to include("old")
+          expect(measurement[:values]).to include("new")
+        end
+      end
+
+      describe "reports consistency" do
+        it "when the check is true or false" do
+          [true, false].each do |is_consistent|
+            with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+              event = LaunchDarkly::Impl::MigrationOpEvent.new(
+                starting_timestamp+1,
+                context,
+                LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+                LaunchDarkly::Interfaces::Migrations::OP_READ,
+                LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+                EvaluationDetail.new(true, 0, EvaluationReason.off),
+                Set.new,
+                is_consistent,
+                nil,
+                Set.new,
+                {}
+              )
+              ep.record_migration_op_event(event)
+
+              output = flush_and_get_events(ep, sender)
+              measurement = output[0][:measurements][0]
+
+              expect(measurement[:key]).to eq("consistent")
+              expect(measurement[:value]).to be(is_consistent)
+              expect(measurement[:samplingRatio]).to be_nil
+            end
+          end
+        end
+
+        it "sampling ratio when non-nil / non-one" do
+          with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+            event = LaunchDarkly::Impl::MigrationOpEvent.new(
+              starting_timestamp+1,
+              context,
+              LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+              LaunchDarkly::Interfaces::Migrations::OP_READ,
+              LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+              EvaluationDetail.new(true, 0, EvaluationReason.off),
+              Set.new,
+              true,
+              3,
+              Set.new,
+              {}
+            )
+            ep.record_migration_op_event(event)
+
+            output = flush_and_get_events(ep, sender)
+            measurement = output[0][:measurements][0]
+
+            expect(measurement[:key]).to eq("consistent")
+            expect(measurement[:value]).to be(true)
+            expect(measurement[:samplingRatio]).to be(3)
+          end
+        end
       end
     end
 
@@ -423,6 +569,33 @@ module LaunchDarkly
     end
 
     #
+    # @param flag [LaunchDarkly::Impl::Models::FeatureFlag]
+    # @param context [LDContext]
+    # @param variation [Integer]
+    # @param value [any]
+    # @param default [Symbol]
+    # @param reason [LaunchDarkly::Impl::Models::EvaluationReason]
+    # @param timestamp [Integer]
+    # @return [Hash]
+    #
+    def migration_op_event(flag, context, variation, value, default, reason, timestamp = starting_timestamp)
+      out = {
+        kind: 'migration_op',
+        operation: 'read',
+        creationDate: timestamp,
+        contextKeys: context.keys,
+        evaluation: {
+          default: default.to_s,
+          key: flag.key,
+          value: value,
+          variation: variation,
+          reason: reason,
+        },
+      }
+      JSON.parse(out.to_json, symbolize_names: true)
+    end
+
+    #
     # @param config [Config]
     # @param flag [Hash]
     # @param context [LDContext]
@@ -469,23 +642,6 @@ module LaunchDarkly
       ep.flush
       ep.wait_until_inactive
       sender.analytics_payloads.pop
-    end
-
-    class FakeEventSender
-      attr_accessor :result
-      attr_reader :analytics_payloads
-      attr_reader :diagnostic_payloads
-
-      def initialize
-        @result = Impl::EventSenderResult.new(true, false, nil)
-        @analytics_payloads = Queue.new
-        @diagnostic_payloads = Queue.new
-      end
-
-      def send_event_data(data, description, is_diagnostic)
-        (is_diagnostic ? @diagnostic_payloads : @analytics_payloads).push(JSON.parse(data, symbolize_names: true))
-        @result
-      end
     end
   end
 end

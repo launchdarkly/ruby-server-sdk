@@ -310,22 +310,22 @@ module LaunchDarkly
 
           case stage
           when LaunchDarkly::Interfaces::Migrations::STAGE_OFF
-            result = old.run()
+            result = old.run
           when LaunchDarkly::Interfaces::Migrations::STAGE_DUALWRITE
-            result = old.run()
+            result = old.run
           when LaunchDarkly::Interfaces::Migrations::STAGE_SHADOW
             result = read_both(old, new, @read_config.comparison, @read_execution_order, tracker)
           when LaunchDarkly::Interfaces::Migrations::STAGE_LIVE
             result = read_both(new, old, @read_config.comparison, @read_execution_order, tracker)
           when LaunchDarkly::Interfaces::Migrations::STAGE_RAMPDOWN
-            result = new.run()
+            result = new.run
           when LaunchDarkly::Interfaces::Migrations::STAGE_COMPLETE
-            result = new.run()
+            result = new.run
           else
             result = OperationResult.fail(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, "invalid stage #{stage}; cannot execute read")
           end
 
-          event = tracker.build()
+          event = tracker.build
           if event.is_a? String
             @client.logger.error { "[Migrator] Error occurred generating migration op event; #{event}" }
           else
@@ -403,6 +403,9 @@ module LaunchDarkly
         # @return [OperationResult]
         #
         private def read_both(authoritative, nonauthoritative, comparison, execution_order, tracker)
+          authoritative_result = nil
+          nonauthoritative_result = nil
+
           case execution_order
           when LaunchDarkly::Impl::Migrations::MigratorBuilder::EXECUTION_PARALLEL
             auth_handler = Thread.new { authoritative_result = authoritative.run() }
@@ -487,7 +490,7 @@ module LaunchDarkly
           result = @fn.call(@payload)
 
           @tracker.latency(result.origin, (Time.now - start) * 1_000) if @measure_latency
-          @tracker.error(result.origin, result.error) if @measure_errors && !result.success?
+          @tracker.error(result.origin) if @measure_errors && !result.success?
           @tracker.invoked(result.origin)
 
           result

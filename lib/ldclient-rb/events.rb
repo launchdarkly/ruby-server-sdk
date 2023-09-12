@@ -55,6 +55,9 @@ module LaunchDarkly
     )
     end
 
+    def record_migration_op_event(event)
+    end
+
     def flush
     end
 
@@ -165,6 +168,10 @@ module LaunchDarkly
 
     def record_custom_event(context, key, data = nil, metric_value = nil)
       post_to_inbox(LaunchDarkly::Impl::CustomEvent.new(timestamp, context, key, data, metric_value))
+    end
+
+    def record_migration_op_event(event)
+      post_to_inbox(event)
     end
 
     def flush
@@ -309,7 +316,7 @@ module LaunchDarkly
 
       # For each context we haven't seen before, we add an index event - unless this is already
       # an identify event for that context.
-      if !event.context.nil? && !notice_context(event.context) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
+      if !event.context.nil? && !notice_context(event.context) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent) && !event.is_a?(LaunchDarkly::Impl::MigrationOpEvent)
         outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.context))
       end
 
@@ -443,6 +450,7 @@ module LaunchDarkly
     CUSTOM_KIND = 'custom'
     INDEX_KIND = 'index'
     DEBUG_KIND = 'debug'
+    MIGRATION_OP_KIND = 'migration_op'
     SUMMARY_KIND = 'summary'
 
     def initialize(config)
@@ -474,6 +482,63 @@ module LaunchDarkly
         out[:prereqOf] = event.prereq_of unless event.prereq_of.nil?
         out[:contextKeys] = event.context.keys
         out[:reason] = event.reason unless event.reason.nil?
+        out
+
+      when LaunchDarkly::Impl::MigrationOpEvent
+        out = {
+          kind: MIGRATION_OP_KIND,
+          creationDate: event.timestamp,
+          contextKeys: event.context.keys,
+          operation: event.operation.to_s,
+          evaluation: {
+            key: event.key,
+            value: event.evaluation.value,
+          },
+        }
+
+        out[:evaluation][:default] = event.default unless event.default.nil?
+        out[:evaluation][:variation] = event.evaluation.variation_index unless event.evaluation.variation_index.nil?
+        out[:evaluation][:reason] = event.evaluation.reason unless event.evaluation.reason.nil?
+        out[:samplingRatio] = event.sampling_ratio unless event.sampling_ratio.nil? || event.sampling_ratio == 1
+
+        measurements = []
+
+        unless event.invoked.empty?
+          measurements << {
+            "key": "invoked",
+            "values": event.invoked,
+          }
+        end
+
+        unless event.consistency_check.nil?
+          measurement = {
+            "key": "consistent",
+            "value": event.consistency_check,
+          }
+
+          unless event.consistency_check_ratio.nil? || event.consistency_check_ratio == 1
+            measurement[:samplingRatio] = event.consistency_check_ratio
+          end
+
+          measurements << measurement
+        end
+
+
+        unless event.latencies.empty?
+          measurements << {
+            "key": "latency_ms",
+            "values": event.latencies,
+          }
+        end
+
+        unless event.errors.empty?
+          measurements << {
+            "key": "error",
+            "values": event.errors,
+          }
+        end
+        out[:measurements] = measurements unless measurements.empty?
+
         out
 
       when LaunchDarkly::Impl::IdentifyEvent

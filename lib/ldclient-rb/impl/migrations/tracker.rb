@@ -30,10 +30,12 @@ module LaunchDarkly
           @invoked = Set.new
           # @type [Boolean, nil]
           @consistent = nil
+          # @type [Int, nil]
+          @consistent_ratio = @flag&.migration_settings&.check_ratio
           # @type [Set<Symbol>]
           @errors = Set.new
-          # @type [Hash<String, Float>]
-          @latencies = {}
+          # @type [Hash<Symbol, Float>]
+          @latencies = Hash.new
         end
 
         def operation(operation)
@@ -75,7 +77,7 @@ module LaunchDarkly
           end
         end
 
-        def build()
+        def build
           @mutex.synchronize do
             return "flag not provided" if @flag.nil?
             return "operation not provided" if @operation.nil?
@@ -88,9 +90,10 @@ module LaunchDarkly
               @flag,
               @operation,
               @default_stage,
-              @evaluation,
+              @detail,
               @invoked,
               @consistent,
+              @consistent_ratio,
               @errors,
               @latencies
             )

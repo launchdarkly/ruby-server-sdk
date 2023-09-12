@@ -26,6 +26,9 @@ module LaunchDarkly
           @version = data[:version]
           @deleted = !!data[:deleted]
           return if @deleted
+          migration_settings = data[:migrationSettings] || {}
+          @migration_settings = MigrationSettings.new(migration_settings[:check_ratio])
+          @sampling_ratio = data[:samplingRatio]
           @variations = data[:variations] || []
           @on = !!data[:on]
           fallthrough = data[:fallthrough] || {}
@@ -63,6 +66,10 @@ module LaunchDarkly
         attr_reader :version
         # @return [Boolean]
         attr_reader :deleted
+        # @return [MigrationSettings]
+        attr_reader :migration_settings
+        # @return [Int, nil]
+        attr_reader :sampling_ratio
         # @return [Array]
         attr_reader :variations
         # @return [Boolean]
@@ -171,6 +178,19 @@ module LaunchDarkly
         attr_reader :match_results
         # @return [LaunchDarkly::Impl::Model::VariationOrRollout]
         attr_reader :variation_or_rollout
+      end
+
+
+      class MigrationSettings
+        #
+        # @param check_ratio [Int, nil]
+        #
+        def initialize(check_ratio)
+          @check_ratio = check_ratio
+        end
+
+        # @return [Integer, nil]
+        attr_reader :check_ratio
       end
 
       class VariationOrRollout
