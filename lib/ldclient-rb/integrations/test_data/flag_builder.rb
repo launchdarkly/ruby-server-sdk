@@ -170,11 +170,6 @@ module LaunchDarkly
         end
 
         #
-        # @deprecated Backwards compatibility alias for #variation_for_all
-        #
-        alias_method :variation_for_all_users, :variation_for_all
-
-        #
         # Sets the flag to always return the specified variation value for all context.
         #
         # The value may be of any valid JSON type. This method changes the
@@ -188,11 +183,6 @@ module LaunchDarkly
         def value_for_all(value)
           variations(value).variation_for_all(0)
         end
-
-        #
-        # @deprecated Backwards compatibility alias for #value_for_all
-        #
-        alias_method :value_for_all_users, :value_for_all
 
         #
         # Sets the flag to return the specified variation for a specific context key when targeting
@@ -355,11 +345,6 @@ module LaunchDarkly
           @targets = nil
           self
         end
-
-        #
-        # @deprecated Backwards compatibility alias for #clear_targets
-        #
-        alias_method :clear_user_targets, :clear_targets
 
         #
         # Removes any existing rules from the flag.
