@@ -325,8 +325,8 @@ module LaunchDarkly
             starting_timestamp+1,
             context,
             flag,
-            LaunchDarkly::Interfaces::Migrations::OP_READ,
-            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            LaunchDarkly::Migrations::OP_READ,
+            LaunchDarkly::Migrations::STAGE_OFF,
             evaluation,
             Set.new,
             nil,
@@ -338,7 +338,7 @@ module LaunchDarkly
 
           output = flush_and_get_events(ep, sender)
           expect(output).to contain_exactly(
-            eq(migration_op_event(flag, context, 0, true, LaunchDarkly::Interfaces::Migrations::STAGE_OFF, reason, starting_timestamp+1))
+            eq(migration_op_event(flag, context, 0, true, LaunchDarkly::Migrations::STAGE_OFF, reason, starting_timestamp+1))
           )
         end
       end
@@ -353,8 +353,8 @@ module LaunchDarkly
             starting_timestamp+1,
             context,
             flag,
-            LaunchDarkly::Interfaces::Migrations::OP_READ,
-            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            LaunchDarkly::Migrations::OP_READ,
+            LaunchDarkly::Migrations::STAGE_OFF,
             evaluation,
             Set.new,
             nil,
@@ -377,10 +377,10 @@ module LaunchDarkly
             starting_timestamp+1,
             context,
             LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
-            LaunchDarkly::Interfaces::Migrations::OP_READ,
-            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            LaunchDarkly::Migrations::OP_READ,
+            LaunchDarkly::Migrations::STAGE_OFF,
             EvaluationDetail.new(true, 0, EvaluationReason.off),
-            Set[LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW],
+            Set[LaunchDarkly::Migrations::ORIGIN_OLD, LaunchDarkly::Migrations::ORIGIN_NEW],
             nil,
             nil,
             Set.new,
@@ -403,14 +403,14 @@ module LaunchDarkly
             starting_timestamp+1,
             context,
             LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
-            LaunchDarkly::Interfaces::Migrations::OP_READ,
-            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            LaunchDarkly::Migrations::OP_READ,
+            LaunchDarkly::Migrations::STAGE_OFF,
             EvaluationDetail.new(true, 0, EvaluationReason.off),
             Set.new,
             nil,
             nil,
             Set.new,
-            {LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD => 12.3, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW => 10.8}
+            {LaunchDarkly::Migrations::ORIGIN_OLD => 12.3, LaunchDarkly::Migrations::ORIGIN_NEW => 10.8}
           )
           ep.record_migration_op_event(event)
 
@@ -429,13 +429,13 @@ module LaunchDarkly
             starting_timestamp+1,
             context,
             LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
-            LaunchDarkly::Interfaces::Migrations::OP_READ,
-            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            LaunchDarkly::Migrations::OP_READ,
+            LaunchDarkly::Migrations::STAGE_OFF,
             EvaluationDetail.new(true, 0, EvaluationReason.off),
             Set.new,
             nil,
             nil,
-            Set[LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW],
+            Set[LaunchDarkly::Migrations::ORIGIN_OLD, LaunchDarkly::Migrations::ORIGIN_NEW],
             {}
           )
           ep.record_migration_op_event(event)
@@ -457,8 +457,8 @@ module LaunchDarkly
                 starting_timestamp+1,
                 context,
                 LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
-                LaunchDarkly::Interfaces::Migrations::OP_READ,
-                LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+                LaunchDarkly::Migrations::OP_READ,
+                LaunchDarkly::Migrations::STAGE_OFF,
                 EvaluationDetail.new(true, 0, EvaluationReason.off),
                 Set.new,
                 is_consistent,
@@ -484,8 +484,8 @@ module LaunchDarkly
               starting_timestamp+1,
               context,
               LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
-              LaunchDarkly::Interfaces::Migrations::OP_READ,
-              LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+              LaunchDarkly::Migrations::OP_READ,
+              LaunchDarkly::Migrations::STAGE_OFF,
               EvaluationDetail.new(true, 0, EvaluationReason.off),
               Set.new,
               true,

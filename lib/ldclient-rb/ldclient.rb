@@ -239,22 +239,22 @@ module LaunchDarkly
     # @param context [LDContext]
     # @param default_stage [Symbol]
     #
-    # @return [Array<Symbol, LaunchDarkly::Impl::Migrations::OpTracker, [String, nil]>]
+    # @return [Array<Symbol, Interfaces::Migrations::OpTracker, [String, nil]>]
     #
     def migration_variation(key, context, default_stage)
-      unless LaunchDarkly::Interfaces::Migrations::VALID_STAGES.include? default_stage
+      unless Migrations::VALID_STAGES.include? default_stage
         @config.logger.error { "[LDClient] default_stage #{default_stage} is not a valid stage; using 'off' instead" }
-        default_stage = LaunchDarkly::Interfaces::Migrations::STAGE_OFF
+        default_stage = LaunchDarkly::Migrations::STAGE_OFF
       end
 
       context = Impl::Context::make_context(context)
       detail, flag, err = variation_with_flag(key, context, default_stage.to_s)
-      tracker = LaunchDarkly::Impl::Migrations::OpTracker.new(flag, context, detail, default_stage)
+      tracker = Impl::Migrations::OpTracker.new(flag, context, detail, default_stage)
 
       return default_stage, tracker, err unless err.nil?
 
       stage = detail.value.to_sym
-      unless LaunchDarkly::Interfaces::Migrations::VALID_STAGES.include? stage
+      unless Migrations::VALID_STAGES.include? stage
         return default_stage, tracker, "value is not a valid stage; using default stage"
       end
 
@@ -325,11 +325,11 @@ module LaunchDarkly
     # Tracks the results of a migrations operation. This event includes measurements which can be used to enhance the
     # observability of a migration within the LaunchDarkly UI.
     #
-    # This event should be generated through {LaunchDarkly::Interfaces::Migrations::OpTracker}. If you are using the
-    # {LaunchDarkly::Impl::Migrations::Migrator} to handling migrations, this event will be created and emitted
+    # This event should be generated through {Interfaces::Migrations::OpTracker}. If you are using the
+    # {Interfaces::Migrations::Migrator} to handle migrations, this event will be created and emitted
     # automatically.
     #
-    # @param event [LaunchDarkly::Impl::MigrationOpEvent]
+    # @param event [Impl::MigrationOpEvent]
     #
     def track_migration_op(event)
       unless event.is_a? LaunchDarkly::Impl::MigrationOpEvent

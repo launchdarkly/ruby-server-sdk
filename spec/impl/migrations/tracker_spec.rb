@@ -13,10 +13,10 @@ module LaunchDarkly
         let(:detail) { LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough) }
 
         def minimal_tracker()
-          tracker = subject.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
-          tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
-          tracker.invoked(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)
-          tracker.invoked(LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW)
+          tracker = subject.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+          tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
+          tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
+          tracker.invoked(LaunchDarkly::Migrations::ORIGIN_NEW)
 
           tracker
         end
@@ -28,9 +28,9 @@ module LaunchDarkly
 
         describe "can track invocations" do
           it "individually" do
-            [LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW].each do |origin|
-              tracker = subject.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
-              tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
+            [LaunchDarkly::Migrations::ORIGIN_OLD, LaunchDarkly::Migrations::ORIGIN_NEW].each do |origin|
+              tracker = subject.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+              tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
               tracker.invoked(origin)
 
               event = tracker.build
@@ -51,8 +51,8 @@ module LaunchDarkly
 
             event = tracker.build
             expect(event.invoked.length).to be(2)
-            expect(event.invoked.include?(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)).to be true
-            expect(event.invoked.include?(LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW)).to be true
+            expect(event.invoked.include?(LaunchDarkly::Migrations::ORIGIN_OLD)).to be true
+            expect(event.invoked.include?(LaunchDarkly::Migrations::ORIGIN_NEW)).to be true
           end
         end
 
@@ -78,9 +78,9 @@ module LaunchDarkly
             context = LaunchDarkly::LDContext.with_key("user-key")
             detail = LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough)
 
-            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
-            tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
-            tracker.invoked(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)
+            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
+            tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
 
             [true, false].each do |expected_consistent|
               tracker.consistent(-> { expected_consistent })
@@ -101,9 +101,9 @@ module LaunchDarkly
             context = LaunchDarkly::LDContext.with_key("user-key")
             detail = LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough)
 
-            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
-            tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
-            tracker.invoked(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)
+            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
+            tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
 
             [true, false].each do |expected_consistent|
               tracker.consistent(-> { expected_consistent })
@@ -129,10 +129,10 @@ module LaunchDarkly
 
             count = 0
             1_000.times do |_|
-              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
+              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
               tracker.instance_variable_set(:@sampler, sampler)
-              tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
-              tracker.invoked(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)
+              tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
+              tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
 
               tracker.consistent(-> { true })
               event = tracker.build
@@ -149,7 +149,7 @@ module LaunchDarkly
 
         describe "can track errors" do
           it "individually" do
-            [LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW].each do |origin|
+            [LaunchDarkly::Migrations::ORIGIN_OLD, LaunchDarkly::Migrations::ORIGIN_NEW].each do |origin|
               tracker = minimal_tracker
               tracker.error(origin)
 
@@ -161,8 +161,8 @@ module LaunchDarkly
 
           it "together" do
             tracker = minimal_tracker
-            tracker.error(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)
-            tracker.error(LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW)
+            tracker.error(LaunchDarkly::Migrations::ORIGIN_OLD)
+            tracker.error(LaunchDarkly::Migrations::ORIGIN_NEW)
 
             event = tracker.build
             expect(event.errors.length).to be(2)
@@ -180,7 +180,7 @@ module LaunchDarkly
 
         describe "can track latencies" do
           it "individually" do
-            [LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW].each do |origin|
+            [LaunchDarkly::Migrations::ORIGIN_OLD, LaunchDarkly::Migrations::ORIGIN_NEW].each do |origin|
               tracker = minimal_tracker
               tracker.latency(origin, 5.4)
 
@@ -192,13 +192,13 @@ module LaunchDarkly
 
           it "together" do
             tracker = minimal_tracker
-            tracker.latency(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, 2)
-            tracker.latency(LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW, 3)
+            tracker.latency(LaunchDarkly::Migrations::ORIGIN_OLD, 2)
+            tracker.latency(LaunchDarkly::Migrations::ORIGIN_NEW, 3)
 
             event = tracker.build
             expect(event.latencies.length).to be(2)
-            expect(event.latencies[LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD]).to eq(2)
-            expect(event.latencies[LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW]).to eq(3)
+            expect(event.latencies[LaunchDarkly::Migrations::ORIGIN_OLD]).to eq(2)
+            expect(event.latencies[LaunchDarkly::Migrations::ORIGIN_NEW]).to eq(3)
           end
 
           it "will ignore invalid origins" do
@@ -212,8 +212,8 @@ module LaunchDarkly
 
           it "will ignore invalid durations" do
             tracker = minimal_tracker
-            tracker.latency(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, -1)
-            tracker.latency(LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW, nil)
+            tracker.latency(LaunchDarkly::Migrations::ORIGIN_OLD, -1)
+            tracker.latency(LaunchDarkly::Migrations::ORIGIN_NEW, nil)
 
             event = tracker.build
             expect(event.latencies.length).to be(0)
@@ -222,32 +222,32 @@ module LaunchDarkly
 
         describe "can handle build failures" do
           it "without providing a flag" do
-            tracker = subject.new(nil, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
-            tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
+            tracker = subject.new(nil, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
 
             event = tracker.build
             expect(event).to eq("flag not provided")
           end
 
           it "without calling invoked" do
-            tracker = subject.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
-            tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
+            tracker = subject.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
 
             event = tracker.build
             expect(event).to eq("no origins were invoked")
           end
 
           it "without operation" do
-            tracker = subject.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
+            tracker = subject.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
             event = tracker.build
             expect(event).to eq("operation not provided")
           end
 
           it "with invalid context " do
             invalid = LaunchDarkly::LDContext.create({kind: 'multi', key: 'invalid'})
-            tracker = subject.new(flag, invalid, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
-            tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
-            tracker.invoked(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)
+            tracker = subject.new(flag, invalid, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
+            tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
 
             event = tracker.build
             expect(event).to eq("provided context was invalid")

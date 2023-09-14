@@ -7,7 +7,7 @@ module LaunchDarkly
       class OpTracker
         include LaunchDarkly::Interfaces::Migrations::OpTracker
 
-        VALID_ORIGINS = [LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD, LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW]
+        VALID_ORIGINS = [LaunchDarkly::Migrations::ORIGIN_OLD, LaunchDarkly::Migrations::ORIGIN_NEW]
         private_constant :VALID_ORIGINS
 
         #

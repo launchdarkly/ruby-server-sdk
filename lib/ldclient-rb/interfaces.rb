@@ -793,35 +793,9 @@ module LaunchDarkly
     # Namespace for feature-flag based technology migration support.
     #
     module Migrations
-      # Symbol representing the old origin, or the old technology source you are migrating away from.
-      ORIGIN_OLD = :old
-      # Symbol representing the new origin, or the new technology source you are migrating towards.
-      ORIGIN_NEW = :new
-
-      # Symbol defining a read-related operation
-      OP_READ = :read
-      # Symbol defining a write-related operation
-      OP_WRITE = :write
-
-      STAGE_OFF = :off
-      STAGE_DUALWRITE = :dualwrite
-      STAGE_SHADOW = :shadow
-      STAGE_LIVE = :live
-      STAGE_RAMPDOWN = :rampdown
-      STAGE_COMPLETE = :complete
-
-      VALID_STAGES = [
-        STAGE_OFF,
-        STAGE_DUALWRITE,
-        STAGE_SHADOW,
-        STAGE_LIVE,
-        STAGE_RAMPDOWN,
-        STAGE_COMPLETE,
-      ]
-
       #
       # A migrator is the interface through which migration support is executed. A migrator is configured through the
-      # {LaunchDarkly::Impl::Migrations::MigratorBuilder} class.
+      # {LaunchDarkly::Migrations::MigratorBuilder} class.
       #
       module Migrator
         #
@@ -832,7 +806,7 @@ module LaunchDarkly
         # @param default_stage [Symbol]
         # @param payload [Object, nil]
         #
-        # @return [LaunchDarkly::Impl::Migrations::OperationResult]
+        # @return [LaunchDarkly::Migrations::OperationResult]
         #
         def read(key, context, default_stage, payload = nil) end
 
@@ -844,7 +818,7 @@ module LaunchDarkly
         # @param default_stage [Symbol]
         # @param payload [Object, nil]
         #
-        # @return [LaunchDarkly::Impl::Migrations::WriteResult]
+        # @return [LaunchDarkly::Migrations::WriteResult]
         #
         def write(key, context, default_stage, payload = nil) end
       end
@@ -906,7 +880,8 @@ module LaunchDarkly
         # @return [LaunchDarkly::Impl::MigrationOpEvent, String] A migration op event or a string describing the error.
         # failure.
         #
-        def build() end
+        def build
+        end
       end
     end
   end

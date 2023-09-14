@@ -104,20 +104,20 @@ class ClientEntity
   end
 
   def migration_operation(params)
-    builder = LaunchDarkly::Impl::Migrations::MigratorBuilder.new(@client)
+    builder = LaunchDarkly::Migrations::MigratorBuilder.new(@client)
     builder.read_execution_order(params[:readExecutionOrder].to_sym)
     builder.track_latency(params[:trackLatency])
     builder.track_errors(params[:trackErrors])
 
-    callback = ->(endpoint, origin) {
+    callback = ->(endpoint) {
       ->(payload) {
         response = HTTP.post(endpoint, body: payload)
 
-        unless response.status.success?
-          return LaunchDarkly::Impl::Migrations::OperationResult.fail(origin, "requested failed with status code #{response.status}")
+        if response.status.success?
+          LaunchDarkly::Result.success(response.body.to_s)
+        else
+          LaunchDarkly::Result.fail("requested failed with status code #{response.status}")
         end
-
-        LaunchDarkly::Impl::Migrations::OperationResult.success(origin, response.body.to_s)
       }
     }
 
@@ -131,21 +131,14 @@ class ClientEntity
       }
     end
 
-    builder.read(
-      callback.call(params[:oldEndpoint], LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD),
-      callback.call(params[:newEndpoint], LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW),
-      consistency
-    )
-    builder.write(
-      callback.call(params[:oldEndpoint], LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD),
-      callback.call(params[:newEndpoint], LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW)
-    )
+    builder.read(callback.call(params[:oldEndpoint]), callback.call(params[:newEndpoint]), consistency)
+    builder.write(callback.call(params[:oldEndpoint]), callback.call(params[:newEndpoint]))
 
-    migrator = builder.build()
+    migrator = builder.build
 
     return migrator if migrator.is_a? String
 
-    if params[:operation] == LaunchDarkly::Interfaces::Migrations::OP_READ.to_s
+    if params[:operation] == LaunchDarkly::Migrations::OP_READ.to_s
       result = migrator.read(params[:key], params[:context], params[:defaultStage].to_sym, params[:payload])
       result.success? ? result.value : result.error
     else
