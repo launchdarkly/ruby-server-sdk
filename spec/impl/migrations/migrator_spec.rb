@@ -322,7 +322,7 @@ module LaunchDarkly
                     builder = default_builder(client)
                     old_callable = ->(_) { LaunchDarkly::Result.success(test_param[:old_return]) }
                     new_callable = ->(_) { LaunchDarkly::Result.success(test_param[:new_return]) }
-                    compare_callable = ->(lhs, rhs) { lhs.value == rhs.value }
+                    compare_callable = ->(lhs, rhs) { lhs == rhs }
 
                     builder.read(old_callable, new_callable, compare_callable)
                     builder.write(old_callable, new_callable)
@@ -337,10 +337,50 @@ module LaunchDarkly
                     expect(events.size).to be(3) # Index, migration op, and summary
 
                     op_event = events[1]
-                    latencies = op_event[:measurements][1] # First measurement is invoked
+                    consistent = op_event[:measurements][1] # First measurement is invoked
 
-                    expect(latencies[:key]).to eq("consistent")
-                    expect(latencies[:value]).to eq(test_param[:expected])
+                    expect(consistent[:key]).to eq("consistent")
+                    expect(consistent[:value]).to eq(test_param[:expected])
+                  end
+                end
+              end
+            end
+
+            [
+              {label: "shadow when same", stage: LaunchDarkly::Migrations::STAGE_SHADOW},
+              {label: "shadow when different", stage: LaunchDarkly::Migrations::STAGE_SHADOW},
+
+              {label: "live when same", stage: LaunchDarkly::Migrations::STAGE_LIVE},
+              {label: "live when different", stage: LaunchDarkly::Migrations::STAGE_LIVE},
+            ].each do |test_param|
+              it "for #{test_param[:label]} unless there is an error" do
+                with_client(test_config(data_source: data_source)) do |client|
+                  with_processor_and_sender(default_config, 0) do |ep, sender|
+                    override_client_event_processor(client, ep)
+
+                    builder = default_builder(client)
+                    old_callable = ->(_) { LaunchDarkly::Result.fail("old fail") }
+                    new_callable = ->(_) { LaunchDarkly::Result.fail("new fail") }
+                    compare_callable = ->(lhs, rhs) { lhs == rhs }
+
+                    builder.read(old_callable, new_callable, compare_callable)
+                    builder.write(old_callable, new_callable)
+                    migrator = builder.build
+
+                    migrator.read(test_param[:stage], basic_context, LaunchDarkly::Migrations::STAGE_OFF)
+
+                    ep.flush
+                    ep.wait_until_inactive
+                    events = sender.analytics_payloads.pop
+
+                    expect(events.size).to be(3) # Index, migration op, and summary
+
+                    op_event = events[1]
+
+                    expect(op_event[:measurements].size).to eq(1)
+                    invoked = op_event[:measurements][0] # First measurement is invoked
+
+                    expect(invoked[:key]).to eq("invoked")
                   end
                 end
               end

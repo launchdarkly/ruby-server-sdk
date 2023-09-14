@@ -215,8 +215,10 @@ module LaunchDarkly
             nonauthoritative_result = nonauthoritative.run
           end
 
-          unless comparison.nil?
-            tracker.consistent(->{ return comparison.call(authoritative_result, nonauthoritative_result) })
+          return authoritative_result if comparison.nil?
+
+          if authoritative_result.success? && nonauthoritative_result.success?
+            tracker.consistent(->{ comparison.call(authoritative_result.value, nonauthoritative_result.value) })
           end
 
           authoritative_result

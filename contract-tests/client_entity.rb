@@ -123,12 +123,7 @@ class ClientEntity
 
     consistency = nil
     if params[:trackConsistency]
-      consistency = ->(lhs, rhs) {
-        return false unless lhs.success?
-        return false unless rhs.success?
-
-        lhs.value == rhs.value
-      }
+      consistency = ->(lhs, rhs) { lhs == rhs }
     end
 
     builder.read(callback.call(params[:oldEndpoint]), callback.call(params[:newEndpoint]), consistency)
