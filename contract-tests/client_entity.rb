@@ -3,6 +3,7 @@ require 'json'
 require 'net/http'
 require 'launchdarkly-server-sdk'
 require './big_segment_store_fixture'
+require 'http'
 
 class ClientEntity
   def initialize(log, config)
@@ -95,6 +96,62 @@ class ClientEntity
     opts[:details_only_for_tracked_flags] = params[:detailsOnlyForTrackedFlags] || false
 
     @client.all_flags_state(params[:context] || params[:user], opts)
+  end
+
+  def migration_variation(params)
+    stage, _, err = @client.migration_variation(params[:key], params[:context], params[:defaultStage])
+    stage
+  end
+
+  def migration_operation(params)
+    builder = LaunchDarkly::Impl::Migrations::MigratorBuilder.new(@client)
+    builder.read_execution_order(params[:readExecutionOrder].to_sym)
+    builder.track_latency(params[:trackLatency])
+    builder.track_errors(params[:trackErrors])
+
+    callback = ->(endpoint, origin) {
+      ->(payload) {
+        response = HTTP.post(endpoint, body: payload)
+
+        unless response.status.success?
+          return LaunchDarkly::Impl::Migrations::OperationResult.fail(origin, "requested failed with status code #{response.status}")
+        end
+
+        LaunchDarkly::Impl::Migrations::OperationResult.success(origin, response.body.to_s)
+      }
+    }
+
+    consistency = nil
+    if params[:trackConsistency]
+      consistency = ->(lhs, rhs) {
+        return false unless lhs.success?
+        return false unless rhs.success?
+
+        lhs.value == rhs.value
+      }
+    end
+
+    builder.read(
+      callback.call(params[:oldEndpoint], LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD),
+      callback.call(params[:newEndpoint], LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW),
+      consistency
+    )
+    builder.write(
+      callback.call(params[:oldEndpoint], LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD),
+      callback.call(params[:newEndpoint], LaunchDarkly::Interfaces::Migrations::ORIGIN_NEW)
+    )
+
+    migrator = builder.build()
+
+    return migrator if migrator.is_a? String
+
+    if params[:operation] == LaunchDarkly::Interfaces::Migrations::OP_READ.to_s
+      result = migrator.read(params[:key], params[:context], params[:defaultStage].to_sym, params[:payload])
+      result.success? ? result.value : result.error
+    else
+      result = migrator.write(params[:key], params[:context], params[:defaultStage].to_sym, params[:payload])
+      result.authoritative.success? ? result.authoritative.value : result.authoritative.error
+    end
   end
 
   def secure_mode_hash(params)

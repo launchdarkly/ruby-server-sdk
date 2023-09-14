@@ -247,6 +247,7 @@ module LaunchDarkly
         default_stage = LaunchDarkly::Interfaces::Migrations::STAGE_OFF
       end
 
+      context = Impl::Context::make_context(context)
       detail, flag, err = variation_with_flag(key, context, default_stage.to_s)
       tracker = LaunchDarkly::Impl::Migrations::OpTracker.new(flag, context, detail, default_stage)
 
@@ -601,8 +602,8 @@ module LaunchDarkly
         add_experiment_data || prereq_flag[:trackEvents] || false,
         prereq_flag[:debugEventsUntilDate],
         prereq_of_flag[:key],
-        prereq_of_flag[:samplingRatio],
-        !!prereq_of_flag[:excludeFromSummaries]
+        prereq_flag[:samplingRatio],
+        !!prereq_flag[:excludeFromSummaries]
       )
     end
 

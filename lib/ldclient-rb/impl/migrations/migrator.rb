@@ -345,7 +345,7 @@ module LaunchDarkly
         #
         def write(key, context, default_stage, payload = nil)
           stage, tracker, err = @client.migration_variation(key, context, default_stage)
-          tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_READ)
+          tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
 
           unless err.nil?
             @client.logger.error { "[Migrator] Error occurred determining migration stage for write; #{err}" }

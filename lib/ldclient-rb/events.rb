@@ -511,7 +511,7 @@ module LaunchDarkly
         unless event.invoked.empty?
           measurements << {
             "key": "invoked",
-            "values": event.invoked,
+            "values": event.invoked.map { |origin| [origin, true] }.to_h,
           }
         end
 
@@ -539,7 +539,7 @@ module LaunchDarkly
         unless event.errors.empty?
           measurements << {
             "key": "error",
-            "values": event.errors,
+            "values": event.errors.map { |origin| [origin, true] }.to_h,
           }
         end
         out[:measurements] = measurements unless measurements.empty?

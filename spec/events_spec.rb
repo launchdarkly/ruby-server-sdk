@@ -392,8 +392,8 @@ module LaunchDarkly
           measurement = output[0][:measurements][0]
 
           expect(measurement[:key]).to eq("invoked")
-          expect(measurement[:values]).to include("old")
-          expect(measurement[:values]).to include("new")
+          expect(measurement[:values]).to include({"old": true})
+          expect(measurement[:values]).to include({"new": true})
         end
       end
 
@@ -444,8 +444,8 @@ module LaunchDarkly
           measurement = output[0][:measurements][0]
 
           expect(measurement[:key]).to eq("error")
-          expect(measurement[:values]).to include("old")
-          expect(measurement[:values]).to include("new")
+          expect(measurement[:values]).to include({"old": true})
+          expect(measurement[:values]).to include({"new": true})
         end
       end
 

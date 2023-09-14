@@ -418,7 +418,7 @@ module LaunchDarkly
           end
 
           unless @migration_settings.nil?
-            res[:migrationSettings] = @migration_settings
+            res[:migration] = @migration_settings
           end
 
           unless @sampling_ratio.nil? || @sampling_ratio == 1

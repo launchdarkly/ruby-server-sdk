@@ -26,7 +26,7 @@ module LaunchDarkly
           @version = data[:version]
           @deleted = !!data[:deleted]
           return if @deleted
-          migration_settings = data[:migrationSettings] || {}
+          migration_settings = data[:migration] || {}
           @migration_settings = MigrationSettings.new(migration_settings[:checkRatio])
           @sampling_ratio = data[:samplingRatio]
           @exclude_from_summaries = !!data[:excludeFromSummaries]

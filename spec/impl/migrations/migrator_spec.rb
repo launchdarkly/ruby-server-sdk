@@ -126,7 +126,7 @@ module LaunchDarkly
                     invocations = op_event[:measurements][0]
 
                     expect(invocations[:key]).to eq("invoked")
-                    test_param[:expected].each { |ev| expect(invocations[:values]).to include(ev) }
+                    test_param[:expected].each { |ev| expect(invocations[:values]).to include({ev.to_sym => true}) }
                   end
                 end
               end
@@ -384,7 +384,7 @@ module LaunchDarkly
                     errors = op_event[:measurements][1] # First measurement is invoked
 
                     expect(errors[:key]).to eq("error")
-                    test_param[:expected].each { |ev| expect(errors[:values]).to include(ev) }
+                    test_param[:expected].each { |ev| expect(errors[:values]).to include({ev.to_sym => true}) }
                   end
                 end
               end
@@ -508,7 +508,7 @@ module LaunchDarkly
                       errors = op_event[:measurements][1] # First measurement is invoked
 
                       expect(errors[:key]).to eq("error")
-                      expect(errors[:values]).to include(test_param[:expected])
+                      expect(errors[:values]).to include({test_param[:expected].to_sym => true})
                     end
                   end
                 end
@@ -562,7 +562,7 @@ module LaunchDarkly
                       errors = op_event[:measurements][1] # First measurement is invoked
 
                       expect(errors[:key]).to eq("error")
-                      expect(errors[:values]).to include(test_param[:expected])
+                      expect(errors[:values]).to include({test_param[:expected].to_sym => true})
                     end
                   end
                 end
