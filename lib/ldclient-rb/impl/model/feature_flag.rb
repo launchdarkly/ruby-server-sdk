@@ -27,8 +27,9 @@ module LaunchDarkly
           @deleted = !!data[:deleted]
           return if @deleted
           migration_settings = data[:migrationSettings] || {}
-          @migration_settings = MigrationSettings.new(migration_settings[:check_ratio])
+          @migration_settings = MigrationSettings.new(migration_settings[:checkRatio])
           @sampling_ratio = data[:samplingRatio]
+          @exclude_from_summaries = !!data[:excludeFromSummaries]
           @variations = data[:variations] || []
           @on = !!data[:on]
           fallthrough = data[:fallthrough] || {}
@@ -66,10 +67,12 @@ module LaunchDarkly
         attr_reader :version
         # @return [Boolean]
         attr_reader :deleted
-        # @return [MigrationSettings]
+        # @return [MigrationSettings, nil]
         attr_reader :migration_settings
-        # @return [Int, nil]
+        # @return [Integer, nil]
         attr_reader :sampling_ratio
+        # @return [Boolean, nil]
+        attr_reader :exclude_from_summaries
         # @return [Array]
         attr_reader :variations
         # @return [Boolean]

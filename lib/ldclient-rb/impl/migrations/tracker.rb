@@ -1,4 +1,5 @@
-require 'set'
+require "set"
+require "ldclient-rb/impl/sampler"
 
 module LaunchDarkly
   module Impl
@@ -20,6 +21,7 @@ module LaunchDarkly
           @context = context
           @detail = detail
           @default_stage = default_stage
+          @sampler = LaunchDarkly::Impl::Sampler.new(Random.new)
 
           @mutex = Mutex.new
 
@@ -54,8 +56,10 @@ module LaunchDarkly
 
         def consistent(is_consistent)
           @mutex.synchronize do
-            # TODO(uc2-migrations): Add consistent sampling ratio support
-            @consistent = is_consistent.call
+            ratio = @flag.migration_settings&.check_ratio.nil? ? 1 : @flag.migration_settings.check_ratio
+            if @sampler.sample(ratio)
+              @consistent = is_consistent.call
+            end
           end
         end
 

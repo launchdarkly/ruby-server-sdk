@@ -5,21 +5,29 @@ module LaunchDarkly
     class Event
       # @param timestamp [Integer]
       # @param context [LaunchDarkly::LDContext]
-      def initialize(timestamp, context)
+      # @param sampling_ratio [Integer, nil]
+      # @param exclude_from_summaries [Boolean]
+      def initialize(timestamp, context, sampling_ratio = nil, exclude_from_summaries = false)
         @timestamp = timestamp
         @context = context
+        @sampling_ratio = sampling_ratio
+        @exclude_from_summaries = exclude_from_summaries
       end
 
       # @return [Integer]
       attr_reader :timestamp
       # @return [LaunchDarkly::LDContext]
       attr_reader :context
+      # @return [Integer, nil]
+      attr_reader :sampling_ratio
+      # @return [Boolean]
+      attr_reader :exclude_from_summaries
     end
 
     class EvalEvent < Event
       def initialize(timestamp, context, key, version = nil, variation = nil, value = nil, reason = nil, default = nil,
-        track_events = false, debug_until = nil, prereq_of = nil)
-        super(timestamp, context)
+        track_events = false, debug_until = nil, prereq_of = nil, sampling_ratio = nil, exclude_from_summaries = false)
+        super(timestamp, context, sampling_ratio, exclude_from_summaries)
         @key = key
         @version = version
         @variation = variation
@@ -70,7 +78,7 @@ module LaunchDarkly
         @default = default_stage
         @evaluation = evaluation
         @consistency_check = consistency_check
-        @consistency_check_ratio = consistency_check_ratio
+        @consistency_check_ratio = consistency_check.nil? ? nil : consistency_check_ratio
         @invoked = invoked
         @errors = errors
         @latencies = latencies

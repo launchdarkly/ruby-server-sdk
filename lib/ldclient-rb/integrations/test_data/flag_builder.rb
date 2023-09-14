@@ -44,6 +44,47 @@ module LaunchDarkly
         end
 
         #
+        # Set the migration related settings for this feature flag.
+        #
+        # The settings hash should be built using the {FlagMigrationSettingsBuilder}.
+        #
+        # @param settings [Hash]
+        # @return [FlagBuilder] the builder
+        #
+        def migration_settings(settings)
+          @migration_settings = settings
+          self
+        end
+
+        #
+        # Set the sampling ratio for this flag. This ratio is used to control the emission rate of feature, debug, and
+        # migration op events.
+        #
+        # General usage should not require interacting with this method.
+        #
+        # @param ratio [Integer]
+        # @return [FlagBuilder]
+        #
+        def sampling_ratio(ratio)
+          @sampling_ratio = ratio
+          self
+        end
+
+        #
+        # Set the option to exclude this flag from summary events. This is used to control the size of the summary event
+        # in the event certain flag payloads are large.
+        #
+        # General usage should not require interacting with this method.
+        #
+        # @param exclude [Boolean]
+        # @return [FlagBuilder]
+        #
+        def exclude_from_summaries(exclude)
+          @exclude_from_summaries = exclude
+          self
+        end
+
+        #
         # Specifies the fallthrough variation. The fallthrough is the value
         # that is returned if targeting is on and the context was not matched by a more specific
         # target or rule.
@@ -376,6 +417,18 @@ module LaunchDarkly
             res[:fallthrough] = { variation: @fallthrough_variation }
           end
 
+          unless @migration_settings.nil?
+            res[:migrationSettings] = @migration_settings
+          end
+
+          unless @sampling_ratio.nil? || @sampling_ratio == 1
+            res[:samplingRatio] = @sampling_ratio
+          end
+
+          unless @exclude_from_summaries.nil? || !@exclude_from_summaries
+            res[:excludeFromSummaries] = @exclude_from_summaries
+          end
+
           unless @targets.nil?
             targets = []
             context_targets = []
@@ -401,6 +454,37 @@ module LaunchDarkly
           end
 
           res
+        end
+
+        #
+        # A builder for feature flag migration settings to be used with {FlagBuilder}.
+        #
+        # In the LaunchDarkly model, a flag can be a standard feature flag, or it can be a migration-related flag, in
+        # which case it has migration-specified related settings. These settings control things like the rate at which
+        # reads are tested for consistency between origins.
+        #
+        class FlagMigrationSettingsBuilder
+          def initialize()
+            @check_ratio = nil
+          end
+
+          #
+          # @param ratio [Integer]
+          # @return [FlagMigrationSettingsBuilder]
+          #
+          def check_ratio(ratio)
+            return unless ratio.is_a? Integer
+            @check_ratio = ratio
+            self
+          end
+
+          def build
+            return nil if @check_ratio.nil? || @check_ratio == 1
+
+            {
+              "checkRatio": @check_ratio,
+            }
+          end
         end
 
         #

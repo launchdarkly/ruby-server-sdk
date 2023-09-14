@@ -47,6 +47,33 @@ module LaunchDarkly
       end
     end
 
+    it "does not queue feature events with a sampling ratio of 0" do
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+        sampling_ratio = 0
+        ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, true, 0, nil, sampling_ratio)
+
+        output = flush_and_get_events(ep, sender)
+        expect(output).to contain_exactly(
+          eq(index_event(default_config, context)),
+          include(:kind => "summary")
+        )
+      end
+    end
+
+    it "can exclude feature event from summaries" do
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+        exclude_from_summaries = true
+        flag = { key: "flagkey", version: 11 }
+        ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, true, 0, nil, 1, exclude_from_summaries)
+
+        output = flush_and_get_events(ep, sender)
+        expect(output).to contain_exactly(
+          eq(index_event(default_config, context)),
+          eq(feature_event(flag, context, 1, 'value'))
+        )
+      end
+    end
+
     it "filters context in index event" do
       config = Config.new(default_config_opts.merge(all_attributes_private: true))
       with_processor_and_sender(config, starting_timestamp) do |ep, sender|
@@ -87,6 +114,20 @@ module LaunchDarkly
         expect(output).to contain_exactly(
           eq(index_event(default_config, context)),
           eq(debug_event(default_config, flag, context, 1, 'value')),
+          include(:kind => "summary")
+        )
+      end
+    end
+
+    it "can disable debug events with 0 sampling ratio" do
+      with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+        flag = { key: "flagkey", version: 11 }
+        future_time = (Time.now.to_f * 1000).to_i + 1000000
+        ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, nil, false, future_time, nil, 0)
+
+        output = flush_and_get_events(ep, sender)
+        expect(output).to contain_exactly(
+          eq(index_event(default_config, context)),
           include(:kind => "summary")
         )
       end
@@ -278,7 +319,7 @@ module LaunchDarkly
         with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
           reason = EvaluationReason.off
           evaluation = EvaluationDetail.new(true, 0, reason)
-          flag = LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]})
+          flag = LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]})
 
           event = LaunchDarkly::Impl::MigrationOpEvent.new(
             starting_timestamp+1,
@@ -302,12 +343,40 @@ module LaunchDarkly
         end
       end
 
+      it "can be disabled with sampling ratio of 0" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          reason = EvaluationReason.off
+          evaluation = EvaluationDetail.new(true, 0, reason)
+          flag = LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false], samplingRatio: 0})
+
+          event = LaunchDarkly::Impl::MigrationOpEvent.new(
+            starting_timestamp+1,
+            context,
+            flag,
+            LaunchDarkly::Interfaces::Migrations::OP_READ,
+            LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
+            evaluation,
+            Set.new,
+            nil,
+            nil,
+            Set.new,
+            {}
+          )
+          ep.record_migration_op_event(event)
+
+          # We have to send some event so we know events are actually being processed
+          ep.record_identify_event(context)
+          output = flush_and_get_events(ep, sender)
+          expect(output).to contain_exactly(eq(identify_event(default_config, context)))
+        end
+      end
+
       it "reports invoked" do
         with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
           event = LaunchDarkly::Impl::MigrationOpEvent.new(
             starting_timestamp+1,
             context,
-            LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+            LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
             LaunchDarkly::Interfaces::Migrations::OP_READ,
             LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
             EvaluationDetail.new(true, 0, EvaluationReason.off),
@@ -333,7 +402,7 @@ module LaunchDarkly
           event = LaunchDarkly::Impl::MigrationOpEvent.new(
             starting_timestamp+1,
             context,
-            LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+            LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
             LaunchDarkly::Interfaces::Migrations::OP_READ,
             LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
             EvaluationDetail.new(true, 0, EvaluationReason.off),
@@ -359,7 +428,7 @@ module LaunchDarkly
           event = LaunchDarkly::Impl::MigrationOpEvent.new(
             starting_timestamp+1,
             context,
-            LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+            LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
             LaunchDarkly::Interfaces::Migrations::OP_READ,
             LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
             EvaluationDetail.new(true, 0, EvaluationReason.off),
@@ -387,7 +456,7 @@ module LaunchDarkly
               event = LaunchDarkly::Impl::MigrationOpEvent.new(
                 starting_timestamp+1,
                 context,
-                LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+                LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
                 LaunchDarkly::Interfaces::Migrations::OP_READ,
                 LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
                 EvaluationDetail.new(true, 0, EvaluationReason.off),
@@ -414,7 +483,7 @@ module LaunchDarkly
             event = LaunchDarkly::Impl::MigrationOpEvent.new(
               starting_timestamp+1,
               context,
-              LaunchDarkly::Impl::Model::FeatureFlag.new({:key => "flagkey", variations: [true, false]}),
+              LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
               LaunchDarkly::Interfaces::Migrations::OP_READ,
               LaunchDarkly::Interfaces::Migrations::STAGE_OFF,
               EvaluationDetail.new(true, 0, EvaluationReason.off),

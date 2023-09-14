@@ -582,7 +582,9 @@ module LaunchDarkly
         default,
         add_experiment_data || flag[:trackEvents] || false,
         flag[:debugEventsUntilDate],
-        nil
+        nil,
+        flag[:samplingRatio],
+        !!flag[:excludeFromSummaries]
       )
     end
 
@@ -598,13 +600,15 @@ module LaunchDarkly
         nil,
         add_experiment_data || prereq_flag[:trackEvents] || false,
         prereq_flag[:debugEventsUntilDate],
-        prereq_of_flag[:key]
+        prereq_of_flag[:key],
+        prereq_of_flag[:samplingRatio],
+        !!prereq_of_flag[:excludeFromSummaries]
       )
     end
 
     private def record_flag_eval_error(flag, context, default, reason, with_reasons)
       @event_processor.record_eval_event(context, flag[:key], flag[:version], nil, default, with_reasons ? reason : nil, default,
-        flag[:trackEvents], flag[:debugEventsUntilDate], nil)
+        flag[:trackEvents], flag[:debugEventsUntilDate], nil, flag[:samplingRatio], !!flag[:excludeFromSummaries])
     end
 
     #
@@ -616,7 +620,7 @@ module LaunchDarkly
     #
     private def record_unknown_flag_eval(flag_key, context, default, reason, with_reasons)
       @event_processor.record_eval_event(context, flag_key, nil, nil, default, with_reasons ? reason : nil, default,
-        false, nil, nil)
+        false, nil, nil, 1, false)
     end
 
     private def experiment?(flag, reason)

@@ -40,7 +40,9 @@ module LaunchDarkly
       default = nil,
       track_events = false,
       debug_until = nil,
-      prereq_of = nil
+      prereq_of = nil,
+      sampling_ratio = nil,
+      exclude_from_summaries = false
     )
     end
 
@@ -156,10 +158,12 @@ module LaunchDarkly
       default = nil,
       track_events = false,
       debug_until = nil,
-      prereq_of = nil
+      prereq_of = nil,
+      sampling_ratio = nil,
+      exclude_from_summaries = false
     )
       post_to_inbox(LaunchDarkly::Impl::EvalEvent.new(timestamp, context, key, version, variation, value, reason,
-        default, track_events, debug_until, prereq_of))
+        default, track_events, debug_until, prereq_of, sampling_ratio, exclude_from_summaries))
     end
 
     def record_identify_event(context)
@@ -227,6 +231,7 @@ module LaunchDarkly
       @config = config
       @diagnostic_accumulator = config.diagnostic_opt_out? ? nil : diagnostic_accumulator
       @event_sender = event_sender
+      @sampler = LaunchDarkly::Impl::Sampler.new(Random.new)
 
       @context_keys = SimpleLRUCacheSet.new(config.context_keys_capacity)
       @formatter = EventOutputFormatter.new(config)
@@ -299,7 +304,7 @@ module LaunchDarkly
       return if @disabled.value
 
       # Always record the event in the summary.
-      outbox.add_to_summary(event)
+      outbox.add_to_summary(event) unless event.exclude_from_summaries
 
       # Decide whether to add the event to the payload. Feature events may be added twice, once for
       # the event (if tracked) and once for debugging.
@@ -320,8 +325,8 @@ module LaunchDarkly
         outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.context))
       end
 
-      outbox.add_event(event) if will_add_full_event
-      outbox.add_event(debug_event) unless debug_event.nil?
+      outbox.add_event(event) if will_add_full_event && @sampler.sample(event.sampling_ratio.nil? ? 1 : event.sampling_ratio)
+      outbox.add_event(debug_event) if !debug_event.nil? && @sampler.sample(event.sampling_ratio.nil? ? 1 : event.sampling_ratio)
     end
 
     #

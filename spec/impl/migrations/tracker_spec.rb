@@ -1,5 +1,5 @@
 require 'ldclient-rb/interfaces'
-require 'ldclient-rb/impl/migrations/tracker'
+require "ldclient-rb"
 
 module LaunchDarkly
   module Impl
@@ -9,7 +9,7 @@ module LaunchDarkly
 
         let(:flag_data) { LaunchDarkly::Integrations::TestData::FlagBuilder.new("feature").build(1) }
         let(:flag) { LaunchDarkly::Impl::Model::FeatureFlag.new(flag_data) }
-        let(:context) { context = LaunchDarkly::LDContext.with_key("user-key") }
+        let(:context) { LaunchDarkly::LDContext.with_key("user-key") }
         let(:detail) { LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough) }
 
         def minimal_tracker()
@@ -56,14 +56,94 @@ module LaunchDarkly
           end
         end
 
-        it "can track consistency" do
-          # TODO(uc2-migrations): Add additional tests once sampling is added
-          [true, false].each do |expected_consistent|
-            tracker = minimal_tracker
-            tracker.consistent(-> { expected_consistent })
-            event = tracker.build
+        describe "can track consistency" do
+          it "with no sampling ratio" do
+            [true, false].each do |expected_consistent|
+              tracker = minimal_tracker
+              tracker.consistent(-> { expected_consistent })
+              event = tracker.build
 
-            expect(event.consistency_check).to be expected_consistent
+              expect(event.consistency_check).to be expected_consistent
+              expect(event.consistency_check_ratio).to be_nil
+            end
+          end
+
+          it "with explicit sampling ratio of 1" do
+            settings = LaunchDarkly::Integrations::TestData::FlagBuilder::FlagMigrationSettingsBuilder.new
+            settings.check_ratio(1)
+
+            builder = LaunchDarkly::Integrations::TestData::FlagBuilder.new("feature")
+            builder.migration_settings(settings.build)
+            flag = LaunchDarkly::Impl::Model::FeatureFlag.new(builder.build(1))
+            context = LaunchDarkly::LDContext.with_key("user-key")
+            detail = LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough)
+
+            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
+            tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
+            tracker.invoked(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)
+
+            [true, false].each do |expected_consistent|
+              tracker.consistent(-> { expected_consistent })
+              event = tracker.build
+
+              expect(event.consistency_check).to be expected_consistent
+              expect(event.consistency_check_ratio).to be_nil
+            end
+          end
+
+          it "unless disabled with sampling ratio of 0" do
+            settings = LaunchDarkly::Integrations::TestData::FlagBuilder::FlagMigrationSettingsBuilder.new
+            settings.check_ratio(0)
+
+            builder = LaunchDarkly::Integrations::TestData::FlagBuilder.new("feature")
+            builder.migration_settings(settings.build)
+            flag = LaunchDarkly::Impl::Model::FeatureFlag.new(builder.build(1))
+            context = LaunchDarkly::LDContext.with_key("user-key")
+            detail = LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough)
+
+            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
+            tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
+            tracker.invoked(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)
+
+            [true, false].each do |expected_consistent|
+              tracker.consistent(-> { expected_consistent })
+              event = tracker.build
+
+              expect(event.consistency_check).to be_nil
+              expect(event.consistency_check_ratio).to be_nil
+            end
+          end
+
+          it "when supplied a non-trivial sampling ratio" do
+            settings = LaunchDarkly::Integrations::TestData::FlagBuilder::FlagMigrationSettingsBuilder.new
+            settings.check_ratio(10)
+
+            builder = LaunchDarkly::Integrations::TestData::FlagBuilder.new("feature")
+            builder.migration_settings(settings.build)
+            flag = LaunchDarkly::Impl::Model::FeatureFlag.new(builder.build(1))
+            context = LaunchDarkly::LDContext.with_key("user-key")
+            detail = LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough)
+
+            sampler = LaunchDarkly::Impl::Sampler.new(Random.new(0))
+
+
+            count = 0
+            1_000.times do |_|
+              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Interfaces::Migrations::STAGE_LIVE)
+              tracker.instance_variable_set(:@sampler, sampler)
+              tracker.operation(LaunchDarkly::Interfaces::Migrations::OP_WRITE)
+              tracker.invoked(LaunchDarkly::Interfaces::Migrations::ORIGIN_OLD)
+
+              tracker.consistent(-> { true })
+              event = tracker.build
+
+              unless event.consistency_check.nil?
+                count += 1
+                expect(event.consistency_check_ratio).to eq(10)
+              end
+            end
+
+            expect(count).to eq(98)
           end
         end
 
