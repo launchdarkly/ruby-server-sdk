@@ -88,6 +88,9 @@ module LaunchDarkly
             return "no origins were invoked" if @invoked.empty?
             return "provided context was invalid" unless @context.valid?
 
+            result = check_invoked_consistency
+            return result unless result == true
+
             LaunchDarkly::Impl::MigrationOpEvent.new(
               LaunchDarkly::Impl::Util.current_time_millis,
               @context,
@@ -102,6 +105,19 @@ module LaunchDarkly
               @latencies
             )
           end
+        end
+
+        private def check_invoked_consistency
+          VALID_ORIGINS.each do |origin|
+            next if @invoked.include? origin
+
+            return "provided latency for origin '#{origin}' without recording invocation" if @latencies.include? origin
+            return "provided error for origin '#{origin}' without recording invocation" if @errors.include? origin
+          end
+
+          return "provided consistency without recording both invocations" if !@consistent.nil? && @invoked.size != 2
+
+          true
         end
       end
     end
