@@ -225,6 +225,32 @@ module LaunchDarkly
             end
           end
 
+          describe "handles exceptions from origin methods" do
+            [
+              { stage: LaunchDarkly::Migrations::STAGE_OFF, origin: "old" },
+              { stage: LaunchDarkly::Migrations::STAGE_DUALWRITE, origin: "old" },
+              { stage: LaunchDarkly::Migrations::STAGE_SHADOW, origin: "old" },
+              { stage: LaunchDarkly::Migrations::STAGE_LIVE, origin: "new" },
+              { stage: LaunchDarkly::Migrations::STAGE_RAMPDOWN, origin: "new" },
+              { stage: LaunchDarkly::Migrations::STAGE_COMPLETE, origin: "new" },
+            ].each do |params|
+              it "for #{params[:stage]} stage" do
+                with_client(test_config(data_source: data_source)) do |client|
+                  builder = default_builder(client)
+
+                  builder.read(->(_) { raise "old error" }, ->(_) { raise "new error" })
+
+                  migrator = builder.build
+                  result = migrator.read(params[:stage].to_s, basic_context, LaunchDarkly::Migrations::STAGE_OFF)
+
+                  expect(result.success?).to be false
+                  expect(result.error).to eq("'#{params[:origin]}' operation raised an exception")
+                  expect(result.exception.to_s).to eq("#{params[:origin]} error")
+                end
+              end
+            end
+          end
+
           describe "support execution order" do
             it "parallel" do
               with_client(test_config(data_source: data_source)) do |client|
@@ -385,6 +411,43 @@ module LaunchDarkly
                 end
               end
             end
+
+            [
+              {label: "shadow", stage: LaunchDarkly::Migrations::STAGE_SHADOW},
+              {label: "live", stage: LaunchDarkly::Migrations::STAGE_LIVE},
+            ].each do |test_param|
+              it "for #{test_param[:label]} when an exception occurs" do
+                with_client(test_config(data_source: data_source)) do |client|
+                  with_processor_and_sender(default_config, 0) do |ep, sender|
+                    override_client_event_processor(client, ep)
+
+                    builder = default_builder(client)
+                    old_callable = ->(_) { LaunchDarkly::Result.success(nil) }
+                    new_callable = ->(_) { LaunchDarkly::Result.success(nil) }
+                    compare_callable = ->(lhs, rhs) { raise "consistency check exception" }
+
+                    builder.read(old_callable, new_callable, compare_callable)
+                    builder.write(old_callable, new_callable)
+                    migrator = builder.build
+
+                    migrator.read(test_param[:stage], basic_context, LaunchDarkly::Migrations::STAGE_OFF)
+
+                    ep.flush
+                    ep.wait_until_inactive
+                    events = sender.analytics_payloads.pop
+
+                    expect(events.size).to be(3) # Index, migration op, and summary
+
+                    op_event = events[1]
+
+                    expect(op_event[:measurements].size).to eq(1)
+                    invoked = op_event[:measurements][0] # First measurement is invoked
+
+                    expect(invoked[:key]).to eq("invoked")
+                  end
+                end
+              end
+            end
           end
 
           describe "track errors" do
@@ -465,6 +528,32 @@ module LaunchDarkly
 
                   expect(called_old).to eq(params[:old])
                   expect(called_new).to eq(params[:new])
+                end
+              end
+            end
+          end
+
+          describe "handles exceptions from origin methods" do
+            [
+              { stage: LaunchDarkly::Migrations::STAGE_OFF, origin: "old" },
+              { stage: LaunchDarkly::Migrations::STAGE_DUALWRITE, origin: "old" },
+              { stage: LaunchDarkly::Migrations::STAGE_SHADOW, origin: "old" },
+              { stage: LaunchDarkly::Migrations::STAGE_LIVE, origin: "new" },
+              { stage: LaunchDarkly::Migrations::STAGE_RAMPDOWN, origin: "new" },
+              { stage: LaunchDarkly::Migrations::STAGE_COMPLETE, origin: "new" },
+            ].each do |params|
+              it "for #{params[:stage]} stage" do
+                with_client(test_config(data_source: data_source)) do |client|
+                  builder = default_builder(client)
+
+                  builder.write(->(_) { raise "old error" }, ->(_) { raise "new error" })
+
+                  migrator = builder.build
+                  result = migrator.write(params[:stage].to_s, basic_context, LaunchDarkly::Migrations::STAGE_OFF)
+
+                  expect(result.authoritative.success?).to be false
+                  expect(result.authoritative.error).to eq("'#{params[:origin]}' operation raised an exception")
+                  expect(result.authoritative.exception.to_s).to eq("#{params[:origin]} error")
                 end
               end
             end

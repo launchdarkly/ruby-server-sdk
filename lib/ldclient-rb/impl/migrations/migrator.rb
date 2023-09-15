@@ -91,8 +91,8 @@ module LaunchDarkly
             @client.logger.error { "[Migrator] Error occurred determining migration stage for read; #{err}" }
           end
 
-          old = Executor.new(LaunchDarkly::Migrations::ORIGIN_OLD, @read_config.old, tracker, @measure_latency, @measure_errors, payload)
-          new = Executor.new(LaunchDarkly::Migrations::ORIGIN_NEW, @read_config.new, tracker, @measure_latency, @measure_errors, payload)
+          old = Executor.new(@client.logger, LaunchDarkly::Migrations::ORIGIN_OLD, @read_config.old, tracker, @measure_latency, @measure_errors, payload)
+          new = Executor.new(@client.logger, LaunchDarkly::Migrations::ORIGIN_NEW, @read_config.new, tracker, @measure_latency, @measure_errors, payload)
 
           case stage
           when LaunchDarkly::Migrations::STAGE_OFF
@@ -142,8 +142,8 @@ module LaunchDarkly
             @client.logger.error { "[Migrator] Error occurred determining migration stage for write; #{err}" }
           end
 
-          old = Executor.new(LaunchDarkly::Migrations::ORIGIN_OLD, @write_config.old, tracker, @measure_latency, @measure_errors, payload)
-          new = Executor.new(LaunchDarkly::Migrations::ORIGIN_NEW, @write_config.new, tracker, @measure_latency, @measure_errors, payload)
+          old = Executor.new(@client.logger, LaunchDarkly::Migrations::ORIGIN_OLD, @write_config.old, tracker, @measure_latency, @measure_errors, payload)
+          new = Executor.new(@client.logger, LaunchDarkly::Migrations::ORIGIN_NEW, @write_config.new, tracker, @measure_latency, @measure_errors, payload)
 
           case stage
           when LaunchDarkly::Migrations::STAGE_OFF
@@ -218,7 +218,11 @@ module LaunchDarkly
           return authoritative_result if comparison.nil?
 
           if authoritative_result.success? && nonauthoritative_result.success?
-            tracker.consistent(->{ comparison.call(authoritative_result.value, nonauthoritative_result.value) })
+            begin
+              tracker.consistent(->{ comparison.call(authoritative_result.value, nonauthoritative_result.value) })
+            rescue => e
+              LaunchDarkly::Util.log_exception(@client.logger, "Exception raised during consistency check; failed to record measurement", e)
+            end
           end
 
           authoritative_result
@@ -267,7 +271,8 @@ module LaunchDarkly
         # @param measure_errors [Boolean]
         # @param payload [Object, nil]
         #
-        def initialize(origin, fn, tracker, measure_latency, measure_errors, payload)
+        def initialize(logger, origin, fn, tracker, measure_latency, measure_errors, payload)
+          @logger = logger
           @origin = origin
           @fn = fn
           @tracker = tracker
@@ -283,7 +288,13 @@ module LaunchDarkly
         #
         def run()
           start = Time.now
-          result = @fn.call(@payload)
+
+          begin
+            result = @fn.call(@payload)
+          rescue => e
+            LaunchDarkly::Util.log_exception(@logger, "Unexpected error running method for '#{origin}' origin", e)
+            result = LaunchDarkly::Result.fail("'#{origin}' operation raised an exception", e)
+          end
 
           @tracker.latency(@origin, (Time.now - start) * 1_000) if @measure_latency
           @tracker.error(@origin) if @measure_errors && !result.success?

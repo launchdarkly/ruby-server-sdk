@@ -36,7 +36,7 @@ module LaunchDarkly
     #
     class OperationResult
       extend Forwardable
-      def_delegators :@result, :value, :error, :success?
+      def_delegators :@result, :value, :error, :exception, :success?
 
       #
       # @param origin [Symbol]

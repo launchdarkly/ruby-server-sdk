@@ -20,17 +20,18 @@ module LaunchDarkly
     # @return [Result]
     #
     def self.success(value)
-      Result.new(value, nil)
+      Result.new(value)
     end
 
     #
     # Create a failed result with the provided error description.
     #
     # @param error [String]
+    # @param exception [Exception, nil]
     # @return [Result]
     #
-    def self.fail(error)
-      Result.new(nil, error)
+    def self.fail(error, exception = nil)
+      Result.new(nil, error, exception)
     end
 
     #
@@ -52,9 +53,15 @@ module LaunchDarkly
     #
     attr_reader :error
 
-    private def initialize(value, error)
+    #
+    # @return [Exception, nil] An optional exception which caused the failure
+    #
+    attr_reader :exception
+
+    private def initialize(value, error = nil, exception = nil)
       @value = value
       @error = error
+      @exception = exception
     end
   end
 
