@@ -61,6 +61,7 @@ module LaunchDarkly
       # @param timestamp [Integer]
       # @param context [LaunchDarkly::LDContext]
       # @param flag [LaunchDarkly::Impl::Model::FeatureFlag]
+      # @param key [string]
       # @param operation [Symbol]
       # @param default_stage [Symbol]
       # @param evaluation [LaunchDarkly::EvaluationDetail]
@@ -75,6 +76,7 @@ module LaunchDarkly
         @operation = operation
         @key = flag.key
         @sampling_ratio = flag.sampling_ratio
+        @version = flag&.version
         @default = default_stage
         @evaluation = evaluation
         @consistency_check = consistency_check
@@ -86,6 +88,7 @@ module LaunchDarkly
 
       attr_reader :operation
       attr_reader :key
+      attr_reader :version
       attr_reader :sampling_ratio
       attr_reader :default
       attr_reader :evaluation

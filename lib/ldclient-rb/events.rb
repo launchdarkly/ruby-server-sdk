@@ -501,6 +501,7 @@ module LaunchDarkly
           },
         }
 
+        out[:evaluation][:version] = event.version unless event.version.nil?
         out[:evaluation][:default] = event.default unless event.default.nil?
         out[:evaluation][:variation] = event.evaluation.variation_index unless event.evaluation.variation_index.nil?
         out[:evaluation][:reason] = event.evaluation.reason unless event.evaluation.reason.nil?
