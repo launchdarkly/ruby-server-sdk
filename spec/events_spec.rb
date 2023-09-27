@@ -324,6 +324,7 @@ module LaunchDarkly
           event = LaunchDarkly::Impl::MigrationOpEvent.new(
             starting_timestamp+1,
             context,
+            flag.key,
             flag,
             LaunchDarkly::Migrations::OP_READ,
             LaunchDarkly::Migrations::STAGE_OFF,
@@ -352,6 +353,7 @@ module LaunchDarkly
           event = LaunchDarkly::Impl::MigrationOpEvent.new(
             starting_timestamp+1,
             context,
+            flag.key,
             flag,
             LaunchDarkly::Migrations::OP_READ,
             LaunchDarkly::Migrations::STAGE_OFF,
@@ -376,6 +378,7 @@ module LaunchDarkly
           event = LaunchDarkly::Impl::MigrationOpEvent.new(
             starting_timestamp+1,
             context,
+            "flagkey",
             LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
             LaunchDarkly::Migrations::OP_READ,
             LaunchDarkly::Migrations::STAGE_OFF,
@@ -402,6 +405,7 @@ module LaunchDarkly
           event = LaunchDarkly::Impl::MigrationOpEvent.new(
             starting_timestamp+1,
             context,
+            "flagkey",
             LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
             LaunchDarkly::Migrations::OP_READ,
             LaunchDarkly::Migrations::STAGE_OFF,
@@ -428,6 +432,7 @@ module LaunchDarkly
           event = LaunchDarkly::Impl::MigrationOpEvent.new(
             starting_timestamp+1,
             context,
+            "flagkey",
             LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
             LaunchDarkly::Migrations::OP_READ,
             LaunchDarkly::Migrations::STAGE_OFF,
@@ -456,6 +461,7 @@ module LaunchDarkly
               event = LaunchDarkly::Impl::MigrationOpEvent.new(
                 starting_timestamp+1,
                 context,
+                "flagkey",
                 LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
                 LaunchDarkly::Migrations::OP_READ,
                 LaunchDarkly::Migrations::STAGE_OFF,
@@ -483,6 +489,7 @@ module LaunchDarkly
             event = LaunchDarkly::Impl::MigrationOpEvent.new(
               starting_timestamp+1,
               context,
+              "flagkey",
               LaunchDarkly::Impl::Model::FeatureFlag.new({key: "flagkey", variations: [true, false]}),
               LaunchDarkly::Migrations::OP_READ,
               LaunchDarkly::Migrations::STAGE_OFF,

@@ -11,12 +11,14 @@ module LaunchDarkly
         private_constant :VALID_ORIGINS
 
         #
+        # @param key [string] key
         # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] flag
         # @param context [LaunchDarkly::LDContext] context
         # @param detail [LaunchDarkly::EvaluationDetail] detail
         # @param default_stage [Symbol] default_stage
         #
-        def initialize(flag, context, detail, default_stage)
+        def initialize(key, flag, context, detail, default_stage)
+          @key = key
           @flag = flag
           @context = context
           @detail = detail
@@ -83,7 +85,7 @@ module LaunchDarkly
 
         def build
           @mutex.synchronize do
-            return "flag not provided" if @flag.nil?
+            return "operation cannot contain an empty key" if @key.empty?
             return "operation not provided" if @operation.nil?
             return "no origins were invoked" if @invoked.empty?
             return "provided context was invalid" unless @context.valid?
@@ -94,6 +96,7 @@ module LaunchDarkly
             LaunchDarkly::Impl::MigrationOpEvent.new(
               LaunchDarkly::Impl::Util.current_time_millis,
               @context,
+              @key,
               @flag,
               @operation,
               @default_stage,

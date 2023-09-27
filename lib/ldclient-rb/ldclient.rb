@@ -249,7 +249,7 @@ module LaunchDarkly
 
       context = Impl::Context::make_context(context)
       detail, flag, err = variation_with_flag(key, context, default_stage.to_s)
-      tracker = Impl::Migrations::OpTracker.new(flag, context, detail, default_stage)
+      tracker = Impl::Migrations::OpTracker.new(key, flag, context, detail, default_stage)
 
       return default_stage, tracker, err unless err.nil?
 

@@ -60,8 +60,8 @@ module LaunchDarkly
       #
       # @param timestamp [Integer]
       # @param context [LaunchDarkly::LDContext]
-      # @param flag [LaunchDarkly::Impl::Model::FeatureFlag]
       # @param key [string]
+      # @param flag [LaunchDarkly::Impl::Model::FeatureFlag, nil]
       # @param operation [Symbol]
       # @param default_stage [Symbol]
       # @param evaluation [LaunchDarkly::EvaluationDetail]
@@ -71,12 +71,12 @@ module LaunchDarkly
       # @param errors [Set]
       # @param latencies [Hash<Symbol, Float>]
       #
-      def initialize(timestamp, context, flag, operation, default_stage, evaluation, invoked, consistency_check, consistency_check_ratio, errors, latencies)
+      def initialize(timestamp, context, key, flag, operation, default_stage, evaluation, invoked, consistency_check, consistency_check_ratio, errors, latencies)
         super(timestamp, context)
         @operation = operation
-        @key = flag.key
-        @sampling_ratio = flag.sampling_ratio
+        @key = key
         @version = flag&.version
+        @sampling_ratio = flag&.sampling_ratio
         @default = default_stage
         @evaluation = evaluation
         @consistency_check = consistency_check

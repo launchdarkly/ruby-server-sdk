@@ -11,7 +11,7 @@ module LaunchDarkly
         let(:detail) { LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough) }
 
         def minimal_tracker()
-          tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+          tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
           tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
           tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
           tracker.invoked(LaunchDarkly::Migrations::ORIGIN_NEW)
@@ -24,10 +24,18 @@ module LaunchDarkly
           expect(event).to be_instance_of(LaunchDarkly::Impl::MigrationOpEvent)
         end
 
+        it "can build without a flag" do
+          tracker = OpTracker.new("feature", nil, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+          tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
+          tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
+          event = tracker.build
+          expect(event).to be_instance_of(LaunchDarkly::Impl::MigrationOpEvent)
+        end
+
         describe "can track invocations" do
           it "individually" do
             [LaunchDarkly::Migrations::ORIGIN_OLD, LaunchDarkly::Migrations::ORIGIN_NEW].each do |origin|
-              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+              tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
               tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
               tracker.invoked(origin)
 
@@ -76,7 +84,7 @@ module LaunchDarkly
             context = LaunchDarkly::LDContext.with_key("user-key")
             detail = LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough)
 
-            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
             tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
             tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
             tracker.invoked(LaunchDarkly::Migrations::ORIGIN_NEW)
@@ -100,7 +108,7 @@ module LaunchDarkly
             context = LaunchDarkly::LDContext.with_key("user-key")
             detail = LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough)
 
-            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
             tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
             tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
 
@@ -128,7 +136,7 @@ module LaunchDarkly
 
             count = 0
             1_000.times do |_|
-              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+              tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
               tracker.instance_variable_set(:@sampler, sampler)
               tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
               tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
@@ -221,16 +229,16 @@ module LaunchDarkly
         end
 
         describe "can handle build failures" do
-          it "without providing a flag" do
-            tracker = OpTracker.new(nil, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+          it "without providing a key" do
+            tracker = OpTracker.new("", nil, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
             tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
 
             event = tracker.build
-            expect(event).to eq("flag not provided")
+            expect(event).to eq("operation cannot contain an empty key")
           end
 
           it "without calling invoked" do
-            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
             tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
 
             event = tracker.build
@@ -238,14 +246,14 @@ module LaunchDarkly
           end
 
           it "without operation" do
-            tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
             event = tracker.build
             expect(event).to eq("operation not provided")
           end
 
           it "with invalid context " do
             invalid = LaunchDarkly::LDContext.create({kind: 'multi', key: 'invalid'})
-            tracker = OpTracker.new(flag, invalid, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+            tracker = OpTracker.new(flag.key, flag, invalid, detail, LaunchDarkly::Migrations::STAGE_LIVE)
             tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
             tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
 
@@ -255,7 +263,7 @@ module LaunchDarkly
 
           describe "detects when invoked doesn't align with" do
             it "latency" do
-              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+              tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
               tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
               tracker.invoked(LaunchDarkly::Migrations::ORIGIN_NEW)
               tracker.latency(LaunchDarkly::Migrations::ORIGIN_OLD, 10)
@@ -263,7 +271,7 @@ module LaunchDarkly
               event = tracker.build
               expect(event).to eq("provided latency for origin 'old' without recording invocation")
 
-              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+              tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
               tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
               tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
               tracker.latency(LaunchDarkly::Migrations::ORIGIN_NEW, 10)
@@ -274,7 +282,7 @@ module LaunchDarkly
             end
 
             it "errors" do
-              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+              tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
               tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
               tracker.invoked(LaunchDarkly::Migrations::ORIGIN_NEW)
               tracker.error(LaunchDarkly::Migrations::ORIGIN_OLD)
@@ -282,7 +290,7 @@ module LaunchDarkly
               event = tracker.build
               expect(event).to eq("provided error for origin 'old' without recording invocation")
 
-              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+              tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
               tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
               tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
               tracker.error(LaunchDarkly::Migrations::ORIGIN_NEW)
@@ -292,7 +300,7 @@ module LaunchDarkly
             end
 
             it "consistent" do
-              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+              tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
               tracker.operation(LaunchDarkly::Migrations::OP_READ)
               tracker.invoked(LaunchDarkly::Migrations::ORIGIN_OLD)
               tracker.consistent(->{ true })
@@ -300,7 +308,7 @@ module LaunchDarkly
               event = tracker.build
               expect(event).to eq("provided consistency without recording both invocations")
 
-              tracker = OpTracker.new(flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
+              tracker = OpTracker.new(flag.key, flag, context, detail, LaunchDarkly::Migrations::STAGE_LIVE)
               tracker.operation(LaunchDarkly::Migrations::OP_READ)
               tracker.invoked(LaunchDarkly::Migrations::ORIGIN_NEW)
               tracker.consistent(->{ true })
