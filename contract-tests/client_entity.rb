@@ -99,7 +99,9 @@ class ClientEntity
   end
 
   def migration_variation(params)
-    stage, _, err = @client.migration_variation(params[:key], params[:context], params[:defaultStage])
+    default_stage = params[:defaultStage]
+    default_stage = default_stage.to_sym if default_stage.respond_to? :to_sym
+    stage, _, err = @client.migration_variation(params[:key], params[:context], default_stage)
     stage
   end
 

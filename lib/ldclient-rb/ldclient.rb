@@ -249,11 +249,12 @@ module LaunchDarkly
 
       context = Impl::Context::make_context(context)
       detail, flag, err = variation_with_flag(key, context, default_stage.to_s)
-      tracker = Impl::Migrations::OpTracker.new(key, flag, context, detail, default_stage)
+      tracker = Impl::Migrations::OpTracker.new(@config.logger, key, flag, context, detail, default_stage)
 
       return default_stage, tracker, err unless err.nil?
 
-      stage = detail.value.to_sym
+      stage = detail.value
+      stage = stage.to_sym if stage.respond_to? :to_sym
       unless Migrations::VALID_STAGES.include? stage
         return default_stage, tracker, "value is not a valid stage; using default stage"
       end

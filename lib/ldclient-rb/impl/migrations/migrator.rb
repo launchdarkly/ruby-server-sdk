@@ -71,6 +71,7 @@ module LaunchDarkly
           @write_config = write_config
           @measure_latency = measure_latency
           @measure_errors = measure_errors
+          @sampler = LaunchDarkly::Impl::Sampler.new(Random.new)
         end
 
         #
@@ -207,7 +208,7 @@ module LaunchDarkly
 
             auth_handler.join()
             nonauth_handler.join()
-          when LaunchDarkly::Migrations::MigratorBuilder::EXECUTION_RANDOM && rand > 0.5
+          when LaunchDarkly::Migrations::MigratorBuilder::EXECUTION_RANDOM && @sampler.sample(2)
             nonauthoritative_result = nonauthoritative.run
             authoritative_result = authoritative.run
           else
@@ -218,11 +219,7 @@ module LaunchDarkly
           return authoritative_result if comparison.nil?
 
           if authoritative_result.success? && nonauthoritative_result.success?
-            begin
-              tracker.consistent(->{ comparison.call(authoritative_result.value, nonauthoritative_result.value) })
-            rescue => e
-              LaunchDarkly::Util.log_exception(@client.logger, "Exception raised during consistency check; failed to record measurement", e)
-            end
+            tracker.consistent(->{ comparison.call(authoritative_result.value, nonauthoritative_result.value) })
           end
 
           authoritative_result

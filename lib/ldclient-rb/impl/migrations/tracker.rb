@@ -1,5 +1,6 @@
 require "set"
 require "ldclient-rb/impl/sampler"
+require "logger"
 
 module LaunchDarkly
   module Impl
@@ -7,17 +8,16 @@ module LaunchDarkly
       class OpTracker
         include LaunchDarkly::Interfaces::Migrations::OpTracker
 
-        VALID_ORIGINS = [LaunchDarkly::Migrations::ORIGIN_OLD, LaunchDarkly::Migrations::ORIGIN_NEW]
-        private_constant :VALID_ORIGINS
-
         #
+        # @param logger [Logger] logger
         # @param key [string] key
         # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] flag
         # @param context [LaunchDarkly::LDContext] context
         # @param detail [LaunchDarkly::EvaluationDetail] detail
         # @param default_stage [Symbol] default_stage
         #
-        def initialize(key, flag, context, detail, default_stage)
+        def initialize(logger, key, flag, context, detail, default_stage)
+          @logger = logger
           @key = key
           @flag = flag
           @context = context
@@ -34,8 +34,11 @@ module LaunchDarkly
           @invoked = Set.new
           # @type [Boolean, nil]
           @consistent = nil
-          # @type [Int, nil]
+
+          # @type [Int]
           @consistent_ratio = @flag&.migration_settings&.check_ratio
+          @consistent_ratio = 1 if @consistent_ratio.nil?
+
           # @type [Set<Symbol>]
           @errors = Set.new
           # @type [Hash<Symbol, Float>]
@@ -43,13 +46,15 @@ module LaunchDarkly
         end
 
         def operation(operation)
+          return unless LaunchDarkly::Migrations::VALID_OPERATIONS.include? operation
+
           @mutex.synchronize do
             @operation = operation
           end
         end
 
         def invoked(origin)
-          return unless VALID_ORIGINS.include? origin
+          return unless LaunchDarkly::Migrations::VALID_ORIGINS.include? origin
 
           @mutex.synchronize do
             @invoked.add(origin)
@@ -58,15 +63,18 @@ module LaunchDarkly
 
         def consistent(is_consistent)
           @mutex.synchronize do
-            ratio = @flag.migration_settings&.check_ratio.nil? ? 1 : @flag.migration_settings.check_ratio
-            if @sampler.sample(ratio)
-              @consistent = is_consistent.call
+            if @sampler.sample(@consistent_ratio)
+              begin
+                @consistent = is_consistent.call
+              rescue => e
+                LaunchDarkly::Util.log_exception(@logger, "Exception raised during consistency check; failed to record measurement", e)
+              end
             end
           end
         end
 
         def error(origin)
-          return unless VALID_ORIGINS.include? origin
+          return unless LaunchDarkly::Migrations::VALID_ORIGINS.include? origin
 
           @mutex.synchronize do
             @errors.add(origin)
@@ -74,7 +82,7 @@ module LaunchDarkly
         end
 
         def latency(origin, duration)
-          return unless VALID_ORIGINS.include? origin
+          return unless LaunchDarkly::Migrations::VALID_ORIGINS.include? origin
           return unless duration.is_a? Numeric
           return if duration < 0
 
@@ -111,7 +119,7 @@ module LaunchDarkly
         end
 
         private def check_invoked_consistency
-          VALID_ORIGINS.each do |origin|
+          LaunchDarkly::Migrations::VALID_ORIGINS.each do |origin|
             next if @invoked.include? origin
 
             return "provided latency for origin '#{origin}' without recording invocation" if @latencies.include? origin

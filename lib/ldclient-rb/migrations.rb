@@ -22,6 +22,16 @@ module LaunchDarkly
     STAGE_RAMPDOWN = :rampdown
     STAGE_COMPLETE = :complete
 
+    VALID_OPERATIONS = [
+      OP_READ,
+      OP_WRITE,
+    ]
+
+    VALID_ORIGINS = [
+      ORIGIN_OLD,
+      ORIGIN_NEW,
+    ]
+
     VALID_STAGES = [
       STAGE_OFF,
       STAGE_DUALWRITE,
