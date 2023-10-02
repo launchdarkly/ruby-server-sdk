@@ -239,27 +239,29 @@ module LaunchDarkly
     # @param context [LDContext]
     # @param default_stage [Symbol]
     #
-    # @return [Array<Symbol, Interfaces::Migrations::OpTracker, [String, nil]>]
+    # @return [Array<Symbol, Interfaces::Migrations::OpTracker>]
     #
     def migration_variation(key, context, default_stage)
       unless Migrations::VALID_STAGES.include? default_stage
-        @config.logger.error { "[LDClient] default_stage #{default_stage} is not a valid stage; using 'off' instead" }
-        default_stage = LaunchDarkly::Migrations::STAGE_OFF
+        @config.logger.error { "[LDClient] default_stage #{default_stage} is not a valid stage; continuing with 'off' as default" }
+        default_stage = Migrations::STAGE_OFF
       end
 
       context = Impl::Context::make_context(context)
-      detail, flag, err = variation_with_flag(key, context, default_stage.to_s)
-      tracker = Impl::Migrations::OpTracker.new(@config.logger, key, flag, context, detail, default_stage)
-
-      return default_stage, tracker, err unless err.nil?
+      detail, flag, _ = variation_with_flag(key, context, default_stage.to_s)
 
       stage = detail.value
       stage = stage.to_sym if stage.respond_to? :to_sym
-      unless Migrations::VALID_STAGES.include? stage
-        return default_stage, tracker, "value is not a valid stage; using default stage"
+
+      if Migrations::VALID_STAGES.include?(stage)
+        tracker = Impl::Migrations::OpTracker.new(@config.logger, key, flag, context, detail, default_stage)
+        return stage, tracker
       end
 
-      [stage, tracker, nil]
+      detail = LaunchDarkly::Impl::Evaluator.error_result(LaunchDarkly::EvaluationReason::ERROR_WRONG_TYPE, default_stage.to_s)
+      tracker = Impl::Migrations::OpTracker.new(@config.logger, key, flag, context, detail, default_stage)
+
+      [default_stage, tracker]
     end
 
     #

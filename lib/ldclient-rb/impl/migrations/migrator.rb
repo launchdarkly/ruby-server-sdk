@@ -85,12 +85,8 @@ module LaunchDarkly
         # @return [LaunchDarkly::Migrations::OperationResult]
         #
         def read(key, context, default_stage, payload = nil)
-          stage, tracker, err = @client.migration_variation(key, context, default_stage)
+          stage, tracker = @client.migration_variation(key, context, default_stage)
           tracker.operation(LaunchDarkly::Migrations::OP_READ)
-
-          unless err.nil?
-            @client.logger.error { "[Migrator] Error occurred determining migration stage for read; #{err}" }
-          end
 
           old = Executor.new(@client.logger, LaunchDarkly::Migrations::ORIGIN_OLD, @read_config.old, tracker, @measure_latency, @measure_errors, payload)
           new = Executor.new(@client.logger, LaunchDarkly::Migrations::ORIGIN_NEW, @read_config.new, tracker, @measure_latency, @measure_errors, payload)
@@ -136,12 +132,8 @@ module LaunchDarkly
         # @return [LaunchDarkly::Migrations::WriteResult]
         #
         def write(key, context, default_stage, payload = nil)
-          stage, tracker, err = @client.migration_variation(key, context, default_stage)
+          stage, tracker = @client.migration_variation(key, context, default_stage)
           tracker.operation(LaunchDarkly::Migrations::OP_WRITE)
-
-          unless err.nil?
-            @client.logger.error { "[Migrator] Error occurred determining migration stage for write; #{err}" }
-          end
 
           old = Executor.new(@client.logger, LaunchDarkly::Migrations::ORIGIN_OLD, @write_config.old, tracker, @measure_latency, @measure_errors, payload)
           new = Executor.new(@client.logger, LaunchDarkly::Migrations::ORIGIN_NEW, @write_config.new, tracker, @measure_latency, @measure_errors, payload)
