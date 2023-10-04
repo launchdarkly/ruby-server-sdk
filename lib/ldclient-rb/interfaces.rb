@@ -874,7 +874,7 @@ module LaunchDarkly
 
         #
         # Creates an instance of {LaunchDarkly::Impl::MigrationOpEventData}. This event data can be provided to
-        # the {LaunchDarkly::LDClient.track_migration_op} method to rely this metric information upstream to LaunchDarkly
+        # the {LaunchDarkly::LDClient.track_migration_op} method to relay this metric information upstream to LaunchDarkly
         # services.
         #
         # @return [LaunchDarkly::Impl::MigrationOpEvent, String] A migration op event or a string describing the error.
