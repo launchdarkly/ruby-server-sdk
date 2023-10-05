@@ -332,13 +332,20 @@ module LaunchDarkly
     # {Interfaces::Migrations::Migrator} to handle migrations, this event will be created and emitted
     # automatically.
     #
-    # @param event [Impl::MigrationOpEvent]
+    # @param tracker [LaunchDarkly::Interfaces::Migrations::OpTracker]
     #
-    def track_migration_op(event)
-      unless event.is_a? LaunchDarkly::Impl::MigrationOpEvent
-        @config.logger.error { "Tried to track migration op event by providing a non-event object. Ignoring." }
+    def track_migration_op(tracker)
+      unless tracker.is_a? LaunchDarkly::Interfaces::Migrations::OpTracker
+        @config.logger.error { "invalid op tracker received in track_migration_op" }
         return
       end
+
+      event = tracker.build
+      if event.is_a? String
+        @config.logger.error { "[LDClient] Error occurred generating migration op event; #{event}" }
+        return
+      end
+
 
       @event_processor.record_migration_op_event(event)
     end

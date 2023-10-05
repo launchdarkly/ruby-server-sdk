@@ -111,12 +111,7 @@ module LaunchDarkly
             )
           end
 
-          event = tracker.build
-          if event.is_a? String
-            @client.logger.error { "[Migrator] Error occurred generating migration op event; #{event}" }
-          else
-            @client.track_migration_op(event)
-          end
+          @client.track_migration_op(tracker)
 
           result
         end
@@ -165,12 +160,7 @@ module LaunchDarkly
             write_result = LaunchDarkly::Migrations::WriteResult.new(result)
           end
 
-          event = tracker.build()
-          if event.is_a? String
-            @client.logger.error { "[Migrator] Error occurred generating migration op event; #{event}" }
-          else
-            @client.track_migration_op(event)
-          end
+          @client.track_migration_op(tracker)
 
           write_result
         end
