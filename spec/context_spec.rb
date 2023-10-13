@@ -19,73 +19,6 @@ module LaunchDarkly
     end
 
     describe "context construction" do
-      describe "legacy users contexts" do
-        it "can be created using the legacy user format" do
-          context = {
-            key: "user-key",
-            custom: {
-              address: {
-                street: "123 Main St.",
-                city: "Every City",
-                state: "XX",
-              },
-            },
-          }
-          result = subject.create(context)
-          expect(result).to be_a(LDContext)
-          expect(result.key).to eq("user-key")
-          expect(result.kind).to eq("user")
-          expect(result.valid?).to be true
-        end
-
-        it "allows an empty string for a key, but it cannot be missing or nil" do
-          expect(subject.create({ key: "" }).valid?).to be true
-          expect(subject.create({ key: nil }).valid?).to be false
-          expect(subject.create({}).valid?).to be false
-        end
-
-        it "anonymous is required to be a boolean or nil" do
-          expect(subject.create({ key: "" }).valid?).to be true
-          expect(subject.create({ key: "", anonymous: true }).valid?).to be true
-          expect(subject.create({ key: "", anonymous: false }).valid?).to be true
-          expect(subject.create({ key: "", anonymous: 0 }).valid?).to be false
-        end
-
-        it "name is required to be a string or nil" do
-          expect(subject.create({ key: "" }).valid?).to be true
-          expect(subject.create({ key: "", name: "My Name" }).valid?).to be true
-          expect(subject.create({ key: "", name: 0 }).valid?).to be false
-        end
-
-        it "creates the correct fully qualified key" do
-          expect(subject.create({ key: "user-key" }).fully_qualified_key).to eq("user-key")
-        end
-
-        it "requires privateAttributeNames to be an array" do
-          context = {
-            key: "user-key",
-            privateAttributeNames: "not an array",
-          }
-          expect(subject.create(context).valid?).to be false
-        end
-
-        it "overwrite custom properties with built-ins when collisions occur" do
-          context = {
-            key: "user-key",
-            ip: "192.168.1.1",
-            avatar: "avatar",
-            custom: {
-              ip: "127.0.0.1",
-              avatar: "custom avatar",
-            },
-          }
-
-          result = subject.create(context)
-          expect(result.get_value(:ip)).to eq("192.168.1.1")
-          expect(result.get_value(:avatar)).to eq("avatar")
-        end
-      end
-
       describe "single kind contexts" do
         it "can be created using the new format" do
           context = {
@@ -151,7 +84,7 @@ module LaunchDarkly
 
       describe "multi-kind contexts" do
         it "can be created from single kind contexts" do
-          user_context = subject.create({ key: "user-key" })
+          user_context = subject.create({ key: "user-key", kind: "user" })
           org_context = subject.create({ key: "org-key", kind: "org" })
           multi_context = subject.create_multi([user_context, org_context])
 
@@ -172,7 +105,7 @@ module LaunchDarkly
         end
 
         it "will return the single kind context if only one is provided" do
-          user_context = subject.create({ key: "user-key" })
+          user_context = subject.create({ kind: 'user', key: "user-key" })
           multi_context = subject.create_multi([user_context])
 
           expect(multi_context).to be_a(LDContext)
@@ -205,7 +138,7 @@ module LaunchDarkly
         end
 
         it "creates the correct fully qualified key" do
-          user_context = subject.create({ key: "a-user-key" })
+          user_context = subject.create({ key: "a-user-key", kind: 'user' })
           org_context = subject.create({ key: "b-org-key", kind: "org" })
           user_first = subject.create_multi([user_context, org_context])
           org_first = subject.create_multi([org_context, user_context])
@@ -305,7 +238,7 @@ module LaunchDarkly
 
       describe "supports retrieval" do
         it "with only support kind for multi-kind contexts" do
-          user_context = subject.create({ key: 'user', name: 'Ruby', anonymous: true })
+          user_context = subject.create({ key: 'user', kind: 'user', name: 'Ruby', anonymous: true })
           org_context = subject.create({ key: 'ld', kind: 'org', name: 'LaunchDarkly', anonymous: false })
 
           multi_context = subject.create_multi([user_context, org_context])
@@ -321,7 +254,6 @@ module LaunchDarkly
         end
 
         it "with basic attributes" do
-          legacy_user = subject.create({ key: 'user', name: 'Ruby', privateAttributeNames: ['name'] })
           org_context = subject.create({ key: 'ld', kind: 'org', name: 'LaunchDarkly', anonymous: true, _meta: { privateAttributes: ['name'] } })
 
           [
@@ -336,7 +268,6 @@ module LaunchDarkly
             ['privateAttributes', be_nil, be_nil],
           ].each do |(reference, user_matcher, org_matcher)|
             ref = Reference.create(reference)
-            expect(legacy_user.get_value_for_reference(ref)).to user_matcher
             expect(org_context.get_value_for_reference(ref)).to org_matcher
           end
         end
@@ -346,7 +277,6 @@ module LaunchDarkly
           tags = ["LaunchDarkly", "Feature Flags"]
           nested = { upper: { middle: { name: "Middle Level", inner: { levels: [0, 1, 2] } }, name: "Upper Level" } }
 
-          legacy_user = subject.create({ key: 'user', name: 'Ruby', custom: { address: address, tags: tags, nested: nested }})
           org_context = subject.create({ key: 'ld', kind: 'org', name: 'LaunchDarkly', anonymous: true, address: address, tags: tags, nested: nested })
 
           [
@@ -361,7 +291,6 @@ module LaunchDarkly
             ['/nested/upper/middle/inner/levels', eq([0, 1, 2])],
           ].each do |(reference, matcher)|
             ref = Reference.create(reference)
-            expect(legacy_user.get_value_for_reference(ref)).to matcher
             expect(org_context.get_value_for_reference(ref)).to matcher
           end
         end

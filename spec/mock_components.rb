@@ -35,7 +35,7 @@ def with_client(config)
 end
 
 def basic_context
-  LaunchDarkly::LDContext::create({ "key": "user-key" })
+  LaunchDarkly::LDContext::create({ "key": "user-key", kind: "user" })
 end
 
 module LaunchDarkly

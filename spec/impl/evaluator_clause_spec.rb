@@ -6,35 +6,35 @@ module LaunchDarkly
     describe "Evaluator (clauses)" do
       describe "evaluate", :evaluator_spec_base => true do
         it "can match built-in attribute" do
-          context = LDContext.create({ key: 'x', name: 'Bob' })
+          context = LDContext.create({ key: 'x', kind: 'user', name: 'Bob' })
           clause = { attribute: 'name', op: 'in', values: ['Bob'] }
           flag = Flags.boolean_flag_with_clauses(clause)
           expect(basic_evaluator.evaluate(flag, context).detail.value).to be true
         end
 
         it "can match custom attribute" do
-          context = LDContext.create({ key: 'x', name: 'Bob', custom: { legs: 4 } })
+          context = LDContext.create({ key: 'x', kind: 'user', name: 'Bob', legs: 4 })
           clause = { attribute: 'legs', op: 'in', values: [4] }
           flag = Flags.boolean_flag_with_clauses(clause)
           expect(basic_evaluator.evaluate(flag, context).detail.value).to be true
         end
 
         it "returns false for missing attribute" do
-          context = LDContext.create({ key: 'x', name: 'Bob' })
+          context = LDContext.create({ key: 'x', kind: 'user', name: 'Bob' })
           clause = { attribute: 'legs', op: 'in', values: [4] }
           flag = Flags.boolean_flag_with_clauses(clause)
           expect(basic_evaluator.evaluate(flag, context).detail.value).to be false
         end
 
         it "returns false for unknown operator" do
-          context = LDContext.create({ key: 'x', name: 'Bob' })
+          context = LDContext.create({ key: 'x', kind: 'user', name: 'Bob' })
           clause = { attribute: 'name', op: 'unknown', values: [4] }
           flag = Flags.boolean_flag_with_clauses(clause)
           expect(basic_evaluator.evaluate(flag, context).detail.value).to be false
         end
 
         it "does not stop evaluating rules after clause with unknown operator" do
-          context = LDContext.create({ key: 'x', name: 'Bob' })
+          context = LDContext.create({ key: 'x', kind: 'user', name: 'Bob' })
           clause0 = { attribute: 'name', op: 'unknown', values: [4] }
           rule0 = { clauses: [ clause0 ], variation: 1 }
           clause1 = { attribute: 'name', op: 'in', values: ['Bob'] }
@@ -44,7 +44,7 @@ module LaunchDarkly
         end
 
         it "can be negated" do
-          context = LDContext.create({ key: 'x', name: 'Bob' })
+          context = LDContext.create({ key: 'x', kind: 'user', name: 'Bob' })
           clause = { attribute: 'name', op: 'in', values: ['Bob'], negate: true }
           flag = Flags.boolean_flag_with_clauses(clause)
           expect(basic_evaluator.evaluate(flag, context).detail.value).to be false
@@ -67,7 +67,7 @@ module LaunchDarkly
         it "clause match by kind attribute" do
           clause = { attribute: 'kind', op: 'startsWith', values: ['a'] }
 
-          context1 = LDContext.create({ key: 'key' })
+          context1 = LDContext.create({ key: 'key', kind: 'user' })
           context2 = LDContext.create({ key: 'key', kind: 'ab' })
           context3 = LDContext.create_multi(
             [

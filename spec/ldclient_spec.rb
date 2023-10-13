@@ -48,7 +48,7 @@ module LaunchDarkly
     context "secure_mode_hash" do
       it "will return the expected value for a known message and secret" do
         ensure_close(subject.new("secret", test_config)) do |client|
-          result = client.secure_mode_hash({key: :Message})
+          result = client.secure_mode_hash(LDContext.create({key: 'Message', kind: 'user'}))
           expect(result).to eq "aa747c502a898200f9e4fa21bac68136f886a0e27aec70ba06daf2e2a5cb5597"
         end
       end

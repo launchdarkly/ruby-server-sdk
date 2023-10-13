@@ -154,7 +154,7 @@ module LaunchDarkly
     # @return [String, nil] a hash string or nil if the provided context was invalid
     #
     def secure_mode_hash(context)
-      context = Impl::Context::make_context(context)
+      context = Impl::Context.make_context(context)
       unless context.valid?
         @config.logger.warn("secure_mode_hash called with invalid context: #{context.error}")
         return nil

@@ -322,7 +322,6 @@ module LaunchDarkly
     #
     def self.create(data)
       return create_invalid_context(ERR_NOT_HASH) unless data.is_a?(Hash)
-      return create_legacy_context(data) unless data.has_key?(:kind)
 
       kind = data[:kind]
       if kind == KIND_MULTI
@@ -390,50 +389,6 @@ module LaunchDarkly
     #
     private_class_method def self.create_invalid_context(error)
       new(nil, nil, nil, nil, false, nil, nil, error)
-    end
-
-    #
-    # @param data [Hash]
-    # @return [LDContext]
-    #
-    private_class_method def self.create_legacy_context(data)
-      key = data[:key]
-
-      # Legacy users are allowed to have "" as a key but they cannot have nil as a key.
-      return create_invalid_context(ERR_KEY_EMPTY) if key.nil?
-
-      name = data[:name]
-      name_error = LaunchDarkly::Impl::Context.validate_name(name)
-      return create_invalid_context(name_error) unless name_error.nil?
-
-      anonymous = data[:anonymous]
-      anonymous_error = LaunchDarkly::Impl::Context.validate_anonymous(anonymous, true)
-      return create_invalid_context(anonymous_error) unless anonymous_error.nil?
-
-      custom = data[:custom]
-      unless custom.nil? || custom.is_a?(Hash)
-        return create_invalid_context(ERR_CUSTOM_NON_HASH)
-      end
-
-      # We only need to create an attribute hash if one of these keys exist.
-      # Everything else is stored in dedicated instance variables.
-      attributes = custom.clone
-      data.each do |k, v|
-        case k
-        when :ip, :email, :avatar, :firstName, :lastName, :country
-          attributes ||= {}
-          attributes[k] = v.clone
-        else
-          next
-        end
-      end
-
-      private_attributes = data[:privateAttributeNames]
-      if private_attributes && !private_attributes.is_a?(Array)
-        return create_invalid_context(ERR_PRIVATE_NON_ARRAY)
-      end
-
-      new(key.to_s, key.to_s, KIND_DEFAULT, name, anonymous, attributes, private_attributes)
     end
 
     #

@@ -80,6 +80,7 @@ module LaunchDarkly
       def user_context
         LDContext::create({
           key: "userkey",
+          kind: "user",
           email: "test@example.com",
           name: "Bob",
         })

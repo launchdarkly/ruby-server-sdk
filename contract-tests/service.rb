@@ -32,7 +32,6 @@ get '/' do
       'all-flags-details-only-for-tracked-flags',
       'filtering',
       'secure-mode-hash',
-      'user-type',
       'tags',
       'migrations',
       'event-sampling',
