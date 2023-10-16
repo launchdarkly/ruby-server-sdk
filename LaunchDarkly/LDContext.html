@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::LDContext
   
-    &mdash; LaunchDarkly Ruby SDK (7.2.0)
+    &mdash; LaunchDarkly Ruby SDK (7.3.0)
   
 </title>
 
@@ -306,7 +306,7 @@ context, and the associated errors by calling <span class='object_link'><a href=
 
     <ul class="summary">
       
-        <li class="public ">
+        <li class="public deprecated">
   <span class="summary_signature">
     
       <a href="#create-class_method" title="create (class method)">.<strong>create</strong>(data)  &#x21d2; LDContext </a>
@@ -319,11 +319,11 @@ context, and the associated errors by calling <span class='object_link'><a href=
   
   
   
-  
+  <span class="deprecated note title">deprecated</span>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Create a single kind context from the provided hash.</p>
+    <span class="summary_desc"><strong>Deprecated.</strong> <div class='inline'><p>The old user format will be removed in 8.0.0. Please use the new context specific format.</p>
 </div></span>
   
 </li>
@@ -911,7 +911,9 @@ context, and the associated errors by calling <span class='object_link'><a href=
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Create a single kind context from the provided hash.</p>
+    <div class="note deprecated"><strong>Deprecated.</strong> <div class='inline'><p>The old user format will be removed in 8.0.0. Please use the new context specific format.</p>
+</div></div>
+<p>Create a single kind context from the provided hash.</p>
 
 <p>The provided hash must match the format as outlined in the
 href="https://docs.launchdarkly.com/sdk/features/user-config">https://docs.launchdarkly.com/sdk/features/user-config</a> SDK
@@ -957,8 +959,6 @@ documentation.</p>
       <pre class="lines">
 
 
-323
-324
 325
 326
 327
@@ -973,10 +973,12 @@ documentation.</p>
 336
 337
 338
-339</pre>
+339
+340
+341</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 323</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 325</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create'>create</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_create_invalid_context'>create_invalid_context</span><span class='lparen'>(</span><span class='const'>ERR_NOT_HASH</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
@@ -1065,8 +1067,6 @@ multi-kind context wrapping that one single-kind.</p>
       <pre class="lines">
 
 
-359
-360
 361
 362
 363
@@ -1091,10 +1091,12 @@ multi-kind context wrapping that one single-kind.</p>
 382
 383
 384
-385</pre>
+385
+386
+387</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 359</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 361</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create_multi'>create_multi</span><span class='lparen'>(</span><span class='id identifier rubyid_contexts'>contexts</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_create_invalid_context'>create_invalid_context</span><span class='lparen'>(</span><span class='const'>ERR_KIND_MULTI_NON_CONTEXT_ARRAY</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_contexts'>contexts</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Array</span><span class='rparen'>)</span>
@@ -1923,7 +1925,7 @@ zero.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu May  4 12:47:44 2023 by
+  Generated on Mon Oct 16 19:42:12 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

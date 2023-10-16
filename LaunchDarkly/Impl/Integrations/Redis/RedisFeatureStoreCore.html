@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStoreCore
   
-    &mdash; LaunchDarkly Ruby SDK (7.2.0)
+    &mdash; LaunchDarkly Ruby SDK (7.3.0)
   
 </title>
 
@@ -368,14 +368,14 @@
       <pre class="lines">
 
 
-159
 160
 161
 162
-163</pre>
+163
+164</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 159</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 160</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
   <span class='kw'>super</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
@@ -446,16 +446,16 @@
       <pre class="lines">
 
 
-165
 166
 167
 168
 169
 170
-171</pre>
+171
+172</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 165</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 166</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_available?'>available?</span>
   <span class='comment'># We don&#39;t care what the status is, only that we can connect
@@ -508,12 +508,12 @@
       <pre class="lines">
 
 
-173
 174
-175</pre>
+175
+176</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 173</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 174</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_description'>description</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>RedisFeatureStore</span><span class='tstring_end'>&quot;</span></span>
@@ -562,7 +562,6 @@
       <pre class="lines">
 
 
-200
 201
 202
 203
@@ -571,10 +570,11 @@
 206
 207
 208
-209</pre>
+209
+210</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 200</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 201</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_all_internal'>get_all_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_fs'>fs</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
@@ -630,14 +630,14 @@
       <pre class="lines">
 
 
-194
 195
 196
 197
-198</pre>
+198
+199</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 194</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 195</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_internal'>get_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_with_connection'>with_connection</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_redis'>redis</span><span class='op'>|</span>
@@ -688,7 +688,6 @@
       <pre class="lines">
 
 
-177
 178
 179
 180
@@ -703,10 +702,11 @@
 189
 190
 191
-192</pre>
+192
+193</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 177</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 178</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_init_internal'>init_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_count'>count</span> <span class='op'>=</span> <span class='int'>0</span>
@@ -781,12 +781,12 @@
       <pre class="lines">
 
 
-243
 244
-245</pre>
+245
+246</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 243</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 244</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized_internal?'>initialized_internal?</span>
   <span class='id identifier rubyid_with_connection'>with_connection</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_redis'>redis</span><span class='op'>|</span> <span class='id identifier rubyid_redis'>redis</span><span class='period'>.</span><span class='id identifier rubyid_exists?'>exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
@@ -835,7 +835,6 @@
       <pre class="lines">
 
 
-211
 212
 213
 214
@@ -865,10 +864,11 @@
 238
 239
 240
-241</pre>
+241
+242</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 211</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/redis_impl.rb', line 212</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_upsert_internal'>upsert_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_base_key'>base_key</span> <span class='op'>=</span> <span class='id identifier rubyid_items_key'>items_key</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
@@ -911,7 +911,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu May  4 12:47:45 2023 by
+  Generated on Mon Oct 16 19:42:13 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

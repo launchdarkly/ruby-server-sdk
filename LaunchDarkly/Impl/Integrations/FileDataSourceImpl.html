@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::FileDataSourceImpl
   
-    &mdash; LaunchDarkly Ruby SDK (7.2.0)
+    &mdash; LaunchDarkly Ruby SDK (7.3.0)
   
 </title>
 
@@ -382,7 +382,6 @@ gem has been provided by the host app.</p>
       <pre class="lines">
 
 
-29
 30
 31
 32
@@ -403,10 +402,11 @@ gem has been provided by the host app.</p>
 47
 48
 49
-50</pre>
+50
+51</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 29</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 30</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_data_store'>data_store</span><span class='comma'>,</span> <span class='id identifier rubyid_data_source_update_sink'>data_source_update_sink</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='ivar'>@data_store</span> <span class='op'>=</span> <span class='id identifier rubyid_data_source_update_sink'>data_source_update_sink</span> <span class='op'>||</span> <span class='id identifier rubyid_data_store'>data_store</span>
@@ -494,12 +494,12 @@ gem has been provided by the host app.</p>
       <pre class="lines">
 
 
-52
 53
-54</pre>
+54
+55</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 52</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 53</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='ivar'>@initialized</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
@@ -548,7 +548,6 @@ gem has been provided by the host app.</p>
       <pre class="lines">
 
 
-56
 57
 58
 59
@@ -564,10 +563,11 @@ gem has been provided by the host app.</p>
 69
 70
 71
-72</pre>
+72
+73</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 56</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 57</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start'>start</span>
   <span class='id identifier rubyid_ready'>ready</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>Event</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
@@ -630,12 +630,12 @@ gem has been provided by the host app.</p>
       <pre class="lines">
 
 
-74
 75
-76</pre>
+76
+77</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 74</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 75</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='ivar'>@listener</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span> <span class='kw'>unless</span> <span class='ivar'>@listener</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -650,7 +650,7 @@ gem has been provided by the host app.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu May  4 12:47:45 2023 by
+  Generated on Mon Oct 16 19:42:13 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Impl::Integrations::FileDataSourceImpl::FileDataSourcePoller
   
-    &mdash; LaunchDarkly Ruby SDK (7.2.0)
+    &mdash; LaunchDarkly Ruby SDK (7.3.0)
   
 </title>
 
@@ -232,7 +232,6 @@
       <pre class="lines">
 
 
-180
 181
 182
 183
@@ -266,10 +265,11 @@
 211
 212
 213
-214</pre>
+214
+215</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 180</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 181</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_resolved_paths'>resolved_paths</span><span class='comma'>,</span> <span class='id identifier rubyid_interval'>interval</span><span class='comma'>,</span> <span class='id identifier rubyid_reloader'>reloader</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
   <span class='ivar'>@stopped</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>AtomicBoolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
@@ -357,13 +357,13 @@
       <pre class="lines">
 
 
-216
 217
 218
-219</pre>
+219
+220</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 216</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/file_data_source.rb', line 217</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='ivar'>@stopped</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
@@ -379,7 +379,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu May  4 12:47:45 2023 by
+  Generated on Mon Oct 16 19:42:13 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>

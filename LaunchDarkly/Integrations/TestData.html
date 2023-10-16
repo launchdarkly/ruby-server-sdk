@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Integrations::TestData
   
-    &mdash; LaunchDarkly Ruby SDK (7.2.0)
+    &mdash; LaunchDarkly Ruby SDK (7.3.0)
   
 </title>
 
@@ -489,7 +489,7 @@ properties, and provide more complex behavior, using the <span class='object_lin
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flag'>flag</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_existing_builder'>existing_builder</span> <span class='op'>=</span> <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_read_lock'>with_read_lock</span> <span class='lbrace'>{</span> <span class='ivar'>@flag_builders</span><span class='lbracket'>[</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
-  <span class='kw'>if</span> <span class='id identifier rubyid_existing_builder'>existing_builder</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='kw'>then</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_existing_builder'>existing_builder</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='const'><span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_boolean_flag'><span class='object_link'><a href="TestData/FlagBuilder.html#boolean_flag-instance_method" title="LaunchDarkly::Integrations::TestData::FlagBuilder#boolean_flag (method)">boolean_flag</a></span></span>
   <span class='kw'>else</span>
     <span class='id identifier rubyid_existing_builder'>existing_builder</span><span class='period'>.</span><span class='id identifier rubyid_clone'>clone</span>
@@ -610,7 +610,7 @@ unless you call <span class='object_link'><a href="#update-instance_method" titl
     <span class='ivar'>@flag_builders</span><span class='lbracket'>[</span><span class='id identifier rubyid_flag_builder'>flag_builder</span><span class='period'>.</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_flag_builder'>flag_builder</span>
     <span class='id identifier rubyid_version'>version</span> <span class='op'>=</span> <span class='int'>0</span>
     <span class='id identifier rubyid_flag_key'>flag_key</span> <span class='op'>=</span> <span class='id identifier rubyid_flag_builder'>flag_builder</span><span class='period'>.</span><span class='id identifier rubyid_key'>key</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span>
-    <span class='kw'>if</span> <span class='ivar'>@current_flags</span><span class='lbracket'>[</span><span class='id identifier rubyid_flag_key'>flag_key</span><span class='rbracket'>]</span> <span class='kw'>then</span>
+    <span class='kw'>if</span> <span class='ivar'>@current_flags</span><span class='lbracket'>[</span><span class='id identifier rubyid_flag_key'>flag_key</span><span class='rbracket'>]</span>
       <span class='id identifier rubyid_version'>version</span> <span class='op'>=</span> <span class='ivar'>@current_flags</span><span class='lbracket'>[</span><span class='id identifier rubyid_flag_key'>flag_key</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span>
     <span class='kw'>end</span>
     <span class='id identifier rubyid_new_flag'>new_flag</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>Model</span><span class='period'>.</span><span class='id identifier rubyid_deserialize'>deserialize</span><span class='lparen'>(</span><span class='const'>FEATURES</span><span class='comma'>,</span> <span class='id identifier rubyid_flag_builder'>flag_builder</span><span class='period'>.</span><span class='id identifier rubyid_build'>build</span><span class='lparen'>(</span><span class='id identifier rubyid_version'>version</span><span class='op'>+</span><span class='int'>1</span><span class='rparen'>)</span><span class='rparen'>)</span>
@@ -833,7 +833,7 @@ by just setting flag values.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu May  4 12:47:44 2023 by
+  Generated on Mon Oct 16 19:42:12 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.34 (ruby-2.7.8).
 </div>
