@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.3.0] - 2023-10-16
+### Fixed:
+- The documentation for the `default_connect_timeout` setting stated it defaulted to 10 seconds when the code actually defaults to 2. (Thanks, [zmagg-figma](https://github.com/launchdarkly/ruby-server-sdk/pull/223)!)
+
+### Deprecated:
+- Creating an `LDContext` using the legacy user format has been deprecated and will be removed in the next major release. To learn more, read the [Contexts documentation](https://docs.launchdarkly.com/guides/flags/intro-contexts).
+
 ## [7.2.0] - 2023-05-04
 ### Added:
 - You can monitor the status of the SDK's data source (which normally means the streaming connection to the LaunchDarkly service) with `LaunchDarkly::LDClient.data_source_status_provider`. This allows you to check the current connection status, and to be notified if this status changes.
