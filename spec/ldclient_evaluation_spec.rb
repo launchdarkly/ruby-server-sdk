@@ -76,9 +76,6 @@ module LaunchDarkly
     end
 
     context "variation_detail" do
-      feature_with_value = { key: "key", on: false, offVariation: 0, variations: ["value"], version: 100,
-        trackEvents: true, debugEventsUntilDate: 1000 }
-
       it "returns the default value if the client is offline" do
         with_client(test_config(offline: true)) do |offline_client|
           result = offline_client.variation_detail("doesntmatter", basic_context, "default")
@@ -146,7 +143,7 @@ module LaunchDarkly
 
     context "all_flags_state" do
       let(:flag1) { { key: "key1", version: 100, offVariation: 0, variations: [ 'value1' ], trackEvents: false } }
-      let(:flag2) { { key: "key2", version: 200, offVariation: 1, variations: [ 'x', 'value2' ], trackEvents: true, debugEventsUntilDate: 1000 } }
+      let(:flag2) { { key: "key2", version: 200, offVariation: 1, variations: %w[x value2], trackEvents: true, debugEventsUntilDate: 1000 } }
       let(:test_data) {
         td = Integrations::TestData.data_source
         td.use_preconfigured_flag(flag1)
@@ -204,8 +201,8 @@ module LaunchDarkly
         future_time = (Time.now.to_f * 1000).to_i + 100000
         td = Integrations::TestData.data_source
         td.use_preconfigured_flag({ key: "key1", version: 100, offVariation: 0, variations: [ 'value1' ], trackEvents: false })
-        td.use_preconfigured_flag({ key: "key2", version: 200, offVariation: 1, variations: [ 'x', 'value2' ], trackEvents: true })
-        td.use_preconfigured_flag({ key: "key3", version: 300, offVariation: 1, variations: [ 'x', 'value3' ], debugEventsUntilDate: future_time })
+        td.use_preconfigured_flag({ key: "key2", version: 200, offVariation: 1, variations: %w[x value2], trackEvents: true })
+        td.use_preconfigured_flag({ key: "key3", version: 300, offVariation: 1, variations: %w[x value3], debugEventsUntilDate: future_time })
 
         with_client(test_config(data_source: td)) do |client|
           state = client.all_flags_state({ key: 'userkey' }, { details_only_for_tracked_flags: true })

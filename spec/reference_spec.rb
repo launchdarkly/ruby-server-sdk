@@ -1,7 +1,8 @@
 require "ldclient-rb/reference"
 
-describe LaunchDarkly::Reference do
-  subject { LaunchDarkly::Reference }
+module LaunchDarkly
+describe Reference do
+  subject { Reference }
 
   it "determines invalid formats" do
     [
@@ -92,10 +93,10 @@ describe LaunchDarkly::Reference do
   describe "creating literal references" do
     it "can create valid references" do
       [
-        ["name", "name"],
-        ["a/b", "a/b"],
-        ["/a/b~c", "/~1a~1b~0c"],
-        ["/", "/~1"],
+        %w[name name],
+        %w[a/b a/b],
+        %w[/a/b~c /~1a~1b~0c],
+        %w[/ /~1],
       ].each do |(literal, path)|
         expect(subject.create_literal(literal).raw_path).to eq(subject.create(path).raw_path)
       end
@@ -107,4 +108,5 @@ describe LaunchDarkly::Reference do
       end
     end
   end
+end
 end

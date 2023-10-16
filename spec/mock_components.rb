@@ -13,7 +13,7 @@ def null_data
 end
 
 def null_logger
-  double().as_null_object
+  double.as_null_object
 end
 
 def base_config

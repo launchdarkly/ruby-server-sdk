@@ -18,6 +18,7 @@ module LaunchDarkly
           require 'listen'
           @@have_listen = true
         rescue LoadError
+          # Ignored
         end
 
         #

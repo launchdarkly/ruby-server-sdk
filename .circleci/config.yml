@@ -22,9 +22,13 @@ workflows:
           name: Ruby 3.1
           docker-image: cimg/ruby:3.1
       - build-test-linux:
+          name: Ruby 3.2
+          docker-image: cimg/ruby:3.2
+      - build-test-linux:
           name: JRuby 9.4
           docker-image: jruby:9.4-jdk
           jruby: true
+          spec-tags: -t '~flaky'
 
 jobs:
   build-test-windows:
@@ -36,6 +40,12 @@ jobs:
 
     steps:
       - checkout
+
+      # No idea what this is. But the win orb starts it up on port 8000 which
+      # conflicts with DynamoDB. So we will stop it.
+      - run:
+          name: "Shutdown IBXDashboard"
+          command: Stop-Service IBXDashboard
 
       - run:
           name: "Setup DynamoDB"
@@ -97,10 +107,13 @@ jobs:
       jruby:
         type: boolean
         default: false
+      spec-tags:
+        type: string
+        default: ""
 
     docker:
       - image: <<parameters.docker-image>>
-      - image: consul
+      - image: hashicorp/consul
       - image: redis
       - image: amazon/dynamodb-local
 
@@ -124,7 +137,7 @@ jobs:
       - run: gem install bundler -v 2.2.33
       - run: bundle _2.2.33_ install
       - run: mkdir /tmp/circle-artifacts
-      - run: bundle _2.2.33_ exec rspec --format documentation --format RspecJunitFormatter -o /tmp/circle-artifacts/rspec.xml spec
+      - run: bundle _2.2.33_ exec rspec --format documentation --format RspecJunitFormatter -o /tmp/circle-artifacts/rspec.xml spec <<parameters.spec-tags>>
       - run: mv coverage /tmp/circle-artifacts/
 
       - when:

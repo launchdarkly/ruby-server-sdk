@@ -13,14 +13,14 @@ RSpec.shared_examples "segment_store" do |create_store_method|
   let(:key0) { segment0[:key].to_sym }
 
   let!(:store) do
-    s = create_store_method.call()
+    s = create_store_method.call
     s.init({ key0 => segment0 })
     s
   end
 
-  def new_version_plus(f, deltaVersion, attrs = {})
+  def new_version_plus(f, delta_version, attrs = {})
     f1 = f.clone
-    f1[:version] = f[:version] + deltaVersion
+    f1[:version] = f[:version] + delta_version
     f1.update(attrs)
     f1
   end
@@ -48,7 +48,7 @@ RSpec.shared_examples "segment_store" do |create_store_method|
     feature1[:version] = 5
     feature1[:on] = false
     store.upsert(:"test-feature-flag1", feature1)
-    expect(store.all).to eq ({ key0 => segment0, :"test-feature-flag1" => feature1 })
+    expect(store.all).to eq({ key0 => segment0, :"test-feature-flag1" => feature1 })
   end
 
   it "can add new feature" do

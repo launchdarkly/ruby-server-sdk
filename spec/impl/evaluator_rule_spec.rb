@@ -19,7 +19,6 @@ module LaunchDarkly
           rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }], variation: 1 }
           flag = Flags.boolean_flag_with_rules(rule)
           context = LDContext.create({ key: 'userkey' })
-          detail = EvaluationDetail.new(true, 1, EvaluationReason::rule_match(0, 'ruleid'))
           result1 = basic_evaluator.evaluate(flag, context)
           result2 = basic_evaluator.evaluate(flag, context)
           expect(result1.detail.reason.rule_id).to eq 'ruleid'

@@ -1,20 +1,22 @@
 require "feature_store_spec_base"
 require "spec_helper"
 
-class InMemoryStoreTester
-  def create_feature_store
-    LaunchDarkly::InMemoryFeatureStore.new
+module LaunchDarkly
+  class InMemoryStoreTester
+    def create_feature_store
+      InMemoryFeatureStore.new
+    end
   end
-end
 
-describe LaunchDarkly::InMemoryFeatureStore do
-  subject { LaunchDarkly::InMemoryFeatureStore }
+  describe InMemoryFeatureStore do
+    subject { InMemoryFeatureStore }
 
-  include_examples "any_feature_store", InMemoryStoreTester.new
+    include_examples "any_feature_store", InMemoryStoreTester.new
 
-  it "does not provide status monitoring support" do
-    store = subject.new
+    it "does not provide status monitoring support" do
+      store = subject.new
 
-    expect(store.monitoring_enabled?).to be false
+      expect(store.monitoring_enabled?).to be false
+    end
   end
 end

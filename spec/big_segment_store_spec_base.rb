@@ -82,7 +82,7 @@ shared_examples "big_segment_store" do |store_tester_class|
 
         it "includes only" do
           with_empty_store do |store|
-            store_tester.set_big_segments(fake_context_hash, ["key1", "key2"], [])
+            store_tester.set_big_segments(fake_context_hash, %w[key1 key2], [])
 
             membership = store.get_membership(fake_context_hash)
             expect(membership).to eq({ "key1" => true, "key2" => true })
@@ -91,7 +91,7 @@ shared_examples "big_segment_store" do |store_tester_class|
 
         it "excludes only" do
           with_empty_store do |store|
-            store_tester.set_big_segments(fake_context_hash, [], ["key1", "key2"])
+            store_tester.set_big_segments(fake_context_hash, [], %w[key1 key2])
 
             membership = store.get_membership(fake_context_hash)
             expect(membership).to eq({ "key1" => false, "key2" => false })
@@ -100,7 +100,7 @@ shared_examples "big_segment_store" do |store_tester_class|
 
         it "includes and excludes" do
           with_empty_store do |store|
-            store_tester.set_big_segments(fake_context_hash, ["key1", "key2"], ["key2", "key3"])
+            store_tester.set_big_segments(fake_context_hash, %w[key1 key2], %w[key2 key3])
 
             membership = store.get_membership(fake_context_hash)
             expect(membership).to eq({ "key1" => true, "key2" => true, "key3" => false }) # include of key2 overrides exclude

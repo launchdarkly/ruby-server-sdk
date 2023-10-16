@@ -29,7 +29,6 @@ module LaunchDarkly
 
       it "tracks start and end dates" do
         es = subject.new
-        flag = { key: "key" }
         event1 = make_eval_event(2000, context, 'flag1')
         event2 = make_eval_event(1000, context, 'flag1')
         event3 = make_eval_event(1500, context, 'flag1')
@@ -44,8 +43,6 @@ module LaunchDarkly
 
       it "counts events" do
         es = subject.new
-        flag1 = { key: "key1", version: 11 }
-        flag2 = { key: "key2", version: 22 }
         event1 = make_eval_event(0, context, 'key1', 11, 1, 'value1', nil, 'default1')
         event2 = make_eval_event(0, context, 'key1', 11, 2, 'value2', nil, 'default1')
         event3 = make_eval_event(0, context, 'key2', 22, 1, 'value99', nil, 'default2')
@@ -54,7 +51,7 @@ module LaunchDarkly
         [event1, event2, event3, event4, event5].each { |e| es.summarize_event(e) }
         data = es.snapshot
 
-        expectedCounters = {
+        expected_counters = {
           'key1' => EventSummaryFlagInfo.new(
             'default1', {
               11 => {
@@ -81,7 +78,7 @@ module LaunchDarkly
             Set.new(["user"])
           ),
         }
-        expect(data.counters).to eq expectedCounters
+        expect(data.counters).to eq expected_counters
       end
     end
   end

@@ -1,3 +1,4 @@
+require "ldclient-rb/interfaces"
 require "concurrent/atomics"
 require "json"
 
@@ -117,7 +118,7 @@ module LaunchDarkly
             @logger = opts[:logger] || Config.default_logger
             @test_hook = opts[:test_hook]  # used for unit tests, deliberately undocumented
 
-            @stopped = Concurrent::AtomicBoolean.new()
+            @stopped = Concurrent::AtomicBoolean.new
 
             with_connection do |redis|
               @logger.info("#{description}: using Redis instance at #{redis.connection[:host]}:#{redis.connection[:port]} and prefix: #{@prefix}")

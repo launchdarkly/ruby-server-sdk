@@ -167,7 +167,7 @@ module LaunchDarkly
       context "status polling" do
         it "detects store unavailability" do
           store = double
-          should_fail = Concurrent::AtomicBoolean.new(false)
+          should_fail = Concurrent::AtomicBoolean.new
           expect(store).to receive(:get_metadata).at_least(:once) do
             throw "sorry" if should_fail.value
             always_up_to_date
@@ -178,24 +178,24 @@ module LaunchDarkly
           with_manager(BigSegmentsConfig.new(store: store, status_poll_interval: 0.01)) do |m|
             m.status_provider.add_observer(SimpleObserver.new(->(value) { statuses << value }))
 
-            status1 = statuses.pop()
+            status1 = statuses.pop
             expect(status1.available).to be(true)
 
             should_fail.make_true
 
-            status2 = statuses.pop()
+            status2 = statuses.pop
             expect(status2.available).to be(false)
 
             should_fail.make_false
 
-            status3 = statuses.pop()
+            status3 = statuses.pop
             expect(status3.available).to be(true)
           end
         end
 
         it "detects stale status" do
           store = double
-          should_be_stale = Concurrent::AtomicBoolean.new(false)
+          should_be_stale = Concurrent::AtomicBoolean.new
           expect(store).to receive(:get_metadata).at_least(:once) do
             should_be_stale.value ? always_stale : always_up_to_date
           end
@@ -205,17 +205,17 @@ module LaunchDarkly
           with_manager(BigSegmentsConfig.new(store: store, status_poll_interval: 0.01)) do |m|
             m.status_provider.add_observer(SimpleObserver.new(->(value) { statuses << value }))
 
-            status1 = statuses.pop()
+            status1 = statuses.pop
             expect(status1.stale).to be(false)
 
             should_be_stale.make_true
 
-            status2 = statuses.pop()
+            status2 = statuses.pop
             expect(status2.stale).to be(true)
 
             should_be_stale.make_false
 
-            status3 = statuses.pop()
+            status3 = statuses.pop
             expect(status3.stale).to be(false)
           end
         end

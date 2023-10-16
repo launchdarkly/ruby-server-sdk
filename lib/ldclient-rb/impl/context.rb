@@ -40,7 +40,7 @@ module LaunchDarkly
         return ERR_KIND_NON_STRING unless kind.is_a?(String)
         return ERR_KIND_CANNOT_BE_KIND if kind == "kind"
         return ERR_KIND_CANNOT_BE_MULTI if kind == "multi"
-        return ERR_KIND_INVALID_CHARS unless kind.match?(/^[\w.-]+$/)
+        ERR_KIND_INVALID_CHARS unless kind.match?(/^[\w.-]+$/)
       end
 
       #
@@ -51,7 +51,7 @@ module LaunchDarkly
       #
       def self.validate_key(key)
         return ERR_KEY_NON_STRING unless key.is_a?(String)
-        return ERR_KEY_EMPTY if key == ""
+        ERR_KEY_EMPTY if key == ""
       end
 
       #
@@ -61,7 +61,7 @@ module LaunchDarkly
       # @return [String, nil]
       #
       def self.validate_name(name)
-        return ERR_NAME_NON_STRING unless name.nil? || name.is_a?(String)
+        ERR_NAME_NON_STRING unless name.nil? || name.is_a?(String)
       end
 
       #

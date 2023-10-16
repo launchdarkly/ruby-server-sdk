@@ -48,7 +48,7 @@ $unused_key = "no"
 shared_examples "any_feature_store" do |store_tester|
   let(:store_tester) { store_tester }
 
-  def with_store()
+  def with_store
     ensure_stop(store_tester.create_feature_store) do |store|
       yield store
     end
@@ -64,8 +64,8 @@ shared_examples "any_feature_store" do |store_tester|
     end
   end
 
-  def new_version_plus(f, deltaVersion, attrs = {})
-    f.clone.merge({ version: f[:version] + deltaVersion }).merge(attrs)
+  def new_version_plus(f, delta_version, attrs = {})
+    f.clone.merge({ version: f[:version] + delta_version }).merge(attrs)
   end
 
   it "is not initialized by default" do
@@ -114,7 +114,7 @@ shared_examples "any_feature_store" do |store_tester|
       deleted: false,
     }
     with_inited_store([ $thing1, thing2 ]) do |store|
-      expect(store.all($things_kind)).to eq ({ $key1.to_sym => $thing1, key2.to_sym => thing2 })
+      expect(store.all($things_kind)).to eq({ $key1.to_sym => $thing1, key2.to_sym => thing2 })
     end
   end
 
@@ -127,7 +127,7 @@ shared_examples "any_feature_store" do |store_tester|
       deleted: true,
     }
     with_inited_store([ $thing1, thing2 ]) do |store|
-      expect(store.all($things_kind)).to eq ({ $key1.to_sym => $thing1 })
+      expect(store.all($things_kind)).to eq({ $key1.to_sym => $thing1 })
     end
   end
 
@@ -221,8 +221,6 @@ shared_examples "persistent_feature_store" do |store_tester_class|
       prefix_test_groups.each do |subgroup_description, prefix_options|
         # The following tests are done for each permutation of (caching/no caching) and (default prefix/specified prefix)
         context(subgroup_description) do
-          options = caching_options.merge(prefix_options).merge(base_options)
-
           store_tester = store_tester_class.new(base_options)
 
           before(:each) { store_tester.clear_data }
