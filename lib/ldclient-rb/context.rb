@@ -317,6 +317,8 @@ module LaunchDarkly
     # {https://docs.launchdarkly.com/sdk/features/user-config SDK
     # documentation}.
     #
+    # @deprecated The old user format will be removed in 8.0.0. Please use the new context specific format.
+    #
     # @param data [Hash]
     # @return [LDContext]
     #
