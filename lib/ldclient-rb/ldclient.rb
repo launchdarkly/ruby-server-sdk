@@ -6,8 +6,10 @@ require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/store_client_wrapper"
+require "ldclient-rb/impl/migrations/tracker"
 require "concurrent/atomics"
 require "digest/sha1"
+require "forwardable"
 require "logger"
 require "benchmark"
 require "json"
@@ -20,6 +22,10 @@ module LaunchDarkly
   #
   class LDClient
     include Impl
+    extend Forwardable
+
+    def_delegators :@config, :logger
+
     #
     # Creates a new client instance that connects to LaunchDarkly. A custom
     # configuration parameter can also supplied to specify advanced options,
@@ -148,7 +154,7 @@ module LaunchDarkly
     # @return [String, nil] a hash string or nil if the provided context was invalid
     #
     def secure_mode_hash(context)
-      context = Impl::Context::make_context(context)
+      context = Impl::Context.make_context(context)
       unless context.valid?
         @config.logger.warn("secure_mode_hash called with invalid context: #{context.error}")
         return nil
@@ -188,10 +194,11 @@ module LaunchDarkly
     # @param default the default value of the flag; this is used if there is an error
     #   condition making it impossible to find or evaluate the flag
     #
-    # @return the variation for the provided context, or the default value if there's an an error
+    # @return the variation for the provided context, or the default value if there's an error
     #
     def variation(key, context, default)
-      evaluate_internal(key, context, default, false).value
+      detail, _, _, = variation_with_flag(key, context, default)
+      detail.value
     end
 
     #
@@ -218,7 +225,43 @@ module LaunchDarkly
     # @return [EvaluationDetail] an object describing the result
     #
     def variation_detail(key, context, default)
-      evaluate_internal(key, context, default, true)
+      detail, _, _ = evaluate_internal(key, context, default, true)
+      detail
+    end
+
+    #
+    # This method returns the migration stage of the migration feature flag for the given evaluation context.
+    #
+    # This method returns the default stage if there is an error or the flag does not exist. If the default stage is not
+    # a valid stage, then a default stage of 'off' will be used instead.
+    #
+    # @param key [String]
+    # @param context [LDContext]
+    # @param default_stage [Symbol]
+    #
+    # @return [Array<Symbol, Interfaces::Migrations::OpTracker>]
+    #
+    def migration_variation(key, context, default_stage)
+      unless Migrations::VALID_STAGES.include? default_stage
+        @config.logger.error { "[LDClient] default_stage #{default_stage} is not a valid stage; continuing with 'off' as default" }
+        default_stage = Migrations::STAGE_OFF
+      end
+
+      context = Impl::Context::make_context(context)
+      detail, flag, _ = variation_with_flag(key, context, default_stage.to_s)
+
+      stage = detail.value
+      stage = stage.to_sym if stage.respond_to? :to_sym
+
+      if Migrations::VALID_STAGES.include?(stage)
+        tracker = Impl::Migrations::OpTracker.new(@config.logger, key, flag, context, detail, default_stage)
+        return stage, tracker
+      end
+
+      detail = LaunchDarkly::Impl::Evaluator.error_result(LaunchDarkly::EvaluationReason::ERROR_WRONG_TYPE, default_stage.to_s)
+      tracker = Impl::Migrations::OpTracker.new(@config.logger, key, flag, context, detail, default_stage)
+
+      [default_stage, tracker]
     end
 
     #
@@ -279,6 +322,32 @@ module LaunchDarkly
       end
 
       @event_processor.record_custom_event(context, event_name, data, metric_value)
+    end
+
+    #
+    # Tracks the results of a migrations operation. This event includes measurements which can be used to enhance the
+    # observability of a migration within the LaunchDarkly UI.
+    #
+    # This event should be generated through {Interfaces::Migrations::OpTracker}. If you are using the
+    # {Interfaces::Migrations::Migrator} to handle migrations, this event will be created and emitted
+    # automatically.
+    #
+    # @param tracker [LaunchDarkly::Interfaces::Migrations::OpTracker]
+    #
+    def track_migration_op(tracker)
+      unless tracker.is_a? LaunchDarkly::Interfaces::Migrations::OpTracker
+        @config.logger.error { "invalid op tracker received in track_migration_op" }
+        return
+      end
+
+      event = tracker.build
+      if event.is_a? String
+        @config.logger.error { "[LDClient] Error occurred generating migration op event; #{event}" }
+        return
+      end
+
+
+      @event_processor.record_migration_op_event(event)
     end
 
     #
@@ -430,24 +499,41 @@ module LaunchDarkly
       end
     end
 
+    #
+    # @param key [String]
     # @param context [Hash, LDContext]
-    # @return [EvaluationDetail]
+    # @param default [Object]
+    #
+    # @return [Array<EvaluationDetail, [LaunchDarkly::Impl::Model::FeatureFlag, nil], [String, nil]>]
+    #
+    def variation_with_flag(key, context, default)
+      evaluate_internal(key, context, default, false)
+    end
+
+    #
+    # @param key [String]
+    # @param context [Hash, LDContext]
+    # @param default [Object]
+    # @param with_reasons [Boolean]
+    #
+    # @return [Array<EvaluationDetail, [LaunchDarkly::Impl::Model::FeatureFlag, nil], [String, nil]>]
+    #
     def evaluate_internal(key, context, default, with_reasons)
       if @config.offline?
-        return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
+        return Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default), nil, nil
       end
 
       if context.nil?
         @config.logger.error { "[LDClient] Must specify context" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
-        return detail
+        return detail, nil, "no context provided"
       end
 
       context = Impl::Context::make_context(context)
       unless context.valid?
         @config.logger.error { "[LDClient] Context was invalid for evaluation of flag '#{key}' (#{context.error}); returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
-        return detail
+        return detail, nil, context.error
       end
 
       unless initialized?
@@ -457,7 +543,7 @@ module LaunchDarkly
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
           detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
           record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
-          return detail
+          return detail, nil, "client not initialized"
         end
       end
 
@@ -471,7 +557,7 @@ module LaunchDarkly
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_FLAG_NOT_FOUND, default)
         record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
-        return detail
+        return detail, nil, "feature flag not found"
       end
 
       begin
@@ -486,12 +572,12 @@ module LaunchDarkly
           detail = EvaluationDetail.new(default, nil, detail.reason)
         end
         record_flag_eval(feature, context, detail, default, with_reasons)
-        detail
+        [detail, feature, nil]
       rescue => exn
         Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
         record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
-        detail
+        [detail, feature, exn.to_s]
       end
     end
 
@@ -507,7 +593,9 @@ module LaunchDarkly
         default,
         add_experiment_data || flag[:trackEvents] || false,
         flag[:debugEventsUntilDate],
-        nil
+        nil,
+        flag[:samplingRatio],
+        !!flag[:excludeFromSummaries]
       )
     end
 
@@ -523,13 +611,15 @@ module LaunchDarkly
         nil,
         add_experiment_data || prereq_flag[:trackEvents] || false,
         prereq_flag[:debugEventsUntilDate],
-        prereq_of_flag[:key]
+        prereq_of_flag[:key],
+        prereq_flag[:samplingRatio],
+        !!prereq_flag[:excludeFromSummaries]
       )
     end
 
     private def record_flag_eval_error(flag, context, default, reason, with_reasons)
       @event_processor.record_eval_event(context, flag[:key], flag[:version], nil, default, with_reasons ? reason : nil, default,
-        flag[:trackEvents], flag[:debugEventsUntilDate], nil)
+        flag[:trackEvents], flag[:debugEventsUntilDate], nil, flag[:samplingRatio], !!flag[:excludeFromSummaries])
     end
 
     #
@@ -541,7 +631,7 @@ module LaunchDarkly
     #
     private def record_unknown_flag_eval(flag_key, context, default, reason, with_reasons)
       @event_processor.record_eval_event(context, flag_key, nil, nil, default, with_reasons ? reason : nil, default,
-        false, nil, nil)
+        false, nil, nil, 1, false)
     end
 
     private def experiment?(flag, reason)

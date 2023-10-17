@@ -13,9 +13,6 @@ workflows:
             - run: gem install rubocop-performance
       - build-test-windows
       - build-test-linux:
-          name: Ruby 2.7
-          docker-image: cimg/ruby:2.7
-      - build-test-linux:
           name: Ruby 3.0
           docker-image: cimg/ruby:3.0
       - build-test-linux:

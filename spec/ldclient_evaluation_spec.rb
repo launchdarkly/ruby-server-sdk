@@ -154,7 +154,7 @@ module LaunchDarkly
       it "returns flags state" do
 
         with_client(test_config(data_source: test_data)) do |client|
-          state = client.all_flags_state({ key: 'userkey' })
+          state = client.all_flags_state({ key: 'userkey', kind: 'user' })
           expect(state.valid?).to be true
 
           values = state.values_map
@@ -189,7 +189,7 @@ module LaunchDarkly
         td.use_preconfigured_flag({ key: "client-side-2", offVariation: 0, variations: [ 'value2' ], clientSide: true })
 
         with_client(test_config(data_source: td)) do |client|
-          state = client.all_flags_state({ key: 'userkey' }, client_side_only: true)
+          state = client.all_flags_state({ key: 'userkey', kind: 'user' }, client_side_only: true)
           expect(state.valid?).to be true
 
           values = state.values_map
@@ -205,7 +205,7 @@ module LaunchDarkly
         td.use_preconfigured_flag({ key: "key3", version: 300, offVariation: 1, variations: %w[x value3], debugEventsUntilDate: future_time })
 
         with_client(test_config(data_source: td)) do |client|
-          state = client.all_flags_state({ key: 'userkey' }, { details_only_for_tracked_flags: true })
+          state = client.all_flags_state({ key: 'userkey', kind: 'user' }, { details_only_for_tracked_flags: true })
           expect(state.valid?).to be true
 
           values = state.values_map

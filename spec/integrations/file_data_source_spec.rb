@@ -290,7 +290,7 @@ EOF
         client = LaunchDarkly::LDClient.new('sdkKey', config)
 
         begin
-          value = client.variation(flag_value_1_key, { key: 'user' }, '')
+          value = client.variation(flag_value_1_key, { key: 'user', kind: 'user' }, '')
           expect(value).to eq(flag_value_1)
         ensure
           client.close
@@ -304,7 +304,7 @@ EOF
         client = LaunchDarkly::LDClient.new('sdkKey', config)
 
         begin
-          value = client.variation(full_flag_1_key, { key: 'user' }, '')
+          value = client.variation(full_flag_1_key, { key: 'user', kind: 'user' }, '')
           expect(value).to eq(full_flag_1_value)
         ensure
           client.close

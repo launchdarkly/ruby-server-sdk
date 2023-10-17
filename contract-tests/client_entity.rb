@@ -3,6 +3,7 @@ require 'json'
 require 'net/http'
 require 'launchdarkly-server-sdk'
 require './big_segment_store_fixture'
+require 'http'
 
 class ClientEntity
   def initialize(log, config)
@@ -77,12 +78,12 @@ class ClientEntity
     response = {}
 
     if params[:detail]
-      detail = @client.variation_detail(params[:flagKey], params[:context] || params[:user], params[:defaultValue])
+      detail = @client.variation_detail(params[:flagKey], params[:context], params[:defaultValue])
       response[:value] = detail.value
       response[:variationIndex] = detail.variation_index
       response[:reason] = detail.reason
     else
-      response[:value] = @client.variation(params[:flagKey], params[:context] || params[:user], params[:defaultValue])
+      response[:value] = @client.variation(params[:flagKey], params[:context], params[:defaultValue])
     end
 
     response
@@ -94,19 +95,65 @@ class ClientEntity
     opts[:with_reasons] = params[:withReasons] || false
     opts[:details_only_for_tracked_flags] = params[:detailsOnlyForTrackedFlags] || false
 
-    @client.all_flags_state(params[:context] || params[:user], opts)
+    @client.all_flags_state(params[:context], opts)
+  end
+
+  def migration_variation(params)
+    default_stage = params[:defaultStage]
+    default_stage = default_stage.to_sym if default_stage.respond_to? :to_sym
+    stage, _ = @client.migration_variation(params[:key], params[:context], default_stage)
+    stage
+  end
+
+  def migration_operation(params)
+    builder = LaunchDarkly::Migrations::MigratorBuilder.new(@client)
+    builder.read_execution_order(params[:readExecutionOrder].to_sym)
+    builder.track_latency(params[:trackLatency])
+    builder.track_errors(params[:trackErrors])
+
+    callback = ->(endpoint) {
+      ->(payload) {
+        response = HTTP.post(endpoint, body: payload)
+
+        if response.status.success?
+          LaunchDarkly::Result.success(response.body.to_s)
+        else
+          LaunchDarkly::Result.fail("requested failed with status code #{response.status}")
+        end
+      }
+    }
+
+    consistency = nil
+    if params[:trackConsistency]
+      consistency = ->(lhs, rhs) { lhs == rhs }
+    end
+
+    builder.read(callback.call(params[:oldEndpoint]), callback.call(params[:newEndpoint]), consistency)
+    builder.write(callback.call(params[:oldEndpoint]), callback.call(params[:newEndpoint]))
+
+    migrator = builder.build
+
+    return migrator if migrator.is_a? String
+
+    if params[:operation] == LaunchDarkly::Migrations::OP_READ.to_s
+      result = migrator.read(params[:key], params[:context], params[:defaultStage].to_sym, params[:payload])
+      result.success? ? result.value : result.error
+    else
+      result = migrator.write(params[:key], params[:context], params[:defaultStage].to_sym, params[:payload])
+      result.authoritative.success? ? result.authoritative.value : result.authoritative.error
+    end
   end
 
   def secure_mode_hash(params)
-    @client.secure_mode_hash(params[:context] || params[:user])
+    @client.secure_mode_hash(params[:context])
   end
 
   def track(params)
-    @client.track(params[:eventKey], params[:context] || params[:user], params[:data], params[:metricValue])
+    @client.track(params[:eventKey], params[:context], params[:data], params[:metricValue])
   end
 
   def identify(params)
-    @client.identify(params[:context] || params[:user])
+    @client.identify(params[:context])
   end
 
   def flush_events

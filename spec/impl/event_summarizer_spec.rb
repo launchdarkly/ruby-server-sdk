@@ -9,7 +9,7 @@ module LaunchDarkly
     describe EventSummarizer do
       subject { EventSummarizer }
 
-      let(:context) { LaunchDarkly::LDContext.create({ key: "key" }) }
+      let(:context) { LaunchDarkly::LDContext.create({ key: "key", kind: "user" }) }
 
       it "does not add identify event to summary" do
         es = subject.new
