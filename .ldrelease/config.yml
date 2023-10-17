@@ -8,6 +8,7 @@ branches:
   - name: main
   - name: 5.x
   - name: 6.x
+  - name: 7.x
 
 publications:
   - url: https://rubygems.org/gems/launchdarkly-server-sdk
