@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::LDClient
   
-    &mdash; LaunchDarkly Ruby SDK (7.3.0)
+    &mdash; LaunchDarkly Ruby SDK (8.0.0)
   
 </title>
 
@@ -84,6 +84,11 @@
   
 
   
+  
+  <dl>
+      <dt>Extended by:</dt>
+      <dd>Forwardable</dd>
+  </dl>
   
   
   
@@ -385,6 +390,29 @@ should create a single client instance for the lifetime of the application.</p>
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#migration_variation-instance_method" title="#migration_variation (instance method)">#<strong>migration_variation</strong>(key, context, default_stage)  &#x21d2; Array&lt;Symbol, Interfaces::Migrations::OpTracker&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>This method returns the migration stage of the migration feature flag for the given evaluation context.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#secure_mode_hash-instance_method" title="#secure_mode_hash (instance method)">#<strong>secure_mode_hash</strong>(context)  &#x21d2; String<sup>?</sup> </a>
     
 
@@ -423,6 +451,29 @@ should create a single client instance for the lifetime of the application.</p>
 
   
     <span class="summary_desc"><div class='inline'><p>Tracks that a context performed an event.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#track_migration_op-instance_method" title="#track_migration_op (instance method)">#<strong>track_migration_op</strong>(tracker)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Tracks the results of a migrations operation.</p>
 </div></span>
   
 </li>
@@ -478,6 +529,7 @@ should create a single client instance for the lifetime of the application.</p>
   
 
 
+  
   
   <div id="constructor_details" class="method_details_list">
   <h2>Constructor Details</h2>
@@ -567,12 +619,6 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
       <pre class="lines">
 
 
-39
-40
-41
-42
-43
-44
 45
 46
 47
@@ -653,10 +699,16 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
 122
 123
 124
-125</pre>
+125
+126
+127
+128
+129
+130
+131</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 39</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 45</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default'><span class='object_link'><a href="Config.html#default-class_method" title="LaunchDarkly::Config.default (method)">default</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_wait_for_sec'>wait_for_sec</span> <span class='op'>=</span> <span class='int'>5</span><span class='rparen'>)</span>
   <span class='comment'># Note that sdk_key is normally a required parameter, and a nil value would cause the SDK to
@@ -785,12 +837,12 @@ is (as far as the SDK knows) currently operational and tracking changes in this 
       <pre class="lines">
 
 
-378
-379
-380</pre>
+447
+448
+449</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 378</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 447</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_big_segment_store_status_provider'>big_segment_store_status_provider</span>
   <span class='ivar'>@big_segment_store_status_provider</span>
@@ -846,12 +898,12 @@ currently operational and tracking changes in this status.</p>
       <pre class="lines">
 
 
-405
-406
-407</pre>
+474
+475
+476</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 405</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 474</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data_source_status_provider'>data_source_status_provider</span>
   <span class='ivar'>@data_source_status_provider</span>
@@ -908,12 +960,12 @@ object that provides no information.</p>
       <pre class="lines">
 
 
-392
-393
-394</pre>
+461
+462
+463</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 392</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 461</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data_store_status_provider'>data_store_status_provider</span>
   <span class='ivar'>@data_store_status_provider</span>
@@ -954,12 +1006,12 @@ listener model.</p>
       <pre class="lines">
 
 
-414
-415
-416</pre>
+483
+484
+485</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 414</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 483</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flag_tracker'>flag_tracker</span>
   <span class='ivar'>@flag_tracker</span>
@@ -1117,66 +1169,66 @@ of the JSON data if you are passing the flag state to the front end.</p>
       <pre class="lines">
 
 
-301
-302
-303
-304
-305
-306
-307
-308
-309
-310
-311
-312
-313
-314
-315
-316
-317
-318
-319
-320
-321
-322
-323
-324
-325
-326
-327
-328
-329
-330
-331
-332
-333
-334
-335
-336
-337
-338
-339
-340
-341
-342
-343
-344
-345
-346
-347
-348
-349
-350
-351
-352
-353
-354
-355
-356
-357</pre>
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 301</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 370</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_flags_state'>all_flags_state</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span>
@@ -1265,17 +1317,17 @@ of the JSON data if you are passing the flag state to the front end.</p>
       <pre class="lines">
 
 
-363
-364
-365
-366
-367
-368
-369
-370</pre>
+432
+433
+434
+435
+436
+437
+438
+439</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 363</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 432</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
   <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] Closing LaunchDarkly client...</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
@@ -1324,12 +1376,12 @@ call <span class='object_link'><a href="#close-instance_method" title="LaunchDar
       <pre class="lines">
 
 
-139
-140
-141</pre>
+145
+146
+147</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 139</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 145</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flush'>flush</span>
   <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_flush'>flush</span>
@@ -1391,23 +1443,23 @@ until later; see <span class='object_link'><a href="#flush-instance_method" titl
       <pre class="lines">
 
 
-238
-239
-240
-241
-242
-243
-244
-245
-246
-247
-248
-249
-250
-251</pre>
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 238</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 281</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_identify'>identify</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Context</span><span class='period'>.</span><span class='id identifier rubyid_make_context'>make_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
@@ -1484,15 +1536,146 @@ parameter of <span class='object_link'><a href="#variation-instance_method" titl
       <pre class="lines">
 
 
-178
-179
-180</pre>
+184
+185
+186</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 178</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 184</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span> <span class='op'>||</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_use_ldd?'>use_ldd?</span> <span class='op'>||</span> <span class='ivar'>@data_source</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="migration_variation-instance_method">
+  
+    #<strong>migration_variation</strong>(key, context, default_stage)  &#x21d2; <tt>Array&lt;Symbol, <span class='object_link'><a href="Interfaces/Migrations/OpTracker.html" title="LaunchDarkly::Interfaces::Migrations::OpTracker (module)">Interfaces::Migrations::OpTracker</a></span>&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>This method returns the migration stage of the migration feature flag for the given evaluation context.</p>
+
+<p>This method returns the default stage if there is an error or the flag does not exist. If the default stage is not
+a valid stage, then a default stage of &#39;off&#39; will be used instead.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>default_stage</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;Symbol, <span class='object_link'><a href="Interfaces/Migrations/OpTracker.html" title="LaunchDarkly::Interfaces::Migrations::OpTracker (module)">Interfaces::Migrations::OpTracker</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 244</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_migration_variation'>migration_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='rparen'>)</span>
+  <span class='kw'>unless</span> <span class='const'>Migrations</span><span class='op'>::</span><span class='const'>VALID_STAGES</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span> <span class='id identifier rubyid_default_stage'>default_stage</span>
+    <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] default_stage </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_default_stage'>default_stage</span><span class='embexpr_end'>}</span><span class='tstring_content'> is not a valid stage; continuing with &#39;off&#39; as default</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+    <span class='id identifier rubyid_default_stage'>default_stage</span> <span class='op'>=</span> <span class='const'>Migrations</span><span class='op'>::</span><span class='const'>STAGE_OFF</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>Context</span><span class='op'>::</span><span class='id identifier rubyid_make_context'>make_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_detail'>detail</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='id identifier rubyid__'>_</span> <span class='op'>=</span> <span class='id identifier rubyid_variation_with_flag'>variation_with_flag</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_stage'>stage</span> <span class='op'>=</span> <span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
+  <span class='id identifier rubyid_stage'>stage</span> <span class='op'>=</span> <span class='id identifier rubyid_stage'>stage</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span> <span class='kw'>if</span> <span class='id identifier rubyid_stage'>stage</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span> <span class='symbol'>:to_sym</span>
+
+  <span class='kw'>if</span> <span class='const'>Migrations</span><span class='op'>::</span><span class='const'>VALID_STAGES</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_stage'>stage</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_tracker'>tracker</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>Migrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Migrations/OpTracker.html" title="LaunchDarkly::Impl::Migrations::OpTracker (class)">OpTracker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Impl/Migrations/OpTracker.html#initialize-instance_method" title="LaunchDarkly::Impl::Migrations::OpTracker#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_detail'>detail</span><span class='comma'>,</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='rparen'>)</span>
+    <span class='kw'>return</span> <span class='id identifier rubyid_stage'>stage</span><span class='comma'>,</span> <span class='id identifier rubyid_tracker'>tracker</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_detail'>detail</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Evaluator</span><span class='period'>.</span><span class='id identifier rubyid_error_result'>error_result</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="EvaluationReason.html#ERROR_WRONG_TYPE-constant" title="LaunchDarkly::EvaluationReason::ERROR_WRONG_TYPE (constant)">ERROR_WRONG_TYPE</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_tracker'>tracker</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>Migrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Migrations/OpTracker.html" title="LaunchDarkly::Impl::Migrations::OpTracker (class)">OpTracker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Impl/Migrations/OpTracker.html#initialize-instance_method" title="LaunchDarkly::Impl::Migrations::OpTracker#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_detail'>detail</span><span class='comma'>,</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='rparen'>)</span>
+
+  <span class='lbracket'>[</span><span class='id identifier rubyid_default_stage'>default_stage</span><span class='comma'>,</span> <span class='id identifier rubyid_tracker'>tracker</span><span class='rbracket'>]</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1557,21 +1740,21 @@ For more information, see <a href="https://docs.launchdarkly.com/sdk/features/se
       <pre class="lines">
 
 
-150
-151
-152
-153
-154
-155
 156
 157
-158</pre>
+158
+159
+160
+161
+162
+163
+164</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 150</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 156</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_secure_mode_hash'>secure_mode_hash</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>Context</span><span class='op'>::</span><span class='id identifier rubyid_make_context'>make_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>Context</span><span class='period'>.</span><span class='id identifier rubyid_make_context'>make_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_valid?'>valid?</span>
     <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>secure_mode_hash called with invalid context: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
     <span class='kw'>return</span> <span class='kw'>nil</span>
@@ -1689,18 +1872,18 @@ for Data Export.</p>
       <pre class="lines">
 
 
-274
-275
-276
-277
-278
-279
-280
-281
-282</pre>
+317
+318
+319
+320
+321
+322
+323
+324
+325</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 274</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 317</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_track'>track</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_metric_value'>metric_value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Context</span><span class='period'>.</span><span class='id identifier rubyid_make_context'>make_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
@@ -1710,6 +1893,90 @@ for Data Export.</p>
   <span class='kw'>end</span>
 
   <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_record_custom_event'>record_custom_event</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='id identifier rubyid_metric_value'>metric_value</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="track_migration_op-instance_method">
+  
+    #<strong>track_migration_op</strong>(tracker)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Tracks the results of a migrations operation. This event includes measurements which can be used to enhance the
+observability of a migration within the LaunchDarkly UI.</p>
+
+<p>This event should be generated through <span class='object_link'><a href="Interfaces/Migrations/OpTracker.html" title="LaunchDarkly::Interfaces::Migrations::OpTracker (module)">Interfaces::Migrations::OpTracker</a></span>. If you are using the
+<span class='object_link'><a href="Interfaces/Migrations/Migrator.html" title="LaunchDarkly::Interfaces::Migrations::Migrator (module)">Interfaces::Migrations::Migrator</a></span> to handle migrations, this event will be created and emitted
+automatically.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>tracker</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Interfaces/Migrations/OpTracker.html" title="LaunchDarkly::Interfaces::Migrations::OpTracker (module)">LaunchDarkly::Interfaces::Migrations::OpTracker</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 337</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_track_migration_op'>track_migration_op</span><span class='lparen'>(</span><span class='id identifier rubyid_tracker'>tracker</span><span class='rparen'>)</span>
+  <span class='kw'>unless</span> <span class='id identifier rubyid_tracker'>tracker</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/Migrations.html" title="LaunchDarkly::Interfaces::Migrations (module)">Migrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/Migrations/OpTracker.html" title="LaunchDarkly::Interfaces::Migrations::OpTracker (module)">OpTracker</a></span></span>
+    <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>invalid op tracker received in track_migration_op</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+    <span class='kw'>return</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_event'>event</span> <span class='op'>=</span> <span class='id identifier rubyid_tracker'>tracker</span><span class='period'>.</span><span class='id identifier rubyid_build'>build</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_event'>event</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>String</span>
+    <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] Error occurred generating migration op event; </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_event'>event</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+    <span class='kw'>return</span>
+  <span class='kw'>end</span>
+
+
+  <span class='ivar'>@event_processor</span><span class='period'>.</span><span class='id identifier rubyid_record_migration_op_event'>record_migration_op_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1796,7 +2063,7 @@ condition making it impossible to find or evaluate the flag</p>
       
       
         
-        <div class='inline'><p>the variation for the provided context, or the default value if there&#39;s an an error</p>
+        <div class='inline'><p>the variation for the provided context, or the default value if there&#39;s an error</p>
 </div>
       
     </li>
@@ -1809,15 +2076,17 @@ condition making it impossible to find or evaluate the flag</p>
       <pre class="lines">
 
 
-193
-194
-195</pre>
+199
+200
+201
+202</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 193</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 199</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation'>variation</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_evaluate_internal'>evaluate_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
+  <span class='id identifier rubyid_detail'>detail</span><span class='comma'>,</span> <span class='id identifier rubyid__'>_</span><span class='comma'>,</span> <span class='id identifier rubyid__'>_</span><span class='comma'>,</span> <span class='op'>=</span> <span class='id identifier rubyid_variation_with_flag'>variation_with_flag</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1929,15 +2198,17 @@ condition making it impossible to find or evaluate the flag</p>
       <pre class="lines">
 
 
-220
-221
-222</pre>
+227
+228
+229
+230</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 220</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 227</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation_detail'>variation_detail</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_evaluate_internal'>evaluate_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_detail'>detail</span><span class='comma'>,</span> <span class='id identifier rubyid__'>_</span><span class='comma'>,</span> <span class='id identifier rubyid__'>_</span> <span class='op'>=</span> <span class='id identifier rubyid_evaluate_internal'>evaluate_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_detail'>detail</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1949,9 +2220,9 @@ condition making it impossible to find or evaluate the flag</p>
 </div>
 
       <div id="footer">
-  Generated on Mon Oct 16 19:42:12 2023 by
+  Generated on Tue Oct 17 21:01:35 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.34 (ruby-2.7.8).
+  0.9.34 (ruby-3.0.6).
 </div>
 
     </div>

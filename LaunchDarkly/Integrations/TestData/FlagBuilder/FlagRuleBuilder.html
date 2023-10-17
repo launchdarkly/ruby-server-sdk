@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Integrations::TestData::FlagBuilder::FlagRuleBuilder
   
-    &mdash; LaunchDarkly Ruby SDK (7.3.0)
+    &mdash; LaunchDarkly Ruby SDK (8.0.0)
   
 </title>
 
@@ -381,12 +381,12 @@ Finally, call <span class='object_link'><a href="#then_return-instance_method" t
       <pre class="lines">
 
 
-476
-477
-478</pre>
+545
+546
+547</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 476</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 545</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_and_match'>and_match</span><span class='lparen'>(</span><span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_and_match_context'>and_match_context</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
@@ -516,19 +516,19 @@ Finally, call <span class='object_link'><a href="#then_return-instance_method" t
       <pre class="lines">
 
 
-449
-450
-451
-452
-453
-454
-455
-456
-457
-458</pre>
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 449</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 518</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_and_match_context'>and_match_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
   <span class='ivar'>@clauses</span><span class='period'>.</span><span class='id identifier rubyid_push'>push</span><span class='lparen'>(</span><span class='const'>FlagRuleClause</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span>
@@ -653,12 +653,12 @@ Finally, call <span class='object_link'><a href="#then_return-instance_method" t
       <pre class="lines">
 
 
-521
-522
-523</pre>
+590
+591
+592</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 521</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 590</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_and_not_match'>and_not_match</span><span class='lparen'>(</span><span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_and_not_match_context'>and_not_match_context</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
@@ -788,19 +788,19 @@ Finally, call <span class='object_link'><a href="#then_return-instance_method" t
       <pre class="lines">
 
 
-494
-495
-496
-497
-498
-499
-500
-501
-502
-503</pre>
+563
+564
+565
+566
+567
+568
+569
+570
+571
+572</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 494</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 563</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_and_not_match_context'>and_not_match_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
   <span class='ivar'>@clauses</span><span class='period'>.</span><span class='id identifier rubyid_push'>push</span><span class='lparen'>(</span><span class='const'>FlagRuleClause</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span>
@@ -898,18 +898,18 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-536
-537
-538
-539
-540
-541
-542
-543
-544</pre>
+605
+606
+607
+608
+609
+610
+611
+612
+613</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 536</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 605</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_then_return'>then_return</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Util</span><span class='period'>.</span><span class='id identifier rubyid_bool?'>bool?</span> <span class='id identifier rubyid_variation'>variation</span>
@@ -930,9 +930,9 @@ this also changes it to a boolean flag.</p>
 </div>
 
       <div id="footer">
-  Generated on Mon Oct 16 19:42:13 2023 by
+  Generated on Tue Oct 17 21:01:37 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.34 (ruby-2.7.8).
+  0.9.34 (ruby-3.0.6).
 </div>
 
     </div>

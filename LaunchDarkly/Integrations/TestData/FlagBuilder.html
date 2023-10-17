@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::Integrations::TestData::FlagBuilder
   
-    &mdash; LaunchDarkly Ruby SDK (7.3.0)
+    &mdash; LaunchDarkly Ruby SDK (8.0.0)
   
 </title>
 
@@ -139,7 +139,7 @@
     
   
     
-      <strong class="classes">Classes:</strong> <span class='object_link'><a href="FlagBuilder/FlagRuleBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder::FlagRuleBuilder (class)">FlagRuleBuilder</a></span>
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="FlagBuilder/FlagMigrationSettingsBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder::FlagMigrationSettingsBuilder (class)">FlagMigrationSettingsBuilder</a></span>, <span class='object_link'><a href="FlagBuilder/FlagRuleBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder::FlagRuleBuilder (class)">FlagRuleBuilder</a></span>
     
   
 </p>
@@ -243,8 +243,6 @@
     
 
     
-      (also: #clear_user_targets)
-    
   </span>
   
   
@@ -256,6 +254,29 @@
 
   
     <span class="summary_desc"><div class='inline'><p>Removes any existing targets from the flag.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exclude_from_summaries-instance_method" title="#exclude_from_summaries (instance method)">#<strong>exclude_from_summaries</strong>(exclude)  &#x21d2; FlagBuilder </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set the option to exclude this flag from summary events.</p>
 </div></span>
   
 </li>
@@ -379,6 +400,29 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#migration_settings-instance_method" title="#migration_settings (instance method)">#<strong>migration_settings</strong>(settings)  &#x21d2; FlagBuilder </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set the migration related settings for this feature flag.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#off_variation-instance_method" title="#off_variation (instance method)">#<strong>off_variation</strong>(variation)  &#x21d2; FlagBuilder </a>
     
 
@@ -425,11 +469,32 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#value_for_all-instance_method" title="#value_for_all (instance method)">#<strong>value_for_all</strong>(value)  &#x21d2; FlagBuilder </a>
+      <a href="#sampling_ratio-instance_method" title="#sampling_ratio (instance method)">#<strong>sampling_ratio</strong>(ratio)  &#x21d2; FlagBuilder </a>
     
 
     
-      (also: #value_for_all_users)
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set the sampling ratio for this flag.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#value_for_all-instance_method" title="#value_for_all (instance method)">#<strong>value_for_all</strong>(value)  &#x21d2; FlagBuilder </a>
+    
+
     
   </span>
   
@@ -453,8 +518,6 @@
       <a href="#variation_for_all-instance_method" title="#variation_for_all (instance method)">#<strong>variation_for_all</strong>(variation)  &#x21d2; FlagBuilder </a>
     
 
-    
-      (also: #variation_for_all_users)
     
   </span>
   
@@ -673,18 +736,18 @@ if no other settings specify otherwise.</p>
       <pre class="lines">
 
 
-353
-354
-355
-356
-357
-358
-359
-360
-361</pre>
+379
+380
+381
+382
+383
+384
+385
+386
+387</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 353</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 379</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_boolean_flag'>boolean_flag</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_boolean_flag?'>boolean_flag?</span>
@@ -758,13 +821,13 @@ This undoes the effect of methods like <span class='object_link'><a href="#if_ma
       <pre class="lines">
 
 
-329
-330
-331
-332</pre>
+355
+356
+357
+358</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 329</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 355</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_clear_rules'>clear_rules</span>
   <span class='ivar'>@rules</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -781,10 +844,6 @@ This undoes the effect of methods like <span class='object_link'><a href="#if_ma
     #<strong>clear_targets</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt> 
   
 
-  
-    <span class="aliases">Also known as:
-    <span class="names"><span id='clear_user_targets-instance_method'>clear_user_targets</span></span>
-    </span>
   
 
   
@@ -837,16 +896,104 @@ This undoes the effect of methods like <span class='object_link'><a href="#varia
       <pre class="lines">
 
 
-313
-314
-315
-316</pre>
+344
+345
+346
+347</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 313</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 344</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_clear_targets'>clear_targets</span>
   <span class='ivar'>@targets</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exclude_from_summaries-instance_method">
+  
+    #<strong>exclude_from_summaries</strong>(exclude)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set the option to exclude this flag from summary events. This is used to control the size of the summary event
+in the event certain flag payloads are large.</p>
+
+<p>General usage should not require interacting with this method.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>exclude</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>6.3.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+82
+83
+84
+85</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 82</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exclude_from_summaries'>exclude_from_summaries</span><span class='lparen'>(</span><span class='id identifier rubyid_exclude'>exclude</span><span class='rparen'>)</span>
+  <span class='ivar'>@exclude_from_summaries</span> <span class='op'>=</span> <span class='id identifier rubyid_exclude'>exclude</span>
   <span class='kw'>self</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -936,17 +1083,17 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-58
-59
-60
-61
-62
-63
-64
-65</pre>
+99
+100
+101
+102
+103
+104
+105
+106</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 58</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 99</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_fallthrough_variation'>fallthrough_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Util</span><span class='period'>.</span><span class='id identifier rubyid_bool?'>bool?</span> <span class='id identifier rubyid_variation'>variation</span>
@@ -1079,12 +1226,12 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-259
-260
-261</pre>
+290
+291
+292</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 259</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 290</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_if_match'>if_match</span><span class='lparen'>(</span><span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_if_match_context'>if_match_context</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
@@ -1224,12 +1371,12 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-236
-237
-238</pre>
+267
+268
+269</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 236</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 267</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_if_match_context'>if_match_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="FlagBuilder/FlagRuleBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder::FlagRuleBuilder (class)">FlagRuleBuilder</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_and_match_context'><span class='object_link'><a href="FlagBuilder/FlagRuleBuilder.html#and_match_context-instance_method" title="LaunchDarkly::Integrations::TestData::FlagBuilder::FlagRuleBuilder#and_match_context (method)">and_match_context</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
@@ -1357,12 +1504,12 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-303
-304
-305</pre>
+334
+335
+336</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 303</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 334</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_if_not_match'>if_not_match</span><span class='lparen'>(</span><span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_if_not_match_context'>if_not_match_context</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
@@ -1502,15 +1649,106 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-280
-281
-282</pre>
+311
+312
+313</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 280</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 311</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_if_not_match_context'>if_not_match_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="FlagBuilder/FlagRuleBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder::FlagRuleBuilder (class)">FlagRuleBuilder</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_and_not_match_context'><span class='object_link'><a href="FlagBuilder/FlagRuleBuilder.html#and_not_match_context-instance_method" title="LaunchDarkly::Integrations::TestData::FlagBuilder::FlagRuleBuilder#and_not_match_context (method)">and_not_match_context</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="migration_settings-instance_method">
+  
+    #<strong>migration_settings</strong>(settings)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set the migration related settings for this feature flag.</p>
+
+<p>The settings hash should be built using the <span class='object_link'><a href="FlagBuilder/FlagMigrationSettingsBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder::FlagMigrationSettingsBuilder (class)">FlagMigrationSettingsBuilder</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>settings</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>6.3.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+54
+55
+56
+57</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 54</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_migration_settings'>migration_settings</span><span class='lparen'>(</span><span class='id identifier rubyid_settings'>settings</span><span class='rparen'>)</span>
+  <span class='ivar'>@migration_settings</span> <span class='op'>=</span> <span class='id identifier rubyid_settings'>settings</span>
+  <span class='kw'>self</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1598,17 +1836,17 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-78
-79
-80
-81
-82
-83
-84
-85</pre>
+119
+120
+121
+122
+123
+124
+125
+126</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 78</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 119</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_off_variation'>off_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Util</span><span class='period'>.</span><span class='id identifier rubyid_bool?'>bool?</span> <span class='id identifier rubyid_variation'>variation</span>
@@ -1722,15 +1960,99 @@ whenever targeting is off, and <code>true</code> when targeting is on.</p>
 </div>
     
       <div class="method_details ">
+  <h3 class="signature " id="sampling_ratio-instance_method">
+  
+    #<strong>sampling_ratio</strong>(ratio)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set the sampling ratio for this flag. This ratio is used to control the emission rate of feature, debug, and
+migration op events.</p>
+
+<p>General usage should not require interacting with this method.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>ratio</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>6.3.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+68
+69
+70
+71</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 68</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_sampling_ratio'>sampling_ratio</span><span class='lparen'>(</span><span class='id identifier rubyid_ratio'>ratio</span><span class='rparen'>)</span>
+  <span class='ivar'>@sampling_ratio</span> <span class='op'>=</span> <span class='id identifier rubyid_ratio'>ratio</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
   <h3 class="signature " id="value_for_all-instance_method">
   
     #<strong>value_for_all</strong>(value)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt> 
   
 
-  
-    <span class="aliases">Also known as:
-    <span class="names"><span id='value_for_all_users-instance_method'>value_for_all_users</span></span>
-    </span>
   
 
   
@@ -1806,12 +2128,12 @@ are removed.</p>
       <pre class="lines">
 
 
-147
-148
-149</pre>
+183
+184
+185</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 147</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 183</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_value_for_all'>value_for_all</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_variations'>variations</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_variation_for_all'>variation_for_all</span><span class='lparen'>(</span><span class='int'>0</span><span class='rparen'>)</span>
@@ -1827,10 +2149,6 @@ are removed.</p>
     #<strong>variation_for_all</strong>(variation)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt> 
   
 
-  
-    <span class="aliases">Also known as:
-    <span class="names"><span id='variation_for_all_users-instance_method'>variation_for_all_users</span></span>
-    </span>
   
 
   
@@ -1908,16 +2226,16 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-123
-124
-125
-126
-127
-128
-129</pre>
+164
+165
+166
+167
+168
+169
+170</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 123</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 164</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation_for_all'>variation_for_all</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Util</span><span class='period'>.</span><span class='id identifier rubyid_bool?'>bool?</span> <span class='id identifier rubyid_variation'>variation</span>
@@ -2044,35 +2362,35 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-171
-172
-173
-174
-175
-176
-177
-178
-179
-180
-181
-182
-183
-184
-185
-186
-187
-188
-189
-190
-191
-192
-193
-194
-195
-196</pre>
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 171</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 202</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation_for_key'>variation_for_key</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_context_key'>context_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>Impl</span><span class='op'>::</span><span class='const'>Util</span><span class='period'>.</span><span class='id identifier rubyid_bool?'>bool?</span> <span class='id identifier rubyid_variation'>variation</span>
@@ -2206,12 +2524,12 @@ this also changes it to a boolean flag.</p>
       <pre class="lines">
 
 
-215
-216
-217</pre>
+246
+247
+248</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 215</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 246</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation_for_user'>variation_for_user</span><span class='lparen'>(</span><span class='id identifier rubyid_user_key'>user_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_variation_for_key'>variation_for_key</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_user_key'>user_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
@@ -2320,13 +2638,13 @@ normally has <code>true, false</code>; a string-valued flag might have
       <pre class="lines">
 
 
-105
-106
-107
-108</pre>
+146
+147
+148
+149</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 105</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data/flag_builder.rb', line 146</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variations'>variations</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_variations'>variations</span><span class='rparen'>)</span>
   <span class='ivar'>@variations</span> <span class='op'>=</span> <span class='id identifier rubyid_variations'>variations</span>
@@ -2342,9 +2660,9 @@ normally has <code>true, false</code>; a string-valued flag might have
 </div>
 
       <div id="footer">
-  Generated on Mon Oct 16 19:42:13 2023 by
+  Generated on Tue Oct 17 21:01:36 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.34 (ruby-2.7.8).
+  0.9.34 (ruby-3.0.6).
 </div>
 
     </div>

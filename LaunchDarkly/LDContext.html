@@ -6,7 +6,7 @@
 <title>
   Class: LaunchDarkly::LDContext
   
-    &mdash; LaunchDarkly Ruby SDK (7.3.0)
+    &mdash; LaunchDarkly Ruby SDK (8.0.0)
   
 </title>
 
@@ -974,15 +974,13 @@ documentation.</p>
 337
 338
 339
-340
-341</pre>
+340</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 325</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create'>create</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_create_invalid_context'>create_invalid_context</span><span class='lparen'>(</span><span class='const'>ERR_NOT_HASH</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='id identifier rubyid_create_legacy_context'>create_legacy_context</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:kind</span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_kind'>kind</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='symbol'>:kind</span><span class='rbracket'>]</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="#KIND_MULTI-constant" title="LaunchDarkly::LDContext::KIND_MULTI (constant)">KIND_MULTI</a></span></span>
@@ -1067,6 +1065,7 @@ multi-kind context wrapping that one single-kind.</p>
       <pre class="lines">
 
 
+360
 361
 362
 363
@@ -1092,11 +1091,10 @@ multi-kind context wrapping that one single-kind.</p>
 383
 384
 385
-386
-387</pre>
+386</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 361</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 360</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create_multi'>create_multi</span><span class='lparen'>(</span><span class='id identifier rubyid_contexts'>contexts</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_create_invalid_context'>create_invalid_context</span><span class='lparen'>(</span><span class='const'>ERR_KIND_MULTI_NON_CONTEXT_ARRAY</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_contexts'>contexts</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Array</span><span class='rparen'>)</span>
@@ -1925,9 +1923,9 @@ zero.</p>
 </div>
 
       <div id="footer">
-  Generated on Mon Oct 16 19:42:12 2023 by
+  Generated on Tue Oct 17 21:01:34 2023 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.34 (ruby-2.7.8).
+  0.9.34 (ruby-3.0.6).
 </div>
 
     </div>
