@@ -22,7 +22,7 @@ module LaunchDarkly
         with_client(test_config) do |client|
           context = basic_context
           expect(event_processor(client)).to receive(:record_eval_event).with(
-            context, 'badkey', nil, nil, 'default', nil, 'default', false, nil, nil
+            context, 'badkey', nil, nil, 'default', nil, 'default', false, nil, nil, 1, false
            )
           client.variation("badkey", context, "default")
         end
@@ -35,7 +35,7 @@ module LaunchDarkly
         context = basic_context
         with_client(test_config(data_source: td)) do |client|
           expect(event_processor(client)).to receive(:record_eval_event).with(
-            context, 'flagkey', 1, 0, 'value', nil, 'default', false, nil, nil
+            context, 'flagkey', 1, 0, 'value', nil, 'default', false, nil, nil, nil, false
           )
           client.variation("flagkey", context, "default")
         end
@@ -81,7 +81,7 @@ module LaunchDarkly
         with_client(test_config(data_source: td)) do |client|
           expect(event_processor(client)).to receive(:record_eval_event).with(
             context, 'flagkey', 100, 0, 'value', LaunchDarkly::EvaluationReason::rule_match(0, 'id'),
-            'default', true, nil, nil
+            'default', true, nil, nil, nil, false
           )
           client.variation("flagkey", context, "default")
         end
@@ -98,7 +98,7 @@ module LaunchDarkly
         with_client(test_config(data_source: td)) do |client|
           expect(event_processor(client)).to receive(:record_eval_event).with(
             context, 'flagkey', 100, 0, 'value', LaunchDarkly::EvaluationReason::fallthrough,
-            'default', true, nil, nil
+            'default', true, nil, nil, nil, false
           )
           client.variation("flagkey", context, "default")
         end
@@ -112,7 +112,7 @@ module LaunchDarkly
           expect(event_processor(client)).to receive(:record_eval_event).with(
             context, 'badkey', nil, nil, 'default',
             LaunchDarkly::EvaluationReason::error(LaunchDarkly::EvaluationReason::ERROR_FLAG_NOT_FOUND),
-            'default', false, nil, nil
+            'default', false, nil, nil, 1, false
           )
           client.variation_detail("badkey", context, "default")
         end
@@ -126,7 +126,7 @@ module LaunchDarkly
         with_client(test_config(data_source: td)) do |client|
           expect(event_processor(client)).to receive(:record_eval_event).with(
             context, 'flagkey', 1, 0, 'value', LaunchDarkly::EvaluationReason::off,
-            'default', false, nil, nil
+            'default', false, nil, nil, nil, false
           )
           client.variation_detail("flagkey", context, "default")
         end

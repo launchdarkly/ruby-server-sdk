@@ -32,8 +32,9 @@ get '/' do
       'all-flags-details-only-for-tracked-flags',
       'filtering',
       'secure-mode-hash',
-      'user-type',
       'tags',
+      'migrations',
+      'event-sampling',
     ],
   }.to_json
 end
@@ -102,6 +103,12 @@ post '/clients/:id' do |clientId|
   when "getBigSegmentStoreStatus"
     status = client.get_big_segment_store_status
     return [200, nil, status.to_json]
+  when "migrationVariation"
+    response = {:result => client.migration_variation(params[:migrationVariation]).to_s}
+    return [200, nil, response.to_json]
+  when "migrationOperation"
+    response = {:result => client.migration_operation(params[:migrationOperation]).to_s}
+    return [200, nil, response.to_json]
   end
 
   return [400, nil, {:error => "Unknown command requested"}.to_json]

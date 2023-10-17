@@ -18,7 +18,7 @@ publications:
 
 jobs:
   - docker:
-      image: ruby:2.7-buster
+      image: ruby:3.0-buster
     template:
       name: ruby
 

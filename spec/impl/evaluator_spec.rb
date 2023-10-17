@@ -131,7 +131,7 @@ module LaunchDarkly
             offVariation: 1,
             variations: %w[a b c],
           })
-          context = LDContext.create({ key: 'userkey' })
+          context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
@@ -146,7 +146,7 @@ module LaunchDarkly
             offVariation: 1,
             variations: %w[a b c],
           })
-          context = LDContext.create({ key: 'userkey' })
+          context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
@@ -161,7 +161,7 @@ module LaunchDarkly
             offVariation: 1,
             variations: %w[a b c],
           })
-          context = LDContext.create({ key: 'userkey' })
+          context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
@@ -176,7 +176,7 @@ module LaunchDarkly
             offVariation: 1,
             variations: %w[a b c],
           })
-          context = LDContext.create({ key: 'userkey' })
+          context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
           result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
@@ -194,7 +194,7 @@ module LaunchDarkly
             offVariation: 1,
             variations: %w[a b c],
           })
-          context = LDContext.create({ key: 'userkey' })
+          context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new('c', 2, EvaluationReason::target_match)
           result = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
@@ -212,7 +212,7 @@ module LaunchDarkly
             offVariation: 1,
             variations: %w[a b c],
           })
-          context = LDContext.create({ key: 'userkey' })
+          context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new('c', 2, EvaluationReason::target_match)
           result1 = basic_evaluator.evaluate(flag, context)
           result2 = basic_evaluator.evaluate(flag, context)
@@ -262,7 +262,7 @@ module LaunchDarkly
               offVariation: 1,
               variations: %w[a b c],
             })
-            context = LDContext.create({ key: 'userkey' })
+            context = LDContext.create({ key: 'userkey', kind: 'user' })
             result = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(true)
@@ -276,7 +276,7 @@ module LaunchDarkly
               offVariation: 1,
               variations: %w[a b c],
             })
-            context = LDContext.create({ key: 'userkey' })
+            context = LDContext.create({ key: 'userkey', kind: 'user' })
             result = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)
@@ -290,7 +290,7 @@ module LaunchDarkly
               offVariation: 1,
               variations: %w[a b c],
             })
-            context = LDContext.create({ key: 'userkey' })
+            context = LDContext.create({ key: 'userkey', kind: 'user' })
             result = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)

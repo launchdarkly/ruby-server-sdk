@@ -1,4 +1,5 @@
 require 'timecop'
+require "ldclient-rb/expiring_cache"
 
 module LaunchDarkly
   describe ExpiringCache do
