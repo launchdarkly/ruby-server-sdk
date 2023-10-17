@@ -2,6 +2,21 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.0.0] - 2023-10-17
+The latest version of this SDK supports the ability to manage migrations or modernizations, using migration flags. You might use this functionality if you are optimizing queries, upgrading to new tech stacks, migrating from one database to another, or other similar technology changes. Migration flags are part of LaunchDarkly's Early Access Program. This feature is available to all LaunchDarkly customers but may undergo additional changes before it is finalized.
+
+For detailed information about this version, refer to the list below. For information on how to upgrade from the previous version, read the [migration guide](https://docs.launchdarkly.com/sdk/server-side/ruby/migration-7-to-8).
+
+### Added:
+- A new `Migrator` type which provides an out-of-the-box configurable migration framework.
+- For more advanced use cases, added new `migration_variation` and `track_migration_op` methods on `LDClient`.
+
+### Removed:
+- Ruby 2.7 support was removed.
+- The legacy user format for contexts is no longer supported.  To learn more, read the [Contexts documentation](https://docs.launchdarkly.com/guides/flags/intro-contexts).
+- Previously deprecated config options `user_keys_capacity`, `user_keys_flush_interval`, `private_attribute_names`, `default_user_keys_capacity`, `user_cache_size`, `user_cache_time`, and `default_user_keys_flush_interval` have been removed.
+- Previously deprecated test data flag builder methods `variation_for_all_users`, `value_for_all_users`, and `clear_user_targets` have been removed.
+
 ## [7.3.0] - 2023-10-16
 ### Fixed:
 - The documentation for the `default_connect_timeout` setting stated it defaulted to 10 seconds when the code actually defaults to 2. (Thanks, [zmagg-figma](https://github.com/launchdarkly/ruby-server-sdk/pull/223)!)

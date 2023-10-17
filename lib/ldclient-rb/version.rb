@@ -1,3 +1,3 @@
 module LaunchDarkly
-  VERSION = "7.3.0"
+  VERSION = "8.0.0"
 end
