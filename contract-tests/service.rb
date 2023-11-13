@@ -36,6 +36,7 @@ get '/' do
       'migrations',
       'event-sampling',
       'context-comparison',
+      'inline-context',
     ],
   }.to_json
 end
