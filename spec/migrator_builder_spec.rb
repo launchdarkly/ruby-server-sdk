@@ -10,8 +10,8 @@ module LaunchDarkly
         it "when properly configured" do
           with_client(test_config) do |client|
             builder = subject.new(client)
-            builder.read(->(_) { return true }, ->(_) { return true })
-            builder.write(->(_) { return true }, ->(_) { return true })
+            builder.read(->(_) { true }, ->(_) { true })
+            builder.write(->(_) { true }, ->(_) { true })
             migrator = builder.build
 
             expect(migrator).to be_a LaunchDarkly::Interfaces::Migrations::Migrator
@@ -23,8 +23,8 @@ module LaunchDarkly
             with_client(test_config) do |client|
               builder = subject.new(client)
               builder.read_execution_order(order)
-              builder.read(->(_) { return true }, ->(_) { return true })
-              builder.write(->(_) { return true }, ->(_) { return true })
+              builder.read(->(_) { true }, ->(_) { true })
+              builder.write(->(_) { true }, ->(_) { true })
               migrator = builder.build
 
               expect(migrator).to be_a LaunchDarkly::Interfaces::Migrations::Migrator
@@ -51,7 +51,7 @@ module LaunchDarkly
         it "if read config has wrong arity" do
           with_client(test_config) do |client|
             builder = subject.new(client)
-            builder.read(-> { return true }, -> { return true })
+            builder.read(-> { true }, -> { true })
             error = builder.build
 
             expect(error).to eq("read configuration not provided")
@@ -61,7 +61,7 @@ module LaunchDarkly
         it "if read comparison has wrong arity" do
           with_client(test_config) do |client|
             builder = subject.new(client)
-            builder.read(->(_) { return true }, ->(_) { return true }, ->(_) { return true })
+            builder.read(->(_) { true }, ->(_) { true }, ->(_) { true })
             error = builder.build
 
             expect(error).to eq("read configuration not provided")
@@ -71,7 +71,7 @@ module LaunchDarkly
         it "if write config isn't provided" do
           with_client(test_config) do |client|
             builder = subject.new(client)
-            builder.read(->(_) { return true }, ->(_) { return true })
+            builder.read(->(_) { true }, ->(_) { true })
 
             error = builder.build
             expect(error).to eq("write configuration not provided")
@@ -81,8 +81,8 @@ module LaunchDarkly
         it "if write config has wrong arity" do
           with_client(test_config) do |client|
             builder = subject.new(client)
-            builder.read(->(_) { return true }, ->(_) { return true })
-            builder.write(-> { return true }, -> { return true })
+            builder.read(->(_) { true }, ->(_) { true })
+            builder.write(-> { true }, -> { true })
             error = builder.build
 
             expect(error).to eq("write configuration not provided")

@@ -1,0 +1,36 @@
+name: CI Workflow
+description: 'Shared CI workflow.'
+inputs:
+  ruby-version:
+    description: 'The version of ruby to setup and run'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ inputs.ruby-version }}
+        bundler: 2.2.33
+
+    - name: Install dependencies
+      shell: bash
+      run: bundle _2.2.33_ install
+
+    - name: Skip flaky tests for jruby
+      if: ${{ startsWith(inputs.ruby-version, 'jruby') }}
+      shell: bash
+      run: echo "SPEC_TAGS=-t '~flaky'" >> $GITHUB_ENV
+
+    - name: Run tests
+      shell: bash
+      run: bundle _2.2.33_ exec rspec spec $SPEC_TAGS
+
+    - name: Run RuboCop
+      shell: bash
+      run: bundle exec rubocop --parallel
+
+    - name: Run contract tests
+      if: ${{ !startsWith(inputs.ruby-version, 'jruby') }}
+      shell: bash
+      run: make contract-tests
