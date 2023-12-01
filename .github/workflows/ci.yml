@@ -1,11 +1,11 @@
 name: Run CI
 on:
   push:
-    branches: [ 7.x ]
+    branches: [ main ]
     paths-ignore:
       - '**.md' # Do not need to run CI for markdown changes.
   pull_request:
-    branches: [ 7.x ]
+    branches: [ main ]
     paths-ignore:
       - '**.md'
 
@@ -19,7 +19,6 @@ jobs:
     strategy:
       matrix:
         ruby-version:
-          - '2.7'
           - '3.0'
           - '3.1'
           - '3.2'
@@ -66,7 +65,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.7
+          ruby-version: 3.0
           bundler: 2.2.33
 
       - name: Install dependencies
