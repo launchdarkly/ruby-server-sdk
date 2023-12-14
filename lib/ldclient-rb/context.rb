@@ -47,9 +47,6 @@ module LaunchDarkly
     # @return [String, nil] Returns the error associated with this LDContext if invalid
     attr_reader :error
 
-    # @return [Array<Reference>] Returns the private attributes associated with this LDContext
-    attr_reader :private_attributes
-
     #
     # @private
     # @param key [String, nil]
@@ -69,16 +66,26 @@ module LaunchDarkly
       @name = name
       @anonymous = anonymous || false
       @attributes = attributes
-      @private_attributes = []
+      @private_attributes = Set.new
       (private_attributes || []).each do |attribute|
         reference = Reference.create(attribute)
-        @private_attributes << reference if reference.error.nil?
+        @private_attributes.add(reference) if reference.error.nil?
       end
       @error = error
       @contexts = contexts
       @is_multi = !contexts.nil?
     end
     private_class_method :new
+
+    protected attr_reader :name, :anonymous, :attributes
+
+    #
+    # @return [Array<Reference>] Returns the private attributes associated with this LDContext
+    #
+    def private_attributes
+      # TODO(sc-227265): Return a set instead of an array.
+      @private_attributes.to_a
+    end
 
     #
     # @return [Boolean] Is this LDContext a multi-kind context?
@@ -273,6 +280,33 @@ module LaunchDarkly
 
       nil
     end
+
+    def ==(other)
+      return false unless self.kind == other.kind
+      return false unless self.valid? == other.valid?
+      return false unless self.error == other.error
+
+      return false unless self.individual_context_count == other.individual_context_count
+
+      if self.multi_kind?
+        self.kinds.each do |kind|
+          return false unless self.individual_context(kind) == other.individual_context(kind)
+        end
+
+        return true
+      end
+
+      return false unless self.key == other.key
+      return false unless self.name == other.name
+      return false unless self.anonymous == other.anonymous
+      return false unless self.attributes == other.attributes
+
+      # TODO(sc-227265): Calling .to_set is unnecessary once private_attributes are sets.
+      return false unless self.private_attributes.to_set == other.private_attributes.to_set
+
+      true
+    end
+    alias eql? ==
 
     #
     # Retrieve the value of any top level, addressable attribute.

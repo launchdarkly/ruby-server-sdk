@@ -109,6 +109,8 @@ module LaunchDarkly
     end
     private_class_method :new
 
+    protected attr_reader :components
+
     #
     # Creates a Reference from a string. For the supported syntax and examples,
     # see comments on the Reference type.
@@ -225,6 +227,15 @@ module LaunchDarkly
       return nil if index < 0 || index >= depth
 
       @components[index]
+    end
+
+    def ==(other)
+      self.error == other.error && self.components == other.components
+    end
+    alias eql? ==
+
+    def hash
+      ([error] + components).hash
     end
 
     #

@@ -35,6 +35,7 @@ get '/' do
       'tags',
       'migrations',
       'event-sampling',
+      'context-comparison',
     ],
   }.to_json
 end
@@ -108,6 +109,9 @@ post '/clients/:id' do |clientId|
     return [200, nil, response.to_json]
   when "migrationOperation"
     response = {:result => client.migration_operation(params[:migrationOperation]).to_s}
+    return [200, nil, response.to_json]
+  when "contextComparison"
+    response = {:equals => client.context_comparison(params[:contextComparison])}
     return [200, nil, response.to_json]
   end
 

@@ -144,6 +144,45 @@ class ClientEntity
     end
   end
 
+  def context_comparison(params)
+    context1 = build_context_from_params(params[:context1])
+    context2 = build_context_from_params(params[:context2])
+
+    context1 == context2
+  end
+
+  private def build_context_from_params(params)
+    return build_single_context_from_attribute_definitions(params[:single]) unless params[:single].nil?
+
+    contexts = params[:multi].map do |param|
+      build_single_context_from_attribute_definitions(param)
+    end
+
+    LaunchDarkly::LDContext.create_multi(contexts)
+  end
+
+  private def build_single_context_from_attribute_definitions(params)
+    context = {kind: params[:kind], key: params[:key]}
+
+    params[:attributes]&.each do |attribute|
+      context[attribute[:name]] = attribute[:value]
+    end
+
+    if params[:privateAttributes]
+      context[:_meta] = {
+        privateAttributes: params[:privateAttributes].map do |attribute|
+          if attribute[:literal]
+            LaunchDarkly::Reference.create_literal(attribute[:value])
+          else
+            LaunchDarkly::Reference.create(attribute[:value])
+          end
+        end,
+      }
+    end
+
+    LaunchDarkly::LDContext.create(context)
+  end
+
   def secure_mode_hash(params)
     @client.secure_mode_hash(params[:context])
   end
