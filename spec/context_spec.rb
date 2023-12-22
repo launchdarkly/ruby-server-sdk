@@ -296,5 +296,68 @@ module LaunchDarkly
         end
       end
     end
+
+    describe "equality comparisons" do
+      it "single kind contexts are equal" do
+        original_context = subject.create(
+          { key: 'context-key', kind: 'user', name: 'Example name', groups: ['test', 'it', 'here'], address: {street: '123 Easy St', city: 'Every Town'},
+            _meta: { privateAttributes: ['name', 'out of order attribute'] }
+          })
+        duplicate_context = subject.create(
+          { key: 'context-key', kind: 'user', name: 'Example name', groups: ['test', 'it', 'here'], address: {street: '123 Easy St', city: 'Every Town'},
+            _meta: { privateAttributes: ['out of order attribute', 'name'] }
+          })
+        expect(original_context).to eq(duplicate_context)
+      end
+
+      it "multi kind contexts are equal" do
+        org_context = subject.create({ key: 'org-key', kind: 'org' })
+        user_context = subject.create({ key: 'user-key', kind: 'user' })
+        device_context = subject.create({ key: 'device-key', kind: 'device' })
+
+        original_context = subject.create_multi([org_context, user_context])
+        duplicate_context = subject.create_multi([user_context, org_context])
+
+        expect(original_context).to eq(duplicate_context)
+
+        superset_context = subject.create_multi([org_context, user_context, device_context])
+        expect(superset_context).not_to eq(duplicate_context)
+      end
+
+      it "mixed size contexts are not equal" do
+        org_context = subject.create({ key: 'org-key', kind: 'org' })
+        user_context = subject.create({ key: 'user-key', kind: 'user' })
+
+        flattened_multi = subject.create_multi([org_context])
+
+        expect(flattened_multi).to eq(org_context)
+
+        multi = subject.create_multi([org_context, user_context])
+        expect(multi).not_to eq(org_context)
+        expect(multi).not_to eq(user_context)
+      end
+
+      it "failed contexts can be equal" do
+        invalid_hash = subject.create(true)
+        invalid_kind = subject.create({ kind: 'this is not valid' })
+        invalid_key = subject.create({ key: nil })
+        invalid_name = subject.create({ key: 'user-key', name: true })
+        invalid_anonymous = subject.create({ key: 'user-key', anonymous: 'this is no boolean' })
+        invalid_private_attributes = subject.create({ key: 'user-key', _meta: { privateAttributes: 'this is no array' }})
+
+        expect(invalid_hash).not_to eq(invalid_kind)
+        expect(invalid_hash).not_to eq(invalid_key)
+        expect(invalid_hash).not_to eq(invalid_name)
+        expect(invalid_hash).not_to eq(invalid_anonymous)
+        expect(invalid_hash).not_to eq(invalid_private_attributes)
+
+        expect(invalid_hash).to eq(subject.create(true))
+        expect(invalid_kind).to eq(subject.create({ kind: 'this is not valid' }))
+        expect(invalid_key).to eq(subject.create({ key: nil }))
+        expect(invalid_name).to eq(subject.create({ key: 'user-key', name: true }))
+        expect(invalid_anonymous).to eq(subject.create({ key: 'user-key', anonymous: 'this is no boolean' }))
+        expect(invalid_private_attributes).to eq(subject.create({ key: 'user-key', _meta: { privateAttributes: 'this is no array' }}))
+      end
+    end
   end
 end
