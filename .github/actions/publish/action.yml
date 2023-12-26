@@ -10,9 +10,9 @@ runs:
   steps:
     - name: Build gemspec
       shell: bash
-      run: gem build ld-eventsource.gemspec
+      run: gem build launchdarkly-server-sdk.gemspec
 
     - name: Publish Library
       shell: bash
       if: ${{ inputs.dry_run == 'false' }}
-      run: gem push ld-eventsource-*.gem
+      run: gem push launchdarkly-server-sdk-*.gem
