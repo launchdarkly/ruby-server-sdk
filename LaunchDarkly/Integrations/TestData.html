@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: LaunchDarkly::Integrations::TestData
+  
+    &mdash; LaunchDarkly Ruby SDK
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "LaunchDarkly::Integrations::TestData";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (T)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span>
+     &raquo; 
+    <span class="title">TestData</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: LaunchDarkly::Integrations::TestData
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">LaunchDarkly::Integrations::TestData</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/ldclient-rb/integrations/test_data.rb<span class="defines">,<br />
+  lib/ldclient-rb/integrations/test_data/flag_builder.rb</span>
+</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A mechanism for providing dynamically updatable feature flag state in a simplified form to an SDK
+client in test scenarios.</p>
+
+<p>Unlike <span class='object_link'><a href="FileData.html" title="LaunchDarkly::Integrations::FileData (module)">FileData</a></span>, this mechanism does not use any external resources. It
+provides only the data that the application has put into it using the <span class='object_link'><a href="#update-instance_method" title="LaunchDarkly::Integrations::TestData#update (method)">#update</a></span> method.</p>
+
+<p>The above example uses a simple boolean flag, but more complex configurations are possible using
+the methods of the <span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span> that is returned by <span class='object_link'><a href="#flag-instance_method" title="LaunchDarkly::Integrations::TestData#flag (method)">#flag</a></span>. <span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span>
+supports many of the ways a flag can be configured on the LaunchDarkly dashboard, but does not
+currently support 1. rule operators other than &quot;in&quot; and &quot;not in&quot;, or 2. percentage rollouts.</p>
+
+<p>If the same <code>TestData</code> instance is used to configure multiple <code>LDClient</code> instances,
+any changes made to the data will propagate to all of the <code>LDClient</code>s.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <p class="tag_title">Examples:</p>
+    
+      
+      <pre class="example code"><code>td = LaunchDarkly::Integrations::TestData.data_source
+td.update(td.flag(&quot;flag-key-1&quot;).variation_for_all(true))
+config = LaunchDarkly::Config.new(data_source: td)
+client = LaunchDarkly::LDClient.new(&#39;sdkKey&#39;, config)
+# flags can be updated at any time:
+td.update(td.flag(&quot;flag-key-2&quot;)
+            .variation_for_key(&quot;user&quot;, some-user-key&quot;, true)
+            .fallthrough_variation(false))</code></pre>
+    
+  </div>
+
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>6.3.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span>
+    
+  
+</p>
+
+
+
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#data_source-class_method" title="data_source (class method)">.<strong>data_source</strong>  &#x21d2; TestData </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Creates a new instance of the test data source.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#flag-instance_method" title="#flag (instance method)">#<strong>flag</strong>(key)  &#x21d2; FlagBuilder </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Creates or copies a <span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span> for building a test flag configuration.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#update-instance_method" title="#update (instance method)">#<strong>update</strong>(flag_builder)  &#x21d2; TestData </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Updates the test data with the specified flag configuration.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#use_preconfigured_flag-instance_method" title="#use_preconfigured_flag (instance method)">#<strong>use_preconfigured_flag</strong>(flag)  &#x21d2; TestData </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Copies a full feature flag data model object into the test data.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#use_preconfigured_segment-instance_method" title="#use_preconfigured_segment (instance method)">#<strong>use_preconfigured_segment</strong>(segment)  &#x21d2; TestData </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Copies a full segment data model object into the test data.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="data_source-class_method">
+  
+    .<strong>data_source</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData (class)">TestData</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Creates a new instance of the test data source.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData (class)">TestData</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a new configurable test data source</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>6.3.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+41
+42
+43</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data.rb', line 41</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_data_source'>data_source</span>
+  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="flag-instance_method">
+  
+    #<strong>flag</strong>(key)  &#x21d2; <tt><span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Creates or copies a <span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span> for building a test flag configuration.</p>
+
+<p>If this flag key has already been defined in this <code>TestData</code> instance, then the builder
+starts with the same configuration that was last provided for this flag.</p>
+
+<p>Otherwise, it starts with a new default configuration in which the flag has <code>true</code> and
+<code>false</code> variations, is <code>true</code> for all contexts when targeting is turned on and
+<code>false</code> otherwise, and currently has targeting turned on. You can change any of those
+properties, and provide more complex behavior, using the <span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span> methods.</p>
+
+<p>Once you have set the desired configuration, pass the builder to <span class='object_link'><a href="#update-instance_method" title="LaunchDarkly::Integrations::TestData#update (method)">#update</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag key</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a flag configuration builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>6.3.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+91
+92
+93
+94
+95
+96
+97
+98</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data.rb', line 91</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_flag'>flag</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_existing_builder'>existing_builder</span> <span class='op'>=</span> <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_read_lock'>with_read_lock</span> <span class='lbrace'>{</span> <span class='ivar'>@flag_builders</span><span class='lbracket'>[</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_existing_builder'>existing_builder</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='const'><span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_boolean_flag'><span class='object_link'><a href="TestData/FlagBuilder.html#boolean_flag-instance_method" title="LaunchDarkly::Integrations::TestData::FlagBuilder#boolean_flag (method)">boolean_flag</a></span></span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_existing_builder'>existing_builder</span><span class='period'>.</span><span class='id identifier rubyid_clone'>clone</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="update-instance_method">
+  
+    #<strong>update</strong>(flag_builder)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData (class)">TestData</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Updates the test data with the specified flag configuration.</p>
+
+<p>This has the same effect as if a flag were added or modified on the LaunchDarkly dashboard.
+It immediately propagates the flag change to any <code>LDClient</code> instance(s) that you have
+already configured to use this <code>TestData</code>. If no <code>LDClient</code> has been started yet,
+it simply adds this flag to the test data which will be provided to any <code>LDClient</code> that
+you subsequently configure.</p>
+
+<p>Any subsequent changes to this <span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span> instance do not affect the test data,
+unless you call <span class='object_link'><a href="#update-instance_method" title="LaunchDarkly::Integrations::TestData#update (method)">#update</a></span> again.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>flag_builder</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a flag configuration builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData (class)">TestData</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the TestData instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>6.3.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data.rb', line 115</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_update'>update</span><span class='lparen'>(</span><span class='id identifier rubyid_flag_builder'>flag_builder</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_new_flag'>new_flag</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_write_lock'>with_write_lock</span> <span class='kw'>do</span>
+    <span class='ivar'>@flag_builders</span><span class='lbracket'>[</span><span class='id identifier rubyid_flag_builder'>flag_builder</span><span class='period'>.</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_flag_builder'>flag_builder</span>
+    <span class='id identifier rubyid_version'>version</span> <span class='op'>=</span> <span class='int'>0</span>
+    <span class='id identifier rubyid_flag_key'>flag_key</span> <span class='op'>=</span> <span class='id identifier rubyid_flag_builder'>flag_builder</span><span class='period'>.</span><span class='id identifier rubyid_key'>key</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span>
+    <span class='kw'>if</span> <span class='ivar'>@current_flags</span><span class='lbracket'>[</span><span class='id identifier rubyid_flag_key'>flag_key</span><span class='rbracket'>]</span>
+      <span class='id identifier rubyid_version'>version</span> <span class='op'>=</span> <span class='ivar'>@current_flags</span><span class='lbracket'>[</span><span class='id identifier rubyid_flag_key'>flag_key</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_new_flag'>new_flag</span> <span class='op'>=</span> <span class='const'>Impl</span><span class='op'>::</span><span class='const'>Model</span><span class='period'>.</span><span class='id identifier rubyid_deserialize'>deserialize</span><span class='lparen'>(</span><span class='const'>FEATURES</span><span class='comma'>,</span> <span class='id identifier rubyid_flag_builder'>flag_builder</span><span class='period'>.</span><span class='id identifier rubyid_build'>build</span><span class='lparen'>(</span><span class='id identifier rubyid_version'>version</span><span class='op'>+</span><span class='int'>1</span><span class='rparen'>)</span><span class='rparen'>)</span>
+    <span class='ivar'>@current_flags</span><span class='lbracket'>[</span><span class='id identifier rubyid_flag_key'>flag_key</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_new_flag'>new_flag</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_update_item'>update_item</span><span class='lparen'>(</span><span class='const'>FEATURES</span><span class='comma'>,</span> <span class='id identifier rubyid_new_flag'>new_flag</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="use_preconfigured_flag-instance_method">
+  
+    #<strong>use_preconfigured_flag</strong>(flag)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData (class)">TestData</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Copies a full feature flag data model object into the test data.</p>
+
+<p>It immediately propagates the flag change to any <code>LDClient</code> instance(s) that you have already
+configured to use this <code>TestData</code>. If no <code>LDClient</code> has been started yet, it simply adds
+this flag to the test data which will be provided to any LDClient that you subsequently
+configure.</p>
+
+<p>Use this method if you need to use advanced flag configuration properties that are not supported by
+the simplified <span class='object_link'><a href="TestData/FlagBuilder.html" title="LaunchDarkly::Integrations::TestData::FlagBuilder (class)">FlagBuilder</a></span> API. Otherwise it is recommended to use the regular <span class='object_link'><a href="#flag-instance_method" title="LaunchDarkly::Integrations::TestData#flag (method)">#flag</a></span>/<span class='object_link'><a href="#update-instance_method" title="LaunchDarkly::Integrations::TestData#update (method)">#update</a></span>
+mechanism to avoid dependencies on details of the data model.</p>
+
+<p>You cannot make incremental changes with <span class='object_link'><a href="#flag-instance_method" title="LaunchDarkly::Integrations::TestData#flag (method)">#flag</a></span>/<span class='object_link'><a href="#update-instance_method" title="LaunchDarkly::Integrations::TestData#update (method)">#update</a></span> to a flag that has been added in this way;
+you can only replace it with an entirely new flag configuration.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>flag</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag configuration</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData (class)">TestData</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the TestData instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>6.3.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+149
+150
+151</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data.rb', line 149</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_use_preconfigured_flag'>use_preconfigured_flag</span><span class='lparen'>(</span><span class='id identifier rubyid_flag'>flag</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_use_preconfigured_item'>use_preconfigured_item</span><span class='lparen'>(</span><span class='const'>FEATURES</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='ivar'>@current_flags</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="use_preconfigured_segment-instance_method">
+  
+    #<strong>use_preconfigured_segment</strong>(segment)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData (class)">TestData</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Copies a full segment data model object into the test data.</p>
+
+<p>It immediately propagates the change to any <code>LDClient</code> instance(s) that you have already
+configured to use this <code>TestData</code>. If no <code>LDClient</code> has been started yet, it simply adds
+this segment to the test data which will be provided to any LDClient that you subsequently
+configure.</p>
+
+<p>This method is currently the only way to inject segment data, since there is no builder
+API for segments. It is mainly intended for the SDK&#39;s own tests of segment functionality,
+since application tests that need to produce a desired evaluation state could do so more easily
+by just setting flag values.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>segment</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the segment configuration</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestData (class)">TestData</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the TestData instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>6.3.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+169
+170
+171</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data.rb', line 169</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_use_preconfigured_segment'>use_preconfigured_segment</span><span class='lparen'>(</span><span class='id identifier rubyid_segment'>segment</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_use_preconfigured_item'>use_preconfigured_item</span><span class='lparen'>(</span><span class='const'>SEGMENTS</span><span class='comma'>,</span> <span class='id identifier rubyid_segment'>segment</span><span class='comma'>,</span> <span class='ivar'>@current_segments</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Tue Dec 26 20:53:00 2023 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.34 (ruby-2.7.8).
+</div>
+
+    </div>
+  </body>
+</html>
