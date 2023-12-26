@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.3.1](https://github.com/launchdarkly/ruby-server-sdk/compare/7.3.0...7.3.1) (2023-12-26)
+
+
+### Bug Fixes
+
+* Calling stop in ldd mode no longer raises an exception ([#235](https://github.com/launchdarkly/ruby-server-sdk/issues/235)) ([eeb9906](https://github.com/launchdarkly/ruby-server-sdk/commit/eeb9906768f0519ac8d39def50226ed6bc8cb9ba))
+
 ## [8.0.0] - 2023-10-17
 The latest version of this SDK supports the ability to manage migrations or modernizations, using migration flags. You might use this functionality if you are optimizing queries, upgrading to new tech stacks, migrating from one database to another, or other similar technology changes. Migration flags are part of LaunchDarkly's Early Access Program. This feature is available to all LaunchDarkly customers but may undergo additional changes before it is finalized.
 
