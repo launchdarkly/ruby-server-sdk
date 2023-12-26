@@ -112,7 +112,7 @@ module LaunchDarkly
             @pool = create_redis_pool(opts)
 
             # shutdown pool on close unless the client passed a custom pool and specified not to shutdown
-            @pool_shutdown_on_close = (!opts[:pool] || opts.fetch(:pool_shutdown_on_close, true))
+            @pool_shutdown_on_close = !opts[:pool] || opts.fetch(:pool_shutdown_on_close, true)
 
             @prefix = opts[:prefix] || LaunchDarkly::Integrations::Redis::default_prefix
             @logger = opts[:logger] || Config.default_logger
