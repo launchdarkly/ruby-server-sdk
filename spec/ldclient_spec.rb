@@ -45,6 +45,23 @@ module LaunchDarkly
       end
     end
 
+    context "client can be stopped" do
+      it "when in online mode" do
+        client = subject.new("sdk-key", Config.new)
+        client.close()
+      end
+
+      it "when in offline mode" do
+        client = subject.new("sdk-key", Config.new(offline: true))
+        client.close()
+      end
+
+      it "when in ldd mode" do
+        client = subject.new("sdk-key", Config.new(use_ldd: true))
+        client.close()
+      end
+    end
+
     context "secure_mode_hash" do
       it "will return the expected value for a known message and secret" do
         ensure_close(subject.new("secret", test_config)) do |client|

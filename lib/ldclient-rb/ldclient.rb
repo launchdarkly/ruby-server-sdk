@@ -87,6 +87,7 @@ module LaunchDarkly
 
       if @config.use_ldd?
         @config.logger.info { "[LDClient] Started LaunchDarkly Client in LDD mode" }
+        @data_source = NullUpdateProcessor.new
         return  # requestor and update processor are not used in this mode
       end
 
