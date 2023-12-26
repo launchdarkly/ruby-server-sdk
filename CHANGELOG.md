@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [7.3.1](https://github.com/launchdarkly/ruby-server-sdk/compare/7.3.0...7.3.1) (2023-12-26)
+
+
+### Bug Fixes
+
+* Calling stop in ldd mode no longer raises an exception ([#235](https://github.com/launchdarkly/ruby-server-sdk/issues/235)) ([eeb9906](https://github.com/launchdarkly/ruby-server-sdk/commit/eeb9906768f0519ac8d39def50226ed6bc8cb9ba))
+
 ## [7.3.0] - 2023-10-16
 ### Fixed:
 - The documentation for the `default_connect_timeout` setting stated it defaulted to 10 seconds when the code actually defaults to 2. (Thanks, [zmagg-figma](https://github.com/launchdarkly/ruby-server-sdk/pull/223)!)
