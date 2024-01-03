@@ -2,6 +2,19 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.1.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.0.0...8.1.0) (2024-01-03)
+
+
+### Features
+
+* Add hash access and equality support to LDContext ([#241](https://github.com/launchdarkly/ruby-server-sdk/issues/241)) ([1ba6bde](https://github.com/launchdarkly/ruby-server-sdk/commit/1ba6bde61fd8ed5a197fee74770a0aa5ab5222c8))
+* Define equality methods for LDContext and Reference ([#232](https://github.com/launchdarkly/ruby-server-sdk/issues/232)) ([1b2ba7b](https://github.com/launchdarkly/ruby-server-sdk/commit/1b2ba7bfd9ebfccfa7717cbd5c32665bc5f380db))
+
+
+### Bug Fixes
+
+* Calling stop in ldd mode no longer raises an exception ([#237](https://github.com/launchdarkly/ruby-server-sdk/issues/237)) ([8149da1](https://github.com/launchdarkly/ruby-server-sdk/commit/8149da1897d6da6bc9325c977df02f355173b135))
+
 ## [7.3.2](https://github.com/launchdarkly/ruby-server-sdk/compare/7.3.1...7.3.2) (2023-12-26)
 
 
