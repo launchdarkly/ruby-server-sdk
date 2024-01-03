@@ -211,6 +211,44 @@ module LaunchDarkly
       end
     end
 
+    describe "hash-like behavior" do
+      it "multi-kind contexts return nested contexts" do
+        user_context = subject.create({ key: "user-key", kind: "user" })
+        org_context = subject.create({ key: "org-key", kind: "org" })
+        multi_context = subject.create_multi([user_context, org_context])
+
+        expect(multi_context.valid?).to be true
+        expect(multi_context["user"]).to eq(user_context)
+        expect(multi_context["org"]).to eq(org_context)
+        expect(multi_context["no-such-type"]).to be_nil
+      end
+
+      describe "single-kind contexts" do
+        it "can retrieve the correct simple attribute value" do
+          context = subject.create({ key: "my-key", kind: "org", name: "x", :"my-attr" => "y", :"/starts-with-slash" => "z" })
+
+          expect(context["kind"]).to eq("org")
+          expect(context["key"]).to eq("my-key")
+          expect(context["name"]).to eq("x")
+          expect(context["my-attr"]).to eq("y")
+          expect(context["/starts-with-slash"]).to eq("z")
+          expect(context["a-value-that-is-not-set"]).to be_nil
+        end
+
+        it "cannot query subpath/elements" do
+          object_value = { a: 1 }
+          array_value = [1]
+
+          context = subject.create({ key: "my-key", kind: "org", :"obj-attr" => object_value, :"array-attr" => array_value })
+          expect(context["obj-attr"]).to eq(object_value)
+          expect(context[:"array-attr"]).to eq(array_value)
+
+          expect(context[:"/obj-attr/a"]).to be_nil
+          expect(context[:"/array-attr/0"]).to be_nil
+        end
+      end
+    end
+
     describe "value retrieval" do
       describe "supports simple attribute retrieval" do
         it "can retrieve the correct simple attribute value" do
@@ -298,6 +336,38 @@ module LaunchDarkly
     end
 
     describe "equality comparisons" do
+      it "wrong types are not equal" do
+        context = subject.create({ key: 'context-key', kind: 'user' })
+        expect(context).to_not eq(true)
+        expect(context).to_not eq(3)
+      end
+
+      it "single-kind context can compare with hash" do
+        hash = { key: 'context-key', kind: 'user', name: 'Example name', groups: ['test', 'it', 'here'], address: {street: '123 Easy St', city: 'Every Town'},
+            _meta: { privateAttributes: ['name', 'out of order attribute'] }
+          }
+        context = subject.create(hash)
+        expect(context).to eq(hash)
+      end
+
+      it "multi-kind context can compare with hash" do
+        hash = {
+          kind: "multi",
+          org: { key: 'org-key', kind: 'org' },
+          user: { key: 'user-key', kind: 'user' },
+          device: { key: 'device-key', kind: 'device' },
+        }
+        org_context = subject.create(hash[:org])
+        user_context = subject.create(hash[:user])
+        device_context = subject.create(hash[:device])
+        context = subject.create(hash)
+
+        expect(context).to eq(hash)
+        expect(context["org"]).to eq(hash[:org])
+        expect(context["user"]).to eq(hash[:user])
+        expect(context["device"]).to eq(hash[:device])
+      end
+
       it "single kind contexts are equal" do
         original_context = subject.create(
           { key: 'context-key', kind: 'user', name: 'Example name', groups: ['test', 'it', 'here'], address: {street: '123 Easy St', city: 'Every Town'},

@@ -281,7 +281,18 @@ module LaunchDarkly
       nil
     end
 
+    #
+    # An LDContext can be compared to other LDContexts or to a hash object. If
+    # a hash is provided, it is first converted to an LDContext using the
+    # `LDContext.create` method.
+    #
+    # @param other [LDContext, Hash]
+    # @return [Boolean]
+    #
     def ==(other)
+      other = LDContext.create(other) if other.is_a? Hash
+      return false unless other.is_a? LDContext
+
       return false unless self.kind == other.kind
       return false unless self.valid? == other.valid?
       return false unless self.error == other.error
@@ -307,6 +318,21 @@ module LaunchDarkly
       true
     end
     alias eql? ==
+
+    #
+    # For a single-kind context, the provided key will return the attribute value specified. This is the same as calling
+    # `LDCotnext.get_value`.
+    #
+    # For multi-kind contexts, the key will be interpreted as a context kind. If the multi-kind context has an
+    # individual context of that kind, it will be returned. Otherwise, this method will return nil. This behaves the
+    # same as calling `LDContext.individual_context`.
+    #
+    # @param key [Symbol, String]
+    #
+    def [](key)
+      return nil unless key.is_a? Symbol or key.is_a? String
+      multi_kind? ? individual_context(key.to_s) : get_value(key)
+    end
 
     #
     # Retrieve the value of any top level, addressable attribute.
