@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: LaunchDarkly::Integrations::FileData
+  
+    &mdash; LaunchDarkly Ruby SDK
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "LaunchDarkly::Integrations::FileData";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (F)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span>
+     &raquo; 
+    <span class="title">FileData</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: LaunchDarkly::Integrations::FileData
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/ldclient-rb/integrations/file_data.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>Provides a way to use local files as a source of feature flag state. This allows using a
+predetermined feature flag state without an actual LaunchDarkly connection.</p>
+
+<p>Reading flags from a file is only intended for pre-production environments. Production
+environments should always be configured to receive flag updates from LaunchDarkly.</p>
+
+<p>To use this component, call <span class='object_link'><a href="#data_source-class_method" title="LaunchDarkly::Integrations::FileData.data_source (method)">FileData.data_source</a></span>, and store its return value in the
+<span class='object_link'><a href="../Config.html#data_source-instance_method" title="LaunchDarkly::Config#data_source (method)">Config#data_source</a></span> property of your LaunchDarkly client configuration. In the options
+to <code>data_source</code>, set <code>paths</code> to the file path(s) of your data file(s):</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_file_source'>file_source</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span><span class='op'>::</span><span class='const'>FileData</span><span class='period'>.</span><span class='id identifier rubyid_data_source'><span class='object_link'><a href="#data_source-class_method" title="LaunchDarkly::Integrations::FileData.data_source (method)">data_source</a></span></span><span class='lparen'>(</span><span class='label'>paths:</span> <span class='lbracket'>[</span> <span class='id identifier rubyid_myFilePath'>myFilePath</span> <span class='rbracket'>]</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>data_source:</span> <span class='id identifier rubyid_file_source'>file_source</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>This will cause the client not to connect to LaunchDarkly to get feature flags. The
+client may still make network connections to send analytics events, unless you have disabled
+this with <span class='object_link'><a href="../Config.html#send_events-instance_method" title="LaunchDarkly::Config#send_events (method)">Config#send_events</a></span> or <span class='object_link'><a href="../Config.html#offline%3F-instance_method" title="LaunchDarkly::Config#offline? (method)">Config#offline?</a></span>.</p>
+
+<p>Flag data files can be either JSON or YAML. They contain an object with three possible
+properties:</p>
+
+<ul>
+<li><code>flags</code>: Feature flag definitions.</li>
+<li><code>flagValues</code>: Simplified feature flags that contain only a value.</li>
+<li><code>segments</code>: Context segment definitions.</li>
+</ul>
+
+<p>The format of the data in <code>flags</code> and <code>segments</code> is defined by the LaunchDarkly application
+and is subject to change. Rather than trying to construct these objects yourself, it is simpler
+to request existing flags directly from the LaunchDarkly server in JSON format, and use this
+output as the starting point for your file. In Linux you would do this:</p>
+
+<pre class="code ruby"><code class="ruby">    curl -H &quot;Authorization: YOUR_SDK_KEY&quot; https://sdk.launchdarkly.com/sdk/latest-all
+</code></pre>
+
+<p>The output will look something like this (but with many more properties):</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>flags</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>flag-key-1</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>key</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>flag-key-1</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>on</span><span class='label_end'>&quot;:</span> <span class='kw'>true</span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>variations</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>a</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>b</span><span class='tstring_end'>&quot;</span></span> <span class='rbracket'>]</span>
+    <span class='rbrace'>}</span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>segments</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>segment-key-1</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>key</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>segment-key-1</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>includes</span><span class='label_end'>&quot;:</span> <span class='lbracket'>[</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>user-key-1</span><span class='tstring_end'>&quot;</span></span> <span class='rbracket'>]</span>
+    <span class='rbrace'>}</span>
+  <span class='rbrace'>}</span>
+<span class='rbrace'>}</span>
+</code></pre>
+
+<p>Data in this format allows the SDK to exactly duplicate all the kinds of flag behavior supported
+by LaunchDarkly. However, in many cases you will not need this complexity, but will just want to
+set specific flag keys to specific values. For that, you can use a much simpler format:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbrace'>{</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>flagValues</span><span class='label_end'>&quot;:</span> <span class='lbrace'>{</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my-string-flag-key</span><span class='label_end'>&quot;:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>value-1</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my-boolean-flag-key</span><span class='label_end'>&quot;:</span> <span class='kw'>true</span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my-integer-flag-key</span><span class='label_end'>&quot;:</span> <span class='int'>3</span>
+  <span class='rbrace'>}</span>
+<span class='rbrace'>}</span>
+</code></pre>
+
+<p>Or, in YAML:</p>
+
+<pre class="code ruby"><code class="ruby">flagValues:
+  my-string-flag-key: &quot;value-1&quot;
+  my-boolean-flag-key: true
+  my-integer-flag-key: 1
+</code></pre>
+
+<p>It is also possible to specify both &quot;flags&quot; and &quot;flagValues&quot;, if you want some flags
+to have simple values and others to have complex behavior. However, it is an error to use the
+same flag key or segment key more than once, either in a single file or across multiple files.</p>
+
+<p>If the data source encounters any error in any file-- malformed content, a missing file, or a
+duplicate key-- it will not load flags from any of the files.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#data_source-class_method" title="data_source (class method)">.<strong>data_source</strong>(options = {})  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a factory for the file data source component.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="data_source-class_method">
+  
+    .<strong>data_source</strong>(options = {})  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a factory for the file data source component.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>the configuration options</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+  
+    
+    
+    <p class="tag_title">Options Hash (<tt>options</tt>):</p>
+    <ul class="option">
+      
+        <li>
+          <span class="name">:paths</span>
+          <span class="type">(<tt>Array</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>The paths of the source files for loading flag data. These
+may be absolute paths or relative to the current working directory.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:auto_update</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>True if the data source should watch for changes to
+the source file(s) and reload flags whenever there is a change. Auto-updating will only
+work if all of the files you specified have valid directory paths at startup time.
+Note that the default implementation of this feature is based on polling the filesystem,
+which may not perform well. If you install the &#39;listen&#39; gem (not included by default, to
+avoid adding unwanted dependencies to the SDK), its native file watching mechanism will be
+used instead. However, &#39;listen&#39; will not be used in JRuby 9.1 due to a known instability.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:poll_interval</span>
+          <span class="type">(<tt>Float</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>The minimum interval, in seconds, between checks for
+file modifications - used only if auto_update is true, and if the native file-watching
+mechanism from &#39;listen&#39; is not being used. The default value is 1 second.</p>
+</div>
+          
+        </li>
+      
+    </ul>
+  
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        
+        <div class='inline'><p>an object that can be stored in <span class='object_link'><a href="../Config.html#data_source-instance_method" title="LaunchDarkly::Config#data_source (method)">Config#data_source</a></span></p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+102
+103
+104
+105</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/file_data.rb', line 102</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_data_source'>data_source</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+    <span class='const'>Impl</span><span class='op'>::</span><span class='const'>Integrations</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl/Integrations/FileDataSourceImpl.html" title="LaunchDarkly::Impl::Integrations::FileDataSourceImpl (class)">FileDataSourceImpl</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Impl/Integrations/FileDataSourceImpl.html#initialize-instance_method" title="LaunchDarkly::Impl::Integrations::FileDataSourceImpl#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_feature_store'>feature_store</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_data_source_update_sink'>data_source_update_sink</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jan  3 16:54:29 2024 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.34 (ruby-3.3.0).
+</div>
+
+    </div>
+  </body>
+</html>
