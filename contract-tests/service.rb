@@ -37,6 +37,7 @@ get '/' do
       'event-sampling',
       'context-comparison',
       'inline-context',
+      'anonymous-redaction',
     ],
   }.to_json
 end
