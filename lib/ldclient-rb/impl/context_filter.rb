@@ -20,10 +20,27 @@ module LaunchDarkly
       # redaction applied.
       #
       # @param context [LaunchDarkly::LDContext]
-      # @param redact_anonymous [Boolean]
       # @return [Hash]
       #
-      def filter(context, redact_anonymous)
+      def filter(context)
+        internal_filter(context, false)
+      end
+
+      #
+      # Return a hash representation of the provided context with attribute
+      # redaction applied.
+      #
+      # If a context is anonyomous, all attributes will be redacted except
+      # for key, kind, and anonymous.
+      #
+      # @param context [LaunchDarkly::LDContext]
+      # @return [Hash]
+      #
+      def filter_redact_anonymous(context)
+        internal_filter(context, true)
+      end
+
+      private def internal_filter(context, redact_anonymous)
         return filter_single_context(context, true, redact_anonymous) unless context.multi_kind?
 
         filtered = {kind: 'multi'}

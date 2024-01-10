@@ -601,7 +601,7 @@ module LaunchDarkly
       out = {
         kind: "index",
         creationDate: timestamp,
-        context: context_filter.filter(context, false),
+        context: context_filter.filter(context),
       }
       JSON.parse(out.to_json, symbolize_names: true)
     end
@@ -618,7 +618,7 @@ module LaunchDarkly
         kind: "identify",
         creationDate: timestamp,
         key: context.fully_qualified_key,
-        context: context_filter.filter(context, false),
+        context: context_filter.filter(context),
       }
       JSON.parse(out.to_json, symbolize_names: true)
     end
@@ -634,7 +634,7 @@ module LaunchDarkly
     #
     def feature_event(config, flag, context, variation, value, timestamp = starting_timestamp)
       context_filter = Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes)
-      redacted_context = context_filter.filter(context, true)
+      redacted_context = context_filter.filter_redact_anonymous(context)
 
       out = {
         kind: 'feature',
@@ -693,7 +693,7 @@ module LaunchDarkly
         variation: variation,
         version: flag[:version],
         value: value,
-        context: context_filter.filter(context, false),
+        context: context_filter.filter(context),
       }
       JSON.parse(out.to_json, symbolize_names: true)
     end

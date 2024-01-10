@@ -486,7 +486,7 @@ module LaunchDarkly
         out[:variation] = event.variation unless event.variation.nil?
         out[:version] = event.version unless event.version.nil?
         out[:prereqOf] = event.prereq_of unless event.prereq_of.nil?
-        out[:context] = @context_filter.filter(event.context, true)
+        out[:context] = @context_filter.filter_redact_anonymous(event.context)
         out[:reason] = event.reason unless event.reason.nil?
 
         out
@@ -554,7 +554,7 @@ module LaunchDarkly
           kind: IDENTIFY_KIND,
           creationDate: event.timestamp,
           key: event.context.fully_qualified_key,
-          context: @context_filter.filter(event.context, false),
+          context: @context_filter.filter(event.context),
         }
 
       when LaunchDarkly::Impl::CustomEvent
@@ -572,7 +572,7 @@ module LaunchDarkly
         {
           kind: INDEX_KIND,
           creationDate: event.timestamp,
-          context: @context_filter.filter(event.context, false),
+          context: @context_filter.filter(event.context),
         }
 
       when LaunchDarkly::Impl::DebugEvent
@@ -581,7 +581,7 @@ module LaunchDarkly
           kind: DEBUG_KIND,
           creationDate: original.timestamp,
           key: original.key,
-          context: @context_filter.filter(original.context, false),
+          context: @context_filter.filter(original.context),
           value: original.value,
         }
         out[:default] = original.default unless original.default.nil?
