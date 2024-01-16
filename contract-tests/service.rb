@@ -38,6 +38,7 @@ get '/' do
       'context-comparison',
       'polling-gzip',
       'inline-context',
+      'anonymous-redaction',
     ],
   }.to_json
 end

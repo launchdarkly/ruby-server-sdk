@@ -481,12 +481,14 @@ module LaunchDarkly
           key: event.key,
           value: event.value,
         }
+
         out[:default] = event.default unless event.default.nil?
         out[:variation] = event.variation unless event.variation.nil?
         out[:version] = event.version unless event.version.nil?
         out[:prereqOf] = event.prereq_of unless event.prereq_of.nil?
-        out[:context] = @context_filter.filter(event.context)
+        out[:context] = @context_filter.filter_redact_anonymous(event.context)
         out[:reason] = event.reason unless event.reason.nil?
+
         out
 
       when LaunchDarkly::Impl::MigrationOpEvent

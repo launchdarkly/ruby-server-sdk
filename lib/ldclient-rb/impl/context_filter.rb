@@ -23,14 +23,32 @@ module LaunchDarkly
       # @return [Hash]
       #
       def filter(context)
-        return filter_single_context(context, true) unless context.multi_kind?
+        internal_filter(context, false)
+      end
+
+      #
+      # Return a hash representation of the provided context with attribute
+      # redaction applied.
+      #
+      # If a context is anonyomous, all attributes will be redacted except
+      # for key, kind, and anonymous.
+      #
+      # @param context [LaunchDarkly::LDContext]
+      # @return [Hash]
+      #
+      def filter_redact_anonymous(context)
+        internal_filter(context, true)
+      end
+
+      private def internal_filter(context, redact_anonymous)
+        return filter_single_context(context, true, redact_anonymous) unless context.multi_kind?
 
         filtered = {kind: 'multi'}
         (0...context.individual_context_count).each do |i|
           c = context.individual_context(i)
           next if c.nil?
 
-          filtered[c.kind] = filter_single_context(c, false)
+          filtered[c.kind] = filter_single_context(c, false, redact_anonymous)
         end
 
         filtered
@@ -43,22 +61,24 @@ module LaunchDarkly
       # @param include_kind [Boolean]
       # @return [Hash]
       #
-      private def filter_single_context(context, include_kind)
+      private def filter_single_context(context, include_kind, redact_anonymous)
         filtered = {key: context.key}
 
         filtered[:kind] = context.kind if include_kind
-        filtered[:anonymous] = true if context.get_value(:anonymous)
+
+        anonymous = context.get_value(:anonymous)
+        filtered[:anonymous] = true if anonymous
 
         redacted = []
         private_attributes = @private_attributes.concat(context.private_attributes)
 
         name = context.get_value(:name)
-        if !name.nil? && !check_whole_attribute_private(:name, private_attributes, redacted)
+        if !name.nil? && !check_whole_attribute_private(:name, private_attributes, redacted, anonymous && redact_anonymous)
           filtered[:name] = name
         end
 
         context.get_custom_attribute_names.each do |attribute|
-          unless check_whole_attribute_private(attribute, private_attributes, redacted)
+          unless check_whole_attribute_private(attribute, private_attributes, redacted, anonymous && redact_anonymous)
             value = context.get_value(attribute)
             filtered[attribute] = redact_json_value(nil, attribute, value, private_attributes, redacted)
           end
@@ -75,10 +95,11 @@ module LaunchDarkly
       # @param attribute [Symbol]
       # @param private_attributes [Array<Reference>]
       # @param redacted [Array<Symbol>]
+      # @param redact_all [Boolean]
       # @return [Boolean]
       #
-      private def check_whole_attribute_private(attribute, private_attributes, redacted)
-        if @all_attributes_private
+      private def check_whole_attribute_private(attribute, private_attributes, redacted, redact_all)
+        if @all_attributes_private || redact_all
           redacted << attribute
           return true
         end
