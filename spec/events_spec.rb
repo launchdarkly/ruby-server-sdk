@@ -634,10 +634,12 @@ module LaunchDarkly
     #
     def feature_event(config, flag, context, variation, value, timestamp = starting_timestamp)
       context_filter = Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes)
+      redacted_context = context_filter.filter_redact_anonymous(context)
+
       out = {
         kind: 'feature',
         creationDate: timestamp,
-        context: context_filter.filter(context),
+        context: redacted_context,
         key: flag[:key],
         variation: variation,
         version: flag[:version],
