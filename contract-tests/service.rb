@@ -37,6 +37,7 @@ get '/' do
       'event-sampling',
       'context-comparison',
       'polling-gzip',
+      'inline-context',
     ],
   }.to_json
 end
