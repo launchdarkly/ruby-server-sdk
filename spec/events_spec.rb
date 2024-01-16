@@ -41,7 +41,7 @@ module LaunchDarkly
         output = flush_and_get_events(ep, sender)
         expect(output).to contain_exactly(
           eq(index_event(default_config, context)),
-          eq(feature_event(flag, context, 1, 'value')),
+          eq(feature_event(default_config, flag, context, 1, 'value')),
           include(:kind => "summary")
         )
       end
@@ -69,7 +69,7 @@ module LaunchDarkly
         output = flush_and_get_events(ep, sender)
         expect(output).to contain_exactly(
           eq(index_event(default_config, context)),
-          eq(feature_event(flag, context, 1, 'value'))
+          eq(feature_event(default_config, flag, context, 1, 'value'))
         )
       end
     end
@@ -83,7 +83,7 @@ module LaunchDarkly
         output = flush_and_get_events(ep, sender)
         expect(output).to contain_exactly(
           eq(index_event(config, context)),
-          eq(feature_event(flag, context, 1, 'value')),
+          eq(feature_event(config, flag, context, 1, 'value')),
           include(:kind => "summary")
         )
       end
@@ -98,7 +98,7 @@ module LaunchDarkly
         output = flush_and_get_events(ep, sender)
         expect(output).to contain_exactly(
           eq(index_event(config, context)),
-          eq(feature_event(flag, context, 1, 'value')),
+          eq(feature_event(config, flag, context, 1, 'value')),
           include(:kind => "summary")
         )
       end
@@ -142,7 +142,7 @@ module LaunchDarkly
         output = flush_and_get_events(ep, sender)
         expect(output).to contain_exactly(
           eq(index_event(default_config, context)),
-          eq(feature_event(flag, context, 1, 'value')),
+          eq(feature_event(default_config, flag, context, 1, 'value')),
           eq(debug_event(default_config, flag, context, 1, 'value')),
           include(:kind => "summary")
         )
@@ -207,8 +207,8 @@ module LaunchDarkly
         output = flush_and_get_events(ep, sender)
         expect(output).to contain_exactly(
           eq(index_event(default_config, context)),
-          eq(feature_event(flag1, context, 1, 'value', starting_timestamp)),
-          eq(feature_event(flag2, context, 1, 'value', starting_timestamp + 1)),
+          eq(feature_event(default_config, flag1, context, 1, 'value', starting_timestamp)),
+          eq(feature_event(default_config, flag2, context, 1, 'value', starting_timestamp + 1)),
           include(:kind => "summary")
         )
       end
@@ -624,6 +624,7 @@ module LaunchDarkly
     end
 
     #
+    # @param config [Config]
     # @param flag [Hash]
     # @param context [LDContext]
     # @param variation [Integer]
@@ -631,11 +632,12 @@ module LaunchDarkly
     # @param timestamp [Integer]
     # @return [Hash]
     #
-    def feature_event(flag, context, variation, value, timestamp = starting_timestamp)
+    def feature_event(config, flag, context, variation, value, timestamp = starting_timestamp)
+      context_filter = Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes)
       out = {
         kind: 'feature',
         creationDate: timestamp,
-        contextKeys: context.keys,
+        context: context_filter.filter(context),
         key: flag[:key],
         variation: variation,
         version: flag[:version],
