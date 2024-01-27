@@ -19,8 +19,6 @@ $ slsa-verifier verify-artifact \
 --provenance-path multiple-provenance.intoto.jsonl \
 --source-uri github.com/launchdarkly/ruby-server-sdk \
 launchdarkly-server-sdk-VERSION.gem
-
-TBD OUTPUT
 ```
 
 Alternatively, to verify the provenance manually, the SLSA framework specifies [recommendations for verifying build artifacts](https://slsa.dev/spec/v1.0/verifying-artifacts) in their documentation.
