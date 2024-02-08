@@ -4,6 +4,10 @@ inputs:
   dry_run:
     description: 'Is this a dry run. If so no package will be published.'
     required: true
+outputs:
+  gem-hash:
+    description: "base64-encoded sha256 hashes of distribution files"
+    value: ${{ steps.gem-hash.outputs.gem-hash }}
 
 runs:
   using: composite
@@ -11,6 +15,12 @@ runs:
     - name: Build gemspec
       shell: bash
       run: gem build launchdarkly-server-sdk.gemspec
+
+    - name: Hash gem for provenance
+      id: gem-hash
+      shell: bash 
+      run: |
+        echo "gem-hash=$(sha256sum launchdarkly-server-sdk-*.gem | base64 -w0)" >> "$GITHUB_OUTPUT"
 
     - name: Publish Library
       shell: bash
