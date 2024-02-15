@@ -26,6 +26,8 @@ module LaunchDarkly
       @sdk_key = sdk_key
       @config = config
       @http_client = LaunchDarkly::Util.new_http_client(config.base_uri, config)
+        .use(:auto_inflate)
+        .headers("Accept-Encoding" => "gzip")
       @cache = @config.cache_store
     end
 
