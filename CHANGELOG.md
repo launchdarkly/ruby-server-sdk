@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.2.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.1.0...8.2.0) (2024-02-20)
+
+
+### Features
+
+* Enable gzip compression on polling requests ([#249](https://github.com/launchdarkly/ruby-server-sdk/issues/249)) ([abffe47](https://github.com/launchdarkly/ruby-server-sdk/commit/abffe476093a8203f262be337b0bc3a4ec6ba982))
+
 ## [8.1.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.0.0...8.1.0) (2024-01-03)
 
 
