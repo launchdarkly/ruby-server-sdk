@@ -36,6 +36,7 @@ get '/' do
       'migrations',
       'event-sampling',
       'context-comparison',
+      'polling-gzip',
     ],
   }.to_json
 end
