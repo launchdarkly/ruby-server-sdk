@@ -1,4 +1,3 @@
-
 ifeq ($(LD_RELEASE_VERSION),)
 TITLE=LaunchDarkly Ruby SDK
 else
@@ -20,6 +19,7 @@ html: dependencies
 		lib/**/*.rb \
 		lib/**/**/*.rb \
 		lib/**/**/**/*.rb
+	rm -f build/html/frames.html
 
 dependencies:
 	gem install --conservative yard
