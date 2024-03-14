@@ -2,6 +2,14 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.3.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.2.0...8.3.0) (2024-03-14)
+
+
+### Features
+
+* Inline contexts for all evaluation events ([#245](https://github.com/launchdarkly/ruby-server-sdk/issues/245)) ([bd30c3b](https://github.com/launchdarkly/ruby-server-sdk/commit/bd30c3be7a832c14a9b9d2757b651169079a8c10))
+* Redact anonymous attributes within feature events ([#246](https://github.com/launchdarkly/ruby-server-sdk/issues/246)) ([640ac39](https://github.com/launchdarkly/ruby-server-sdk/commit/640ac393e6a9b7b0e9785b05917ec4301d4a3a90))
+
 ## [8.2.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.1.0...8.2.0) (2024-02-20)
 
 
