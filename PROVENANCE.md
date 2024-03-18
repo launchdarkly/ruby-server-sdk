@@ -6,19 +6,36 @@ As part of [SLSA requirements for level 3 compliance](https://slsa.dev/spec/v1.0
 
 To verify SLSA provenance attestations, we recommend using [slsa-verifier](https://github.com/slsa-framework/slsa-verifier). Example usage for verifying SDK packages is included below:
 
+<!-- x-release-please-start-version -->
+```
+# Set the version of the SDK to verify
+SDK_VERSION=8.3.0
+```
+<!-- x-release-please-end -->
+
 ```
 # Download gem
-$ gem fetch launchdarkly-server-sdk
+$ gem fetch launchdarkly-server-sdk -v $SDK_VERSION
 
 # Download provenance from Github release
 $ curl --location -O \
-  https://github.com/launchdarkly/ruby-server-sdk/releases/download/VERSION/multiple.intoto.jsonl
+  https://github.com/launchdarkly/ruby-server-sdk/releases/download/${SDK_VERSION}/launchdarkly-server-sdk-${SDK_VERSION}.gem.intoto.jsonl
 
 # Run slsa-verifier to verify provenance against package artifacts 
 $ slsa-verifier verify-artifact \
---provenance-path multiple-provenance.intoto.jsonl \
+--provenance-path launchdarkly-server-sdk-${SDK_VERSION}.gem.intoto.jsonl \
 --source-uri github.com/launchdarkly/ruby-server-sdk \
-launchdarkly-server-sdk-VERSION.gem
+launchdarkly-server-sdk-${SDK_VERSION}.gem
+```
+
+Below is a sample of expected output.
+
+```
+Verified signature against tlog entry index 78214752 at URL: https://rekor.sigstore.dev/api/v1/log/entries/24296fb24b8ad77ab941c118ef7e0b2d656b962a0d670c6ac91cfa37d07b7b121ae560b00a978ecf
+Verified build using builder "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v1.7.0" at commit f43b3ad834103fdc282652efbfe4963e8dfa737b
+Verifying artifact launchdarkly-server-sdk-8.3.0.gem: PASSED
+
+PASSED: Verified SLSA provenance
 ```
 
 Alternatively, to verify the provenance manually, the SLSA framework specifies [recommendations for verifying build artifacts](https://slsa.dev/spec/v1.0/verifying-artifacts) in their documentation.
