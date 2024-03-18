@@ -6,7 +6,7 @@
       "versioning": "default",
       "include-component-in-tag": false,
       "include-v-in-tag": false,
-      "extra-files": ["lib/ldclient-rb/version.rb"]
+      "extra-files": ["PROVENANCE.md", "lib/ldclient-rb/version.rb"]
     }
   }
 }
