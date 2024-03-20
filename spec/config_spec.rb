@@ -49,6 +49,11 @@ module LaunchDarkly
         stub_const("Rails", rails)
         expect(subject.default_logger).to eq :logger
       end
+      it "uses logger if Rails logger is nil" do
+        rails = instance_double("Rails", logger: nil)
+        stub_const("Rails", rails)
+        expect(subject.default_logger).to be_an_instance_of Logger
+      end
       it "Uses logger if Rails is not available" do
         expect(subject.default_logger).to be_an_instance_of Logger
       end
