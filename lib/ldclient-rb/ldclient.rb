@@ -54,6 +54,7 @@ module LaunchDarkly
       end
 
       @sdk_key = sdk_key
+      @hooks = config.hooks
 
       @shared_executor = Concurrent::SingleThreadExecutor.new
 
@@ -129,6 +130,23 @@ module LaunchDarkly
           @config.logger.error { "[LDClient] LaunchDarkly client initialization failed" }
         end
       end
+    end
+
+    #
+    # Add a hook to the client. In order to register a hook before the client starts, please use the `hooks` property of
+    # {#LDConfig}.
+    #
+    # Hooks provide entrypoints which allow for observation of SDK functions.
+    #
+    # @param hook [Interfaces::Hooks::Hook]
+    #
+    def add_hook(hook)
+      unless hook.is_a?(Interfaces::Hooks::Hook)
+        @config.logger.error { "[LDClient] Attempted to add a hook that does not include the LaunchDarkly::Intefaces::Hooks:Hook mixin. Ignoring." }
+        return
+      end
+
+      @hooks.push(hook)
     end
 
     #
@@ -226,8 +244,114 @@ module LaunchDarkly
     # @return [EvaluationDetail] an object describing the result
     #
     def variation_detail(key, context, default)
-      detail, _, _ = evaluate_internal(key, context, default, true)
+      detail, _, _ = evaluate_with_hooks(key, context, default, :variation_detail) do
+        evaluate_internal(key, context, default, true)
+      end
+
       detail
+    end
+
+    #
+    # evaluate_with_hook will run the provided block, wrapping it with evaluation hook support.
+    #
+    # Example:
+    #
+    # ```ruby
+    # evaluate_with_hooks(key, context, default, method) do
+    #   puts 'This is being wrapped with evaluation hooks'
+    # end
+    # ```
+    #
+    # @param key [String]
+    # @param context [String]
+    # @param default [String]
+    # @param method [Symbol]
+    # @param &block [#call] Implicit passed block
+    #
+    private def evaluate_with_hooks(key, context, default, method)
+      return yield if @hooks.empty?
+
+      hooks, hook_context = prepare_hooks(key, context, default, method)
+      hook_data = execute_before_evaluation(hooks, hook_context)
+      evaluation_detail, flag, error = yield
+      execute_after_evaluation(hooks, hook_context, hook_data, evaluation_detail)
+
+      [evaluation_detail, flag, error]
+    end
+
+    #
+    # Execute the :before_evaluation stage of the evaluation series.
+    #
+    # This method will return the results of each hook, indexed into an array in the same order as the hooks. If a hook
+    # raised an uncaught exception, the value will be nil.
+    #
+    # @param hooks [Array<Interfaces::Hooks::Hook>]
+    # @param hook_context [EvaluationContext]
+    #
+    # @return [Array<any>]
+    #
+    private def execute_before_evaluation(hooks, hook_context)
+      hooks.map do |hook|
+        try_execute_stage(:before_evaluation, hook.metadata.name) do
+          hook.before_evaluation(hook_context, {})
+        end
+      end
+    end
+
+    #
+    # Execute the :after_evaluation stage of the evaluation series.
+    #
+    # This method will return the results of each hook, indexed into an array in the same order as the hooks. If a hook
+    # raised an uncaught exception, the value will be nil.
+    #
+    # @param hooks [Array<Interfaces::Hooks::Hook>]
+    # @param hook_context [EvaluationContext]
+    # @param hook_data [Array<any>]
+    # @param evaluation_detail [EvaluationDetail]
+    #
+    # @return [Array<any>]
+    #
+    private def execute_after_evaluation(hooks, hook_context, hook_data, evaluation_detail)
+      hooks.zip(hook_data).reverse.map do |(hook, data)|
+        try_execute_stage(:after_evaluation, hook.metadata.name) do
+          hook.after_evaluation(hook_context, data, evaluation_detail)
+        end
+      end
+    end
+
+    #
+    # Try to execute the provided block. If execution raises an exception, catch and log it, then move on with
+    # execution.
+    #
+    # @return [any]
+    #
+    private def try_execute_stage(method, hook_name)
+      begin
+        yield
+      rescue => e
+        @config.logger.error { "[LDClient] An error occurred in #{method} of the hook #{hook_name}: #{e}" }
+        nil
+      end
+    end
+
+    #
+    # Return a copy of the existing hooks and a few instance of the EvaluationContext used for the evaluation series.
+    #
+    # @param key [String]
+    # @param context [LDContext]
+    # @param default [any]
+    # @param method [Symbol]
+    # @return [Array[Array<Interfaces::Hooks::Hook>, Interfaces::Hooks::EvaluationContext]]
+    #
+    private def prepare_hooks(key, context, default, method)
+      # Copy the hooks to use a consistent set during the evaluation series.
+      #
+      # Hooks can be added and we want to ensure all correct stages for a given hook execute. For example, we do not
+      # want to trigger the after_evaluation method without also triggering the before_evaluation method.
+      hooks = @hooks.dup
+      hook_context = Interfaces::Hooks::EvaluationContext.new(key, context, default, method)
+
+      [hooks, hook_context]
     end
 
     #
@@ -508,7 +632,9 @@ module LaunchDarkly
     # @return [Array<EvaluationDetail, [LaunchDarkly::Impl::Model::FeatureFlag, nil], [String, nil]>]
     #
     def variation_with_flag(key, context, default)
-      evaluate_internal(key, context, default, false)
+      evaluate_with_hooks(key, context, default, :variation_detail) do
+        evaluate_internal(key, context, default, false)
+      end
     end
 
     #

@@ -97,4 +97,25 @@ module LaunchDarkly
       new(->(value) { q << value })
     end
   end
+
+  class MockHook
+    include Interfaces::Hooks::Hook
+
+    def initialize(before_evaluation, after_evaluation)
+      @before_evaluation = before_evaluation
+      @after_evaluation = after_evaluation
+    end
+
+    def metadata
+      Interfaces::Hooks::Metadata.new("mock hook")
+    end
+
+    def before_evaluation(hook_context, data)
+      @before_evaluation.call(hook_context, data)
+    end
+
+    def after_evaluation(hook_context, data, detail)
+      @after_evaluation.call(hook_context, data, detail)
+    end
+  end
 end
