@@ -43,6 +43,7 @@ module LaunchDarkly
     # @option opts [BigSegmentsConfig] :big_segments See {#big_segments}.
     # @option opts [Hash] :application See {#application}
     # @option opts [String] :payload_filter_key See {#payload_filter_key}
+    # @option hooks [Array<Interfaces::Hooks::Hook]
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -75,6 +76,7 @@ module LaunchDarkly
       @big_segments = opts[:big_segments] || BigSegmentsConfig.new(store: nil)
       @application = LaunchDarkly::Impl::Util.validate_application_info(opts[:application] || {}, @logger)
       @payload_filter_key = opts[:payload_filter_key]
+      @hooks = (opts[:hooks] || []).keep_if { |hook| hook.is_a? Interfaces::Hooks::Hook }
       @data_source_update_sink = nil
     end
 
@@ -371,6 +373,17 @@ module LaunchDarkly
     # @return [#open]
     #
     attr_reader :socket_factory
+
+    #
+    # Initial set of hooks for the client.
+    #
+    # Hooks provide entrypoints which allow for observation of SDK functions.
+    #
+    # LaunchDarkly provides integration packages, and most applications will not
+    # need to implement their own hooks. Refer to the `launchdarkly-server-sdk-otel` gem
+    # for instrumentation.
+    #
+    attr_reader :hooks
 
     #
     # The default LaunchDarkly client configuration. This configuration sets
