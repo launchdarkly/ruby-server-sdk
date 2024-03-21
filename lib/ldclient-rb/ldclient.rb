@@ -272,10 +272,10 @@ module LaunchDarkly
     private def evaluate_with_hooks(key, context, default, method)
       return yield if @hooks.empty?
 
-      hooks, hook_context = prepare_hooks(key, context, default, method)
-      hook_data = execute_before_evaluation(hooks, hook_context)
+      hooks, evaluation_series_context = prepare_hooks(key, context, default, method)
+      hook_data = execute_before_evaluation(hooks, evaluation_series_context)
       evaluation_detail, flag, error = yield
-      execute_after_evaluation(hooks, hook_context, hook_data, evaluation_detail)
+      execute_after_evaluation(hooks, evaluation_series_context, hook_data, evaluation_detail)
 
       [evaluation_detail, flag, error]
     end
@@ -287,14 +287,14 @@ module LaunchDarkly
     # raised an uncaught exception, the value will be nil.
     #
     # @param hooks [Array<Interfaces::Hooks::Hook>]
-    # @param hook_context [EvaluationContext]
+    # @param evaluation_series_context [EvaluationSeriesContext]
     #
     # @return [Array<any>]
     #
-    private def execute_before_evaluation(hooks, hook_context)
+    private def execute_before_evaluation(hooks, evaluation_series_context)
       hooks.map do |hook|
         try_execute_stage(:before_evaluation, hook.metadata.name) do
-          hook.before_evaluation(hook_context, {})
+          hook.before_evaluation(evaluation_series_context, {})
         end
       end
     end
@@ -306,16 +306,16 @@ module LaunchDarkly
     # raised an uncaught exception, the value will be nil.
     #
     # @param hooks [Array<Interfaces::Hooks::Hook>]
-    # @param hook_context [EvaluationContext]
+    # @param evaluation_series_context [EvaluationSeriesContext]
     # @param hook_data [Array<any>]
     # @param evaluation_detail [EvaluationDetail]
     #
     # @return [Array<any>]
     #
-    private def execute_after_evaluation(hooks, hook_context, hook_data, evaluation_detail)
+    private def execute_after_evaluation(hooks, evaluation_series_context, hook_data, evaluation_detail)
       hooks.zip(hook_data).reverse.map do |(hook, data)|
         try_execute_stage(:after_evaluation, hook.metadata.name) do
-          hook.after_evaluation(hook_context, data, evaluation_detail)
+          hook.after_evaluation(evaluation_series_context, data, evaluation_detail)
         end
       end
     end
@@ -336,13 +336,13 @@ module LaunchDarkly
     end
 
     #
-    # Return a copy of the existing hooks and a few instance of the EvaluationContext used for the evaluation series.
+    # Return a copy of the existing hooks and a few instance of the EvaluationSeriesContext used for the evaluation series.
     #
     # @param key [String]
     # @param context [LDContext]
     # @param default [any]
     # @param method [Symbol]
-    # @return [Array[Array<Interfaces::Hooks::Hook>, Interfaces::Hooks::EvaluationContext]]
+    # @return [Array[Array<Interfaces::Hooks::Hook>, Interfaces::Hooks::EvaluationSeriesContext]]
     #
     private def prepare_hooks(key, context, default, method)
       # Copy the hooks to use a consistent set during the evaluation series.
@@ -350,9 +350,9 @@ module LaunchDarkly
       # Hooks can be added and we want to ensure all correct stages for a given hook execute. For example, we do not
       # want to trigger the after_evaluation method without also triggering the before_evaluation method.
       hooks = @hooks.dup
-      hook_context = Interfaces::Hooks::EvaluationContext.new(key, context, default, method)
+      evaluation_series_context = Interfaces::Hooks::EvaluationSeriesContext.new(key, context, default, method)
 
-      [hooks, hook_context]
+      [hooks, evaluation_series_context]
     end
 
     #

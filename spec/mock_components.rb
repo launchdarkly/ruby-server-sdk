@@ -110,12 +110,12 @@ module LaunchDarkly
       Interfaces::Hooks::Metadata.new("mock hook")
     end
 
-    def before_evaluation(hook_context, data)
-      @before_evaluation.call(hook_context, data)
+    def before_evaluation(evaluation_series_context, data)
+      @before_evaluation.call(evaluation_series_context, data)
     end
 
-    def after_evaluation(hook_context, data, detail)
-      @after_evaluation.call(hook_context, data, detail)
+    def after_evaluation(evaluation_series_context, data, detail)
+      @after_evaluation.call(evaluation_series_context, data, detail)
     end
   end
 end

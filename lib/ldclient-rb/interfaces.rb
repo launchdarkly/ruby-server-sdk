@@ -902,35 +902,36 @@ module LaunchDarkly
         # @return [Metadata]
         #
         def metadata
-          Metadata('UNDEFINED')
+          Metadata.new('UNDEFINED')
         end
 
         #
         # The before method is called during the execution of a variation method before the flag value has been
         # determined. The method is executed synchronously.
         #
-        # @param hook_context [EvaluationContext] Contains information about the evaluation being performed. This is not
-        # mutable.
+        # @param evaluation_series_context [EvaluationSeriesContext] Contains information about the evaluation being
+        # performed. This is not mutable.
         # @param data [Hash] A record associated with each stage of hook invocations. Each stage is called with the data
         # of the previous stage for a series. The input record should not be modified.
         # @return [Hash] Data to use when executing the next state of the hook in the evaluation series.
         #
-        def before_evaluation(hook_context, data)
+        def before_evaluation(evaluation_series_context, data)
           {}
         end
 
         #
-        # The after method is called during the execution of the variation method
-        # after the flag value has been determined. The method is executed synchronously.
+        # The after method is called during the execution of the variation method # after the flag value has been
+        # determined. The method is executed synchronously.
         #
-        # @param hook_context [EvaluationContext] Contains read-only information about the evaluation being performed.
+        # @param evaluation_series_context [EvaluationSeriesContext] Contains read-only information about the evaluation
+        # being performed.
         # @param data [Hash] A record associated with each stage of hook invocations. Each stage is called with the data
         # of the previous stage for a series.
         # @param detail [LaunchDarkly::EvaluationDetail] The result of the evaluation. This value should not be
         # modified.
         # @return [Hash] Data to use when executing the next state of the hook in the evaluation series.
         #
-        def after_evaluation(hook_context, data, detail)
+        def after_evaluation(evaluation_series_context, data, detail)
           data
         end
       end
@@ -949,7 +950,7 @@ module LaunchDarkly
       #
       # Contextual information that will be provided to handlers during evaluation series.
       #
-      class EvaluationContext
+      class EvaluationSeriesContext
         attr_reader :key
         attr_reader :context
         attr_reader :value
