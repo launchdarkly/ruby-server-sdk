@@ -7,6 +7,7 @@ require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/store_client_wrapper"
 require "ldclient-rb/impl/migrations/tracker"
+require "concurrent"
 require "concurrent/atomics"
 require "digest/sha1"
 require "forwardable"
@@ -54,7 +55,7 @@ module LaunchDarkly
       end
 
       @sdk_key = sdk_key
-      @hooks = config.hooks
+      @hooks = Concurrent::Array.new(config.hooks)
 
       @shared_executor = Concurrent::SingleThreadExecutor.new
 
