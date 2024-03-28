@@ -39,6 +39,7 @@ get '/' do
       'polling-gzip',
       'inline-context',
       'anonymous-redaction',
+      'evaluation-hooks',
     ],
   }.to_json
 end

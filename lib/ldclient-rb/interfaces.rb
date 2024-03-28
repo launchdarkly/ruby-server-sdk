@@ -916,7 +916,7 @@ module LaunchDarkly
         # @return [Hash] Data to use when executing the next state of the hook in the evaluation series.
         #
         def before_evaluation(evaluation_series_context, data)
-          {}
+          data
         end
 
         #
@@ -953,19 +953,19 @@ module LaunchDarkly
       class EvaluationSeriesContext
         attr_reader :key
         attr_reader :context
-        attr_reader :value
+        attr_reader :default_value
         attr_reader :method
 
         #
         # @param key [String]
         # @param context [LaunchDarkly::LDContext]
-        # @param value [any]
+        # @param default_value [any]
         # @param method [Symbol]
         #
-        def initialize(key, context, value, method)
+        def initialize(key, context, default_value, method)
           @key = key
           @context = context
-          @value = value
+          @default_value = default_value
           @method = method
         end
       end

@@ -3,6 +3,7 @@ require 'json'
 require 'net/http'
 require 'launchdarkly-server-sdk'
 require './big_segment_store_fixture'
+require './hook'
 require 'http'
 
 class ClientEntity
@@ -60,6 +61,12 @@ class ClientEntity
         :id => config[:tags][:applicationId],
         :version => config[:tags][:applicationVersion],
       }
+    end
+
+    if config[:hooks]
+      opts[:hooks] = config[:hooks][:hooks].map do |hook|
+        Hook.new(hook[:name], hook[:callbackUri], hook[:data] || {})
+      end
     end
 
     startWaitTimeMs = config[:startWaitTimeMs] || 5_000
