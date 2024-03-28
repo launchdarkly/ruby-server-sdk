@@ -42,6 +42,38 @@ module LaunchDarkly
         expect(result2.detail).to be result1.detail
       end
 
+      it "returns off variation and event if prereq condition is invalid" do
+        flag = Flags.from_hash(
+          {
+            key: 'feature0',
+            on: true,
+            prerequisites: [{ key: 'feature1', variation: 2 }], # there are only 2 variations, so variation index 2 is invalid
+            fallthrough: { variation: 0 },
+            offVariation: 1,
+            variations: %w[a b c],
+            version: 1,
+          }
+        )
+        flag1 = Flags.from_hash(
+          {
+            key: 'feature1',
+            on: true,
+            fallthrough: { variation: 0 },
+            variations: %w[d e],
+            version: 2,
+          }
+        )
+        context = LDContext.create({ key: 'x' })
+        detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
+        expected_prereqs = [
+          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough())),
+        ]
+        e = EvaluatorBuilder.new(logger).with_flag(flag1).with_unknown_flag('feature2').build
+        result = e.evaluate(flag, context)
+        expect(result.detail).to eq(detail)
+        expect(result.prereq_evals).to eq(expected_prereqs)
+      end
+
       it "returns off variation and event if prerequisite of a prerequisite is not found" do
         flag = Flags.from_hash(
           {
