@@ -37,7 +37,7 @@ module LaunchDarkly
           @off_variation = data[:offVariation]
           check_variation_range(self, errors, @off_variation, "off variation")
           @prerequisites = (data[:prerequisites] || []).map do |prereq_data|
-            Prerequisite.new(prereq_data, self, errors)
+            Prerequisite.new(prereq_data, self)
           end
           @targets = (data[:targets] || []).map do |target_data|
             Target.new(target_data, self, errors)
@@ -118,13 +118,12 @@ module LaunchDarkly
       end
 
       class Prerequisite
-        def initialize(data, flag, errors_out = nil)
+        def initialize(data, flag)
           @data = data
           @key = data[:key]
           @variation = data[:variation]
           @failure_result = EvaluatorHelpers.evaluation_detail_for_off_variation(flag,
             EvaluationReason::prerequisite_failed(@key))
-          check_variation_range(flag, errors_out, @variation, "prerequisite")
         end
 
         # @return [Hash]
