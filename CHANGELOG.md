@@ -2,6 +2,14 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.3.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.3.0...8.3.1) (2024-03-28)
+
+
+### Bug Fixes
+
+* Ensure Rails.logger exists before using it ([#258](https://github.com/launchdarkly/ruby-server-sdk/issues/258)) ([2f0f7ed](https://github.com/launchdarkly/ruby-server-sdk/commit/2f0f7edcce831b486f1fb8f9a5ce368575ad1b43))
+* Remove invalid prereq `check_variation_range` check ([#261](https://github.com/launchdarkly/ruby-server-sdk/issues/261)) ([#263](https://github.com/launchdarkly/ruby-server-sdk/issues/263)) ([74ca206](https://github.com/launchdarkly/ruby-server-sdk/commit/74ca2067fafead5325d824f8923ddb5ced83196d)), closes [#260](https://github.com/launchdarkly/ruby-server-sdk/issues/260)
+
 ## [8.3.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.2.0...8.3.0) (2024-03-14)
 
 
