@@ -245,6 +245,7 @@ module LaunchDarkly
     # @return [EvaluationDetail] an object describing the result
     #
     def variation_detail(key, context, default)
+      context = Impl::Context::make_context(context)
       detail, _, _ = evaluate_with_hooks(key, context, default, :variation_detail) do
         evaluate_internal(key, context, default, true)
       end
@@ -264,8 +265,8 @@ module LaunchDarkly
     # ```
     #
     # @param key [String]
-    # @param context [String]
-    # @param default [String]
+    # @param context [LDContext]
+    # @param default [any]
     # @param method [Symbol]
     # @param &block [#call] Implicit passed block
     #
@@ -633,6 +634,7 @@ module LaunchDarkly
     # @return [Array<EvaluationDetail, [LaunchDarkly::Impl::Model::FeatureFlag, nil], [String, nil]>]
     #
     def variation_with_flag(key, context, default)
+      context = Impl::Context::make_context(context)
       evaluate_with_hooks(key, context, default, :variation_detail) do
         evaluate_internal(key, context, default, false)
       end
@@ -640,7 +642,7 @@ module LaunchDarkly
 
     #
     # @param key [String]
-    # @param context [Hash, LDContext]
+    # @param context [LDContext]
     # @param default [Object]
     # @param with_reasons [Boolean]
     #
@@ -657,7 +659,6 @@ module LaunchDarkly
         return detail, nil, "no context provided"
       end
 
-      context = Impl::Context::make_context(context)
       unless context.valid?
         @config.logger.error { "[LDClient] Context was invalid for evaluation of flag '#{key}' (#{context.error}); returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_USER_NOT_SPECIFIED, default)
