@@ -20,18 +20,18 @@ class Hook
   end
 
   #
-  # @param hook_context [LaunchDarkly::Interfaces::Hooks::EvaluationContext]
+  # @param evaluation_series_context [LaunchDarkly::Interfaces::Hooks::EvaluationSeriesContext]
   # @param data [Hash]
   #
-  def before_evaluation(hook_context, data)
+  def before_evaluation(evaluation_series_context, data)
     payload = {
-      evaluationHookContext: {
-        flagKey: hook_context.key,
-        context: @context_filter.filter(hook_context.context),
-        defaultValue: hook_context.default_value,
-        method: hook_context.method,
+      evaluationSeriesContext: {
+        flagKey: evaluation_series_context.key,
+        context: @context_filter.filter(evaluation_series_context.context),
+        defaultValue: evaluation_series_context.default_value,
+        method: evaluation_series_context.method,
       },
-      evaluationHookData: data,
+      evaluationSeriesData: data,
       stage: 'beforeEvaluation',
     }
     result = HTTP.post(@callback_uri, json: payload)
@@ -41,19 +41,19 @@ class Hook
 
 
   #
-  # @param hook_context [LaunchDarkly::Interfaces::Hooks::EvaluationContext]
+  # @param evaluation_series_context [LaunchDarkly::Interfaces::Hooks::EvaluationSeriesContext]
   # @param data [Hash]
   # @param detail [LaunchDarkly::EvaluationDetail]
   #
-  def after_evaluation(hook_context, data, detail)
+  def after_evaluation(evaluation_series_context, data, detail)
     payload = {
-      evaluationHookContext: {
-        flagKey: hook_context.key,
-        context: @context_filter.filter(hook_context.context),
-        defaultValue: hook_context.default_value,
-        method: hook_context.method,
+      evaluationSeriesContext: {
+        flagKey: evaluation_series_context.key,
+        context: @context_filter.filter(evaluation_series_context.context),
+        defaultValue: evaluation_series_context.default_value,
+        method: evaluation_series_context.method,
       },
-      evaluationHookData: data,
+      evaluationSeriesData: data,
       evaluationDetail: {
         value: detail.value,
         variationIndex: detail.variation_index,
