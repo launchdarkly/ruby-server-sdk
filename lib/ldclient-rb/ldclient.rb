@@ -219,7 +219,7 @@ module LaunchDarkly
     #
     def variation(key, context, default)
       context = Impl::Context::make_context(context)
-      result = evaluate_with_hooks(key, context, default, :variation_detail) do
+      result = evaluate_with_hooks(key, context, default, :variation) do
         detail, _, _ = variation_with_flag(key, context, default)
         LaunchDarkly::Impl::EvaluationWithHookResult.new(detail)
       end
