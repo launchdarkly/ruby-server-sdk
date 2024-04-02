@@ -920,7 +920,7 @@ module LaunchDarkly
         end
 
         #
-        # The after method is called during the execution of the variation method # after the flag value has been
+        # The after method is called during the execution of the variation method after the flag value has been
         # determined. The method is executed synchronously.
         #
         # @param evaluation_series_context [EvaluationSeriesContext] Contains read-only information about the evaluation
