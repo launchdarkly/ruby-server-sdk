@@ -4,6 +4,7 @@ require "ldclient-rb/impl/data_source"
 require "ldclient-rb/impl/data_store"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
+require "ldclient-rb/impl/evaluation_with_hook_result"
 require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/store_client_wrapper"
 require "ldclient-rb/impl/migrations/tracker"
@@ -217,8 +218,13 @@ module LaunchDarkly
     # @return the variation for the provided context, or the default value if there's an error
     #
     def variation(key, context, default)
-      detail, _, _, = variation_with_flag(key, context, default)
-      detail.value
+      context = Impl::Context::make_context(context)
+      result = evaluate_with_hooks(key, context, default, :variation) do
+        detail, _, _ = variation_with_flag(key, context, default)
+        LaunchDarkly::Impl::EvaluationWithHookResult.new(detail)
+      end
+
+      result.evaluation_detail.value
     end
 
     #
@@ -246,11 +252,12 @@ module LaunchDarkly
     #
     def variation_detail(key, context, default)
       context = Impl::Context::make_context(context)
-      detail, _, _ = evaluate_with_hooks(key, context, default, :variation_detail) do
-        evaluate_internal(key, context, default, true)
+      result = evaluate_with_hooks(key, context, default, :variation_detail) do
+        detail, _, _ = evaluate_internal(key, context, default, true)
+        LaunchDarkly::Impl::EvaluationWithHookResult.new(detail)
       end
 
-      detail
+      result.evaluation_detail
     end
 
     #
@@ -270,15 +277,17 @@ module LaunchDarkly
     # @param method [Symbol]
     # @param &block [#call] Implicit passed block
     #
+    # @return [LaunchDarkly::Impl::EvaluationWithHookResult]
+    #
     private def evaluate_with_hooks(key, context, default, method)
       return yield if @hooks.empty?
 
       hooks, evaluation_series_context = prepare_hooks(key, context, default, method)
       hook_data = execute_before_evaluation(hooks, evaluation_series_context)
-      evaluation_detail, flag, error = yield
-      execute_after_evaluation(hooks, evaluation_series_context, hook_data, evaluation_detail)
+      evaluation_result = yield
+      execute_after_evaluation(hooks, evaluation_series_context, hook_data, evaluation_result.evaluation_detail)
 
-      [evaluation_detail, flag, error]
+      evaluation_result
     end
 
     #
@@ -375,20 +384,24 @@ module LaunchDarkly
       end
 
       context = Impl::Context::make_context(context)
-      detail, flag, _ = variation_with_flag(key, context, default_stage.to_s)
+      result = evaluate_with_hooks(key, context, default_stage, :migration_variation) do
+        detail, flag, _ = variation_with_flag(key, context, default_stage.to_s)
 
-      stage = detail.value
-      stage = stage.to_sym if stage.respond_to? :to_sym
+        stage = detail.value
+        stage = stage.to_sym if stage.respond_to? :to_sym
 
-      if Migrations::VALID_STAGES.include?(stage)
+        if Migrations::VALID_STAGES.include?(stage)
+          tracker = Impl::Migrations::OpTracker.new(@config.logger, key, flag, context, detail, default_stage)
+          next LaunchDarkly::Impl::EvaluationWithHookResult.new(detail, {stage: stage, tracker: tracker})
+        end
+
+        detail = LaunchDarkly::Impl::Evaluator.error_result(LaunchDarkly::EvaluationReason::ERROR_WRONG_TYPE, default_stage.to_s)
         tracker = Impl::Migrations::OpTracker.new(@config.logger, key, flag, context, detail, default_stage)
-        return stage, tracker
+
+        LaunchDarkly::Impl::EvaluationWithHookResult.new(detail, {stage: default_stage, tracker: tracker})
       end
 
-      detail = LaunchDarkly::Impl::Evaluator.error_result(LaunchDarkly::EvaluationReason::ERROR_WRONG_TYPE, default_stage.to_s)
-      tracker = Impl::Migrations::OpTracker.new(@config.logger, key, flag, context, detail, default_stage)
-
-      [default_stage, tracker]
+      [result.results[:stage], result.results[:tracker]]
     end
 
     #
@@ -628,16 +641,13 @@ module LaunchDarkly
 
     #
     # @param key [String]
-    # @param context [Hash, LDContext]
+    # @param context [LDContext]
     # @param default [Object]
     #
     # @return [Array<EvaluationDetail, [LaunchDarkly::Impl::Model::FeatureFlag, nil], [String, nil]>]
     #
     def variation_with_flag(key, context, default)
-      context = Impl::Context::make_context(context)
-      evaluate_with_hooks(key, context, default, :variation_detail) do
-        evaluate_internal(key, context, default, false)
-      end
+      evaluate_internal(key, context, default, false)
     end
 
     #
