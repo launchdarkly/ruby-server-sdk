@@ -65,7 +65,7 @@ class ClientEntity
 
     if config[:hooks]
       opts[:hooks] = config[:hooks][:hooks].map do |hook|
-        Hook.new(hook[:name], hook[:callbackUri], hook[:data] || {})
+        Hook.new(hook[:name], hook[:callbackUri], hook[:data] || {}, hook[:errors] || {})
       end
     end
 
