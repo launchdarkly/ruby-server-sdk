@@ -7,11 +7,13 @@ class Hook
   # @param name [String]
   # @param callback_uri [String]
   # @param data [Hash]
+  # @parm errors [Hash]
   #
-  def initialize(name, callback_uri, data)
+  def initialize(name, callback_uri, data, errors)
     @metadata = LaunchDarkly::Interfaces::Hooks::Metadata.new(name)
     @callback_uri = callback_uri
     @data = data
+    @errors = errors
     @context_filter = LaunchDarkly::Impl::ContextFilter.new(false, [])
   end
 
@@ -24,6 +26,8 @@ class Hook
   # @param data [Hash]
   #
   def before_evaluation(evaluation_series_context, data)
+    raise @errors[:beforeEvaluation] if @errors.include? :beforeEvaluation
+
     payload = {
       evaluationSeriesContext: {
         flagKey: evaluation_series_context.key,
@@ -46,6 +50,8 @@ class Hook
   # @param detail [LaunchDarkly::EvaluationDetail]
   #
   def after_evaluation(evaluation_series_context, data, detail)
+    raise @errors[:afterEvaluation] if @errors.include? :afterEvaluation
+
     payload = {
       evaluationSeriesContext: {
         flagKey: evaluation_series_context.key,
