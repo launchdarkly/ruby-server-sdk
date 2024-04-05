@@ -4,6 +4,7 @@ All notable changes to the LaunchDarkly Ruby SDK will be documented in this file
 
 ## [8.4.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.3.1...8.4.0) (2024-04-05)
 
+This release introduces a Hooks API. Hooks are collections of user-defined callbacks that are executed by the SDK at various points of interest. You can use them to augment the SDK with metrics or tracing.
 
 ### Features
 
