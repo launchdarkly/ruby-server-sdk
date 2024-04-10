@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "sdks": {
+    "ruby-server-sdk": {
+      "name": "Ruby Server SDK",
+      "type": "server-side",
+      "languages": [
+        "Ruby"
+      ]
+    }
+  }
+}
