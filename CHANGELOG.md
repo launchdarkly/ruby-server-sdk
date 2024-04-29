@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.4.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.4.0...8.4.1) (2024-04-29)
+
+
+### Bug Fixes
+
+* Add observer as explicit dependency ([#272](https://github.com/launchdarkly/ruby-server-sdk/issues/272)) ([f2226a6](https://github.com/launchdarkly/ruby-server-sdk/commit/f2226a60295c06d0b154a8eaee6dd2fb42a5cd76)), closes [#271](https://github.com/launchdarkly/ruby-server-sdk/issues/271)
+
 ## [8.4.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.3.1...8.4.0) (2024-04-05)
 
 This release introduces a Hooks API. Hooks are collections of user-defined callbacks that are executed by the SDK at various points of interest. You can use them to augment the SDK with metrics or tracing.
