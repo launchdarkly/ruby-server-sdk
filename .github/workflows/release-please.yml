@@ -40,6 +40,7 @@ jobs:
         if: ${{ steps.release.outputs.releases_created }}
         with:
           ruby-version: 3.0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/build-docs
         if: ${{ steps.release.outputs.releases_created }}

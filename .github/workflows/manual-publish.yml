@@ -30,6 +30,7 @@ jobs:
         uses: ./.github/actions/ci
         with:
           ruby-version: 3.0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - id: publish
         name: Publish Package
@@ -47,4 +48,3 @@ jobs:
     with:
       base64-subjects: "${{ needs.build-publish.outputs.gem-hash }}"
       upload-assets: ${{ !inputs.dry_run }}
-        

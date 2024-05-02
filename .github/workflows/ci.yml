@@ -17,6 +17,7 @@ jobs:
       LD_SKIP_DATABASE_TESTS: 0
 
     strategy:
+      fail-fast: false
       matrix:
         ruby-version:
           - '3.0'
@@ -46,6 +47,7 @@ jobs:
       - uses: ./.github/actions/ci
         with:
           ruby-version: ${{ matrix.ruby-version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/build-docs
         if: ${{ !startsWith(matrix.ruby-version, 'jruby') }}

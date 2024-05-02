@@ -4,6 +4,9 @@ inputs:
   ruby-version:
     description: 'The version of ruby to setup and run'
     required: true
+  token:
+    description: 'GH token used to fetch the SDK test harness'
+    required: true
 
 runs:
   using: composite
@@ -30,7 +33,18 @@ runs:
       shell: bash
       run: bundle exec rubocop --parallel
 
-    - name: Run contract tests
+    - name: Build contract tests
       if: ${{ !startsWith(inputs.ruby-version, 'jruby') }}
       shell: bash
-      run: make contract-tests
+      run: make build-contract-tests
+
+    - name: Start contract test service
+      if: ${{ !startsWith(inputs.ruby-version, 'jruby') }}
+      shell: bash
+      run: make start-contract-test-service-bg
+
+    - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.0.1
+      if: ${{ !startsWith(inputs.ruby-version, 'jruby') }}
+      with:
+        test_service_port: 9000
+        token: ${{ inputs.token }}
