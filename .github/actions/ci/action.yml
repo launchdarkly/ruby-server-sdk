@@ -43,7 +43,7 @@ runs:
       shell: bash
       run: make start-contract-test-service-bg
 
-    - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.0.1
+    - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.0.2
       if: ${{ !startsWith(inputs.ruby-version, 'jruby') }}
       with:
         test_service_port: 9000
