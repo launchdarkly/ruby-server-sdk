@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: LaunchDarkly::BigSegmentsConfig
+  
+    &mdash; LaunchDarkly Ruby SDK
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "LaunchDarkly::BigSegmentsConfig";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (B)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span>
+     &raquo; 
+    <span class="title">BigSegmentsConfig</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: LaunchDarkly::BigSegmentsConfig
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">LaunchDarkly::BigSegmentsConfig</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/ldclient-rb/config.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>Configuration options related to Big Segments.</p>
+
+<p>Big Segments are a specific type of segments. For more information, read the LaunchDarkly
+documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">https://docs.launchdarkly.com/home/users/big-segments</a></p>
+
+<p>If your application uses Big Segments, you will need to create a <code>BigSegmentsConfig</code> that at a
+minimum specifies what database integration to use, and then pass the <code>BigSegmentsConfig</code>
+object as the <code>big_segments</code> parameter when creating a <span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <p class="tag_title">Examples:</p>
+    
+      
+        <p class="example_title"><div class='inline'><p>Configuring Big Segments with Redis</p>
+</div></p>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_store'>store</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Integrations/Redis.html" title="LaunchDarkly::Integrations::Redis (module)">Redis</a></span></span><span class='op'>::</span><span class='id identifier rubyid_new_big_segments_store'>new_big_segments_store</span><span class='lparen'>(</span><span class='label'>redis_url:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>redis://my-server</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>big_segments:</span>
+  <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'>BigSegmentsConfig</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="LaunchDarkly::BigSegmentsConfig#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>store:</span> <span class='id identifier rubyid_store'>store</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_client'>client</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="LDClient.html" title="LaunchDarkly::LDClient (class)">LDClient</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="LDClient.html#initialize-instance_method" title="LaunchDarkly::LDClient#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_my_sdk_key'>my_sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+
+
+</div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="DEFAULT_CONTEXT_CACHE_SIZE-constant" class="">DEFAULT_CONTEXT_CACHE_SIZE =
+          
+        </dt>
+        <dd><pre class="code"><span class='int'>1000</span></pre></dd>
+      
+        <dt id="DEFAULT_CONTEXT_CACHE_TIME-constant" class="">DEFAULT_CONTEXT_CACHE_TIME =
+          
+        </dt>
+        <dd><pre class="code"><span class='int'>5</span></pre></dd>
+      
+        <dt id="DEFAULT_STATUS_POLL_INTERVAL-constant" class="">DEFAULT_STATUS_POLL_INTERVAL =
+          
+        </dt>
+        <dd><pre class="code"><span class='int'>5</span></pre></dd>
+      
+        <dt id="DEFAULT_STALE_AFTER-constant" class="">DEFAULT_STALE_AFTER =
+          
+        </dt>
+        <dd><pre class="code"><span class='int'>2</span> <span class='op'>*</span> <span class='int'>60</span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#context_cache_size-instance_method" title="#context_cache_size (instance method)">#<strong>context_cache_size</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The maximum number of contexts whose Big Segment state will be cached by the SDK at any given time.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#context_cache_time-instance_method" title="#context_cache_time (instance method)">#<strong>context_cache_time</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The maximum length of time (in seconds) that the Big Segment state for a context will be cached by the SDK.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#stale_after-instance_method" title="#stale_after (instance method)">#<strong>stale_after</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The maximum length of time between updates of the Big Segments data before the data is considered out of date.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#status_poll_interval-instance_method" title="#status_poll_interval (instance method)">#<strong>status_poll_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The interval (in seconds) at which the SDK will poll the Big Segment store to make sure it is available and to determine how long ago it was updated.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#store-instance_method" title="#store (instance method)">#<strong>store</strong>  &#x21d2; LaunchDarkly::Interfaces::BigSegmentStore </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The implementation of <span class='object_link'><a href="Interfaces/BigSegmentStore.html" title="LaunchDarkly::Interfaces::BigSegmentStore (module)">Interfaces::BigSegmentStore</a></span> that will be used to query the Big Segments database.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(store:, context_cache_size: nil, context_cache_time: nil, status_poll_interval: nil, stale_after: nil)  &#x21d2; BigSegmentsConfig </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Constructor for setting Big Segments options.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(store:, context_cache_size: nil, context_cache_time: nil, status_poll_interval: nil, stale_after: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::BigSegmentsConfig (class)">BigSegmentsConfig</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Constructor for setting Big Segments options.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>store</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Interfaces/BigSegmentStore.html" title="LaunchDarkly::Interfaces::BigSegmentStore (module)">LaunchDarkly::Interfaces::BigSegmentStore</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the data store implementation</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_cache_size</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>See <span class='object_link'><a href="#context_cache_size-instance_method" title="LaunchDarkly::BigSegmentsConfig#context_cache_size (method)">#context_cache_size</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_cache_time</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>See <span class='object_link'><a href="#context_cache_time-instance_method" title="LaunchDarkly::BigSegmentsConfig#context_cache_time (method)">#context_cache_time</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>status_poll_interval</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>See <span class='object_link'><a href="#status_poll_interval-instance_method" title="LaunchDarkly::BigSegmentsConfig#status_poll_interval (method)">#status_poll_interval</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>stale_after</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>See <span class='object_link'><a href="#stale_after-instance_method" title="LaunchDarkly::BigSegmentsConfig#stale_after (method)">#stale_after</a></span>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+595
+596
+597
+598
+599
+600
+601</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 595</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>store:</span><span class='comma'>,</span> <span class='label'>context_cache_size:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>context_cache_time:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>status_poll_interval:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>stale_after:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='ivar'>@store</span> <span class='op'>=</span> <span class='id identifier rubyid_store'>store</span>
+  <span class='ivar'>@context_cache_size</span> <span class='op'>=</span> <span class='id identifier rubyid_context_cache_size'>context_cache_size</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_CONTEXT_CACHE_SIZE-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_CONTEXT_CACHE_SIZE (constant)">DEFAULT_CONTEXT_CACHE_SIZE</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_context_cache_size'>context_cache_size</span>
+  <span class='ivar'>@context_cache_time</span> <span class='op'>=</span> <span class='id identifier rubyid_context_cache_time'>context_cache_time</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_CONTEXT_CACHE_TIME-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_CONTEXT_CACHE_TIME (constant)">DEFAULT_CONTEXT_CACHE_TIME</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_context_cache_time'>context_cache_time</span>
+  <span class='ivar'>@status_poll_interval</span> <span class='op'>=</span> <span class='id identifier rubyid_status_poll_interval'>status_poll_interval</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_STATUS_POLL_INTERVAL-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_STATUS_POLL_INTERVAL (constant)">DEFAULT_STATUS_POLL_INTERVAL</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_status_poll_interval'>status_poll_interval</span>
+  <span class='ivar'>@stale_after</span> <span class='op'>=</span> <span class='id identifier rubyid_stale_after'>stale_after</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="#DEFAULT_STALE_AFTER-constant" title="LaunchDarkly::BigSegmentsConfig::DEFAULT_STALE_AFTER (constant)">DEFAULT_STALE_AFTER</a></span></span> <span class='op'>:</span> <span class='id identifier rubyid_stale_after'>stale_after</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="context_cache_size-instance_method">
+  
+    #<strong>context_cache_size</strong>  &#x21d2; <tt>Integer</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The maximum number of contexts whose Big Segment state will be cached by the SDK at any given time.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+610
+611
+612</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 610</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_context_cache_size'>context_cache_size</span>
+  <span class='ivar'>@context_cache_size</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="context_cache_time-instance_method">
+  
+    #<strong>context_cache_time</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The maximum length of time (in seconds) that the Big Segment state for a context will be cached
+by the SDK.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+615
+616
+617</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 615</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_context_cache_time'>context_cache_time</span>
+  <span class='ivar'>@context_cache_time</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="stale_after-instance_method">
+  
+    #<strong>stale_after</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The maximum length of time between updates of the Big Segments data before the data is
+considered out of date.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+625
+626
+627</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 625</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_stale_after'>stale_after</span>
+  <span class='ivar'>@stale_after</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="status_poll_interval-instance_method">
+  
+    #<strong>status_poll_interval</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The interval (in seconds) at which the SDK will poll the Big Segment store to make sure it is
+available and to determine how long ago it was updated.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+620
+621
+622</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 620</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_status_poll_interval'>status_poll_interval</span>
+  <span class='ivar'>@status_poll_interval</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="store-instance_method">
+  
+    #<strong>store</strong>  &#x21d2; <tt><span class='object_link'><a href="Interfaces/BigSegmentStore.html" title="LaunchDarkly::Interfaces::BigSegmentStore (module)">LaunchDarkly::Interfaces::BigSegmentStore</a></span></tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The implementation of <span class='object_link'><a href="Interfaces/BigSegmentStore.html" title="LaunchDarkly::Interfaces::BigSegmentStore (module)">Interfaces::BigSegmentStore</a></span> that will be used to
+query the Big Segments database.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Interfaces/BigSegmentStore.html" title="LaunchDarkly::Interfaces::BigSegmentStore (module)">LaunchDarkly::Interfaces::BigSegmentStore</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+606
+607
+608</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 606</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_store'>store</span>
+  <span class='ivar'>@store</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+</div>
+
+      <div id="footer">
+  Generated on Fri May  3 20:03:33 2024 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.36 (ruby-3.3.1).
+</div>
+
+    </div>
+  </body>
+</html>
