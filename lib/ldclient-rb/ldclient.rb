@@ -124,13 +124,18 @@ module LaunchDarkly
       end
 
       ready = @data_source.start
-      if wait_for_sec > 0
-        ok = ready.wait(wait_for_sec)
-        if !ok
-          @config.logger.error { "[LDClient] Timeout encountered waiting for LaunchDarkly client initialization" }
-        elsif !@data_source.initialized?
-          @config.logger.error { "[LDClient] LaunchDarkly client initialization failed" }
-        end
+
+      return unless wait_for_sec > 0
+
+      if wait_for_sec > 60
+        @config.logger.warn { "[LDClient] LDClient was instantiated with a timeout greater than 60 seconds. We recommend a timeout of less than 60 seconds." }
+      end
+
+      ok = ready.wait(wait_for_sec)
+      if !ok
+        @config.logger.error { "[LDClient] Timeout encountered waiting for LaunchDarkly client initialization" }
+      elsif !@data_source.initialized?
+        @config.logger.error { "[LDClient] LaunchDarkly client initialization failed" }
       end
     end
 
