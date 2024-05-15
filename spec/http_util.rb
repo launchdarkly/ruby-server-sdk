@@ -1,6 +1,8 @@
 require "webrick"
 require "webrick/httpproxy"
 require "webrick/https"
+require "stringio"
+require "zlib"
 
 class StubHTTPServer
   attr_reader :requests, :port
@@ -73,14 +75,13 @@ class StubHTTPServer
     @requests_queue << [req, req.body]
   end
 
-  def await_request
-    r = @requests_queue.pop
-    r[0]
-  end
-
   def await_request_with_body
     r = @requests_queue.pop
-    [r[0], r[1]]
+    body = r[1]
+
+    gz = Zlib::GzipReader.new(StringIO.new(body.to_s))
+
+    [r[0], gz.read]
   end
 end
 

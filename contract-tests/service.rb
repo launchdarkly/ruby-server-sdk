@@ -34,6 +34,7 @@ get '/' do
       'secure-mode-hash',
       'tags',
       'migrations',
+      'event-gzip',
       'event-sampling',
       'context-comparison',
       'polling-gzip',
