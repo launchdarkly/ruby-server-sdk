@@ -38,6 +38,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "semantic", "~> 1.6"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.1"
   spec.add_runtime_dependency "ld-eventsource", "2.2.2"
+  spec.add_runtime_dependency "zlib", "~> 3.1" unless RUBY_PLATFORM == "java"
   # Please keep ld-eventsource dependency as an exact version so that bugfixes to
   # that LD library are always associated with a new SDK version.
 

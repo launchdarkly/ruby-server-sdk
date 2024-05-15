@@ -37,8 +37,8 @@ module LaunchDarkly
           expect(result.must_shutdown).to be false
           expect(result.time_from_server).not_to be_nil
 
-          req = server.await_request
-          expect(req.body).to eq fake_data
+          req, body = server.await_request_with_body
+          expect(body).to eq fake_data
           expect(req.header).to include({
             "authorization" => [ sdk_key ],
             "content-type" => [ "application/json" ],
@@ -63,8 +63,8 @@ module LaunchDarkly
           result = es.send_event_data(fake_data, "", false)
 
           expect(result.success).to be true
-          req = server.await_request
-          expect(req.body).to eq fake_data
+          req, body = server.await_request_with_body
+          expect(body).to eq fake_data
           expect(req.host).to eq "fake-event-server"
         end
       end
