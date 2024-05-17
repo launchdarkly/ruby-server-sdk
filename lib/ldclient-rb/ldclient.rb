@@ -128,7 +128,7 @@ module LaunchDarkly
       return unless wait_for_sec > 0
 
       if wait_for_sec > 60
-        @config.logger.warn { "[LDClient] LDClient was instantiated with a timeout greater than 60 seconds. We recommend a timeout of less than 60 seconds." }
+        @config.logger.warn { "[LDClient] Client was configured to block for up to #{wait_for_sec} seconds when initializing. We recommend blocking no longer than 60." }
       end
 
       ok = ready.wait(wait_for_sec)
