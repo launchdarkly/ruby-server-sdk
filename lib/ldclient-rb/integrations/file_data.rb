@@ -93,7 +93,7 @@ module LaunchDarkly
       #   Note that the default implementation of this feature is based on polling the filesystem,
       #   which may not perform well. If you install the 'listen' gem (not included by default, to
       #   avoid adding unwanted dependencies to the SDK), its native file watching mechanism will be
-      #   used instead. However, 'listen' will not be used in JRuby 9.1 due to a known instability.
+      #   used instead.
       # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
       #   file modifications - used only if auto_update is true, and if the native file-watching
       #   mechanism from 'listen' is not being used. The default value is 1 second.
