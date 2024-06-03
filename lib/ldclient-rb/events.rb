@@ -167,7 +167,8 @@ module LaunchDarkly
     end
 
     def record_identify_event(context)
-      post_to_inbox(LaunchDarkly::Impl::IdentifyEvent.new(timestamp, context))
+      filtered = context.without_anonymous_contexts
+      post_to_inbox(LaunchDarkly::Impl::IdentifyEvent.new(timestamp, filtered)) if filtered.valid?
     end
 
     def record_custom_event(context, key, data = nil, metric_value = nil)
@@ -319,14 +320,25 @@ module LaunchDarkly
         will_add_full_event = true
       end
 
-      # For each context we haven't seen before, we add an index event - unless this is already
-      # an identify event for that context.
-      if !event.context.nil? && !notice_context(event.context) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent) && !event.is_a?(LaunchDarkly::Impl::MigrationOpEvent)
-        outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.context))
+      get_indexable_context(event) do |ctx|
+        outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, ctx))
       end
 
       outbox.add_event(event) if will_add_full_event && @sampler.sample(event.sampling_ratio.nil? ? 1 : event.sampling_ratio)
       outbox.add_event(debug_event) if !debug_event.nil? && @sampler.sample(event.sampling_ratio.nil? ? 1 : event.sampling_ratio)
+    end
+
+    private def get_indexable_context(event, &block)
+      return if event.context.nil?
+
+      filtered = event.context.without_anonymous_contexts
+      return unless filtered.valid?
+
+      return if notice_context(filtered)
+      return if event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
+      return if event.is_a?(LaunchDarkly::Impl::MigrationOpEvent)
+
+      yield filtered unless block.nil?
     end
 
     #

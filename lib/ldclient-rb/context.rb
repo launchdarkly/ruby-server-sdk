@@ -102,6 +102,26 @@ module LaunchDarkly
     end
 
     #
+    # For a multi-kind context:
+    #
+    # A multi-kind context is made up of two or more single-kind contexts. This method will first discard any
+    # single-kind contexts which are anonymous. It will then create a new multi-kind context from the remaining
+    # single-kind contexts. This may result in an invalid context (e.g. all single-kind contexts are anonymous).
+    #
+    # For a single-kind context:
+    #
+    # If the context is not anonymous, this method will return the current context as is and unmodified.
+    #
+    # If the context is anonymous, this method will return an invalid context.
+    #
+    def without_anonymous_contexts
+      contexts = multi_kind? ? @contexts : [self]
+      contexts = contexts.reject { |c| c.anonymous }
+
+      LDContext.create_multi(contexts)
+    end
+
+    #
     # Returns a hash mapping each context's kind to its key.
     #
     # @return [Hash<Symbol, String>]
