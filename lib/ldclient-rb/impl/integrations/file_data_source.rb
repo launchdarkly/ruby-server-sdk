@@ -36,15 +36,7 @@ module LaunchDarkly
             @paths = [ @paths ]
           end
           @auto_update = options[:auto_update]
-          if @auto_update && @@have_listen && !options[:force_polling] # force_polling is used only for tests
-            # We have seen unreliable behavior in the 'listen' gem in JRuby 9.1 (https://github.com/guard/listen/issues/449).
-            # Therefore, on that platform we'll fall back to file polling instead.
-            if defined?(JRUBY_VERSION) && JRUBY_VERSION.start_with?("9.1.")
-              @use_listen = false
-            else
-              @use_listen = true
-            end
-          end
+          @use_listen = @auto_update && @@have_listen && !options[:force_polling]
           @poll_interval = options[:poll_interval] || 1
           @initialized = Concurrent::AtomicBoolean.new(false)
           @ready = Concurrent::Event.new
