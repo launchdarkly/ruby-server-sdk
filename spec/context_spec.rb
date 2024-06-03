@@ -1,4 +1,5 @@
 require "ldclient-rb/context"
+require "json"
 
 module LaunchDarkly
   describe LDContext do
@@ -146,6 +147,64 @@ module LaunchDarkly
           # Verify we are sorting contexts by kind when generating the canonical key
           expect(user_first.fully_qualified_key).to eq("org:b-org-key:user:a-user-key")
           expect(org_first.fully_qualified_key).to eq("org:b-org-key:user:a-user-key")
+        end
+      end
+
+      describe "converts back to JSON format" do
+        it "single kind contexts" do
+          contextHash = {
+            key: "launchdarkly",
+            kind: "org",
+            address: {
+              street: "1999 Harrison St Suite 1100",
+              city: "Oakland",
+              state: "CA",
+              zip: "94612",
+              _meta: {
+                privateAttributes: ["city"],
+              },
+            },
+          }
+          context = subject.create(contextHash)
+          contextJson = context.to_json
+          backToHash = JSON.parse(contextJson, symbolize_names: true)
+
+          expect(backToHash).to eq(contextHash)
+        end
+
+        it "multi kind contexts" do
+          contextHash = {
+            kind: "multi",
+            "org": {
+              key: "launchdarkly",
+              address: {
+                street: "1999 Harrison St Suite 1100",
+                city: "Oakland",
+                state: "CA",
+                zip: "94612",
+              },
+              _meta: {
+                privateAttributes: ["address/city"],
+              },
+            },
+            "user": {
+              key: "user-key",
+              name: "Ruby",
+              anonymous: true,
+            },
+          }
+          context = subject.create(contextHash)
+          contextJson = context.to_json
+          backToHash = JSON.parse(contextJson, symbolize_names: true)
+
+          expect(backToHash).to eq(contextHash)
+        end
+
+        it "invalid context returns error" do
+          context = subject.create({ key: "", kind: "user", name: "testing" })
+          expect(context.valid?).to be false
+          expect(context.to_h).to eq({ error: "context key must not be empty" })
+          expect(context.to_json).to eq({ error: "context key must not be empty" }.to_json)
         end
       end
     end
