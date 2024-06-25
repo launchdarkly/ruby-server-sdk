@@ -2,6 +2,19 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.5.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.4.2...8.5.0) (2024-06-10)
+
+
+### Features
+
+* Support to_h and to_json methods for LDContext ([#284](https://github.com/launchdarkly/ruby-server-sdk/issues/284)) ([d3c8d40](https://github.com/launchdarkly/ruby-server-sdk/commit/d3c8d409b631f559239e48fb93eb5e4f9181254f))
+
+
+### Bug Fixes
+
+* Increment flag & segment versions when reloading from file data source ([#285](https://github.com/launchdarkly/ruby-server-sdk/issues/285)) ([7d5b051](https://github.com/launchdarkly/ruby-server-sdk/commit/7d5b051ec1b1e8990a7fb3def5798f064acd5e04))
+* Log warning if client init timeout is considered high ([#278](https://github.com/launchdarkly/ruby-server-sdk/issues/278)) ([61f4c7e](https://github.com/launchdarkly/ruby-server-sdk/commit/61f4c7e589e9d0da94e4f289e9c601aa36028c95))
+
 ## [8.4.2](https://github.com/launchdarkly/ruby-server-sdk/compare/8.4.1...8.4.2) (2024-05-03)
 
 

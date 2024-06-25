@@ -239,6 +239,16 @@ module LaunchDarkly
     end
 
     #
+    # Convert the Reference to a JSON string.
+    #
+    # @param args [Array]
+    # @return [String]
+    #
+    def to_json(*args)
+      JSON.generate(@raw_path, *args)
+    end
+
+    #
     # Performs unescaping of attribute reference path components:
     #
     # "~1" becomes "/"
