@@ -1,0 +1,6 @@
+events/feature events/single-kind anonymous context redacts all attributes/type: any
+events/feature events/multi-kind with anonymous context redacts attributes appropriately/type: any
+events/context properties/single-kind, allAttributesPrivate/debug event
+events/context properties/single-kind, allAttributesPrivate/identify event
+events/context properties/single-kind, allAttributesPrivate/index event from evaluation
+events/context properties/single-kind, allAttributesPrivate/index event from custom event
