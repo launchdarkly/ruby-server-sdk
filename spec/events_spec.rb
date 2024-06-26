@@ -12,6 +12,7 @@ module LaunchDarkly
     let(:starting_timestamp) { 1000 }
     let(:default_config_opts) { { diagnostic_opt_out: true, logger: $null_log } }
     let(:default_config) { Config.new(default_config_opts) }
+    let(:omit_anonymous_contexts_config) { Config.new(default_config_opts.merge(omit_anonymous_contexts: true))}
     let(:context) { LDContext.create({ kind: "user", key: "userkey", name: "Red" }) }
     let(:anon_context) { LDContext.create({ kind: "org", key: "orgkey", name: "Organization", anonymous: true }) }
 
@@ -25,8 +26,17 @@ module LaunchDarkly
         end
       end
 
-      it "does not queue if anonymous" do
+      it "does queue if anonymous" do
         with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          ep.record_identify_event(anon_context)
+
+          output = flush_and_get_events(ep, sender)
+          expect(output).to contain_exactly(eq(identify_event(default_config, anon_context)))
+        end
+      end
+
+      it "does not queue if anonymous and omit_anonymous_contexts" do
+        with_processor_and_sender(omit_anonymous_contexts_config, starting_timestamp) do |ep, sender|
           ep.record_identify_event(anon_context)
 
           output = flush_and_get_events(ep, sender)
@@ -34,8 +44,8 @@ module LaunchDarkly
         end
       end
 
-      it "strips anonymous contexts from multi kind contexts" do
-        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+      it "strips anonymous contexts from multi kind contexts if omit_anonymous_contexts" do
+        with_processor_and_sender(omit_anonymous_contexts_config, starting_timestamp) do |ep, sender|
           user = LDContext.create({ kind: "user", key: "userkey", name: "Example User", anonymous: true })
           org = LDContext.create({ kind: "org", key: "orgkey", name: "Big Organization" })
           device = LDContext.create({ kind: "device", key: "devicekey", name: "IoT Device", anonymous: true })
@@ -43,12 +53,12 @@ module LaunchDarkly
           ep.record_identify_event(LDContext.create_multi([user, org, device]))
 
           output = flush_and_get_events(ep, sender)
-          expect(output).to contain_exactly(eq(identify_event(default_config, org)))
+          expect(output).to contain_exactly(eq(identify_event(omit_anonymous_contexts_config, org)))
         end
       end
 
-      it "does not queue if all are anonymous" do
-        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+      it "does not queue if all are anonymous and omit_anonymous_contexts" do
+        with_processor_and_sender(omit_anonymous_contexts_config, starting_timestamp) do |ep, sender|
           user = LDContext.create({ kind: "user", key: "userkey", name: "Example User", anonymous: true })
           org = LDContext.create({ kind: "org", key: "orgkey", name: "Big Organization", anonymous: true })
           device = LDContext.create({ kind: "device", key: "devicekey", name: "IoT Device", anonymous: true })
@@ -62,13 +72,14 @@ module LaunchDarkly
     end
 
     describe "index events" do
-      it "ignore single-kind anonymous context" do
+      it "does not ignore single-kind anonymous context" do
         with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
           flag = { key: "flagkey", version: 11 }
           ep.record_eval_event(anon_context, 'flagkey', 11, 1, 'value', nil, nil, true)
 
           output = flush_and_get_events(ep, sender)
           expect(output).to contain_exactly(
+            eq(index_event(default_config, anon_context)),
             eq(feature_event(default_config, flag, anon_context, 1, 'value')),
             include(:kind => "summary")
           )
@@ -78,16 +89,32 @@ module LaunchDarkly
         end
       end
 
-      it "ignore anonymous contexts from multi-kind" do
-        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+      it "ignore single-kind anonymous context if omit_anonymous_contexts" do
+        with_processor_and_sender(omit_anonymous_contexts_config, starting_timestamp) do |ep, sender|
+          flag = { key: "flagkey", version: 11 }
+          ep.record_eval_event(anon_context, 'flagkey', 11, 1, 'value', nil, nil, true)
+
+          output = flush_and_get_events(ep, sender)
+          expect(output).to contain_exactly(
+            eq(feature_event(omit_anonymous_contexts_config, flag, anon_context, 1, 'value')),
+            include(:kind => "summary")
+          )
+
+          summary = output.detect { |e| e[:kind] == "summary" }
+          expect(summary[:features][:flagkey][:contextKinds]).to contain_exactly("org")
+        end
+      end
+
+      it "ignore anonymous contexts from multi-kind if omit_anonymous_contexts" do
+        with_processor_and_sender(omit_anonymous_contexts_config, starting_timestamp) do |ep, sender|
           flag = { key: "flagkey", version: 11 }
           multi = LDContext.create_multi([context, anon_context])
           ep.record_eval_event(multi, 'flagkey', 11, 1, 'value', nil, nil, true)
 
           output = flush_and_get_events(ep, sender)
           expect(output).to contain_exactly(
-            eq(index_event(default_config, context)),
-            eq(feature_event(default_config, flag, multi, 1, 'value')),
+            eq(index_event(omit_anonymous_contexts_config, context)),
+            eq(feature_event(omit_anonymous_contexts_config, flag, multi, 1, 'value')),
             include(:kind => "summary")
           )
 
@@ -96,8 +123,8 @@ module LaunchDarkly
         end
       end
 
-      it "handles mult-kind context being completely anonymous" do
-        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+      it "handles mult-kind context being completely anonymous if omit_anonymous_contexts" do
+        with_processor_and_sender(omit_anonymous_contexts_config, starting_timestamp) do |ep, sender|
           flag = { key: "flagkey", version: 11 }
           anon_user = LDContext.create({ kind: "user", key: "userkey", name: "User name", anonymous: true })
           multi = LDContext.create_multi([anon_user, anon_context])
@@ -105,7 +132,7 @@ module LaunchDarkly
 
           output = flush_and_get_events(ep, sender)
           expect(output).to contain_exactly(
-            eq(feature_event(default_config, flag, multi, 1, 'value')),
+            eq(feature_event(omit_anonymous_contexts_config, flag, multi, 1, 'value')),
             include(:kind => "summary")
           )
 
@@ -114,8 +141,8 @@ module LaunchDarkly
         end
       end
 
-      it "anonymous context does not prevent subsequent index events" do
-        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+      it "anonymous context does not prevent subsequent index events if omit_anonymous_contexts" do
+        with_processor_and_sender(omit_anonymous_contexts_config, starting_timestamp) do |ep, sender|
           flag = { key: "flagkey", version: 11 }
           ep.record_eval_event(anon_context, 'flagkey', 11, 1, 'value', nil, nil, false)
           non_anon_context = LDContext.create({ kind: "org", key: "orgkey", name: "Organization", anonymous: false })
@@ -123,7 +150,7 @@ module LaunchDarkly
 
           output = flush_and_get_events(ep, sender)
           expect(output).to contain_exactly(
-            eq(index_event(default_config, non_anon_context, starting_timestamp + 1)),
+            eq(index_event(omit_anonymous_contexts_config, non_anon_context, starting_timestamp + 1)),
             include(:kind => "summary")
           )
 

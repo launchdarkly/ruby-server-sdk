@@ -144,6 +144,7 @@ module LaunchDarkly
         Impl::EventSender.new(sdk_key, config, client || Util.new_http_client(config.events_uri, config))
 
       @timestamp_fn = (test_properties || {})[:timestamp_fn] || proc { Impl::Util.current_time_millis }
+      @omit_anonymous_contexts = config.omit_anonymous_contexts
 
       EventDispatcher.new(@inbox, sdk_key, config, diagnostic_accumulator, event_sender)
     end
@@ -167,8 +168,8 @@ module LaunchDarkly
     end
 
     def record_identify_event(context)
-      filtered = context.without_anonymous_contexts
-      post_to_inbox(LaunchDarkly::Impl::IdentifyEvent.new(timestamp, filtered)) if filtered.valid?
+      target_context = !@omit_anonymous_contexts ? context : context.without_anonymous_contexts
+      post_to_inbox(LaunchDarkly::Impl::IdentifyEvent.new(timestamp, target_context)) if target_context.valid?
     end
 
     def record_custom_event(context, key, data = nil, metric_value = nil)
@@ -331,14 +332,14 @@ module LaunchDarkly
     private def get_indexable_context(event, &block)
       return if event.context.nil?
 
-      filtered = event.context.without_anonymous_contexts
-      return unless filtered.valid?
+      context = !@config.omit_anonymous_contexts ? event.context : event.context.without_anonymous_contexts
+      return unless context.valid?
 
-      return if notice_context(filtered)
+      return if notice_context(context)
       return if event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
       return if event.is_a?(LaunchDarkly::Impl::MigrationOpEvent)
 
-      yield filtered unless block.nil?
+      yield context unless block.nil?
     end
 
     #
