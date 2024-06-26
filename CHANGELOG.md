@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.6.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.5.0...8.6.0) (2024-06-26)
+
+
+### Features
+
+* adding option to omit anonymous contexts in identify and index events  ([#287](https://github.com/launchdarkly/ruby-server-sdk/issues/287)) ([554f965](https://github.com/launchdarkly/ruby-server-sdk/commit/554f9652f64fe52e2c809514490dd211c0699a27))
+
 ## [8.5.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.4.2...8.5.0) (2024-06-10)
 
 
