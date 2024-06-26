@@ -355,6 +355,49 @@ module LaunchDarkly
     end
 
     #
+    # Convert the LDContext to a JSON string.
+    #
+    # @param args [Array]
+    # @return [String]
+    #
+    def to_json(*args)
+      JSON.generate(to_h, *args)
+    end
+
+    #
+    # Convert the LDContext to a hash. If the LDContext is invalid, the hash will contain an error key with the error
+    # message.
+    #
+    # @return [Hash]
+    #
+    def to_h
+      return {error: error} unless valid?
+      return hash_single_kind unless multi_kind?
+
+      hash = {kind: 'multi'}
+      @contexts.each do |context|
+        single_kind_hash = context.to_h
+        kind = single_kind_hash.delete(:kind)
+        hash[kind] = single_kind_hash
+      end
+
+      hash
+    end
+
+    protected def hash_single_kind
+      hash = attributes.nil? ? {} : attributes.clone
+
+      hash[:kind] = kind
+      hash[:key] = key
+
+      hash[:name] = name unless name.nil?
+      hash[:anonymous] = anonymous if anonymous
+      hash[:_meta] = {privateAttributes: private_attributes} unless private_attributes.empty?
+
+      hash
+    end
+
+    #
     # Retrieve the value of any top level, addressable attribute.
     #
     # This method returns an array of two values. The first element is the

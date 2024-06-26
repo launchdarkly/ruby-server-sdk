@@ -40,6 +40,9 @@ module LaunchDarkly
           @poll_interval = options[:poll_interval] || 1
           @initialized = Concurrent::AtomicBoolean.new(false)
           @ready = Concurrent::Event.new
+
+          @version_lock = Mutex.new
+          @last_version = 1
         end
 
         def initialized?
@@ -93,14 +96,22 @@ module LaunchDarkly
         end
 
         def load_file(path, all_data)
+          version = 1
+          @version_lock.synchronize {
+            version = @last_version
+            @last_version += 1
+          }
+
           parsed = parse_content(IO.read(path))
           (parsed[:flags] || {}).each do |key, flag|
+            flag[:version] = version
             add_item(all_data, FEATURES, flag)
           end
           (parsed[:flagValues] || {}).each do |key, value|
-            add_item(all_data, FEATURES, make_flag_with_value(key.to_s, value))
+            add_item(all_data, FEATURES, make_flag_with_value(key.to_s, value, version))
           end
           (parsed[:segments] || {}).each do |key, segment|
+            segment[:version] = version
             add_item(all_data, SEGMENTS, segment)
           end
         end
@@ -134,10 +145,11 @@ module LaunchDarkly
           items[key] = Model.deserialize(kind, item)
         end
 
-        def make_flag_with_value(key, value)
+        def make_flag_with_value(key, value, version)
           {
             key: key,
             on: true,
+            version: version,
             fallthrough: { variation: 0 },
             variations: [ value ],
           }
