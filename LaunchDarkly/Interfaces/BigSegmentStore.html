@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: LaunchDarkly::Interfaces::BigSegmentStore
+  
+    &mdash; LaunchDarkly Ruby SDK
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "LaunchDarkly::Interfaces::BigSegmentStore";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (B)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span>
+     &raquo; 
+    <span class="title">BigSegmentStore</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: LaunchDarkly::Interfaces::BigSegmentStore
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/ldclient-rb/interfaces.rb</dd>
+  </dl>
+  
+</div>
+
+
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#get_membership-instance_method" title="#get_membership (instance method)">#<strong>get_membership</strong>(context_hash)  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Queries the store for a snapshot of the current segment state for a specific context.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#get_metadata-instance_method" title="#get_metadata (instance method)">#<strong>get_metadata</strong>  &#x21d2; BigSegmentStoreMetadata </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns information about the overall state of the store.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#stop-instance_method" title="#stop (instance method)">#<strong>stop</strong>  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Performs any necessary cleanup to shut down the store when the client is being shut down.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="get_membership-instance_method">
+  
+    #<strong>get_membership</strong>(context_hash)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Queries the store for a snapshot of the current segment state for a specific context.</p>
+
+<p>The context_hash is a base64-encoded string produced by hashing the context key as defined by
+the Big Segments specification; the store implementation does not need to know the details
+of how this is done, because it deals only with already-hashed keys, but the string can be
+assumed to only contain characters that are valid in base64.</p>
+
+<p>The return value should be either a Hash, or nil if the context is not referenced in any big
+segments. Each key in the Hash is a &quot;segment reference&quot;, which is how segments are
+identified in Big Segment data. This string is not identical to the segment key-- the SDK
+will add other information. The store implementation should not be concerned with the
+format of the string. Each value in the Hash is true if the context is explicitly included in
+the segment, false if the context is explicitly excluded from the segment-- and is not also
+explicitly included (that is, if both an include and an exclude existed in the data, the
+include would take precedence). If the context&#39;s status in a particular segment is undefined,
+there should be no key or value for that segment.</p>
+
+<p>This Hash may be cached by the SDK, so it should not be modified after it is created. It
+is a snapshot of the segment membership state at one point in time.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>context_hash</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true/false values for Big Segments that reference this context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+452
+453</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 452</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_get_membership'>get_membership</span><span class='lparen'>(</span><span class='id identifier rubyid_context_hash'>context_hash</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="get_metadata-instance_method">
+  
+    #<strong>get_metadata</strong>  &#x21d2; <tt><span class='object_link'><a href="BigSegmentStoreMetadata.html" title="LaunchDarkly::Interfaces::BigSegmentStoreMetadata (class)">BigSegmentStoreMetadata</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns information about the overall state of the store. This method will be called only
+when the SDK needs the latest state, so it should not be cached.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="BigSegmentStoreMetadata.html" title="LaunchDarkly::Interfaces::BigSegmentStoreMetadata (class)">BigSegmentStoreMetadata</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+425
+426</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 425</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_get_metadata'>get_metadata</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="stop-instance_method">
+  
+    #<strong>stop</strong>  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Performs any necessary cleanup to shut down the store when the client is being shut down.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+460
+461</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces.rb', line 460</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jun 26 18:04:41 2024 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.36 (ruby-3.3.3).
+</div>
+
+    </div>
+  </body>
+</html>
