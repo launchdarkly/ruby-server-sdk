@@ -144,6 +144,7 @@ module LaunchDarkly
         Impl::EventSender.new(sdk_key, config, client || Util.new_http_client(config.events_uri, config))
 
       @timestamp_fn = (test_properties || {})[:timestamp_fn] || proc { Impl::Util.current_time_millis }
+      @omit_anonymous_contexts = config.omit_anonymous_contexts
 
       EventDispatcher.new(@inbox, sdk_key, config, diagnostic_accumulator, event_sender)
     end
@@ -167,7 +168,8 @@ module LaunchDarkly
     end
 
     def record_identify_event(context)
-      post_to_inbox(LaunchDarkly::Impl::IdentifyEvent.new(timestamp, context))
+      target_context = !@omit_anonymous_contexts ? context : context.without_anonymous_contexts
+      post_to_inbox(LaunchDarkly::Impl::IdentifyEvent.new(timestamp, target_context)) if target_context.valid?
     end
 
     def record_custom_event(context, key, data = nil, metric_value = nil)
@@ -319,14 +321,25 @@ module LaunchDarkly
         will_add_full_event = true
       end
 
-      # For each context we haven't seen before, we add an index event - unless this is already
-      # an identify event for that context.
-      if !event.context.nil? && !notice_context(event.context) && !event.is_a?(LaunchDarkly::Impl::IdentifyEvent) && !event.is_a?(LaunchDarkly::Impl::MigrationOpEvent)
-        outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, event.context))
+      get_indexable_context(event) do |ctx|
+        outbox.add_event(LaunchDarkly::Impl::IndexEvent.new(event.timestamp, ctx))
       end
 
       outbox.add_event(event) if will_add_full_event && @sampler.sample(event.sampling_ratio.nil? ? 1 : event.sampling_ratio)
       outbox.add_event(debug_event) if !debug_event.nil? && @sampler.sample(event.sampling_ratio.nil? ? 1 : event.sampling_ratio)
+    end
+
+    private def get_indexable_context(event, &block)
+      return if event.context.nil?
+
+      context = !@config.omit_anonymous_contexts ? event.context : event.context.without_anonymous_contexts
+      return unless context.valid?
+
+      return if notice_context(context)
+      return if event.is_a?(LaunchDarkly::Impl::IdentifyEvent)
+      return if event.is_a?(LaunchDarkly::Impl::MigrationOpEvent)
+
+      yield context unless block.nil?
     end
 
     #

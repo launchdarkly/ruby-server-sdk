@@ -99,5 +99,13 @@ module LaunchDarkly
         end
       end
     end
+    describe ".omit_anonymous_contexts" do
+      it "defaults to false" do
+        expect(subject.new.omit_anonymous_contexts).to eq false
+      end
+      it "can be set to true" do
+        expect(subject.new(omit_anonymous_contexts: true).omit_anonymous_contexts).to eq true
+      end
+    end
   end
 end

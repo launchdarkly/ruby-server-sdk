@@ -43,6 +43,7 @@ module LaunchDarkly
     # @option opts [BigSegmentsConfig] :big_segments See {#big_segments}.
     # @option opts [Hash] :application See {#application}
     # @option opts [String] :payload_filter_key See {#payload_filter_key}
+    # @option opts [Boolean] :omit_anonymous_contexts See {#omit_anonymous_contexts}
     # @option hooks [Array<Interfaces::Hooks::Hook]
     #
     def initialize(opts = {})
@@ -77,6 +78,7 @@ module LaunchDarkly
       @application = LaunchDarkly::Impl::Util.validate_application_info(opts[:application] || {}, @logger)
       @payload_filter_key = opts[:payload_filter_key]
       @hooks = (opts[:hooks] || []).keep_if { |hook| hook.is_a? Interfaces::Hooks::Hook }
+      @omit_anonymous_contexts = opts.has_key?(:omit_anonymous_contexts) && opts[:omit_anonymous_contexts]
       @data_source_update_sink = nil
     end
 
@@ -384,6 +386,15 @@ module LaunchDarkly
     # for instrumentation.
     #
     attr_reader :hooks
+
+    #
+    # Sets whether anonymous contexts should be omitted from index and identify events.
+    #
+    # The default value is false. Anonymous contexts will be included in index and identify events.
+    # @return [Boolean]
+    #
+    attr_reader :omit_anonymous_contexts
+
 
     #
     # The default LaunchDarkly client configuration. This configuration sets
