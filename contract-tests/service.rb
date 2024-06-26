@@ -40,6 +40,7 @@ get '/' do
       'inline-context',
       'anonymous-redaction',
       'evaluation-hooks',
+      'omit-anonymous-contexts',
     ],
   }.to_json
 end
