@@ -13,17 +13,38 @@ module LaunchDarkly
       let(:sdk_key) { "sdk_key" }
       let(:fake_data) { '{"things":[]}' }
 
-      def make_sender(server)
-        make_sender_with_events_uri(server.base_uri.to_s)
+      def make_sender_with_config(config = Config.new(logger: $null_log))
+        subject.new(sdk_key, config, nil, 0.1)
       end
 
-      def make_sender_with_events_uri(events_uri)
-        subject.new(sdk_key, Config.new(events_uri: events_uri, logger: $null_log, application: {id: "id", version: "version"}), nil, 0.1)
+      def with_sender_and_server(enable_compression = false)
+        with_server(enable_compression) do |server|
+          config = Config.new(events_uri: server.base_uri.to_s, logger: $null_log)
+          yield make_sender_with_config(config), server
+        end
       end
 
-      def with_sender_and_server
-        with_server do |server|
-          yield make_sender(server), server
+      it "sends analytic data with gzip compression" do
+        with_sender_and_server(true) do |es, server|
+          server.setup_ok_response("/bulk", "")
+
+          result = es.send_event_data(fake_data, "", false)
+
+          expect(result.success).to be true
+          expect(result.must_shutdown).to be false
+          expect(result.time_from_server).not_to be_nil
+
+          req, body = server.await_request_with_body
+          expect(body).to eq fake_data
+          expect(req.header).to include({
+            "authorization" => [ sdk_key ],
+            "content-type" => [ "application/json" ],
+            "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
+            "x-launchdarkly-event-schema" => [ "4" ],
+            "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
+            "connection" => [ "Keep-Alive" ],
+          })
+          expect(req.header['x-launchdarkly-payload-id']).not_to eq []
         end
       end
 
@@ -123,7 +144,9 @@ module LaunchDarkly
           begin
             ENV["http_proxy"] = proxy.base_uri.to_s
 
-            es = make_sender_with_events_uri(fake_target_uri)
+            config = Config.default
+            config.events_uri = fake_target_uri
+            es = make_sender_with_config(config)
 
             result = es.send_event_data(fake_data, "", false)
 

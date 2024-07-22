@@ -35,6 +35,7 @@ get '/' do
       'tags',
       'migrations',
       'event-gzip',
+      'optional-event-gzip',
       'event-sampling',
       'context-comparison',
       'polling-gzip',

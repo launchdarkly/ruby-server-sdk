@@ -35,6 +35,7 @@ class ClientEntity
       opts[:all_attributes_private] = !!events[:allAttributesPrivate]
       opts[:private_attributes] = events[:globalPrivateAttributes]
       opts[:flush_interval] = (events[:flushIntervalMs] / 1_000) unless events[:flushIntervalMs].nil?
+      opts[:compress_events] = !!events[:enableGzip]
     else
       opts[:send_events] = false
     end
