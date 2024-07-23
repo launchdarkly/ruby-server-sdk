@@ -9,7 +9,7 @@ class StubHTTPServer
 
   @@next_port = 50000
 
-  def initialize(enable_compression = false)
+  def initialize(enable_compression: false)
     @port = StubHTTPServer.next_port
     @enable_compression = enable_compression
     begin
@@ -78,9 +78,10 @@ class StubHTTPServer
 
   def await_request_with_body
     r = @requests_queue.pop
-    request, body = r[0], r[1]
+    request = r[0]
+    body = r[1]
 
-    return [request, body] unless @enable_compression
+    return [request, body.to_s] unless @enable_compression
 
     gz = Zlib::GzipReader.new(StringIO.new(body.to_s))
 
@@ -94,8 +95,8 @@ class NullLogger
   end
 end
 
-def with_server(enable_compression = false)
-  server = StubHTTPServer.new(enable_compression)
+def with_server(enable_compression: false)
+  server = StubHTTPServer.new(enable_compression: enable_compression)
   begin
     server.start
     yield server

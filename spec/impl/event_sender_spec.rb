@@ -11,21 +11,23 @@ module LaunchDarkly
       subject { EventSender }
 
       let(:sdk_key) { "sdk_key" }
-      let(:fake_data) { '{"things":[]}' }
+      let(:fake_data) { '{"things":[],"stuff":false,"other examples":["you", "me", "us", "we"]}' }
 
-      def make_sender_with_config(config = Config.new(logger: $null_log))
-        subject.new(sdk_key, config, nil, 0.1)
+      def make_sender(config_options = {})
+        config_options = {logger: $null_log}.merge(config_options)
+        subject.new(sdk_key, Config.new(config_options), nil, 0.1)
       end
 
-      def with_sender_and_server(enable_compression = false)
-        with_server(enable_compression) do |server|
-          config = Config.new(events_uri: server.base_uri.to_s, logger: $null_log)
-          yield make_sender_with_config(config), server
+      def with_sender_and_server(config_options = {})
+        enable_compression = config_options[:compress_events] || false
+        with_server(enable_compression: enable_compression) do |server|
+          config_options[:events_uri] = server.base_uri.to_s
+          yield make_sender(config_options), server
         end
       end
 
-      it "sends analytic data with gzip compression" do
-        with_sender_and_server(true) do |es, server|
+      it "sends analytics event data without compression enabled" do
+        with_sender_and_server(compress_events: false) do |es, server|
           server.setup_ok_response("/bulk", "")
 
           result = es.send_event_data(fake_data, "", false)
@@ -41,15 +43,16 @@ module LaunchDarkly
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
             "x-launchdarkly-event-schema" => [ "4" ],
-            "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
             "connection" => [ "Keep-Alive" ],
           })
           expect(req.header['x-launchdarkly-payload-id']).not_to eq []
+          expect(req.header['content-encoding']).to eq []
+          expect(req.header['content-length'][0].to_i).to eq fake_data.length
         end
       end
 
-      it "sends analytics event data" do
-        with_sender_and_server do |es, server|
+      it "sends analytics event data with compression enabled" do
+        with_sender_and_server(compress_events: true) do |es, server|
           server.setup_ok_response("/bulk", "")
 
           result = es.send_event_data(fake_data, "", false)
@@ -62,13 +65,14 @@ module LaunchDarkly
           expect(body).to eq fake_data
           expect(req.header).to include({
             "authorization" => [ sdk_key ],
+            "content-encoding" => [ "gzip" ],
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
             "x-launchdarkly-event-schema" => [ "4" ],
-            "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
             "connection" => [ "Keep-Alive" ],
           })
           expect(req.header['x-launchdarkly-payload-id']).not_to eq []
+          expect(req.header['content-length'][0].to_i).to be > fake_data.length
         end
       end
 
@@ -144,9 +148,7 @@ module LaunchDarkly
           begin
             ENV["http_proxy"] = proxy.base_uri.to_s
 
-            config = Config.default
-            config.events_uri = fake_target_uri
-            es = make_sender_with_config(config)
+            es = make_sender(events_uri: fake_target_uri)
 
             result = es.send_event_data(fake_data, "", false)
 
