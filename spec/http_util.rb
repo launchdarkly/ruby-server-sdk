@@ -1,14 +1,17 @@
 require "webrick"
 require "webrick/httpproxy"
 require "webrick/https"
+require "stringio"
+require "zlib"
 
 class StubHTTPServer
   attr_reader :requests, :port
 
   @@next_port = 50000
 
-  def initialize
+  def initialize(enable_compression: false)
     @port = StubHTTPServer.next_port
+    @enable_compression = enable_compression
     begin
       base_opts = {
         BindAddress: '127.0.0.1',
@@ -73,14 +76,16 @@ class StubHTTPServer
     @requests_queue << [req, req.body]
   end
 
-  def await_request
-    r = @requests_queue.pop
-    r[0]
-  end
-
   def await_request_with_body
     r = @requests_queue.pop
-    [r[0], r[1]]
+    request = r[0]
+    body = r[1]
+
+    return [request, body.to_s] unless @enable_compression
+
+    gz = Zlib::GzipReader.new(StringIO.new(body.to_s))
+
+    [request, gz.read]
   end
 end
 
@@ -90,8 +95,8 @@ class NullLogger
   end
 end
 
-def with_server(server = nil)
-  server = StubHTTPServer.new if server.nil?
+def with_server(enable_compression: false)
+  server = StubHTTPServer.new(enable_compression: enable_compression)
   begin
     server.start
     yield server
