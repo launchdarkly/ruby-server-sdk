@@ -65,6 +65,7 @@ module LaunchDarkly
       @all_attributes_private = opts[:all_attributes_private] || false
       @private_attributes = opts[:private_attributes] || []
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
+      @compress_events = opts.has_key?(:compress_events) ? opts[:compress_events] : Config.default_compress_events
       @context_keys_capacity = opts[:context_keys_capacity] || Config.default_context_keys_capacity
       @context_keys_flush_interval = opts[:context_keys_flush_interval] || Config.default_context_keys_flush_interval
       @data_source = opts[:data_source]
@@ -253,6 +254,17 @@ module LaunchDarkly
     # @return [Boolean]
     #
     attr_reader :send_events
+
+    #
+    # Should the event payload sent to LaunchDarkly use gzip compression. By default this is false to prevent backward
+    # breaking compatibility issues with older versions of the relay proxy.
+    #
+    # Customers not using the relay proxy are strongly encouraged to enable this feature to reduce egress bandwidth
+    # cost.
+    #
+    # @return [Boolean]
+    #
+    attr_reader :compress_events
 
     #
     # The number of context keys that the event processor can remember at any one time. This reduces the
@@ -537,6 +549,14 @@ module LaunchDarkly
     #
     def self.default_send_events
       true
+    end
+
+    #
+    # The default value for {#compress_events}.
+    # @return [Boolean] false
+    #
+    def self.default_compress_events
+      false
     end
 
     #

@@ -44,17 +44,24 @@ module LaunchDarkly
               @logger.debug { "[LDClient] sending #{description}: #{event_data}" }
               headers = {}
               headers["content-type"] = "application/json"
-              headers["content-encoding"] = "gzip"
+              headers["content-encoding"] = "gzip" if @config.compress_events
               Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| headers[k] = v }
               unless is_diagnostic
                 headers["X-LaunchDarkly-Event-Schema"] = CURRENT_SCHEMA_VERSION.to_s
                 headers["X-LaunchDarkly-Payload-ID"] = payload_id
               end
-              gzip = Zlib::GzipWriter.new(StringIO.new)
-              gzip << event_data
+
+              body = event_data
+              if @config.compress_events
+                gzip = Zlib::GzipWriter.new(StringIO.new)
+                gzip << event_data
+
+                body = gzip.close.string
+              end
+
               response = http_client.request("POST", uri, {
                 headers: headers,
-                body: gzip.close.string,
+                body: body,
               })
             rescue StandardError => exn
               @logger.warn { "[LDClient] Error sending events: #{exn.inspect}." }
