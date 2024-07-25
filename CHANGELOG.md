@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.7.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.6.0...8.7.0) (2024-07-25)
+
+
+### Features
+
+* Add option to enable compression of event payloads ([#291](https://github.com/launchdarkly/ruby-server-sdk/issues/291)) ([978f6ea](https://github.com/launchdarkly/ruby-server-sdk/commit/978f6eaf27e27f0e2484a7aa25ca70750d70f97f))
+
 ## [8.6.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.5.0...8.6.0) (2024-06-26)
 
 
