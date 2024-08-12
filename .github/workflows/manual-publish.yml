@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.0.0
+      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
         name: 'Get rubygems API key'
         with:
           aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
@@ -44,7 +44,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.10.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
       base64-subjects: "${{ needs.build-publish.outputs.gem-hash }}"
       upload-assets: ${{ !inputs.dry_run }}
