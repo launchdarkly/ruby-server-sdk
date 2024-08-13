@@ -21,40 +21,40 @@ jobs:
         id: release
 
       - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           fetch-depth: 0 # If you only need the current version keep this.
 
       - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         name: 'Get rubygems API key'
         with:
           aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
           ssm_parameter_pairs: '/production/common/releasing/rubygems/api_key = GEM_HOST_API_KEY'
 
       - uses: ./.github/actions/ci
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           ruby-version: 3.0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/build-docs
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
 
       - uses: ./.github/actions/publish
         id: publish
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           dry_run: false
 
       - uses: ./.github/actions/publish-docs
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           token: ${{secrets.GITHUB_TOKEN}}
 
   release-provenance:
     needs: [ 'release-package' ]
-    if: ${{ needs.release-package.outputs.release-created }}
+    if: ${{ needs.release-package.outputs.release-created == 'true' }}
     permissions:
       actions: read
       id-token: write
