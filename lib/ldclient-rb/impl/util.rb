@@ -83,7 +83,7 @@ module LaunchDarkly
       #
       def self.validate_payload_filter_key(value, logger)
         return nil if value.nil?
-        return value if value.is_a?(String) && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.match?(value)
+        return value if value.is_a?(String) && /^[a-zA-Z0-9][._\-a-zA-Z0-9]*$/.match?(value)
 
         logger.warn {
           "Invalid payload filter configured, full environment will be fetched. Ensure the filter key is not empty and was copied correctly from LaunchDarkly settings."
