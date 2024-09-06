@@ -77,7 +77,7 @@ module LaunchDarkly
       @socket_factory = opts[:socket_factory]
       @big_segments = opts[:big_segments] || BigSegmentsConfig.new(store: nil)
       @application = LaunchDarkly::Impl::Util.validate_application_info(opts[:application] || {}, @logger)
-      @payload_filter_key = opts[:payload_filter_key]
+      @payload_filter_key = LaunchDarkly::Impl::Util.validate_payload_filter_key(opts[:payload_filter_key] , @logger)
       @hooks = (opts[:hooks] || []).keep_if { |hook| hook.is_a? Interfaces::Hooks::Hook }
       @omit_anonymous_contexts = opts.has_key?(:omit_anonymous_contexts) && opts[:omit_anonymous_contexts]
       @data_source_update_sink = nil

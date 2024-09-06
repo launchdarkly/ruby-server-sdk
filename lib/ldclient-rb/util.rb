@@ -77,11 +77,6 @@ module LaunchDarkly
     def self.add_payload_filter_key(uri, config)
       return uri if config.payload_filter_key.nil?
 
-      unless config.payload_filter_key.is_a?(String) && !config.payload_filter_key.empty?
-        config.logger.warn { "[LDClient] Filter key must be a non-empty string. No filtering will be applied." }
-        return uri
-      end
-
       begin
         parsed = URI.parse(uri)
         new_query_params = URI.decode_www_form(String(parsed.query)) << ["filter", config.payload_filter_key]

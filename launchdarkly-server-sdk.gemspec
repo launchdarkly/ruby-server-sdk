@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.0.0"
 
   spec.add_development_dependency "aws-sdk-dynamodb", "~> 1.57"
+  spec.add_development_dependency "rexml", "~> 3.3", ">= 3.3.7"
   spec.add_development_dependency "bundler", "2.2.33"
   spec.add_development_dependency "simplecov", "~> 0.21"
   spec.add_development_dependency "rspec", "~> 3.10"

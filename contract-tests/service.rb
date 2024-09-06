@@ -31,6 +31,7 @@ get '/' do
       'all-flags-client-side-only',
       'all-flags-details-only-for-tracked-flags',
       'filtering',
+      'filtering-strict',
       'secure-mode-hash',
       'tags',
       'migrations',
