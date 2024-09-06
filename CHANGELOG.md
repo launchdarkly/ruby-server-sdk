@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.7.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.7.0...8.7.1) (2024-09-06)
+
+
+### Bug Fixes
+
+* Add additional payload filter key validation ([#295](https://github.com/launchdarkly/ruby-server-sdk/issues/295)) ([75d6c6a](https://github.com/launchdarkly/ruby-server-sdk/commit/75d6c6af595350f3a10e6215edb06647d5f0ea13))
+
 ## [8.7.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.6.0...8.7.0) (2024-07-25)
 
 This release introduces the ability to enable compression of event payloads. When enabled, the SDK will compress events before sending them to the LaunchDarkly servers. This can reduce the bandwidth required to send events, which can be useful in high-traffic environments to reduce egress traffic costs.
