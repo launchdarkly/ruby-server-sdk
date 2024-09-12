@@ -97,6 +97,9 @@ module LaunchDarkly
       # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
       #   file modifications - used only if auto_update is true, and if the native file-watching
       #   mechanism from 'listen' is not being used. The default value is 1 second.
+      # @option options [Boolean] :allow_duplicates Do not raise an error if using multiple files
+      #   that contain the same flag or segment key. If this is true, the last value for a given key
+      #   will be used. The default is false.
       # @return an object that can be stored in {Config#data_source}
       #
       def self.data_source(options={})

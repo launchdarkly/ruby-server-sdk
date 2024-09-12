@@ -37,6 +37,22 @@ module LaunchDarkly
 EOF
       }
 
+      let(:alternate_flag_only_json) { <<-EOF
+{
+  "flags": {
+    "flag1": {
+      "key": "flag1",
+      "on": false,
+      "fallthrough": {
+        "variation": 2
+      },
+      "variations": [ "fall", "off", "on" ]
+    }
+  }
+}
+EOF
+      }
+
       let(:segment_only_json) { <<-EOF
 {
   "segments": {
@@ -240,6 +256,17 @@ EOF
           ds.start
           expect(@store.initialized?).to eq(false)
           expect(@store.all(LaunchDarkly::FEATURES).keys).to eq([])
+        end
+      end
+
+      it "allows duplicate keys and uses the last loaded version when allow-duplicates is true" do
+        file1 = make_temp_file(flag_only_json)
+        file2 = make_temp_file(alternate_flag_only_json)
+        with_data_source({ paths: [ file1.path, file2.path ], allow_duplicates: true }) do |ds|
+          ds.start
+          expect(@store.initialized?).to eq(true)
+          expect(@store.all(LaunchDarkly::FEATURES).keys).to_not eq([])
+          expect(@store.all(LaunchDarkly::FEATURES)[:flag1][:on]).to eq(false)
         end
       end
 
