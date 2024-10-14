@@ -181,6 +181,63 @@ module LaunchDarkly
         end
       end
 
+      it "correctly includes only top level prerequisite keys" do
+        td = Integrations::TestData.data_source
+        td.use_preconfigured_flag({
+          key: "top-level-has-prereqs-1",
+          on: true,
+          version: 100,
+          fallthrough: { variation: 0 },
+          variations: [ 'value' ],
+          prerequisites: [{key: 'prereq1',
+            variation: 0},
+            {key: 'prereq2',
+              variation: 0}],
+        })
+        td.use_preconfigured_flag({
+          key: "top-level-has-prereqs-2",
+          on: true,
+          version: 100,
+          fallthrough: { variation: 0 },
+          variations: [ 'value' ],
+          prerequisites: [{key: 'prereq3',
+            variation: 0}],
+        })
+        td.use_preconfigured_flag({ key: "prereq1", on: true, version: 200, fallthrough: { variation: 0 }, variations: [ 'value' ] })
+        td.use_preconfigured_flag({ key: "prereq2", on: true, version: 200, fallthrough: { variation: 0 }, variations: [ 'value' ] })
+        td.use_preconfigured_flag({ key: "prereq3", on: true, version: 200, fallthrough: { variation: 0 }, variations: [ 'value' ] })
+
+        with_client(test_config(data_source: td)) do |client|
+          state = client.all_flags_state({ key: 'userkey', kind: 'user' })
+          expect(state.valid?).to be true
+
+          result = state.as_json
+          expect(result).to eq({
+            'top-level-has-prereqs-1' => 'value',
+            'top-level-has-prereqs-2' => 'value',
+            'prereq1' => 'value',
+            'prereq2' => 'value',
+            'prereq3' => 'value',
+            '$flagsState' => {
+              'top-level-has-prereqs-1' => {
+                :version => 100,
+                :variation => 0,
+                :prerequisites => ['prereq1', 'prereq2'],
+              },
+              'top-level-has-prereqs-2' => {
+                :version => 100,
+                :variation => 0,
+                :prerequisites => ['prereq3'],
+              },
+              'prereq1' => { :version => 200, :variation => 0 },
+              'prereq2' => { :version => 200, :variation => 0 },
+              'prereq3' => { :version => 200, :variation => 0 },
+            },
+            '$valid' => true,
+          })
+        end
+      end
+
       it "can be filtered for only client-side flags" do
         td = Integrations::TestData.data_source
         td.use_preconfigured_flag({ key: "server-side-1", offVariation: 0, variations: [ 'a' ], clientSide: false })

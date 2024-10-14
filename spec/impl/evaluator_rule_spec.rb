@@ -10,7 +10,7 @@ module LaunchDarkly
           flag = Flags.boolean_flag_with_rules(rule)
           context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new(true, 1, EvaluationReason::rule_match(0, 'ruleid'))
-          result = basic_evaluator.evaluate(flag, context)
+          (result, _) = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -19,8 +19,8 @@ module LaunchDarkly
           rule = { id: 'ruleid', clauses: [{ attribute: 'key', op: 'in', values: ['userkey'] }], variation: 1 }
           flag = Flags.boolean_flag_with_rules(rule)
           context = LDContext.create({ key: 'userkey', kind: 'user' })
-          result1 = basic_evaluator.evaluate(flag, context)
-          result2 = basic_evaluator.evaluate(flag, context)
+          (result1, _) = basic_evaluator.evaluate(flag, context)
+          (result2, _) = basic_evaluator.evaluate(flag, context)
           expect(result1.detail.reason.rule_id).to eq 'ruleid'
           expect(result1.detail).to be result2.detail
         end
@@ -31,7 +31,7 @@ module LaunchDarkly
           context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new(nil, nil,
             EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, context)
+          (result, _) = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -42,7 +42,7 @@ module LaunchDarkly
           context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new(nil, nil,
             EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, context)
+          (result, _) = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -53,7 +53,7 @@ module LaunchDarkly
           context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new(nil, nil,
             EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, context)
+          (result, _) = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -65,7 +65,7 @@ module LaunchDarkly
           context = LDContext.create({ key: 'userkey', kind: 'user' })
           detail = EvaluationDetail.new(nil, nil,
             EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG))
-          result = basic_evaluator.evaluate(flag, context)
+          (result, _) = basic_evaluator.evaluate(flag, context)
           expect(result.detail).to eq(detail)
           expect(result.prereq_evals).to eq(nil)
         end
@@ -77,7 +77,7 @@ module LaunchDarkly
             flag = Flags.boolean_flag_with_rules(rule)
             context = LDContext.create({ key: 'userkey', kind: 'user' })
             detail = EvaluationDetail.new(true, 1, EvaluationReason::rule_match(0, 'ruleid'))
-            result = basic_evaluator.evaluate(flag, context)
+            (result, _) = basic_evaluator.evaluate(flag, context)
             expect(result.detail).to eq(detail)
             expect(result.prereq_evals).to eq(nil)
           end
@@ -88,8 +88,8 @@ module LaunchDarkly
             flag = Flags.boolean_flag_with_rules(rule)
             context = LDContext.create({ key: 'userkey', kind: 'user' })
             detail = EvaluationDetail.new(true, 1, EvaluationReason::rule_match(0, 'ruleid'))
-            result1 = basic_evaluator.evaluate(flag, context)
-            result2 = basic_evaluator.evaluate(flag, context)
+            (result1, _) = basic_evaluator.evaluate(flag, context)
+            (result2, _) = basic_evaluator.evaluate(flag, context)
             expect(result1.detail).to eq(detail)
             expect(result2.detail).to be(result1.detail)
           end
@@ -99,7 +99,7 @@ module LaunchDarkly
               rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: false } ] } }
             flag = Flags.boolean_flag_with_rules(rule)
             context = LDContext.create({ key: 'userkey', kind: 'user' })
-            result = basic_evaluator.evaluate(flag, context)
+            (result, _) = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(true)
           end
@@ -109,7 +109,7 @@ module LaunchDarkly
               rollout: { kind: 'rollout', variations: [ { weight: 100000, variation: 1, untracked: false } ] } }
             flag = Flags.boolean_flag_with_rules(rule)
             context = LDContext.create({ key: 'userkey', kind: 'user' })
-            result = basic_evaluator.evaluate(flag, context)
+            (result, _) = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)
           end
@@ -119,7 +119,7 @@ module LaunchDarkly
               rollout: { kind: 'experiment', variations: [ { weight: 100000, variation: 1, untracked: true } ] } }
             flag = Flags.boolean_flag_with_rules(rule)
             context = LDContext.create({ key: 'userkey', kind: 'user' })
-            result = basic_evaluator.evaluate(flag, context)
+            (result, _) = basic_evaluator.evaluate(flag, context)
             expect(result.detail.reason.to_json).to_not include('"inExperiment":true')
             expect(result.detail.reason.in_experiment).to eq(nil)
           end

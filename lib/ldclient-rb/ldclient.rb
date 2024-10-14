@@ -546,7 +546,8 @@ module LaunchDarkly
           next
         end
         begin
-          detail = @evaluator.evaluate(f, context).detail
+          (eval_result, eval_state) = @evaluator.evaluate(f, context)
+          detail = eval_result.detail
         rescue => exn
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
           Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
@@ -558,6 +559,7 @@ module LaunchDarkly
           value: detail.value,
           variation: detail.variation_index,
           reason: detail.reason,
+          prerequisites: eval_state.prerequisites,
           version: f[:version],
           trackEvents: f[:trackEvents] || requires_experiment_data,
           trackReason: requires_experiment_data,
@@ -705,7 +707,7 @@ module LaunchDarkly
       end
 
       begin
-        res = @evaluator.evaluate(feature, context)
+        (res, _) = @evaluator.evaluate(feature, context)
         unless res.prereq_evals.nil?
           res.prereq_evals.each do |prereq_eval|
             record_prereq_flag_eval(prereq_eval.prereq_flag, prereq_eval.prereq_of_flag, context, prereq_eval.detail, with_reasons)
