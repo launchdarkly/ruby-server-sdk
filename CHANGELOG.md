@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.8.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.7.1...8.8.0) (2024-10-16)
+
+
+### Features
+
+* Add support for client-side prerequisite events ([#299](https://github.com/launchdarkly/ruby-server-sdk/issues/299)) ([021451c](https://github.com/launchdarkly/ruby-server-sdk/commit/021451cd3fc83fb3701e8a1d02f187e8baa18bb1))
+
 ## [8.7.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.7.0...8.7.1) (2024-09-06)
 
 
