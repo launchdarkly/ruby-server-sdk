@@ -44,6 +44,7 @@ get '/' do
       'anonymous-redaction',
       'evaluation-hooks',
       'omit-anonymous-contexts',
+      'client-prereq-events',
     ],
   }.to_json
 end

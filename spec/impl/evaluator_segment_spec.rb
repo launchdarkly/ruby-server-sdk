@@ -10,7 +10,8 @@ module LaunchDarkly
           clause = Clauses.match_segment(segment)
           flag = Flags.boolean_flag_with_clauses(clause)
           e = EvaluatorBuilder.new(logger).with_segment(segment).build
-          e.evaluate(flag, context).detail.value
+          (eval_result, _) = e.evaluate(flag, context)
+          eval_result.detail.value
         end
 
         it "retrieves segment from segment store for segmentMatch operator" do
@@ -22,14 +23,16 @@ module LaunchDarkly
           }
           e = EvaluatorBuilder.new(logger).with_segment(segment).build
           flag = Flags.boolean_flag_with_clauses(Clauses.match_segment(segment))
-          expect(e.evaluate(flag, user_context).detail.value).to be true
+          (result, _) = e.evaluate(flag, user_context)
+          expect(result.detail.value).to be true
         end
 
         it "falls through with no errors if referenced segment is not found" do
           e = EvaluatorBuilder.new(logger).with_unknown_segment('segkey').build
           clause = { attribute: '', op: 'segmentMatch', values: ['segkey'] }
           flag = Flags.boolean_flag_with_clauses(clause)
-          expect(e.evaluate(flag, user_context).detail.value).to be false
+          (result, _) = e.evaluate(flag, user_context)
+          expect(result.detail.value).to be false
         end
 
         it 'explicitly includes context' do
@@ -163,7 +166,7 @@ module LaunchDarkly
             segments.each { |segment| builder.with_segment(segment) }
 
             evaluator = builder.build
-            result = evaluator.evaluate(flag, context)
+            (result, _) = evaluator.evaluate(flag, context)
             expect(result.detail.value).to be(true)
 
           end
@@ -187,7 +190,7 @@ module LaunchDarkly
             segments.each { |segment| builder.with_segment(segment) }
 
             evaluator = builder.build
-            result = evaluator.evaluate(flag, context)
+            (result, _) = evaluator.evaluate(flag, context)
             reason = EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG)
             expect(result.detail.reason).to eq(reason)
           end

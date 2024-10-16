@@ -38,6 +38,7 @@ module LaunchDarkly
         meta[:version] = flag_state[:version]
       end
 
+      meta[:prerequisites] = flag_state[:prerequisites] unless flag_state[:prerequisites].nil? || flag_state[:prerequisites].empty?
       meta[:variation] = flag_state[:variation] unless flag_state[:variation].nil?
       meta[:trackEvents] = true if flag_state[:trackEvents]
       meta[:trackReason] = true if flag_state[:trackReason]

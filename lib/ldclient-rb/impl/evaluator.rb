@@ -32,8 +32,16 @@ module LaunchDarkly
       def initialize(original_flag)
         @prereq_stack = EvaluatorStack.new(original_flag.key)
         @segment_stack = EvaluatorStack.new(nil)
+        @prerequisites = []
+        @depth = 0
       end
 
+      def record_evaluated_prereq_key(key)
+        @prerequisites.push(key) if @depth.zero?
+      end
+
+      attr_accessor :depth
+      attr_reader :prerequisites
       attr_reader :prereq_stack
       attr_reader :segment_stack
     end
@@ -135,7 +143,8 @@ module LaunchDarkly
       #
       # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] the flag
       # @param context [LaunchDarkly::LDContext] the evaluation context
-      # @return [EvalResult] the evaluation result
+      # @return [Array<EvalResult, EvaluatorState>] the evaluation result and a state object that may be used for
+      # inspecting the evaluation process
       def evaluate(flag, context)
         state = EvaluatorState.new(flag)
 
@@ -145,11 +154,11 @@ module LaunchDarkly
         rescue EvaluationException => exn
           LaunchDarkly::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
           result.detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(exn.error_kind))
-          return result
+          return result, state
         rescue => exn
           LaunchDarkly::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
           result.detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
-          return result
+          return result, state
         end
 
         unless result.big_segments_status.nil?
@@ -159,7 +168,7 @@ module LaunchDarkly
             detail.reason.with_big_segments_status(result.big_segments_status))
         end
         result.detail = detail
-        result
+        [result, state]
       end
 
       # @param segment [LaunchDarkly::Impl::Model::Segment]
@@ -223,13 +232,16 @@ module LaunchDarkly
               )
             end
 
+            state.record_evaluated_prereq_key(prereq_key)
             prereq_flag = @get_flag.call(prereq_key)
 
             if prereq_flag.nil?
               @logger.error { "[LDClient] Could not retrieve prerequisite flag \"#{prereq_key}\" when evaluating \"#{flag.key}\"" }
               prereq_ok = false
             else
+              state.depth += 1
               prereq_res = eval_internal(prereq_flag, context, eval_result, state)
+              state.depth -= 1
               # Note that if the prerequisite flag is off, we don't consider it a match no matter what its
               # off variation was. But we still need to evaluate it in order to generate an event.
               if !prereq_flag.on || prereq_res.variation_index != prerequisite.variation

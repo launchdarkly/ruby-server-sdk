@@ -18,7 +18,8 @@ module LaunchDarkly
         context = LDContext.create({ key: 'x' })
         detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('badfeature'))
         e = EvaluatorBuilder.new(logger).with_unknown_flag('badfeature').build
-        result = e.evaluate(flag, context)
+        (result, state) = e.evaluate(flag, context)
+        expect(state.prerequisites).to eq(['badfeature'])
         expect(result.detail).to eq(detail)
         expect(result.prereq_evals).to eq(nil)
       end
@@ -36,9 +37,11 @@ module LaunchDarkly
         )
         context = LDContext.create({ key: 'x' })
         e = EvaluatorBuilder.new(logger).with_unknown_flag('badfeature').build
-        result1 = e.evaluate(flag, context)
+        (result1, state1) = e.evaluate(flag, context)
+        expect(state1.prerequisites).to eq(['badfeature'])
         expect(result1.detail.reason).to eq EvaluationReason::prerequisite_failed('badfeature')
-        result2 = e.evaluate(flag, context)
+        (result2, state2) = e.evaluate(flag, context)
+        expect(state2.prerequisites).to eq(['badfeature'])
         expect(result2.detail).to be result1.detail
       end
 
@@ -69,7 +72,8 @@ module LaunchDarkly
           PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough())),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).with_unknown_flag('feature2').build
-        result = e.evaluate(flag, context)
+        (result, state) = e.evaluate(flag, context)
+        expect(state.prerequisites).to eq(['feature1'])
         expect(result.detail).to eq(detail)
         expect(result.prereq_evals).to eq(expected_prereqs)
       end
@@ -102,7 +106,8 @@ module LaunchDarkly
           PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new(nil, nil, EvaluationReason::prerequisite_failed('feature2'))),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).with_unknown_flag('feature2').build
-        result = e.evaluate(flag, context)
+        (result, state) = e.evaluate(flag, context)
+        expect(state.prerequisites).to eq(['feature1'])
         expect(result.detail).to eq(detail)
         expect(result.prereq_evals).to eq(expected_prereqs)
       end
@@ -136,7 +141,8 @@ module LaunchDarkly
           PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::off)),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).build
-        result = e.evaluate(flag, context)
+        (result, state) = e.evaluate(flag, context)
+        expect(state.prerequisites).to eq(['feature1'])
         expect(result.detail).to eq(detail)
         expect(result.prereq_evals).to eq(expected_prereqs)
       end
@@ -168,7 +174,8 @@ module LaunchDarkly
           PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough)),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).build
-        result = e.evaluate(flag, context)
+        (result, state) = e.evaluate(flag, context)
+        expect(state.prerequisites).to eq(['feature1'])
         expect(result.detail).to eq(detail)
         expect(result.prereq_evals).to eq(expected_prereqs)
       end
@@ -200,7 +207,8 @@ module LaunchDarkly
           PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::fallthrough)),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).build
-        result = e.evaluate(flag, context)
+        (result, state) = e.evaluate(flag, context)
+        expect(state.prerequisites).to eq(['feature1'])
         expect(result.detail).to eq(detail)
         expect(result.prereq_evals).to eq(expected_prereqs)
       end
@@ -224,7 +232,7 @@ module LaunchDarkly
           flags.each { |flag| builder.with_flag(flag) }
 
           evaluator = builder.build
-          result = evaluator.evaluate(flags[0], LDContext.with_key('user'))
+          (result, _) = evaluator.evaluate(flags[0], LDContext.with_key('user'))
           reason = EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG)
           expect(result.detail.reason).to eq(reason)
         end
