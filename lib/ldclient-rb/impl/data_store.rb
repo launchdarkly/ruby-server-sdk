@@ -4,6 +4,56 @@ require "ldclient-rb/interfaces"
 module LaunchDarkly
   module Impl
     module DataStore
+
+      class DataKind
+        FEATURES = "features".freeze
+        SEGMENTS = "segments".freeze
+
+        FEATURE_PREREQ_FN = lambda { |flag| (flag[:prerequisites] || []).map { |p| p[:key] } }.freeze
+
+        attr_reader :namespace
+        attr_reader :priority
+
+        #
+        # @param namespace [String]
+        # @param priority [Integer]
+        #
+        def initialize(namespace:, priority:)
+          @namespace = namespace
+          @priority = priority
+        end
+
+        #
+        # Maintain the same behavior when these data kinds were standard ruby hashes.
+        #
+        # @param key [Symbol]
+        # @return [Object]
+        #
+        def [](key)
+          return priority if key == :priority
+          return namespace if key == :namespace
+          return get_dependency_keys_fn() if key == :get_dependency_keys
+          nil
+        end
+
+        #
+        # Retrieve the dependency keys for a particular data kind. Right now, this is only defined for flags.
+        #
+        def get_dependency_keys_fn()
+          return nil unless @namespace == FEATURES
+
+          FEATURE_PREREQ_FN
+        end
+
+        def eql?(other)
+          namespace == other.namespace && priority == other.priority
+        end
+
+        def hash
+          [namespace, priority].hash
+        end
+      end
+
       class StatusProvider
         include LaunchDarkly::Interfaces::DataStore::StatusProvider
 

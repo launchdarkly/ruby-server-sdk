@@ -11,17 +11,10 @@ module LaunchDarkly
   # to ensure data consistency during non-atomic updates.
 
   # @private
-  FEATURES = {
-    namespace: "features",
-    priority: 1,  # that is, features should be stored after segments
-    get_dependency_keys: lambda { |flag| (flag[:prerequisites] || []).map { |p| p[:key] } },
-  }.freeze
+  FEATURES = Impl::DataStore::DataKind.new(namespace: "features", priority: 1).freeze
 
   # @private
-  SEGMENTS = {
-    namespace: "segments",
-    priority: 0,
-  }.freeze
+  SEGMENTS = Impl::DataStore::DataKind.new(namespace: "segments", priority: 0).freeze
 
   # @private
   ALL_KINDS = [FEATURES, SEGMENTS].freeze
