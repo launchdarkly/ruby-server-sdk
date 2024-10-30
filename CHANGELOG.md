@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.8.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.8.0...8.8.1) (2024-10-30)
+
+
+### Bug Fixes
+
+* Modify data kind constants to avoid Process.warmup rehash ([#301](https://github.com/launchdarkly/ruby-server-sdk/issues/301)) ([06f11f0](https://github.com/launchdarkly/ruby-server-sdk/commit/06f11f0757555cc680776f747dfa68ca7e278cb6))
+
 ## [8.8.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.7.1...8.8.0) (2024-10-16)
 
 
