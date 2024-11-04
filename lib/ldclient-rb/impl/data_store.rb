@@ -46,7 +46,7 @@ module LaunchDarkly
         end
 
         def eql?(other)
-          namespace == other.namespace && priority == other.priority
+          other.is_a?(DataKind) && namespace == other.namespace && priority == other.priority
         end
 
         def hash
