@@ -46,6 +46,7 @@ get '/' do
       'omit-anonymous-contexts',
       'client-prereq-events',
       'persistent-data-store-redis',
+      'persistent-data-store-consul',
     ],
   }.to_json
 end

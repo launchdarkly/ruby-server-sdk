@@ -14,3 +14,5 @@ gem 'thin', :platforms => :ruby
 
 gem "redis", "~> 5.3"
 gem "connection_pool", "~> 2.4"
+
+gem "diplomat", "~> 2.6"

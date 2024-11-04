@@ -49,6 +49,10 @@ class ClientEntity
         store_config[:redis_url] = config[:persistentDataStore][:store][:dsn]
         store = LaunchDarkly::Integrations::Redis.new_feature_store(store_config)
         opts[:feature_store] = store
+      when 'consul'
+        store_config[:url] = config[:persistentDataStore][:store][:url]
+        store = LaunchDarkly::Integrations::Consul.new_feature_store(store_config)
+        opts[:feature_store] = store
       end
     end
 
