@@ -53,6 +53,15 @@ class ClientEntity
         store_config[:url] = config[:persistentDataStore][:store][:url]
         store = LaunchDarkly::Integrations::Consul.new_feature_store(store_config)
         opts[:feature_store] = store
+      when 'dynamodb'
+        client = Aws::DynamoDB::Client.new(
+          region: 'us-east-1',
+          credentials: Aws::Credentials.new('dummy', 'dummy', 'dummy'),
+          endpoint: config[:persistentDataStore][:store][:dsn]
+        )
+        store_config[:existing_client] = client
+        store = LaunchDarkly::Integrations::DynamoDB.new_feature_store('sdk-contract-tests', store_config)
+        opts[:feature_store] = store
       end
     end
 
