@@ -2,6 +2,14 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.8.2](https://github.com/launchdarkly/ruby-server-sdk/compare/8.8.1...8.8.2) (2024-11-06)
+
+
+### Bug Fixes
+
+* Allow gem to be installed from source ([#305](https://github.com/launchdarkly/ruby-server-sdk/issues/305)) ([76d06bc](https://github.com/launchdarkly/ruby-server-sdk/commit/76d06bc6f8ac3d92fdff19321126ff1462a4b69e))
+* Improve DataKind eql? to consider object type ([#304](https://github.com/launchdarkly/ruby-server-sdk/issues/304)) ([5893245](https://github.com/launchdarkly/ruby-server-sdk/commit/5893245426076555d40dcfc5f452acb9d15d2d61))
+
 ## [8.8.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.8.0...8.8.1) (2024-10-30)
 
 
