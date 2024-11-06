@@ -43,8 +43,9 @@ runs:
       shell: bash
       run: make start-contract-test-service-bg
 
-    - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.0.2
+    - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.2.0
       if: ${{ !startsWith(inputs.ruby-version, 'jruby') }}
       with:
         test_service_port: 9000
+        enable_persistence_tests: true
         token: ${{ inputs.token }}
