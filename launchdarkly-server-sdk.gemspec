@@ -3,7 +3,6 @@
 lib = File.expand_path("lib", __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "ldclient-rb/version"
-require "rake"
 
 # rubocop:disable Metrics/BlockLength
 Gem::Specification.new do |spec|
@@ -16,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/launchdarkly/ruby-server-sdk"
   spec.license       = "Apache-2.0"
 
-  spec.files         = FileList["lib/**/*", "README.md", "LICENSE.txt"]
+  spec.files         = Dir["lib/**/*.rb", "README.md", "LICENSE.txt"]
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
   spec.required_ruby_version = ">= 3.0.0"
