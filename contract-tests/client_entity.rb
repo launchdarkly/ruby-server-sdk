@@ -25,6 +25,44 @@ class ClientEntity
       opts[:base_uri] = polling[:baseUri] unless polling[:baseUri].nil?
       opts[:payload_filter_key] = polling[:filter] unless polling[:filter].nil?
       opts[:poll_interval] = polling[:pollIntervalMs] / 1_000.0 unless polling[:pollIntervalMs].nil?
+    else
+      opts[:use_ldd] = true
+    end
+
+    if config[:persistentDataStore]
+      store_config = {}
+      store_config[:prefix] = config[:persistentDataStore][:store][:prefix] if config[:persistentDataStore][:store][:prefix]
+
+      case config[:persistentDataStore][:cache][:mode]
+        when 'off'
+          store_config[:expiration] = 0
+        when 'infinite'
+          # NOTE: We don't actually support infinite cache mode, so we'll just set it to nil for now. This uses a default
+          # 15 second expiration time in the SDK, which is long enough to pass any test.
+          store_config[:expiration] = nil
+        when 'ttl'
+          store_config[:expiration] = config[:persistentDataStore][:cache][:ttl]
+      end
+
+      case config[:persistentDataStore][:store][:type]
+      when 'redis'
+        store_config[:redis_url] = config[:persistentDataStore][:store][:dsn]
+        store = LaunchDarkly::Integrations::Redis.new_feature_store(store_config)
+        opts[:feature_store] = store
+      when 'consul'
+        store_config[:url] = config[:persistentDataStore][:store][:url]
+        store = LaunchDarkly::Integrations::Consul.new_feature_store(store_config)
+        opts[:feature_store] = store
+      when 'dynamodb'
+        client = Aws::DynamoDB::Client.new(
+          region: 'us-east-1',
+          credentials: Aws::Credentials.new('dummy', 'dummy', 'dummy'),
+          endpoint: config[:persistentDataStore][:store][:dsn]
+        )
+        store_config[:existing_client] = client
+        store = LaunchDarkly::Integrations::DynamoDB.new_feature_store('sdk-contract-tests', store_config)
+        opts[:feature_store] = store
+      end
     end
 
     if config[:events]

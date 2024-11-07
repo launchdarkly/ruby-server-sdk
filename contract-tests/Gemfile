@@ -11,3 +11,10 @@ gem 'json'
 gem 'rubocop', '~> 1.37', group: 'development'
 gem 'rubocop-performance', '~> 1.15', group: 'development'
 gem 'thin', :platforms => :ruby
+
+gem "redis", "~> 5.3"
+gem "connection_pool", "~> 2.4"
+
+gem "diplomat", "~> 2.6"
+
+gem "aws-sdk-dynamodb", "~> 1.127"

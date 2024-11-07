@@ -45,6 +45,9 @@ get '/' do
       'evaluation-hooks',
       'omit-anonymous-contexts',
       'client-prereq-events',
+      'persistent-data-store-consul',
+      'persistent-data-store-dynamodb',
+      'persistent-data-store-redis',
     ],
   }.to_json
 end
