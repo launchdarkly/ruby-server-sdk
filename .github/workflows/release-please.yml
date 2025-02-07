@@ -8,59 +8,79 @@ on:
 jobs:
   release-package:
     runs-on: ubuntu-latest
+
     permissions:
-      id-token: write # Needed if using OIDC to get release secrets.
       contents: write # Contents and pull-requests are for release-please to make releases.
       pull-requests: write
+
     outputs:
       release-created: ${{ steps.release.outputs.release_created }}
       upload-tag-name: ${{ steps.release.outputs.tag_name }}
-      gem-hash: ${{ steps.publish.outputs.gem-hash}}
+
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
 
-      - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
+  build-ruby-gem:
+    needs: [ 'release-package' ]
+    if: ${{ needs.release-package.outputs.release-created == 'true' }}
+    uses: ./.github/workflows/build-gem.yml
+    with:
+      platform: 'ruby'
+
+  build-jruby-gem:
+    needs: [ 'release-package' ]
+    if: ${{ needs.release-package.outputs.release-created == 'true' }}
+    uses: ./.github/workflows/build-gem.yml
+    with:
+      platform: 'jruby'
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [ 'release-package', 'build-ruby-gem', 'build-jruby-gem' ]
+    if: ${{ needs.release-package.outputs.release-created == 'true' }}
+
+    outputs:
+      gem-hash: ${{ steps.publish.outputs.gem-hash }}
+
+    permissions:
+      id-token: write # Needed if using OIDC to get release secrets.
+      contents: write # Contents and pull-requests are for release-please to make releases.
+
+    steps:
+      - uses: ./.github/actions/setup
         with:
-          fetch-depth: 0 # If you only need the current version keep this.
+          version: '3.0'
+          install-dependencies: false
 
       - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
         name: 'Get rubygems API key'
         with:
           aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
           ssm_parameter_pairs: '/production/common/releasing/rubygems/api_key = GEM_HOST_API_KEY'
 
-      - uses: ./.github/actions/ci
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        with:
-          ruby-version: 3.0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: ./.github/actions/build-docs
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
 
       - uses: ./.github/actions/publish
         id: publish
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           dry_run: false
 
       - uses: ./.github/actions/publish-docs
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
-          token: ${{secrets.GITHUB_TOKEN}}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   release-provenance:
-    needs: [ 'release-package' ]
+    needs: [ 'release-package', 'publish' ]
     if: ${{ needs.release-package.outputs.release-created == 'true' }}
+
     permissions:
       actions: read
       id-token: write
       contents: write
+
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
-      base64-subjects: "${{ needs.release-package.outputs.gem-hash }}"
+      base64-subjects: "${{ needs.publish.outputs.gem-hash }}"
       upload-assets: true
       upload-tag-name: ${{ needs.release-package.outputs.upload-tag-name }}

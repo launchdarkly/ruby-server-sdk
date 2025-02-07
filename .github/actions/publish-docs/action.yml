@@ -12,4 +12,4 @@ runs:
       name: 'Publish to Github pages'
       with:
         docs_path: docs/build/html/
-        github_token: ${{inputs.token}} # For the shared action the token should be a GITHUB_TOKEN<
+        github_token: ${{ inputs.token }} # For the shared action the token should be a GITHUB_TOKEN<

@@ -10,47 +10,32 @@ on:
       - '**.md'
 
 jobs:
-  build-linux:
+  build-linux-oldest:
+    uses: ./.github/workflows/build-gem.yml
+    with:
+      version: '3.0'
+
+  build-linux-latest:
+    uses: ./.github/workflows/build-gem.yml
+    with:
+      version: '3.2'
+
+  build-linux-jruby:
+    uses: ./.github/workflows/build-gem.yml
+    with:
+      version: 'jruby-9.4'
+
+  build-docs:
     runs-on: ubuntu-latest
-
-    env:
-      LD_SKIP_DATABASE_TESTS: 0
-
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby-version:
-          - '3.0'
-          - '3.1'
-          - '3.2'
-          - jruby-9.4
-
-    services:
-      redis:
-        image: redis
-        ports:
-          - 6379:6379
-      dynamodb:
-        image: amazon/dynamodb-local
-        ports:
-          - 8000:8000
-      consul:
-        image: hashicorp/consul
-        ports:
-          - 8500:8500
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # If you only need the current version keep this.
 
-      - uses: ./.github/actions/ci
+      - uses: ./.github/actions/setup
         with:
-          ruby-version: ${{ matrix.ruby-version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          version: '3.0'
 
       - uses: ./.github/actions/build-docs
-        if: ${{ !startsWith(matrix.ruby-version, 'jruby') }}
 
   build-windows:
     runs-on: windows-latest
@@ -65,13 +50,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ruby/setup-ruby@v1
+      - uses: ./.github/actions/setup
         with:
-          ruby-version: 3.0
-          bundler: 2.2.33
-
-      - name: Install dependencies
-        run: bundle _2.2.33_ install
+          version: '3.0'
 
       - name: Run tests
         run: bundle _2.2.33_ exec rspec spec

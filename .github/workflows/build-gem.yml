@@ -1,0 +1,58 @@
+name: Build gem
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'The version of ruby to build against'
+        type: string
+        default: '3.0'
+      upload-artifact:
+        description: 'Whether to upload the gem as an artifact'
+        type: boolean
+        required: false
+        default: true
+
+jobs:
+  build-gem:
+    runs-on: ubuntu-latest
+
+    env:
+      LD_SKIP_DATABASE_TESTS: 0
+      BUILD_PLATFORM: ${{ startsWith(inputs.version, 'jruby') && 'jruby' || 'ruby' }}
+      FLAKY: ${{ startsWith(inputs.version, 'jruby') && 'true' || 'false' }}
+
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+      dynamodb:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
+      consul:
+        image: hashicorp/consul
+        ports:
+          - 8500:8500
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup
+        with:
+          version: ${{ inputs.version }}
+
+      - uses: ./.github/actions/check
+        with:
+          flaky: ${{ env.FLAKY }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build gemspec
+        run: gem build launchdarkly-server-sdk.gemspec --platform=$BUILD_PLATFORM
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.upload-artifact }}
+        with:
+          name: gems-${{ inputs.version }}
+          path: launchdarkly-server-sdk-*.gem
