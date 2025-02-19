@@ -46,7 +46,7 @@ jobs:
       - uses: ./.github/actions/publish
         id: publish
         with:
-          dry_run: ${{ !inputs.dry_run }}
+          dry_run: ${{ inputs.dry_run }}
 
       - uses: ./.github/actions/publish-docs
         if: ${{ !inputs.dry_run }}
@@ -55,7 +55,6 @@ jobs:
 
   release-provenance:
     needs: [ 'publish' ]
-    if: ${{ needs.release-package.outputs.release-created == 'true' }}
 
     permissions:
       actions: read
@@ -65,4 +64,4 @@ jobs:
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
       base64-subjects: "${{ needs.publish.outputs.gem-hash }}"
-      upload-assets: true
+      upload-assets: ${{ !inputs.dry_run }}
