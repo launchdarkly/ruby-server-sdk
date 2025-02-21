@@ -12,13 +12,13 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Build gemspec
-      shell: bash
-      run: gem build launchdarkly-server-sdk.gemspec
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: 'gems-*'
 
     - name: Hash gem for provenance
       id: gem-hash
-      shell: bash 
+      shell: bash
       run: |
         echo "gem-hash=$(sha256sum launchdarkly-server-sdk-*.gem | base64 -w0)" >> "$GITHUB_OUTPUT"
 

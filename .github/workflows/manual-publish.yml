@@ -8,16 +8,32 @@ on:
         required: true
 
 jobs:
-  build-publish:
+  build-ruby-gem:
+    uses: ./.github/workflows/build-gem.yml
+    with:
+      version: '3.0'
+
+  build-jruby-gem:
+    uses: ./.github/workflows/build-gem.yml
+    with:
+      version: 'jruby-9.4'
+
+  publish:
     runs-on: ubuntu-latest
-    # Needed to get tokens during publishing.
-    permissions:
-      id-token: write
-      contents: read
+    needs: [ 'build-ruby-gem', 'build-jruby-gem' ]
+
     outputs:
-      gem-hash: ${{ steps.publish.outputs.gem-hash}}
+      gem-hash: ${{ steps.publish.outputs.gem-hash }}
+
+    permissions:
+      id-token: write # Needed if using OIDC to get release secrets.
+      contents: write
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          version: '3.0'
+          install-dependencies: false
 
       - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
         name: 'Get rubygems API key'
@@ -25,26 +41,27 @@ jobs:
           aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
           ssm_parameter_pairs: '/production/common/releasing/rubygems/api_key = GEM_HOST_API_KEY'
 
-      - id: build-and-test
-        name: Build and Test
-        uses: ./.github/actions/ci
-        with:
-          ruby-version: 3.0
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ./.github/actions/build-docs
 
-      - id: publish
-        name: Publish Package
-        uses: ./.github/actions/publish
+      - uses: ./.github/actions/publish
+        id: publish
         with:
           dry_run: ${{ inputs.dry_run }}
 
+      - uses: ./.github/actions/publish-docs
+        if: ${{ !inputs.dry_run }}
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+
   release-provenance:
-    needs: [ 'build-publish' ]
+    needs: [ 'publish' ]
+
     permissions:
       actions: read
       id-token: write
       contents: write
+
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
-      base64-subjects: "${{ needs.build-publish.outputs.gem-hash }}"
+      base64-subjects: "${{ needs.publish.outputs.gem-hash }}"
       upload-assets: ${{ !inputs.dry_run }}
