@@ -26,14 +26,14 @@ jobs:
     if: ${{ needs.release-package.outputs.release-created == 'true' }}
     uses: ./.github/workflows/build-gem.yml
     with:
-      platform: 'ruby'
+      version: '3.0'
 
   build-jruby-gem:
     needs: [ 'release-package' ]
     if: ${{ needs.release-package.outputs.release-created == 'true' }}
     uses: ./.github/workflows/build-gem.yml
     with:
-      platform: 'jruby'
+      version: 'jruby-9.4'
 
   publish:
     runs-on: ubuntu-latest
