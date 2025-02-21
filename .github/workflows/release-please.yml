@@ -48,6 +48,8 @@ jobs:
       contents: write # Contents and pull-requests are for release-please to make releases.
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup
         with:
           version: '3.0'
