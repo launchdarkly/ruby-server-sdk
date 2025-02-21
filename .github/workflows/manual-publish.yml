@@ -30,6 +30,8 @@ jobs:
       contents: write
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup
         with:
           version: '3.0'
