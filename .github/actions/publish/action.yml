@@ -26,4 +26,4 @@ runs:
     - name: Publish Library
       shell: bash
       if: ${{ inputs.dry_run == 'false' }}
-      run: gem push launchdarkly-server-sdk-*.gem
+      run: ls launchdarkly-server-sdk-*.gem | xargs -I {} gem push {}
