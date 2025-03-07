@@ -30,6 +30,8 @@ module LaunchDarkly
               sleep(delta)
             end
           end
+        end.tap do |worker|
+          worker.name = "LD/Impl/RepeatingTask"
         end
       end
 

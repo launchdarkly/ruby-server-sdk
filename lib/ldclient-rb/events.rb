@@ -253,7 +253,7 @@ module LaunchDarkly
         diagnostic_event_workers = nil
       end
 
-      Thread.new { main_loop(inbox, outbox, flush_workers, diagnostic_event_workers) }
+      Thread.new { main_loop(inbox, outbox, flush_workers, diagnostic_event_workers) }.name = "LD/EventDispatcher#main_loop"
     end
 
     private

@@ -10,7 +10,7 @@ module LaunchDarkly
   class NonBlockingThreadPool
     def initialize(capacity)
       @capacity = capacity
-      @pool = Concurrent::FixedThreadPool.new(capacity)
+      @pool = Concurrent::FixedThreadPool.new(capacity, name: "LD/NonBlockingThreadPool")
       @semaphore = Concurrent::Semaphore.new(capacity)
     end
 
