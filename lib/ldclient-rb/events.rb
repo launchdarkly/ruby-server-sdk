@@ -243,10 +243,10 @@ module LaunchDarkly
       @events_in_last_batch = 0
 
       outbox = EventBuffer.new(config.capacity, config.logger)
-      flush_workers = NonBlockingThreadPool.new(MAX_FLUSH_WORKERS)
+      flush_workers = NonBlockingThreadPool.new(MAX_FLUSH_WORKERS, 'EventDispatcher/FlushWorkers')
 
       if !@diagnostic_accumulator.nil?
-        diagnostic_event_workers = NonBlockingThreadPool.new(1)
+        diagnostic_event_workers = NonBlockingThreadPool.new(1, 'EventDispatcher/DiagnosticEventWorkers')
         init_event = @diagnostic_accumulator.create_init_event(config)
         send_diagnostic_event(init_event, diagnostic_event_workers)
       else

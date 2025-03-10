@@ -8,9 +8,9 @@ module LaunchDarkly
   # than blocking. Also provides a way to wait for all jobs to finish without shutting down.
   # @private
   class NonBlockingThreadPool
-    def initialize(capacity)
+    def initialize(capacity, name = 'LD/NonBlockingThreadPool')
       @capacity = capacity
-      @pool = Concurrent::FixedThreadPool.new(capacity, name: "LD/NonBlockingThreadPool")
+      @pool = Concurrent::FixedThreadPool.new(capacity, name: name)
       @semaphore = Concurrent::Semaphore.new(capacity)
     end
 
