@@ -99,7 +99,7 @@ module LaunchDarkly
 
         @logger.warn("Detected persistent store unavailability; updates will be cached until it recovers.")
 
-        task = Impl::RepeatingTask.new(0.5, 0, -> { self.check_availability }, @logger)
+        task = Impl::RepeatingTask.new(0.5, 0, -> { self.check_availability }, @logger, 'LD/StoreWrapper#check_availability')
 
         @mutex.synchronize do
           @poller = task

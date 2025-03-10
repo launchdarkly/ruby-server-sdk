@@ -24,7 +24,7 @@ module LaunchDarkly
 
         unless @store.nil?
           @cache = ExpiringCache.new(big_segments_config.context_cache_size, big_segments_config.context_cache_time)
-          @poll_worker = RepeatingTask.new(big_segments_config.status_poll_interval, 0, -> { poll_store_and_update_status }, logger)
+          @poll_worker = RepeatingTask.new(big_segments_config.status_poll_interval, 0, -> { poll_store_and_update_status }, logger, 'LD/BigSegments#status')
           @poll_worker.start
         end
       end
