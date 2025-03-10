@@ -11,9 +11,17 @@ module LaunchDarkly
         double.as_null_object
       end
 
+      it "can name the task" do
+        signal = Concurrent::Event.new
+        task = RepeatingTask.new(0.01, 0, -> { signal.set }, null_logger, "Junie B.")
+
+        expect(task.name).to eq("Junie B.")
+        task.stop
+      end
+
       it "does not start when created" do
         signal = Concurrent::Event.new
-        task = RepeatingTask.new(0.01, 0, -> { signal.set }, null_logger)
+        task = RepeatingTask.new(0.01, 0, -> { signal.set }, null_logger, "test")
         begin
           expect(signal.wait(0.1)).to be false
         ensure
@@ -23,7 +31,7 @@ module LaunchDarkly
 
       it "executes until stopped" do
         queue = Queue.new
-        task = RepeatingTask.new(0.1, 0, -> { queue << Time.now }, null_logger)
+        task = RepeatingTask.new(0.1, 0, -> { queue << Time.now }, null_logger, "test")
         begin
           last = nil
           task.start
@@ -62,7 +70,7 @@ module LaunchDarkly
               stopped.set
             end
           },
-          null_logger)
+          null_logger, "test")
         begin
           task.start
           expect(stopped.wait(0.1)).to be true

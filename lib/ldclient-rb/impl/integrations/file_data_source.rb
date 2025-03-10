@@ -216,6 +216,7 @@ module LaunchDarkly
                 end
               end
             end
+            @thread.name = "LD/FileDataSource"
           end
 
           def stop

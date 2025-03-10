@@ -5,13 +5,16 @@ require "concurrent/atomics"
 module LaunchDarkly
   module Impl
     class RepeatingTask
-      def initialize(interval, start_delay, task, logger)
+      attr_reader :name
+
+      def initialize(interval, start_delay, task, logger, name)
         @interval = interval
         @start_delay = start_delay
         @task = task
         @logger = logger
         @stopped = Concurrent::AtomicBoolean.new(false)
         @worker = nil
+        @name = name
       end
 
       def start
@@ -31,6 +34,8 @@ module LaunchDarkly
             end
           end
         end
+
+        @worker.name = @name
       end
 
       def stop

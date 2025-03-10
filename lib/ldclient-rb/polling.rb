@@ -13,7 +13,7 @@ module LaunchDarkly
       @initialized = Concurrent::AtomicBoolean.new(false)
       @started = Concurrent::AtomicBoolean.new(false)
       @ready = Concurrent::Event.new
-      @task = Impl::RepeatingTask.new(@config.poll_interval, 0, -> { self.poll }, @config.logger)
+      @task = Impl::RepeatingTask.new(@config.poll_interval, 0, -> { self.poll }, @config.logger, 'LD/PollingDataSource')
     end
 
     def initialized?
