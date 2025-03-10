@@ -216,7 +216,7 @@ module LaunchDarkly
                 end
               end
             end
-            @thread.name = "LD/Impl/Integrations/FileDataSourceImpl/FileDataSourcePoller"
+            @thread.name = "LD/FileDataSource"
           end
 
           def stop

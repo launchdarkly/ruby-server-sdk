@@ -188,8 +188,8 @@ module LaunchDarkly
             auth_handler = Thread.new { authoritative_result = authoritative.run }
             nonauth_handler = Thread.new { nonauthoritative_result = nonauthoritative.run }
 
-            auth_handler.name = "LD/Impl/Migrations/Migrator/auth_handler"
-            nonauth_handler.name = "LD/Impl/Migrations/Migrator/nonauth_handler"
+            auth_handler.name = "LD/Migrator#auth_handler"
+            nonauth_handler.name = "LD/Migrator#nonauth_handler"
 
             auth_handler.join()
             nonauth_handler.join()
