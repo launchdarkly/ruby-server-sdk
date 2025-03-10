@@ -1,3 +1,3 @@
 module LaunchDarkly
-  VERSION = "8.8.3" # x-release-please-version
+  VERSION = "8.8.4" # x-release-please-version
 end
