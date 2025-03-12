@@ -40,7 +40,7 @@ get '/' do
       'event-sampling',
       'context-comparison',
       'polling-gzip',
-      'inline-context',
+      'inline-context-all',
       'anonymous-redaction',
       'evaluation-hooks',
       'omit-anonymous-contexts',

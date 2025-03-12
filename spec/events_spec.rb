@@ -391,7 +391,7 @@ module LaunchDarkly
         output = flush_and_get_events(ep, sender)
         expect(output).to contain_exactly(
           eq(index_event(default_config, context)),
-          eq(custom_event(context, 'eventkey', { thing: 'stuff' }, 1.5))
+          eq(custom_event(default_config, context, 'eventkey', { thing: 'stuff' }, 1.5))
         )
       end
     end
@@ -404,7 +404,7 @@ module LaunchDarkly
         output = flush_and_get_events(ep, sender)
         expect(output).to contain_exactly(
           eq(index_event(config, context)),
-          eq(custom_event(context, 'eventkey', nil, nil))
+          eq(custom_event(config, context, 'eventkey', nil, nil))
         )
       end
     end
@@ -476,7 +476,7 @@ module LaunchDarkly
 
           output = flush_and_get_events(ep, sender)
           expect(output).to contain_exactly(
-            eq(migration_op_event(flag, context, 0, true, LaunchDarkly::Migrations::STAGE_OFF, reason, starting_timestamp+1))
+            eq(migration_op_event(default_config, flag, context, 0, true, LaunchDarkly::Migrations::STAGE_OFF, reason, starting_timestamp+1))
           )
         end
       end
@@ -786,6 +786,7 @@ module LaunchDarkly
     end
 
     #
+    # @param config [Config]
     # @param flag [LaunchDarkly::Impl::Models::FeatureFlag]
     # @param context [LDContext]
     # @param variation [Integer]
@@ -795,12 +796,15 @@ module LaunchDarkly
     # @param timestamp [Integer]
     # @return [Hash]
     #
-    def migration_op_event(flag, context, variation, value, default, reason, timestamp = starting_timestamp)
+    def migration_op_event(config, flag, context, variation, value, default, reason, timestamp = starting_timestamp)
+      context_filter = Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes)
+      redacted_context = context_filter.filter_redact_anonymous(context)
+
       out = {
         kind: 'migration_op',
         operation: 'read',
         creationDate: timestamp,
-        contextKeys: context.keys,
+        context: redacted_context,
         evaluation: {
           default: default.to_s,
           key: flag.key,
@@ -836,17 +840,21 @@ module LaunchDarkly
     end
 
     #
+    # @param config [Config]
     # @param context [LDContext]
     # @param key [String]
     # @param data [any]
     # @param metric_value [any]
     # @return [Hash]
     #
-    def custom_event(context, key, data, metric_value)
+    def custom_event(config, context, key, data, metric_value)
+      context_filter = Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes)
+      redacted_context = context_filter.filter_redact_anonymous(context)
+
       out = {
         kind: "custom",
         creationDate: starting_timestamp,
-        contextKeys: context.keys,
+        context: redacted_context,
         key: key,
       }
       out[:data] = data unless data.nil?
