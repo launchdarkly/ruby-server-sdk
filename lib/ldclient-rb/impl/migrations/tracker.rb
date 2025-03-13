@@ -9,12 +9,12 @@ module LaunchDarkly
         include LaunchDarkly::Interfaces::Migrations::OpTracker
 
         #
-        # @param logger [Logger] logger
-        # @param key [string] key
-        # @param flag [LaunchDarkly::Impl::Model::FeatureFlag] flag
-        # @param context [LaunchDarkly::LDContext] context
-        # @param detail [LaunchDarkly::EvaluationDetail] detail
-        # @param default_stage [Symbol] default_stage
+        # @param logger [Logger]
+        # @param key [string]
+        # @param flag [LaunchDarkly::Impl::Model::FeatureFlag]
+        # @param context [LaunchDarkly::LDContext]
+        # @param detail [LaunchDarkly::EvaluationDetail]
+        # @param default_stage [Symbol]
         #
         def initialize(logger, key, flag, context, detail, default_stage)
           @logger = logger

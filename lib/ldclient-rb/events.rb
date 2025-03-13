@@ -508,7 +508,7 @@ module LaunchDarkly
         out = {
           kind: MIGRATION_OP_KIND,
           creationDate: event.timestamp,
-          contextKeys: event.context.keys,
+          context: @context_filter.filter_redact_anonymous(event.context),
           operation: event.operation.to_s,
           evaluation: {
             key: event.key,
@@ -577,7 +577,7 @@ module LaunchDarkly
           key: event.key,
         }
         out[:data] = event.data unless event.data.nil?
-        out[:contextKeys] = event.context.keys
+        out[:context] = @context_filter.filter_redact_anonymous(event.context)
         out[:metricValue] = event.metric_value unless event.metric_value.nil?
         out
 
