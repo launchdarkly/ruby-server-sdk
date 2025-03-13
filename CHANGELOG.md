@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.9.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.8.4...8.9.0) (2025-03-13)
+
+
+### Features
+
+* Inline context for custom and migration op events ([#315](https://github.com/launchdarkly/ruby-server-sdk/issues/315)) ([ab5b14f](https://github.com/launchdarkly/ruby-server-sdk/commit/ab5b14fff2f04f1dfa7e6f61669bc348fffb5cac))
+
 ## [8.8.4](https://github.com/launchdarkly/ruby-server-sdk/compare/8.8.3...8.8.4) (2025-03-10)
 
 
