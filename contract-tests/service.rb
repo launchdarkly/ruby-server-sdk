@@ -41,6 +41,7 @@ get '/' do
       'context-comparison',
       'polling-gzip',
       'inline-context-all',
+      'instance-id',
       'anonymous-redaction',
       'evaluation-hooks',
       'omit-anonymous-contexts',

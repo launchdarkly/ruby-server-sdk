@@ -29,6 +29,7 @@ module LaunchDarkly
       it "sends analytics event data without compression enabled" do
         with_sender_and_server(compress_events: false) do |es, server|
           server.setup_ok_response("/bulk", "")
+          es.instance_variable_get(:@config).instance_id = 'instance-id'
 
           result = es.send_event_data(fake_data, "", false)
 
@@ -43,6 +44,7 @@ module LaunchDarkly
             "content-type" => [ "application/json" ],
             "user-agent" => [ "RubyClient/" + LaunchDarkly::VERSION ],
             "x-launchdarkly-event-schema" => [ "4" ],
+            "x-launchdarkly-instance-id" => [ "instance-id" ],
             "connection" => [ "Keep-Alive" ],
           })
           expect(req.header['x-launchdarkly-payload-id']).not_to eq []

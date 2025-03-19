@@ -81,6 +81,7 @@ module LaunchDarkly
       @hooks = (opts[:hooks] || []).keep_if { |hook| hook.is_a? Interfaces::Hooks::Hook }
       @omit_anonymous_contexts = opts.has_key?(:omit_anonymous_contexts) && opts[:omit_anonymous_contexts]
       @data_source_update_sink = nil
+      @instance_id = nil
     end
 
     #
@@ -96,6 +97,18 @@ module LaunchDarkly
     # @private
     #
     attr_accessor :data_source_update_sink
+
+
+    #
+    # Returns the unique identifier for this instance of the SDK.
+    #
+    # This property should only be set by the SDK. Long term access of this
+    # property is not supported; it is temporarily being exposed to maintain
+    # backwards compatibility while the SDK structure is updated.
+    #
+    # @private
+    #
+    attr_accessor :instance_id
 
     #
     # The base URL for the LaunchDarkly server. This is configurable mainly for testing
