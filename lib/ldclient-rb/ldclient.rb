@@ -13,6 +13,7 @@ require "concurrent/atomics"
 require "digest/sha1"
 require "forwardable"
 require "logger"
+require "securerandom"
 require "benchmark"
 require "json"
 require "openssl"
@@ -56,25 +57,57 @@ module LaunchDarkly
       end
 
       @sdk_key = sdk_key
-      @hooks = Concurrent::Array.new(config.hooks)
+      config.instance_id = SecureRandom.uuid
+      @config = config
+
+      start_up(wait_for_sec)
+    end
+
+    #
+    # Re-initializes an existing client after a process fork.
+    #
+    # The SDK relies on multiple background threads to operate correctly. When a process forks, `these threads are not
+    # available to the child <https://apidock.com/ruby/Process/fork/class>`.
+    #
+    # As a result, the SDK will not function correctly in the child process until it is re-initialized.
+    #
+    # This method is effectively equivalent to instantiating a new client. Future iterations of the SDK will provide
+    # increasingly efficient re-initializing improvements.
+    #
+    # Note that any configuration provided to the SDK will need to survive the forking process independently. For this
+    # reason, it is recommended that any listener or hook integrations be added postfork unless you are certain it can
+    # survive the forking process.
+    #
+    # @param wait_for_sec [Float] maximum time (in seconds) to wait for initialization
+    #
+    def postfork(wait_for_sec = 5)
+      @data_source = nil
+      @event_processor = nil
+      @big_segment_store_manager = nil
+
+      start_up(wait_for_sec)
+    end
+
+    private def start_up(wait_for_sec)
+      @hooks = Concurrent::Array.new(@config.hooks)
 
       @shared_executor = Concurrent::SingleThreadExecutor.new
 
-      data_store_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, config.logger)
+      data_store_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @config.logger)
       store_sink = LaunchDarkly::Impl::DataStore::UpdateSink.new(data_store_broadcaster)
 
       # We need to wrap the feature store object with a FeatureStoreClientWrapper in order to add
       # some necessary logic around updates. Unfortunately, we have code elsewhere that accesses
       # the feature store through the Config object, so we need to make a new Config that uses
       # the wrapped store.
-      @store = Impl::FeatureStoreClientWrapper.new(config.feature_store, store_sink, config.logger)
-      updated_config = config.clone
+      @store = Impl::FeatureStoreClientWrapper.new(@config.feature_store, store_sink, @config.logger)
+      updated_config = @config.clone
       updated_config.instance_variable_set(:@feature_store, @store)
       @config = updated_config
 
       @data_store_status_provider = LaunchDarkly::Impl::DataStore::StatusProvider.new(@store, store_sink)
 
-      @big_segment_store_manager = Impl::BigSegmentStoreManager.new(config.big_segments, @config.logger)
+      @big_segment_store_manager = Impl::BigSegmentStoreManager.new(@config.big_segments, @config.logger)
       @big_segment_store_status_provider = @big_segment_store_manager.status_provider
 
       get_flag = lambda { |key| @store.get(FEATURES, key) }
@@ -83,7 +116,7 @@ module LaunchDarkly
       @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, get_big_segments_membership, @config.logger)
 
       if !@config.offline? && @config.send_events && !@config.diagnostic_opt_out?
-        diagnostic_accumulator = Impl::DiagnosticAccumulator.new(Impl::DiagnosticAccumulator.create_diagnostic_id(sdk_key))
+        diagnostic_accumulator = Impl::DiagnosticAccumulator.new(Impl::DiagnosticAccumulator.create_diagnostic_id(@sdk_key))
       else
         diagnostic_accumulator = nil
       end
@@ -91,7 +124,7 @@ module LaunchDarkly
       if @config.offline? || !@config.send_events
         @event_processor = NullEventProcessor.new
       else
-        @event_processor = EventProcessor.new(sdk_key, config, nil, diagnostic_accumulator)
+        @event_processor = EventProcessor.new(@sdk_key, @config, nil, diagnostic_accumulator)
       end
 
       if @config.use_ldd?
@@ -115,9 +148,9 @@ module LaunchDarkly
         # Currently, data source factories take two parameters unless they need to be aware of diagnostic_accumulator, in
         # which case they take three parameters. This will be changed in the future to use a less awkware mechanism.
         if data_source_or_factory.arity == 3
-          @data_source = data_source_or_factory.call(sdk_key, @config, diagnostic_accumulator)
+          @data_source = data_source_or_factory.call(@sdk_key, @config, diagnostic_accumulator)
         else
-          @data_source = data_source_or_factory.call(sdk_key, @config)
+          @data_source = data_source_or_factory.call(@sdk_key, @config)
         end
       else
         @data_source = data_source_or_factory

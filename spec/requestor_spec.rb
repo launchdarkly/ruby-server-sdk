@@ -19,6 +19,7 @@ module LaunchDarkly
       it "uses expected URI and headers" do
         with_server do |server|
           with_requestor(server.base_uri.to_s) do |requestor|
+            requestor.instance_variable_get(:@config).instance_id = 'instance-id'
             server.setup_ok_response("/", "{}")
             requestor.request_all_data
             expect(server.requests.count).to eq 1
@@ -27,6 +28,7 @@ module LaunchDarkly
               "authorization" => [ sdk_key ],
               "user-agent" => [ "RubyClient/" + VERSION ],
               "x-launchdarkly-tags" => [ "application-id/id application-version/version" ],
+              "x-launchdarkly-instance-id" => [ "instance-id" ],
             })
           end
         end

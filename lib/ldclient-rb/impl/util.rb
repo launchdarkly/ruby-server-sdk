@@ -11,6 +11,9 @@ module LaunchDarkly
 
       def self.default_http_headers(sdk_key, config)
         ret = { "Authorization" => sdk_key, "User-Agent" => "RubyClient/" + LaunchDarkly::VERSION }
+
+        ret["X-LaunchDarkly-Instance-Id"] = config.instance_id unless config.instance_id.nil?
+
         if config.wrapper_name
           ret["X-LaunchDarkly-Wrapper"] = config.wrapper_name +
             (config.wrapper_version ? "/" + config.wrapper_version : "")
