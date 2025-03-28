@@ -10,6 +10,7 @@ module LaunchDarkly
         class ConsulFeatureStoreCore
           begin
             require "diplomat"
+            require "ostruct"
             CONSUL_ENABLED = true
           rescue ScriptError, StandardError
             CONSUL_ENABLED = false
