@@ -2,18 +2,17 @@ source 'https://rubygems.org'
 
 gem 'launchdarkly-server-sdk', path: '..'
 
-gem 'sinatra', '~> 2.1'
-# Sinatra can work with several server frameworks. In JRuby, we have to use glassfish (which
-# is only available in JRuby). Otherwise we use thin (which is not available in JRuby).
-gem 'glassfish', :platforms => :jruby
 gem 'http', '~> 5.1'
 gem 'json'
+gem "puma", "~> 6.6"
+gem "rackup", "~> 2.2"
+gem 'sinatra', '>= 4.1'
+
 gem 'rubocop', '~> 1.37', group: 'development'
 gem 'rubocop-performance', '~> 1.15', group: 'development'
-gem 'thin', :platforms => :ruby
 
-gem "redis", "~> 5.3"
 gem "connection_pool", "~> 2.4"
+gem "redis", "~> 5.3"
 
 gem "diplomat", "~> 2.6"
 
