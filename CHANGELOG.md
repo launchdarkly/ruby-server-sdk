@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.10.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.9.0...8.10.0) (2025-04-08)
+
+
+### Features
+
+* Add `postfork` method to re-initialize after forking ([#319](https://github.com/launchdarkly/ruby-server-sdk/issues/319)) ([e7c2b07](https://github.com/launchdarkly/ruby-server-sdk/commit/e7c2b074c5de1cad92c92c4303d4143cf175d913))
+
 ## [8.9.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.8.4...8.9.0) (2025-03-13)
 
 
