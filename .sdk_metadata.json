@@ -6,7 +6,8 @@
       "type": "server-side",
       "languages": [
         "Ruby"
-      ]
+      ],
+      "userAgents": ["RubyClient"]
     }
   }
 }
