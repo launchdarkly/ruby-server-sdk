@@ -5,10 +5,10 @@ TEMP_TEST_OUTPUT=/tmp/contract-test-service.log
 TEST_HARNESS_PARAMS=
 
 build-contract-tests:
-	@cd contract-tests && bundle _2.2.33_ install
+	@cd contract-tests && bundle install
 
 start-contract-test-service:
-	@cd contract-tests && bundle _2.2.33_ exec ruby service.rb
+	@cd contract-tests && bundle exec ruby service.rb
 
 start-contract-test-service-bg:
 	@echo "Test service output will be captured in $(TEMP_TEST_OUTPUT)"

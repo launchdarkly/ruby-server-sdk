@@ -15,9 +15,8 @@ runs:
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ inputs.version }}
-        bundler: 2.2.33
 
     - name: Install dependencies
       if: ${{ inputs.install-dependencies == 'true' }}
       shell: bash
-      run: bundle _2.2.33_ install
+      run: bundle install

@@ -1,8 +1,8 @@
-require "bundler/setup"
 require "bundler/inline"
 
 gemfile do
-  gem "launchdarkly-server-sdk", path: "."
+  # Inline gemfiles don't appear to load the gemspec so we are loading it explicitly
+  gemspec
 end
 
 Bundler.require(:development)

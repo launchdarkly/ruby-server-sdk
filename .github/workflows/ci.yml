@@ -55,4 +55,4 @@ jobs:
           version: '3.0'
 
       - name: Run tests
-        run: bundle _2.2.33_ exec rspec spec
+        run: bundle exec rspec spec

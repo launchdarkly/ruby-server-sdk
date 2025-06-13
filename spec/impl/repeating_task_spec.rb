@@ -38,7 +38,7 @@ module LaunchDarkly
           3.times do
             time = queue.pop
             unless last.nil?
-              expect(time.to_f - last.to_f).to be >=(0.05)
+              expect(time.to_f - last.to_f).to be >= 0.05
             end
             last = time
           end
@@ -50,7 +50,7 @@ module LaunchDarkly
         2.times do
           begin
             time = queue.pop(true)
-            expect(time.to_f).to be <=(stopped_time.to_f)
+            expect(time.to_f).to be <= stopped_time.to_f
           rescue ThreadError
             no_more_items = true
             break
