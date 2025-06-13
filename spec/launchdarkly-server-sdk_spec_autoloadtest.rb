@@ -2,7 +2,7 @@ require "bundler/inline"
 
 gemfile do
   # Inline gemfiles don't appear to load the gemspec so we are loading it explicitly
-  gemspec 
+  gemspec
 end
 
 Bundler.require(:development)
