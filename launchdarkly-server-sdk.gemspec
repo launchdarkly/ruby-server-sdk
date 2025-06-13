@@ -35,6 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "timecop", "~> 0.9"
   spec.add_development_dependency "webrick", "~> 1.7"
 
+  spec.add_runtime_dependency "benchmark", "~> 0.1", ">= 0.1.1"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.1"
   spec.add_runtime_dependency "ld-eventsource", "2.2.3"
   spec.add_runtime_dependency "observer", "~> 0.1.2"
