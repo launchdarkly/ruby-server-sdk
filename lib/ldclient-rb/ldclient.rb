@@ -89,7 +89,10 @@ module LaunchDarkly
     end
 
     private def start_up(wait_for_sec)
-      @hooks = Concurrent::Array.new(@config.hooks)
+      environment_metadata = get_environment_metadata
+      plugin_hooks = get_plugin_hooks(environment_metadata)
+      
+      @hooks = Concurrent::Array.new(@config.hooks + plugin_hooks)
 
       @shared_executor = Concurrent::SingleThreadExecutor.new
 
@@ -156,6 +159,8 @@ module LaunchDarkly
         @data_source = data_source_or_factory
       end
 
+      register_plugins(environment_metadata)
+
       ready = @data_source.start
 
       return unless wait_for_sec > 0
@@ -169,6 +174,51 @@ module LaunchDarkly
         @config.logger.error { "[LDClient] Timeout encountered waiting for LaunchDarkly client initialization" }
       elsif !@data_source.initialized?
         @config.logger.error { "[LDClient] LaunchDarkly client initialization failed" }
+      end
+    end
+
+    private def get_environment_metadata
+      sdk_metadata = Interfaces::Plugins::SdkMetadata.new(
+        name: "ruby-server-sdk",
+        version: LaunchDarkly::VERSION,
+        wrapper_name: @config.wrapper_name,
+        wrapper_version: @config.wrapper_version
+      )
+
+      application_metadata = nil
+      if @config.application && (!@config.application.empty?)
+        application_metadata = Interfaces::Plugins::ApplicationMetadata.new(
+          id: @config.application[:id],
+          version: @config.application[:version]
+        )
+      end
+
+      Interfaces::Plugins::EnvironmentMetadata.new(
+        sdk: sdk_metadata,
+        application: application_metadata,
+        sdk_key: @sdk_key
+      )
+    end
+
+    private def get_plugin_hooks(environment_metadata)
+      hooks = []
+      @config.plugins.each do |plugin|
+        begin
+          hooks.concat(plugin.get_hooks(environment_metadata))
+        rescue => e
+          @config.logger.error { "[LDClient] Error getting hooks from plugin #{plugin.metadata.name}: #{e}" }
+        end
+      end
+      hooks
+    end
+
+    private def register_plugins(environment_metadata)
+      @config.plugins.each do |plugin|
+        begin
+          plugin.register(self, environment_metadata)
+        rescue => e
+          @config.logger.error { "[LDClient] Error registering plugin #{plugin.metadata.name}: #{e}" }
+        end
       end
     end
 

@@ -45,6 +45,7 @@ module LaunchDarkly
     # @option opts [String] :payload_filter_key See {#payload_filter_key}
     # @option opts [Boolean] :omit_anonymous_contexts See {#omit_anonymous_contexts}
     # @option hooks [Array<Interfaces::Hooks::Hook]
+    # @option plugins [Array<Interfaces::Plugins::Plugin]
     #
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
@@ -79,6 +80,7 @@ module LaunchDarkly
       @application = LaunchDarkly::Impl::Util.validate_application_info(opts[:application] || {}, @logger)
       @payload_filter_key = LaunchDarkly::Impl::Util.validate_payload_filter_key(opts[:payload_filter_key] , @logger)
       @hooks = (opts[:hooks] || []).keep_if { |hook| hook.is_a? Interfaces::Hooks::Hook }
+      @plugins = (opts[:plugins] || []).keep_if { |plugin| plugin.is_a? Interfaces::Plugins::Plugin }
       @omit_anonymous_contexts = opts.has_key?(:omit_anonymous_contexts) && opts[:omit_anonymous_contexts]
       @data_source_update_sink = nil
       @instance_id = nil
@@ -411,6 +413,14 @@ module LaunchDarkly
     # for instrumentation.
     #
     attr_reader :hooks
+
+    #
+    # Initial set of plugins for the client.
+    #
+    # Plugins provide an interface which allows for initialization, access to credentials, and hook registration
+    # in a single interface.
+    #
+    attr_reader :plugins
 
     #
     # Sets whether anonymous contexts should be omitted from index and identify events.
