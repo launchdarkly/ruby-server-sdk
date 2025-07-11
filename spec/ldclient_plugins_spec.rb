@@ -1,3 +1,4 @@
+require "mock_components"
 require "spec_helper"
 
 module LaunchDarkly
