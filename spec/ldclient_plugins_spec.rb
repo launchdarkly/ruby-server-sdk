@@ -3,28 +3,6 @@ require "spec_helper"
 
 module LaunchDarkly
   describe "LDClient plugins tests" do
-    class MockPlugin
-      include Interfaces::Plugins::Plugin
-
-      def initialize(name, hooks = [], register_callback = nil)
-        @name = name
-        @hooks = hooks
-        @register_callback = register_callback
-      end
-
-      def metadata
-        Interfaces::Plugins::PluginMetadata.new(@name)
-      end
-
-      def get_hooks(environment_metadata)
-        @hooks
-      end
-
-      def register(client, environment_metadata)
-        @register_callback.call(client, environment_metadata) if @register_callback
-      end
-    end
-
     context "plugin configuration" do
       it "can register a plugin on the config" do
         plugin = MockPlugin.new("test-plugin")
