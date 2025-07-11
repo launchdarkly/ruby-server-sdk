@@ -49,7 +49,7 @@ module LaunchDarkly
       it "collects hooks from plugins" do
         hook = MockHook.new(->(_, _) { }, ->(_, _, _) { })
         plugin = MockPlugin.new("test-plugin", [hook])
-        
+
         with_client(test_config(plugins: [plugin])) do |client|
           expect(client.instance_variable_get("@hooks")).to include(hook)
         end
@@ -58,7 +58,7 @@ module LaunchDarkly
       it "handles plugin hook errors gracefully" do
         plugin = MockPlugin.new("error-plugin")
         allow(plugin).to receive(:get_hooks).and_raise("Hook error")
-        
+
         with_client(test_config(plugins: [plugin])) do |client|
           expect(client).to be_initialized
         end
@@ -70,7 +70,7 @@ module LaunchDarkly
         registered = false
         register_callback = ->(client, metadata) { registered = true }
         plugin = MockPlugin.new("test-plugin", [], register_callback)
-        
+
         with_client(test_config(plugins: [plugin])) do |client|
           expect(registered).to be true
         end
@@ -80,7 +80,7 @@ module LaunchDarkly
         received_metadata = nil
         register_callback = ->(client, metadata) { received_metadata = metadata }
         plugin = MockPlugin.new("test-plugin", [], register_callback)
-        
+
         with_client(test_config(plugins: [plugin])) do |client|
           expect(received_metadata).to be_a(Interfaces::Plugins::EnvironmentMetadata)
           expect(received_metadata.sdk.name).to eq("ruby-server-sdk")
@@ -91,7 +91,7 @@ module LaunchDarkly
       it "handles plugin registration errors gracefully" do
         register_callback = ->(client, metadata) { raise "Registration error" }
         plugin = MockPlugin.new("error-plugin", [], register_callback)
-        
+
         with_client(test_config(plugins: [plugin])) do |client|
           expect(client).to be_initialized
         end
@@ -103,7 +103,7 @@ module LaunchDarkly
         order = []
         plugin1 = MockPlugin.new("plugin1", [], ->(_, _) { order << "plugin1" })
         plugin2 = MockPlugin.new("plugin2", [], ->(_, _) { order << "plugin2" })
-        
+
         with_client(test_config(plugins: [plugin1, plugin2])) do |client|
           expect(order).to eq ["plugin1", "plugin2"]
         end
@@ -113,7 +113,7 @@ module LaunchDarkly
         config_hook = MockHook.new(->(_, _) { }, ->(_, _, _) { })
         plugin_hook = MockHook.new(->(_, _) { }, ->(_, _, _) { })
         plugin = MockPlugin.new("test-plugin", [plugin_hook])
-        
+
         with_client(test_config(hooks: [config_hook], plugins: [plugin])) do |client|
           hooks = client.instance_variable_get("@hooks")
           config_hook_index = hooks.index(config_hook)
@@ -131,7 +131,7 @@ module LaunchDarkly
           wrapper_name: "test-wrapper",
           wrapper_version: "2.0.0"
         )
-        
+
         expect(metadata.name).to eq("test-sdk")
         expect(metadata.version).to eq("1.0.0")
         expect(metadata.wrapper_name).to eq("test-wrapper")
@@ -143,7 +143,7 @@ module LaunchDarkly
           id: "test-app",
           version: "3.0.0"
         )
-        
+
         expect(metadata.id).to eq("test-app")
         expect(metadata.version).to eq("3.0.0")
       end
@@ -151,13 +151,13 @@ module LaunchDarkly
       it "creates EnvironmentMetadata correctly" do
         sdk_metadata = Interfaces::Plugins::SdkMetadata.new(name: "test", version: "1.0")
         app_metadata = Interfaces::Plugins::ApplicationMetadata.new(id: "app")
-        
+
         metadata = Interfaces::Plugins::EnvironmentMetadata.new(
           sdk: sdk_metadata,
           application: app_metadata,
           sdk_key: "test-key"
         )
-        
+
         expect(metadata.sdk).to eq(sdk_metadata)
         expect(metadata.application).to eq(app_metadata)
         expect(metadata.sdk_key).to eq("test-key")

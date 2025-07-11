@@ -159,4 +159,4 @@ module LaunchDarkly
       # def available? end
     end
   end
-end 
+end

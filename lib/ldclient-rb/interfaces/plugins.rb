@@ -8,15 +8,15 @@ module LaunchDarkly
         # The id of the SDK (e.g., "ruby-server-sdk")
         # @return [String]
         attr_reader :name
-        
+
         # The version of the SDK
         # @return [String]
         attr_reader :version
-        
+
         # The wrapper name if this SDK is a wrapper
         # @return [String, nil]
         attr_reader :wrapper_name
-        
+
         # The wrapper version if this SDK is a wrapper
         # @return [String, nil]
         attr_reader :wrapper_version
@@ -36,7 +36,7 @@ module LaunchDarkly
         # The id of the application
         # @return [String, nil]
         attr_reader :id
-        
+
         # The version of the application
         # @return [String, nil]
         attr_reader :version
@@ -54,11 +54,11 @@ module LaunchDarkly
         # Information about the SDK
         # @return [SdkMetadata]
         attr_reader :sdk
-        
+
         # Information about the application
         # @return [ApplicationMetadata, nil]
         attr_reader :application
-        
+
         # The SDK key used to initialize the SDK
         # @return [String, nil]
         attr_reader :sdk_key
@@ -133,4 +133,4 @@ module LaunchDarkly
       end
     end
   end
-end 
+end

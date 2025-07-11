@@ -91,7 +91,7 @@ module LaunchDarkly
     private def start_up(wait_for_sec)
       environment_metadata = get_environment_metadata
       plugin_hooks = get_plugin_hooks(environment_metadata)
-      
+
       @hooks = Concurrent::Array.new(@config.hooks + plugin_hooks)
 
       @shared_executor = Concurrent::SingleThreadExecutor.new
@@ -186,7 +186,7 @@ module LaunchDarkly
       )
 
       application_metadata = nil
-      if @config.application && (!@config.application.empty?)
+      if @config.application && !@config.application.empty?
         application_metadata = Interfaces::Plugins::ApplicationMetadata.new(
           id: @config.application[:id],
           version: @config.application[:version]
