@@ -4,11 +4,11 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'The version of ruby to build against'
+        description: "The version of ruby to build against"
         type: string
-        default: '3.0'
+        default: "3.2"
       upload-artifact:
-        description: 'Whether to upload the gem as an artifact'
+        description: "Whether to upload the gem as an artifact"
         type: boolean
         required: false
         default: true

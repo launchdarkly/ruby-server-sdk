@@ -487,7 +487,7 @@ module LaunchDarkly
         #
         class FlagRuleBuilder
           # @private
-          FlagRuleClause = Struct.new(:contextKind, :attribute, :op, :values, :negate, keyword_init: true) # rubocop:disable Naming/MethodName
+          FlagRuleClause = Struct.new(:contextKind, :attribute, :op, :values, :negate, keyword_init: true) # rubocop:disable Naming/MethodName:
 
           # @private
           def initialize(flag_builder)

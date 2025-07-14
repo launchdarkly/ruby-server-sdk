@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Is this a dry run. If so no package will be published.'
+        description: "Is this a dry run. If so no package will be published."
         type: boolean
         required: true
 
@@ -11,16 +11,16 @@ jobs:
   build-ruby-gem:
     uses: ./.github/workflows/build-gem.yml
     with:
-      version: '3.0'
+      version: "3.2"
 
   build-jruby-gem:
     uses: ./.github/workflows/build-gem.yml
     with:
-      version: 'jruby-9.4'
+      version: "jruby-9.4"
 
   publish:
     runs-on: ubuntu-latest
-    needs: [ 'build-ruby-gem', 'build-jruby-gem' ]
+    needs: ["build-ruby-gem", "build-jruby-gem"]
 
     outputs:
       gem-hash: ${{ steps.publish.outputs.gem-hash }}
@@ -34,15 +34,15 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          version: '3.0'
+          version: "3.2"
           install-dependencies: false
 
       - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
-        name: 'Get rubygems API key'
+        name: "Get rubygems API key"
         if: ${{ !inputs.dry_run }}
         with:
           aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
-          ssm_parameter_pairs: '/production/common/releasing/rubygems/api_key = GEM_HOST_API_KEY'
+          ssm_parameter_pairs: "/production/common/releasing/rubygems/api_key = GEM_HOST_API_KEY"
 
       - uses: ./.github/actions/build-docs
 
@@ -57,7 +57,7 @@ jobs:
           token: ${{secrets.GITHUB_TOKEN}}
 
   release-provenance:
-    needs: [ 'publish' ]
+    needs: ["publish"]
 
     permissions:
       actions: read

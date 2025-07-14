@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.files         = Dir["lib/**/*.rb", "README.md", "LICENSE.txt"]
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
-  spec.required_ruby_version = ">= 3.0.0"
+  spec.required_ruby_version = ">= 3.1.0"
 
   spec.add_development_dependency "aws-sdk-dynamodb", "~> 1.57"
   spec.add_development_dependency "bundler", "~> 2.2", ">= 2.2.3"
@@ -37,7 +37,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "benchmark", "~> 0.1", ">= 0.1.1"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.1"
-  spec.add_runtime_dependency "ld-eventsource", "2.2.3"
+  spec.add_runtime_dependency "ld-eventsource", "2.2.5"
   spec.add_runtime_dependency "observer", "~> 0.1.2"
   spec.add_runtime_dependency "semantic", "~> 1.6"
   spec.add_runtime_dependency "zlib", "~> 3.1" unless RUBY_PLATFORM == "java"
