@@ -16,7 +16,7 @@ LaunchDarkly overview
 Supported Ruby versions
 -----------------------
 
-This version of the LaunchDarkly SDK has a minimum Ruby version of 3.0.0, or 9.3.0 for JRuby.
+This version of the LaunchDarkly SDK has a minimum Ruby version of 3.1.0.
 
 Getting started
 -----------
