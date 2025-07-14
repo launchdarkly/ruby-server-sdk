@@ -1,29 +1,29 @@
 name: Run CI
 on:
   push:
-    branches: [ main, 'feat/**' ]
+    branches: [main, "feat/**"]
     paths-ignore:
-      - '**.md' # Do not need to run CI for markdown changes.
+      - "**.md" # Do not need to run CI for markdown changes.
   pull_request:
-    branches: [ main, 'feat/**' ]
+    branches: [main, "feat/**"]
     paths-ignore:
-      - '**.md'
+      - "**.md"
 
 jobs:
   build-linux-oldest:
     uses: ./.github/workflows/build-gem.yml
     with:
-      version: '3.0'
+      version: "3.2"
 
   build-linux-latest:
     uses: ./.github/workflows/build-gem.yml
     with:
-      version: '3.2'
+      version: "3.2"
 
   build-linux-jruby:
     uses: ./.github/workflows/build-gem.yml
     with:
-      version: 'jruby-9.4'
+      version: "jruby-9.4"
 
   build-docs:
     runs-on: ubuntu-latest
@@ -33,7 +33,7 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          version: '3.0'
+          version: "3.2"
 
       - uses: ./.github/actions/build-docs
 
@@ -52,7 +52,7 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          version: '3.0'
+          version: "3.2"
 
       - name: Run tests
         run: bundle exec rspec spec
