@@ -10,20 +10,13 @@ on:
       - "**.md"
 
 jobs:
-  build-linux-oldest:
+  build-linux:
     uses: ./.github/workflows/build-gem.yml
+    strategy:
+      matrix:
+        version: ["3.2", "jruby-9.4"]
     with:
-      version: "3.2"
-
-  build-linux-latest:
-    uses: ./.github/workflows/build-gem.yml
-    with:
-      version: "3.2"
-
-  build-linux-jruby:
-    uses: ./.github/workflows/build-gem.yml
-    with:
-      version: "jruby-9.4"
+      version: ${{ matrix.version }}
 
   build-docs:
     runs-on: ubuntu-latest

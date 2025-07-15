@@ -118,4 +118,26 @@ module LaunchDarkly
       @after_evaluation.call(evaluation_series_context, data, detail)
     end
   end
+
+  class MockPlugin
+    include Interfaces::Plugins::Plugin
+
+    def initialize(name, hooks = [], register_callback = nil)
+      @name = name
+      @hooks = hooks
+      @register_callback = register_callback
+    end
+
+    def metadata
+      Interfaces::Plugins::PluginMetadata.new(@name)
+    end
+
+    def get_hooks(environment_metadata)
+      @hooks
+    end
+
+    def register(client, environment_metadata)
+      @register_callback.call(client, environment_metadata) if @register_callback
+    end
+  end
 end
