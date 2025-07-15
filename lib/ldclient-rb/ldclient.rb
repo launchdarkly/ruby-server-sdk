@@ -203,22 +203,18 @@ module LaunchDarkly
     private def get_plugin_hooks(environment_metadata)
       hooks = []
       @config.plugins.each do |plugin|
-        begin
-          hooks.concat(plugin.get_hooks(environment_metadata))
-        rescue => e
+        hooks.concat(plugin.get_hooks(environment_metadata))
+      rescue => e
           @config.logger.error { "[LDClient] Error getting hooks from plugin #{plugin.metadata.name}: #{e}" }
-        end
       end
       hooks
     end
 
     private def register_plugins(environment_metadata)
       @config.plugins.each do |plugin|
-        begin
-          plugin.register(self, environment_metadata)
-        rescue => e
-          @config.logger.error { "[LDClient] Error registering plugin #{plugin.metadata.name}: #{e}" }
-        end
+        plugin.register(self, environment_metadata)
+      rescue => e
+        @config.logger.error { "[LDClient] Error registering plugin #{plugin.metadata.name}: #{e}" }
       end
     end
 
@@ -425,12 +421,10 @@ module LaunchDarkly
     # @return [any]
     #
     private def try_execute_stage(method, hook_name)
-      begin
-        yield
-      rescue => e
-        @config.logger.error { "[LDClient] An error occurred in #{method} of the hook #{hook_name}: #{e}" }
-        nil
-      end
+      yield
+    rescue => e
+      @config.logger.error { "[LDClient] An error occurred in #{method} of the hook #{hook_name}: #{e}" }
+      nil
     end
 
     #
