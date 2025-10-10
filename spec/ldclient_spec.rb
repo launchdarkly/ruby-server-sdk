@@ -113,7 +113,7 @@ module LaunchDarkly
               prereq = flags_map[prereq[:key].to_sym]
               prereq_index = flags_list.index(prereq)
               if prereq_index > item_index
-                all_keys = (flags_list.map { |f| f[:key] }).join(", ")
+                all_keys = flags_list.map { |f| f[:key] }.join(", ")
                 raise "#{item[:key]} depends on #{prereq[:key]}, but #{item[:key]} was listed first; keys in order are [#{all_keys}]"
               end
             end
