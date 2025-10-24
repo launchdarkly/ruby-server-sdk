@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ["3.2", "jruby-9.4"]
+        version: ["3.2", "3.4", "jruby-9.4"]
     with:
       version: ${{ matrix.version }}
 
