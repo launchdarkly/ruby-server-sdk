@@ -7,36 +7,25 @@ require "zlib"
 class StubHTTPServer
   attr_reader :requests, :port
 
-  @@next_port = 50000
-
   def initialize(enable_compression: false)
-    @port = StubHTTPServer.next_port
     @enable_compression = enable_compression
-    begin
-      base_opts = {
-        BindAddress: '127.0.0.1',
-        Port: @port,
-        AccessLog: [],
-        Logger: NullLogger.new,
-        RequestCallback: method(:record_request),
-      }
-      @server = create_server(@port, base_opts)
-    rescue Errno::EADDRINUSE
-      @port = StubHTTPServer.next_port
-      retry
-    end
+    base_opts = {
+      BindAddress: '127.0.0.1',
+      Port: 0,  # Let OS assign an available port
+      AccessLog: [],
+      Logger: NullLogger.new,
+      RequestCallback: method(:record_request),
+    }
+    @server = create_server(base_opts)
     @requests = []
     @requests_queue = Queue.new
   end
 
-  def self.next_port
-    p = @@next_port
-    @@next_port = (p + 1 < 60000) ? p + 1 : 50000
-    p
-  end
-
-  def create_server(port, base_opts)
-    WEBrick::HTTPServer.new(base_opts)
+  def create_server(base_opts)
+    server = WEBrick::HTTPServer.new(base_opts)
+    # Get the actual port assigned by the OS
+    @port = server.config[:Port]
+    server
   end
 
   def start

@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.11.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.11.0...8.11.1) (2025-10-10)
+
+
+### Bug Fixes
+
+* Explicitly require openssl gem ([#334](https://github.com/launchdarkly/ruby-server-sdk/issues/334)) ([0ea53a5](https://github.com/launchdarkly/ruby-server-sdk/commit/0ea53a5826968e9da094792217e69c17fa7edc18)), closes [#333](https://github.com/launchdarkly/ruby-server-sdk/issues/333)
+
 ## [8.11.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.10.2...8.11.0) (2025-07-15)
 
 

@@ -13,6 +13,7 @@ jobs:
   build-linux:
     uses: ./.github/workflows/build-gem.yml
     strategy:
+      fail-fast: false
       matrix:
         version: ["3.2", "3.4", "jruby-9.4"]
     with:

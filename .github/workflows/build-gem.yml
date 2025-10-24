@@ -22,22 +22,14 @@ jobs:
       BUILD_PLATFORM: ${{ startsWith(inputs.version, 'jruby') && 'jruby' || 'ruby' }}
       FLAKY: ${{ startsWith(inputs.version, 'jruby') && 'true' || 'false' }}
 
-    services:
-      redis:
-        image: redis
-        ports:
-          - 6379:6379
-      dynamodb:
-        image: amazon/dynamodb-local
-        ports:
-          - 8000:8000
-      consul:
-        image: hashicorp/consul
-        ports:
-          - 8500:8500
-
     steps:
       - uses: actions/checkout@v4
+
+      - uses: launchdarkly/gh-actions/actions/persistent-stores@persistent-stores-v0
+        with:
+          redis: true
+          consul: true
+          dynamodb: true
 
       - uses: ./.github/actions/setup
         with:
