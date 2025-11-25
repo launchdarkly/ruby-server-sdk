@@ -1,12 +1,121 @@
 module LaunchDarkly
   module Impl
+    #
+    # Mixin that defines the required methods of a data system implementation. The data system
+    # is responsible for managing the SDK's data model, including storage, retrieval, and change
+    # detection for feature flag configurations.
+    #
+    # This module also contains supporting classes and additional mixins for data system
+    # implementations, such as DataAvailability, Update, and protocol-specific mixins.
+    #
+    # For operations that can fail, use {LaunchDarkly::Result} from util.rb.
+    #
+    # Application code should not need to implement this directly; it is used internally by the
+    # SDK's data system implementations.
+    #
+    # @private
+    #
     module DataSystem
       #
-      # This module contains the generic interfaces used for the data system (v1 and
-      # v2), as well as types for v1 and v2 specific protocols.
+      # Starts the data system.
       #
-      # @private
+      # This method will return immediately. The provided event will be set when the system
+      # has reached an initial state (either permanently failed, e.g. due to bad auth, or succeeded).
       #
+      # @param ready_event [Concurrent::Event] Event to set when initialization is complete
+      # @return [void]
+      #
+      def start(ready_event)
+        raise NotImplementedError, "#{self.class} must implement #start"
+      end
+
+      #
+      # Halts the data system. Should be called when the client is closed to stop any long running
+      # operations.
+      #
+      # @return [void]
+      #
+      def stop
+        raise NotImplementedError, "#{self.class} must implement #stop"
+      end
+
+      #
+      # Returns an interface for tracking the status of the data source.
+      #
+      # The data source is the mechanism that the SDK uses to get feature flag configurations, such
+      # as a streaming connection (the default) or poll requests.
+      #
+      # @return [LaunchDarkly::Interfaces::DataSource::StatusProvider]
+      #
+      def data_source_status_provider
+        raise NotImplementedError, "#{self.class} must implement #data_source_status_provider"
+      end
+
+      #
+      # Returns an interface for tracking the status of a persistent data store.
+      #
+      # The provider has methods for checking whether the data store is (as far
+      # as the SDK knows) currently operational, tracking changes in this
+      # status, and getting cache statistics. These are only relevant for a
+      # persistent data store; if you are using an in-memory data store, then
+      # this method will return a stub object that provides no information.
+      #
+      # @return [LaunchDarkly::Interfaces::DataStore::StatusProvider]
+      #
+      def data_store_status_provider
+        raise NotImplementedError, "#{self.class} must implement #data_store_status_provider"
+      end
+
+      #
+      # Returns an interface for tracking changes in feature flag configurations.
+      #
+      # @return [LaunchDarkly::Interfaces::FlagTracker]
+      #
+      def flag_tracker
+        raise NotImplementedError, "#{self.class} must implement #flag_tracker"
+      end
+
+      #
+      # Indicates what form of data is currently available.
+      #
+      # @return [Symbol] One of DataAvailability constants
+      #
+      def data_availability
+        raise NotImplementedError, "#{self.class} must implement #data_availability"
+      end
+
+      #
+      # Indicates the ideal form of data attainable given the current configuration.
+      #
+      # @return [Symbol] One of DataAvailability constants
+      #
+      def target_availability
+        raise NotImplementedError, "#{self.class} must implement #target_availability"
+      end
+
+      #
+      # Returns the data store used by the data system.
+      #
+      # @return [Object] The read-only store
+      #
+      def store
+        raise NotImplementedError, "#{self.class} must implement #store"
+      end
+
+      #
+      # Injects the flag value evaluation function used by the flag tracker to
+      # compute FlagValueChange events. The function signature should be
+      # (key, context) -> value.
+      #
+      # This method must be called after initialization to enable the flag tracker
+      # to compute value changes for flag change listeners.
+      #
+      # @param eval_fn [Proc] The evaluation function
+      # @return [void]
+      #
+      def set_flag_value_eval_fn(eval_fn)
+        raise NotImplementedError, "#{self.class} must implement #set_flag_value_eval_fn"
+      end
 
       #
       # Represents the availability of data in the SDK.
@@ -36,116 +145,6 @@ module LaunchDarkly
           return true if self_level == CACHED && other == DEFAULTS
 
           false
-        end
-      end
-
-      #
-      # Mixin that defines the required methods of a data system implementation. The data system
-      # is responsible for managing the SDK's data model, including storage, retrieval, and change
-      # detection for feature flag configurations.
-      #
-      # Application code should not need to implement this directly; it is used internally by the
-      # SDK's data system implementations.
-      #
-      module DataSystem
-        #
-        # Starts the data system.
-        #
-        # This method will return immediately. The system should signal when it has reached
-        # an initial state (either permanently failed, e.g. due to bad auth, or succeeded).
-        #
-        # @return [void]
-        #
-        def start
-          raise NotImplementedError, "#{self.class} must implement #start"
-        end
-
-        #
-        # Halts the data system. Should be called when the client is closed to stop any long running
-        # operations.
-        #
-        # @return [void]
-        #
-        def stop
-          raise NotImplementedError, "#{self.class} must implement #stop"
-        end
-
-        #
-        # Returns an interface for tracking the status of the data source.
-        #
-        # The data source is the mechanism that the SDK uses to get feature flag configurations, such
-        # as a streaming connection (the default) or poll requests.
-        #
-        # @return [LaunchDarkly::Interfaces::DataSource::StatusProvider]
-        #
-        def data_source_status_provider
-          raise NotImplementedError, "#{self.class} must implement #data_source_status_provider"
-        end
-
-        #
-        # Returns an interface for tracking the status of a persistent data store.
-        #
-        # The provider has methods for checking whether the data store is (as far
-        # as the SDK knows) currently operational, tracking changes in this
-        # status, and getting cache statistics. These are only relevant for a
-        # persistent data store; if you are using an in-memory data store, then
-        # this method will return a stub object that provides no information.
-        #
-        # @return [LaunchDarkly::Interfaces::DataStore::StatusProvider]
-        #
-        def data_store_status_provider
-          raise NotImplementedError, "#{self.class} must implement #data_store_status_provider"
-        end
-
-        #
-        # Returns an interface for tracking changes in feature flag configurations.
-        #
-        # @return [LaunchDarkly::Interfaces::FlagTracker]
-        #
-        def flag_tracker
-          raise NotImplementedError, "#{self.class} must implement #flag_tracker"
-        end
-
-        #
-        # Indicates what form of data is currently available.
-        #
-        # @return [Symbol] One of DataAvailability constants
-        #
-        def data_availability
-          raise NotImplementedError, "#{self.class} must implement #data_availability"
-        end
-
-        #
-        # Indicates the ideal form of data attainable given the current configuration.
-        #
-        # @return [Symbol] One of DataAvailability constants
-        #
-        def target_availability
-          raise NotImplementedError, "#{self.class} must implement #target_availability"
-        end
-
-        #
-        # Returns the data store used by the data system.
-        #
-        # @return [Object] The read-only store
-        #
-        def store
-          raise NotImplementedError, "#{self.class} must implement #store"
-        end
-
-        #
-        # Injects the flag value evaluation function used by the flag tracker to
-        # compute FlagValueChange events. The function signature should be
-        # (key, context) -> value.
-        #
-        # This method must be called after initialization to enable the flag tracker
-        # to compute value changes for flag change listeners.
-        #
-        # @param eval_fn [Proc] The evaluation function
-        # @return [void]
-        #
-        def set_flag_value_eval_fn(eval_fn)
-          raise NotImplementedError, "#{self.class} must implement #set_flag_value_eval_fn"
         end
       end
 
@@ -211,68 +210,6 @@ module LaunchDarkly
       end
 
       #
-      # Result type for operations that can fail, containing either a successful value or an error message.
-      #
-      class Result
-        # @return [Object, nil] The successful result value
-        attr_reader :value
-
-        # @return [String, nil] The error message if operation failed
-        attr_reader :error
-
-        # @return [Boolean] Whether the operation was successful
-        attr_reader :success
-
-        #
-        # @param value [Object, nil] The successful result value
-        # @param error [String, nil] The error message
-        #
-        def initialize(value: nil, error: nil)
-          @value = value
-          @error = error
-          @success = error.nil?
-        end
-
-        #
-        # Creates a successful result.
-        #
-        # @param value [Object] The successful result value
-        # @return [Result]
-        #
-        def self.success(value)
-          new(value: value)
-        end
-
-        #
-        # Creates a failed result.
-        #
-        # @param error [String] The error message
-        # @return [Result]
-        #
-        def self.fail(error)
-          new(error: error)
-        end
-
-        #
-        # Returns whether the result represents a success.
-        #
-        # @return [Boolean]
-        #
-        def success?
-          @success
-        end
-
-        #
-        # Returns whether the result represents a failure.
-        #
-        # @return [Boolean]
-        #
-        def failure?
-          !@success
-        end
-      end
-
-      #
       # Mixin that defines the required methods of an initializer implementation. An initializer
       # is a component capable of retrieving a single data result, such as from the LaunchDarkly
       # polling API.
@@ -288,7 +225,7 @@ module LaunchDarkly
         # Fetch should retrieve the initial data set for the data source, returning
         # a Basis object on success, or an error message on failure.
         #
-        # @return [Result] A Result containing either a Basis or an error message
+        # @return [LaunchDarkly::Result] A Result containing either a Basis or an error message
         #
         def fetch
           raise NotImplementedError, "#{self.class} must implement #fetch"
