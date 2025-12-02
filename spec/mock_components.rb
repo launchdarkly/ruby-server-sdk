@@ -2,6 +2,7 @@ require "spec_helper"
 
 require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/evaluator"
+require "ldclient-rb/impl/datasource/null_processor"
 require "ldclient-rb/interfaces"
 
 def sdk_key
@@ -9,7 +10,7 @@ def sdk_key
 end
 
 def null_data
-  LaunchDarkly::NullUpdateProcessor.new
+  LaunchDarkly::Impl::DataSource::NullUpdateProcessor.new
 end
 
 def null_logger
@@ -39,6 +40,37 @@ def basic_context
 end
 
 module LaunchDarkly
+  class MockUpdateProcessor
+    attr_reader :ready
+
+    def initialize
+      @ready = Concurrent::Event.new
+      @started = false
+      @stopped = false
+    end
+
+    def start
+      @started = true
+      @ready
+    end
+
+    def stop
+      @stopped = true
+    end
+
+    def initialized?
+      @ready.set?
+    end
+
+    def started?
+      @started
+    end
+
+    def stopped?
+      @stopped
+    end
+  end
+
   class CapturingFeatureStore
     attr_reader :received_data
 

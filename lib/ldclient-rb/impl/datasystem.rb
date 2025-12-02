@@ -19,13 +19,12 @@ module LaunchDarkly
       #
       # Starts the data system.
       #
-      # This method will return immediately. The provided event will be set when the system
+      # This method will return immediately. The returned event will be set when the system
       # has reached an initial state (either permanently failed, e.g. due to bad auth, or succeeded).
       #
-      # @param ready_event [Concurrent::Event] Event to set when initialization is complete
-      # @return [void]
+      # @return [Concurrent::Event] Event that will be set when initialization is complete
       #
-      def start(ready_event)
+      def start
         raise NotImplementedError, "#{self.class} must implement #start"
       end
 
@@ -115,6 +114,17 @@ module LaunchDarkly
       #
       def set_flag_value_eval_fn(eval_fn)
         raise NotImplementedError, "#{self.class} must implement #set_flag_value_eval_fn"
+      end
+
+      #
+      # Sets the diagnostic accumulator for streaming initialization metrics.
+      # This should be called before start() to ensure metrics are collected.
+      #
+      # @param diagnostic_accumulator [DiagnosticAccumulator] The diagnostic accumulator
+      # @return [void]
+      #
+      def set_diagnostic_accumulator(diagnostic_accumulator)
+        raise NotImplementedError, "#{self.class} must implement #set_diagnostic_accumulator"
       end
 
       #

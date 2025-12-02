@@ -13,8 +13,7 @@ module LaunchDarkly
         end
 
         it "start raises NotImplementedError" do
-          ready_event = double("Event")
-          expect { test_instance.start(ready_event) }.to raise_error(NotImplementedError, /must implement #start/)
+          expect { test_instance.start }.to raise_error(NotImplementedError, /must implement #start/)
         end
 
         it "stop raises NotImplementedError" do
@@ -47,6 +46,11 @@ module LaunchDarkly
 
         it "set_flag_value_eval_fn raises NotImplementedError" do
           expect { test_instance.set_flag_value_eval_fn(nil) }.to raise_error(NotImplementedError, /must implement #set_flag_value_eval_fn/)
+        end
+
+        it "set_diagnostic_accumulator raises NotImplementedError" do
+          accumulator = double("DiagnosticAccumulator")
+          expect { test_instance.set_diagnostic_accumulator(accumulator) }.to raise_error(NotImplementedError, /must implement #set_diagnostic_accumulator/)
         end
       end
 
