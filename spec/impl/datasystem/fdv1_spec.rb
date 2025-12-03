@@ -11,22 +11,6 @@ module LaunchDarkly
         subject { FDv1.new(sdk_key, config) }
 
         describe "#initialize" do
-          it "creates data store status provider" do
-            expect(subject.data_store_status_provider).to be_a(LaunchDarkly::Impl::DataStore::StatusProvider)
-          end
-
-          it "creates data source status provider" do
-            expect(subject.data_source_status_provider).to be_a(LaunchDarkly::Impl::DataSource::StatusProvider)
-          end
-
-          it "creates flag tracker" do
-            expect(subject.flag_tracker).to be_a(LaunchDarkly::Impl::FlagTracker)
-          end
-
-          it "creates store wrapper" do
-            expect(subject.store).to be_a(LaunchDarkly::Impl::FeatureStoreClientWrapper)
-          end
-
           it "injects data_source_update_sink into config" do
             subject  # Force creation of FDv1 instance
             expect(config.data_source_update_sink).to be_a(LaunchDarkly::Impl::DataSource::UpdateSink)
@@ -139,20 +123,6 @@ module LaunchDarkly
           end
         end
 
-        describe "#set_flag_value_eval_fn" do
-          it "updates the flag tracker with the evaluation function" do
-            eval_fn = ->(key, context) { "value" }
-            original_tracker = subject.flag_tracker
-
-            subject.set_flag_value_eval_fn(eval_fn)
-
-            # Should have created a new flag tracker with the eval function
-            expect(subject.flag_tracker).to be_a(LaunchDarkly::Impl::FlagTracker)
-            # The tracker should be different (new instance with eval_fn)
-            expect(subject.flag_tracker.object_id).not_to eq(original_tracker.object_id)
-          end
-        end
-
         describe "#set_diagnostic_accumulator" do
           it "stores the diagnostic accumulator" do
             diagnostic_accumulator = double("DiagnosticAccumulator")
@@ -172,9 +142,9 @@ module LaunchDarkly
           end
         end
 
-        describe "#flag_tracker" do
-          it "returns the flag tracker" do
-            expect(subject.flag_tracker).to be_a(LaunchDarkly::Impl::FlagTracker)
+        describe "#flag_change_broadcaster" do
+          it "returns the flag change broadcaster" do
+            expect(subject.flag_change_broadcaster).to be_a(LaunchDarkly::Impl::Broadcaster)
           end
         end
 

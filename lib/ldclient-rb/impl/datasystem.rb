@@ -66,12 +66,15 @@ module LaunchDarkly
       end
 
       #
-      # Returns an interface for tracking changes in feature flag configurations.
+      # Returns the broadcaster for flag change notifications.
       #
-      # @return [LaunchDarkly::Interfaces::FlagTracker]
+      # Consumers can use this broadcaster to build their own flag tracker
+      # or listen for flag changes directly.
       #
-      def flag_tracker
-        raise NotImplementedError, "#{self.class} must implement #flag_tracker"
+      # @return [LaunchDarkly::Impl::Broadcaster]
+      #
+      def flag_change_broadcaster
+        raise NotImplementedError, "#{self.class} must implement #flag_change_broadcaster"
       end
 
       #
@@ -99,21 +102,6 @@ module LaunchDarkly
       #
       def store
         raise NotImplementedError, "#{self.class} must implement #store"
-      end
-
-      #
-      # Injects the flag value evaluation function used by the flag tracker to
-      # compute FlagValueChange events. The function signature should be
-      # (key, context) -> value.
-      #
-      # This method must be called after initialization to enable the flag tracker
-      # to compute value changes for flag change listeners.
-      #
-      # @param eval_fn [Proc] The evaluation function
-      # @return [void]
-      #
-      def set_flag_value_eval_fn(eval_fn)
-        raise NotImplementedError, "#{self.class} must implement #set_flag_value_eval_fn"
       end
 
       #

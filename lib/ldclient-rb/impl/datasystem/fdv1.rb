@@ -3,7 +3,6 @@ require 'ldclient-rb/impl/datasystem'
 require 'ldclient-rb/impl/data_source'
 require 'ldclient-rb/impl/data_store'
 require 'ldclient-rb/impl/datasource/null_processor'
-require 'ldclient-rb/impl/flag_tracker'
 require 'ldclient-rb/impl/broadcaster'
 
 module LaunchDarkly
@@ -51,10 +50,6 @@ module LaunchDarkly
           # Set up data source plumbing
           @data_source_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @config.logger)
           @flag_change_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @config.logger)
-          @flag_tracker_impl = LaunchDarkly::Impl::FlagTracker.new(
-            @flag_change_broadcaster,
-            lambda { |_key, _context| nil } # Replaced by client to use its evaluation method
-          )
           @data_source_update_sink = LaunchDarkly::Impl::DataSource::UpdateSink.new(
             @store_wrapper,
             @data_source_broadcaster,
@@ -106,18 +101,6 @@ module LaunchDarkly
         end
 
         #
-        # Injects the flag value evaluation function used by the flag tracker to
-        # compute FlagValueChange events. The function signature should be
-        # (key, context) -> value.
-        #
-        # @param eval_fn [Proc] The evaluation function
-        # @return [void]
-        #
-        def set_flag_value_eval_fn(eval_fn)
-          @flag_tracker_impl = LaunchDarkly::Impl::FlagTracker.new(@flag_change_broadcaster, eval_fn)
-        end
-
-        #
         # Sets the diagnostic accumulator for streaming initialization metrics.
         # This should be called before start() to ensure metrics are collected.
         #
@@ -147,12 +130,12 @@ module LaunchDarkly
         end
 
         #
-        # Returns the flag tracker.
+        # Returns the broadcaster for flag change notifications.
         #
-        # @return [LaunchDarkly::Interfaces::FlagTracker]
+        # @return [LaunchDarkly::Impl::Broadcaster]
         #
-        def flag_tracker
-          @flag_tracker_impl
+        def flag_change_broadcaster
+          @flag_change_broadcaster
         end
 
         #

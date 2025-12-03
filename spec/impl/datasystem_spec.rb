@@ -28,8 +28,8 @@ module LaunchDarkly
           expect { test_instance.data_store_status_provider }.to raise_error(NotImplementedError, /must implement #data_store_status_provider/)
         end
 
-        it "flag_tracker raises NotImplementedError" do
-          expect { test_instance.flag_tracker }.to raise_error(NotImplementedError, /must implement #flag_tracker/)
+        it "flag_change_broadcaster raises NotImplementedError" do
+          expect { test_instance.flag_change_broadcaster }.to raise_error(NotImplementedError, /must implement #flag_change_broadcaster/)
         end
 
         it "data_availability raises NotImplementedError" do
@@ -42,10 +42,6 @@ module LaunchDarkly
 
         it "store raises NotImplementedError" do
           expect { test_instance.store }.to raise_error(NotImplementedError, /must implement #store/)
-        end
-
-        it "set_flag_value_eval_fn raises NotImplementedError" do
-          expect { test_instance.set_flag_value_eval_fn(nil) }.to raise_error(NotImplementedError, /must implement #set_flag_value_eval_fn/)
         end
 
         it "set_diagnostic_accumulator raises NotImplementedError" do
