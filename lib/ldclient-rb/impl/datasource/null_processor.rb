@@ -1,4 +1,5 @@
 require 'concurrent'
+require 'ldclient-rb/interfaces'
 
 module LaunchDarkly
   module Impl
