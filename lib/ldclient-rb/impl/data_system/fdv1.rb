@@ -1,9 +1,10 @@
 require 'concurrent'
-require 'ldclient-rb/impl/datasystem'
-require 'ldclient-rb/impl/data_source'
-require 'ldclient-rb/impl/data_store'
-require 'ldclient-rb/impl/datasource/null_processor'
 require 'ldclient-rb/impl/broadcaster'
+require 'ldclient-rb/impl/data_source'
+require 'ldclient-rb/impl/data_source/null_processor'
+require 'ldclient-rb/impl/data_store'
+require 'ldclient-rb/impl/data_system'
+require 'ldclient-rb/impl/store_client_wrapper'
 
 module LaunchDarkly
   module Impl

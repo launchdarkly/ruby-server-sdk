@@ -2,7 +2,7 @@ require "spec_helper"
 
 require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/evaluator"
-require "ldclient-rb/impl/datasource/null_processor"
+require "ldclient-rb/impl/data_source/null_processor"
 require "ldclient-rb/interfaces"
 
 def sdk_key

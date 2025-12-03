@@ -1,5 +1,5 @@
 require "spec_helper"
-require "ldclient-rb/impl/datasystem"
+require "ldclient-rb/impl/data_system"
 
 module LaunchDarkly
   module Impl

@@ -1,5 +1,5 @@
 require "spec_helper"
-require "ldclient-rb/impl/datasource/null_processor"
+require "ldclient-rb/impl/data_source/null_processor"
 
 module LaunchDarkly
   module Impl

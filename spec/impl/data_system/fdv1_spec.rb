@@ -1,6 +1,6 @@
 require "spec_helper"
 require "mock_components"
-require "ldclient-rb/impl/datasystem/fdv1"
+require "ldclient-rb/impl/data_system/fdv1"
 
 module LaunchDarkly
   module Impl
