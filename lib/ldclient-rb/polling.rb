@@ -5,7 +5,7 @@ require "json"
 require "thread"
 
 module LaunchDarkly
-  # @private
+  # @api private
   class PollingProcessor
     def initialize(config, requestor)
       @config = config

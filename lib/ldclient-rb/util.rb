@@ -65,7 +65,7 @@ module LaunchDarkly
     end
   end
 
-  # @private
+  # @api private
   module Util
     #
     # Append the payload filter key query parameter to the provided URI.

@@ -6,7 +6,7 @@ require "uri"
 require "http"
 
 module LaunchDarkly
-  # @private
+  # @api private
   class UnexpectedResponseError < StandardError
     def initialize(status)
       @status = status
@@ -18,7 +18,7 @@ module LaunchDarkly
     end
   end
 
-  # @private
+  # @api private
   class Requestor
     CacheEntry = Struct.new(:etag, :body)
 

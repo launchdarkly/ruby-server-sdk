@@ -42,7 +42,7 @@ module LaunchDarkly
         self.new
       end
 
-      # @private
+      # @api private
       def initialize
         @flag_builders = Hash.new
         @current_flags = Hash.new
@@ -56,7 +56,7 @@ module LaunchDarkly
       # Called internally by the SDK to determine what arguments to pass to call
       # You do not need to call this method.
       #
-      # @private
+      # @api private
       def arity
         2
       end
@@ -65,7 +65,7 @@ module LaunchDarkly
       # Called internally by the SDK to associate this test data source with an {@code LDClient} instance.
       # You do not need to call this method.
       #
-      # @private
+      # @api private
       def call(_, config)
         impl = LaunchDarkly::Impl::Integrations::TestData::TestDataSource.new(config.feature_store, self)
         @instances_lock.with_write_lock { @instances.push(impl) }
@@ -194,7 +194,7 @@ module LaunchDarkly
         end
       end
 
-      # @private
+      # @api private
       def make_init_data
         @lock.with_read_lock do
           {
@@ -204,7 +204,7 @@ module LaunchDarkly
         end
       end
 
-      # @private
+      # @api private
       def closed_instance(instance)
         @instances_lock.with_write_lock { @instances.delete(instance) }
       end

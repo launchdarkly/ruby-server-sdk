@@ -96,7 +96,7 @@ module LaunchDarkly
     # Custom data source implementations should integrate with this sink if
     # they want to provide support for data source status listeners.
     #
-    # @private
+    # @api private
     #
     attr_accessor :data_source_update_sink
 
@@ -108,7 +108,7 @@ module LaunchDarkly
     # property is not supported; it is temporarily being exposed to maintain
     # backwards compatibility while the SDK structure is updated.
     #
-    # @private
+    # @api private
     #
     attr_accessor :instance_id
 

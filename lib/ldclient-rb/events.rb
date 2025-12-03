@@ -70,24 +70,24 @@ module LaunchDarkly
   MAX_FLUSH_WORKERS = 5
   private_constant :MAX_FLUSH_WORKERS
 
-  # @private
+  # @api private
   class NullEventProcessor
     include EventProcessorMethods
   end
 
-  # @private
+  # @api private
   class FlushMessage
   end
 
-  # @private
+  # @api private
   class FlushContextsMessage
   end
 
-  # @private
+  # @api private
   class DiagnosticEventMessage
   end
 
-  # @private
+  # @api private
   class SynchronousMessage
     def initialize
       @reply = Concurrent::Semaphore.new(0)
@@ -102,15 +102,15 @@ module LaunchDarkly
     end
   end
 
-  # @private
+  # @api private
   class TestSyncMessage < SynchronousMessage
   end
 
-  # @private
+  # @api private
   class StopMessage < SynchronousMessage
   end
 
-  # @private
+  # @api private
   class EventProcessor
     include EventProcessorMethods
 
@@ -226,7 +226,7 @@ module LaunchDarkly
     end
   end
 
-  # @private
+  # @api private
   class EventDispatcher
     def initialize(inbox, sdk_key, config, diagnostic_accumulator, event_sender)
       @sdk_key = sdk_key
@@ -414,10 +414,10 @@ module LaunchDarkly
     end
   end
 
-  # @private
+  # @api private
   FlushPayload = Struct.new(:events, :summary)
 
-  # @private
+  # @api private
   class EventBuffer
     def initialize(capacity, logger)
       @capacity = capacity
@@ -461,7 +461,7 @@ module LaunchDarkly
     end
   end
 
-  # @private
+  # @api private
   class EventOutputFormatter
     FEATURE_KIND = 'feature'
     IDENTIFY_KIND = 'identify'

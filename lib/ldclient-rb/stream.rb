@@ -5,22 +5,22 @@ require "json"
 require "ld-eventsource"
 
 module LaunchDarkly
-  # @private
+  # @api private
   PUT = :put
-  # @private
+  # @api private
   PATCH = :patch
-  # @private
+  # @api private
   DELETE = :delete
-  # @private
+  # @api private
   READ_TIMEOUT_SECONDS = 300  # 5 minutes; the stream should send a ping every 3 minutes
 
-  # @private
+  # @api private
   KEY_PATHS = {
     FEATURES => "/flags/",
     SEGMENTS => "/segments/",
   }
 
-  # @private
+  # @api private
   class StreamProcessor
     def initialize(sdk_key, config, diagnostic_accumulator = nil)
       @sdk_key = sdk_key

@@ -5,7 +5,7 @@ module LaunchDarkly
   # A thread-safe in-memory store that uses the same semantics that Faraday would expect, although we
   # no longer use Faraday. This is used by Requestor, when we are not in a Rails environment.
   #
-  # @private
+  # @api private
   #
   class ThreadSafeMemoryStore
     #
