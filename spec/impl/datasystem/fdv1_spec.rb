@@ -212,7 +212,7 @@ module LaunchDarkly
               subject.start
               # Returns CACHED even when store is empty
               expect(subject.data_availability).to eq(DataAvailability::CACHED)
-              
+
               # Still returns CACHED when store is initialized
               subject.store.init({})
               expect(subject.data_availability).to eq(DataAvailability::CACHED)
