@@ -212,6 +212,21 @@ module LaunchDarkly
               expect(subject.data_availability).to eq(DataAvailability::DEFAULTS)
             end
           end
+
+          context "in LDD mode" do
+            let(:config) { LaunchDarkly::Config.new(use_ldd: true) }
+
+            it "returns DEFAULTS when store is empty" do
+              subject.start
+              expect(subject.data_availability).to eq(DataAvailability::DEFAULTS)
+            end
+
+            it "returns CACHED when store is initialized" do
+              subject.start
+              subject.store.init({})
+              expect(subject.data_availability).to eq(DataAvailability::CACHED)
+            end
+          end
         end
 
         describe "#target_availability" do
@@ -232,8 +247,8 @@ module LaunchDarkly
           context "with LDD mode" do
             let(:config) { LaunchDarkly::Config.new(use_ldd: true) }
 
-            it "returns REFRESHED" do
-              expect(subject.target_availability).to eq(DataAvailability::REFRESHED)
+            it "returns CACHED" do
+              expect(subject.target_availability).to eq(DataAvailability::CACHED)
             end
           end
         end

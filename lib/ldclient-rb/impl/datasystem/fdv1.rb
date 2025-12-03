@@ -163,17 +163,13 @@ module LaunchDarkly
         # @return [Symbol] One of DataAvailability constants
         #
         def data_availability
-          if @config.offline?
-            return DataAvailability::DEFAULTS
+          return DataAvailability::DEFAULTS if @config.offline?
+
+          unless @config.use_ldd?
+            return DataAvailability::REFRESHED if @update_processor && @update_processor.initialized?
           end
 
-          if @update_processor && @update_processor.initialized?
-            return DataAvailability::REFRESHED
-          end
-
-          if @store_wrapper.initialized?
-            return DataAvailability::CACHED
-          end
+          return DataAvailability::CACHED if @store_wrapper.initialized?
 
           DataAvailability::DEFAULTS
         end
@@ -184,10 +180,9 @@ module LaunchDarkly
         # @return [Symbol] One of DataAvailability constants
         #
         def target_availability
-          if @config.offline?
-            return DataAvailability::DEFAULTS
-          end
-          # In LDD mode or normal connected modes, the ideal is to be refreshed
+          return DataAvailability::DEFAULTS if @config.offline?
+          return DataAvailability::CACHED if @config.use_ldd?
+
           DataAvailability::REFRESHED
         end
 
