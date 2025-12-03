@@ -12,8 +12,6 @@ module LaunchDarkly
       # FDv1 wires the existing v1 data source and store behavior behind the
       # generic DataSystem surface.
       #
-      # @private
-      #
       class FDv1
         include LaunchDarkly::Impl::DataSystem
 
@@ -63,7 +61,7 @@ module LaunchDarkly
           # Ensure v1 processors can find the sink via config for status updates
           @config.data_source_update_sink = @data_source_update_sink
 
-          # Update processor created in start(), because it needs the ready event
+          # Update processor created in start()
           @update_processor = nil
 
           # Diagnostic accumulator provided by client for streaming metrics
@@ -74,15 +72,20 @@ module LaunchDarkly
         # Starts the v1 update processor and returns immediately. The returned event
         # will be set by the processor upon first successful initialization or upon permanent failure.
         #
+        # If called multiple times, returns the same event as the first call. The update
+        # processor is created only once, and subsequent calls delegate to the processor's
+        # own start method which handles multiple invocations.
+        #
         # @return [Concurrent::Event] Event that will be set when initialization is complete
         #
         def start
-          @update_processor = make_update_processor
+          @update_processor ||= make_update_processor
           @update_processor.start
         end
 
         #
-        # Halts the data system, stopping the update processor and shutting down the executor.
+        # Halts the data system, stopping the update processor and shutting down the executor,
+        # making the data system no longer usable.
         #
         # @return [void]
         #

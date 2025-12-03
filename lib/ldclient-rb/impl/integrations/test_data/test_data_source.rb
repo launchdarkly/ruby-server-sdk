@@ -5,7 +5,6 @@ module LaunchDarkly
   module Impl
     module Integrations
       module TestData
-        # @private
         class TestDataSource
           include LaunchDarkly::Interfaces::DataSource
 

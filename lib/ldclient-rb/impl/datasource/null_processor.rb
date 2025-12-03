@@ -7,8 +7,6 @@ module LaunchDarkly
       # A minimal UpdateProcessor implementation used when the SDK is in offline mode
       # or daemon (LDD) mode. It does nothing except mark itself as initialized.
       #
-      # @private
-      #
       class NullUpdateProcessor
         include LaunchDarkly::Interfaces::DataSource
 

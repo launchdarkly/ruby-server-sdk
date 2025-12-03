@@ -95,6 +95,28 @@ module LaunchDarkly
               expect(ready_event).to be_a(Concurrent::Event)
             end
           end
+
+          it "returns the same event on multiple calls" do
+            first_event = subject.start
+            second_event = subject.start
+            third_event = subject.start
+
+            expect(second_event).to be(first_event)
+            expect(third_event).to be(first_event)
+          end
+
+          it "does not create a new processor on subsequent calls" do
+            processor = MockUpdateProcessor.new
+            allow(subject).to receive(:make_update_processor).and_return(processor)
+
+            subject.start
+            expect(subject).to have_received(:make_update_processor).once
+
+            subject.start
+            subject.start
+            # Should still only be called once
+            expect(subject).to have_received(:make_update_processor).once
+          end
         end
 
         describe "#stop" do
