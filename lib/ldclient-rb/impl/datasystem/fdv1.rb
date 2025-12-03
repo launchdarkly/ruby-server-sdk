@@ -151,10 +151,13 @@ module LaunchDarkly
         def data_availability
           return DataAvailability::DEFAULTS if @config.offline?
 
-          unless @config.use_ldd?
-            return DataAvailability::REFRESHED if @update_processor && @update_processor.initialized?
-          end
+          # In LDD mode, always return CACHED for backwards compatibility.
+          # Even though the store might be empty (technically DEFAULTS), we maintain
+          # the existing behavior where LDD mode is assumed to have data available
+          # from the external daemon, regardless of the store's initialization state.
+          return DataAvailability::CACHED if @config.use_ldd?
 
+          return DataAvailability::REFRESHED if @update_processor && @update_processor.initialized?
           return DataAvailability::CACHED if @store_wrapper.initialized?
 
           DataAvailability::DEFAULTS
