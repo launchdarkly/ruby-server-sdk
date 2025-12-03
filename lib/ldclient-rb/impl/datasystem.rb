@@ -22,6 +22,8 @@ module LaunchDarkly
       # This method will return immediately. The returned event will be set when the system
       # has reached an initial state (either permanently failed, e.g. due to bad auth, or succeeded).
       #
+      # If called multiple times, returns the same event as the first call.
+      #
       # @return [Concurrent::Event] Event that will be set when initialization is complete
       #
       def start
@@ -30,7 +32,7 @@ module LaunchDarkly
 
       #
       # Halts the data system. Should be called when the client is closed to stop any long running
-      # operations.
+      # operations. Makes the data system no longer usable.
       #
       # @return [void]
       #
@@ -80,7 +82,9 @@ module LaunchDarkly
       #
       # Indicates what form of data is currently available.
       #
-      # @return [Symbol] One of DataAvailability constants
+      # This is calculated dynamically based on current system state.
+      #
+      # @return [Symbol] one of the {DataAvailability} constants
       #
       def data_availability
         raise NotImplementedError, "#{self.class} must implement #data_availability"
@@ -89,7 +93,7 @@ module LaunchDarkly
       #
       # Indicates the ideal form of data attainable given the current configuration.
       #
-      # @return [Symbol] One of DataAvailability constants
+      # @return [Symbol] one of the {#DataAvailability} constants
       #
       def target_availability
         raise NotImplementedError, "#{self.class} must implement #target_availability"

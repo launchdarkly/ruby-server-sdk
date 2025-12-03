@@ -12,6 +12,8 @@ module LaunchDarkly
       # FDv1 wires the existing v1 data source and store behavior behind the
       # generic DataSystem surface.
       #
+      # @see DataSystem
+      #
       class FDv1
         include LaunchDarkly::Impl::DataSystem
 
@@ -68,85 +70,48 @@ module LaunchDarkly
           @diagnostic_accumulator = nil
         end
 
-        #
-        # Starts the v1 update processor and returns immediately. The returned event
-        # will be set by the processor upon first successful initialization or upon permanent failure.
-        #
-        # If called multiple times, returns the same event as the first call. The update
-        # processor is created only once, and subsequent calls delegate to the processor's
-        # own start method which handles multiple invocations.
-        #
-        # @return [Concurrent::Event] Event that will be set when initialization is complete
-        #
+        # (see DataSystem#start)
         def start
           @update_processor ||= make_update_processor
           @update_processor.start
         end
 
-        #
-        # Halts the data system, stopping the update processor and shutting down the executor,
-        # making the data system no longer usable.
-        #
-        # @return [void]
-        #
+        # (see DataSystem#stop)
         def stop
           @update_processor&.stop
           @shared_executor.shutdown
         end
 
-        #
-        # Returns the feature store wrapper used by this data system.
-        #
-        # @return [LaunchDarkly::Impl::DataStore::ClientWrapper]
-        #
+        # (see DataSystem#store)
         def store
           @store_wrapper
         end
 
-        #
-        # Sets the diagnostic accumulator for streaming initialization metrics.
-        # This should be called before start() to ensure metrics are collected.
-        #
-        # @param diagnostic_accumulator [DiagnosticAccumulator] The diagnostic accumulator
-        # @return [void]
-        #
+        # (see DataSystem#set_diagnostic_accumulator)
         def set_diagnostic_accumulator(diagnostic_accumulator)
           @diagnostic_accumulator = diagnostic_accumulator
         end
 
-        #
-        # Returns the data source status provider.
-        #
-        # @return [LaunchDarkly::Interfaces::DataSource::StatusProvider]
-        #
+        # (see DataSystem#data_source_status_provider)
         def data_source_status_provider
           @data_source_status_provider
         end
 
-        #
-        # Returns the data store status provider.
-        #
-        # @return [LaunchDarkly::Interfaces::DataStore::StatusProvider]
-        #
+        # (see DataSystem#data_store_status_provider)
         def data_store_status_provider
           @data_store_status_provider
         end
 
-        #
-        # Returns the broadcaster for flag change notifications.
-        #
-        # @return [LaunchDarkly::Impl::Broadcaster]
-        #
+        # (see DataSystem#flag_change_broadcaster)
         def flag_change_broadcaster
           @flag_change_broadcaster
         end
 
         #
-        # Indicates what form of data is currently available.
+        # (see DataSystem#data_availability)
         #
-        # This is calculated dynamically based on current system state.
-        #
-        # @return [Symbol] One of DataAvailability constants
+        # In LDD mode, always returns CACHED for backwards compatibility,
+        # even if the store is empty.
         #
         def data_availability
           return DataAvailability::DEFAULTS if @config.offline?
@@ -163,11 +128,7 @@ module LaunchDarkly
           DataAvailability::DEFAULTS
         end
 
-        #
-        # Indicates the ideal form of data attainable given the current configuration.
-        #
-        # @return [Symbol] One of DataAvailability constants
-        #
+        # (see DataSystem#target_availability)
         def target_availability
           return DataAvailability::DEFAULTS if @config.offline?
           return DataAvailability::CACHED if @config.use_ldd?
