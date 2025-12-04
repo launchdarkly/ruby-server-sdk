@@ -19,19 +19,20 @@ module LaunchDarkly
       #
       # Starts the data system.
       #
-      # This method will return immediately. The provided event will be set when the system
+      # This method will return immediately. The returned event will be set when the system
       # has reached an initial state (either permanently failed, e.g. due to bad auth, or succeeded).
       #
-      # @param ready_event [Concurrent::Event] Event to set when initialization is complete
-      # @return [void]
+      # If called multiple times, returns the same event as the first call.
       #
-      def start(ready_event)
+      # @return [Concurrent::Event] Event that will be set when initialization is complete
+      #
+      def start
         raise NotImplementedError, "#{self.class} must implement #start"
       end
 
       #
       # Halts the data system. Should be called when the client is closed to stop any long running
-      # operations.
+      # operations. Makes the data system no longer usable.
       #
       # @return [void]
       #
@@ -67,18 +68,23 @@ module LaunchDarkly
       end
 
       #
-      # Returns an interface for tracking changes in feature flag configurations.
+      # Returns the broadcaster for flag change notifications.
       #
-      # @return [LaunchDarkly::Interfaces::FlagTracker]
+      # Consumers can use this broadcaster to build their own flag tracker
+      # or listen for flag changes directly.
       #
-      def flag_tracker
-        raise NotImplementedError, "#{self.class} must implement #flag_tracker"
+      # @return [LaunchDarkly::Impl::Broadcaster]
+      #
+      def flag_change_broadcaster
+        raise NotImplementedError, "#{self.class} must implement #flag_change_broadcaster"
       end
 
       #
       # Indicates what form of data is currently available.
       #
-      # @return [Symbol] One of DataAvailability constants
+      # This is calculated dynamically based on current system state.
+      #
+      # @return [Symbol] one of the {DataAvailability} constants
       #
       def data_availability
         raise NotImplementedError, "#{self.class} must implement #data_availability"
@@ -87,7 +93,7 @@ module LaunchDarkly
       #
       # Indicates the ideal form of data attainable given the current configuration.
       #
-      # @return [Symbol] One of DataAvailability constants
+      # @return [Symbol] one of the {#DataAvailability} constants
       #
       def target_availability
         raise NotImplementedError, "#{self.class} must implement #target_availability"
@@ -103,18 +109,14 @@ module LaunchDarkly
       end
 
       #
-      # Injects the flag value evaluation function used by the flag tracker to
-      # compute FlagValueChange events. The function signature should be
-      # (key, context) -> value.
+      # Sets the diagnostic accumulator for streaming initialization metrics.
+      # This should be called before start() to ensure metrics are collected.
       #
-      # This method must be called after initialization to enable the flag tracker
-      # to compute value changes for flag change listeners.
-      #
-      # @param eval_fn [Proc] The evaluation function
+      # @param diagnostic_accumulator [DiagnosticAccumulator] The diagnostic accumulator
       # @return [void]
       #
-      def set_flag_value_eval_fn(eval_fn)
-        raise NotImplementedError, "#{self.class} must implement #set_flag_value_eval_fn"
+      def set_diagnostic_accumulator(diagnostic_accumulator)
+        raise NotImplementedError, "#{self.class} must implement #set_diagnostic_accumulator"
       end
 
       #

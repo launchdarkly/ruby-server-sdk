@@ -2,6 +2,7 @@ require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/broadcaster"
 require "ldclient-rb/impl/data_source"
 require "ldclient-rb/impl/data_store"
+require "ldclient-rb/impl/data_source/null_processor"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/evaluation_with_hook_result"
@@ -132,7 +133,7 @@ module LaunchDarkly
 
       if @config.use_ldd?
         @config.logger.info { "[LDClient] Started LaunchDarkly Client in LDD mode" }
-        @data_source = NullUpdateProcessor.new
+        @data_source = LaunchDarkly::Impl::DataSource::NullUpdateProcessor.new
         return  # requestor and update processor are not used in this mode
       end
 
@@ -710,7 +711,7 @@ module LaunchDarkly
 
     def create_default_data_source(sdk_key, config, diagnostic_accumulator)
       if config.offline?
-        return NullUpdateProcessor.new
+        return LaunchDarkly::Impl::DataSource::NullUpdateProcessor.new
       end
       raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?  # see LDClient constructor comment on sdk_key
       if config.stream?
@@ -875,25 +876,6 @@ module LaunchDarkly
         return !!flag[:trackEventsFallthrough]
       end
       false
-    end
-  end
-
-  #
-  # Used internally when the client is offline.
-  # @private
-  #
-  class NullUpdateProcessor
-    def start
-      e = Concurrent::Event.new
-      e.set
-      e
-    end
-
-    def initialized?
-      true
-    end
-
-    def stop
     end
   end
 end

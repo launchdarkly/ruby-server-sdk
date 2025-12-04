@@ -1,5 +1,5 @@
 require "spec_helper"
-require "ldclient-rb/impl/datasystem"
+require "ldclient-rb/impl/data_system"
 
 module LaunchDarkly
   module Impl
@@ -13,8 +13,7 @@ module LaunchDarkly
         end
 
         it "start raises NotImplementedError" do
-          ready_event = double("Event")
-          expect { test_instance.start(ready_event) }.to raise_error(NotImplementedError, /must implement #start/)
+          expect { test_instance.start }.to raise_error(NotImplementedError, /must implement #start/)
         end
 
         it "stop raises NotImplementedError" do
@@ -29,8 +28,8 @@ module LaunchDarkly
           expect { test_instance.data_store_status_provider }.to raise_error(NotImplementedError, /must implement #data_store_status_provider/)
         end
 
-        it "flag_tracker raises NotImplementedError" do
-          expect { test_instance.flag_tracker }.to raise_error(NotImplementedError, /must implement #flag_tracker/)
+        it "flag_change_broadcaster raises NotImplementedError" do
+          expect { test_instance.flag_change_broadcaster }.to raise_error(NotImplementedError, /must implement #flag_change_broadcaster/)
         end
 
         it "data_availability raises NotImplementedError" do
@@ -45,8 +44,9 @@ module LaunchDarkly
           expect { test_instance.store }.to raise_error(NotImplementedError, /must implement #store/)
         end
 
-        it "set_flag_value_eval_fn raises NotImplementedError" do
-          expect { test_instance.set_flag_value_eval_fn(nil) }.to raise_error(NotImplementedError, /must implement #set_flag_value_eval_fn/)
+        it "set_diagnostic_accumulator raises NotImplementedError" do
+          accumulator = double("DiagnosticAccumulator")
+          expect { test_instance.set_diagnostic_accumulator(accumulator) }.to raise_error(NotImplementedError, /must implement #set_diagnostic_accumulator/)
         end
       end
 
