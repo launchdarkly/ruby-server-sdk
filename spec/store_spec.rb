@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/cache_store"
 require "spec_helper"
 
 module LaunchDarkly

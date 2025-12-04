@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/data_source/stream"
 require "ld-eventsource"
 require "model_builders"
 require "spec_helper"

@@ -1,4 +1,5 @@
 require "http_util"
+require "ldclient-rb/impl/data_source/requestor"
 require "model_builders"
 require "spec_helper"
 

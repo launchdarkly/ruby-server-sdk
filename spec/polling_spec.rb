@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/data_source/polling"
 require "ldclient-rb/impl/model/feature_flag"
 require "ldclient-rb/impl/model/segment"
 require 'ostruct'

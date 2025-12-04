@@ -1,9 +1,10 @@
+require 'spec_helper'
 require 'timecop'
-require "ldclient-rb/expiring_cache"
+require "ldclient-rb/impl/expiring_cache"
 
 module LaunchDarkly
-  describe ExpiringCache do
-    subject { ExpiringCache }
+  describe Impl::ExpiringCache do
+    subject { Impl::ExpiringCache }
 
     before(:each) do
       Timecop.freeze(Time.now)

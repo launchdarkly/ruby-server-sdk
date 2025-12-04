@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/simple_lru_cache"
 require "spec_helper"
 
 module LaunchDarkly
