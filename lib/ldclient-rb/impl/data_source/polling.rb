@@ -1,4 +1,5 @@
 require "ldclient-rb/impl/repeating_task"
+require "ldclient-rb/impl/util"
 
 require "concurrent/atomics"
 require "json"
@@ -69,7 +70,7 @@ module LaunchDarkly
               stop_with_error_info error_info
             end
           rescue StandardError => e
-            Util.log_exception(@config.logger, "Exception while polling", e)
+            Impl::Util.log_exception(@config.logger, "Exception while polling", e)
             @config.data_source_update_sink&.update_status(
               LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
               LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN, 0, e.to_s, Time.now)

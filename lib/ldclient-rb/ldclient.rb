@@ -13,6 +13,7 @@ require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/migrations/tracker"
 require "ldclient-rb/impl/store_client_wrapper"
+require "ldclient-rb/impl/util"
 require "ldclient-rb/events"
 require "ldclient-rb/in_memory_store"
 require "concurrent"
@@ -617,7 +618,7 @@ module LaunchDarkly
       begin
         features = @store.all(FEATURES)
       rescue => exn
-        Util.log_exception(@config.logger, "Unable to read flags for all_flags_state", exn)
+        Impl::Util.log_exception(@config.logger, "Unable to read flags for all_flags_state", exn)
         return FeatureFlagsState.new(false)
       end
 
@@ -634,7 +635,7 @@ module LaunchDarkly
           detail = eval_result.detail
         rescue => exn
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
-          Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
+          Impl::Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
         end
 
         requires_experiment_data = experiment?(f, detail.reason)
@@ -804,7 +805,7 @@ module LaunchDarkly
         record_flag_eval(feature, context, detail, default, with_reasons)
         [detail, feature, nil]
       rescue => exn
-        Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
+        Impl::Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
         record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
         [detail, feature, exn.to_s]

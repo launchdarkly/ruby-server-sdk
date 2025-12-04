@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/util"
 require "spec_helper"
 
 module LaunchDarkly

@@ -283,7 +283,7 @@ module LaunchDarkly
             dispatch_event(message, outbox)
           end
         rescue => e
-          Util.log_exception(@config.logger, "Unexpected error in event processor", e)
+          Impl::Util.log_exception(@config.logger, "Unexpected error in event processor", e)
         end
       end
     end
@@ -410,7 +410,7 @@ module LaunchDarkly
         begin
           @event_sender.send_event_data(event.to_json, "diagnostic event", true)
         rescue => e
-          Util.log_exception(@config.logger, "Unexpected error in event processor", e)
+          Impl::Util.log_exception(@config.logger, "Unexpected error in event processor", e)
         end
       end
     end
