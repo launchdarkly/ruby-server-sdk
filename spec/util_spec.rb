@@ -1,7 +1,7 @@
 require "spec_helper"
 
 module LaunchDarkly
-  describe Util do
+  describe Impl::Util do
     describe 'log_exception' do
       let(:logger) { double }
 
@@ -11,7 +11,7 @@ module LaunchDarkly
         begin
           raise StandardError.new 'asdf'
         rescue StandardError => exn
-          Util.log_exception(logger, "message", exn)
+          Impl::Util.log_exception(logger, "message", exn)
         end
       end
     end

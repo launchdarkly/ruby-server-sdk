@@ -5,6 +5,8 @@ require "ldclient-rb/impl/data_store"
 require "ldclient-rb/impl/data_source/null_processor"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluator"
+require "ldclient-rb/events"
+require "ldclient-rb/in_memory_store"
 require "ldclient-rb/impl/evaluation_with_hook_result"
 require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/store_client_wrapper"
@@ -715,12 +717,12 @@ module LaunchDarkly
       end
       raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?  # see LDClient constructor comment on sdk_key
       if config.stream?
-        StreamProcessor.new(sdk_key, config, diagnostic_accumulator)
+        Impl::DataSource::StreamProcessor.new(sdk_key, config, diagnostic_accumulator)
       else
         config.logger.info { "Disabling streaming API" }
         config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
-        requestor = Requestor.new(sdk_key, config)
-        PollingProcessor.new(config, requestor)
+        requestor = Impl::DataSource::Requestor.new(sdk_key, config)
+        Impl::DataSource::PollingProcessor.new(config, requestor)
       end
     end
 

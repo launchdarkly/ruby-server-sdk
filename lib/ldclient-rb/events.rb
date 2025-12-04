@@ -3,6 +3,8 @@ require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/event_sender"
 require "ldclient-rb/impl/event_summarizer"
 require "ldclient-rb/impl/event_types"
+require "ldclient-rb/impl/non_blocking_thread_pool"
+require "ldclient-rb/impl/simple_lru_cache"
 require "ldclient-rb/impl/util"
 
 require "concurrent"
@@ -141,7 +143,7 @@ module LaunchDarkly
       @inbox_full = Concurrent::AtomicBoolean.new(false)
 
       event_sender = (test_properties || {})[:event_sender] ||
-        Impl::EventSender.new(sdk_key, config, client || Util.new_http_client(config.events_uri, config))
+        Impl::EventSender.new(sdk_key, config, client || Impl::Util.new_http_client(config.events_uri, config))
 
       @timestamp_fn = (test_properties || {})[:timestamp_fn] || proc { Impl::Util.current_time_millis }
       @omit_anonymous_contexts = config.omit_anonymous_contexts
@@ -235,7 +237,7 @@ module LaunchDarkly
       @event_sender = event_sender
       @sampler = LaunchDarkly::Impl::Sampler.new(Random.new)
 
-      @context_keys = SimpleLRUCacheSet.new(config.context_keys_capacity)
+      @context_keys = Impl::SimpleLRUCacheSet.new(config.context_keys_capacity)
       @formatter = EventOutputFormatter.new(config)
       @disabled = Concurrent::AtomicBoolean.new(false)
       @last_known_past_time = Concurrent::AtomicReference.new(0)
@@ -243,10 +245,10 @@ module LaunchDarkly
       @events_in_last_batch = 0
 
       outbox = EventBuffer.new(config.capacity, config.logger)
-      flush_workers = NonBlockingThreadPool.new(MAX_FLUSH_WORKERS, 'LD/EventDispatcher/FlushWorkers')
+      flush_workers = Impl::NonBlockingThreadPool.new(MAX_FLUSH_WORKERS, 'LD/EventDispatcher/FlushWorkers')
 
       if !@diagnostic_accumulator.nil?
-        diagnostic_event_workers = NonBlockingThreadPool.new(1, 'LD/EventDispatcher/DiagnosticEventWorkers')
+        diagnostic_event_workers = Impl::NonBlockingThreadPool.new(1, 'LD/EventDispatcher/DiagnosticEventWorkers')
         init_event = @diagnostic_accumulator.create_init_event(config)
         send_diagnostic_event(init_event, diagnostic_event_workers)
       else
@@ -383,7 +385,7 @@ module LaunchDarkly
               @last_known_past_time.value = (result.time_from_server.to_f * 1000).to_i
             end
           rescue => e
-            Util.log_exception(@config.logger, "Unexpected error in event processor", e)
+            Impl::Util.log_exception(@config.logger, "Unexpected error in event processor", e)
           end
         end
         outbox.clear if success # Reset our internal state, these events now belong to the flush worker

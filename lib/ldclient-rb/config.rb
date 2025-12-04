@@ -1,4 +1,5 @@
 require "logger"
+require "ldclient-rb/impl/cache_store"
 
 module LaunchDarkly
   #
@@ -477,7 +478,7 @@ module LaunchDarkly
     # @return [Object] the Rails cache if in Rails, or a simple in-memory implementation otherwise
     #
     def self.default_cache_store
-      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : ThreadSafeMemoryStore.new
+      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : Impl::ThreadSafeMemoryStore.new
     end
 
     #

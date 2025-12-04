@@ -1,4 +1,5 @@
 require "concurrent/atomics"
+require "ldclient-rb/impl/data_store"
 
 module LaunchDarkly
 

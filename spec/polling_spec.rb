@@ -4,8 +4,8 @@ require 'ostruct'
 require "spec_helper"
 
 module LaunchDarkly
-  describe PollingProcessor do
-    subject { PollingProcessor }
+  describe Impl::DataSource::PollingProcessor do
+    subject { Impl::DataSource::PollingProcessor }
     let(:executor) { SynchronousExecutor.new }
     let(:status_broadcaster) { Impl::Broadcaster.new(executor, $null_log) }
     let(:flag_change_broadcaster) { Impl::Broadcaster.new(executor, $null_log) }
@@ -99,7 +99,7 @@ module LaunchDarkly
 
     describe 'HTTP errors' do
       def verify_unrecoverable_http_error(status)
-        allow(requestor).to receive(:request_all_data).and_raise(UnexpectedResponseError.new(status))
+        allow(requestor).to receive(:request_all_data).and_raise(Impl::DataSource::UnexpectedResponseError.new(status))
         listener = ListenerSpy.new
         status_broadcaster.add_listener(listener)
 
@@ -118,7 +118,7 @@ module LaunchDarkly
       end
 
       def verify_recoverable_http_error(status)
-        allow(requestor).to receive(:request_all_data).and_raise(UnexpectedResponseError.new(status))
+        allow(requestor).to receive(:request_all_data).and_raise(Impl::DataSource::UnexpectedResponseError.new(status))
         listener = ListenerSpy.new
         status_broadcaster.add_listener(listener)
 

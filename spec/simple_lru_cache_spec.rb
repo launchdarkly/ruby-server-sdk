@@ -1,8 +1,8 @@
 require "spec_helper"
 
 module LaunchDarkly
-  describe SimpleLRUCacheSet do
-    subject { SimpleLRUCacheSet }
+  describe Impl::SimpleLRUCacheSet do
+    subject { Impl::SimpleLRUCacheSet }
 
     it "retains values up to capacity" do
       lru = subject.new(3)

@@ -1,8 +1,8 @@
 require "ldclient-rb/config"
-require "ldclient-rb/expiring_cache"
+require "ldclient-rb/impl/expiring_cache"
 require "ldclient-rb/impl/repeating_task"
+require "ldclient-rb/impl/util"
 require "ldclient-rb/interfaces"
-require "ldclient-rb/util"
 
 require "digest"
 
@@ -45,7 +45,7 @@ module LaunchDarkly
             membership = EMPTY_MEMBERSHIP if membership.nil?
             @cache[context_key] = membership
           rescue => e
-            LaunchDarkly::Util.log_exception(@logger, "Big Segment store membership query returned error", e)
+            Impl::Util.log_exception(@logger, "Big Segment store membership query returned error", e)
             return BigSegmentMembershipResult.new(nil, BigSegmentsStatus::STORE_ERROR)
           end
         end
@@ -67,7 +67,7 @@ module LaunchDarkly
             metadata = @store.get_metadata
             new_status = Interfaces::BigSegmentStoreStatus.new(true, !metadata || stale?(metadata.last_up_to_date))
           rescue => e
-            LaunchDarkly::Util.log_exception(@logger, "Big Segment store status query returned error", e)
+            Impl::Util.log_exception(@logger, "Big Segment store status query returned error", e)
           end
         end
         @last_status = new_status

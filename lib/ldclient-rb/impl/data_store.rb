@@ -4,7 +4,6 @@ require "ldclient-rb/interfaces"
 module LaunchDarkly
   module Impl
     module DataStore
-
       class DataKind
         FEATURES = "features".freeze
         SEGMENTS = "segments".freeze

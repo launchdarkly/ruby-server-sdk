@@ -3,11 +3,11 @@ require "model_builders"
 require "spec_helper"
 
 module LaunchDarkly
-  describe Requestor do
+  describe Impl::DataSource::Requestor do
     let(:sdk_key) { "secret" }
 
     def with_requestor(base_uri, opts = {})
-      r = Requestor.new(sdk_key, Config.new({ base_uri: base_uri, application: {id: "id", version: "version"} }.merge(opts)))
+      r = Impl::DataSource::Requestor.new(sdk_key, Config.new({ base_uri: base_uri, application: {id: "id", version: "version"} }.merge(opts)))
       begin
         yield r
       ensure
@@ -188,7 +188,7 @@ module LaunchDarkly
             server.setup_response("/") do |_, res|
               res.status = 400
             end
-            expect { requestor.request_all_data }.to raise_error(UnexpectedResponseError)
+            expect { requestor.request_all_data }.to raise_error(LaunchDarkly::Impl::DataSource::UnexpectedResponseError)
           end
         end
       end

@@ -1,4 +1,5 @@
 require "ldclient-rb/impl/model/serialization"
+require "ldclient-rb/impl/util"
 
 require "concurrent/atomics"
 require "json"
@@ -27,7 +28,7 @@ module LaunchDarkly
         def initialize(sdk_key, config)
           @sdk_key = sdk_key
           @config = config
-          @http_client = LaunchDarkly::Util.new_http_client(config.base_uri, config)
+          @http_client = Impl::Util.new_http_client(config.base_uri, config)
             .use(:auto_inflate)
             .headers("Accept-Encoding" => "gzip")
           @cache = @config.cache_store

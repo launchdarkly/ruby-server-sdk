@@ -3,8 +3,8 @@ require "model_builders"
 require "spec_helper"
 
 module LaunchDarkly
-  describe StreamProcessor do
-    subject { StreamProcessor }
+  describe Impl::DataSource::StreamProcessor do
+    subject { Impl::DataSource::StreamProcessor }
     let(:executor) { SynchronousExecutor.new }
     let(:status_broadcaster) { Impl::Broadcaster.new(executor, $null_log) }
     let(:flag_change_broadcaster) { Impl::Broadcaster.new(executor, $null_log) }

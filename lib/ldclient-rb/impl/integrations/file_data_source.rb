@@ -1,5 +1,5 @@
 require 'ldclient-rb/in_memory_store'
-require 'ldclient-rb/util'
+require 'ldclient-rb/impl/util'
 
 require 'concurrent/atomics'
 require 'json'
@@ -82,7 +82,7 @@ module LaunchDarkly
             begin
               load_file(path, all_data)
             rescue => exn
-              LaunchDarkly::Util.log_exception(@logger, "Unable to load flag data from \"#{path}\"", exn)
+              Impl::Util.log_exception(@logger, "Unable to load flag data from \"#{path}\"", exn)
               @data_source_update_sink&.update_status(
                 LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                 LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA, 0, exn.to_s, Time.now)
@@ -212,7 +212,7 @@ module LaunchDarkly
                   end
                   reloader.call if changed
                 rescue => exn
-                  LaunchDarkly::Util.log_exception(logger, "Unexpected exception in FileDataSourcePoller", exn)
+                  Impl::Util.log_exception(logger, "Unexpected exception in FileDataSourcePoller", exn)
                 end
               end
             end
