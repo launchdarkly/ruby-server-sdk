@@ -208,14 +208,14 @@ module LaunchDarkly
           context "in LDD mode" do
             let(:config) { LaunchDarkly::Config.new(use_ldd: true) }
 
-            it "always returns CACHED for backwards compatibility" do
+            it "always returns REFRESHED for backwards compatibility" do
               subject.start
-              # Returns CACHED even when store is empty
-              expect(subject.data_availability).to eq(DataAvailability::CACHED)
+              # Returns REFRESHED even when store is empty
+              expect(subject.data_availability).to eq(DataAvailability::REFRESHED)
 
-              # Still returns CACHED when store is initialized
+              # Still returns REFRESHED when store is initialized
               subject.store.init({})
-              expect(subject.data_availability).to eq(DataAvailability::CACHED)
+              expect(subject.data_availability).to eq(DataAvailability::REFRESHED)
             end
           end
         end
@@ -238,8 +238,8 @@ module LaunchDarkly
           context "with LDD mode" do
             let(:config) { LaunchDarkly::Config.new(use_ldd: true) }
 
-            it "returns CACHED" do
-              expect(subject.target_availability).to eq(DataAvailability::CACHED)
+            it "returns REFRESHED" do
+              expect(subject.target_availability).to eq(DataAvailability::REFRESHED)
             end
           end
         end
