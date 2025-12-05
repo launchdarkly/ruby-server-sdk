@@ -102,7 +102,7 @@ module LaunchDarkly
             @last_version += 1
           }
 
-          parsed = parse_content(IO.read(path))
+          parsed = parse_content(File.read(path))
           (parsed[:flags] || {}).each do |key, flag|
             flag[:version] = version
             add_item(all_data, FEATURES, flag)
