@@ -231,7 +231,7 @@ module LaunchDarkly
     def initialize(inbox, sdk_key, config, diagnostic_accumulator, event_sender)
       @sdk_key = sdk_key
       @config = config
-      @diagnostic_accumulator = config.diagnostic_opt_out? ? nil : diagnostic_accumulator
+      @diagnostic_accumulator = diagnostic_accumulator
       @event_sender = event_sender
       @sampler = LaunchDarkly::Impl::Sampler.new(Random.new)
 
