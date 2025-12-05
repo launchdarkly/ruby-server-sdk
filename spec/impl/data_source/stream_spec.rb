@@ -27,26 +27,26 @@ module LaunchDarkly
 
       it "will accept PUT methods" do
         processor.send(:process_message, put_message)
-        expect(config.feature_store.get(FEATURES, "asdf")).to eq(Flags.from_hash(key: "asdf"))
-        expect(config.feature_store.get(SEGMENTS, "segkey")).to eq(Segments.from_hash(key: "segkey"))
+        expect(config.feature_store.get(Impl::DataStore::FEATURES, "asdf")).to eq(Flags.from_hash(key: "asdf"))
+        expect(config.feature_store.get(Impl::DataStore::SEGMENTS, "segkey")).to eq(Segments.from_hash(key: "segkey"))
       end
       it "will accept PATCH methods for flags" do
         processor.send(:process_message, patch_flag_message)
-        expect(config.feature_store.get(FEATURES, "asdf")).to eq(Flags.from_hash(key: "asdf", version: 1))
+        expect(config.feature_store.get(Impl::DataStore::FEATURES, "asdf")).to eq(Flags.from_hash(key: "asdf", version: 1))
       end
       it "will accept PATCH methods for segments" do
         processor.send(:process_message, patch_seg_message)
-        expect(config.feature_store.get(SEGMENTS, "asdf")).to eq(Segments.from_hash(key: "asdf", version: 1))
+        expect(config.feature_store.get(Impl::DataStore::SEGMENTS, "asdf")).to eq(Segments.from_hash(key: "asdf", version: 1))
       end
       it "will accept DELETE methods for flags" do
         processor.send(:process_message, patch_flag_message)
         processor.send(:process_message, delete_flag_message)
-        expect(config.feature_store.get(FEATURES, "key")).to eq(nil)
+        expect(config.feature_store.get(Impl::DataStore::FEATURES, "key")).to eq(nil)
       end
       it "will accept DELETE methods for segments" do
         processor.send(:process_message, patch_seg_message)
         processor.send(:process_message, delete_seg_message)
-        expect(config.feature_store.get(SEGMENTS, "key")).to eq(nil)
+        expect(config.feature_store.get(Impl::DataStore::SEGMENTS, "key")).to eq(nil)
       end
       it "will log a warning if the method is not recognized" do
         expect(processor.instance_variable_get(:@config).logger).to receive :warn

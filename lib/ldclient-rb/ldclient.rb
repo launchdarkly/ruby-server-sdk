@@ -121,8 +121,8 @@ module LaunchDarkly
       @big_segment_store_manager = Impl::BigSegmentStoreManager.new(@config.big_segments, @config.logger)
       @big_segment_store_status_provider = @big_segment_store_manager.status_provider
 
-      get_flag = lambda { |key| @store.get(FEATURES, key) }
-      get_segment = lambda { |key| @store.get(SEGMENTS, key) }
+      get_flag = lambda { |key| @store.get(Impl::DataStore::FEATURES, key) }
+      get_segment = lambda { |key| @store.get(Impl::DataStore::SEGMENTS, key) }
       get_big_segments_membership = lambda { |key| @big_segment_store_manager.get_context_membership(key) }
       @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, get_big_segments_membership, @config.logger)
 
@@ -616,7 +616,7 @@ module LaunchDarkly
       end
 
       begin
-        features = @store.all(FEATURES)
+        features = @store.all(Impl::DataStore::FEATURES)
       rescue => exn
         Impl::Util.log_exception(@config.logger, "Unable to read flags for all_flags_state", exn)
         return FeatureFlagsState.new(false)
@@ -779,7 +779,7 @@ module LaunchDarkly
       end
 
       begin
-        feature = @store.get(FEATURES, key)
+        feature = @store.get(Impl::DataStore::FEATURES, key)
       rescue
         # Ignored
       end

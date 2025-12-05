@@ -2,24 +2,6 @@ require "concurrent/atomics"
 require "ldclient-rb/impl/data_store"
 
 module LaunchDarkly
-
-  # These constants denote the types of data that can be stored in the feature store.  If
-  # we add another storable data type in the future, as long as it follows the same pattern
-  # (having "key", "version", and "deleted" properties), we only need to add a corresponding
-  # constant here and the existing store should be able to handle it.
-  #
-  # The :priority and :get_dependency_keys properties are used by FeatureStoreDataSetSorter
-  # to ensure data consistency during non-atomic updates.
-
-  # @api private
-  FEATURES = Impl::DataStore::DataKind.new(namespace: "features", priority: 1).freeze
-
-  # @api private
-  SEGMENTS = Impl::DataStore::DataKind.new(namespace: "segments", priority: 0).freeze
-
-  # @api private
-  ALL_KINDS = [FEATURES, SEGMENTS].freeze
-
   #
   # Default implementation of the LaunchDarkly client's feature store, using an in-memory
   # cache.  This object holds feature flags and related data received from LaunchDarkly.

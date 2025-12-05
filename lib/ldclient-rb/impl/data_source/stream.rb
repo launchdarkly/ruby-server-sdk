@@ -1,4 +1,6 @@
 require "ldclient-rb/impl/model/serialization"
+require "ldclient-rb/impl/util"
+require "ldclient-rb/in_memory_store"
 
 require "concurrent/atomics"
 require "json"
@@ -18,8 +20,8 @@ module LaunchDarkly
 
       # @api private
       KEY_PATHS = {
-        FEATURES => "/flags/",
-        SEGMENTS => "/segments/",
+        Impl::DataStore::FEATURES => "/flags/",
+        Impl::DataStore::SEGMENTS => "/segments/",
       }
 
       # @api private
@@ -55,7 +57,7 @@ module LaunchDarkly
           }
           log_connection_started
 
-          uri = Util.add_payload_filter_key(@config.stream_uri + "/all", @config)
+          uri = Impl::Util.add_payload_filter_key(@config.stream_uri + "/all", @config)
           @es = SSE::Client.new(uri, **opts) do |conn|
             conn.on_event { |event| process_message(event) }
             conn.on_error { |err|
@@ -142,7 +144,7 @@ module LaunchDarkly
               @ready.set
             elsif method == PATCH
               data = JSON.parse(message.data, symbolize_names: true)
-              for kind in [FEATURES, SEGMENTS]
+              for kind in [Impl::DataStore::FEATURES, Impl::DataStore::SEGMENTS]
                 key = key_for_path(kind, data[:path])
                 if key
                   item = Impl::Model.deserialize(kind, data[:data], @config.logger)
@@ -152,7 +154,7 @@ module LaunchDarkly
               end
             elsif method == DELETE
               data = JSON.parse(message.data, symbolize_names: true)
-              for kind in [FEATURES, SEGMENTS]
+              for kind in [Impl::DataStore::FEATURES, Impl::DataStore::SEGMENTS]
                 key = key_for_path(kind, data[:path])
                 if key
                   update_sink_or_data_store.delete(kind, key, data[:version])

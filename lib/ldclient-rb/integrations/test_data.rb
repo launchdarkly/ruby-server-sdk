@@ -121,10 +121,10 @@ module LaunchDarkly
           if @current_flags[flag_key]
             version = @current_flags[flag_key][:version]
           end
-          new_flag = Impl::Model.deserialize(FEATURES, flag_builder.build(version+1))
+          new_flag = LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::Impl::DataStore::FEATURES, flag_builder.build(version+1))
           @current_flags[flag_key] = new_flag
         end
-        update_item(FEATURES, new_flag)
+        update_item(LaunchDarkly::Impl::DataStore::FEATURES, new_flag)
         self
       end
 
@@ -147,7 +147,7 @@ module LaunchDarkly
       # @return [TestData] the TestData instance
       #
       def use_preconfigured_flag(flag)
-        use_preconfigured_item(FEATURES, flag, @current_flags)
+        use_preconfigured_item(LaunchDarkly::Impl::DataStore::FEATURES, flag, @current_flags)
       end
 
       #
@@ -167,7 +167,7 @@ module LaunchDarkly
       # @return [TestData] the TestData instance
       #
       def use_preconfigured_segment(segment)
-        use_preconfigured_item(SEGMENTS, segment, @current_segments)
+        use_preconfigured_item(LaunchDarkly::Impl::DataStore::SEGMENTS, segment, @current_segments)
       end
 
       private def use_preconfigured_item(kind, item, current)
@@ -198,8 +198,8 @@ module LaunchDarkly
       def make_init_data
         @lock.with_read_lock do
           {
-            FEATURES => @current_flags.clone,
-            SEGMENTS => @current_segments.clone,
+            LaunchDarkly::Impl::DataStore::FEATURES => @current_flags.clone,
+            LaunchDarkly::Impl::DataStore::SEGMENTS => @current_segments.clone,
           }
         end
       end

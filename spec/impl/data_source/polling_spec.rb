@@ -36,10 +36,10 @@ module LaunchDarkly
       flag = Impl::Model::FeatureFlag.new({ key: 'flagkey', version: 1 })
       segment = Impl::Model::Segment.new({ key: 'segkey', version: 1 })
       all_data = {
-        FEATURES => {
+        Impl::DataStore::FEATURES => {
           flagkey: flag,
         },
-        SEGMENTS => {
+        Impl::DataStore::SEGMENTS => {
           segkey: segment,
         },
       }
@@ -50,8 +50,8 @@ module LaunchDarkly
         with_processor(store) do |processor|
           ready = processor.start
           ready.wait
-          expect(store.get(FEATURES, "flagkey")).to eq(flag)
-          expect(store.get(SEGMENTS, "segkey")).to eq(segment)
+          expect(store.get(Impl::DataStore::FEATURES, "flagkey")).to eq(flag)
+          expect(store.get(Impl::DataStore::SEGMENTS, "segkey")).to eq(segment)
         end
       end
 
@@ -75,8 +75,8 @@ module LaunchDarkly
         with_processor(store) do |processor|
           ready = processor.start
           ready.wait
-          expect(store.get(FEATURES, "flagkey")).to eq(flag)
-          expect(store.get(SEGMENTS, "segkey")).to eq(segment)
+          expect(store.get(Impl::DataStore::FEATURES, "flagkey")).to eq(flag)
+          expect(store.get(Impl::DataStore::SEGMENTS, "segkey")).to eq(segment)
 
           expect(listener.statuses.count).to eq(1)
           expect(listener.statuses[0].state).to eq(Interfaces::DataSource::Status::VALID)

@@ -4,7 +4,7 @@ require "json"
 
 class Flags
   def self.from_hash(data)
-    LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::FEATURES, data)
+    LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::Impl::DataStore::FEATURES, data)
   end
 
   def self.boolean_flag_with_rules(*rules)
@@ -20,7 +20,7 @@ end
 
 class Segments
   def self.from_hash(data)
-    LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::SEGMENTS, data)
+    LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::Impl::DataStore::SEGMENTS, data)
   end
 end
 
@@ -226,21 +226,21 @@ class DataSetBuilder
   end
 
   def flag(data)
-    f = LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::FEATURES, data)
+    f = LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::Impl::DataStore::FEATURES, data)
     @flags[f.key.to_sym] = f
     self
   end
 
   def segment(data)
-    s = LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::SEGMENTS, data)
+    s = LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::Impl::DataStore::SEGMENTS, data)
     @segments[s.key.to_sym] = s
     self
   end
 
   def to_store_data
     {
-      LaunchDarkly::FEATURES => @flags,
-      LaunchDarkly::SEGMENTS => @segments,
+      LaunchDarkly::Impl::DataStore::FEATURES => @flags,
+      LaunchDarkly::Impl::DataStore::SEGMENTS => @segments,
     }
   end
 

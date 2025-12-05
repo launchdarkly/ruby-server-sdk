@@ -6,15 +6,15 @@ module LaunchDarkly
       describe DataKind do
         describe "eql?" do
           it "constant instances are equal to themselves" do
-            expect(LaunchDarkly::FEATURES.eql?(LaunchDarkly::FEATURES)).to be true
-            expect(LaunchDarkly::SEGMENTS.eql?(LaunchDarkly::SEGMENTS)).to be true
+            expect(FEATURES.eql?(FEATURES)).to be true
+            expect(SEGMENTS.eql?(SEGMENTS)).to be true
           end
 
           it "same constructions are equal" do
-            expect(LaunchDarkly::FEATURES.eql?(DataKind.new(namespace: "features", priority: 1))).to be true
+            expect(FEATURES.eql?(DataKind.new(namespace: "features", priority: 1))).to be true
             expect(DataKind.new(namespace: "features", priority: 1).eql?(DataKind.new(namespace: "features", priority: 1))).to be true
 
-            expect(LaunchDarkly::SEGMENTS.eql?(DataKind.new(namespace: "segments", priority: 0))).to be true
+            expect(SEGMENTS.eql?(DataKind.new(namespace: "segments", priority: 0))).to be true
             expect(DataKind.new(namespace: "segments", priority: 0).eql?(DataKind.new(namespace: "segments", priority: 0))).to be true
           end
 
@@ -29,22 +29,22 @@ module LaunchDarkly
 
           it "handles non-DataKind objects" do
             ["example", true, 1, 1.0, [], {}].each do |obj|
-              expect(LaunchDarkly::FEATURES.eql?(obj)).to be false
+              expect(FEATURES.eql?(obj)).to be false
             end
           end
         end
 
         describe "hash" do
           it "constant instances are equal to themselves" do
-            expect(LaunchDarkly::FEATURES.hash).to be LaunchDarkly::FEATURES.hash
-            expect(LaunchDarkly::SEGMENTS.hash).to be LaunchDarkly::SEGMENTS.hash
+            expect(FEATURES.hash).to be FEATURES.hash
+            expect(SEGMENTS.hash).to be SEGMENTS.hash
           end
 
           it "same constructions are equal" do
-            expect(LaunchDarkly::FEATURES.hash).to be DataKind.new(namespace: "features", priority: 1).hash
+            expect(FEATURES.hash).to be DataKind.new(namespace: "features", priority: 1).hash
             expect(DataKind.new(namespace: "features", priority: 1).hash).to be DataKind.new(namespace: "features", priority: 1).hash
 
-            expect(LaunchDarkly::SEGMENTS.hash).to be DataKind.new(namespace: "segments", priority: 0).hash
+            expect(SEGMENTS.hash).to be DataKind.new(namespace: "segments", priority: 0).hash
             expect(DataKind.new(namespace: "segments", priority: 0).hash).to be DataKind.new(namespace: "segments", priority: 0).hash
           end
 
