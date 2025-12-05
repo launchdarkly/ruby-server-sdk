@@ -231,7 +231,9 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.upsert(LaunchDarkly::Impl::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag3', version: 2, prerequisities: [{key: 'flag4', variation: 0}] }))
+          sink.upsert(LaunchDarkly::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({
+            key: 'flag3', version: 2, prerequisities: [{key: 'flag4', variation: 0}]
+          }))
           expect(listener.statuses.count).to eq(3)
           expect(listener.statuses[0].key).to eq('flag3')
           expect(listener.statuses[1].key).to eq('flag2')
@@ -244,7 +246,9 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.upsert(LaunchDarkly::Impl::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag2', version: 2, prerequisities: [{key: 'flag3', variation: 0}] }))
+          sink.upsert(LaunchDarkly::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({
+            key: 'flag2', version: 2, prerequisities: [{key: 'flag3', variation: 0}]
+          }))
           expect(listener.statuses.count).to eq(2)
           expect(listener.statuses[0].key).to eq('flag2')
           expect(listener.statuses[1].key).to eq('flag1')
