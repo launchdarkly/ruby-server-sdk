@@ -30,7 +30,7 @@ module LaunchDarkly
             ],
           }
           flag = Model::FeatureFlag.new(original_flag)
-          json = Model.serialize(FEATURES, flag)
+          json = Model.serialize(DataStore::FEATURES, flag)
           parsed = JSON.parse(json, symbolize_names: true)
           expect(parsed).to eq(original_flag)
         end

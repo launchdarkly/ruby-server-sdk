@@ -15,7 +15,7 @@ module LaunchDarkly
     end
 
     # Used internally to build the state map.
-    # @private
+    # @api private
     def add_flag(flag_state, with_reasons, details_only_if_tracked)
       key = flag_state[:key]
       @flag_values[key] = flag_state[:value]

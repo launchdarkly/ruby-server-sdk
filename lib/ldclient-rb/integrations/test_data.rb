@@ -42,7 +42,7 @@ module LaunchDarkly
         self.new
       end
 
-      # @private
+      # @api private
       def initialize
         @flag_builders = Hash.new
         @current_flags = Hash.new
@@ -56,7 +56,7 @@ module LaunchDarkly
       # Called internally by the SDK to determine what arguments to pass to call
       # You do not need to call this method.
       #
-      # @private
+      # @api private
       def arity
         2
       end
@@ -65,7 +65,7 @@ module LaunchDarkly
       # Called internally by the SDK to associate this test data source with an {@code LDClient} instance.
       # You do not need to call this method.
       #
-      # @private
+      # @api private
       def call(_, config)
         impl = LaunchDarkly::Impl::Integrations::TestData::TestDataSource.new(config.feature_store, self)
         @instances_lock.with_write_lock { @instances.push(impl) }
@@ -121,10 +121,10 @@ module LaunchDarkly
           if @current_flags[flag_key]
             version = @current_flags[flag_key][:version]
           end
-          new_flag = Impl::Model.deserialize(FEATURES, flag_builder.build(version+1))
+          new_flag = LaunchDarkly::Impl::Model.deserialize(LaunchDarkly::Impl::DataStore::FEATURES, flag_builder.build(version+1))
           @current_flags[flag_key] = new_flag
         end
-        update_item(FEATURES, new_flag)
+        update_item(LaunchDarkly::Impl::DataStore::FEATURES, new_flag)
         self
       end
 
@@ -147,7 +147,7 @@ module LaunchDarkly
       # @return [TestData] the TestData instance
       #
       def use_preconfigured_flag(flag)
-        use_preconfigured_item(FEATURES, flag, @current_flags)
+        use_preconfigured_item(LaunchDarkly::Impl::DataStore::FEATURES, flag, @current_flags)
       end
 
       #
@@ -167,7 +167,7 @@ module LaunchDarkly
       # @return [TestData] the TestData instance
       #
       def use_preconfigured_segment(segment)
-        use_preconfigured_item(SEGMENTS, segment, @current_segments)
+        use_preconfigured_item(LaunchDarkly::Impl::DataStore::SEGMENTS, segment, @current_segments)
       end
 
       private def use_preconfigured_item(kind, item, current)
@@ -194,17 +194,17 @@ module LaunchDarkly
         end
       end
 
-      # @private
+      # @api private
       def make_init_data
         @lock.with_read_lock do
           {
-            FEATURES => @current_flags.clone,
-            SEGMENTS => @current_segments.clone,
+            LaunchDarkly::Impl::DataStore::FEATURES => @current_flags.clone,
+            LaunchDarkly::Impl::DataStore::SEGMENTS => @current_segments.clone,
           }
         end
       end
 
-      # @private
+      # @api private
       def closed_instance(instance)
         @instances_lock.with_write_lock { @instances.delete(instance) }
       end

@@ -1,6 +1,7 @@
 require "concurrent/atomics"
 
-require "ldclient-rb/expiring_cache"
+require "ldclient-rb/impl/expiring_cache"
+require "ldclient-rb/interfaces"
 
 module LaunchDarkly
   module Integrations
@@ -37,7 +38,7 @@ module LaunchDarkly
           expiration_seconds = opts[:expiration] || 15
           if expiration_seconds > 0
             capacity = opts[:capacity] || 1000
-            @cache = ExpiringCache.new(capacity, expiration_seconds)
+            @cache = Impl::ExpiringCache.new(capacity, expiration_seconds)
           else
             @cache = nil
           end

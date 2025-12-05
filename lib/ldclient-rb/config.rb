@@ -1,4 +1,5 @@
 require "logger"
+require "ldclient-rb/impl/cache_store"
 
 module LaunchDarkly
   #
@@ -96,7 +97,7 @@ module LaunchDarkly
     # Custom data source implementations should integrate with this sink if
     # they want to provide support for data source status listeners.
     #
-    # @private
+    # @api private
     #
     attr_accessor :data_source_update_sink
 
@@ -108,7 +109,7 @@ module LaunchDarkly
     # property is not supported; it is temporarily being exposed to maintain
     # backwards compatibility while the SDK structure is updated.
     #
-    # @private
+    # @api private
     #
     attr_accessor :instance_id
 
@@ -477,7 +478,7 @@ module LaunchDarkly
     # @return [Object] the Rails cache if in Rails, or a simple in-memory implementation otherwise
     #
     def self.default_cache_store
-      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : ThreadSafeMemoryStore.new
+      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : Impl::ThreadSafeMemoryStore.new
     end
 
     #

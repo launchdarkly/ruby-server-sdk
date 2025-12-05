@@ -1,14 +1,21 @@
 require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/broadcaster"
+require "ldclient-rb/impl/context"
 require "ldclient-rb/impl/data_source"
-require "ldclient-rb/impl/data_store"
 require "ldclient-rb/impl/data_source/null_processor"
+require "ldclient-rb/impl/data_source/polling"
+require "ldclient-rb/impl/data_source/requestor"
+require "ldclient-rb/impl/data_source/stream"
+require "ldclient-rb/impl/data_store"
 require "ldclient-rb/impl/diagnostic_events"
-require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/evaluation_with_hook_result"
+require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/flag_tracker"
-require "ldclient-rb/impl/store_client_wrapper"
 require "ldclient-rb/impl/migrations/tracker"
+require "ldclient-rb/impl/store_client_wrapper"
+require "ldclient-rb/impl/util"
+require "ldclient-rb/events"
+require "ldclient-rb/in_memory_store"
 require "concurrent"
 require "concurrent/atomics"
 require "digest/sha1"
@@ -114,8 +121,8 @@ module LaunchDarkly
       @big_segment_store_manager = Impl::BigSegmentStoreManager.new(@config.big_segments, @config.logger)
       @big_segment_store_status_provider = @big_segment_store_manager.status_provider
 
-      get_flag = lambda { |key| @store.get(FEATURES, key) }
-      get_segment = lambda { |key| @store.get(SEGMENTS, key) }
+      get_flag = lambda { |key| @store.get(Impl::DataStore::FEATURES, key) }
+      get_segment = lambda { |key| @store.get(Impl::DataStore::SEGMENTS, key) }
       get_big_segments_membership = lambda { |key| @big_segment_store_manager.get_context_membership(key) }
       @evaluator = LaunchDarkly::Impl::Evaluator.new(get_flag, get_segment, get_big_segments_membership, @config.logger)
 
@@ -609,9 +616,9 @@ module LaunchDarkly
       end
 
       begin
-        features = @store.all(FEATURES)
+        features = @store.all(Impl::DataStore::FEATURES)
       rescue => exn
-        Util.log_exception(@config.logger, "Unable to read flags for all_flags_state", exn)
+        Impl::Util.log_exception(@config.logger, "Unable to read flags for all_flags_state", exn)
         return FeatureFlagsState.new(false)
       end
 
@@ -628,7 +635,7 @@ module LaunchDarkly
           detail = eval_result.detail
         rescue => exn
           detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
-          Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
+          Impl::Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
         end
 
         requires_experiment_data = experiment?(f, detail.reason)
@@ -715,12 +722,12 @@ module LaunchDarkly
       end
       raise ArgumentError, "sdk_key must not be nil" if sdk_key.nil?  # see LDClient constructor comment on sdk_key
       if config.stream?
-        StreamProcessor.new(sdk_key, config, diagnostic_accumulator)
+        Impl::DataSource::StreamProcessor.new(sdk_key, config, diagnostic_accumulator)
       else
         config.logger.info { "Disabling streaming API" }
         config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
-        requestor = Requestor.new(sdk_key, config)
-        PollingProcessor.new(config, requestor)
+        requestor = Impl::DataSource::Requestor.new(sdk_key, config)
+        Impl::DataSource::PollingProcessor.new(config, requestor)
       end
     end
 
@@ -772,7 +779,7 @@ module LaunchDarkly
       end
 
       begin
-        feature = @store.get(FEATURES, key)
+        feature = @store.get(Impl::DataStore::FEATURES, key)
       rescue
         # Ignored
       end
@@ -798,7 +805,7 @@ module LaunchDarkly
         record_flag_eval(feature, context, detail, default, with_reasons)
         [detail, feature, nil]
       rescue => exn
-        Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
+        Impl::Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
         record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
         [detail, feature, exn.to_s]

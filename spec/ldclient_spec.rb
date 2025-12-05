@@ -74,7 +74,7 @@ module LaunchDarkly
     context "feature store data ordering" do
       let(:dependency_ordering_test_data) {
         {
-          FEATURES => {
+          Impl::DataStore::FEATURES => {
             a: { key: "a", prerequisites: [ { key: "b" }, { key: "c" } ] },
             b: { key: "b", prerequisites: [ { key: "c" }, { key: "e" } ] },
             c: { key: "c" },
@@ -82,7 +82,7 @@ module LaunchDarkly
             e: { key: "e" },
             f: { key: "f" },
           },
-          SEGMENTS => {
+          Impl::DataStore::SEGMENTS => {
             o: { key: "o" },
           },
         }
@@ -91,8 +91,8 @@ module LaunchDarkly
       it "passes data set to feature store in correct order on init" do
         store = CapturingFeatureStore.new
         td = Integrations::TestData.data_source
-        dependency_ordering_test_data[FEATURES].each { |_, flag| td.use_preconfigured_flag(flag) }
-        dependency_ordering_test_data[SEGMENTS].each { |_, segment| td.use_preconfigured_segment(segment) }
+        dependency_ordering_test_data[Impl::DataStore::FEATURES].each { |_, flag| td.use_preconfigured_flag(flag) }
+        dependency_ordering_test_data[Impl::DataStore::SEGMENTS].each { |_, segment| td.use_preconfigured_segment(segment) }
 
         with_client(test_config(feature_store: store, data_source: td)) do |_|
           data = store.received_data
@@ -100,14 +100,14 @@ module LaunchDarkly
           expect(data.count).to eq(2)
 
           # Segments should always come first
-          expect(data.keys[0]).to be(SEGMENTS)
-          expect(data.values[0].count).to eq(dependency_ordering_test_data[SEGMENTS].count)
+          expect(data.keys[0]).to be(Impl::DataStore::SEGMENTS)
+          expect(data.values[0].count).to eq(dependency_ordering_test_data[Impl::DataStore::SEGMENTS].count)
 
           # Features should be ordered so that a flag always appears after its prerequisites, if any
-          expect(data.keys[1]).to be(FEATURES)
+          expect(data.keys[1]).to be(Impl::DataStore::FEATURES)
           flags_map = data.values[1]
           flags_list = flags_map.values
-          expect(flags_list.count).to eq(dependency_ordering_test_data[FEATURES].count)
+          expect(flags_list.count).to eq(dependency_ordering_test_data[Impl::DataStore::FEATURES].count)
           flags_list.each_with_index do |item, item_index|
             (item[:prerequisites] || []).each do |prereq|
               prereq = flags_map[prereq[:key].to_sym]

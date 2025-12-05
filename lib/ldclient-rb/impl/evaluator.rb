@@ -4,6 +4,7 @@ require "ldclient-rb/impl/evaluator_helpers"
 require "ldclient-rb/impl/evaluator_operators"
 require "ldclient-rb/impl/model/feature_flag"
 require "ldclient-rb/impl/model/segment"
+require "ldclient-rb/impl/util"
 
 module LaunchDarkly
   module Impl
@@ -152,11 +153,11 @@ module LaunchDarkly
         begin
           detail = eval_internal(flag, context, result, state)
         rescue EvaluationException => exn
-          LaunchDarkly::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
+          Impl::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
           result.detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(exn.error_kind))
           return result, state
         rescue => exn
-          LaunchDarkly::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
+          Impl::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
           result.detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
           return result, state
         end

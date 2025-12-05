@@ -191,8 +191,8 @@ shared_examples "any_feature_store" do |store_tester|
       deleted: false,
     }
     with_inited_store([]) do |store|
-      store.upsert(LaunchDarkly::FEATURES, flag)
-      expect(store.get(LaunchDarkly::FEATURES, flag[:key])).to eq flag
+      store.upsert(LaunchDarkly::Impl::DataStore::FEATURES, flag)
+      expect(store.get(LaunchDarkly::Impl::DataStore::FEATURES, flag[:key])).to eq flag
     end
   end
 end

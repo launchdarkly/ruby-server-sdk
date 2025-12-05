@@ -12,14 +12,14 @@ module LaunchDarkly
       class FlagBuilder
         attr_reader :key
 
-        # @private
+        # @api private
         def initialize(key)
           @key = key
           @on = true
           @variations = []
         end
 
-        # @private
+        # @api private
         def initialize_copy(other)
           super(other)
           @variations = @variations.clone
@@ -357,7 +357,7 @@ module LaunchDarkly
           self
         end
 
-        # @private
+        # @api private
         def add_rule(rule)
           if @rules.nil?
             @rules = Array.new
@@ -386,7 +386,7 @@ module LaunchDarkly
           end
         end
 
-        # @private
+        # @api private
         def build(version)
           res = { key: @key,
                   version: version,
@@ -486,16 +486,16 @@ module LaunchDarkly
         # Finally, call {#then_return} to finish defining the rule.
         #
         class FlagRuleBuilder
-          # @private
+          # @api private
           FlagRuleClause = Struct.new(:contextKind, :attribute, :op, :values, :negate, keyword_init: true) # rubocop:disable Naming/MethodName:
 
-          # @private
+          # @api private
           def initialize(flag_builder)
             @flag_builder = flag_builder
             @clauses = Array.new
           end
 
-          # @private
+          # @api private
           def intialize_copy(other)
             super(other)
             @clauses = @clauses.clone
@@ -612,7 +612,7 @@ module LaunchDarkly
             end
           end
 
-          # @private
+          # @api private
           def build(ri)
             {
               id: 'rule' + ri.to_s,
@@ -622,7 +622,7 @@ module LaunchDarkly
           end
         end
 
-        # @private
+        # @api private
         def variation_for_boolean(variation)
           variation ? TRUE_VARIATION_INDEX : FALSE_VARIATION_INDEX
         end

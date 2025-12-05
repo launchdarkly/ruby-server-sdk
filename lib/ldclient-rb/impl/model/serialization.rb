@@ -34,7 +34,7 @@ module LaunchDarkly
       # SDK code outside of Impl::Model should use this method instead of calling the model class
       # constructors directly, so as not to rely on implementation details.
       #
-      # @param kind [Hash] normally either FEATURES or SEGMENTS
+      # @param kind [Hash] normally either Impl::DataStore::FEATURES or Impl::DataStore::SEGMENTS
       # @param input [object] a JSON string or a parsed hash (or a data model object, in which case
       #  we'll just return the original object)
       # @param logger [Logger|nil] logs errors if there are any data validation problems
@@ -44,9 +44,9 @@ module LaunchDarkly
         return input if !input.is_a?(String) && !input.is_a?(Hash)
         data = input.is_a?(Hash) ? input : JSON.parse(input, symbolize_names: true)
         case kind
-        when FEATURES
+        when Impl::DataStore::FEATURES
           FeatureFlag.new(data, logger)
-        when SEGMENTS
+        when Impl::DataStore::SEGMENTS
           Segment.new(data, logger)
         else
           data
@@ -63,8 +63,8 @@ module LaunchDarkly
       # Translates a { flags: ..., segments: ... } object received from LaunchDarkly to the data store format.
       def self.make_all_store_data(received_data, logger = nil)
         {
-          FEATURES => (received_data[:flags] || {}).transform_values { |data| FeatureFlag.new(data, logger) },
-          SEGMENTS => (received_data[:segments] || {}).transform_values { |data| Segment.new(data, logger) },
+          Impl::DataStore::FEATURES => (received_data[:flags] || {}).transform_values { |data| FeatureFlag.new(data, logger) },
+          Impl::DataStore::SEGMENTS => (received_data[:segments] || {}).transform_values { |data| Segment.new(data, logger) },
         }
       end
     end

@@ -105,11 +105,11 @@ module LaunchDarkly
           tester = RedisStoreTester.new({ test_hook: test_hook, logger: $null_logger })
 
           ensure_stop(tester.create_feature_store) do |store|
-            store.init(LaunchDarkly::FEATURES => { flag[:key] => flag })
+            store.init(LaunchDarkly::Impl::DataStore::FEATURES => { flag[:key] => flag })
 
             my_ver = { key: "foo", version: 10 }
-            store.upsert(LaunchDarkly::FEATURES, my_ver)
-            result = store.get(LaunchDarkly::FEATURES, flag[:key])
+            store.upsert(LaunchDarkly::Impl::DataStore::FEATURES, my_ver)
+            result = store.get(LaunchDarkly::Impl::DataStore::FEATURES, flag[:key])
             expect(result[:version]).to eq 10
           end
         end
@@ -122,11 +122,11 @@ module LaunchDarkly
           tester = RedisStoreTester.new({ test_hook: test_hook, logger: $null_logger })
 
           ensure_stop(tester.create_feature_store) do |store|
-            store.init(LaunchDarkly::FEATURES => { flag[:key] => flag })
+            store.init(LaunchDarkly::Impl::DataStore::FEATURES => { flag[:key] => flag })
 
             my_ver = { key: "foo", version: 2 }
-            store.upsert(LaunchDarkly::FEATURES, my_ver)
-            result = store.get(LaunchDarkly::FEATURES, flag[:key])
+            store.upsert(LaunchDarkly::Impl::DataStore::FEATURES, my_ver)
+            result = store.get(LaunchDarkly::Impl::DataStore::FEATURES, flag[:key])
             expect(result[:version]).to eq 3
           end
         end
@@ -138,7 +138,7 @@ module LaunchDarkly
         store = tester.create_feature_store
 
         begin
-          store.init(LaunchDarkly::FEATURES => { })
+          store.init(LaunchDarkly::Impl::DataStore::FEATURES => { })
           store.stop
 
           expect { unowned_pool.with {} }.to raise_error(ConnectionPool::PoolShuttingDownError)
@@ -153,7 +153,7 @@ module LaunchDarkly
         store = tester.create_feature_store
 
         begin
-          store.init(LaunchDarkly::FEATURES => { })
+          store.init(LaunchDarkly::Impl::DataStore::FEATURES => { })
           store.stop
 
           expect { unowned_pool.with {} }.not_to raise_error

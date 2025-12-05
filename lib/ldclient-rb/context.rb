@@ -48,7 +48,7 @@ module LaunchDarkly
     attr_reader :error
 
     #
-    # @private
+    # @api private
     # @param key [String, nil]
     # @param fully_qualified_key [String, nil]
     # @param kind [String, nil]

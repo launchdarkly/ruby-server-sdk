@@ -24,18 +24,18 @@ module LaunchDarkly
           end
 
           it "creates streaming processor by default" do
-            allow(LaunchDarkly::StreamProcessor).to receive(:new).and_call_original
+            allow(LaunchDarkly::Impl::DataSource::StreamProcessor).to receive(:new).and_call_original
             subject.start
-            expect(LaunchDarkly::StreamProcessor).to have_received(:new).with(sdk_key, config, nil)
+            expect(LaunchDarkly::Impl::DataSource::StreamProcessor).to have_received(:new).with(sdk_key, config, nil)
           end
 
           context "with polling mode" do
             let(:config) { LaunchDarkly::Config.new(stream: false) }
 
             it "creates polling processor" do
-              allow(LaunchDarkly::PollingProcessor).to receive(:new).and_call_original
+              allow(LaunchDarkly::Impl::DataSource::PollingProcessor).to receive(:new).and_call_original
               subject.start
-              expect(LaunchDarkly::PollingProcessor).to have_received(:new)
+              expect(LaunchDarkly::Impl::DataSource::PollingProcessor).to have_received(:new)
             end
           end
 
@@ -249,7 +249,7 @@ module LaunchDarkly
             diagnostic_accumulator = double("DiagnosticAccumulator")
             subject.set_diagnostic_accumulator(diagnostic_accumulator)
 
-            expect(LaunchDarkly::StreamProcessor).to receive(:new).with(sdk_key, config, diagnostic_accumulator).and_call_original
+            expect(LaunchDarkly::Impl::DataSource::StreamProcessor).to receive(:new).with(sdk_key, config, diagnostic_accumulator).and_call_original
             subject.start
           end
 
@@ -261,7 +261,7 @@ module LaunchDarkly
               subject.set_diagnostic_accumulator(diagnostic_accumulator)
 
               # PollingProcessor doesn't accept diagnostic_accumulator
-              expect(LaunchDarkly::PollingProcessor).to receive(:new).with(config, anything).and_call_original
+              expect(LaunchDarkly::Impl::DataSource::PollingProcessor).to receive(:new).with(config, anything).and_call_original
               subject.start
             end
           end

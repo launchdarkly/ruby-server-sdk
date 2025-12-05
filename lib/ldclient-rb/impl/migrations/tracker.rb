@@ -1,5 +1,6 @@
 require "set"
 require "ldclient-rb/impl/sampler"
+require "ldclient-rb/impl/util"
 require "logger"
 
 module LaunchDarkly
@@ -67,7 +68,7 @@ module LaunchDarkly
               begin
                 @consistent = is_consistent.call
               rescue => e
-                LaunchDarkly::Util.log_exception(@logger, "Exception raised during consistency check; failed to record measurement", e)
+                Impl::Util.log_exception(@logger, "Exception raised during consistency check; failed to record measurement", e)
               end
             end
           end

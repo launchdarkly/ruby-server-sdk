@@ -1,4 +1,5 @@
 require "ldclient-rb/impl/unbounded_pool"
+require "ldclient-rb/impl/util"
 
 require "securerandom"
 require "http"
@@ -21,7 +22,7 @@ module LaunchDarkly
         @logger = config.logger
         @retry_interval = retry_interval
         @http_client_pool = UnboundedPool.new(
-          lambda { LaunchDarkly::Util.new_http_client(@config.events_uri, @config) },
+          lambda { Impl::Util.new_http_client(@config.events_uri, @config) },
           lambda { |client| client.close })
       end
 
@@ -81,9 +82,9 @@ module LaunchDarkly
               end
               return EventSenderResult.new(true, false, res_time)
             end
-            must_shutdown = !LaunchDarkly::Util.http_error_recoverable?(status)
+            must_shutdown = !Impl::Util.http_error_recoverable?(status)
             can_retry = !must_shutdown && attempt == 0
-            message = LaunchDarkly::Util.http_error_message(status, "event delivery", can_retry ? "will retry" : "some events were dropped")
+            message = Impl::Util.http_error_message(status, "event delivery", can_retry ? "will retry" : "some events were dropped")
             @logger.error { "[LDClient] #{message}" }
             if must_shutdown
               return EventSenderResult.new(false, true, nil)

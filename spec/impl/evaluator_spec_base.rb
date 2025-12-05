@@ -17,7 +17,7 @@ module LaunchDarkly
       end
 
       def with_flag(flag)
-        @flags[flag[:key]] = Model.deserialize(FEATURES, flag)
+        @flags[flag[:key]] = Model.deserialize(DataStore::FEATURES, flag)
         self
       end
 
@@ -27,7 +27,7 @@ module LaunchDarkly
       end
 
       def with_segment(segment)
-        @segments[segment[:key]] = Model.deserialize(SEGMENTS, segment)
+        @segments[segment[:key]] = Model.deserialize(DataStore::SEGMENTS, segment)
         self
       end
 

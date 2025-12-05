@@ -40,7 +40,7 @@ module LaunchDarkly
         expect(subject.default_cache_store).to eq :cache
       end
       it "uses memory store if Rails is not available" do
-        expect(subject.default_cache_store).to be_an_instance_of ThreadSafeMemoryStore
+        expect(subject.default_cache_store).to be_an_instance_of Impl::ThreadSafeMemoryStore
       end
     end
     describe ".default_logger" do
