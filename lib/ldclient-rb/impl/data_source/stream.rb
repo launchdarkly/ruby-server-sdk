@@ -29,6 +29,7 @@ module LaunchDarkly
         def initialize(sdk_key, config, diagnostic_accumulator = nil)
           @sdk_key = sdk_key
           @config = config
+          @diagnostic_accumulator = diagnostic_accumulator
           @data_source_update_sink = config.data_source_update_sink
           @feature_store = config.feature_store
           @initialized = Concurrent::AtomicBoolean.new(false)

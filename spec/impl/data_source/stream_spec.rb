@@ -67,5 +67,71 @@ module LaunchDarkly
         expect(listener.statuses[1].last_error.kind).to eq(Interfaces::DataSource::ErrorInfo::INVALID_DATA)
       end
     end
+
+    describe '#log_connection_result' do
+      it "logs successful connection when diagnostic_accumulator is provided" do
+        diagnostic_accumulator = double("DiagnosticAccumulator")
+        expect(diagnostic_accumulator).to receive(:record_stream_init).with(
+          kind_of(Integer),
+          false,
+          kind_of(Integer)
+        )
+
+        processor = subject.new("sdk_key", config, diagnostic_accumulator)
+        processor.send(:log_connection_started)
+        processor.send(:log_connection_result, true)
+      end
+
+      it "logs failed connection when diagnostic_accumulator is provided" do
+        diagnostic_accumulator = double("DiagnosticAccumulator")
+        expect(diagnostic_accumulator).to receive(:record_stream_init).with(
+          kind_of(Integer),
+          true,
+          kind_of(Integer)
+        )
+
+        processor = subject.new("sdk_key", config, diagnostic_accumulator)
+        processor.send(:log_connection_started)
+        processor.send(:log_connection_result, false)
+      end
+
+      it "logs connection metrics with correct timestamp and duration" do
+        diagnostic_accumulator = double("DiagnosticAccumulator")
+
+        processor = subject.new("sdk_key", config, diagnostic_accumulator)
+
+        expect(diagnostic_accumulator).to receive(:record_stream_init) do |timestamp, failed, duration|
+          expect(timestamp).to be_a(Integer)
+          expect(timestamp).to be > 0
+          expect(failed).to eq(false)
+          expect(duration).to be_a(Integer)
+          expect(duration).to be >= 0
+        end
+
+        processor.send(:log_connection_started)
+        sleep(0.01) # Small delay to ensure measurable duration
+        processor.send(:log_connection_result, true)
+      end
+
+      it "only logs once per connection attempt" do
+        diagnostic_accumulator = double("DiagnosticAccumulator")
+        expect(diagnostic_accumulator).to receive(:record_stream_init).once
+
+        processor = subject.new("sdk_key", config, diagnostic_accumulator)
+        processor.send(:log_connection_started)
+        processor.send(:log_connection_result, true)
+        # Second call should not trigger another log
+        processor.send(:log_connection_result, true)
+      end
+
+      it "works gracefully when no diagnostic_accumulator is provided" do
+        processor = subject.new("sdk_key", config, nil)
+
+        expect {
+          processor.send(:log_connection_started)
+          processor.send(:log_connection_result, true)
+        }.not_to raise_error
+      end
+    end
   end
 end

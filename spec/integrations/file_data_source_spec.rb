@@ -191,6 +191,34 @@ EOF
         end
       end
 
+      it "does not execute commands via malicious filenames" do
+        # This tests that filenames containing shell metacharacters are treated as literal paths
+        # and do not result in command execution. The file reading should use safe methods
+        # that don't pass paths through a shell.
+        marker_file = File.join(@tmp_dir, "command_injection_marker")
+
+        # Various command injection attempts - if any command executed, it would create the marker file
+        malicious_paths = [
+          "|touch #{marker_file}",
+          ";touch #{marker_file}",
+          "$(touch #{marker_file})",
+          "`touch #{marker_file}`",
+          "& touch #{marker_file}",
+          "\ntouch #{marker_file}\n",
+        ]
+
+        malicious_paths.each do |malicious_path|
+          with_data_source({ paths: [malicious_path] }) do |ds|
+            event = ds.start
+            expect(event.set?).to eq(true)
+            # Should fail to initialize because the file doesn't exist (treated as literal path)
+            expect(ds.initialized?).to eq(false)
+            # Most importantly: no command should have been executed
+            expect(File.exist?(marker_file)).to eq(false), "Command injection detected with path: #{malicious_path}"
+          end
+        end
+      end
+
       it "sets start event and initialized on successful load" do
         file = make_temp_file(all_properties_json)
         with_data_source({ paths: [ file.path ] }) do |ds|

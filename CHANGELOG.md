@@ -2,6 +2,14 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.11.2](https://github.com/launchdarkly/ruby-server-sdk/compare/8.11.1...8.11.2) (2025-12-05)
+
+
+### Bug Fixes
+
+* Fix diagnostic logging for connection results in stream ([#343](https://github.com/launchdarkly/ruby-server-sdk/issues/343)) ([d49eaa8](https://github.com/launchdarkly/ruby-server-sdk/commit/d49eaa895ca370c219439e726771e17154709aa3))
+* Prevent command injection in FileDataSourceImpl ([#341](https://github.com/launchdarkly/ruby-server-sdk/issues/341)) ([9ca4b98](https://github.com/launchdarkly/ruby-server-sdk/commit/9ca4b985c58c62f7b8b454d43a8548924fd4715f))
+
 ## [8.11.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.11.0...8.11.1) (2025-10-10)
 
 
