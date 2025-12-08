@@ -8,7 +8,6 @@ require "thread"
 module LaunchDarkly
   module Impl
     module DataSource
-      # @api private
       class PollingProcessor
         def initialize(config, requestor)
           @config = config

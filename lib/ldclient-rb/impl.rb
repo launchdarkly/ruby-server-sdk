@@ -6,7 +6,6 @@ module LaunchDarkly
   #
   # @since 5.5.0
   # @api private
-  #
   module Impl
     # code is in ldclient-rb/impl/
   end

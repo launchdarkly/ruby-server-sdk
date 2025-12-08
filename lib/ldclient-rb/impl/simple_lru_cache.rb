@@ -3,7 +3,6 @@ module LaunchDarkly
   module Impl
     # A non-thread-safe implementation of a LRU cache set with only add and reset methods.
     # Based on https://github.com/SamSaffron/lru_redux/blob/master/lib/lru_redux/cache.rb
-    # @api private
     class SimpleLRUCacheSet
       def initialize(capacity)
         @values = {}

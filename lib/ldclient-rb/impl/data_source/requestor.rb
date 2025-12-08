@@ -9,7 +9,6 @@ require "http"
 module LaunchDarkly
   module Impl
     module DataSource
-      # @api private
       class UnexpectedResponseError < StandardError
         def initialize(status)
           @status = status
@@ -21,7 +20,6 @@ module LaunchDarkly
         end
       end
 
-      # @api private
       class Requestor
         CacheEntry = Struct.new(:etag, :body)
 

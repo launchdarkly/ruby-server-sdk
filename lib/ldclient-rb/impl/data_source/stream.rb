@@ -9,22 +9,16 @@ require "ld-eventsource"
 module LaunchDarkly
   module Impl
     module DataSource
-      # @api private
       PUT = :put
-      # @api private
       PATCH = :patch
-      # @api private
       DELETE = :delete
-      # @api private
       READ_TIMEOUT_SECONDS = 300  # 5 minutes; the stream should send a ping every 3 minutes
 
-      # @api private
       KEY_PATHS = {
         Impl::DataStore::FEATURES => "/flags/",
         Impl::DataStore::SEGMENTS => "/segments/",
       }
 
-      # @api private
       class StreamProcessor
         def initialize(sdk_key, config, diagnostic_accumulator = nil)
           @sdk_key = sdk_key

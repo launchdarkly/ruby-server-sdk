@@ -7,7 +7,6 @@ module LaunchDarkly
   module Impl
     # Simple wrapper for a FixedThreadPool that rejects new jobs if all the threads are busy, rather
     # than blocking. Also provides a way to wait for all jobs to finish without shutting down.
-    # @api private
     class NonBlockingThreadPool
       def initialize(capacity, name = 'LD/NonBlockingThreadPool')
         @capacity = capacity

@@ -13,13 +13,10 @@ module LaunchDarkly
         # The :priority and :get_dependency_keys properties are used by FeatureStoreDataSetSorter
         # to ensure data consistency during non-atomic updates.
 
-        # @api private
         FEATURES = DataKind.new(namespace: "features", priority: 1).freeze
 
-        # @api private
         SEGMENTS = DataKind.new(namespace: "segments", priority: 0).freeze
 
-        # @api private
         ALL_KINDS = [FEATURES, SEGMENTS].freeze
     end
   end

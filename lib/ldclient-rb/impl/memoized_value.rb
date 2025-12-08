@@ -4,7 +4,6 @@ module LaunchDarkly
     # Simple implementation of a thread-safe memoized value whose generator function will never be
     # run more than once, and whose value can be overridden by explicit assignment.
     # Note that we no longer use this class and it will be removed in a future version.
-    # @api private
     class MemoizedValue
       def initialize(&generator)
         @generator = generator
