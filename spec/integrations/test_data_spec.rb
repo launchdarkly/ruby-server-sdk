@@ -7,7 +7,7 @@ module LaunchDarkly
         td = Integrations::TestData.data_source
         config = Config.new(send_events: false, data_source: td)
         client = LDClient.new('sdkKey', config)
-        expect(config.feature_store.all(FEATURES)).to eql({})
+        expect(config.feature_store.all(LaunchDarkly::Impl::DataStore::FEATURES)).to eql({})
         client.close
       end
 
@@ -16,7 +16,7 @@ module LaunchDarkly
         td.update(td.flag('flag'))
         config = Config.new(send_events: false, data_source: td)
         client = LDClient.new('sdkKey', config)
-        expect(config.feature_store.get(FEATURES, 'flag').data).to eql({
+        expect(config.feature_store.get(LaunchDarkly::Impl::DataStore::FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 0 },
@@ -35,7 +35,7 @@ module LaunchDarkly
         config2 = Config.new(send_events: false, data_source: td)
         client2 = LDClient.new('sdkKey', config2)
 
-        expect(config.feature_store.get(FEATURES, 'flag').data).to eql({
+        expect(config.feature_store.get(LaunchDarkly::Impl::DataStore::FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 0 },
@@ -43,7 +43,7 @@ module LaunchDarkly
           on: true,
           version: 1,
         })
-        expect(config2.feature_store.get(FEATURES, 'flag').data).to eql({
+        expect(config2.feature_store.get(LaunchDarkly::Impl::DataStore::FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 0 },
@@ -54,7 +54,7 @@ module LaunchDarkly
 
         td.update(td.flag('flag').variation_for_all(false))
 
-        expect(config.feature_store.get(FEATURES, 'flag').data).to eql({
+        expect(config.feature_store.get(LaunchDarkly::Impl::DataStore::FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 1 },
@@ -62,7 +62,7 @@ module LaunchDarkly
           on: true,
           version: 2,
         })
-        expect(config2.feature_store.get(FEATURES, 'flag').data).to eql({
+        expect(config2.feature_store.get(LaunchDarkly::Impl::DataStore::FEATURES, 'flag').data).to eql({
           key: 'flag',
           variations: [true, false],
           fallthrough: { variation: 1 },
@@ -83,22 +83,22 @@ module LaunchDarkly
         config = Config.new(send_events: false, data_source: td)
         client = LDClient.new('sdkKey', config)
 
-        expect(config.feature_store.get(FEATURES, 'my-flag').data).to eql({
+        expect(config.feature_store.get(LaunchDarkly::Impl::DataStore::FEATURES, 'my-flag').data).to eql({
           key: 'my-flag', version: 1000, on: true
         })
-        expect(config.feature_store.get(SEGMENTS, 'my-segment').data).to eql({
+        expect(config.feature_store.get(LaunchDarkly::Impl::DataStore::SEGMENTS, 'my-segment').data).to eql({
           key: 'my-segment', version: 2000
         })
 
         td.use_preconfigured_flag({ key: 'my-flag', on: false })
 
-        expect(config.feature_store.get(FEATURES, 'my-flag').data).to eql({
+        expect(config.feature_store.get(LaunchDarkly::Impl::DataStore::FEATURES, 'my-flag').data).to eql({
           key: 'my-flag', version: 1001, on: false
         })
 
         td.use_preconfigured_segment({ key: 'my-segment', included: [ 'x' ] })
 
-        expect(config.feature_store.get(SEGMENTS, 'my-segment').data).to eql({
+        expect(config.feature_store.get(LaunchDarkly::Impl::DataStore::SEGMENTS, 'my-segment').data).to eql({
           key: 'my-segment', version: 2001, included: [ 'x' ]
         })
 

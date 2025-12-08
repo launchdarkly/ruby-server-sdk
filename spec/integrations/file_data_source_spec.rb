@@ -146,8 +146,8 @@ EOF
         file = make_temp_file('{"flagValues":{"key":"value"}}')
         with_data_source({ paths: [ file.path ] }) do |_|
           expect(@store.initialized?).to eq(false)
-          expect(@store.all(LaunchDarkly::FEATURES)).to eq({})
-          expect(@store.all(LaunchDarkly::SEGMENTS)).to eq({})
+          expect(@store.all(LaunchDarkly::Impl::DataStore::FEATURES)).to eq({})
+          expect(@store.all(LaunchDarkly::Impl::DataStore::SEGMENTS)).to eq({})
         end
       end
 
@@ -159,8 +159,8 @@ EOF
 
           ds.start
           expect(@store.initialized?).to eq(true)
-          expect(@store.all(LaunchDarkly::FEATURES).keys).to eq(all_flag_keys)
-          expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq(all_segment_keys)
+          expect(@store.all(LaunchDarkly::Impl::DataStore::FEATURES).keys).to eq(all_flag_keys)
+          expect(@store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys).to eq(all_segment_keys)
 
           expect(listener.statuses.count).to eq(1)
           expect(listener.statuses[0].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
@@ -172,8 +172,8 @@ EOF
         with_data_source({ paths: [ file.path ] }) do |ds|
           ds.start
           expect(@store.initialized?).to eq(true)
-          expect(@store.all(LaunchDarkly::FEATURES).keys).to eq(all_flag_keys)
-          expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq(all_segment_keys)
+          expect(@store.all(LaunchDarkly::Impl::DataStore::FEATURES).keys).to eq(all_flag_keys)
+          expect(@store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys).to eq(all_segment_keys)
         end
       end
 
@@ -242,8 +242,8 @@ EOF
         with_data_source({ paths: [ file1.path, file2.path ] }) do |ds|
           ds.start
           expect(@store.initialized?).to eq(true)
-          expect(@store.all(LaunchDarkly::FEATURES).keys).to eq([ full_flag_1_key.to_sym ])
-          expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq([ full_segment_1_key.to_sym ])
+          expect(@store.all(LaunchDarkly::Impl::DataStore::FEATURES).keys).to eq([ full_flag_1_key.to_sym ])
+          expect(@store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys).to eq([ full_segment_1_key.to_sym ])
         end
       end
 
@@ -267,7 +267,7 @@ EOF
         with_data_source({ paths: [ file1.path, file2.path ] }) do |ds|
           ds.start
           expect(@store.initialized?).to eq(false)
-          expect(@store.all(LaunchDarkly::FEATURES).keys).to eq([])
+          expect(@store.all(LaunchDarkly::Impl::DataStore::FEATURES).keys).to eq([])
         end
       end
 
@@ -277,11 +277,11 @@ EOF
         with_data_source({ paths: [ file.path ] }) do |ds|
           event = ds.start
           expect(event.set?).to eq(true)
-          expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq([])
+          expect(@store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys).to eq([])
 
           IO.write(file, all_properties_json)
           sleep(0.5)
-          expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq([])
+          expect(@store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys).to eq([])
         end
       end
 
@@ -292,13 +292,13 @@ EOF
         with_data_source(options) do |ds|
           event = ds.start
           expect(event.set?).to eq(true)
-          expect(@store.all(LaunchDarkly::SEGMENTS).keys).to eq([])
+          expect(@store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys).to eq([])
 
           sleep(1)
           IO.write(file, all_properties_json)
 
           max_time = 10
-          ok = wait_for_condition(10) { @store.all(LaunchDarkly::SEGMENTS).keys == all_segment_keys }
+          ok = wait_for_condition(10) { @store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys == all_segment_keys }
           expect(ok).to eq(true), "Waited #{max_time}s after modifying file and it did not reload"
         end
       end

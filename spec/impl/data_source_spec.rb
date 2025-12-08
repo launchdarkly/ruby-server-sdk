@@ -49,7 +49,7 @@ module LaunchDarkly
       describe "simple flag change listener" do
         let(:all_data) {
           {
-            LaunchDarkly::FEATURES => {
+            LaunchDarkly::Impl::DataStore::FEATURES => {
               flag1: LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 1 }),
               flag2: LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag2', version: 1 }),
               flag3: LaunchDarkly::Impl::Model::FeatureFlag.new(
@@ -75,7 +75,7 @@ module LaunchDarkly
                 }
               ),
             },
-            LaunchDarkly::SEGMENTS => {
+            LaunchDarkly::Impl::DataStore::SEGMENTS => {
               segment1: LaunchDarkly::Impl::Model::Segment.new({ key: 'segment1', version: 1 }),
               segment2: LaunchDarkly::Impl::Model::Segment.new({ key: 'segment2', version: 1 }),
             },
@@ -89,7 +89,7 @@ module LaunchDarkly
           flag_change_broadcaster.add_listener(listener)
 
           updated_data = {
-            LaunchDarkly::FEATURES => {
+            LaunchDarkly::Impl::DataStore::FEATURES => {
               flag1: LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 2 }),
               flag4: LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag4', version: 1 }),
             },
@@ -110,10 +110,10 @@ module LaunchDarkly
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.upsert(LaunchDarkly::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 2 }))
+          sink.upsert(LaunchDarkly::Impl::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 2 }))
           # TODO(sc-197908): Once the store starts returning a success status on upsert, the flag change notification
           # can start ignoring duplicate requests like this.
-          # sink.upsert(LaunchDarkly::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 2 }))
+          # sink.upsert(LaunchDarkly::Impl::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 2 }))
 
           expect(listener.statuses.count).to eq(1)
           expect(listener.statuses[0].key).to eq('flag1')
@@ -125,10 +125,10 @@ module LaunchDarkly
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.delete(LaunchDarkly::FEATURES, "flag1", 2)
+          sink.delete(LaunchDarkly::Impl::DataStore::FEATURES, "flag1", 2)
           # TODO(sc-197908): Once the store starts returning a success status on delete, the flag change notification
           # can start ignoring duplicate requests like this.
-          # sink.delete(LaunchDarkly::FEATURES, :flag1, 2)
+          # sink.delete(LaunchDarkly::Impl::DataStore::FEATURES, :flag1, 2)
 
           expect(listener.statuses.count).to eq(1)
           expect(listener.statuses[0].key).to eq("flag1")
@@ -140,7 +140,7 @@ module LaunchDarkly
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.upsert(LaunchDarkly::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment2', version: 2 }))
+          sink.upsert(LaunchDarkly::Impl::DataStore::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment2', version: 2 }))
           # TODO(sc-197908): Once the store starts returning a success status on upsert, the flag change notification
           # can start ignoring duplicate requests like this.
           # sink.upsert(LaunchDarkly::Impl::Model::Segment.new({ key: 'segment2', version: 2 }))
@@ -153,7 +153,7 @@ module LaunchDarkly
       describe "prerequisite flag change listener" do
         let(:all_data) {
           {
-            LaunchDarkly::FEATURES => {
+            LaunchDarkly::Impl::DataStore::FEATURES => {
               flag1: LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 1, prerequisites: [{key: 'flag2', variation: 0}] }),
               flag2: LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag2', version: 1,
 prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key: 'flag6', variation: 0}] }),
@@ -183,7 +183,7 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
                 }
               ),
             },
-            LaunchDarkly::SEGMENTS => {
+            LaunchDarkly::Impl::DataStore::SEGMENTS => {
               segment1: LaunchDarkly::Impl::Model::Segment.new({ key: 'segment1', version: 1 }),
               segment2: LaunchDarkly::Impl::Model::Segment.new(
                 {
@@ -218,7 +218,7 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.upsert(LaunchDarkly::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag4', version: 2 }))
+          sink.upsert(LaunchDarkly::Impl::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag4', version: 2 }))
           expect(listener.statuses.count).to eq(3)
           expect(listener.statuses[0].key).to eq('flag4')
           expect(listener.statuses[1].key).to eq('flag2')
@@ -231,7 +231,9 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.upsert(LaunchDarkly::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag3', version: 2, prerequisities: [{key: 'flag4', variation: 0}] }))
+          sink.upsert(LaunchDarkly::Impl::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({
+            key: 'flag3', version: 2, prerequisities: [{key: 'flag4', variation: 0}]
+          }))
           expect(listener.statuses.count).to eq(3)
           expect(listener.statuses[0].key).to eq('flag3')
           expect(listener.statuses[1].key).to eq('flag2')
@@ -244,7 +246,9 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.upsert(LaunchDarkly::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag2', version: 2, prerequisities: [{key: 'flag3', variation: 0}] }))
+          sink.upsert(LaunchDarkly::Impl::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({
+            key: 'flag2', version: 2, prerequisities: [{key: 'flag3', variation: 0}]
+          }))
           expect(listener.statuses.count).to eq(2)
           expect(listener.statuses[0].key).to eq('flag2')
           expect(listener.statuses[1].key).to eq('flag1')
@@ -256,7 +260,7 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.delete(LaunchDarkly::FEATURES, "flag4", 2)
+          sink.delete(LaunchDarkly::Impl::DataStore::FEATURES, "flag4", 2)
           expect(listener.statuses.count).to eq(3)
           expect(listener.statuses[0].key).to eq('flag4')
           expect(listener.statuses[1].key).to eq('flag2')
@@ -269,10 +273,10 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.upsert(LaunchDarkly::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment1', version: 2 }))
+          sink.upsert(LaunchDarkly::Impl::DataStore::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment1', version: 2 }))
           # TODO(sc-197908): Once the store starts returning a success status on upsert, the flag change notification
           # can start ignoring duplicate requests like this.
-          # sink.upsert(LaunchDarkly::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment1', version: 2 }))
+          # sink.upsert(LaunchDarkly::Impl::DataStore::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment1', version: 2 }))
 
           expect(listener.statuses.count).to eq(3)
           expect(listener.statuses[0].key).to eq('flag6')
@@ -286,10 +290,10 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           listener = ListenerSpy.new
           flag_change_broadcaster.add_listener(listener)
 
-          sink.delete(LaunchDarkly::SEGMENTS, 'segment2', 2)
+          sink.delete(LaunchDarkly::Impl::DataStore::SEGMENTS, 'segment2', 2)
           # TODO(sc-197908): Once the store starts returning a success status on upsert, the flag change notification
           # can start ignoring duplicate requests like this.
-          # sink.delete(LaunchDarkly::SEGMENTS, 'segment2', 2)
+          # sink.delete(LaunchDarkly::Impl::DataStore::SEGMENTS, 'segment2', 2)
 
           expect(listener.statuses.count).to eq(3)
           expect(listener.statuses[0].key).to eq('flag6')

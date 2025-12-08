@@ -1,5 +1,5 @@
 require 'ldclient-rb/in_memory_store'
-require 'ldclient-rb/util'
+require 'ldclient-rb/impl/util'
 
 require 'concurrent/atomics'
 require 'json'
@@ -75,14 +75,14 @@ module LaunchDarkly
 
         def load_all
           all_data = {
-            FEATURES => {},
-            SEGMENTS => {},
+            Impl::DataStore::FEATURES => {},
+            Impl::DataStore::SEGMENTS => {},
           }
           @paths.each do |path|
             begin
               load_file(path, all_data)
             rescue => exn
-              LaunchDarkly::Util.log_exception(@logger, "Unable to load flag data from \"#{path}\"", exn)
+              Impl::Util.log_exception(@logger, "Unable to load flag data from \"#{path}\"", exn)
               @data_source_update_sink&.update_status(
                 LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                 LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA, 0, exn.to_s, Time.now)
@@ -105,14 +105,14 @@ module LaunchDarkly
           parsed = parse_content(File.read(path))
           (parsed[:flags] || {}).each do |key, flag|
             flag[:version] = version
-            add_item(all_data, FEATURES, flag)
+            add_item(all_data, Impl::DataStore::FEATURES, flag)
           end
           (parsed[:flagValues] || {}).each do |key, value|
-            add_item(all_data, FEATURES, make_flag_with_value(key.to_s, value, version))
+            add_item(all_data, Impl::DataStore::FEATURES, make_flag_with_value(key.to_s, value, version))
           end
           (parsed[:segments] || {}).each do |key, segment|
             segment[:version] = version
-            add_item(all_data, SEGMENTS, segment)
+            add_item(all_data, Impl::DataStore::SEGMENTS, segment)
           end
         end
 
@@ -212,7 +212,7 @@ module LaunchDarkly
                   end
                   reloader.call if changed
                 rescue => exn
-                  LaunchDarkly::Util.log_exception(logger, "Unexpected exception in FileDataSourcePoller", exn)
+                  Impl::Util.log_exception(logger, "Unexpected exception in FileDataSourcePoller", exn)
                 end
               end
             end

@@ -1,4 +1,5 @@
 require 'thread'
+require 'ldclient-rb/impl/util'
 
 module LaunchDarkly
   module Impl
@@ -274,7 +275,7 @@ module LaunchDarkly
           begin
             result = @fn.call(@payload)
           rescue => e
-            LaunchDarkly::Util.log_exception(@logger, "Unexpected error running method for '#{origin}' origin", e)
+            Impl::Util.log_exception(@logger, "Unexpected error running method for '#{origin}' origin", e)
             result = LaunchDarkly::Result.fail("'#{origin}' operation raised an exception", e)
           end
 

@@ -1,11 +1,12 @@
+require "ldclient-rb/impl/data_source/polling"
 require "ldclient-rb/impl/model/feature_flag"
 require "ldclient-rb/impl/model/segment"
 require 'ostruct'
 require "spec_helper"
 
 module LaunchDarkly
-  describe PollingProcessor do
-    subject { PollingProcessor }
+  describe Impl::DataSource::PollingProcessor do
+    subject { Impl::DataSource::PollingProcessor }
     let(:executor) { SynchronousExecutor.new }
     let(:status_broadcaster) { Impl::Broadcaster.new(executor, $null_log) }
     let(:flag_change_broadcaster) { Impl::Broadcaster.new(executor, $null_log) }
@@ -35,10 +36,10 @@ module LaunchDarkly
       flag = Impl::Model::FeatureFlag.new({ key: 'flagkey', version: 1 })
       segment = Impl::Model::Segment.new({ key: 'segkey', version: 1 })
       all_data = {
-        FEATURES => {
+        Impl::DataStore::FEATURES => {
           flagkey: flag,
         },
-        SEGMENTS => {
+        Impl::DataStore::SEGMENTS => {
           segkey: segment,
         },
       }
@@ -49,8 +50,8 @@ module LaunchDarkly
         with_processor(store) do |processor|
           ready = processor.start
           ready.wait
-          expect(store.get(FEATURES, "flagkey")).to eq(flag)
-          expect(store.get(SEGMENTS, "segkey")).to eq(segment)
+          expect(store.get(Impl::DataStore::FEATURES, "flagkey")).to eq(flag)
+          expect(store.get(Impl::DataStore::SEGMENTS, "segkey")).to eq(segment)
         end
       end
 
@@ -74,8 +75,8 @@ module LaunchDarkly
         with_processor(store) do |processor|
           ready = processor.start
           ready.wait
-          expect(store.get(FEATURES, "flagkey")).to eq(flag)
-          expect(store.get(SEGMENTS, "segkey")).to eq(segment)
+          expect(store.get(Impl::DataStore::FEATURES, "flagkey")).to eq(flag)
+          expect(store.get(Impl::DataStore::SEGMENTS, "segkey")).to eq(segment)
 
           expect(listener.statuses.count).to eq(1)
           expect(listener.statuses[0].state).to eq(Interfaces::DataSource::Status::VALID)
@@ -99,7 +100,7 @@ module LaunchDarkly
 
     describe 'HTTP errors' do
       def verify_unrecoverable_http_error(status)
-        allow(requestor).to receive(:request_all_data).and_raise(UnexpectedResponseError.new(status))
+        allow(requestor).to receive(:request_all_data).and_raise(Impl::DataSource::UnexpectedResponseError.new(status))
         listener = ListenerSpy.new
         status_broadcaster.add_listener(listener)
 
@@ -118,7 +119,7 @@ module LaunchDarkly
       end
 
       def verify_recoverable_http_error(status)
-        allow(requestor).to receive(:request_all_data).and_raise(UnexpectedResponseError.new(status))
+        allow(requestor).to receive(:request_all_data).and_raise(Impl::DataSource::UnexpectedResponseError.new(status))
         listener = ListenerSpy.new
         status_broadcaster.add_listener(listener)
 

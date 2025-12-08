@@ -2,6 +2,9 @@ require 'concurrent'
 require 'ldclient-rb/impl/broadcaster'
 require 'ldclient-rb/impl/data_source'
 require 'ldclient-rb/impl/data_source/null_processor'
+require 'ldclient-rb/impl/data_source/polling'
+require 'ldclient-rb/impl/data_source/requestor'
+require 'ldclient-rb/impl/data_source/stream'
 require 'ldclient-rb/impl/data_store'
 require 'ldclient-rb/impl/data_system'
 require 'ldclient-rb/impl/store_client_wrapper'
@@ -149,14 +152,12 @@ module LaunchDarkly
           return LaunchDarkly::Impl::DataSource::NullUpdateProcessor.new if @config.offline? || @config.use_ldd?
 
           if @config.stream?
-            require 'ldclient-rb/stream'
-            return LaunchDarkly::StreamProcessor.new(@sdk_key, @config, @diagnostic_accumulator)
+            return LaunchDarkly::Impl::DataSource::StreamProcessor.new(@sdk_key, @config, @diagnostic_accumulator)
           end
 
           # Polling processor
-          require 'ldclient-rb/polling'
-          requestor = LaunchDarkly::Requestor.new(@sdk_key, @config)
-          LaunchDarkly::PollingProcessor.new(@config, requestor)
+          requestor = LaunchDarkly::Impl::DataSource::Requestor.new(@sdk_key, @config)
+          LaunchDarkly::Impl::DataSource::PollingProcessor.new(@config, requestor)
         end
       end
     end

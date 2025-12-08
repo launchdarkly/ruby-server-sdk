@@ -1,4 +1,4 @@
-require "ldclient-rb/util"
+require "ldclient-rb/impl/util"
 
 require "concurrent/atomics"
 
@@ -26,7 +26,7 @@ module LaunchDarkly
             begin
               @task.call
             rescue => e
-              LaunchDarkly::Util.log_exception(@logger, "Uncaught exception from repeating task", e)
+              Impl::Util.log_exception(@logger, "Uncaught exception from repeating task", e)
             end
             delta = @interval - (Time.now - started_at)
             if delta > 0
