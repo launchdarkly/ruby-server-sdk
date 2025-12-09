@@ -86,6 +86,7 @@ module LaunchDarkly
         # (see DataSystem#stop)
         def stop
           @update_processor&.stop
+          @store_wrapper.stop
           @shared_executor.shutdown
         end
 
