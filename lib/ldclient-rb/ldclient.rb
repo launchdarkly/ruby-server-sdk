@@ -2,10 +2,6 @@ require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/broadcaster"
 require "ldclient-rb/impl/context"
 require "ldclient-rb/impl/data_source"
-require "ldclient-rb/impl/data_source/null_processor"
-require "ldclient-rb/impl/data_source/polling"
-require "ldclient-rb/impl/data_source/requestor"
-require "ldclient-rb/impl/data_source/stream"
 require "ldclient-rb/impl/data_store"
 require "ldclient-rb/impl/data_system/fdv1"
 require "ldclient-rb/impl/diagnostic_events"
@@ -13,10 +9,8 @@ require "ldclient-rb/impl/evaluation_with_hook_result"
 require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/impl/flag_tracker"
 require "ldclient-rb/impl/migrations/tracker"
-require "ldclient-rb/impl/store_client_wrapper"
 require "ldclient-rb/impl/util"
 require "ldclient-rb/events"
-require "ldclient-rb/in_memory_store"
 require "concurrent"
 require "concurrent/atomics"
 require "digest/sha1"
@@ -264,7 +258,7 @@ module LaunchDarkly
     # @return [Boolean] true if the client has been initialized
     #
     def initialized?
-      @data_system.data_availability != Impl::DataSystem::DataAvailability::DEFAULTS
+      @data_system.data_availability == @data_system.target_availability
     end
 
     #
