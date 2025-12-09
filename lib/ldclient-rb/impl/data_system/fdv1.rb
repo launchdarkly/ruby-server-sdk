@@ -45,6 +45,9 @@ module LaunchDarkly
             @config.logger
           )
 
+          # Update config to use wrapped store so data sources can access it
+          @config.instance_variable_set(:@feature_store, @store_wrapper)
+
           # Create status provider with store wrapper
           @data_store_status_provider = LaunchDarkly::Impl::DataStore::StatusProvider.new(
             @store_wrapper,
@@ -156,6 +159,8 @@ module LaunchDarkly
           end
 
           # Polling processor
+          @config.logger.info { "Disabling streaming API" }
+          @config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
           requestor = LaunchDarkly::Impl::DataSource::Requestor.new(@sdk_key, @config)
           LaunchDarkly::Impl::DataSource::PollingProcessor.new(@config, requestor)
         end
