@@ -15,9 +15,10 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/launchdarkly/ruby-server-sdk"
   spec.license       = "Apache-2.0"
 
-  spec.metadata = {
-    "changelog_uri" => "https://github.com/launchdarkly/ruby-server-sdk/blob/main/CHANGELOG.md",
-  }
+  spec.metadata["bug_tracker_uri"] = "https://github.com/launchdarkly/ruby-server-sdk/issues"
+  spec.metadata["changelog_uri"] = "https://github.com/launchdarkly/ruby-server-sdk/blob/main/CHANGELOG.md"
+  spec.metadata["homepage_uri"] = spec.homepage
+  spec.metadata["source_code_uri"] = "https://github.com/launchdarkly/ruby-server-sdk"
 
   spec.files         = Dir["lib/**/*.rb", "README.md", "LICENSE.txt"]
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
