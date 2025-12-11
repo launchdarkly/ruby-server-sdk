@@ -38,9 +38,15 @@ module LaunchDarkly
             @data_store_broadcaster
           )
 
-          # Wrap the data store with client wrapper (must be created before status provider)
+          # Preserve the original unwrapped store to avoid nested wrappers on postfork
+          original_store = @config.feature_store
+          if original_store.is_a?(LaunchDarkly::Impl::FeatureStoreClientWrapper)
+            original_store = original_store.instance_variable_get(:@store)
+          end
+
+          # Wrap the original data store with client wrapper (must be created before status provider)
           @store_wrapper = LaunchDarkly::Impl::FeatureStoreClientWrapper.new(
-            @config.feature_store,
+            original_store,
             @data_store_update_sink,
             @config.logger
           )
