@@ -66,9 +66,9 @@ module LaunchDarkly
           # @raise [ArgumentError] if required fields are missing
           #
           def self.from_h(data)
-            version = data['version'] || data[:version]
-            kind = data['kind'] || data[:kind]
-            key = data['key'] || data[:key]
+            version = data[:version]
+            kind = data[:kind]
+            key = data[:key]
 
             raise ArgumentError, "Missing required fields in DeleteObject" if version.nil? || kind.nil? || key.nil?
 
@@ -139,10 +139,10 @@ module LaunchDarkly
           # @raise [ArgumentError] if required fields are missing
           #
           def self.from_h(data)
-            version = data['version'] || data[:version]
-            kind = data['kind'] || data[:kind]
-            key = data['key'] || data[:key]
-            object_data = data['object'] || data[:object]
+            version = data[:version]
+            kind = data[:kind]
+            key = data[:key]
+            object_data = data[:object]
 
             raise ArgumentError, "Missing required fields in PutObject" if version.nil? || kind.nil? || key.nil? || object_data.nil?
 
@@ -198,9 +198,9 @@ module LaunchDarkly
           # @raise [ArgumentError] if required fields are missing
           #
           def self.from_h(data)
-            reason = data['reason'] || data[:reason]
-            silent = data['silent'] || data[:silent]
-            catastrophe = data['catastrophe'] || data[:catastrophe]
+            reason = data[:reason]
+            silent = data[:silent]
+            catastrophe = data[:catastrophe]
 
             raise ArgumentError, "Missing required fields in Goodbye" if reason.nil? || silent.nil? || catastrophe.nil?
 
@@ -250,8 +250,8 @@ module LaunchDarkly
           # @raise [ArgumentError] if required fields are missing
           #
           def self.from_h(data)
-            payload_id = data['payloadId'] || data[:payloadId] || data[:payload_id]
-            reason = data['reason'] || data[:reason]
+            payload_id = data[:payloadId]
+            reason = data[:reason]
 
             raise ArgumentError, "Missing required fields in Error" if payload_id.nil? || reason.nil?
 
