@@ -73,7 +73,7 @@ module LaunchDarkly
 
           true
         rescue => e
-          LaunchDarkly::Impl.log.error { "[LDClient] Failed applying set_basis: #{e.message}" }
+          @logger.error { "[LDClient] Failed applying set_basis: #{e.message}" }
           false
         end
 
@@ -121,7 +121,7 @@ module LaunchDarkly
 
           all_decoded
         rescue => e
-          LaunchDarkly::Impl.log.error { "[LDClient] Failed decoding collection: #{e.message}" }
+          @logger.error { "[LDClient] Failed decoding collection: #{e.message}" }
           nil
         end
       end
