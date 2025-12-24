@@ -28,7 +28,7 @@ module LaunchDarkly
             items_of_kind = @items[kind]
             return nil if items_of_kind.nil?
 
-            item = items_of_kind[key.to_sym]
+            item = items_of_kind[key]
             return nil if item.nil?
             return nil if item[:deleted]
 
@@ -91,7 +91,7 @@ module LaunchDarkly
             all_decoded.each do |kind, kind_data|
               items_of_kind = @items[kind] ||= {}
               kind_data.each do |key, item|
-                items_of_kind[key.to_sym] = item
+                items_of_kind[key] = item
               end
             end
           end
