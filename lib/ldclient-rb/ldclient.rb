@@ -32,6 +32,18 @@ module LaunchDarkly
 
     def_delegators :@config, :logger
 
+    # @!method flush
+    #   Delegates to {LaunchDarkly::EventProcessorMethods#flush}.
+    def_delegator :@event_processor, :flush
+
+    # @!method data_store_status_provider
+    #   Delegates to the data system {LaunchDarkly::Impl::DataSystem#data_store_status_provider}.
+    #   @return [LaunchDarkly::Interfaces::DataStore::StatusProvider]
+    # @!method data_source_status_provider
+    #   Delegates to the data system {LaunchDarkly::Impl::DataSystem#data_source_status_provider}.
+    #   @return [LaunchDarkly::Interfaces::DataSource::StatusProvider]
+    def_delegators :@data_system, :data_store_status_provider, :data_source_status_provider
+
     #
     # Creates a new client instance that connects to LaunchDarkly. A custom
     # configuration parameter can also supplied to specify advanced options,
@@ -50,11 +62,13 @@ module LaunchDarkly
     #
     def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
       # Note that sdk_key is normally a required parameter, and a nil value would cause the SDK to
-      # fail in most configurations. However, there are some configurations where it would be OK
-      # (offline = true, *or* we are using LDD mode or the file data source and events are disabled
-      # so we're not connecting to any LD services).
+      # fail in most configurations. However, there are some configurations where it would be OK to
+      # not provide a SDK key.
+      #   * Offline mode
+      #   * Using LDD mode with events disabled
+      #   * Using a custom data source (like FileData) with events disabled
       if !config.offline? && sdk_key.nil?
-        # SDK key can be nil only if using LDD or custom data source with events disabled
+        # If the data source is nil we create a default data source which requires the SDK key.
         if config.send_events || (!config.use_ldd? && config.data_source.nil?)
           raise ArgumentError, "sdk_key must not be nil"
         end
@@ -204,22 +218,6 @@ module LaunchDarkly
       end
 
       @hooks.push(hook)
-    end
-
-    #
-    # Tells the client that all pending analytics events should be delivered as soon as possible.
-    #
-    # When the LaunchDarkly client generates analytics events (from {#variation}, {#variation_detail},
-    # {#identify}, or {#track}), they are queued on a worker thread. The event thread normally
-    # sends all queued events to LaunchDarkly at regular intervals, controlled by the
-    # {Config#flush_interval} option. Calling `flush` triggers a send without waiting for the
-    # next interval.
-    #
-    # Flushing is asynchronous, so this method will return before it is complete. However, if you
-    # call {#close}, events are guaranteed to be sent before that method returns.
-    #
-    def flush
-      @event_processor.flush
     end
 
     #
@@ -638,37 +636,6 @@ module LaunchDarkly
     # is (as far as the SDK knows) currently operational and tracking changes in this status.
     #
     attr_reader :big_segment_store_status_provider
-
-    #
-    # Returns an interface for tracking the status of a persistent data store.
-    #
-    # The {LaunchDarkly::Interfaces::DataStore::StatusProvider} has methods for
-    # checking whether the data store is (as far as the SDK knows) currently
-    # operational, tracking changes in this status, and getting cache
-    # statistics. These are only relevant for a persistent data store; if you
-    # are using an in-memory data store, then this method will return a stub
-    # object that provides no information.
-    #
-    # @return [LaunchDarkly::Interfaces::DataStore::StatusProvider]
-    #
-    def data_store_status_provider
-      @data_system.data_store_status_provider
-    end
-
-    #
-    # Returns an interface for tracking the status of the data source.
-    #
-    # The data source is the mechanism that the SDK uses to get feature flag
-    # configurations, such as a streaming connection (the default) or poll
-    # requests. The {LaunchDarkly::Interfaces::DataSource::StatusProvider} has
-    # methods for checking whether the data source is (as far as the SDK knows)
-    # currently operational and tracking changes in this status.
-    #
-    # @return [LaunchDarkly::Interfaces::DataSource::StatusProvider]
-    #
-    def data_source_status_provider
-      @data_system.data_source_status_provider
-    end
 
     #
     # Returns an interface for tracking changes in feature flag configurations.
