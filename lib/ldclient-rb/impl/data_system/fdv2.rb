@@ -343,10 +343,8 @@ module LaunchDarkly
             # Ensure we always set the ready event when exiting
             @ready_event.set
             @lock.synchronize do
-              if @active_synchronizer
-                @active_synchronizer.stop
-                @active_synchronizer = nil
-              end
+@active_synchronizer&.stop
+@active_synchronizer = nil
             end
           end
         end
