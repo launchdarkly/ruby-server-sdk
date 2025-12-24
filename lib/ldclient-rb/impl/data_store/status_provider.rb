@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "concurrent"
+require "forwardable"
 require "ldclient-rb/interfaces"
 
 module LaunchDarkly
@@ -18,15 +19,18 @@ module LaunchDarkly
       class StatusProviderV2
         include LaunchDarkly::Interfaces::DataStore::StatusProvider
 
+        extend Forwardable
+        def_delegators :@status_broadcaster, :add_listener, :remove_listener
+
         #
         # Initialize the status provider.
         #
         # @param store [Object, nil] The feature store (may be nil for in-memory only)
-        # @param listeners [LaunchDarkly::Impl::Broadcaster] Broadcaster for status changes
+        # @param status_broadcaster [LaunchDarkly::Impl::Broadcaster] Broadcaster for status changes
         #
-        def initialize(store, listeners)
+        def initialize(store, status_broadcaster)
           @store = store
-          @listeners = listeners
+          @status_broadcaster = status_broadcaster
           @lock = Concurrent::ReadWriteLock.new
           @status = LaunchDarkly::Interfaces::DataStore::Status.new(true, false)
           @monitoring_enabled = store_supports_monitoring?
@@ -43,7 +47,7 @@ module LaunchDarkly
             end
           end
 
-          @listeners.broadcast(status) if modified
+          @status_broadcaster.broadcast(status) if modified
         end
 
         # (see LaunchDarkly::Interfaces::DataStore::StatusProvider#status)
@@ -68,16 +72,6 @@ module LaunchDarkly
           return false unless @store.respond_to?(:monitoring_enabled?)
 
           @store.monitoring_enabled?
-        end
-
-        # (see LaunchDarkly::Interfaces::DataStore::StatusProvider#add_listener)
-        def add_listener(listener)
-          @listeners.add(listener)
-        end
-
-        # (see LaunchDarkly::Interfaces::DataStore::StatusProvider#remove_listener)
-        def remove_listener(listener)
-          @listeners.remove(listener)
         end
       end
     end
