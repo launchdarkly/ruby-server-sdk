@@ -91,11 +91,8 @@ module LaunchDarkly
 
         # (see DataSystem#start)
         def start
-          return @ready_event if @disabled
-
-          @logger.warn { "[LDClient] Data system is disabled, SDK will return application-defined default values" } if @disabled
-
           if @disabled
+            @logger.warn { "[LDClient] Data system is disabled, SDK will return application-defined default values" }
             @ready_event.set
             return @ready_event
           end
