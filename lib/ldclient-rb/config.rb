@@ -45,6 +45,7 @@ module LaunchDarkly
     # @option opts [Hash] :application See {#application}
     # @option opts [String] :payload_filter_key See {#payload_filter_key}
     # @option opts [Boolean] :omit_anonymous_contexts See {#omit_anonymous_contexts}
+    # @option opts [DataSystemConfig] :datasystem_config See {#datasystem_config}
     # @option hooks [Array<Interfaces::Hooks::Hook]
     # @option plugins [Array<Interfaces::Plugins::Plugin]
     #
@@ -83,6 +84,7 @@ module LaunchDarkly
       @hooks = (opts[:hooks] || []).keep_if { |hook| hook.is_a? Interfaces::Hooks::Hook }
       @plugins = (opts[:plugins] || []).keep_if { |plugin| plugin.is_a? Interfaces::Plugins::Plugin }
       @omit_anonymous_contexts = opts.has_key?(:omit_anonymous_contexts) && opts[:omit_anonymous_contexts]
+      @datasystem_config = opts[:datasystem_config]
       @data_source_update_sink = nil
       @instance_id = nil
     end
@@ -431,6 +433,15 @@ module LaunchDarkly
     #
     attr_reader :omit_anonymous_contexts
 
+    #
+    # Configuration for the upcoming enhanced data system design. This is
+    # experimental and should not be set without direction from LaunchDarkly
+    # support.
+    #
+    # @return [DataSystemConfig, nil]
+    #
+    attr_reader :datasystem_config
+
 
     #
     # The default LaunchDarkly client configuration. This configuration sets
@@ -678,5 +689,56 @@ module LaunchDarkly
     # considered out of date.
     # @return [Float]
     attr_reader :stale_after
+  end
+
+  #
+  # Configuration for LaunchDarkly's data acquisition strategy.
+  #
+  # This is not stable and is not subject to any backwards compatibility guarantees
+  # or semantic versioning. It is not suitable for production usage.
+  #
+  class DataSystemConfig
+    #
+    # @param initializers [Array<Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Initializer>, nil] The (optional) array of builder procs
+    # @param primary_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil] The (optional) builder proc for primary synchronizer
+    # @param secondary_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil] The (optional) builder proc for secondary synchronizer
+    # @param data_store_mode [Symbol] The (optional) data store mode
+    # @param data_store [LaunchDarkly::Interfaces::FeatureStore, nil] The (optional) data store
+    # @param fdv1_fallback_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
+    #   The (optional) builder proc for FDv1-compatible fallback synchronizer
+    #
+    def initialize(initializers: nil, primary_synchronizer: nil, secondary_synchronizer: nil,
+                   data_store_mode: LaunchDarkly::Interfaces::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil)
+      @initializers = initializers
+      @primary_synchronizer = primary_synchronizer
+      @secondary_synchronizer = secondary_synchronizer
+      @data_store_mode = data_store_mode
+      @data_store = data_store
+      @fdv1_fallback_synchronizer = fdv1_fallback_synchronizer
+    end
+
+    # The initializers for the data system. Each proc takes sdk_key and Config and returns an Initializer.
+    # @return [Array<Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Initializer>, nil]
+    attr_reader :initializers
+
+    # The primary synchronizer builder. Takes sdk_key and Config and returns a Synchronizer.
+    # @return [Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
+    attr_reader :primary_synchronizer
+
+    # The secondary synchronizer builder. Takes sdk_key and Config and returns a Synchronizer.
+    # @return [Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
+    attr_reader :secondary_synchronizer
+
+    # The data store mode.
+    # @return [Symbol]
+    attr_reader :data_store_mode
+
+    # The data store.
+    # @return [LaunchDarkly::Interfaces::FeatureStore, nil]
+    attr_reader :data_store
+
+    # The FDv1-compatible fallback synchronizer builder. Takes sdk_key and Config and returns a Synchronizer.
+    # @return [Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
+    attr_reader :fdv1_fallback_synchronizer
   end
 end
