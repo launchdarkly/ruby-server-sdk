@@ -699,15 +699,15 @@ module LaunchDarkly
   #
   class DataSystemConfig
     #
-    # @param initializers [Array<Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Initializer>, nil] Array of builder procs that take Config and return an Initializer
-    # @param primary_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil] Builder proc that takes Config and returns the primary Synchronizer
-    # @param secondary_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil] Builder proc that takes Config and returns the secondary Synchronizer
-    # @param data_store_mode [Symbol] The data store mode
+    # @param initializers [Array<Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Initializer>, nil] The (optional) array of builder procs
+    # @param primary_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil] The (optional) builder proc for primary synchronizer
+    # @param secondary_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil] The (optional) builder proc for secondary synchronizer
+    # @param data_store_mode [Symbol] The (optional) data store mode
     # @param data_store [LaunchDarkly::Interfaces::FeatureStore, nil] The (optional) data store
     # @param fdv1_fallback_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
     #   The (optional) builder proc for FDv1-compatible fallback synchronizer
     #
-    def initialize(initializers:, primary_synchronizer:, secondary_synchronizer:,
+    def initialize(initializers: nil, primary_synchronizer: nil, secondary_synchronizer: nil,
                    data_store_mode: LaunchDarkly::Interfaces::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil)
       @initializers = initializers
       @primary_synchronizer = primary_synchronizer

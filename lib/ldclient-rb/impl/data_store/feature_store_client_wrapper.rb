@@ -26,7 +26,7 @@ module LaunchDarkly
           @store = store
           @store_update_sink = store_update_sink
           @logger = logger
-          @monitoring_enabled = does_store_support_monitoring?
+          @monitoring_enabled = store_supports_monitoring?
 
           # Thread synchronization
           @mutex = Mutex.new
@@ -95,37 +95,37 @@ module LaunchDarkly
         # @return [void]
         #
         private def update_availability(available)
+          state_changed = false
+          poller_to_stop = nil
+
           @mutex.synchronize do
             return if available == @last_available
+
+            state_changed = true
             @last_available = available
+
+            if available
+              poller_to_stop = @poller
+              @poller = nil
+            elsif @poller.nil?
+              task = LaunchDarkly::Impl::RepeatingTask.new(0.5, 0, method(:check_availability), @logger, "LDClient/DataStoreWrapperV2#check-availability")
+              @poller = task
+              @poller.start
+            end
           end
+
+          return unless state_changed
 
           if available
             @logger.warn { "[LDClient] Persistent store is available again" }
+          else
+            @logger.warn { "[LDClient] Detected persistent store unavailability; updates will be cached until it recovers" }
           end
 
           status = LaunchDarkly::Interfaces::DataStore::Status.new(available, true)
           @store_update_sink.update_status(status)
 
-          if available
-            @mutex.synchronize do
-              return if @poller.nil?
-
-              @poller.stop
-              @poller = nil
-            end
-
-            return
-          end
-
-          @logger.warn { "[LDClient] Detected persistent store unavailability; updates will be cached until it recovers" }
-
-          task = LaunchDarkly::Impl::RepeatingTask.new(0.5, 0, method(:check_availability), @logger, "LDClient/DataStoreWrapperV2#check-availability")
-
-          @mutex.synchronize do
-            @poller = task
-            @poller.start
-          end
+          poller_to_stop.stop if poller_to_stop
         end
 
         #
@@ -156,7 +156,7 @@ module LaunchDarkly
         #
         # @return [Boolean]
         #
-        private def does_store_support_monitoring?
+        private def store_supports_monitoring?
           return false unless @store.respond_to?(:monitoring_enabled?)
           return false unless @store.respond_to?(:available?)
 

@@ -29,6 +29,7 @@ module LaunchDarkly
           @listeners = listeners
           @lock = Concurrent::ReadWriteLock.new
           @status = LaunchDarkly::Interfaces::DataStore::Status.new(true, false)
+          @monitoring_enabled = store_supports_monitoring?
         end
 
         # (see LaunchDarkly::Interfaces::DataStore::UpdateSink#update_status)
@@ -54,6 +55,15 @@ module LaunchDarkly
 
         # (see LaunchDarkly::Interfaces::DataStore::StatusProvider#monitoring_enabled?)
         def monitoring_enabled?
+          @monitoring_enabled
+        end
+
+        #
+        # Determines whether the store supports monitoring.
+        #
+        # @return [Boolean]
+        #
+        private def store_supports_monitoring?
           return false if @store.nil?
           return false unless @store.respond_to?(:monitoring_enabled?)
 

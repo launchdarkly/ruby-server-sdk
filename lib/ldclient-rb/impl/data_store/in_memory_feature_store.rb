@@ -13,7 +13,8 @@ module LaunchDarkly
       #
       class InMemoryFeatureStoreV2
         include LaunchDarkly::Interfaces::DataSystem::ReadOnlyStore
-        def initialize
+        def initialize(logger)
+          @logger = logger
           @lock = Concurrent::ReadWriteLock.new
           @initialized = Concurrent::AtomicBoolean.new(false)
           @items = {}
@@ -97,7 +98,7 @@ module LaunchDarkly
 
           true
         rescue => e
-          LaunchDarkly::Impl.log.error { "[LDClient] Failed applying apply_delta: #{e.message}" }
+          @logger.error { "[LDClient] Failed applying apply_delta: #{e.message}" }
           false
         end
 
@@ -113,8 +114,7 @@ module LaunchDarkly
           collections.each do |kind, collection|
             items_decoded = {}
             collection.each do |key, item|
-              # Items are already in decoded format for FDv2
-              items_decoded[key.to_sym] = item
+              items_decoded[key] = LaunchDarkly::Impl::Model.deserialize(kind, item, @logger)
             end
             all_decoded[kind] = items_decoded
           end

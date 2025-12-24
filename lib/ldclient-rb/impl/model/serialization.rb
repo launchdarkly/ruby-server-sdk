@@ -41,7 +41,7 @@ module LaunchDarkly
       # @return [Object] the flag or segment (or, for an unknown data kind, the data as a hash)
       def self.deserialize(kind, input, logger = nil)
         return nil if input.nil?
-        return input if !input.is_a?(String) && !input.is_a?(Hash)
+        return input unless input.is_a?(String) || input.is_a?(Hash)
         data = input.is_a?(Hash) ? input : JSON.parse(input, symbolize_names: true)
         case kind
         when Impl::DataStore::FEATURES

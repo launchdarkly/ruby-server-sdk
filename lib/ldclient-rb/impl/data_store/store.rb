@@ -36,7 +36,7 @@ module LaunchDarkly
           @persistent_store_writable = false
 
           # Source of truth for flag evaluations once initialized
-          @memory_store = InMemoryFeatureStoreV2.new
+          @memory_store = InMemoryFeatureStoreV2.new(logger)
 
           # Used to track dependencies between items in the store
           @dependency_tracker = LaunchDarkly::Impl::DependencyTracker.new
@@ -284,7 +284,7 @@ module LaunchDarkly
         # Convert a list of Changes to the pre-existing format used by FeatureStore.
         #
         # @param changes [Array<LaunchDarkly::Interfaces::DataSystem::Change>] List of changes
-        # @return [Hash{Object => Hash{String => Hash}}] Hash suitable for FeatureStore operations
+        # @return [Hash{DataKind => Hash{String => Hash}}] Hash suitable for FeatureStore operations
         #
         private def changes_to_store_data(changes)
           all_data = {
@@ -307,7 +307,7 @@ module LaunchDarkly
         #
         # Reset dependency tracker with new full data set.
         #
-        # @param all_data [Hash{Object => Hash{String => Hash}}] Hash of data kinds to items
+        # @param all_data [Hash{DataKind => Hash{String => Hash}}] Hash of data kinds to items
         # @return [void]
         #
         private def reset_dependency_tracker(all_data)
@@ -336,8 +336,8 @@ module LaunchDarkly
         #
         # Compute which items changed between old and new data sets.
         #
-        # @param old_data [Hash{Object => Hash{String => Hash}}] Old data hash
-        # @param new_data [Hash{Object => Hash{String => Hash}}] New data hash
+        # @param old_data [Hash{DataKind => Hash{String => Hash}}] Old data hash
+        # @param new_data [Hash{DataKind => Hash{String => Hash}}] New data hash
         # @return [Set<Hash>] Set of {kind:, key:} hashes
         #
         private def compute_changed_items_for_full_data_set(old_data, new_data)
