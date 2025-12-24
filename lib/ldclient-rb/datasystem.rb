@@ -205,7 +205,7 @@ module LaunchDarkly
     # @return [ConfigBuilder]
     #
     def self.daemon(store)
-      default.data_store(store, LaunchDarkly::Interfaces::DataStoreMode::READ_ONLY)
+      custom.data_store(store, LaunchDarkly::Interfaces::DataStoreMode::READ_ONLY)
     end
 
     #
