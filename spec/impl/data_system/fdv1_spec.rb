@@ -15,6 +15,33 @@ module LaunchDarkly
             subject  # Force creation of FDv1 instance
             expect(config.data_source_update_sink).to be_a(LaunchDarkly::Impl::DataSource::UpdateSink)
           end
+
+          it "wraps the feature store with FeatureStoreClientWrapper" do
+            original_store = config.feature_store
+            subject  # Force creation of FDv1 instance
+
+            wrapped_store = config.feature_store
+            expect(wrapped_store).to be_a(LaunchDarkly::Impl::FeatureStoreClientWrapper)
+            expect(wrapped_store.instance_variable_get(:@store)).to eq(original_store)
+          end
+
+          it "avoids nested wrappers when config.feature_store is already wrapped" do
+            # First initialization wraps the store
+            original_store = config.feature_store
+            first_fdv1 = FDv1.new(sdk_key, config)
+            first_wrapper = config.feature_store
+            expect(first_wrapper).to be_a(LaunchDarkly::Impl::FeatureStoreClientWrapper)
+
+            # Second initialization (simulating postfork) should unwrap and re-wrap the original
+            second_fdv1 = FDv1.new(sdk_key, config)
+            second_wrapper = config.feature_store
+            expect(second_wrapper).to be_a(LaunchDarkly::Impl::FeatureStoreClientWrapper)
+
+            # The inner store should be the original, not the first wrapper
+            inner_store = second_wrapper.instance_variable_get(:@store)
+            expect(inner_store).to eq(original_store)
+            expect(inner_store).not_to be_a(LaunchDarkly::Impl::FeatureStoreClientWrapper)
+          end
         end
 
         describe "#start" do

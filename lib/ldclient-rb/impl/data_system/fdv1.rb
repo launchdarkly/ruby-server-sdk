@@ -38,12 +38,21 @@ module LaunchDarkly
             @data_store_broadcaster
           )
 
-          # Wrap the data store with client wrapper (must be created before status provider)
+          # Preserve the original unwrapped store to avoid nested wrappers on postfork
+          original_store = @config.feature_store
+          if original_store.is_a?(LaunchDarkly::Impl::FeatureStoreClientWrapper)
+            original_store = original_store.instance_variable_get(:@store)
+          end
+
+          # Wrap the original data store with client wrapper (must be created before status provider)
           @store_wrapper = LaunchDarkly::Impl::FeatureStoreClientWrapper.new(
-            @config.feature_store,
+            original_store,
             @data_store_update_sink,
             @config.logger
           )
+
+          # Update config to use wrapped store so data sources can access it
+          @config.instance_variable_set(:@feature_store, @store_wrapper)
 
           # Create status provider with store wrapper
           @data_store_status_provider = LaunchDarkly::Impl::DataStore::StatusProvider.new(
@@ -83,6 +92,7 @@ module LaunchDarkly
         # (see DataSystem#stop)
         def stop
           @update_processor&.stop
+          @store_wrapper.stop
           @shared_executor.shutdown
         end
 
@@ -156,6 +166,8 @@ module LaunchDarkly
           end
 
           # Polling processor
+          @config.logger.info { "Disabling streaming API" }
+          @config.logger.warn { "You should only disable the streaming API if instructed to do so by LaunchDarkly support" }
           requestor = LaunchDarkly::Impl::DataSource::Requestor.new(@sdk_key, @config)
           LaunchDarkly::Impl::DataSource::PollingProcessor.new(@config, requestor)
         end

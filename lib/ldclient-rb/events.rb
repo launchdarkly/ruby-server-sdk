@@ -62,6 +62,19 @@ module LaunchDarkly
     def record_migration_op_event(event)
     end
 
+    #
+    # Tells the event processor that all pending analytics events should be delivered as soon as possible.
+    #
+    # When the LaunchDarkly client generates analytics events (from {LaunchDarkly::LDClient#variation},
+    # {LaunchDarkly::LDClient#variation_detail}, {LaunchDarkly::LDClient#identify}, or
+    # {LaunchDarkly::LDClient#track}), they are queued on a worker thread. The event thread normally
+    # sends all queued events to LaunchDarkly at regular intervals, controlled by the
+    # {LaunchDarkly::Config#flush_interval} option. Calling `flush` triggers a send without waiting
+    # for the next interval.
+    #
+    # Flushing is asynchronous, so this method will return before it is complete. However, if you
+    # call {LaunchDarkly::LDClient#close}, events are guaranteed to be sent before that method returns.
+    #
     def flush
     end
 
