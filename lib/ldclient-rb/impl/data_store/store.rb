@@ -39,7 +39,7 @@ module LaunchDarkly
           @memory_store = InMemoryFeatureStoreV2.new(logger)
 
           # Used to track dependencies between items in the store
-          @dependency_tracker = LaunchDarkly::Impl::DependencyTracker.new
+          @dependency_tracker = LaunchDarkly::Impl::DependencyTracker.new(logger)
 
           # Broadcasters for events
           @flag_change_broadcaster = flag_change_broadcaster
