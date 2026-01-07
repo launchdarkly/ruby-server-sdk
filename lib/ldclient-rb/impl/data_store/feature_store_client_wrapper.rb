@@ -67,8 +67,6 @@ module LaunchDarkly
 
         # (see LaunchDarkly::Interfaces::FeatureStore#stop)
         def stop
-          @store.stop
-
           poller_to_stop = nil
 
           @mutex.synchronize do
@@ -80,6 +78,8 @@ module LaunchDarkly
           end
 
           poller_to_stop.stop if poller_to_stop
+
+          @store.stop
         end
 
         #
