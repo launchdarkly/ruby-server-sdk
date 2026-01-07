@@ -32,6 +32,7 @@ module LaunchDarkly
           @mutex = Mutex.new
           @last_available = true
           @poller = nil
+          @closed = false
         end
 
         # (see LaunchDarkly::Interfaces::FeatureStore#init)
@@ -62,6 +63,23 @@ module LaunchDarkly
         # (see LaunchDarkly::Interfaces::FeatureStore#initialized?)
         def initialized?
           @store.initialized?
+        end
+
+        # (see LaunchDarkly::Interfaces::FeatureStore#stop)
+        def stop
+          @store.stop
+
+          poller_to_stop = nil
+
+          @mutex.synchronize do
+            return if @closed
+
+            @closed = true
+            poller_to_stop = @poller
+            @poller = nil
+          end
+
+          poller_to_stop.stop if poller_to_stop
         end
 
         #
@@ -99,6 +117,7 @@ module LaunchDarkly
           poller_to_stop = nil
 
           @mutex.synchronize do
+            return if @closed
             return if available == @last_available
 
             state_changed = true
