@@ -103,6 +103,9 @@ module LaunchDarkly
       #
       # Performs any necessary cleanup to shut down the store when the client is being shut down.
       #
+      # This method should be idempotent - it is safe to call it multiple times, and subsequent
+      # calls after the first should have no effect.
+      #
       # @return [void]
       #
       def stop

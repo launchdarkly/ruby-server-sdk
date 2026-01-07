@@ -1,9 +1,12 @@
+require "ldclient-rb/impl/model/serialization"
+
 module LaunchDarkly
   module Impl
     class DependencyTracker
-      def initialize
+      def initialize(logger = nil)
         @from = {}
         @to = {}
+        @logger = logger
       end
 
       #
@@ -11,11 +14,11 @@ module LaunchDarkly
       #
       # @param from_kind [Object] the changed item's kind
       # @param from_key [String] the changed item's key
-      # @param from_item [Object] the changed item
+      # @param from_item [Object] the changed item (can be a Hash, model object, or nil)
       #
       def update_dependencies_from(from_kind, from_key, from_item)
         from_what = { kind: from_kind, key: from_key }
-        updated_dependencies = DependencyTracker.compute_dependencies_from(from_kind, from_item)
+        updated_dependencies = DependencyTracker.compute_dependencies_from(from_kind, from_item, @logger)
 
         old_dependency_set = @from[from_what]
         unless old_dependency_set.nil?
@@ -48,19 +51,28 @@ module LaunchDarkly
 
       #
       # @param from_kind [String]
-      # @param from_item [LaunchDarkly::Impl::Model::FeatureFlag, LaunchDarkly::Impl::Model::Segment]
+      # @param from_item [Hash, LaunchDarkly::Impl::Model::FeatureFlag, LaunchDarkly::Impl::Model::Segment, nil] the item (can be a hash, model object, or nil)
+      # @param logger [Logger, nil] optional logger for deserialization
       # @return [Set]
       #
-      def self.compute_dependencies_from(from_kind, from_item)
-        return Set.new if from_item.nil?
+      def self.compute_dependencies_from(from_kind, from_item, logger = nil)
+        # Check for deleted items (matches Python: from_item.get('deleted', False))
+        return Set.new if from_item.nil? || (from_item.is_a?(Hash) && from_item[:deleted])
 
-        if from_kind == DataStore::FEATURES
+        # Deserialize hash to model object if needed (matches Python: from_kind.decode(from_item) if isinstance(from_item, dict))
+        from_item = if from_item.is_a?(Hash)
+                      LaunchDarkly::Impl::Model.deserialize(from_kind, from_item, logger)
+                    else
+                      from_item
+                    end
+
+        if from_kind == DataStore::FEATURES && from_item.is_a?(LaunchDarkly::Impl::Model::FeatureFlag)
           prereq_keys = from_item.prerequisites.map { |prereq| {kind: from_kind, key: prereq.key} }
           segment_keys = from_item.rules.flat_map { |rule| DependencyTracker.segment_keys_from_clauses(rule.clauses) }
 
           results = Set.new(prereq_keys)
           results.merge(segment_keys)
-        elsif from_kind == DataStore::SEGMENTS
+        elsif from_kind == DataStore::SEGMENTS && from_item.is_a?(LaunchDarkly::Impl::Model::Segment)
           kind_and_keys  = from_item.rules.flat_map do |rule|
             DependencyTracker.segment_keys_from_clauses(rule.clauses)
           end
