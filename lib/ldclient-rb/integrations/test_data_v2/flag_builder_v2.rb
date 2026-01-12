@@ -34,7 +34,7 @@ module LaunchDarkly
         # consider it part of the public API, but it is still called from TestDataV2.
         #
         # Creates a deep copy of the flag builder. Subsequent updates to the
-        # original `FlagBuilderV2` object will not update the copy and vise versa.
+        # original `FlagBuilderV2` object will not update the copy and vice versa.
         #
         # @api private
         # @return [FlagBuilderV2] a copy of the flag builder object
