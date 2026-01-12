@@ -57,7 +57,7 @@ module LaunchDarkly
                   return LaunchDarkly::Result.fail('TestDataV2 source has been closed')
                 end
 
-                # Get all current flags from test data
+                # Get all current flags and segments from test data
                 init_data = @test_data.make_init_data
                 version = @test_data.get_version
 
@@ -66,12 +66,22 @@ module LaunchDarkly
                 builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
 
                 # Add all flags to the changeset
-                init_data.each do |key, flag_data|
+                init_data[:flags].each do |key, flag_data|
                   builder.add_put(
                     LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
                     key,
                     flag_data[:version] || 1,
                     flag_data
+                  )
+                end
+
+                # Add all segments to the changeset
+                init_data[:segments].each do |key, segment_data|
+                  builder.add_put(
+                    LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
+                    key,
+                    segment_data[:version] || 1,
+                    segment_data
                   )
                 end
 
@@ -208,6 +218,61 @@ module LaunchDarkly
                     LaunchDarkly::Interfaces::DataSource::ErrorInfo::STORE_ERROR,
                     0,
                     "Error processing flag update: #{e.message}",
+                    Time.now
+                  )
+                )
+                @update_queue.push(error_update)
+              end
+            end
+          end
+
+          #
+          # Called by TestDataV2 when a segment is updated.
+          #
+          # This method converts the segment update into an FDv2 changeset and
+          # queues it for delivery through the sync() generator.
+          #
+          # @param segment_data [Hash] the segment data
+          # @return [void]
+          #
+          def upsert_segment(segment_data)
+            @lock.synchronize do
+              return if @closed
+
+              begin
+                version = @test_data.get_version
+
+                # Build a changes transfer changeset
+                builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
+                builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES)
+
+                # Add the updated segment
+                builder.add_put(
+                  LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
+                  segment_data[:key],
+                  segment_data[:version] || 1,
+                  segment_data
+                )
+
+                # Create selector for this version
+                selector = LaunchDarkly::Interfaces::DataSystem::Selector.new_selector(version.to_s, version)
+                change_set = builder.finish(selector)
+
+                # Queue the update
+                update = LaunchDarkly::Interfaces::DataSystem::Update.new(
+                  state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
+                  change_set: change_set
+                )
+
+                @update_queue.push(update)
+              rescue => e
+                # Queue an error update
+                error_update = LaunchDarkly::Interfaces::DataSystem::Update.new(
+                  state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                  error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
+                    LaunchDarkly::Interfaces::DataSource::ErrorInfo::STORE_ERROR,
+                    0,
+                    "Error processing segment update: #{e.message}",
                     Time.now
                   )
                 )

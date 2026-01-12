@@ -708,7 +708,7 @@ module LaunchDarkly
     #   The (optional) builder proc for FDv1-compatible fallback synchronizer
     #
     def initialize(initializers: nil, primary_synchronizer: nil, secondary_synchronizer: nil,
-                   data_store_mode: LaunchDarkly::Interfaces::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil)
+                   data_store_mode: LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil)
       @initializers = initializers
       @primary_synchronizer = primary_synchronizer
       @secondary_synchronizer = secondary_synchronizer

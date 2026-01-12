@@ -60,6 +60,7 @@ module LaunchDarkly
       def initialize
         @flag_builders = Hash.new
         @current_flags = Hash.new
+        @current_segments = Hash.new
         @lock = Concurrent::ReadWriteLock.new
         @instances = Array.new
         @version = 0
@@ -114,6 +115,7 @@ module LaunchDarkly
       #
       def update(flag_builder)
         instances_copy = []
+        new_flag = nil
         @lock.with_write_lock do
           old_flag = @current_flags[flag_builder._key]
           old_version = old_flag ? old_flag[:version] : 0
@@ -137,7 +139,10 @@ module LaunchDarkly
       # @api private
       def make_init_data
         @lock.with_read_lock do
-          @current_flags.dup
+          {
+            flags: @current_flags.dup,
+            segments: @current_segments.dup,
+          }
         end
       end
 
@@ -151,6 +156,7 @@ module LaunchDarkly
       end
 
       # @api private
+      # @param instance [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] the TestDataSourceV2 instance to remove
       def closed_instance(instance)
         @lock.with_write_lock do
           @instances.delete(instance) if @instances.include?(instance)
@@ -158,6 +164,7 @@ module LaunchDarkly
       end
 
       # @api private
+      # @param instance [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] the TestDataSourceV2 instance to add
       def add_instance(instance)
         @lock.with_write_lock do
           @instances.push(instance)
@@ -165,22 +172,69 @@ module LaunchDarkly
       end
 
       #
+      # Copies a full segment data model object into the test data.
+      #
+      # It immediately propagates the change to any `LDClient` instance(s) that you have already
+      # configured to use this `TestDataV2`. If no `LDClient` has been started yet, it simply adds
+      # this segment to the test data which will be provided to any LDClient that you subsequently
+      # configure.
+      #
+      # This method is currently the only way to inject segment data, since there is no builder
+      # API for segments. It is mainly intended for the SDK's own tests of segment functionality,
+      # since application tests that need to produce a desired evaluation state could do so more easily
+      # by just setting flag values.
+      #
+      # @param segment [Hash] the segment configuration
+      # @return [TestDataV2] the TestDataV2 instance
+      #
+      def use_preconfigured_segment(segment)
+        instances_copy = []
+        segment_key = nil
+        updated_segment = nil
+
+        @lock.with_write_lock do
+          # Convert to hash if needed
+          segment_hash = segment.is_a?(Hash) ? segment : segment.as_json
+          segment_key = segment_hash[:key]
+
+          old_segment = @current_segments[segment_key]
+          old_version = old_segment ? old_segment[:version] : 0
+
+          updated_segment = segment_hash.dup
+          updated_segment[:version] = old_version + 1
+
+          @current_segments[segment_key] = updated_segment
+
+          # Create a copy of instances while holding the lock to avoid race conditions
+          instances_copy = @instances.dup
+        end
+
+        instances_copy.each do |instance|
+          instance.upsert_segment(updated_segment)
+        end
+
+        self
+      end
+
+      #
       # Creates an initializer that can be used with the FDv2 data system.
       #
+      # @param sdk_key [String] the SDK key
       # @param config [LaunchDarkly::Config] the SDK configuration
       # @return [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] a test data initializer
       #
-      def build_initializer(config)
+      def build_initializer(sdk_key, config)
         LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(self)
       end
 
       #
       # Creates a synchronizer that can be used with the FDv2 data system.
       #
+      # @param sdk_key [String] the SDK key
       # @param config [LaunchDarkly::Config] the SDK configuration
       # @return [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] a test data synchronizer
       #
-      def build_synchronizer(config)
+      def build_synchronizer(sdk_key, config)
         LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(self)
       end
     end
