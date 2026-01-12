@@ -9,6 +9,11 @@ module LaunchDarkly
       TRUE_VARIATION_INDEX = 0
       FALSE_VARIATION_INDEX = 1
 
+      # @api private
+      def self.variation_for_boolean(variation)
+        variation ? TRUE_VARIATION_INDEX : FALSE_VARIATION_INDEX
+      end
+
       #
       # A builder for feature flag configurations to be used with {TestDataV2}.
       #
@@ -82,7 +87,7 @@ module LaunchDarkly
         #
         def fallthrough_variation(variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
-            boolean_flag.fallthrough_variation(variation_for_boolean(variation))
+            boolean_flag.fallthrough_variation(TestDataV2.variation_for_boolean(variation))
           else
             @_fallthrough_variation = variation
             self
@@ -102,7 +107,7 @@ module LaunchDarkly
         #
         def off_variation(variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
-            boolean_flag.off_variation(variation_for_boolean(variation))
+            boolean_flag.off_variation(TestDataV2.variation_for_boolean(variation))
           else
             @_off_variation = variation
             self
@@ -162,7 +167,7 @@ module LaunchDarkly
         #
         def variation_for_all(variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
-            return boolean_flag.variation_for_all(variation_for_boolean(variation))
+            return boolean_flag.variation_for_all(TestDataV2.variation_for_boolean(variation))
           end
 
           clear_rules.clear_targets.on(true).fallthrough_variation(variation)
@@ -221,7 +226,7 @@ module LaunchDarkly
         #
         def variation_for_key(context_kind, context_key, variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
-            return boolean_flag.variation_for_key(context_kind, context_key, variation_for_boolean(variation))
+            return boolean_flag.variation_for_key(context_kind, context_key, TestDataV2.variation_for_boolean(variation))
           end
 
           targets = @_targets[context_kind]
@@ -387,18 +392,15 @@ module LaunchDarkly
           base_flag_object
         end
 
-        private def variation_for_boolean(variation)
-          variation ? TRUE_VARIATION_INDEX : FALSE_VARIATION_INDEX
+      # @api private
+        def add_rule(flag_rule_builder)
+          @_rules << flag_rule_builder
         end
 
         private def boolean_flag?
           @_variations.length == 2 &&
             @_variations[TRUE_VARIATION_INDEX] == true &&
             @_variations[FALSE_VARIATION_INDEX] == false
-        end
-
-        private def add_rule(flag_rule_builder)
-          @_rules << flag_rule_builder
         end
 
         private def deep_copy_targets
@@ -545,7 +547,7 @@ module LaunchDarkly
         def then_return(variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
             @_flag_builder.boolean_flag
-            return then_return(variation_for_boolean(variation))
+            return then_return(TestDataV2.variation_for_boolean(variation))
           end
 
           @_variation = variation
@@ -568,10 +570,6 @@ module LaunchDarkly
             variation: @_variation,
             clauses: @_clauses,
           }
-        end
-
-        private def variation_for_boolean(variation)
-          variation ? TRUE_VARIATION_INDEX : FALSE_VARIATION_INDEX
         end
       end
     end
