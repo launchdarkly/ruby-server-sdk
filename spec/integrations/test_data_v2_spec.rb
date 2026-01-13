@@ -55,8 +55,8 @@ module LaunchDarkly
           # Verify the changeset contains both flags and segments
           expect(change_set.changes.length).to eq(2)
 
-          flag_change = change_set.changes.find { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG }
-          segment_change = change_set.changes.find { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT }
+          flag_change = change_set.changes.detect { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG }
+          segment_change = change_set.changes.detect { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT }
 
           expect(flag_change).not_to be_nil
           expect(flag_change.key).to eq('my-flag')
@@ -93,7 +93,7 @@ module LaunchDarkly
           expect(updates[1].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
 
           # Check that the second update contains the segment
-          segment_change = updates[1].change_set.changes.find { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT }
+          segment_change = updates[1].change_set.changes.detect { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT }
           expect(segment_change).not_to be_nil
           expect(segment_change.key).to eq('test-segment')
         end
