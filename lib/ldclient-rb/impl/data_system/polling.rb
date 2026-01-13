@@ -56,7 +56,7 @@ module LaunchDarkly
           @requester = requester
           @poll_interval = poll_interval
           @logger = logger
-          @wake_event = Concurrent::Event.new
+          @interrupt_event = Concurrent::Event.new
           @stop = Concurrent::Event.new
           @name = "PollingDataSourceV2"
         end
@@ -82,7 +82,7 @@ module LaunchDarkly
         def sync(ss)
           @logger.info { "[LDClient] Starting PollingDataSourceV2 synchronizer" }
           @stop.reset
-          @wake_event.reset
+          @interrupt_event.reset
 
           until @stop.set?
             result = @requester.fetch(ss.selector)
@@ -156,7 +156,7 @@ module LaunchDarkly
               )
             end
 
-            break if @wake_event.wait(@poll_interval)
+            break if @interrupt_event.wait(@poll_interval)
           end
         end
 
@@ -165,7 +165,7 @@ module LaunchDarkly
         #
         def stop
           @logger.info { "[LDClient] Stopping PollingDataSourceV2 synchronizer" }
-          @wake_event.set
+          @interrupt_event.set
           @stop.set
         end
 
