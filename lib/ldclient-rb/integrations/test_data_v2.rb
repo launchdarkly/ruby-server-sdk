@@ -184,7 +184,8 @@ module LaunchDarkly
       # since application tests that need to produce a desired evaluation state could do so more easily
       # by just setting flag values.
       #
-      # @param segment [Hash] the segment configuration
+      # @param segment [Hash, LaunchDarkly::Impl::Model::Segment] the segment configuration as a hash or
+      #   a Segment model object.
       # @return [TestDataV2] the TestDataV2 instance
       #
       def use_preconfigured_segment(segment)
@@ -193,8 +194,12 @@ module LaunchDarkly
         updated_segment = nil
 
         @lock.with_write_lock do
-          # Convert to hash if needed
-          segment_hash = segment.is_a?(Hash) ? segment : segment.as_json
+          # Convert to hash and normalize keys to symbols
+          segment_hash = if segment.is_a?(Hash)
+            segment.transform_keys(&:to_sym)
+          else
+            segment.as_json
+          end
           segment_key = segment_hash[:key]
 
           old_segment = @current_segments[segment_key]

@@ -30,6 +30,18 @@ module LaunchDarkly
         expect(init_data[:segments]['my-segment'][:included]).to eq(['user1'])
       end
 
+      it 'handles segments with string-keyed hashes' do
+        td = TestDataV2.data_source
+        # Use string keys instead of symbol keys
+        td.use_preconfigured_segment({ 'key' => 'my-segment', 'version' => 100, 'included' => ['user1'], 'excluded' => ['user2'] })
+        init_data = td.make_init_data
+        expect(init_data[:segments].keys).to include('my-segment')
+        expect(init_data[:segments]['my-segment'][:key]).to eq('my-segment')
+        expect(init_data[:segments]['my-segment'][:version]).to eq(1)
+        expect(init_data[:segments]['my-segment'][:included]).to eq(['user1'])
+        expect(init_data[:segments]['my-segment'][:excluded]).to eq(['user2'])
+      end
+
       it 'increments segment version on update' do
         td = TestDataV2.data_source
         td.use_preconfigured_segment({ key: 'my-segment', version: 100 })
