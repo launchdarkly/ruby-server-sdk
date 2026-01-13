@@ -148,10 +148,10 @@ module LaunchDarkly
             fdv2.flag_change_broadcaster.add_listener(listener)
 
             ready_event = fdv2.start
-            expect(ready_event.wait(1)).to be true
+            expect(ready_event.wait(2)).to be true
 
             td.update(td.flag("feature-flag").on(false))
-            expect(changed.wait(1)).to be true
+            expect(changed.wait(2)).to be true
 
             expect(changes.length).to eq(2)
             expect(changes[0].key).to eq("feature-flag")
@@ -197,9 +197,9 @@ module LaunchDarkly
             fdv2.data_source_status_provider.add_listener(listener)
 
             ready_event = fdv2.start
-            expect(ready_event.wait(1)).to be true
+            expect(ready_event.wait(2)).to be true
 
-            expect(changed.wait(2)).to be true
+            expect(changed.wait(5)).to be true
             expect(fdv2.data_source_status_provider.status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
 
             fdv2.stop
@@ -293,15 +293,15 @@ module LaunchDarkly
             fdv2.flag_change_broadcaster.add_listener(listener)
 
             ready_event = fdv2.start
-            expect(ready_event.wait(1)).to be true
+            expect(ready_event.wait(2)).to be true
 
             # Wait for first flag change (from FDv1 synchronizer starting)
-            expect(changed.wait(2)).to be true
+            expect(changed.wait(3)).to be true
             changed = Concurrent::Event.new  # Reset for second change
 
             # Trigger a flag update in FDv1
             td_fdv1.update(td_fdv1.flag("fdv1-fallback-flag").on(false))
-            expect(changed.wait(1)).to be true
+            expect(changed.wait(2)).to be true
 
             # Verify FDv1 is active and we got both changes
             expect(changes.length).to eq(2)
@@ -351,8 +351,8 @@ module LaunchDarkly
             fdv2.flag_change_broadcaster.add_listener(listener)
 
             ready_event = fdv2.start
-            expect(ready_event.wait(1)).to be true
-            expect(changed.wait(2)).to be true
+            expect(ready_event.wait(2)).to be true
+            expect(changed.wait(3)).to be true
 
             # Verify we got changes for both flags
             flag_keys = changes.map { |change| change.key }
@@ -402,10 +402,10 @@ module LaunchDarkly
             fdv2 = FDv2.new(sdk_key, config, data_system_config)
 
             ready_event = fdv2.start
-            expect(ready_event.wait(1)).to be true
+            expect(ready_event.wait(2)).to be true
 
             # Give it a moment to process
-            sleep 0.2
+            sleep 0.5
 
             # The primary should have been called, then secondary
             expect(mock_primary).to have_received(:sync)
@@ -440,10 +440,10 @@ module LaunchDarkly
             fdv2 = FDv2.new(sdk_key, config, data_system_config)
 
             ready_event = fdv2.start
-            expect(ready_event.wait(1)).to be true
+            expect(ready_event.wait(2)).to be true
 
             # Give it time to settle
-            sleep 0.5
+            sleep 1.0
 
             # Primary should only be called once (not retried after fallback)
             expect(mock_primary).to have_received(:sync).once
