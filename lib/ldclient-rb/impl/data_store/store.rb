@@ -328,7 +328,7 @@ module LaunchDarkly
         private def send_change_events(affected_items)
           affected_items.each do |item|
             if item[:kind] == FEATURES
-              @flag_change_broadcaster.broadcast(item[:key])
+              @flag_change_broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new(item[:key]))
             end
           end
         end

@@ -19,7 +19,7 @@ module LaunchDarkly
         @primary_synchronizer = nil
         @secondary_synchronizer = nil
         @fdv1_fallback_synchronizer = nil
-        @data_store_mode = LaunchDarkly::Interfaces::DataStoreMode::READ_ONLY
+        @data_store_mode = LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY
         @data_store = nil
       end
 
@@ -205,7 +205,7 @@ module LaunchDarkly
     # @return [ConfigBuilder]
     #
     def self.daemon(store)
-      custom.data_store(store, LaunchDarkly::Interfaces::DataStoreMode::READ_ONLY)
+      custom.data_store(store, LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY)
     end
 
     #
@@ -219,7 +219,7 @@ module LaunchDarkly
     # @return [ConfigBuilder]
     #
     def self.persistent_store(store)
-      default.data_store(store, LaunchDarkly::Interfaces::DataStoreMode::READ_WRITE)
+      default.data_store(store, LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_WRITE)
     end
   end
 end
