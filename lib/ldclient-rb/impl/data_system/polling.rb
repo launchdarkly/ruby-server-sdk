@@ -14,8 +14,8 @@ require "http"
 module LaunchDarkly
   module Impl
     module DataSystem
-      POLLING_ENDPOINT = "/sdk/poll"
-      LATEST_ALL_URI = "/sdk/latest-all"
+      FDV2_POLLING_ENDPOINT = "/sdk/poll"
+      FDV1_POLLING_ENDPOINT = "/sdk/latest-all"
 
       LD_ENVID_HEADER = "x-launchdarkly-env-id"
       LD_FD_FALLBACK_HEADER = "x-launchdarkly-fd-fallback"
@@ -56,7 +56,7 @@ module LaunchDarkly
           @requester = requester
           @poll_interval = poll_interval
           @logger = logger
-          @event = Concurrent::Event.new
+          @wake_event = Concurrent::Event.new
           @stop = Concurrent::Event.new
           @name = "PollingDataSourceV2"
         end
@@ -82,6 +82,7 @@ module LaunchDarkly
         def sync(ss)
           @logger.info { "[LDClient] Starting PollingDataSourceV2 synchronizer" }
           @stop.reset
+          @wake_event.reset
 
           until @stop.set?
             result = @requester.fetch(ss.selector)
@@ -155,7 +156,7 @@ module LaunchDarkly
               )
             end
 
-            break if @event.wait(@poll_interval)
+            break if @wake_event.wait(@poll_interval)
           end
         end
 
@@ -164,7 +165,7 @@ module LaunchDarkly
         #
         def stop
           @logger.info { "[LDClient] Stopping PollingDataSourceV2 synchronizer" }
-          @event.set
+          @wake_event.set
           @stop.set
         end
 
@@ -223,7 +224,7 @@ module LaunchDarkly
           @etag = nil
           @config = config
           @sdk_key = sdk_key
-          @poll_uri = config.base_uri + POLLING_ENDPOINT
+          @poll_uri = config.base_uri + FDV2_POLLING_ENDPOINT
           @http_client = Impl::Util.new_http_client(config.base_uri, config)
             .use(:auto_inflate)
             .headers("Accept-Encoding" => "gzip")
@@ -275,7 +276,7 @@ module LaunchDarkly
 
             @config.logger.debug { "[LDClient] #{uri} response status:[#{status}] ETag:[#{etag}]" }
 
-            changeset_result = polling_payload_to_changeset(data)
+            changeset_result = LaunchDarkly::Impl::DataSystem.polling_payload_to_changeset(data)
             if changeset_result.success?
               LaunchDarkly::Result.success([changeset_result.value, response_headers])
             else
@@ -285,13 +286,6 @@ module LaunchDarkly
             LaunchDarkly::Result.fail("Failed to parse JSON: #{e.message}", e)
           rescue => e
             LaunchDarkly::Result.fail("Network error: #{e.message}", e)
-          end
-        end
-
-        def stop
-          begin
-            @http_client.close
-          rescue
           end
         end
       end
@@ -311,7 +305,7 @@ module LaunchDarkly
           @etag = nil
           @config = config
           @sdk_key = sdk_key
-          @poll_uri = config.base_uri + LATEST_ALL_URI
+          @poll_uri = config.base_uri + FDV1_POLLING_ENDPOINT
           @http_client = Impl::Util.new_http_client(config.base_uri, config)
             .use(:auto_inflate)
             .headers("Accept-Encoding" => "gzip")
@@ -359,7 +353,7 @@ module LaunchDarkly
 
             @config.logger.debug { "[LDClient] #{uri} response status:[#{status}] ETag:[#{etag}]" }
 
-            changeset_result = fdv1_polling_payload_to_changeset(data)
+            changeset_result = LaunchDarkly::Impl::DataSystem.fdv1_polling_payload_to_changeset(data)
             if changeset_result.success?
               LaunchDarkly::Result.success([changeset_result.value, response_headers])
             else
@@ -369,13 +363,6 @@ module LaunchDarkly
             LaunchDarkly::Result.fail("Failed to parse JSON: #{e.message}", e)
           rescue => e
             LaunchDarkly::Result.fail("Network error: #{e.message}", e)
-          end
-        end
-
-        def stop
-          begin
-            @http_client.close
-          rescue
           end
         end
       end
