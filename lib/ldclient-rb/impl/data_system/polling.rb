@@ -123,6 +123,7 @@ module LaunchDarkly
                     error: error_info,
                     environment_id: envid
                   )
+                  @interrupt_event.wait(@poll_interval)
                   next
                 end
 
