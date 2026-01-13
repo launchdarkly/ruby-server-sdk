@@ -40,7 +40,8 @@ module LaunchDarkly
           expect(result).not_to be_nil
           expect(result.value.intent_code).to eq(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_NONE)
           expect(result.value.changes.length).to eq(0)
-          expect(result.value.selector).to be_nil
+          expect(result.value.selector).not_to be_nil
+          expect(result.value.selector.defined?).to eq(false)
         end
 
         it "transfer full with empty payload" do

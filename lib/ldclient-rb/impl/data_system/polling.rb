@@ -197,7 +197,7 @@ module LaunchDarkly
 
           basis = LaunchDarkly::Interfaces::DataSystem::Basis.new(
             change_set: change_set,
-            persist: !change_set.selector.nil?,
+            persist: change_set.selector.defined?,
             environment_id: env_id
           )
 

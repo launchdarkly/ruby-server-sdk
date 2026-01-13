@@ -464,7 +464,7 @@ module LaunchDarkly
         def self.no_changes
           ChangeSet.new(
             intent_code: IntentCode::TRANSFER_NONE,
-            selector: nil,
+            selector: Selector.no_selector,
             changes: []
           )
         end
