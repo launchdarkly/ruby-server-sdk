@@ -35,26 +35,20 @@ module LaunchDarkly
           @_rules = []
         end
 
-        # Note that copy is private by convention, because we don't want developers to
-        # consider it part of the public API, but it is still called from TestDataV2.
+        # Creates a deep copy of the flag builder when the object is duplicated or cloned.
+        # Subsequent updates to the original `FlagBuilderV2` object will not update the
+        # copy and vice versa.
         #
-        # Creates a deep copy of the flag builder. Subsequent updates to the
-        # original `FlagBuilderV2` object will not update the copy and vice versa.
+        # This method is automatically invoked by Ruby's `dup` and `clone` methods.
+        # Immutable instance variables (strings, numbers, booleans, nil) are automatically
+        # copied by the `super` call. Only mutable collections need explicit deep copying.
         #
         # @api private
-        # @return [FlagBuilderV2] a copy of the flag builder object
-        #
-        def copy
-          to = FlagBuilderV2.new(@_key)
-
-          to.instance_variable_set(:@_on, @_on)
-          to.instance_variable_set(:@_variations, @_variations.dup)
-          to.instance_variable_set(:@_off_variation, @_off_variation)
-          to.instance_variable_set(:@_fallthrough_variation, @_fallthrough_variation)
-          to.instance_variable_set(:@_targets, deep_copy_targets)
-          to.instance_variable_set(:@_rules, @_rules.dup)
-
-          to
+        def initialize_copy(other)
+          super(other)
+          @_variations = @_variations.clone
+          @_targets = deep_copy_targets
+          @_rules = deep_copy_rules
         end
 
         #
@@ -408,10 +402,14 @@ module LaunchDarkly
           @_targets.each do |k, v|
             to[k] = {}
             v.each do |var_idx, keys|
-              to[k][var_idx] = keys.dup
+              to[k][var_idx] = keys.clone
             end
           end
           to
+        end
+
+        private def deep_copy_rules
+          @_rules.map(&:clone)
         end
       end
 
@@ -437,6 +435,12 @@ module LaunchDarkly
           @_flag_builder = flag_builder
           @_clauses = []
           @_variation = nil
+        end
+
+        # @api private
+        def initialize_copy(other)
+          super(other)
+          @_clauses = @_clauses.map(&:clone)
         end
 
         #

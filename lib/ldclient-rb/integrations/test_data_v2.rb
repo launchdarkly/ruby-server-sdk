@@ -94,7 +94,7 @@ module LaunchDarkly
         if existing_builder.nil?
           LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2.new(key).boolean_flag
         else
-          existing_builder.copy
+          existing_builder.clone
         end
       end
 
@@ -123,7 +123,7 @@ module LaunchDarkly
           new_flag = flag_builder.build(old_version + 1)
 
           @current_flags[flag_builder._key] = new_flag
-          @flag_builders[flag_builder._key] = flag_builder.copy
+          @flag_builders[flag_builder._key] = flag_builder.clone
 
           # Create a copy of instances while holding the lock to avoid race conditions
           instances_copy = @instances.dup
