@@ -15,7 +15,7 @@ module LaunchDarkly
   module Impl
     module DataSystem
       FDV2_STREAMING_ENDPOINT = "/sdk/stream"
-      
+
       # Allows for up to 5 minutes to elapse without any data sent across the stream.
       # The heartbeats sent as comments on the stream will keep this from triggering.
       STREAM_READ_TIMEOUT = 5 * 60
@@ -110,12 +110,12 @@ module LaunchDarkly
 
             @sse.on_error do |error|
               log_connection_result(false)
-              
+
               # Extract envid from error headers if available
               if error.respond_to?(:headers) && error.headers
                 envid_from_error = error.headers[LD_ENVID_HEADER]
                 envid = envid_from_error if envid_from_error
-                
+
                 if error.headers[LD_FD_FALLBACK_HEADER] == 'true'
                   fallback = true
                 end
@@ -167,12 +167,12 @@ module LaunchDarkly
 
               conn.on_error do |error|
                 log_connection_result(false)
-                
+
                 # Extract envid from error headers if available
                 if error.respond_to?(:headers) && error.headers
                   envid_from_error = error.headers[LD_ENVID_HEADER]
                   envid = envid_from_error if envid_from_error
-                  
+
                   if error.headers[LD_FD_FALLBACK_HEADER] == 'true'
                     fallback = true
                   end
@@ -206,17 +206,17 @@ module LaunchDarkly
           uri = @config.stream_uri + FDV2_STREAMING_ENDPOINT
           query_params = []
           query_params << ["filter", @config.payload_filter_key] unless @config.payload_filter_key.nil?
-          
+
           selector = ss.selector
           if selector && selector.defined?
             query_params << ["basis", selector.state]
           end
-          
+
           if query_params.any?
             filter_query = URI.encode_www_form(query_params)
             uri = "#{uri}?#{filter_query}"
           end
-          
+
           uri
         end
 
@@ -230,7 +230,7 @@ module LaunchDarkly
         #
         def process_message(message, change_set_builder, envid)
           event_type = message.type
-          
+
           # Handle heartbeat - SSE library may use symbol or string
           if event_type == :heartbeat || event_type == LaunchDarkly::Interfaces::DataSystem::EventName::HEARTBEAT
             return nil
@@ -275,7 +275,7 @@ module LaunchDarkly
           when LaunchDarkly::Interfaces::DataSystem::EventName::ERROR
             error = LaunchDarkly::Impl::DataSystem::ProtocolV2::Error.from_h(JSON.parse(message.data, symbolize_names: true))
             @logger.error { "[LDClient] Error on #{error.payload_id}: #{error.reason}" }
-            
+
             # Reset any previous change events but continue with last server intent
             change_set_builder.reset
             nil
@@ -343,7 +343,7 @@ module LaunchDarkly
 
             http_error_message_result = Impl::Util.http_error_message(error.status, "stream connection", "will retry")
             is_recoverable = Impl::Util.http_error_recoverable?(error.status)
-            
+
             update = LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: is_recoverable ? LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED : LaunchDarkly::Interfaces::DataSource::Status::OFF,
               error: error_info,
@@ -361,7 +361,7 @@ module LaunchDarkly
 
           when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError
             @logger.warn { "[LDClient] Network error on stream connection: #{error}, will retry" }
-            
+
             update = LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
               error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(

@@ -45,7 +45,7 @@ module LaunchDarkly
           def start
             @events.each do |item|
               break if @closed
-              
+
               if item.is_a?(Exception)
                 @error_callback&.call(item)
               else
@@ -96,7 +96,7 @@ module LaunchDarkly
             events = [
               MockSSEEvent.new(:unknown_type, "{}"),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -117,7 +117,7 @@ module LaunchDarkly
               MockSSEEvent.new(:heartbeat),
               MockSSEEvent.new(LaunchDarkly::Interfaces::DataSystem::EventName::HEARTBEAT),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -142,14 +142,14 @@ module LaunchDarkly
                 reason: "up-to-date"
               )
             )
-            
+
             events = [
               MockSSEEvent.new(
                 LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
                 JSON.generate(server_intent.to_h)
               ),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -181,7 +181,7 @@ module LaunchDarkly
               )
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
-            
+
             events = [
               MockSSEEvent.new(
                 LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
@@ -192,7 +192,7 @@ module LaunchDarkly
                 JSON.generate(selector.to_h)
               ),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -235,7 +235,7 @@ module LaunchDarkly
               object: { key: "flag-key" }
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
-            
+
             events = [
               MockSSEEvent.new(
                 LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
@@ -250,7 +250,7 @@ module LaunchDarkly
                 JSON.generate(selector.to_h)
               ),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -293,7 +293,7 @@ module LaunchDarkly
               key: "flag-key"
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
-            
+
             events = [
               MockSSEEvent.new(
                 LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
@@ -308,7 +308,7 @@ module LaunchDarkly
                 JSON.generate(selector.to_h)
               ),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -350,7 +350,7 @@ module LaunchDarkly
               catastrophe: false
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
-            
+
             events = [
               MockSSEEvent.new(
                 LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
@@ -365,7 +365,7 @@ module LaunchDarkly
                 JSON.generate(selector.to_h)
               ),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -410,7 +410,7 @@ module LaunchDarkly
               key: "flag-key"
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
-            
+
             events = [
               MockSSEEvent.new(
                 LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
@@ -433,7 +433,7 @@ module LaunchDarkly
                 JSON.generate(selector.to_h)
               ),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -464,7 +464,7 @@ module LaunchDarkly
               )
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
-            
+
             events = [
               MockSSEEvent.new(
                 LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
@@ -479,7 +479,7 @@ module LaunchDarkly
                 JSON.generate(selector.to_h)
               ),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -499,7 +499,7 @@ module LaunchDarkly
             expect(updates[0].change_set).to be_nil
             expect(updates[0].error).not_to be_nil
             expect(updates[0].error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN)
-            
+
             # Second update should be valid
             expect(updates[1].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(updates[1].change_set).not_to be_nil
@@ -511,7 +511,7 @@ module LaunchDarkly
             allow(error).to receive(:headers).and_return({})
 
             events = [error]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -537,7 +537,7 @@ module LaunchDarkly
             error1 = SSE::Errors::HTTPStatusError.new(nil, 400)
             allow(error1).to receive(:status).and_return(400)
             allow(error1).to receive(:headers).and_return({})
-            
+
             error2 = SSE::Errors::HTTPStatusError.new(nil, 408)
             allow(error2).to receive(:status).and_return(408)
             allow(error2).to receive(:headers).and_return({})
@@ -551,7 +551,7 @@ module LaunchDarkly
               )
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
-            
+
             events = [
               error1,
               MockSSEEvent.new(
@@ -568,7 +568,7 @@ module LaunchDarkly
                 JSON.generate(selector.to_h)
               ),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -600,12 +600,12 @@ module LaunchDarkly
             allow(error).to receive(:status).and_return(503)
             headers = {
               LaunchDarkly::Impl::DataSystem::LD_ENVID_HEADER => 'test-env-503',
-              LaunchDarkly::Impl::DataSystem::LD_FD_FALLBACK_HEADER => 'true'
+              LaunchDarkly::Impl::DataSystem::LD_FD_FALLBACK_HEADER => 'true',
             }
             allow(error).to receive(:headers).and_return(headers)
 
             events = [error]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -640,7 +640,7 @@ module LaunchDarkly
               )
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
-            
+
             events = [
               error,
               MockSSEEvent.new(
@@ -652,7 +652,7 @@ module LaunchDarkly
                 JSON.generate(selector.to_h)
               ),
             ]
-            
+
             synchronizer = StreamingDataSource.new(config, create_client_builder(events))
             updates = []
 
@@ -669,7 +669,7 @@ module LaunchDarkly
             expect(updates.length).to eq(2)
             expect(updates[0].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
             expect(updates[0].environment_id).to eq('test-env-400')
-            
+
             # envid should be preserved across successful events
             # Note: This test may need adjustment based on actual implementation
             # as envid preservation across callbacks is tricky in Ruby
