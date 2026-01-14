@@ -490,11 +490,12 @@ module LaunchDarkly
             synchronizer.stop
 
             expect(updates.length).to eq(1)
-            off = updates[0]
+            interrupted = updates[0]
 
-            expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
-            expect(off.revert_to_fdv1).to eq(true)
-            expect(off.environment_id).to eq('test-env-503')
+            # 503 is recoverable, so status is INTERRUPTED with fallback flag
+            expect(interrupted.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+            expect(interrupted.revert_to_fdv1).to eq(true)
+            expect(interrupted.environment_id).to eq('test-env-503')
           end
 
           it "captures envid from generic error with headers" do
@@ -534,6 +535,131 @@ module LaunchDarkly
             expect(interrupted.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+          end
+
+          it "preserves fallback header on JSON parse error" do
+            headers_with_fallback = {
+              LD_ENVID_HEADER => 'test-env-parse-error',
+              LD_FD_FALLBACK_HEADER => 'true',
+            }
+            # Simulate a JSON parse error with fallback header
+            parse_error_result = LaunchDarkly::Result.fail(
+              "Failed to parse JSON: unexpected token",
+              JSON::ParserError.new("unexpected token"),
+              headers_with_fallback
+            )
+
+            synchronizer = PollingDataSource.new(
+              0.01,
+              ListBasedRequester.new([parse_error_result]),
+              logger
+            )
+            updates = []
+
+            thread = Thread.new do
+              synchronizer.sync(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector)) do |update|
+                updates << update
+                break  # Break after first update to avoid polling again
+              end
+            end
+
+            thread.join(1)
+            synchronizer.stop
+
+            expect(updates.length).to eq(1)
+            interrupted = updates[0]
+
+            # Verify the update signals INTERRUPTED state with fallback flag
+            # Caller (FDv2) will handle shutdown based on revert_to_fdv1 flag
+            expect(interrupted.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+            expect(interrupted.revert_to_fdv1).to eq(true)
+            expect(interrupted.environment_id).to eq('test-env-parse-error')
+            expect(interrupted.error).not_to be_nil
+            expect(interrupted.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
+          end
+
+          it "signals fallback on recoverable HTTP error with fallback header" do
+            headers_with_fallback = {
+              LD_ENVID_HEADER => 'test-env-408',
+              LD_FD_FALLBACK_HEADER => 'true',
+            }
+            # 408 is a recoverable error
+            error_result = LaunchDarkly::Result.fail(
+              "error for test",
+              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(408),
+              headers_with_fallback
+            )
+
+            synchronizer = PollingDataSource.new(
+              0.01,
+              ListBasedRequester.new([error_result]),
+              logger
+            )
+            updates = []
+
+            thread = Thread.new do
+              synchronizer.sync(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector)) do |update|
+                updates << update
+                break # Break after first update to avoid polling again
+              end
+            end
+
+            sleep 0.1 # Give thread time to process first update
+            synchronizer.stop
+            thread.join(1)
+
+            expect(updates.length).to eq(1)
+            interrupted = updates[0]
+
+            # Should be INTERRUPTED (recoverable) with fallback flag set
+            # Caller will handle shutdown based on revert_to_fdv1 flag
+            expect(interrupted.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+            expect(interrupted.revert_to_fdv1).to eq(true)
+            expect(interrupted.environment_id).to eq('test-env-408')
+            expect(interrupted.error).not_to be_nil
+            expect(interrupted.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
+            expect(interrupted.error.status_code).to eq(408)
+          end
+
+          it "uses data but signals fallback on successful response with fallback header" do
+            builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
+            builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
+            change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
+
+            headers_with_fallback = {
+              LD_ENVID_HEADER => 'test-env-success-fallback',
+              LD_FD_FALLBACK_HEADER => 'true',
+            }
+
+            # Server sends successful response with valid data but also signals fallback
+            success_result = LaunchDarkly::Result.success([change_set, headers_with_fallback])
+
+            synchronizer = PollingDataSource.new(
+              0.01,
+              ListBasedRequester.new([success_result]),
+              logger
+            )
+            updates = []
+
+            thread = Thread.new do
+              synchronizer.sync(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector)) do |update|
+                updates << update
+              end
+            end
+
+            sleep 0.1 # Give thread time to process first update
+            synchronizer.stop
+            thread.join(1)
+
+            expect(updates.length).to eq(1)
+            valid = updates[0]
+
+            # Should use the data (VALID state) but signal future fallback
+            expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+            expect(valid.revert_to_fdv1).to eq(true)
+            expect(valid.environment_id).to eq('test-env-success-fallback')
+            expect(valid.error).to be_nil
+            expect(valid.change_set).not_to be_nil  # Data is provided
           end
         end
       end
