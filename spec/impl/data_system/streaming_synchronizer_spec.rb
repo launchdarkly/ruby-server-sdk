@@ -10,12 +10,12 @@ module LaunchDarkly
     module DataSystem
       RSpec.describe StreamingDataSource do
         let(:logger) { double("Logger", info: nil, warn: nil, error: nil, debug: nil) }
+        let(:sdk_key) { "test-sdk-key" }
         let(:config) do
           double(
             "Config",
             logger: logger,
             stream_uri: "https://stream.example.com",
-            sdk_key: "test-sdk-key",
             payload_filter_key: nil,
             socket_factory: nil,
             initial_reconnect_delay: 1,
@@ -97,7 +97,7 @@ module LaunchDarkly
               MockSSEEvent.new(:unknown_type, "{}"),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -118,7 +118,7 @@ module LaunchDarkly
               MockSSEEvent.new(LaunchDarkly::Interfaces::DataSystem::EventName::HEARTBEAT),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -150,7 +150,7 @@ module LaunchDarkly
               ),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -193,7 +193,7 @@ module LaunchDarkly
               ),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -251,7 +251,7 @@ module LaunchDarkly
               ),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -309,7 +309,7 @@ module LaunchDarkly
               ),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -366,7 +366,7 @@ module LaunchDarkly
               ),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -434,7 +434,7 @@ module LaunchDarkly
               ),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -480,7 +480,7 @@ module LaunchDarkly
               ),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -512,7 +512,7 @@ module LaunchDarkly
 
             events = [error]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -569,7 +569,7 @@ module LaunchDarkly
               ),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -606,7 +606,7 @@ module LaunchDarkly
 
             events = [error]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
@@ -653,7 +653,7 @@ module LaunchDarkly
               ),
             ]
 
-            synchronizer = StreamingDataSource.new(config, create_client_builder(events))
+            synchronizer = StreamingDataSource.new(sdk_key, config, create_client_builder(events))
             updates = []
 
             thread = Thread.new do
