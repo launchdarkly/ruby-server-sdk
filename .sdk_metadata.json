@@ -33,11 +33,17 @@
         "hooks": {
           "introduced": "8.4"
         },
+        "inlineContextFeatureEvents": {
+          "introduced": "8.3"
+        },
         "migrations": {
           "introduced": "8.0"
         },
         "offlineMode": {
           "introduced": "2.0"
+        },
+        "omitAnonContexts": {
+          "introduced": "8.6"
         },
         "otel": {
           "introduced": "8.4"
@@ -55,6 +61,15 @@
           "introduced": "2.0"
         },
         "storingData": {
+          "introduced": "2.3"
+        },
+        "storingDataConsul": {
+          "introduced": "5.5"
+        },
+        "storingDataDynamodb": {
+          "introduced": "5.5"
+        },
+        "storingDataRedis": {
           "introduced": "2.3"
         },
         "testDataSource": {
