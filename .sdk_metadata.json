@@ -70,7 +70,7 @@
           "introduced": "5.5"
         },
         "storingDataRedis": {
-          "introduced": "2.3"
+          "introduced": "2.3.1"
         },
         "testDataSource": {
           "introduced": "2.0"
