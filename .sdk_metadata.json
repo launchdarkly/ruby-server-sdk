@@ -9,82 +9,64 @@
       ],
       "userAgents": ["RubyClient"],
       "features": {
-        "all-flags": {
+        "allFlags": {
           "introduced": "2.0"
         },
-        "all-flags-prereq-details": {
-          "introduced": "8.8"
-        },
-        "application-metadata": {
+        "appMetadata": {
           "introduced": "6.4"
         },
-        "big-segments": {
+        "bigSegments": {
           "introduced": "6.3"
         },
         "contexts": {
           "introduced": "7.0"
         },
-        "custom-events": {
-          "introduced": "2.0"
-        },
-        "evaluation-reasons": {
-          "introduced": "5.2"
-        },
         "experimentation": {
           "introduced": "6.2"
         },
-        "flag-changes": {
-          "introduced": "2.0"
-        },
-        "flags-from-files": {
+        "fileDataSource": {
           "introduced": "5.4"
+        },
+        "flagChanges": {
+          "introduced": "2.0"
         },
         "hooks": {
           "introduced": "8.4"
         },
-        "inline-contexts-in-events": {
-          "introduced": "8.9"
-        },
         "migrations": {
           "introduced": "8.0"
         },
-        "offline-mode": {
+        "offlineMode": {
           "introduced": "2.0"
         },
-        "omit-anon-contexts": {
-          "introduced": "8.6"
-        },
-        "opentelemetry": {
+        "otel": {
           "introduced": "8.4"
         },
-        "private-attributes": {
+        "privateAttrs": {
           "introduced": "2.0"
         },
-        "relay-proxy-daemon-mode": {
+        "relayProxyDaemon": {
           "introduced": "2.0"
         },
-        "relay-proxy-proxy-mode": {
+        "relayProxyProxy": {
           "introduced": "2.0"
         },
-        "secure-mode": {
+        "secureMode": {
           "introduced": "2.0"
         },
-        "storing-data": {
+        "storingData": {
           "introduced": "2.3"
         },
-        "storing-data-consul": {
-          "introduced": "5.5"
-        },
-        "storing-data-dynamodb": {
-          "introduced": "5.5"
-        },
-        "storing-data-redis": {
-          "introduced": "2.3"
-        },
-        "test-data-sources": {
+        "testDataSource": {
           "introduced": "2.0"
         },
-        "web-proxy": {
+        "track": {
+          "introduced": "2.0"
+        },
+        "variationDetail": {
+          "introduced": "5.2"
+        },
+        "webProxy": {
           "introduced": "2.2"
         }
       }
