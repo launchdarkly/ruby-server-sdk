@@ -10,7 +10,7 @@
       "userAgents": ["RubyClient"],
       "features": {
         "allFlags": {
-          "introduced": "2.0"
+          "introduced": "2.0.1"
         },
         "appMetadata": {
           "introduced": "6.4"
@@ -25,7 +25,7 @@
           "introduced": "6.2"
         },
         "fileDataSource": {
-          "introduced": "5.4"
+          "introduced": "5.4.1"
         },
         "flagChanges": {
           "introduced": "2.0"
@@ -58,7 +58,7 @@
           "introduced": "2.0"
         },
         "secureMode": {
-          "introduced": "2.0"
+          "introduced": "2.0.1"
         },
         "storingData": {
           "introduced": "2.3"
@@ -82,7 +82,7 @@
           "introduced": "5.2"
         },
         "webProxy": {
-          "introduced": "2.2"
+          "introduced": "2.2.5"
         }
       }
     }
