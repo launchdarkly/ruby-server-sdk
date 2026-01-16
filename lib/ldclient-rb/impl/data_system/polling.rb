@@ -35,6 +35,15 @@ module LaunchDarkly
         def fetch(selector)
           raise NotImplementedError
         end
+
+        #
+        # Closes any persistent connections and releases resources.
+        # This method should be called when the requester is no longer needed.
+        # Implementations should handle being called multiple times gracefully.
+        #
+        def stop
+          # Optional - implementations may override if they need cleanup
+        end
       end
 
       #
@@ -69,6 +78,9 @@ module LaunchDarkly
         #
         def fetch(ss)
           poll(ss)
+        ensure
+          # Ensure the requester is stopped to avoid leaving open connections.
+          @requester.stop if @requester.respond_to?(:stop)
         end
 
         #
@@ -156,6 +168,9 @@ module LaunchDarkly
             break if fallback
             break if @interrupt_event.wait(@poll_interval)
           end
+        ensure
+          # Ensure the requester is stopped to avoid leaving open connections.
+          @requester.stop if @requester.respond_to?(:stop)
         end
 
         #
@@ -286,6 +301,16 @@ module LaunchDarkly
             LaunchDarkly::Result.fail("Network error: #{e.message}", e)
           end
         end
+
+        #
+        # Closes the HTTP client and releases any persistent connections.
+        #
+        def stop
+          begin
+            @http_client.close if @http_client
+          rescue
+          end
+        end
       end
 
       #
@@ -361,6 +386,16 @@ module LaunchDarkly
             LaunchDarkly::Result.fail("Failed to parse JSON: #{e.message}", e, response_headers)
           rescue => e
             LaunchDarkly::Result.fail("Network error: #{e.message}", e)
+          end
+        end
+
+        #
+        # Closes the HTTP client and releases any persistent connections.
+        #
+        def stop
+          begin
+            @http_client.close if @http_client
+          rescue
           end
         end
       end

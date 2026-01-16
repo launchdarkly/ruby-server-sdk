@@ -174,6 +174,27 @@ module LaunchDarkly
           expect(listener.statuses[0].state).to eq(Interfaces::DataSource::Status::OFF)
         end
       end
+
+      it 'closes requestor HTTP connections on stop' do
+        requestor_with_stop = double("RequestorWithStop")
+        allow(requestor_with_stop).to receive(:request_all_data).and_return({
+          Impl::DataStore::FEATURES => {},
+          Impl::DataStore::SEGMENTS => {},
+        })
+        allow(requestor_with_stop).to receive(:stop)
+
+        config = Config.new(feature_store: InMemoryFeatureStore.new, logger: $null_log)
+        config.data_source_update_sink = Impl::DataSource::UpdateSink.new(
+          config.feature_store, status_broadcaster, flag_change_broadcaster
+        )
+
+        processor = subject.new(config, requestor_with_stop)
+        processor.start
+        sleep(0.1) # Give it time to start
+
+        expect(requestor_with_stop).to receive(:stop)
+        processor.stop
+      end
     end
   end
 end

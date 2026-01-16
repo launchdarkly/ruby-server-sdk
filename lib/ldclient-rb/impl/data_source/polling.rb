@@ -97,6 +97,7 @@ module LaunchDarkly
         #
         private def stop_with_error_info(error_info = nil)
           @task.stop
+          @requestor.stop if @requestor.respond_to?(:stop)
           @config.logger.info { "[LDClient] Polling connection stopped" }
           @config.data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::OFF, error_info)
         end

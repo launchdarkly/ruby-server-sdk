@@ -23,6 +23,26 @@ module LaunchDarkly
           end
         end
 
+        class RequesterWithCleanup
+          include Requester
+
+          attr_reader :stop_called
+
+          def initialize(results)
+            @results = results
+            @index = 0
+            @stop_called = false
+          end
+
+          def fetch(selector)
+            @results[@index].tap { @index += 1 }
+          end
+
+          def stop
+            @stop_called = true
+          end
+        end
+
         class MockSelectorStore
           include LaunchDarkly::Interfaces::DataSystem::SelectorStore
 
@@ -660,6 +680,41 @@ module LaunchDarkly
             expect(valid.environment_id).to eq('test-env-success-fallback')
             expect(valid.error).to be_nil
             expect(valid.change_set).not_to be_nil  # Data is provided
+          end
+
+          it "closes requester when sync exits" do
+            change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
+            headers = {}
+            polling_result = LaunchDarkly::Result.success([change_set, headers])
+
+            requester = RequesterWithCleanup.new([polling_result])
+            synchronizer = PollingDataSource.new(0.01, requester, logger)
+            updates = []
+
+            thread = Thread.new do
+              synchronizer.sync(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector)) do |update|
+                updates << update
+                break
+              end
+            end
+
+            thread.join(1)
+            expect(requester.stop_called).to eq(true)
+          end
+
+          it "closes requester when fetch is called" do
+            change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
+            headers = {}
+            polling_result = LaunchDarkly::Result.success([change_set, headers])
+
+            requester = RequesterWithCleanup.new([polling_result])
+            synchronizer = PollingDataSource.new(0.01, requester, logger)
+
+            # Call fetch (used when PollingDataSource is an Initializer)
+            basis_result = synchronizer.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))
+
+            expect(basis_result).to be_success
+            expect(requester.stop_called).to eq(true)
           end
         end
       end
