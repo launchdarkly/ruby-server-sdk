@@ -61,7 +61,7 @@
           "introduced": "2.0.1"
         },
         "storingData": {
-          "introduced": "2.3"
+          "introduced": "2.3.1"
         },
         "storingDataConsul": {
           "introduced": "5.5"
