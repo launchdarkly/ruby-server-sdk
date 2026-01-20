@@ -7,7 +7,87 @@
       "languages": [
         "Ruby"
       ],
-      "userAgents": ["RubyClient"]
+      "userAgents": ["RubyClient"],
+      "features": {
+        "allFlags": {
+          "introduced": "2.0.1"
+        },
+        "appMetadata": {
+          "introduced": "6.4"
+        },
+        "bigSegments": {
+          "introduced": "6.3"
+        },
+        "contexts": {
+          "introduced": "7.0"
+        },
+        "experimentation": {
+          "introduced": "6.2"
+        },
+        "fileDataSource": {
+          "introduced": "5.4.1"
+        },
+        "flagChanges": {
+          "introduced": "2.0"
+        },
+        "hooks": {
+          "introduced": "8.4"
+        },
+        "inlineContextCustomEvents": {
+          "introduced": "8.9"
+        },
+        "inlineContextEvaluationEvents": {
+          "introduced": "8.3"
+        },
+        "migrations": {
+          "introduced": "8.0"
+        },
+        "offlineMode": {
+          "introduced": "2.0"
+        },
+        "omitAnonContexts": {
+          "introduced": "8.6"
+        },
+        "otel": {
+          "introduced": "8.4"
+        },
+        "privateAttrs": {
+          "introduced": "2.0"
+        },
+        "relayProxyDaemon": {
+          "introduced": "2.0"
+        },
+        "relayProxyProxy": {
+          "introduced": "2.0"
+        },
+        "secureMode": {
+          "introduced": "2.0.1"
+        },
+        "storingData": {
+          "introduced": "2.3.1"
+        },
+        "storingDataConsul": {
+          "introduced": "5.5"
+        },
+        "storingDataDynamodb": {
+          "introduced": "5.5"
+        },
+        "storingDataRedis": {
+          "introduced": "2.3.1"
+        },
+        "testDataSource": {
+          "introduced": "2.0"
+        },
+        "track": {
+          "introduced": "2.0"
+        },
+        "variationDetail": {
+          "introduced": "5.2"
+        },
+        "webProxy": {
+          "introduced": "2.2.5"
+        }
+      }
     }
   }
 }
