@@ -33,7 +33,10 @@
         "hooks": {
           "introduced": "8.4"
         },
-        "inlineContextFeatureEvents": {
+        "inlineContextCustomEvents": {
+          "introduced": "8.9"
+        },
+        "inlineContextEvaluationEvents": {
           "introduced": "8.3"
         },
         "migrations": {
