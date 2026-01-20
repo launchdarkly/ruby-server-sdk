@@ -1,0 +1,2419 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2
+  
+    &mdash; LaunchDarkly Ruby SDK
+  
+</title>
+
+  <link rel="stylesheet" href="../../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2";
+  relpath = '../../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../../_index.html">Index (F)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../TestDataV2.html" title="LaunchDarkly::Integrations::TestDataV2 (class)">TestDataV2</a></span></span>
+     &raquo; 
+    <span class="title">FlagBuilderV2</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A builder for feature flag configurations to be used with <span class='object_link'><a href="../TestDataV2.html" title="LaunchDarkly::Integrations::TestDataV2 (class)">LaunchDarkly::Integrations::TestDataV2</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li><span class='object_link'><a href="../TestDataV2.html#flag-instance_method" title="LaunchDarkly::Integrations::TestDataV2#flag (method)">#flag</a></span></li>
+    
+      <li><span class='object_link'><a href="../TestDataV2.html#update-instance_method" title="LaunchDarkly::Integrations::TestDataV2#update (method)">#update</a></span></li>
+    
+  </ul>
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#_key-instance_method" title="#_key (instance method)">#<strong>_key</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_rule-instance_method" title="#add_rule (instance method)">#<strong>add_rule</strong>(flag_rule_builder)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#boolean_flag-instance_method" title="#boolean_flag (instance method)">#<strong>boolean_flag</strong>  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A shortcut for setting the flag to use the standard boolean configuration.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#build-instance_method" title="#build (instance method)">#<strong>build</strong>(version)  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>Note that build is private by convention, because we don&#39;t want developers to consider it part of the public API, but it is still called from TestDataV2.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#clear_rules-instance_method" title="#clear_rules (instance method)">#<strong>clear_rules</strong>  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Removes any existing rules from the flag.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#clear_targets-instance_method" title="#clear_targets (instance method)">#<strong>clear_targets</strong>  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Removes any existing targets from the flag.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#fallthrough_variation-instance_method" title="#fallthrough_variation (instance method)">#<strong>fallthrough_variation</strong>(variation)  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Specifies the fallthrough variation.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#if_match-instance_method" title="#if_match (instance method)">#<strong>if_match</strong>(attribute, *values)  &#x21d2; FlagRuleBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Starts defining a flag rule, using the &quot;is one of&quot; operator.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#if_match_context-instance_method" title="#if_match_context (instance method)">#<strong>if_match_context</strong>(context_kind, attribute, *values)  &#x21d2; FlagRuleBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Starts defining a flag rule, using the &quot;is one of&quot; operator.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#if_not_match-instance_method" title="#if_not_match (instance method)">#<strong>if_not_match</strong>(attribute, *values)  &#x21d2; FlagRuleBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Starts defining a flag rule, using the &quot;is not one of&quot; operator.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#if_not_match_context-instance_method" title="#if_not_match_context (instance method)">#<strong>if_not_match_context</strong>(context_kind, attribute, *values)  &#x21d2; FlagRuleBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Starts defining a flag rule, using the &quot;is not one of&quot; operator.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(key)  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>A new instance of FlagBuilderV2.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize_copy-instance_method" title="#initialize_copy (instance method)">#<strong>initialize_copy</strong>(other)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>Creates a deep copy of the flag builder when the object is duplicated or cloned.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#off_variation-instance_method" title="#off_variation (instance method)">#<strong>off_variation</strong>(variation)  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Specifies the off variation.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#on-instance_method" title="#on (instance method)">#<strong>on</strong>(on)  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets targeting to be on or off for this flag.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#value_for_all-instance_method" title="#value_for_all (instance method)">#<strong>value_for_all</strong>(value)  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets the flag to always return the specified variation value for all contexts.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#variation_for_all-instance_method" title="#variation_for_all (instance method)">#<strong>variation_for_all</strong>(variation)  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets the flag to always return the specified variation for all contexts.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#variation_for_key-instance_method" title="#variation_for_key (instance method)">#<strong>variation_for_key</strong>(context_kind, context_key, variation)  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets the flag to return the specified variation for a specific context, identified by context kind and key, when targeting is on.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#variation_for_user-instance_method" title="#variation_for_user (instance method)">#<strong>variation_for_user</strong>(user_key, variation)  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets the flag to return the specified variation for a specific user key when targeting is on.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#variations-instance_method" title="#variations (instance method)">#<strong>variations</strong>(*variations)  &#x21d2; FlagBuilderV2 </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Changes the allowable variation values for the flag.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(key)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Returns a new instance of FlagBuilderV2.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+28
+29
+30
+31
+32
+33
+34
+35
+36</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 28</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
+  <span class='ivar'>@_key</span> <span class='op'>=</span> <span class='id identifier rubyid_key'>key</span>
+  <span class='ivar'>@_on</span> <span class='op'>=</span> <span class='kw'>true</span>
+  <span class='ivar'>@_variations</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='ivar'>@_off_variation</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='ivar'>@_fallthrough_variation</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='ivar'>@_targets</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+  <span class='ivar'>@_rules</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="_key-instance_method">
+  
+    #<strong>_key</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+25
+26
+27</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 25</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid__key'>_key</span>
+  <span class='ivar'>@_key</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="add_rule-instance_method">
+  
+    #<strong>add_rule</strong>(flag_rule_builder)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+390
+391
+392</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 390</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_rule'>add_rule</span><span class='lparen'>(</span><span class='id identifier rubyid_flag_rule_builder'>flag_rule_builder</span><span class='rparen'>)</span>
+  <span class='ivar'>@_rules</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_flag_rule_builder'>flag_rule_builder</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="boolean_flag-instance_method">
+  
+    #<strong>boolean_flag</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A shortcut for setting the flag to use the standard boolean configuration.</p>
+
+<p>This is the default for all new flags created with <span class='object_link'><a href="../TestDataV2.html#flag-instance_method" title="LaunchDarkly::Integrations::TestDataV2#flag (method)">LaunchDarkly::Integrations::TestDataV2#flag</a></span>.</p>
+
+<p>The flag will have two variations, <code>true</code> and <code>false</code> (in that order);
+it will return <code>false</code> whenever targeting is off, and <code>true</code> when targeting is on
+if no other settings specify otherwise.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+122
+123
+124
+125
+126</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 122</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_boolean_flag'>boolean_flag</span>
+  <span class='kw'>return</span> <span class='kw'>self</span> <span class='kw'>if</span> <span class='id identifier rubyid_boolean_flag?'>boolean_flag?</span>
+
+  <span class='id identifier rubyid_variations'>variations</span><span class='lparen'>(</span><span class='kw'>true</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_fallthrough_variation'>fallthrough_variation</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../TestDataV2.html#TRUE_VARIATION_INDEX-constant" title="LaunchDarkly::Integrations::TestDataV2::TRUE_VARIATION_INDEX (constant)">TRUE_VARIATION_INDEX</a></span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_off_variation'>off_variation</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../TestDataV2.html#FALSE_VARIATION_INDEX-constant" title="LaunchDarkly::Integrations::TestDataV2::FALSE_VARIATION_INDEX (constant)">FALSE_VARIATION_INDEX</a></span></span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="build-instance_method">
+  
+    #<strong>build</strong>(version)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Note that build is private by convention, because we don&#39;t want developers to
+consider it part of the public API, but it is still called from TestDataV2.</p>
+
+<p>Creates a dictionary representation of the flag</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>version</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the version number of the flag</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the dictionary representation of the flag</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 352</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_build'>build</span><span class='lparen'>(</span><span class='id identifier rubyid_version'>version</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_base_flag_object'>base_flag_object</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+    <span class='label'>key:</span> <span class='ivar'>@_key</span><span class='comma'>,</span>
+    <span class='label'>version:</span> <span class='id identifier rubyid_version'>version</span><span class='comma'>,</span>
+    <span class='label'>on:</span> <span class='ivar'>@_on</span><span class='comma'>,</span>
+    <span class='label'>variations:</span> <span class='ivar'>@_variations</span><span class='comma'>,</span>
+    <span class='label'>prerequisites:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>salt:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+  <span class='rbrace'>}</span>
+
+  <span class='id identifier rubyid_base_flag_object'>base_flag_object</span><span class='lbracket'>[</span><span class='symbol'>:offVariation</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='ivar'>@_off_variation</span> <span class='kw'>unless</span> <span class='ivar'>@_off_variation</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+  <span class='id identifier rubyid_base_flag_object'>base_flag_object</span><span class='lbracket'>[</span><span class='symbol'>:fallthrough</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbrace'>{</span> <span class='label'>variation:</span> <span class='ivar'>@_fallthrough_variation</span> <span class='rbrace'>}</span> <span class='kw'>unless</span> <span class='ivar'>@_fallthrough_variation</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+
+  <span class='id identifier rubyid_targets'>targets</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_context_targets'>context_targets</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='ivar'>@_targets</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_target_context_kind'>target_context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_target_variations'>target_variations</span><span class='op'>|</span>
+    <span class='id identifier rubyid_target_variations'>target_variations</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_var_index'>var_index</span><span class='comma'>,</span> <span class='id identifier rubyid_target_keys'>target_keys</span><span class='op'>|</span>
+      <span class='kw'>if</span> <span class='id identifier rubyid_target_context_kind'>target_context_kind</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span>
+        <span class='id identifier rubyid_targets'>targets</span> <span class='op'>&lt;&lt;</span> <span class='lbrace'>{</span> <span class='label'>variation:</span> <span class='id identifier rubyid_var_index'>var_index</span><span class='comma'>,</span> <span class='label'>values:</span> <span class='id identifier rubyid_target_keys'>target_keys</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span> <span class='rbrace'>}</span> <span class='comment'># sorting just for test determinacy
+</span>        <span class='id identifier rubyid_context_targets'>context_targets</span> <span class='op'>&lt;&lt;</span> <span class='lbrace'>{</span> <span class='label'>contextKind:</span> <span class='id identifier rubyid_target_context_kind'>target_context_kind</span><span class='comma'>,</span> <span class='label'>variation:</span> <span class='id identifier rubyid_var_index'>var_index</span><span class='comma'>,</span> <span class='label'>values:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
+      <span class='kw'>else</span>
+        <span class='id identifier rubyid_context_targets'>context_targets</span> <span class='op'>&lt;&lt;</span> <span class='lbrace'>{</span> <span class='label'>contextKind:</span> <span class='id identifier rubyid_target_context_kind'>target_context_kind</span><span class='comma'>,</span> <span class='label'>variation:</span> <span class='id identifier rubyid_var_index'>var_index</span><span class='comma'>,</span> <span class='label'>values:</span> <span class='id identifier rubyid_target_keys'>target_keys</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span> <span class='rbrace'>}</span> <span class='comment'># sorting just for test determinacy
+</span>      <span class='kw'>end</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_base_flag_object'>base_flag_object</span><span class='lbracket'>[</span><span class='symbol'>:targets</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_targets'>targets</span> <span class='kw'>unless</span> <span class='id identifier rubyid_targets'>targets</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+  <span class='id identifier rubyid_base_flag_object'>base_flag_object</span><span class='lbracket'>[</span><span class='symbol'>:contextTargets</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_context_targets'>context_targets</span> <span class='kw'>unless</span> <span class='id identifier rubyid_context_targets'>context_targets</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+
+  <span class='id identifier rubyid_rules'>rules</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='ivar'>@_rules</span><span class='period'>.</span><span class='id identifier rubyid_each_with_index'>each_with_index</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_rule'>rule</span><span class='comma'>,</span> <span class='id identifier rubyid_idx'>idx</span><span class='op'>|</span>
+    <span class='id identifier rubyid_rules'>rules</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_rule'>rule</span><span class='period'>.</span><span class='id identifier rubyid_build'>build</span><span class='lparen'>(</span><span class='id identifier rubyid_idx'>idx</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_base_flag_object'>base_flag_object</span><span class='lbracket'>[</span><span class='symbol'>:rules</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_rules'>rules</span> <span class='kw'>unless</span> <span class='id identifier rubyid_rules'>rules</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+
+  <span class='id identifier rubyid_base_flag_object'>base_flag_object</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="clear_rules-instance_method">
+  
+    #<strong>clear_rules</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Removes any existing rules from the flag.
+This undoes the effect of methods like <span class='object_link'><a href="#if_match-instance_method" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2#if_match (method)">#if_match</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the same flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+327
+328
+329
+330</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 327</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_clear_rules'>clear_rules</span>
+  <span class='ivar'>@_rules</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="clear_targets-instance_method">
+  
+    #<strong>clear_targets</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Removes any existing targets from the flag.
+This undoes the effect of methods like <span class='object_link'><a href="#variation_for_user-instance_method" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2#variation_for_user (method)">#variation_for_user</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the same flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+338
+339
+340
+341</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 338</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_clear_targets'>clear_targets</span>
+  <span class='ivar'>@_targets</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="fallthrough_variation-instance_method">
+  
+    #<strong>fallthrough_variation</strong>(variation)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Specifies the fallthrough variation. The fallthrough is the value
+that is returned if targeting is on and the context was not matched by a more specific
+target or rule.</p>
+
+<p>If the flag was previously configured with other variations and the variation specified is a boolean,
+this also changes it to a boolean flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>variation</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>, <tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true or false or the desired fallthrough variation index:
+0 for the first, 1 for the second, etc.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+82
+83
+84
+85
+86
+87
+88
+89</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 82</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_fallthrough_variation'>fallthrough_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl/Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_bool?'><span class='object_link'><a href="../../Impl/Util.html#bool%3F-class_method" title="LaunchDarkly::Impl::Util.bool? (method)">bool?</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_boolean_flag'>boolean_flag</span><span class='period'>.</span><span class='id identifier rubyid_fallthrough_variation'>fallthrough_variation</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../TestDataV2.html" title="LaunchDarkly::Integrations::TestDataV2 (class)">TestDataV2</a></span></span><span class='period'>.</span><span class='id identifier rubyid_variation_for_boolean'><span class='object_link'><a href="../TestDataV2.html#variation_for_boolean-class_method" title="LaunchDarkly::Integrations::TestDataV2.variation_for_boolean (method)">variation_for_boolean</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='ivar'>@_fallthrough_variation</span> <span class='op'>=</span> <span class='id identifier rubyid_variation'>variation</span>
+    <span class='kw'>self</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="if_match-instance_method">
+  
+    #<strong>if_match</strong>(attribute, *values)  &#x21d2; <tt><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Starts defining a flag rule, using the &quot;is one of&quot; operator.</p>
+
+<p>This is a shortcut for calling <span class='object_link'><a href="#if_match_context-instance_method" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2#if_match_context (method)">#if_match_context</a></span> with
+<code>LaunchDarkly::LDContext::KIND_DEFAULT</code> as the context kind.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'><p>create a rule that returns <code>true</code> if the name is &quot;Patsy&quot; or &quot;Edina&quot;</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_td'>td</span><span class='period'>.</span><span class='id identifier rubyid_flag'>flag</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>flag</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='period'>.</span><span class='id identifier rubyid_if_match'>if_match</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>name</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Patsy</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Edina</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='period'>.</span><span class='id identifier rubyid_then_return'>then_return</span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>attribute</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the user attribute to match against</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>values</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;Object&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>values to compare to</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag rule builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+258
+259
+260</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 258</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_if_match'>if_match</span><span class='lparen'>(</span><span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_if_match_context'>if_match_context</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="if_match_context-instance_method">
+  
+    #<strong>if_match_context</strong>(context_kind, attribute, *values)  &#x21d2; <tt><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Starts defining a flag rule, using the &quot;is one of&quot; operator. This matching expression only
+applies to contexts of a specific kind.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'><p>create a rule that returns <code>true</code> if the name attribute for the</p>
+</div></h5>
+      
+      <pre class="example code"><code>&quot;company&quot; context is &quot;Ella&quot; or &quot;Monsoon&quot;:
+td.flag(&quot;flag&quot;)
+    .if_match_context(&#39;company&#39;, &#39;name&#39;, &#39;Ella&#39;, &#39;Monsoon&#39;)
+    .then_return(True)</code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>context_kind</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the context kind</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attribute</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the context attribute to match against</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>values</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;Object&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>values to compare to</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag rule builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+277
+278
+279
+280</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 277</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_if_match_context'>if_match_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_flag_rule_builder'>flag_rule_builder</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FlagRuleBuilderV2.html#initialize-instance_method" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_flag_rule_builder'>flag_rule_builder</span><span class='period'>.</span><span class='id identifier rubyid_and_match_context'>and_match_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="if_not_match-instance_method">
+  
+    #<strong>if_not_match</strong>(attribute, *values)  &#x21d2; <tt><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Starts defining a flag rule, using the &quot;is not one of&quot; operator.</p>
+
+<p>This is a shortcut for calling <span class='object_link'><a href="#if_not_match_context-instance_method" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2#if_not_match_context (method)">#if_not_match_context</a></span> with
+<code>LaunchDarkly::LDContext::KIND_DEFAULT</code> as the context kind.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'><p>create a rule that returns <code>true</code> if the name is neither &quot;Saffron&quot; nor &quot;Bubble&quot;</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_td'>td</span><span class='period'>.</span><span class='id identifier rubyid_flag'>flag</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>flag</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='period'>.</span><span class='id identifier rubyid_if_not_match'>if_not_match</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>name</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Saffron</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Bubble</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='period'>.</span><span class='id identifier rubyid_then_return'>then_return</span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>attribute</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the user attribute to match against</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>values</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;Object&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>values to compare to</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag rule builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+297
+298
+299</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 297</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_if_not_match'>if_not_match</span><span class='lparen'>(</span><span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_if_not_match_context'>if_not_match_context</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="if_not_match_context-instance_method">
+  
+    #<strong>if_not_match_context</strong>(context_kind, attribute, *values)  &#x21d2; <tt><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Starts defining a flag rule, using the &quot;is not one of&quot; operator. This matching expression only
+applies to contexts of a specific kind.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'><p>create a rule that returns <code>true</code> if the name attribute for the</p>
+</div></h5>
+      
+      <pre class="example code"><code>&quot;company&quot; context is neither &quot;Pendant&quot; nor &quot;Sterling Cooper&quot;:
+td.flag(&quot;flag&quot;)
+    .if_not_match_context(&#39;company&#39;, &#39;name&#39;, &#39;Pendant&#39;, &#39;Sterling Cooper&#39;)
+    .then_return(true)</code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>context_kind</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the context kind</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>attribute</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the context attribute to match against</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>values</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;Object&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>values to compare to</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag rule builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+316
+317
+318
+319</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 316</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_if_not_match_context'>if_not_match_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_flag_rule_builder'>flag_rule_builder</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="FlagRuleBuilderV2.html" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2 (class)">FlagRuleBuilderV2</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FlagRuleBuilderV2.html#initialize-instance_method" title="LaunchDarkly::Integrations::TestDataV2::FlagRuleBuilderV2#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_flag_rule_builder'>flag_rule_builder</span><span class='period'>.</span><span class='id identifier rubyid_and_not_match_context'>and_not_match_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_attribute'>attribute</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_values'>values</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="initialize_copy-instance_method">
+  
+    #<strong>initialize_copy</strong>(other)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Creates a deep copy of the flag builder when the object is duplicated or cloned.
+Subsequent updates to the original <code>FlagBuilderV2</code> object will not update the
+copy and vice versa.</p>
+
+<p>This method is automatically invoked by Ruby&#39;s <code>dup</code> and <code>clone</code> methods.
+Immutable instance variables (strings, numbers, booleans, nil) are automatically
+copied by the <code>super</code> call. Only mutable collections need explicit deep copying.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+47
+48
+49
+50
+51
+52</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 47</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize_copy'>initialize_copy</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
+  <span class='kw'>super</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
+  <span class='ivar'>@_variations</span> <span class='op'>=</span> <span class='ivar'>@_variations</span><span class='period'>.</span><span class='id identifier rubyid_clone'>clone</span>
+  <span class='ivar'>@_targets</span> <span class='op'>=</span> <span class='id identifier rubyid_deep_copy_targets'>deep_copy_targets</span>
+  <span class='ivar'>@_rules</span> <span class='op'>=</span> <span class='id identifier rubyid_deep_copy_rules'>deep_copy_rules</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="off_variation-instance_method">
+  
+    #<strong>off_variation</strong>(variation)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Specifies the off variation. This is the variation that is returned
+whenever targeting is off.</p>
+
+<p>If the flag was previously configured with other variations and the variation specified is a boolean,
+this also changes it to a boolean flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>variation</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>, <tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true or false or the desired off variation index:
+0 for the first, 1 for the second, etc.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+102
+103
+104
+105
+106
+107
+108
+109</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 102</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_off_variation'>off_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl/Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_bool?'><span class='object_link'><a href="../../Impl/Util.html#bool%3F-class_method" title="LaunchDarkly::Impl::Util.bool? (method)">bool?</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_boolean_flag'>boolean_flag</span><span class='period'>.</span><span class='id identifier rubyid_off_variation'>off_variation</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../TestDataV2.html" title="LaunchDarkly::Integrations::TestDataV2 (class)">TestDataV2</a></span></span><span class='period'>.</span><span class='id identifier rubyid_variation_for_boolean'><span class='object_link'><a href="../TestDataV2.html#variation_for_boolean-class_method" title="LaunchDarkly::Integrations::TestDataV2.variation_for_boolean (method)">variation_for_boolean</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='ivar'>@_off_variation</span> <span class='op'>=</span> <span class='id identifier rubyid_variation'>variation</span>
+    <span class='kw'>self</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="on-instance_method">
+  
+    #<strong>on</strong>(on)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets targeting to be on or off for this flag.</p>
+
+<p>The effect of this depends on the rest of the flag configuration, just as it does on the
+real LaunchDarkly dashboard. In the default configuration that you get from calling
+<span class='object_link'><a href="../TestDataV2.html#flag-instance_method" title="LaunchDarkly::Integrations::TestDataV2#flag (method)">LaunchDarkly::Integrations::TestDataV2#flag</a></span> with a new flag key, the flag will return <code>false</code>
+whenever targeting is off, and <code>true</code> when targeting is on.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>on</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true if targeting should be on</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+65
+66
+67
+68</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 65</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_on'>on</span><span class='lparen'>(</span><span class='id identifier rubyid_on'>on</span><span class='rparen'>)</span>
+  <span class='ivar'>@_on</span> <span class='op'>=</span> <span class='id identifier rubyid_on'>on</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="value_for_all-instance_method">
+  
+    #<strong>value_for_all</strong>(value)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets the flag to always return the specified variation value for all contexts.</p>
+
+<p>The value may be of any valid JSON type. This method changes the flag to have only
+a single variation, which is this value, and to return the same variation
+regardless of whether targeting is on or off. Any existing targets or rules
+are removed.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the desired value to be returned for all contexts</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+181
+182
+183</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 181</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_value_for_all'>value_for_all</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_variations'>variations</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_variation_for_all'>variation_for_all</span><span class='lparen'>(</span><span class='int'>0</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="variation_for_all-instance_method">
+  
+    #<strong>variation_for_all</strong>(variation)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets the flag to always return the specified variation for all contexts.</p>
+
+<p>The variation is specified, targeting is switched on, and any existing targets or rules are removed.
+The fallthrough variation is set to the specified value. The off variation is left unchanged.</p>
+
+<p>If the flag was previously configured with other variations and the variation specified is a boolean,
+this also changes it to a boolean flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>variation</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>, <tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true or false or the desired variation index to return:
+0 for the first, 1 for the second, etc.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+162
+163
+164
+165
+166
+167
+168</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 162</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_variation_for_all'>variation_for_all</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl/Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_bool?'><span class='object_link'><a href="../../Impl/Util.html#bool%3F-class_method" title="LaunchDarkly::Impl::Util.bool? (method)">bool?</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+    <span class='kw'>return</span> <span class='id identifier rubyid_boolean_flag'>boolean_flag</span><span class='period'>.</span><span class='id identifier rubyid_variation_for_all'>variation_for_all</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../TestDataV2.html" title="LaunchDarkly::Integrations::TestDataV2 (class)">TestDataV2</a></span></span><span class='period'>.</span><span class='id identifier rubyid_variation_for_boolean'><span class='object_link'><a href="../TestDataV2.html#variation_for_boolean-class_method" title="LaunchDarkly::Integrations::TestDataV2.variation_for_boolean (method)">variation_for_boolean</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_clear_rules'>clear_rules</span><span class='period'>.</span><span class='id identifier rubyid_clear_targets'>clear_targets</span><span class='period'>.</span><span class='id identifier rubyid_on'>on</span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_fallthrough_variation'>fallthrough_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="variation_for_key-instance_method">
+  
+    #<strong>variation_for_key</strong>(context_kind, context_key, variation)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets the flag to return the specified variation for a specific context, identified
+by context kind and key, when targeting is on.</p>
+
+<p>This has no effect when targeting is turned off for the flag.</p>
+
+<p>If the flag was previously configured with other variations and the variation specified is a boolean,
+this also changes it to a boolean flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>context_kind</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the context kind</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the context key</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>variation</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>, <tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true or false or the desired variation index to return:
+0 for the first, 1 for the second, etc.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 221</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_variation_for_key'>variation_for_key</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_context_key'>context_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl/Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_bool?'><span class='object_link'><a href="../../Impl/Util.html#bool%3F-class_method" title="LaunchDarkly::Impl::Util.bool? (method)">bool?</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+    <span class='kw'>return</span> <span class='id identifier rubyid_boolean_flag'>boolean_flag</span><span class='period'>.</span><span class='id identifier rubyid_variation_for_key'>variation_for_key</span><span class='lparen'>(</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_context_key'>context_key</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../TestDataV2.html" title="LaunchDarkly::Integrations::TestDataV2 (class)">TestDataV2</a></span></span><span class='period'>.</span><span class='id identifier rubyid_variation_for_boolean'><span class='object_link'><a href="../TestDataV2.html#variation_for_boolean-class_method" title="LaunchDarkly::Integrations::TestDataV2.variation_for_boolean (method)">variation_for_boolean</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_targets'>targets</span> <span class='op'>=</span> <span class='ivar'>@_targets</span><span class='lbracket'>[</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='rbracket'>]</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_targets'>targets</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='id identifier rubyid_targets'>targets</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+    <span class='ivar'>@_targets</span><span class='lbracket'>[</span><span class='id identifier rubyid_context_kind'>context_kind</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_targets'>targets</span>
+  <span class='kw'>end</span>
+
+  <span class='ivar'>@_variations</span><span class='period'>.</span><span class='id identifier rubyid_each_index'>each_index</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_idx'>idx</span><span class='op'>|</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_idx'>idx</span> <span class='op'>==</span> <span class='id identifier rubyid_variation'>variation</span>
+      <span class='lparen'>(</span><span class='id identifier rubyid_targets'>targets</span><span class='lbracket'>[</span><span class='id identifier rubyid_idx'>idx</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='const'>Set</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_context_key'>context_key</span><span class='rparen'>)</span>
+    <span class='kw'>elsif</span> <span class='id identifier rubyid_targets'>targets</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='id identifier rubyid_idx'>idx</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_targets'>targets</span><span class='lbracket'>[</span><span class='id identifier rubyid_idx'>idx</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_delete'>delete</span><span class='lparen'>(</span><span class='id identifier rubyid_context_key'>context_key</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="variation_for_user-instance_method">
+  
+    #<strong>variation_for_user</strong>(user_key, variation)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets the flag to return the specified variation for a specific user key when targeting
+is on.</p>
+
+<p>This is a shortcut for calling <span class='object_link'><a href="#variation_for_key-instance_method" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2#variation_for_key (method)">#variation_for_key</a></span> with
+<code>LaunchDarkly::LDContext::KIND_DEFAULT</code> as the context kind.</p>
+
+<p>This has no effect when targeting is turned off for the flag.</p>
+
+<p>If the flag was previously configured with other variations and the variation specified is a boolean,
+this also changes it to a boolean flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>user_key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a user key</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>variation</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>, <tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true or false or the desired variation index to return:
+0 for the first, 1 for the second, etc.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+202
+203
+204</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 202</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_variation_for_user'>variation_for_user</span><span class='lparen'>(</span><span class='id identifier rubyid_user_key'>user_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_variation_for_key'>variation_for_key</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LDContext.html#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_user_key'>user_key</span><span class='comma'>,</span> <span class='id identifier rubyid_variation'>variation</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="variations-instance_method">
+  
+    #<strong>variations</strong>(*variations)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Changes the allowable variation values for the flag.</p>
+
+<p>The value may be of any valid JSON type. For instance, a boolean flag
+normally has <code>true, false</code>; a string-valued flag might have
+<code>&#39;red&#39;, &#39;green&#39;</code>; etc.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'><p>A single variation</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_td'>td</span><span class='period'>.</span><span class='id identifier rubyid_flag'>flag</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>new-flag</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_variations'>variations</span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'><p>Multiple variations</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_td'>td</span><span class='period'>.</span><span class='id identifier rubyid_flag'>flag</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>new-flag</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_variations'>variations</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>red</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>green</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>blue</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>variations</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;Object&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the desired variations</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2 (class)">FlagBuilderV2</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the flag builder</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+144
+145
+146
+147</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/test_data_v2/flag_builder_v2.rb', line 144</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_variations'>variations</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_variations'>variations</span><span class='rparen'>)</span>
+  <span class='ivar'>@_variations</span> <span class='op'>=</span> <span class='id identifier rubyid_variations'>variations</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Tue Jan 20 18:49:31 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.38 (ruby-3.2.10).
+</div>
+
+    </div>
+  </body>
+</html>
