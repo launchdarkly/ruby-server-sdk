@@ -27,10 +27,11 @@ module LaunchDarkly
     #
     # @param error [String]
     # @param exception [Exception, nil]
+    # @param headers [Hash, nil]
     # @return [Result]
     #
-    def self.fail(error, exception = nil)
-      Result.new(nil, error, exception)
+    def self.fail(error, exception = nil, headers = nil)
+      Result.new(nil, error, exception, headers)
     end
 
     #
@@ -57,10 +58,16 @@ module LaunchDarkly
     #
     attr_reader :exception
 
-    private def initialize(value, error = nil, exception = nil)
+    #
+    # @return [Hash] Optional headers associated with the result
+    #
+    attr_reader :headers
+
+    private def initialize(value, error = nil, exception = nil, headers = nil)
       @value = value
       @error = error
       @exception = exception
+      @headers = headers || {}
     end
   end
 end

@@ -2,6 +2,7 @@
 
 require 'ldclient-rb/interfaces/data_system'
 require 'ldclient-rb/config'
+require 'ldclient-rb/impl/data_system/polling'
 
 module LaunchDarkly
   #
@@ -97,23 +98,39 @@ module LaunchDarkly
       end
     end
 
-    # @private
+    #
+    # Returns a builder proc for creating a polling data source.
+    # This is a building block that can be used with {ConfigBuilder#initializers}
+    # or {ConfigBuilder#synchronizers} to create custom data system configurations.
+    #
+    # @return [Proc] A proc that takes (sdk_key, config) and returns a polling data source
+    #
     def self.polling_ds_builder
-      # TODO(fdv2): Implement polling data source builder
-      lambda do |_sdk_key, _config|
-        raise NotImplementedError, "Polling data source not yet implemented for FDv2"
+      lambda do |sdk_key, config|
+        LaunchDarkly::Impl::DataSystem::PollingDataSourceBuilder.new(sdk_key, config).build
       end
     end
 
-    # @private
+    #
+    # Returns a builder proc for creating an FDv1 fallback polling data source.
+    # This is a building block that can be used with {ConfigBuilder#fdv1_compatible_synchronizer}
+    # to provide FDv1 compatibility in custom data system configurations.
+    #
+    # @return [Proc] A proc that takes (sdk_key, config) and returns an FDv1 polling data source
+    #
     def self.fdv1_fallback_ds_builder
-      # TODO(fdv2): Implement FDv1 fallback polling data source builder
-      lambda do |_sdk_key, _config|
-        raise NotImplementedError, "FDv1 fallback data source not yet implemented for FDv2"
+      lambda do |sdk_key, config|
+        LaunchDarkly::Impl::DataSystem::FDv1PollingDataSourceBuilder.new(sdk_key, config).build
       end
     end
 
-    # @private
+    #
+    # Returns a builder proc for creating a streaming data source.
+    # This is a building block that can be used with {ConfigBuilder#synchronizers}
+    # to create custom data system configurations.
+    #
+    # @return [Proc] A proc that takes (sdk_key, config) and returns a streaming data source
+    #
     def self.streaming_ds_builder
       # TODO(fdv2): Implement streaming data source builder
       lambda do |_sdk_key, _config|
