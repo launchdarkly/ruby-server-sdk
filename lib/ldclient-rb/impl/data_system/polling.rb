@@ -35,6 +35,15 @@ module LaunchDarkly
         def fetch(selector)
           raise NotImplementedError
         end
+
+        #
+        # Closes any persistent connections and releases resources.
+        # This method should be called when the requester is no longer needed.
+        # Implementations should handle being called multiple times gracefully.
+        #
+        def stop
+          # Optional - implementations may override if they need cleanup
+        end
       end
 
       #
@@ -69,6 +78,9 @@ module LaunchDarkly
         #
         def fetch(ss)
           poll(ss)
+        ensure
+          # Ensure the requester is stopped to avoid leaving open connections.
+          @requester.stop if @requester.respond_to?(:stop)
         end
 
         #
@@ -106,22 +118,24 @@ module LaunchDarkly
                   Time.now
                 )
 
-                if fallback
-                  yield LaunchDarkly::Interfaces::DataSystem::Update.new(
-                    state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
-                    error: error_info,
-                    revert_to_fdv1: true,
-                    environment_id: envid
-                  )
-                  break
-                end
-
                 status_code = result.exception.status
                 if Impl::Util.http_error_recoverable?(status_code)
+                  # If fallback is requested, send OFF status to signal shutdown
+                  if fallback
+                    yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                      state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                      error: error_info,
+                      environment_id: envid,
+                      revert_to_fdv1: true
+                    )
+                    break
+                  end
+
                   yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                     state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                     error: error_info,
-                    environment_id: envid
+                    environment_id: envid,
+                    revert_to_fdv1: false
                   )
                   @interrupt_event.wait(@poll_interval)
                   next
@@ -130,7 +144,8 @@ module LaunchDarkly
                 yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                   state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
                   error: error_info,
-                  environment_id: envid
+                  environment_id: envid,
+                  revert_to_fdv1: fallback
                 )
                 break
               end
@@ -142,23 +157,40 @@ module LaunchDarkly
                 Time.now
               )
 
+            # If fallback is requested, send OFF status to signal shutdown
+              if fallback
+                yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                  state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                  error: error_info,
+                  environment_id: envid,
+                  revert_to_fdv1: true
+                )
+                break
+              end
+
               yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                 state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                 error: error_info,
-                environment_id: envid
+                environment_id: envid,
+                revert_to_fdv1: false
               )
             else
               change_set, headers = result.value
+              fallback = headers[LD_FD_FALLBACK_HEADER] == 'true'
               yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                 state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
                 change_set: change_set,
                 environment_id: headers[LD_ENVID_HEADER],
-                revert_to_fdv1: headers[LD_FD_FALLBACK_HEADER] == 'true'
+                revert_to_fdv1: fallback
               )
             end
 
+            break if fallback
             break if @interrupt_event.wait(@poll_interval)
           end
+        ensure
+          # Ensure the requester is stopped to avoid leaving open connections.
+          @requester.stop if @requester.respond_to?(:stop)
         end
 
         #
@@ -284,9 +316,19 @@ module LaunchDarkly
               LaunchDarkly::Result.fail(changeset_result.error, changeset_result.exception, response_headers)
             end
           rescue JSON::ParserError => e
-            LaunchDarkly::Result.fail("Failed to parse JSON: #{e.message}", e)
+            LaunchDarkly::Result.fail("Failed to parse JSON: #{e.message}", e, response_headers)
           rescue => e
             LaunchDarkly::Result.fail("Network error: #{e.message}", e)
+          end
+        end
+
+        #
+        # Closes the HTTP client and releases any persistent connections.
+        #
+        def stop
+          begin
+            @http_client.close if @http_client
+          rescue
           end
         end
       end
@@ -361,9 +403,19 @@ module LaunchDarkly
               LaunchDarkly::Result.fail(changeset_result.error, changeset_result.exception, response_headers)
             end
           rescue JSON::ParserError => e
-            LaunchDarkly::Result.fail("Failed to parse JSON: #{e.message}", e)
+            LaunchDarkly::Result.fail("Failed to parse JSON: #{e.message}", e, response_headers)
           rescue => e
             LaunchDarkly::Result.fail("Network error: #{e.message}", e)
+          end
+        end
+
+        #
+        # Closes the HTTP client and releases any persistent connections.
+        #
+        def stop
+          begin
+            @http_client.close if @http_client
+          rescue
           end
         end
       end
