@@ -120,14 +120,23 @@ module LaunchDarkly
 
                 status_code = result.exception.status
                 if Impl::Util.http_error_recoverable?(status_code)
+                  # If fallback is requested, send OFF status to signal shutdown
+                  if fallback
+                    yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                      state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                      error: error_info,
+                      environment_id: envid,
+                      revert_to_fdv1: true
+                    )
+                    break
+                  end
+
                   yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                     state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                     error: error_info,
                     environment_id: envid,
-                    revert_to_fdv1: fallback
+                    revert_to_fdv1: false
                   )
-                  # Stop polling if fallback is set; caller will handle shutdown
-                  break if fallback
                   @interrupt_event.wait(@poll_interval)
                   next
                 end
@@ -148,11 +157,22 @@ module LaunchDarkly
                 Time.now
               )
 
+            # If fallback is requested, send OFF status to signal shutdown
+              if fallback
+                yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                  state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                  error: error_info,
+                  environment_id: envid,
+                  revert_to_fdv1: true
+                )
+                break
+              end
+
               yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                 state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                 error: error_info,
                 environment_id: envid,
-                revert_to_fdv1: fallback
+                revert_to_fdv1: false
               )
             else
               change_set, headers = result.value

@@ -510,12 +510,12 @@ module LaunchDarkly
             synchronizer.stop
 
             expect(updates.length).to eq(1)
-            interrupted = updates[0]
+            off = updates[0]
 
-            # 503 is recoverable, so status is INTERRUPTED with fallback flag
-            expect(interrupted.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
-            expect(interrupted.revert_to_fdv1).to eq(true)
-            expect(interrupted.environment_id).to eq('test-env-503')
+          # When fallback header is present, status is OFF (not INTERRUPTED)
+            expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+            expect(off.revert_to_fdv1).to eq(true)
+            expect(off.environment_id).to eq('test-env-503')
           end
 
           it "captures envid from generic error with headers" do
@@ -587,15 +587,14 @@ module LaunchDarkly
             synchronizer.stop
 
             expect(updates.length).to eq(1)
-            interrupted = updates[0]
+            off = updates[0]
 
-            # Verify the update signals INTERRUPTED state with fallback flag
-            # Caller (FDv2) will handle shutdown based on revert_to_fdv1 flag
-            expect(interrupted.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
-            expect(interrupted.revert_to_fdv1).to eq(true)
-            expect(interrupted.environment_id).to eq('test-env-parse-error')
-            expect(interrupted.error).not_to be_nil
-            expect(interrupted.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
+          # When fallback header is present on parse error, status is OFF
+            expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+            expect(off.revert_to_fdv1).to eq(true)
+            expect(off.environment_id).to eq('test-env-parse-error')
+            expect(off.error).not_to be_nil
+            expect(off.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
           end
 
           it "signals fallback on recoverable HTTP error with fallback header" do
@@ -629,16 +628,15 @@ module LaunchDarkly
             thread.join(1)
 
             expect(updates.length).to eq(1)
-            interrupted = updates[0]
+            off = updates[0]
 
-            # Should be INTERRUPTED (recoverable) with fallback flag set
-            # Caller will handle shutdown based on revert_to_fdv1 flag
-            expect(interrupted.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
-            expect(interrupted.revert_to_fdv1).to eq(true)
-            expect(interrupted.environment_id).to eq('test-env-408')
-            expect(interrupted.error).not_to be_nil
-            expect(interrupted.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
-            expect(interrupted.error.status_code).to eq(408)
+          # When fallback header is present on recoverable error, status is OFF
+            expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+            expect(off.revert_to_fdv1).to eq(true)
+            expect(off.environment_id).to eq('test-env-408')
+            expect(off.error).not_to be_nil
+            expect(off.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
+            expect(off.error.status_code).to eq(408)
           end
 
           it "uses data but signals fallback on successful response with fallback header" do
