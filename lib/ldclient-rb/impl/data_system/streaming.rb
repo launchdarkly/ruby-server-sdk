@@ -296,6 +296,7 @@ module LaunchDarkly
                 revert_to_fdv1: true,
                 environment_id: envid
               )
+              stop
               return [update, false]
             end
 
