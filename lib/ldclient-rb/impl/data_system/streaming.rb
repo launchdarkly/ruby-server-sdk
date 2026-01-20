@@ -264,6 +264,8 @@ module LaunchDarkly
         def handle_error(error, envid, fallback)
           return [nil, false] unless @running.value
 
+          update = nil
+
           case error
           when JSON::ParserError
             @logger.error { "[LDClient] Unexpected error on stream connection: #{error}, will retry" }
@@ -278,7 +280,6 @@ module LaunchDarkly
               ),
               environment_id: envid
             )
-            [update, true]
 
           when SSE::Errors::HTTPStatusError
             error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
@@ -314,7 +315,6 @@ module LaunchDarkly
             end
 
             @logger.warn { "[LDClient] #{http_error_message_result}" }
-            [update, true]
 
           when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError
             @logger.warn { "[LDClient] Network error on stream connection: #{error}, will retry" }
@@ -329,7 +329,6 @@ module LaunchDarkly
               ),
               environment_id: envid
             )
-            [update, true]
 
           else
             @logger.warn { "[LDClient] Unexpected error on stream connection: #{error}, will retry" }
@@ -344,8 +343,9 @@ module LaunchDarkly
               ),
               environment_id: envid
             )
-            [update, true]
           end
+
+          [update, true]
         end
 
         def log_connection_started
