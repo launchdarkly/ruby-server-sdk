@@ -4,6 +4,7 @@ require "ldclient-rb/impl/context"
 require "ldclient-rb/impl/data_source"
 require "ldclient-rb/impl/data_store"
 require "ldclient-rb/impl/data_system/fdv1"
+require "ldclient-rb/impl/data_system/fdv2"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluation_with_hook_result"
 require "ldclient-rb/impl/evaluator"
@@ -113,9 +114,16 @@ module LaunchDarkly
 
       @hooks = Concurrent::Array.new(@config.hooks + plugin_hooks)
 
-      # Initialize the data system (FDv1 for now, will support FDv2 in the future)
-      # Note: FDv1 will update @config.feature_store to use its wrapped store
-      @data_system = Impl::DataSystem::FDv1.new(@sdk_key, @config)
+      # Initialize the data system - use FDv2 if configured, otherwise FDv1
+      data_system_config = @config.data_system_config
+      if data_system_config.nil?
+        # Use FDv1 for backwards compatibility
+        # Note: FDv1 will update @config.feature_store to use its wrapped store
+        @data_system = Impl::DataSystem::FDv1.new(@sdk_key, @config)
+      else
+        # Use FDv2 with the provided configuration
+        @data_system = Impl::DataSystem::FDv2.new(@sdk_key, @config, data_system_config)
+      end
 
       # Components not managed by data system
       @big_segment_store_manager = Impl::BigSegmentStoreManager.new(@config.big_segments, @config.logger)
