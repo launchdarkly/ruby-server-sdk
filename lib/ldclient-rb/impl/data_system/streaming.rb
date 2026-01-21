@@ -47,7 +47,7 @@ module LaunchDarkly
         #
         # Sets the diagnostic accumulator for streaming initialization metrics.
         #
-        # @param diagnostic_accumulator [Object]
+        # @param diagnostic_accumulator [LaunchDarkly::Impl::DiagnosticAccumulator]
         #
         def set_diagnostic_accumulator(diagnostic_accumulator)
           @diagnostic_accumulator = diagnostic_accumulator
@@ -68,7 +68,6 @@ module LaunchDarkly
 
           change_set_builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
           envid = nil
-          fallback = false
 
           base_uri = @config.stream_uri + FDV2_STREAMING_ENDPOINT
           headers = Impl::Util.default_http_headers(@sdk_key, @config)
@@ -94,7 +93,7 @@ module LaunchDarkly
                 yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                   state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                   error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-                    LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN,
+                    LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA,
                     0,
                     e.to_s,
                     Time.now
@@ -118,8 +117,9 @@ module LaunchDarkly
 
             client.on_error do |error|
               log_connection_result(false)
+              fallback = false
 
-              # Extract envid from error headers if available
+              # Extract envid and fallback from error headers if available
               if error.respond_to?(:headers) && error.headers
                 envid_from_error = error.headers[LD_ENVID_HEADER]
                 envid = envid_from_error if envid_from_error
@@ -133,7 +133,6 @@ module LaunchDarkly
               yield update if update
             end
 
-            # Use dynamic query parameters that are evaluated on each connection/reconnection
             client.query_params do
               selector = ss.selector
               {
@@ -253,20 +252,6 @@ module LaunchDarkly
           update = nil
 
           case error
-          when JSON::ParserError
-            @logger.error { "[LDClient] Unexpected error on stream connection: #{error}, will retry" }
-
-            update = LaunchDarkly::Interfaces::DataSystem::Update.new(
-              state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-              error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-                LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA,
-                0,
-                error.to_s,
-                Time.now
-              ),
-              environment_id: envid
-            )
-
           when SSE::Errors::HTTPStatusError
             error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
               LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE,
