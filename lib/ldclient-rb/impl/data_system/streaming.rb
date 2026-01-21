@@ -32,16 +32,14 @@ module LaunchDarkly
         #
         # @param sdk_key [String]
         # @param config [LaunchDarkly::Config]
-        # @param sse_client_builder [Proc] Optional SSE client builder for testing
         #
-        def initialize(sdk_key, config, sse_client_builder = nil)
+        def initialize(sdk_key, config)
           @sdk_key = sdk_key
           @config = config
           @logger = config.logger
           @name = "StreamingDataSourceV2"
-          @sse_client_builder = sse_client_builder || method(:create_sse_client)
           @sse = nil
-          @running = Concurrent::AtomicBoolean.new(false)
+          @stopped = Concurrent::Event.new
           @diagnostic_accumulator = nil
           @connection_attempt_start_time = nil
         end
@@ -65,96 +63,13 @@ module LaunchDarkly
         #
         def sync(ss)
           @logger.info { "[LDClient] Starting StreamingDataSourceV2 synchronizer" }
-          @running.make_true
+          @stopped.reset
           log_connection_started
 
           change_set_builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
           envid = nil
           fallback = false
 
-          # Always use the builder to create the SSE client
-          @sse = @sse_client_builder.call(@config, ss)
-          unless @sse
-            @logger.error { "[LDClient] Failed to create SSE client for streaming updates" }
-            return
-          end
-
-          # Set up event handlers
-          @sse.on_event do |event|
-            begin
-              update = process_message(event, change_set_builder, envid)
-              if update
-                log_connection_result(true)
-                @connection_attempt_start_time = nil
-                yield update
-              end
-            rescue JSON::ParserError => e
-              @logger.info { "[LDClient] Error while handling stream event; will restart stream: #{e}" }
-              yield LaunchDarkly::Interfaces::DataSystem::Update.new(
-                state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-                error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-                  LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN,
-                  0,
-                  e.to_s,
-                  Time.now
-                ),
-                environment_id: envid
-              )
-            rescue => e
-              @logger.info { "[LDClient] Error while handling stream event; will restart stream: #{e}" }
-              yield LaunchDarkly::Interfaces::DataSystem::Update.new(
-                state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-                error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-                  LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN,
-                  0,
-                  e.to_s,
-                  Time.now
-                ),
-                environment_id: envid
-              )
-            end
-          end
-
-          @sse.on_error do |error|
-            log_connection_result(false)
-
-            # Extract envid from error headers if available
-            if error.respond_to?(:headers) && error.headers
-              envid_from_error = error.headers[LD_ENVID_HEADER]
-              envid = envid_from_error if envid_from_error
-
-              if error.headers[LD_FD_FALLBACK_HEADER] == 'true'
-                fallback = true
-              end
-            end
-
-            update, _should_continue = handle_error(error, envid, fallback)
-            yield update if update
-          end
-
-          @sse.start
-        end
-
-        #
-        # Stops the streaming synchronizer.
-        #
-        def stop
-          @logger.info { "[LDClient] Stopping StreamingDataSourceV2 synchronizer" }
-          @running.make_false
-          @sse&.close
-        end
-
-        private
-
-        #
-        # Creates an SSE client configured for the LaunchDarkly streaming endpoint.
-        # This is the default builder used when no custom builder is provided.
-        #
-        # @param config [LaunchDarkly::Config] (unused, but matches builder signature)
-        # @param ss [LaunchDarkly::Interfaces::DataSystem::SelectorStore]
-        # @return [SSE::Client]
-        #
-        def create_sse_client(_config, ss)
           base_uri = @config.stream_uri + FDV2_STREAMING_ENDPOINT
           headers = Impl::Util.default_http_headers(@sdk_key, @config)
           opts = {
@@ -165,7 +80,59 @@ module LaunchDarkly
             reconnect_time: @config.initial_reconnect_delay,
           }
 
-          SSE::Client.new(base_uri, **opts) do |client|
+          @sse = SSE::Client.new(base_uri, **opts) do |client|
+            client.on_event do |event|
+              begin
+                update = process_message(event, change_set_builder, envid)
+                if update
+                  log_connection_result(true)
+                  @connection_attempt_start_time = nil
+                  yield update
+                end
+              rescue JSON::ParserError => e
+                @logger.info { "[LDClient] Error while handling stream event; will restart stream: #{e}" }
+                yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                  state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
+                  error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
+                    LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN,
+                    0,
+                    e.to_s,
+                    Time.now
+                  ),
+                  environment_id: envid
+                )
+              rescue => e
+                @logger.info { "[LDClient] Error while handling stream event; will restart stream: #{e}" }
+                yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                  state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
+                  error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
+                    LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN,
+                    0,
+                    e.to_s,
+                    Time.now
+                  ),
+                  environment_id: envid
+                )
+              end
+            end
+
+            client.on_error do |error|
+              log_connection_result(false)
+
+              # Extract envid from error headers if available
+              if error.respond_to?(:headers) && error.headers
+                envid_from_error = error.headers[LD_ENVID_HEADER]
+                envid = envid_from_error if envid_from_error
+
+                if error.headers[LD_FD_FALLBACK_HEADER] == 'true'
+                  fallback = true
+                end
+              end
+
+              update, _should_continue = handle_error(error, envid, fallback)
+              yield update if update
+            end
+
             # Use dynamic query parameters that are evaluated on each connection/reconnection
             client.query_params do
               selector = ss.selector
@@ -175,7 +142,26 @@ module LaunchDarkly
               }.compact
             end
           end
+
+          unless @sse
+            @logger.error { "[LDClient] Failed to create SSE client for streaming updates" }
+            return
+          end
+
+          # Client auto-starts in background thread. Wait here until stop() is called.
+          @stopped.wait
         end
+
+        #
+        # Stops the streaming synchronizer.
+        #
+        def stop
+          @logger.info { "[LDClient] Stopping StreamingDataSourceV2 synchronizer" }
+          @sse&.close
+          @stopped.set
+        end
+
+        private
 
         #
         # Processes a single SSE message and returns an Update if applicable.
@@ -262,7 +248,7 @@ module LaunchDarkly
         # @return [Array<(LaunchDarkly::Interfaces::DataSystem::Update, Boolean)>] Tuple of (update, should_continue)
         #
         def handle_error(error, envid, fallback)
-          return [nil, false] unless @running.value
+          return [nil, false] if @stopped.set?
 
           update = nil
 
@@ -374,18 +360,6 @@ module LaunchDarkly
         def initialize(sdk_key, config)
           @sdk_key = sdk_key
           @config = config
-          @sse_client_builder = nil
-        end
-
-        #
-        # Sets a custom SSE client builder for testing.
-        #
-        # @param sse_client_builder [Proc]
-        # @return [StreamingDataSourceBuilder]
-        #
-        def sse_client_builder(sse_client_builder)
-          @sse_client_builder = sse_client_builder
-          self
         end
 
         #
@@ -394,7 +368,7 @@ module LaunchDarkly
         # @return [StreamingDataSource]
         #
         def build
-          StreamingDataSource.new(@sdk_key, @config, @sse_client_builder)
+          StreamingDataSource.new(@sdk_key, @config)
         end
       end
     end
