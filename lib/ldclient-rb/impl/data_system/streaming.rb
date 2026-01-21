@@ -100,6 +100,9 @@ module LaunchDarkly
                   ),
                   environment_id: envid
                 )
+
+                # Re-raise the exception so the SSE implementation can catch it and restart the stream.
+                raise
               rescue => e
                 @logger.info { "[LDClient] Error while handling stream event; will restart stream: #{e}" }
                 yield LaunchDarkly::Interfaces::DataSystem::Update.new(
@@ -112,6 +115,9 @@ module LaunchDarkly
                   ),
                   environment_id: envid
                 )
+
+                # Re-raise the exception so the SSE implementation can catch it and restart the stream.
+                raise
               end
             end
 
@@ -271,7 +277,6 @@ module LaunchDarkly
               return [update, false]
             end
 
-            http_error_message_result = Impl::Util.http_error_message(error.status, "stream connection", "will retry")
             is_recoverable = Impl::Util.http_error_recoverable?(error.status)
 
             update = LaunchDarkly::Interfaces::DataSystem::Update.new(
@@ -281,12 +286,12 @@ module LaunchDarkly
             )
 
             unless is_recoverable
-              @logger.error { "[LDClient] #{http_error_message_result}" }
+              @logger.error { "[LDClient] #{error_info.message}" }
               stop
               return [update, false]
             end
 
-            @logger.warn { "[LDClient] #{http_error_message_result}" }
+            @logger.warn { "[LDClient] #{error_info.message}" }
 
           when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError
             @logger.warn { "[LDClient] Network error on stream connection: #{error}, will retry" }
