@@ -35,7 +35,7 @@ module LaunchDarkly
         items_out = {}
         until remaining_items.empty?
           # pick a random item that hasn't been updated yet
-          key, item = remaining_items.first
+          _, item = remaining_items.first
           self.add_with_dependencies_first(item, dependency_fn, remaining_items, items_out)
         end
         items_out

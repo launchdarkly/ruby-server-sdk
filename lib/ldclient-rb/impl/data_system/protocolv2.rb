@@ -72,7 +72,7 @@ module LaunchDarkly
 
             raise ArgumentError, "Missing required fields in DeleteObject" if version.nil? || kind.nil? || key.nil?
 
-            new(version: version, kind: kind, key: key)
+            new(version: version, kind: kind, key: key.to_sym)
           end
         end
 
@@ -146,7 +146,7 @@ module LaunchDarkly
 
             raise ArgumentError, "Missing required fields in PutObject" if version.nil? || kind.nil? || key.nil? || object_data.nil?
 
-            new(version: version, kind: kind, key: key, object: object_data)
+            new(version: version, kind: kind, key: key.to_sym, object: object_data)
           end
         end
 

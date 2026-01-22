@@ -518,7 +518,7 @@ module LaunchDarkly
             version = flag_or_segment[:version]
             return LaunchDarkly::Result.fail("Invalid format: #{key} does not have a version set") if version.nil?
 
-            builder.add_put(kind, key.to_s, version, flag_or_segment)
+            builder.add_put(kind, key, version, flag_or_segment)
           end
         end
 

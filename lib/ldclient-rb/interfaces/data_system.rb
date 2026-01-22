@@ -227,7 +227,7 @@ module LaunchDarkly
         # @return [String] The kind ({ObjectKind})
         attr_reader :kind
 
-        # @return [String] The key
+        # @return [Symbol] The key
         attr_reader :key
 
         # @return [Integer] The version
@@ -239,7 +239,7 @@ module LaunchDarkly
         #
         # @param action [String] The action type ({ChangeType})
         # @param kind [String] The object kind ({ObjectKind})
-        # @param key [String] The key
+        # @param key [Symbol] The key
         # @param version [Integer] The version
         # @param object [Hash, nil] The object data
         #
@@ -546,7 +546,7 @@ module LaunchDarkly
         # Adds a new object to the changeset.
         #
         # @param kind [String] The object kind ({ObjectKind})
-        # @param key [String] The key
+        # @param key [Symbol] The key
         # @param version [Integer] The version
         # @param obj [Hash] The object data
         # @return [void]
@@ -565,7 +565,7 @@ module LaunchDarkly
         # Adds a deletion to the changeset.
         #
         # @param kind [String] The object kind ({ObjectKind})
-        # @param key [String] The key
+        # @param key [Symbol] The key
         # @param version [Integer] The version
         # @return [void]
         #

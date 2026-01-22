@@ -14,48 +14,48 @@ module LaunchDarkly
 
       it 'stores flags' do
         td = TestDataV2.data_source
-        td.update(td.flag('my-flag').variation_for_all(true))
+        td.update(td.flag('myflag').variation_for_all(true))
         init_data = td.make_init_data
-        expect(init_data[:flags].keys).to include('my-flag')
-        expect(init_data[:flags]['my-flag'][:key]).to eq('my-flag')
+        expect(init_data[:flags].keys).to include(:myflag)
+        expect(init_data[:flags][:myflag][:key]).to eq('myflag')
       end
 
       it 'stores preconfigured segments' do
         td = TestDataV2.data_source
-        td.use_preconfigured_segment({ key: 'my-segment', version: 100, included: ['user1'] })
+        td.use_preconfigured_segment({ key: 'mysegment', version: 100, included: ['user1'] })
         init_data = td.make_init_data
-        expect(init_data[:segments].keys).to include('my-segment')
-        expect(init_data[:segments]['my-segment'][:key]).to eq('my-segment')
-        expect(init_data[:segments]['my-segment'][:version]).to eq(1)
-        expect(init_data[:segments]['my-segment'][:included]).to eq(['user1'])
+        expect(init_data[:segments].keys).to include(:mysegment)
+        expect(init_data[:segments][:mysegment][:key]).to eq('mysegment')
+        expect(init_data[:segments][:mysegment][:version]).to eq(1)
+        expect(init_data[:segments][:mysegment][:included]).to eq(['user1'])
       end
 
       it 'handles segments with string-keyed hashes' do
         td = TestDataV2.data_source
         # Use string keys instead of symbol keys
-        td.use_preconfigured_segment({ 'key' => 'my-segment', 'version' => 100, 'included' => ['user1'], 'excluded' => ['user2'] })
+        td.use_preconfigured_segment({ 'key' => 'mysegment', 'version' => 100, 'included' => ['user1'], 'excluded' => ['user2'] })
         init_data = td.make_init_data
-        expect(init_data[:segments].keys).to include('my-segment')
-        expect(init_data[:segments]['my-segment'][:key]).to eq('my-segment')
-        expect(init_data[:segments]['my-segment'][:version]).to eq(1)
-        expect(init_data[:segments]['my-segment'][:included]).to eq(['user1'])
-        expect(init_data[:segments]['my-segment'][:excluded]).to eq(['user2'])
+        expect(init_data[:segments].keys).to include(:mysegment)
+        expect(init_data[:segments][:mysegment][:key]).to eq('mysegment')
+        expect(init_data[:segments][:mysegment][:version]).to eq(1)
+        expect(init_data[:segments][:mysegment][:included]).to eq(['user1'])
+        expect(init_data[:segments][:mysegment][:excluded]).to eq(['user2'])
       end
 
       it 'increments segment version on update' do
         td = TestDataV2.data_source
-        td.use_preconfigured_segment({ key: 'my-segment', version: 100 })
-        td.use_preconfigured_segment({ key: 'my-segment', included: ['user2'] })
+        td.use_preconfigured_segment({ key: 'mysegment', version: 100 })
+        td.use_preconfigured_segment({ key: 'mysegment', included: ['user2'] })
         init_data = td.make_init_data
-        expect(init_data[:segments]['my-segment'][:version]).to eq(2)
-        expect(init_data[:segments]['my-segment'][:included]).to eq(['user2'])
+        expect(init_data[:segments][:mysegment][:version]).to eq(2)
+        expect(init_data[:segments][:mysegment][:included]).to eq(['user2'])
       end
 
       describe 'TestDataSourceV2' do
         it 'includes both flags and segments in fetch' do
           td = TestDataV2.data_source
-          td.update(td.flag('my-flag').variation_for_all(true))
-          td.use_preconfigured_segment({ key: 'my-segment', included: ['user1'] })
+          td.update(td.flag('myflag').variation_for_all(true))
+          td.use_preconfigured_segment({ key: 'mysegment', included: ['user1'] })
 
           source = LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(td)
           result = source.fetch(nil)
@@ -71,10 +71,10 @@ module LaunchDarkly
           segment_change = change_set.changes.detect { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT }
 
           expect(flag_change).not_to be_nil
-          expect(flag_change.key).to eq('my-flag')
+          expect(flag_change.key).to eq(:myflag)
 
           expect(segment_change).not_to be_nil
-          expect(segment_change.key).to eq('my-segment')
+          expect(segment_change.key).to eq(:mysegment)
         end
 
         it 'propagates segment updates' do
@@ -94,7 +94,7 @@ module LaunchDarkly
           sleep 0.1
 
           # Add a segment
-          td.use_preconfigured_segment({ key: 'test-segment', included: ['user1'] })
+          td.use_preconfigured_segment({ key: 'testsegment', included: ['user1'] })
 
           # Wait for the update to propagate
           sync_thread.join(1)
@@ -107,7 +107,7 @@ module LaunchDarkly
           # Check that the second update contains the segment
           segment_change = updates[1].change_set.changes.detect { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT }
           expect(segment_change).not_to be_nil
-          expect(segment_change.key).to eq('test-segment')
+          expect(segment_change.key).to eq(:testsegment)
         end
       end
     end

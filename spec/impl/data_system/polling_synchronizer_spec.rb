@@ -126,9 +126,9 @@ module LaunchDarkly
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
             builder.add_put(
               LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
-              "flag-key",
+              :flagkey,
               100,
-              { key: "flag-key" }
+              { key: "flagkey" }
             )
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
@@ -158,8 +158,8 @@ module LaunchDarkly
             expect(valid.change_set.changes.length).to eq(1)
             expect(valid.change_set.changes[0].action).to eq(LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT)
             expect(valid.change_set.changes[0].kind).to eq(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG)
-            expect(valid.change_set.changes[0].key).to eq("flag-key")
-            expect(valid.change_set.changes[0].object).to eq({ key: "flag-key" })
+            expect(valid.change_set.changes[0].key).to eq(:flagkey)
+            expect(valid.change_set.changes[0].object).to eq({ key: "flagkey" })
             expect(valid.change_set.changes[0].version).to eq(100)
             expect(valid.change_set.selector).not_to be_nil
             expect(valid.change_set.selector.version).to eq(300)
@@ -170,7 +170,7 @@ module LaunchDarkly
           it "handles delete objects" do
             builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
-            builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flag-key", 101)
+            builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, :flagkey, 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
             polling_result = LaunchDarkly::Result.success([change_set, headers])
@@ -199,7 +199,7 @@ module LaunchDarkly
             expect(valid.change_set.changes.length).to eq(1)
             expect(valid.change_set.changes[0].action).to eq(LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE)
             expect(valid.change_set.changes[0].kind).to eq(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG)
-            expect(valid.change_set.changes[0].key).to eq("flag-key")
+            expect(valid.change_set.changes[0].key).to eq(:flagkey)
             expect(valid.change_set.changes[0].version).to eq(101)
             expect(valid.change_set.selector).not_to be_nil
             expect(valid.change_set.selector.version).to eq(300)
@@ -210,7 +210,7 @@ module LaunchDarkly
           it "generic error interrupts and recovers" do
             builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
-            builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flag-key", 101)
+            builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flagkey", 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
             polling_result = LaunchDarkly::Result.success([change_set, headers])
@@ -256,7 +256,7 @@ module LaunchDarkly
           it "recoverable error continues" do
             builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
-            builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flag-key", 101)
+            builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flagkey", 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
             polling_result = LaunchDarkly::Result.success([change_set, headers])
@@ -370,9 +370,9 @@ module LaunchDarkly
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
             builder.add_put(
               LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
-              "flag-key",
+              :flagkey,
               100,
-              { key: "flag-key" }
+              { key: "flagkey" }
             )
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {
@@ -407,7 +407,7 @@ module LaunchDarkly
           it "captures envid from error headers recoverable" do
             builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
-            builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flag-key", 101)
+            builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flagkey", 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers_success = { LD_ENVID_HEADER => 'test-env-success' }
             polling_result = LaunchDarkly::Result.success([change_set, headers_success])

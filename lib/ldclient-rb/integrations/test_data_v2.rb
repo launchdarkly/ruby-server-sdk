@@ -117,12 +117,13 @@ module LaunchDarkly
         instances_copy = []
         new_flag = nil
         @lock.with_write_lock do
-          old_flag = @current_flags[flag_builder._key]
+          flag_key = flag_builder._key.to_sym
+          old_flag = @current_flags[flag_key]
           old_version = old_flag ? old_flag[:version] : 0
 
           new_flag = flag_builder.build(old_version + 1)
 
-          @current_flags[flag_builder._key] = new_flag
+          @current_flags[flag_key] = new_flag
           @flag_builders[flag_builder._key] = flag_builder.clone
 
           # Create a copy of instances while holding the lock to avoid race conditions
@@ -200,7 +201,7 @@ module LaunchDarkly
           else
             segment.as_json
           end
-          segment_key = segment_hash[:key]
+          segment_key = segment_hash[:key].to_sym
 
           old_segment = @current_segments[segment_key]
           old_version = old_segment ? old_segment[:version] : 0
