@@ -32,7 +32,7 @@ module LaunchDarkly
     #
     #     # config = LaunchDarkly::Config.new(
     #     #   sdk_key,
-    #     #   datasystem_config: data_config.build
+    #     #   data_system_config: data_config.build
     #     # )
     #
     #     # flags can be updated at any time:

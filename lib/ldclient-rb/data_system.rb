@@ -3,6 +3,7 @@
 require 'ldclient-rb/interfaces/data_system'
 require 'ldclient-rb/config'
 require 'ldclient-rb/impl/data_system/polling'
+require 'ldclient-rb/impl/data_system/streaming'
 
 module LaunchDarkly
   #
@@ -132,9 +133,8 @@ module LaunchDarkly
     # @return [Proc] A proc that takes (sdk_key, config) and returns a streaming data source
     #
     def self.streaming_ds_builder
-      # TODO(fdv2): Implement streaming data source builder
-      lambda do |_sdk_key, _config|
-        raise NotImplementedError, "Streaming data source not yet implemented for FDv2"
+      lambda do |sdk_key, config|
+        LaunchDarkly::Impl::DataSystem::StreamingDataSourceBuilder.new(sdk_key, config).build
       end
     end
 

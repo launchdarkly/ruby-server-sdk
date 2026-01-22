@@ -39,7 +39,7 @@ module LaunchDarkly
           #
           # Returns the event name.
           #
-          # @return [String]
+          # @return [Symbol]
           #
           def name
             LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT
@@ -111,7 +111,7 @@ module LaunchDarkly
           #
           # Returns the event name.
           #
-          # @return [String]
+          # @return [Symbol]
           #
           def name
             LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT

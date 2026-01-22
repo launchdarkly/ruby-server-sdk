@@ -45,7 +45,7 @@ module LaunchDarkly
     # @option opts [Hash] :application See {#application}
     # @option opts [String] :payload_filter_key See {#payload_filter_key}
     # @option opts [Boolean] :omit_anonymous_contexts See {#omit_anonymous_contexts}
-    # @option opts [DataSystemConfig] :datasystem_config See {#datasystem_config}
+    # @option opts [DataSystemConfig] :data_system_config See {#data_system_config}
     # @option hooks [Array<Interfaces::Hooks::Hook]
     # @option plugins [Array<Interfaces::Plugins::Plugin]
     #
@@ -84,7 +84,7 @@ module LaunchDarkly
       @hooks = (opts[:hooks] || []).keep_if { |hook| hook.is_a? Interfaces::Hooks::Hook }
       @plugins = (opts[:plugins] || []).keep_if { |plugin| plugin.is_a? Interfaces::Plugins::Plugin }
       @omit_anonymous_contexts = opts.has_key?(:omit_anonymous_contexts) && opts[:omit_anonymous_contexts]
-      @datasystem_config = opts[:datasystem_config]
+      @data_system_config = opts[:data_system_config]
       @data_source_update_sink = nil
       @instance_id = nil
     end
@@ -440,7 +440,7 @@ module LaunchDarkly
     #
     # @return [DataSystemConfig, nil]
     #
-    attr_reader :datasystem_config
+    attr_reader :data_system_config
 
 
     #
