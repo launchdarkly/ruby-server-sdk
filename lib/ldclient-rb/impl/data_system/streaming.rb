@@ -41,7 +41,7 @@ module LaunchDarkly
           @sse = nil
           @stopped = Concurrent::Event.new
           @diagnostic_accumulator = nil
-          @connection_attempt_start_time = nil
+          @connection_attempt_start_time = 0
         end
 
         #
@@ -63,7 +63,6 @@ module LaunchDarkly
         #
         def sync(ss)
           @logger.info { "[LDClient] Starting StreamingDataSourceV2 synchronizer" }
-          @stopped.reset
           log_connection_started
 
           change_set_builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
@@ -85,11 +84,11 @@ module LaunchDarkly
                 update = process_message(event, change_set_builder, envid)
                 if update
                   log_connection_result(true)
-                  @connection_attempt_start_time = nil
+                  @connection_attempt_start_time = 0
                   yield update
                 end
               rescue JSON::ParserError => e
-                @logger.info { "[LDClient] Error while handling stream event; will restart stream: #{e}" }
+                @logger.info { "[LDClient] Error parsing stream event; will restart stream: #{e}" }
                 yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                   state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                   error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
@@ -135,7 +134,7 @@ module LaunchDarkly
                 end
               end
 
-              update, _should_continue = handle_error(error, envid, fallback)
+              update = handle_error(error, envid, fallback)
               yield update if update
             end
 
@@ -166,8 +165,6 @@ module LaunchDarkly
           @stopped.set
         end
 
-        private
-
         #
         # Processes a single SSE message and returns an Update if applicable.
         #
@@ -176,20 +173,17 @@ module LaunchDarkly
         # @param envid [String, nil]
         # @return [LaunchDarkly::Interfaces::DataSystem::Update, nil]
         #
-        def process_message(message, change_set_builder, envid)
+        private def process_message(message, change_set_builder, envid)
           event_type = message.type
 
-          # Handle heartbeat - SSE library may use symbol or string
-          if event_type == :heartbeat || event_type == LaunchDarkly::Interfaces::DataSystem::EventName::HEARTBEAT
+          # Handle heartbeat
+          if event_type == LaunchDarkly::Interfaces::DataSystem::EventName::HEARTBEAT
             return nil
           end
 
           @logger.debug { "[LDClient] Stream received #{event_type} message: #{message.data}" }
 
-          # Convert symbol to string for comparison
-          event_name = event_type.is_a?(Symbol) ? event_type.to_s.tr('_', '-') : event_type
-
-          case event_name
+          case event_type
           when LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT
             server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.from_h(JSON.parse(message.data, symbolize_names: true))
             change_set_builder.start(server_intent.payload.code)
@@ -250,10 +244,10 @@ module LaunchDarkly
         # @param error [Exception]
         # @param envid [String, nil]
         # @param fallback [Boolean]
-        # @return [Array<(LaunchDarkly::Interfaces::DataSystem::Update, Boolean)>] Tuple of (update, should_continue)
+        # @return [LaunchDarkly::Interfaces::DataSystem::Update, nil]
         #
-        def handle_error(error, envid, fallback)
-          return [nil, false] if @stopped.set?
+        private def handle_error(error, envid, fallback)
+          return nil if @stopped.set?
 
           update = nil
 
@@ -274,7 +268,7 @@ module LaunchDarkly
                 environment_id: envid
               )
               stop
-              return [update, false]
+              return update
             end
 
             is_recoverable = Impl::Util.http_error_recoverable?(error.status)
@@ -288,7 +282,7 @@ module LaunchDarkly
             unless is_recoverable
               @logger.error { "[LDClient] #{error_info.message}" }
               stop
-              return [update, false]
+              return update
             end
 
             @logger.warn { "[LDClient] #{error_info.message}" }
@@ -322,20 +316,21 @@ module LaunchDarkly
             )
           end
 
-          [update, true]
+          update
         end
 
-        def log_connection_started
+        private def log_connection_started
           @connection_attempt_start_time = Impl::Util.current_time_millis
         end
 
-        def log_connection_result(is_success)
-          if !@diagnostic_accumulator.nil? && @connection_attempt_start_time && @connection_attempt_start_time > 0
-            current_time = Impl::Util.current_time_millis
-            elapsed = current_time - @connection_attempt_start_time
-            @diagnostic_accumulator.record_stream_init(@connection_attempt_start_time, !is_success, elapsed >= 0 ? elapsed : 0)
-            @connection_attempt_start_time = 0
-          end
+        private def log_connection_result(is_success)
+          return unless @diagnostic_accumulator
+          return unless @connection_attempt_start_time > 0
+
+          current_time = Impl::Util.current_time_millis
+          elapsed = current_time - @connection_attempt_start_time
+          @diagnostic_accumulator.record_stream_init(@connection_attempt_start_time, !is_success, elapsed >= 0 ? elapsed : 0)
+          @connection_attempt_start_time = 0
         end
       end
 

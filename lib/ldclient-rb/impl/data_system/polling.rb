@@ -93,8 +93,6 @@ module LaunchDarkly
         #
         def sync(ss)
           @logger.info { "[LDClient] Starting PollingDataSourceV2 synchronizer" }
-          @stop.reset
-          @interrupt_event.reset
 
           until @stop.set?
             result = @requester.fetch(ss.selector)
@@ -440,7 +438,7 @@ module LaunchDarkly
 
           next unless event[:event]
 
-          case event[:event]
+          case event[:event].to_sym
           when LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT
             begin
               server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.from_h(event[:data])
