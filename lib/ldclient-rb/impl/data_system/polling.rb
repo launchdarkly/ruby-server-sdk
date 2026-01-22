@@ -93,8 +93,6 @@ module LaunchDarkly
         #
         def sync(ss)
           @logger.info { "[LDClient] Starting PollingDataSourceV2 synchronizer" }
-          @stop.reset
-          @interrupt_event.reset
 
           until @stop.set?
             result = @requester.fetch(ss.selector)
