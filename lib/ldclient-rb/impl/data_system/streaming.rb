@@ -176,17 +176,14 @@ module LaunchDarkly
         private def process_message(message, change_set_builder, envid)
           event_type = message.type
 
-          # Handle heartbeat - SSE library may use symbol or string
-          if event_type == :heartbeat || event_type == LaunchDarkly::Interfaces::DataSystem::EventName::HEARTBEAT
+          # Handle heartbeat
+          if event_type == LaunchDarkly::Interfaces::DataSystem::EventName::HEARTBEAT
             return nil
           end
 
           @logger.debug { "[LDClient] Stream received #{event_type} message: #{message.data}" }
 
-          # Convert symbol to string for comparison
-          event_name = event_type.is_a?(Symbol) ? event_type.to_s.tr('_', '-') : event_type
-
-          case event_name
+          case event_type
           when LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT
             server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.from_h(JSON.parse(message.data, symbolize_names: true))
             change_set_builder.start(server_intent.payload.code)

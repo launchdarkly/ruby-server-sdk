@@ -14,25 +14,25 @@ module LaunchDarkly
       #
       module EventName
         # Specifies that an object should be added to the data set with upsert semantics.
-        PUT_OBJECT = "put-object"
+        PUT_OBJECT = :"put-object"
 
         # Specifies that an object should be removed from the data set.
-        DELETE_OBJECT = "delete-object"
+        DELETE_OBJECT = :"delete-object"
 
         # Specifies the server's intent.
-        SERVER_INTENT = "server-intent"
+        SERVER_INTENT = :"server-intent"
 
         # Specifies that all data required to bring the existing data set to a new version has been transferred.
-        PAYLOAD_TRANSFERRED = "payload-transferred"
+        PAYLOAD_TRANSFERRED = :"payload-transferred"
 
         # Keeps the connection alive.
-        HEARTBEAT = "heart-beat"
+        HEARTBEAT = :"heart-beat"
 
         # Specifies that the server is about to close the connection.
-        GOODBYE = "goodbye"
+        GOODBYE = :goodbye
 
         # Specifies that an error occurred while serving the connection.
-        ERROR = "error"
+        ERROR = :error
       end
 
       #
@@ -153,7 +153,7 @@ module LaunchDarkly
         #
         # Returns the event name for payload transfer.
         #
-        # @return [String]
+        # @return [Symbol]
         #
         def name
           EventName::PAYLOAD_TRANSFERRED

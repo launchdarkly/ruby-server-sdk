@@ -438,7 +438,7 @@ module LaunchDarkly
 
           next unless event[:event]
 
-          case event[:event]
+          case event[:event].to_sym
           when LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT
             begin
               server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.from_h(event[:data])
