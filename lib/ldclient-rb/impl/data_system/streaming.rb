@@ -89,7 +89,7 @@ module LaunchDarkly
                   yield update
                 end
               rescue JSON::ParserError => e
-                @logger.info { "[LDClient] Error while handling stream event; will restart stream: #{e}" }
+                @logger.info { "[LDClient] Error parsing stream event; will restart stream: #{e}" }
                 yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                   state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                   error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
@@ -330,12 +330,13 @@ module LaunchDarkly
         end
 
         def log_connection_result(is_success)
-          if !@diagnostic_accumulator.nil? && @connection_attempt_start_time && @connection_attempt_start_time > 0
-            current_time = Impl::Util.current_time_millis
-            elapsed = current_time - @connection_attempt_start_time
-            @diagnostic_accumulator.record_stream_init(@connection_attempt_start_time, !is_success, elapsed >= 0 ? elapsed : 0)
-            @connection_attempt_start_time = 0
-          end
+          return unless @diagnostic_accumulator
+          return unless @connection_attempt_start_time > 0
+
+          current_time = Impl::Util.current_time_millis
+          elapsed = current_time - @connection_attempt_start_time
+          @diagnostic_accumulator.record_stream_init(@connection_attempt_start_time, !is_success, elapsed >= 0 ? elapsed : 0)
+          @connection_attempt_start_time = 0
         end
       end
 
