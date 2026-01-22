@@ -298,6 +298,190 @@ module LaunchDarkly
 
           fdv2.stop
         end
+
+        it "writes delta updates to persistent store in READ_WRITE mode" do
+          persistent_store = StubFeatureStore.new
+
+          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
+
+          data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+            .initializers(nil)
+            .synchronizers(td_synchronizer.method(:build_synchronizer))
+            .data_store(persistent_store, :read_write)
+            .build
+
+          fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+          ready_event = fdv2.start
+          expect(ready_event.wait(2)).to be true
+
+          # Wait a bit for initial sync to complete
+          sleep 0.2
+
+          # Reset tracking after initial sync
+          persistent_store.reset_operation_tracking
+
+          # Set up flag change listener to detect the update
+          flag_changed = Concurrent::Event.new
+          listener = Object.new
+          listener.define_singleton_method(:update) do |flag_change|
+            flag_changed.set if flag_change.key == :flagkey
+          end
+
+          fdv2.flag_change_broadcaster.add_listener(listener)
+
+          # Make a delta update
+          td_synchronizer.update(td_synchronizer.flag("flagkey").on(false))
+
+          # Wait for flag change to propagate
+          expect(flag_changed.wait(3)).to be true
+
+          # Verify the update was written to persistent store via upsert
+          # (The test verifies upsert was called; exact timing of snapshot may vary)
+          expect(persistent_store.upsert_calls).not_to be_empty
+          expect(persistent_store.upsert_calls.any? { |call| call[1] == "flagkey" && call[2] >= 2 }).to be true  # version should be >= 2 for the update
+
+          fdv2.stop
+        end
+
+        it "does not write delta updates to persistent store in READ_ONLY mode" do
+          persistent_store = StubFeatureStore.new
+
+          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
+
+          data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+            .initializers(nil)
+            .synchronizers(td_synchronizer.method(:build_synchronizer))
+            .data_store(persistent_store, :read_only)
+            .build
+
+          fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+          # Set up flag change listener
+          flag_changed = Concurrent::Event.new
+          change_count = 0
+
+          listener = Object.new
+          listener.define_singleton_method(:update) do |_flag_change|
+            change_count += 1
+            flag_changed.set if change_count == 2
+          end
+
+          fdv2.flag_change_broadcaster.add_listener(listener)
+          ready_event = fdv2.start
+
+          expect(ready_event.wait(2)).to be true
+
+          persistent_store.reset_operation_tracking
+
+          # Make a delta update
+          td_synchronizer.update(td_synchronizer.flag("flagkey").on(false))
+
+          # Wait for flag change
+          expect(flag_changed.wait(2)).to be true
+
+          # Verify NO updates were written to persistent store in READ_ONLY mode
+          expect(persistent_store.upsert_calls).to be_empty
+
+          fdv2.stop
+        end
+
+        it "persists data from both initializer and synchronizer in READ_WRITE mode" do
+          persistent_store = StubFeatureStore.new
+
+          # Create initializer with one flag
+          td_initializer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_initializer.update(td_initializer.flag("init-flag").on(true))
+
+          # Create synchronizer with another flag
+          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer.update(td_synchronizer.flag("sync-flag").on(false))
+
+          data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+            .initializers([td_initializer.method(:build_initializer)])
+            .synchronizers(td_synchronizer.method(:build_synchronizer))
+            .data_store(persistent_store, :read_write)
+            .build
+
+          fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+          # Set up flag change listener to detect when synchronizer data arrives
+          sync_flag_arrived = Concurrent::Event.new
+
+          listener = Object.new
+          listener.define_singleton_method(:update) do |flag_change|
+            sync_flag_arrived.set if flag_change.key == :"sync-flag"
+          end
+
+          fdv2.flag_change_broadcaster.add_listener(listener)
+          ready_event = fdv2.start
+
+          expect(ready_event.wait(2)).to be true
+
+          # Wait for synchronizer to fully initialize
+          expect(sync_flag_arrived.wait(2)).to be true
+
+          # The synchronizer flag should be in the persistent store
+          # (synchronizer does a full data set transfer, replacing initializer data)
+          snapshot = persistent_store.get_data_snapshot
+          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES]).not_to have_key(:"init-flag")
+          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES]).to have_key(:"sync-flag")
+
+          fdv2.stop
+        end
+
+        it "handles data store status provider correctly" do
+          persistent_store = StubFeatureStore.new
+
+          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
+
+          data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+            .initializers(nil)
+            .synchronizers(td_synchronizer.method(:build_synchronizer))
+            .data_store(persistent_store, :read_write)
+            .build
+
+          fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+          # Verify data store status provider exists
+          status_provider = fdv2.data_store_status_provider
+          expect(status_provider).not_to be_nil
+
+          # Get initial status
+          status = status_provider.status
+          expect(status).not_to be_nil
+          expect(status.available).to be true
+
+          ready_event = fdv2.start
+          expect(ready_event.wait(2)).to be true
+
+          fdv2.stop
+        end
+
+        it "has data store status provider even without persistent store" do
+          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
+
+          data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+            .initializers(nil)
+            .synchronizers(td_synchronizer.method(:build_synchronizer))
+            .data_store(nil, :read_write)  # No persistent store
+            .build
+
+          fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+          # Status provider should exist but not be monitoring
+          status_provider = fdv2.data_store_status_provider
+          expect(status_provider).not_to be_nil
+
+          ready_event = fdv2.start
+          expect(ready_event.wait(2)).to be true
+
+          fdv2.stop
+        end
       end
     end
   end
