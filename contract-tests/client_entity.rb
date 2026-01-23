@@ -101,7 +101,8 @@ class ClientEntity
       opts[:use_ldd] = true
     end
 
-    if config[:persistentDataStore]
+    # Configure persistent data store for legacy (non-dataSystem) configurations
+    if !data_system_config && config[:persistentDataStore]
       store, store_mode = build_persistent_store(config[:persistentDataStore])
       opts[:feature_store] = store
     end
