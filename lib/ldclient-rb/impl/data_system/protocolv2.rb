@@ -22,13 +22,13 @@ module LaunchDarkly
           # @return [String] The object kind ({LaunchDarkly::Interfaces::DataSystem::ObjectKind})
           attr_reader :kind
 
-          # @return [String] The key
+          # @return [Symbol] The key
           attr_reader :key
 
           #
           # @param version [Integer] The version
           # @param kind [String] The object kind ({LaunchDarkly::Interfaces::DataSystem::ObjectKind})
-          # @param key [String] The key
+          # @param key [Symbol] The key
           #
           def initialize(version:, kind:, key:)
             @version = version
@@ -72,7 +72,7 @@ module LaunchDarkly
 
             raise ArgumentError, "Missing required fields in DeleteObject" if version.nil? || kind.nil? || key.nil?
 
-            new(version: version, kind: kind, key: key)
+            new(version: version, kind: kind, key: key.to_sym)
           end
         end
 
@@ -89,7 +89,7 @@ module LaunchDarkly
           # @return [String] The object kind ({LaunchDarkly::Interfaces::DataSystem::ObjectKind})
           attr_reader :kind
 
-          # @return [String] The key
+          # @return [Symbol] The key
           attr_reader :key
 
           # @return [Hash] The object data
@@ -98,7 +98,7 @@ module LaunchDarkly
           #
           # @param version [Integer] The version
           # @param kind [String] The object kind ({LaunchDarkly::Interfaces::DataSystem::ObjectKind})
-          # @param key [String] The key
+          # @param key [Symbol] The key
           # @param object [Hash] The object data
           #
           def initialize(version:, kind:, key:, object:)
@@ -146,7 +146,7 @@ module LaunchDarkly
 
             raise ArgumentError, "Missing required fields in PutObject" if version.nil? || kind.nil? || key.nil? || object_data.nil?
 
-            new(version: version, kind: kind, key: key, object: object_data)
+            new(version: version, kind: kind, key: key.to_sym, object: object_data)
           end
         end
 

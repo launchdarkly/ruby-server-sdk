@@ -28,7 +28,7 @@ module LaunchDarkly
             items_of_kind = @items[kind]
             return nil if items_of_kind.nil?
 
-            item = items_of_kind[key]
+            item = items_of_kind[key.to_sym]
             return nil if item.nil?
             return nil if item[:deleted]
 

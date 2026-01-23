@@ -124,8 +124,8 @@ module LaunchDarkly
             put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.new(
               version: 100,
               kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
-              key: "flag-key",
-              object: { key: "flag-key" }
+              key: "flagkey",
+              object: { key: "flagkey" }
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
 
@@ -159,8 +159,8 @@ module LaunchDarkly
             expect(update.change_set.changes.length).to eq(1)
             expect(update.change_set.changes[0].action).to eq(LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT)
             expect(update.change_set.changes[0].kind).to eq(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG)
-            expect(update.change_set.changes[0].key).to eq("flag-key")
-            expect(update.change_set.changes[0].object).to eq({ key: "flag-key" })
+            expect(update.change_set.changes[0].key).to eq(:flagkey)
+            expect(update.change_set.changes[0].object).to eq({ key: "flagkey" })
             expect(update.change_set.changes[0].version).to eq(100)
           end
 
@@ -176,7 +176,7 @@ module LaunchDarkly
             delete_object = LaunchDarkly::Impl::DataSystem::ProtocolV2::DeleteObject.new(
               version: 101,
               kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
-              key: "flag-key"
+              key: "flagkey"
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
 
@@ -210,7 +210,7 @@ module LaunchDarkly
             expect(update.change_set.changes.length).to eq(1)
             expect(update.change_set.changes[0].action).to eq(LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE)
             expect(update.change_set.changes[0].kind).to eq(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG)
-            expect(update.change_set.changes[0].key).to eq("flag-key")
+            expect(update.change_set.changes[0].key).to eq(:flagkey)
             expect(update.change_set.changes[0].version).to eq(101)
           end
 
@@ -270,8 +270,8 @@ module LaunchDarkly
             put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.new(
               version: 100,
               kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
-              key: "flag-key",
-              object: { key: "flag-key" }
+              key: "flagkey",
+              object: { key: "flagkey" }
             )
             error = LaunchDarkly::Impl::DataSystem::ProtocolV2::Error.new(
               payload_id: "p:SOMETHING:300",
@@ -280,7 +280,7 @@ module LaunchDarkly
             delete_object = LaunchDarkly::Impl::DataSystem::ProtocolV2::DeleteObject.new(
               version: 101,
               kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
-              key: "flag-key"
+              key: "flagkey"
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
 
