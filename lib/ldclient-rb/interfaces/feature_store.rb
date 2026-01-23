@@ -36,7 +36,7 @@ module LaunchDarkly
       # the correct order), storing each item, and then delete any leftover items at the very end.
       #
       # @param all_data [Hash]  a hash where each key is one of the data kind objects, and each
-      #   value is in turn a hash of string keys to entities
+      #   value is in turn a hash of symbol keys to entities
       # @return [void]
       #
       def init(all_data)
@@ -46,7 +46,7 @@ module LaunchDarkly
       # Returns the entity to which the specified key is mapped, if any.
       #
       # @param kind [Object]  the kind of entity to get
-      # @param key [String]  the unique key of the entity to get
+      # @param key [String, Symbol]  the unique key of the entity to get
       # @return [Hash]  the entity; nil if the key was not found, or if the stored entity's
       #   `:deleted` property was true
       #

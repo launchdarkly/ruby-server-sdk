@@ -192,9 +192,10 @@ module LaunchDarkly
                 builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES)
 
                 # Add the updated flag
+                flag_key = flag_data[:key].to_sym
                 builder.add_put(
                   LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
-                  flag_data[:key],
+                  flag_key,
                   flag_data[:version] || 1,
                   flag_data
                 )
@@ -247,9 +248,10 @@ module LaunchDarkly
                 builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES)
 
                 # Add the updated segment
+                segment_key = segment_data[:key].to_sym
                 builder.add_put(
                   LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
-                  segment_data[:key],
+                  segment_key,
                   segment_data[:version] || 1,
                   segment_data
                 )

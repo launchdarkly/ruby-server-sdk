@@ -14,14 +14,14 @@ module LaunchDarkly
         describe "two-phase initialization" do
           it "initializes from initializer then syncs from synchronizer" do
             td_initializer = LaunchDarkly::Integrations::TestDataV2.data_source
-            td_initializer.update(td_initializer.flag("feature-flag").on(true))
+            td_initializer.update(td_initializer.flag("flagkey").on(true))
 
             td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
             # Set this to true, and then to false to ensure the version number exceeded
             # the initializer version number. Otherwise, they start as the same version
             # and the latest value is ignored.
-            td_synchronizer.update(td_synchronizer.flag("feature-flag").on(true))
-            td_synchronizer.update(td_synchronizer.flag("feature-flag").on(false))
+            td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
+            td_synchronizer.update(td_synchronizer.flag("flagkey").on(false))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers([td_initializer.method(:build_initializer)])
@@ -50,13 +50,13 @@ module LaunchDarkly
             expect(ready_event.wait(2)).to be true
             expect(initialized.wait(1)).to be true
 
-            td_synchronizer.update(td_synchronizer.flag("feature-flag").on(true))
+            td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
             expect(modified.wait(1)).to be true
 
             expect(changes.length).to eq(3)
-            expect(changes[0].key).to eq("feature-flag")
-            expect(changes[1].key).to eq("feature-flag")
-            expect(changes[2].key).to eq("feature-flag")
+            expect(changes[0].key).to eq(:flagkey)
+            expect(changes[1].key).to eq(:flagkey)
+            expect(changes[2].key).to eq(:flagkey)
 
             fdv2.stop
           end
@@ -88,7 +88,7 @@ module LaunchDarkly
 
             fdv2.stop
 
-            td.update(td.flag("feature-flag").on(false))
+            td.update(td.flag("flagkey").on(false))
             expect(changed.wait(1)).to be_falsey, "Flag change listener was erroneously called"
             expect(changes.length).to eq(0)
           end
@@ -123,7 +123,7 @@ module LaunchDarkly
             allow(mock_primary).to receive(:sync)
 
             td = LaunchDarkly::Integrations::TestDataV2.data_source
-            td.update(td.flag("feature-flag").on(true))
+            td.update(td.flag("flagkey").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers([td.method(:build_initializer)])
@@ -150,12 +150,12 @@ module LaunchDarkly
             ready_event = fdv2.start
             expect(ready_event.wait(2)).to be true
 
-            td.update(td.flag("feature-flag").on(false))
+            td.update(td.flag("flagkey").on(false))
             expect(changed.wait(2)).to be true
 
             expect(changes.length).to eq(2)
-            expect(changes[0].key).to eq("feature-flag")
-            expect(changes[1].key).to eq("feature-flag")
+            expect(changes[0].key).to eq(:flagkey)
+            expect(changes[1].key).to eq(:flagkey)
 
             fdv2.stop
           end
@@ -176,7 +176,7 @@ module LaunchDarkly
             allow(mock_secondary).to receive(:sync)
 
             td = LaunchDarkly::Integrations::TestDataV2.data_source
-            td.update(td.flag("feature-flag").on(true))
+            td.update(td.flag("flagkey").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers([td.method(:build_initializer)])
@@ -221,7 +221,7 @@ module LaunchDarkly
 
             # Create FDv1 fallback data source with actual data
             td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
-            td_fdv1.update(td_fdv1.flag("fdv1-flag").on(true))
+            td_fdv1.update(td_fdv1.flag("fdv1flag").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
@@ -245,12 +245,12 @@ module LaunchDarkly
             expect(ready_event.wait(1)).to be true
 
             # Update flag in FDv1 data source to verify it's being used
-            td_fdv1.update(td_fdv1.flag("fdv1-flag").on(false))
+            td_fdv1.update(td_fdv1.flag("fdv1flag").on(false))
             expect(changed.wait(10)).to be true
 
             # Verify we got flag changes from FDv1
             expect(changes.length).to be > 0
-            expect(changes.any? { |change| change.key == "fdv1-flag" }).to be true
+            expect(changes.any? { |change| change.key == :fdv1flag }).to be true
 
             fdv2.stop
           end
@@ -270,7 +270,7 @@ module LaunchDarkly
 
             # Create FDv1 fallback data source
             td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
-            td_fdv1.update(td_fdv1.flag("fdv1-fallback-flag").on(true))
+            td_fdv1.update(td_fdv1.flag("fdv1fallbackflag").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
@@ -300,12 +300,12 @@ module LaunchDarkly
             changed = Concurrent::Event.new  # Reset for second change
 
             # Trigger a flag update in FDv1
-            td_fdv1.update(td_fdv1.flag("fdv1-fallback-flag").on(false))
+            td_fdv1.update(td_fdv1.flag("fdv1fallbackflag").on(false))
             expect(changed.wait(2)).to be true
 
             # Verify FDv1 is active and we got both changes
             expect(changes.length).to eq(2)
-            expect(changes.all? { |change| change.key == "fdv1-fallback-flag" }).to be true
+            expect(changes.all? { |change| change.key == :fdv1fallbackflag }).to be true
 
             fdv2.stop
           end
@@ -315,7 +315,7 @@ module LaunchDarkly
           it "falls back to FDv1 and replaces initialized data" do
             # Initialize with some data
             td_initializer = LaunchDarkly::Integrations::TestDataV2.data_source
-            td_initializer.update(td_initializer.flag("initial-flag").on(true))
+            td_initializer.update(td_initializer.flag("initialflag").on(true))
 
             # Create mock primary that signals fallback
             mock_primary = double("primary_synchronizer")
@@ -330,7 +330,7 @@ module LaunchDarkly
 
             # Create FDv1 fallback with different data
             td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
-            td_fdv1.update(td_fdv1.flag("fdv1-replacement-flag").on(true))
+            td_fdv1.update(td_fdv1.flag("fdv1replacementflag").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers([td_initializer.method(:build_initializer)])
@@ -356,8 +356,8 @@ module LaunchDarkly
 
             # Verify we got changes for both flags
             flag_keys = changes.map { |change| change.key }
-            expect(flag_keys).to include("initial-flag")
-            expect(flag_keys).to include("fdv1-replacement-flag")
+            expect(flag_keys).to include(:initialflag)
+            expect(flag_keys).to include(:fdv1replacementflag)
 
             fdv2.stop
           end
@@ -429,7 +429,7 @@ module LaunchDarkly
 
             # Create FDv1 fallback
             td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
-            td_fdv1.update(td_fdv1.flag("fdv1-flag").on(true))
+            td_fdv1.update(td_fdv1.flag("fdv1flag").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
@@ -450,7 +450,7 @@ module LaunchDarkly
 
             # Verify FDv1 is serving data
             store = fdv2.store
-            flag = store.get(LaunchDarkly::Impl::DataStore::FEATURES, "fdv1-flag")
+            flag = store.get(LaunchDarkly::Impl::DataStore::FEATURES, :fdv1flag)
             expect(flag).not_to be_nil
 
             fdv2.stop

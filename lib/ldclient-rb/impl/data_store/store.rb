@@ -284,7 +284,7 @@ module LaunchDarkly
         # Convert a list of Changes to the pre-existing format used by FeatureStore.
         #
         # @param changes [Array<LaunchDarkly::Interfaces::DataSystem::Change>] List of changes
-        # @return [Hash{DataKind => Hash{String => Hash}}] Hash suitable for FeatureStore operations
+        # @return [Hash{DataKind => Hash{Symbol => Hash}}] Hash suitable for FeatureStore operations
         #
         private def changes_to_store_data(changes)
           all_data = {
@@ -307,7 +307,7 @@ module LaunchDarkly
         #
         # Reset dependency tracker with new full data set.
         #
-        # @param all_data [Hash{DataKind => Hash{String => Hash}}] Hash of data kinds to items
+        # @param all_data [Hash{DataKind => Hash{Symbol => Hash}}] Hash of data kinds to items
         # @return [void]
         #
         private def reset_dependency_tracker(all_data)
