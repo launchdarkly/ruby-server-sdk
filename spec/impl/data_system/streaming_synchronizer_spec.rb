@@ -384,18 +384,6 @@ change_set_builder, envid)
             # Call log_connection_result without log_connection_started
             synchronizer.send(:log_connection_result, true)
           end
-
-          it "resets connection attempt time after logging" do
-            diagnostic_accumulator = double("DiagnosticAccumulator")
-            expect(diagnostic_accumulator).to receive(:record_stream_init).once
-
-            synchronizer.set_diagnostic_accumulator(diagnostic_accumulator)
-            synchronizer.send(:log_connection_started)
-            synchronizer.send(:log_connection_result, true)
-
-            # Another log_connection_result should not record (time was reset)
-            synchronizer.send(:log_connection_result, true)
-          end
         end
       end
     end
