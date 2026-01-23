@@ -18,6 +18,11 @@ class ClientEntity
     if data_system_config
       data_system = LaunchDarkly::DataSystem.custom
 
+      if config[:persistentDataStore]
+        store, store_mode = build_persistent_store(config[:persistentDataStore])
+        data_system.data_store(store, store_mode)
+      end
+
       init_configs = data_system_config[:initializers]
       if init_configs
         initializers = []
@@ -70,8 +75,6 @@ class ClientEntity
 
         data_system.synchronizers(primary_builder, secondary_builder) if primary_builder
 
-        # Always configure FDv1 fallback when synchronizers are present
-        # The fallback is triggered by the LD-FD-Fallback header from the server
         if primary_builder || secondary_builder
           fallback_builder = LaunchDarkly::DataSystem.fdv1_fallback_ds_builder
           data_system.fdv1_compatible_synchronizer(fallback_builder)
@@ -99,39 +102,8 @@ class ClientEntity
     end
 
     if config[:persistentDataStore]
-      store_config = {}
-      store_config[:prefix] = config[:persistentDataStore][:store][:prefix] if config[:persistentDataStore][:store][:prefix]
-
-      case config[:persistentDataStore][:cache][:mode]
-        when 'off'
-          store_config[:expiration] = 0
-        when 'infinite'
-          # NOTE: We don't actually support infinite cache mode, so we'll just set it to nil for now. This uses a default
-          # 15 second expiration time in the SDK, which is long enough to pass any test.
-          store_config[:expiration] = nil
-        when 'ttl'
-          store_config[:expiration] = config[:persistentDataStore][:cache][:ttl]
-      end
-
-      case config[:persistentDataStore][:store][:type]
-      when 'redis'
-        store_config[:redis_url] = config[:persistentDataStore][:store][:dsn]
-        store = LaunchDarkly::Integrations::Redis.new_feature_store(store_config)
-        opts[:feature_store] = store
-      when 'consul'
-        store_config[:url] = config[:persistentDataStore][:store][:url]
-        store = LaunchDarkly::Integrations::Consul.new_feature_store(store_config)
-        opts[:feature_store] = store
-      when 'dynamodb'
-        client = Aws::DynamoDB::Client.new(
-          region: 'us-east-1',
-          credentials: Aws::Credentials.new('dummy', 'dummy', 'dummy'),
-          endpoint: config[:persistentDataStore][:store][:dsn]
-        )
-        store_config[:existing_client] = client
-        store = LaunchDarkly::Integrations::DynamoDB.new_feature_store('sdk-contract-tests', store_config)
-        opts[:feature_store] = store
-      end
+      store, store_mode = build_persistent_store(config[:persistentDataStore])
+      opts[:feature_store] = store
     end
 
     if config[:events]
@@ -336,5 +308,50 @@ class ClientEntity
     end
 
     LaunchDarkly::LDContext.create(context)
+  end
+
+  #
+  # Builds a persistent data store from the contract test configuration.
+  #
+  # @param persistent_store_config [Hash] The persistentDataStore configuration
+  # @return [Array<Object, Symbol>] Returns [store, store_mode]
+  #
+  private def build_persistent_store(persistent_store_config)
+    store_config = {}
+    store_config[:prefix] = persistent_store_config[:store][:prefix] if persistent_store_config[:store][:prefix]
+
+    case persistent_store_config[:cache][:mode]
+    when 'off'
+      store_config[:expiration] = 0
+    when 'infinite'
+      # NOTE: We don't actually support infinite cache mode, so we'll just set it to nil for now. This uses a default
+      # 15 second expiration time in the SDK, which is long enough to pass any test.
+      store_config[:expiration] = nil
+    when 'ttl'
+      store_config[:expiration] = persistent_store_config[:cache][:ttl]
+    end
+
+    store = case persistent_store_config[:store][:type]
+            when 'redis'
+              store_config[:redis_url] = persistent_store_config[:store][:dsn]
+              LaunchDarkly::Integrations::Redis.new_feature_store(store_config)
+            when 'consul'
+              store_config[:url] = persistent_store_config[:store][:url]
+              LaunchDarkly::Integrations::Consul.new_feature_store(store_config)
+            when 'dynamodb'
+              client = Aws::DynamoDB::Client.new(
+                region: 'us-east-1',
+                credentials: Aws::Credentials.new('dummy', 'dummy', 'dummy'),
+                endpoint: persistent_store_config[:store][:dsn]
+              )
+              store_config[:existing_client] = client
+              LaunchDarkly::Integrations::DynamoDB.new_feature_store('sdk-contract-tests', store_config)
+            end
+
+    # Determine store mode based on whether it's read-write or read-only
+    # For contract tests with data sources (streaming/polling), stores are read-write
+    store_mode = LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_WRITE
+
+    [store, store_mode]
   end
 end
