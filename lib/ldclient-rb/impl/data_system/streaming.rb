@@ -79,6 +79,23 @@ module LaunchDarkly
           }
 
           @sse = SSE::Client.new(base_uri, **opts) do |client|
+            client.on_connect do |headers|
+              # Extract environment ID and check for fallback on successful connection
+              if headers
+                envid = headers[LD_ENVID_HEADER] || envid
+
+                # Check for fallback header on connection
+                if headers[LD_FD_FALLBACK_HEADER] == 'true'
+                  log_connection_result(true)
+                  yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                    state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                    revert_to_fdv1: true,
+                    environment_id: envid
+                  )
+                end
+              end
+            end
+
             client.on_event do |event|
               begin
                 update = process_message(event, change_set_builder, envid)
@@ -126,8 +143,7 @@ module LaunchDarkly
 
               # Extract envid and fallback from error headers if available
               if error.respond_to?(:headers) && error.headers
-                envid_from_error = error.headers[LD_ENVID_HEADER]
-                envid = envid_from_error if envid_from_error
+                envid = error.headers[LD_ENVID_HEADER] || envid
 
                 if error.headers[LD_FD_FALLBACK_HEADER] == 'true'
                   fallback = true
