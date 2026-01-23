@@ -310,6 +310,81 @@ change_set_builder, envid)
             expect(update.change_set.changes[0].action).to eq(LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE)
           end
         end
+
+        describe 'diagnostic event recording' do
+          let(:synchronizer) { StreamingDataSource.new(sdk_key, config) }
+
+          it "logs successful connection when diagnostic_accumulator is provided" do
+            diagnostic_accumulator = double("DiagnosticAccumulator")
+            expect(diagnostic_accumulator).to receive(:record_stream_init).with(
+              kind_of(Integer),
+              false,
+              kind_of(Integer)
+            )
+
+            synchronizer.set_diagnostic_accumulator(diagnostic_accumulator)
+            synchronizer.send(:log_connection_started)
+            synchronizer.send(:log_connection_result, true)
+          end
+
+          it "logs failed connection when diagnostic_accumulator is provided" do
+            diagnostic_accumulator = double("DiagnosticAccumulator")
+            expect(diagnostic_accumulator).to receive(:record_stream_init).with(
+              kind_of(Integer),
+              true,
+              kind_of(Integer)
+            )
+
+            synchronizer.set_diagnostic_accumulator(diagnostic_accumulator)
+            synchronizer.send(:log_connection_started)
+            synchronizer.send(:log_connection_result, false)
+          end
+
+          it "logs connection metrics with correct timestamp and duration" do
+            diagnostic_accumulator = double("DiagnosticAccumulator")
+
+            synchronizer.set_diagnostic_accumulator(diagnostic_accumulator)
+
+            expect(diagnostic_accumulator).to receive(:record_stream_init) do |timestamp, failed, duration|
+              expect(timestamp).to be_a(Integer)
+              expect(timestamp).to be > 0
+              expect(failed).to eq(false)
+              expect(duration).to be_a(Integer)
+              expect(duration).to be >= 0
+            end
+
+            synchronizer.send(:log_connection_started)
+            sleep(0.01) # Small delay to ensure measurable duration
+            synchronizer.send(:log_connection_result, true)
+          end
+
+          it "only logs once per connection attempt" do
+            diagnostic_accumulator = double("DiagnosticAccumulator")
+            expect(diagnostic_accumulator).to receive(:record_stream_init).once
+
+            synchronizer.set_diagnostic_accumulator(diagnostic_accumulator)
+            synchronizer.send(:log_connection_started)
+            synchronizer.send(:log_connection_result, true)
+
+            # Second call should not record again (no new connection_started)
+            synchronizer.send(:log_connection_result, true)
+          end
+
+          it "does not log when diagnostic_accumulator is not set" do
+            # Should not raise an error
+            expect { synchronizer.send(:log_connection_started) }.not_to raise_error
+            expect { synchronizer.send(:log_connection_result, true) }.not_to raise_error
+          end
+
+          it "does not log when connection was not started" do
+            diagnostic_accumulator = double("DiagnosticAccumulator")
+            expect(diagnostic_accumulator).not_to receive(:record_stream_init)
+
+            synchronizer.set_diagnostic_accumulator(diagnostic_accumulator)
+            # Call log_connection_result without log_connection_started
+            synchronizer.send(:log_connection_result, true)
+          end
+        end
       end
     end
   end
