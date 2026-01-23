@@ -14,17 +14,86 @@ class ClientEntity
 
     opts[:logger] = log
 
-    if config[:streaming]
+    data_system_config = config[:dataSystem]
+    if data_system_config
+      data_system = LaunchDarkly::DataSystem.custom
+
+      init_configs = data_system_config[:initializers]
+      if init_configs
+        initializers = []
+        init_configs.each do |init_config|
+          polling = init_config[:polling]
+          next unless polling
+
+          opts[:base_uri] = polling[:baseUri] if polling[:baseUri]
+          set_optional_time_prop(polling, :pollIntervalMs, opts, :poll_interval)
+          initializers << LaunchDarkly::DataSystem.polling_ds_builder
+        end
+        data_system.initializers(initializers)
+      end
+
+      sync_config = data_system_config[:synchronizers]
+      if sync_config
+        primary = sync_config[:primary]
+        secondary = sync_config[:secondary]
+
+        primary_builder = nil
+        secondary_builder = nil
+
+        if primary
+          streaming = primary[:streaming]
+          if streaming
+            opts[:stream_uri] = streaming[:baseUri] if streaming[:baseUri]
+            set_optional_time_prop(streaming, :initialRetryDelayMs, opts, :initial_reconnect_delay)
+            primary_builder = LaunchDarkly::DataSystem.streaming_ds_builder
+          elsif primary[:polling]
+            polling = primary[:polling]
+            opts[:base_uri] = polling[:baseUri] if polling[:baseUri]
+            set_optional_time_prop(polling, :pollIntervalMs, opts, :poll_interval)
+            primary_builder = LaunchDarkly::DataSystem.polling_ds_builder
+          end
+        end
+
+        if secondary
+          streaming = secondary[:streaming]
+          if streaming
+            opts[:stream_uri] = streaming[:baseUri] if streaming[:baseUri]
+            set_optional_time_prop(streaming, :initialRetryDelayMs, opts, :initial_reconnect_delay)
+            secondary_builder = LaunchDarkly::DataSystem.streaming_ds_builder
+          elsif secondary[:polling]
+            polling = secondary[:polling]
+            opts[:base_uri] = polling[:baseUri] if polling[:baseUri]
+            set_optional_time_prop(polling, :pollIntervalMs, opts, :poll_interval)
+            secondary_builder = LaunchDarkly::DataSystem.polling_ds_builder
+          end
+        end
+
+        data_system.synchronizers(primary_builder, secondary_builder) if primary_builder
+
+        # Always configure FDv1 fallback when synchronizers are present
+        # The fallback is triggered by the LD-FD-Fallback header from the server
+        if primary_builder || secondary_builder
+          fallback_builder = LaunchDarkly::DataSystem.fdv1_fallback_ds_builder
+          data_system.fdv1_compatible_synchronizer(fallback_builder)
+        end
+      end
+
+      if data_system_config[:payloadFilter]
+        opts[:payload_filter_key] = data_system_config[:payloadFilter]
+      end
+
+      opts[:data_system_config] = data_system.build
+    elsif config[:streaming]
       streaming = config[:streaming]
       opts[:stream_uri] = streaming[:baseUri] unless streaming[:baseUri].nil?
       opts[:payload_filter_key] = streaming[:filter] unless streaming[:filter].nil?
-      opts[:initial_reconnect_delay] = streaming[:initialRetryDelayMs] / 1_000.0 unless streaming[:initialRetryDelayMs].nil?
+      set_optional_time_prop(streaming, :initialRetryDelayMs, opts, :initial_reconnect_delay)
     elsif config[:polling]
       polling = config[:polling]
       opts[:stream] = false
       opts[:base_uri] = polling[:baseUri] unless polling[:baseUri].nil?
       opts[:payload_filter_key] = polling[:filter] unless polling[:filter].nil?
-      opts[:poll_interval] = polling[:pollIntervalMs] / 1_000.0 unless polling[:pollIntervalMs].nil?
+      set_optional_time_prop(polling, :pollIntervalMs, opts, :poll_interval)
     else
       opts[:use_ldd] = true
     end
@@ -72,7 +141,7 @@ class ClientEntity
       opts[:diagnostic_opt_out] = !events[:enableDiagnostics]
       opts[:all_attributes_private] = !!events[:allAttributesPrivate]
       opts[:private_attributes] = events[:globalPrivateAttributes]
-      opts[:flush_interval] = (events[:flushIntervalMs] / 1_000) unless events[:flushIntervalMs].nil?
+      set_optional_time_prop(events, :flushIntervalMs, opts, :flush_interval)
       opts[:omit_anonymous_contexts] = !!events[:omitAnonymousContexts]
       opts[:compress_events] = !!events[:enableGzip]
     else
@@ -81,19 +150,14 @@ class ClientEntity
 
     if config[:bigSegments]
       big_segments = config[:bigSegments]
+      big_config = { store: BigSegmentStoreFixture.new(big_segments[:callbackUri]) }
 
-      store = BigSegmentStoreFixture.new(config[:bigSegments][:callbackUri])
-      context_cache_time = big_segments[:userCacheTimeMs].nil? ? nil : big_segments[:userCacheTimeMs] / 1_000
-      status_poll_interval_ms = big_segments[:statusPollIntervalMs].nil? ? nil : big_segments[:statusPollIntervalMs] / 1_000
-      stale_after_ms = big_segments[:staleAfterMs].nil? ? nil : big_segments[:staleAfterMs] / 1_000
+      big_config[:context_cache_size] = big_segments[:userCacheSize] if big_segments[:userCacheSize]
+      set_optional_time_prop(big_segments, :userCacheTimeMs, big_config, :context_cache_time)
+      set_optional_time_prop(big_segments, :statusPollIntervalMs, big_config, :status_poll_interval)
+      set_optional_time_prop(big_segments, :staleAfterMs, big_config, :stale_after)
 
-      opts[:big_segments] = LaunchDarkly::BigSegmentsConfig.new(
-        store: store,
-        context_cache_size: big_segments[:userCacheSize],
-        context_cache_time: context_cache_time,
-        status_poll_interval: status_poll_interval_ms,
-        stale_after: stale_after_ms
-      )
+      opts[:big_segments] = LaunchDarkly::BigSegmentsConfig.new(**big_config)
     end
 
     if config[:tags]
@@ -198,6 +262,50 @@ class ClientEntity
     context1 == context2
   end
 
+  def secure_mode_hash(params)
+    @client.secure_mode_hash(params[:context])
+  end
+
+  def track(params)
+    @client.track(params[:eventKey], params[:context], params[:data], params[:metricValue])
+  end
+
+  def identify(params)
+    @client.identify(params[:context])
+  end
+
+  def flush_events
+    @client.flush
+  end
+
+  def get_big_segment_store_status
+    status = @client.big_segment_store_status_provider.status
+    { available: status.available, stale: status.stale }
+  end
+
+  def log
+    @log
+  end
+
+  def close
+    @client.close
+    @log.info("Test ended")
+  end
+
+  #
+  # Helper to convert millisecond time properties to seconds.
+  # Only sets the output if the input value is present.
+  #
+  # @param params_in [Hash] Input parameters hash
+  # @param name_in [Symbol] Key name in input hash (e.g., :pollIntervalMs)
+  # @param params_out [Hash] Output parameters hash
+  # @param name_out [Symbol] Key name in output hash (e.g., :poll_interval)
+  #
+  private def set_optional_time_prop(params_in, name_in, params_out, name_out)
+    value = params_in[name_in]
+    params_out[name_out] = value / 1_000.0 if value
+  end
+
   private def build_context_from_params(params)
     return build_single_context_from_attribute_definitions(params[:single]) unless params[:single].nil?
 
@@ -228,35 +336,5 @@ class ClientEntity
     end
 
     LaunchDarkly::LDContext.create(context)
-  end
-
-  def secure_mode_hash(params)
-    @client.secure_mode_hash(params[:context])
-  end
-
-  def track(params)
-    @client.track(params[:eventKey], params[:context], params[:data], params[:metricValue])
-  end
-
-  def identify(params)
-    @client.identify(params[:context])
-  end
-
-  def flush_events
-    @client.flush
-  end
-
-  def get_big_segment_store_status
-    status = @client.big_segment_store_status_provider.status
-    { available: status.available, stale: status.stale }
-  end
-
-  def log
-    @log
-  end
-
-  def close
-    @client.close
-    @log.info("Test ended")
   end
 end

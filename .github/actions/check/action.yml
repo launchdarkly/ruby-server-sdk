@@ -35,9 +35,20 @@ runs:
       shell: bash
       run: make start-contract-test-service-bg
 
-    - uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1.2.0
+    - name: Run contract tests v2
       if: ${{ inputs.flaky != 'true' }}
+      uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1
       with:
         test_service_port: 9000
         enable_persistence_tests: true
         token: ${{ inputs.token }}
+        stop_service: 'false'
+
+    - name: Run contract tests v3
+      if: ${{ inputs.flaky != 'true' }}
+      uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1
+      with:
+        test_service_port: 9000
+        enable_persistence_tests: true
+        token: ${{ inputs.token }}
+        version: v3.0.0-alpha.1
