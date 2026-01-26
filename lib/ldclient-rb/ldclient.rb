@@ -264,7 +264,9 @@ module LaunchDarkly
     # @return [Boolean] true if the client has been initialized
     #
     def initialized?
-      @data_system.data_availability == @data_system.target_availability
+      return true if @config.offline? || @config.use_ldd?
+
+      Impl::DataSystem::DataAvailability.at_least?(@data_system.data_availability, Impl::DataSystem::DataAvailability::CACHED)
     end
 
     #
