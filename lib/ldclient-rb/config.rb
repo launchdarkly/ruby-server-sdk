@@ -1,5 +1,8 @@
 require "logger"
 require "ldclient-rb/impl/cache_store"
+require "ldclient-rb/impl/data_system/http_config_options"
+require "ldclient-rb/impl/data_system/polling"
+require "ldclient-rb/impl/data_system/streaming"
 
 module LaunchDarkly
   #
@@ -465,7 +468,7 @@ module LaunchDarkly
     # @return [String] "https://sdk.launchdarkly.com"
     #
     def self.default_base_uri
-      "https://sdk.launchdarkly.com"
+      Impl::DataSystem::PollingDataSourceBuilder::DEFAULT_BASE_URI
     end
 
     #
@@ -473,7 +476,7 @@ module LaunchDarkly
     # @return [String] "https://stream.launchdarkly.com"
     #
     def self.default_stream_uri
-      "https://stream.launchdarkly.com"
+      Impl::DataSystem::StreamingDataSourceBuilder::DEFAULT_BASE_URI
     end
 
     #
@@ -505,7 +508,7 @@ module LaunchDarkly
     # @return [Float] 10
     #
     def self.default_read_timeout
-      10
+      Impl::DataSystem::HttpConfigOptions::DEFAULT_READ_TIMEOUT
     end
 
     #
@@ -513,7 +516,7 @@ module LaunchDarkly
     # @return [Float] 1
     #
     def self.default_initial_reconnect_delay
-      1
+      Impl::DataSystem::StreamingDataSourceBuilder::DEFAULT_INITIAL_RECONNECT_DELAY
     end
 
     #
@@ -521,7 +524,7 @@ module LaunchDarkly
     # @return [Float] 2
     #
     def self.default_connect_timeout
-      2
+      Impl::DataSystem::HttpConfigOptions::DEFAULT_CONNECT_TIMEOUT
     end
 
     #
@@ -575,7 +578,7 @@ module LaunchDarkly
     # @return [Float] 30
     #
     def self.default_poll_interval
-      30
+      Impl::DataSystem::PollingDataSourceBuilder::DEFAULT_POLL_INTERVAL
     end
 
     #
@@ -699,13 +702,13 @@ module LaunchDarkly
   #
   class DataSystemConfig
     #
-    # @param initializers [Array<Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Initializer>, nil] The (optional) array of builder procs
-    # @param primary_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil] The (optional) builder proc for primary synchronizer
-    # @param secondary_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil] The (optional) builder proc for secondary synchronizer
+    # @param initializers [Array<#build(String, Config)>, nil] The (optional) array of builders
+    # @param primary_synchronizer [#build(String, Config), nil] The (optional) builder for primary synchronizer
+    # @param secondary_synchronizer [#build(String, Config), nil] The (optional) builder for secondary synchronizer
     # @param data_store_mode [Symbol] The (optional) data store mode
     # @param data_store [LaunchDarkly::Interfaces::FeatureStore, nil] The (optional) data store
-    # @param fdv1_fallback_synchronizer [Proc(Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
-    #   The (optional) builder proc for FDv1-compatible fallback synchronizer
+    # @param fdv1_fallback_synchronizer [#build(String, Config), nil]
+    #   The (optional) builder for FDv1-compatible fallback synchronizer
     #
     def initialize(initializers: nil, primary_synchronizer: nil, secondary_synchronizer: nil,
                    data_store_mode: LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil)
@@ -717,16 +720,16 @@ module LaunchDarkly
       @fdv1_fallback_synchronizer = fdv1_fallback_synchronizer
     end
 
-    # The initializers for the data system. Each proc takes sdk_key and Config and returns an Initializer.
-    # @return [Array<Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Initializer>, nil]
+    # The initializers for the data system. Each builder responds to build(sdk_key, config) and returns an Initializer.
+    # @return [Array<#build(String, Config)>, nil]
     attr_reader :initializers
 
-    # The primary synchronizer builder. Takes sdk_key and Config and returns a Synchronizer.
-    # @return [Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
+    # The primary synchronizer builder. Responds to build(sdk_key, config) and returns a Synchronizer.
+    # @return [#build(String, Config), nil]
     attr_reader :primary_synchronizer
 
-    # The secondary synchronizer builder. Takes sdk_key and Config and returns a Synchronizer.
-    # @return [Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
+    # The secondary synchronizer builder. Responds to build(sdk_key, config) and returns a Synchronizer.
+    # @return [#build(String, Config), nil]
     attr_reader :secondary_synchronizer
 
     # The data store mode.
@@ -737,8 +740,8 @@ module LaunchDarkly
     # @return [LaunchDarkly::Interfaces::FeatureStore, nil]
     attr_reader :data_store
 
-    # The FDv1-compatible fallback synchronizer builder. Takes sdk_key and Config and returns a Synchronizer.
-    # @return [Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
+    # The FDv1-compatible fallback synchronizer builder. Responds to build(sdk_key, config) and returns a Synchronizer.
+    # @return [#build(String, Config), nil]
     attr_reader :fdv1_fallback_synchronizer
   end
 end

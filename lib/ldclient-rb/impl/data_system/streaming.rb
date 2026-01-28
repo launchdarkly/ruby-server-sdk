@@ -5,6 +5,7 @@ require "ldclient-rb/interfaces/data_system"
 require "ldclient-rb/impl/data_system"
 require "ldclient-rb/impl/data_system/protocolv2"
 require "ldclient-rb/impl/data_system/polling"  # For shared constants
+require "ldclient-rb/impl/data_system/data_source_builder_common"
 require "ldclient-rb/impl/util"
 require "concurrent"
 require "json"
@@ -31,10 +32,14 @@ module LaunchDarkly
 
         #
         # @param sdk_key [String]
-        # @param config [LaunchDarkly::Config]
+        # @param http_config [HttpConfigOptions] HTTP connection settings
+        # @param initial_reconnect_delay [Float] Initial delay before reconnecting after an error
+        # @param config [LaunchDarkly::Config] Used for global header settings
         #
-        def initialize(sdk_key, config)
+        def initialize(sdk_key, http_config, initial_reconnect_delay, config)
           @sdk_key = sdk_key
+          @http_config = http_config
+          @initial_reconnect_delay = initial_reconnect_delay
           @config = config
           @logger = config.logger
           @name = "StreamingDataSourceV2"
@@ -68,14 +73,14 @@ module LaunchDarkly
           change_set_builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
           envid = nil
 
-          base_uri = @config.stream_uri + FDV2_STREAMING_ENDPOINT
+          base_uri = @http_config.base_uri + FDV2_STREAMING_ENDPOINT
           headers = Impl::Util.default_http_headers(@sdk_key, @config)
           opts = {
             headers: headers,
             read_timeout: STREAM_READ_TIMEOUT,
             logger: @logger,
-            socket_factory: @config.socket_factory,
-            reconnect_time: @config.initial_reconnect_delay,
+            socket_factory: @http_config.socket_factory,
+            reconnect_time: @initial_reconnect_delay,
           }
 
           @sse = SSE::Client.new(base_uri, **opts) do |client|
@@ -355,22 +360,40 @@ module LaunchDarkly
       # Builder for a StreamingDataSource.
       #
       class StreamingDataSourceBuilder
+        include DataSourceBuilderCommon
+
+        DEFAULT_BASE_URI = "https://stream.launchdarkly.com"
+        DEFAULT_INITIAL_RECONNECT_DELAY = 1
+
+        def initialize
+          # No initialization needed - defaults applied in build via nil-check
+        end
+
         #
-        # @param sdk_key [String]
-        # @param config [LaunchDarkly::Config]
+        # Sets the initial delay before reconnecting after an error.
         #
-        def initialize(sdk_key, config)
-          @sdk_key = sdk_key
-          @config = config
+        # @param delay [Float] Delay in seconds
+        # @return [StreamingDataSourceBuilder]
+        #
+        def initial_reconnect_delay(delay)
+          @initial_reconnect_delay = delay
+          self
         end
 
         #
         # Builds the StreamingDataSource with the configured parameters.
         #
+        # @param sdk_key [String]
+        # @param config [LaunchDarkly::Config]
         # @return [StreamingDataSource]
         #
-        def build
-          StreamingDataSource.new(@sdk_key, @config)
+        def build(sdk_key, config)
+          http_opts = build_http_config
+          StreamingDataSource.new(
+            sdk_key, http_opts,
+            @initial_reconnect_delay || DEFAULT_INITIAL_RECONNECT_DELAY,
+            config
+          )
         end
       end
     end

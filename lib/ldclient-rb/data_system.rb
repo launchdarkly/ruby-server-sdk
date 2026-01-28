@@ -28,8 +28,8 @@ module LaunchDarkly
       #
       # Sets the initializers for the data system.
       #
-      # @param initializers [Array<Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Initializer>]
-      #   Array of builder procs that take sdk_key and Config and return an Initializer
+      # @param initializers [Array<#build(String, Config)>]
+      #   Array of builders that respond to build(sdk_key, config) and return an Initializer
       # @return [ConfigBuilder] self for chaining
       #
       def initializers(initializers)
@@ -40,9 +40,8 @@ module LaunchDarkly
       #
       # Sets the synchronizers for the data system.
       #
-      # @param primary [Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer] Builder proc that takes sdk_key and Config and returns the primary Synchronizer
-      # @param secondary [Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer, nil]
-      #   Builder proc that takes sdk_key and Config and returns the secondary Synchronizer
+      # @param primary [#build(String, Config)] Builder that responds to build(sdk_key, config) and returns the primary Synchronizer
+      # @param secondary [#build(String, Config), nil] Builder that responds to build(sdk_key, config) and returns the secondary Synchronizer
       # @return [ConfigBuilder] self for chaining
       #
       def synchronizers(primary, secondary = nil)
@@ -55,8 +54,7 @@ module LaunchDarkly
       # Configures the SDK with a fallback synchronizer that is compatible with
       # the Flag Delivery v1 API.
       #
-      # @param fallback [Proc(String, Config) => LaunchDarkly::Interfaces::DataSystem::Synchronizer]
-      #   Builder proc that takes sdk_key and Config and returns the fallback Synchronizer
+      # @param fallback [#build(String, Config)] Builder that responds to build(sdk_key, config) and returns the fallback Synchronizer
       # @return [ConfigBuilder] self for chaining
       #
       def fdv1_compatible_synchronizer(fallback)
@@ -100,42 +98,36 @@ module LaunchDarkly
     end
 
     #
-    # Returns a builder proc for creating a polling data source.
+    # Returns a builder for creating a polling data source.
     # This is a building block that can be used with {ConfigBuilder#initializers}
     # or {ConfigBuilder#synchronizers} to create custom data system configurations.
     #
-    # @return [Proc] A proc that takes (sdk_key, config) and returns a polling data source
+    # @return [LaunchDarkly::Impl::DataSystem::PollingDataSourceBuilder]
     #
     def self.polling_ds_builder
-      lambda do |sdk_key, config|
-        LaunchDarkly::Impl::DataSystem::PollingDataSourceBuilder.new(sdk_key, config).build
-      end
+      LaunchDarkly::Impl::DataSystem::PollingDataSourceBuilder.new
     end
 
     #
-    # Returns a builder proc for creating an FDv1 fallback polling data source.
+    # Returns a builder for creating an FDv1 fallback polling data source.
     # This is a building block that can be used with {ConfigBuilder#fdv1_compatible_synchronizer}
     # to provide FDv1 compatibility in custom data system configurations.
     #
-    # @return [Proc] A proc that takes (sdk_key, config) and returns an FDv1 polling data source
+    # @return [LaunchDarkly::Impl::DataSystem::FDv1PollingDataSourceBuilder]
     #
     def self.fdv1_fallback_ds_builder
-      lambda do |sdk_key, config|
-        LaunchDarkly::Impl::DataSystem::FDv1PollingDataSourceBuilder.new(sdk_key, config).build
-      end
+      LaunchDarkly::Impl::DataSystem::FDv1PollingDataSourceBuilder.new
     end
 
     #
-    # Returns a builder proc for creating a streaming data source.
+    # Returns a builder for creating a streaming data source.
     # This is a building block that can be used with {ConfigBuilder#synchronizers}
     # to create custom data system configurations.
     #
-    # @return [Proc] A proc that takes (sdk_key, config) and returns a streaming data source
+    # @return [LaunchDarkly::Impl::DataSystem::StreamingDataSourceBuilder]
     #
     def self.streaming_ds_builder
-      lambda do |sdk_key, config|
-        LaunchDarkly::Impl::DataSystem::StreamingDataSourceBuilder.new(sdk_key, config).build
-      end
+      LaunchDarkly::Impl::DataSystem::StreamingDataSourceBuilder.new
     end
 
     #
