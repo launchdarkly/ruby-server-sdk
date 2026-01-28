@@ -264,7 +264,9 @@ module LaunchDarkly
     # @return [Boolean] true if the client has been initialized
     #
     def initialized?
-      @data_system.data_availability == @data_system.target_availability
+      return true if @config.offline? || @config.use_ldd?
+
+      Impl::DataSystem::DataAvailability.at_least?(@data_system.data_availability, Impl::DataSystem::DataAvailability::CACHED)
     end
 
     #
@@ -692,8 +694,8 @@ module LaunchDarkly
         return detail, nil, context.error
       end
 
-      unless initialized?
-        if @data_system.store.initialized?
+      if @data_system.data_availability != Impl::DataSystem::DataAvailability::REFRESHED
+        if @data_system.data_availability == Impl::DataSystem::DataAvailability::CACHED
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
         else
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
