@@ -18,8 +18,10 @@ class ClientEntity
     if data_system_config
       data_system = LaunchDarkly::DataSystem.custom
 
-      if config[:persistentDataStore]
-        store, store_mode = build_persistent_store(config[:persistentDataStore])
+      # For FDv2, persistent store config is nested inside dataSystem.store
+      persistent_store_config = data_system_config.dig(:store, :persistentDataStore)
+      if persistent_store_config
+        store, store_mode = build_persistent_store(persistent_store_config)
         data_system.data_store(store, store_mode)
       end
 
@@ -349,9 +351,9 @@ class ClientEntity
               LaunchDarkly::Integrations::DynamoDB.new_feature_store('sdk-contract-tests', store_config)
             end
 
-    # Determine store mode based on whether it's read-write or read-only
-    # For contract tests with data sources (streaming/polling), stores are read-write
-    store_mode = LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_WRITE
+    store_mode = persistent_store_config[:mode] == 'read' ?
+      LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY :
+      LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_WRITE
 
     [store, store_mode]
   end

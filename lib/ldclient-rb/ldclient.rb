@@ -694,8 +694,8 @@ module LaunchDarkly
         return detail, nil, context.error
       end
 
-      unless initialized?
-        if @data_system.store.initialized?
+      if @data_system.data_availability != Impl::DataSystem::DataAvailability::REFRESHED
+        if @data_system.data_availability == Impl::DataSystem::DataAvailability::CACHED
           @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
         else
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
