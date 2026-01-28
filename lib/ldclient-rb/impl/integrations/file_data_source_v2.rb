@@ -65,9 +65,6 @@ module LaunchDarkly
           @update_queue = Queue.new
           @lock = Mutex.new
           @listener = nil
-
-          @version_lock = Mutex.new
-          @last_version = 1
         end
 
         #
@@ -136,7 +133,6 @@ module LaunchDarkly
             return
           end
 
-          # Yield the initial successful state
           yield LaunchDarkly::Interfaces::DataSystem::Update.new(
             state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
             change_set: initial_result.value.change_set
@@ -147,16 +143,13 @@ module LaunchDarkly
             @listener = start_listener unless @closed
           end
 
-          # Continue yielding updates as they arrive
           until @closed
             begin
-              # stop() will push nil to the queue to wake us up when shutting down
               update = @update_queue.pop
 
-              # Handle nil sentinel for shutdown
+              # stop() pushes nil to wake us up when shutting down
               break if update.nil?
 
-              # Yield the actual update
               yield update
             rescue => e
               yield LaunchDarkly::Interfaces::DataSystem::Update.new(
@@ -213,11 +206,9 @@ module LaunchDarkly
             end
           end
 
-          # Build a full transfer changeset
           builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
           builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
 
-          # Add all flags to the changeset
           flags_dict.each do |key, flag_data|
             builder.add_put(
               LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
@@ -227,7 +218,6 @@ module LaunchDarkly
             )
           end
 
-          # Add all segments to the changeset
           segments_dict.each do |key, segment_data|
             builder.add_put(
               LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
@@ -251,25 +241,19 @@ module LaunchDarkly
         # @param segments_dict [Hash] dictionary to add segments to
         #
         def load_file(path, flags_dict, segments_dict)
-          version = 1
-          @version_lock.synchronize do
-            version = @last_version
-            @last_version += 1
-          end
-
           parsed = parse_content(File.read(path))
 
           (parsed[:flags] || {}).each do |key, flag|
-            flag[:version] = version
+            flag[:version] ||= 1
             add_item(flags_dict, 'flags', flag)
           end
 
           (parsed[:flagValues] || {}).each do |key, value|
-            add_item(flags_dict, 'flags', make_flag_with_value(key.to_s, value, version))
+            add_item(flags_dict, 'flags', make_flag_with_value(key.to_s, value))
           end
 
           (parsed[:segments] || {}).each do |key, segment|
-            segment[:version] = version
+            segment[:version] ||= 1
             add_item(segments_dict, 'segments', segment)
           end
         end
@@ -281,9 +265,7 @@ module LaunchDarkly
         # @return [Hash] parsed dictionary with symbolized keys
         #
         def parse_content(content)
-          # We can use the Ruby YAML parser for both YAML and JSON (JSON is a subset of YAML and while
-          # not all YAML parsers handle it correctly, we have verified that the Ruby one does, at least
-          # for all the samples of actual flag data that we've tested).
+          # Ruby's YAML parser correctly handles JSON as well
           symbolize_all_keys(YAML.safe_load(content))
         end
 
@@ -292,10 +274,7 @@ module LaunchDarkly
         #
         # @param value [Object] the value to symbolize
         # @return [Object] the value with all keys symbolized
-        #
         def symbolize_all_keys(value)
-          # This is necessary because YAML.load doesn't have an option for parsing keys as symbols, and
-          # the SDK expects all objects to be formatted that way.
           if value.is_a?(Hash)
             value.map { |k, v| [k.to_sym, symbolize_all_keys(v)] }.to_h
           elsif value.is_a?(Array)
@@ -326,14 +305,13 @@ module LaunchDarkly
         #
         # @param key [String] flag key
         # @param value [Object] flag value
-        # @param version [Integer] version number
         # @return [Hash] flag dictionary
         #
-        def make_flag_with_value(key, value, version)
+        def make_flag_with_value(key, value)
           {
             key: key,
             on: true,
-            version: version,
+            version: 1,
             fallthrough: { variation: 0 },
             variations: [value],
           }
@@ -349,18 +327,15 @@ module LaunchDarkly
             return if @closed
 
             begin
-              # Reload all files
               result = load_all_to_changeset
 
               if result.success?
-                # Queue a successful update
                 update = LaunchDarkly::Interfaces::DataSystem::Update.new(
                   state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
                   change_set: result.value
                 )
                 @update_queue.push(update)
               else
-                # Queue an error update
                 error_update = LaunchDarkly::Interfaces::DataSystem::Update.new(
                   state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                   error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
@@ -435,6 +410,14 @@ module LaunchDarkly
       # Used internally by FileDataSourceV2 to track data file changes if the 'listen' gem is not available.
       #
       class FileDataSourcePollerV2
+        #
+        # Initialize the file data poller.
+        #
+        # @param resolved_paths [Array<String>] resolved file paths to watch
+        # @param interval [Float] polling interval in seconds
+        # @param on_change_callback [Proc] callback to invoke when files change
+        # @param logger [Logger] the logger
+        #
         def initialize(resolved_paths, interval, on_change_callback, logger)
           @stopped = Concurrent::AtomicBoolean.new(false)
           @on_change = on_change_callback
