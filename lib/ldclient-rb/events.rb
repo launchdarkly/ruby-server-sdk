@@ -156,7 +156,7 @@ module LaunchDarkly
       @inbox_full = Concurrent::AtomicBoolean.new(false)
 
       event_sender = (test_properties || {})[:event_sender] ||
-        Impl::EventSender.new(sdk_key, config, client || Impl::Util.new_http_client(config.events_uri, config))
+        Impl::EventSender.new(sdk_key, config)
 
       @timestamp_fn = (test_properties || {})[:timestamp_fn] || proc { Impl::Util.current_time_millis }
       @omit_anonymous_contexts = config.omit_anonymous_contexts

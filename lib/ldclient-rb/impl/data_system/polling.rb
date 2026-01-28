@@ -258,7 +258,7 @@ module LaunchDarkly
           @config = config
           @sdk_key = sdk_key
           @poll_uri = http_config.base_uri + FDV2_POLLING_ENDPOINT
-          @http_client = Impl::Util.new_http_client(http_config.base_uri, http_config)
+          @http_client = Impl::Util.new_http_client(http_config)
             .use(:auto_inflate)
             .headers("Accept-Encoding" => "gzip")
         end
@@ -350,8 +350,7 @@ module LaunchDarkly
           @config = config
           @sdk_key = sdk_key
           @poll_uri = http_config.base_uri + FDV1_POLLING_ENDPOINT
-          # http_config duck-types with config for socket_factory, read_timeout, connect_timeout
-          @http_client = Impl::Util.new_http_client(http_config.base_uri, http_config)
+          @http_client = Impl::Util.new_http_client(http_config)
             .use(:auto_inflate)
             .headers("Accept-Encoding" => "gzip")
         end

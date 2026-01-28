@@ -1,5 +1,6 @@
 require "ldclient-rb/impl/model/serialization"
 require "ldclient-rb/impl/util"
+require "ldclient-rb/impl/data_system/http_config_options"
 
 require "concurrent/atomics"
 require "json"
@@ -26,7 +27,13 @@ module LaunchDarkly
         def initialize(sdk_key, config)
           @sdk_key = sdk_key
           @config = config
-          @http_client = Impl::Util.new_http_client(config.base_uri, config)
+          @http_config = DataSystem::HttpConfigOptions.new(
+            base_uri: config.base_uri,
+            socket_factory: config.socket_factory,
+            read_timeout: config.read_timeout,
+            connect_timeout: config.connect_timeout
+          )
+          @http_client = Impl::Util.new_http_client(@http_config)
             .use(:auto_inflate)
             .headers("Accept-Encoding" => "gzip")
           @cache = @config.cache_store
@@ -48,7 +55,7 @@ module LaunchDarkly
 
         def make_request(path)
           uri = URI(
-            Util.add_payload_filter_key(@config.base_uri + path, @config)
+            Util.add_payload_filter_key(@http_config.base_uri + path, @config)
           )
           headers = {}
           Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| headers[k] = v }

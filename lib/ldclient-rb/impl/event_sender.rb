@@ -1,5 +1,6 @@
 require "ldclient-rb/impl/unbounded_pool"
 require "ldclient-rb/impl/util"
+require "ldclient-rb/impl/data_system/http_config_options"
 
 require "securerandom"
 require "http"
@@ -14,15 +15,21 @@ module LaunchDarkly
       CURRENT_SCHEMA_VERSION = 4
       DEFAULT_RETRY_INTERVAL = 1
 
-      def initialize(sdk_key, config, http_client = nil, retry_interval = DEFAULT_RETRY_INTERVAL)
+      def initialize(sdk_key, config, retry_interval = DEFAULT_RETRY_INTERVAL)
         @sdk_key = sdk_key
         @config = config
-        @events_uri = config.events_uri + "/bulk"
-        @diagnostic_uri = config.events_uri + "/diagnostic"
+        @http_config = DataSystem::HttpConfigOptions.new(
+          base_uri: config.events_uri,
+          socket_factory: config.socket_factory,
+          read_timeout: config.read_timeout,
+          connect_timeout: config.connect_timeout
+        )
+        @events_uri = @http_config.base_uri + "/bulk"
+        @diagnostic_uri = @http_config.base_uri + "/diagnostic"
         @logger = config.logger
         @retry_interval = retry_interval
         @http_client_pool = UnboundedPool.new(
-          lambda { Impl::Util.new_http_client(@config.events_uri, @config) },
+          lambda { Impl::Util.new_http_client(@http_config) },
           lambda { |client| client.close })
       end
 
