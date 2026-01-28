@@ -1,4 +1,5 @@
 require 'ldclient-rb/impl/integrations/file_data_source'
+require 'ldclient-rb/impl/integrations/file_data_source_v2'
 
 module LaunchDarkly
   module Integrations
@@ -102,6 +103,67 @@ module LaunchDarkly
       def self.data_source(options={})
         lambda { |sdk_key, config|
           Impl::Integrations::FileDataSourceImpl.new(config.feature_store, config.data_source_update_sink, config.logger, options) }
+      end
+
+      #
+      # Returns a builder for the FDv2-compatible file data source.
+      #
+      # This type is not stable, and not subject to any backwards
+      # compatibility guarantees or semantic versioning. It is not suitable for production usage.
+      #
+      # Do not use it.
+      # You have been warned.
+      #
+      # This method returns a builder proc that can be used with the FDv2 data system
+      # configuration as both an Initializer and a Synchronizer. When used as an Initializer
+      # (via `fetch`), it reads files once. When used as a Synchronizer (via `sync`), it
+      # watches for file changes and automatically updates when files are modified.
+      #
+      # @param options [Hash] the configuration options
+      # @option options [Array<String>, String] :paths  The paths of the source files for loading flag data. These
+      #   may be absolute paths or relative to the current working directory. (Required)
+      # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
+      #   file modifications - used only if the native file-watching mechanism from 'listen' is not
+      #   being used. The default value is 1 second.
+      # @option options [Boolean] :force_polling  Force polling even if the 'listen' gem is available.
+      #   The default value is false.
+      # @return [Proc] a builder proc that can be used as an FDv2 initializer or synchronizer
+      #
+      # @example Using as an initializer
+      #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
+      #   data_system_config = LaunchDarkly::DataSystemConfig.new(
+      #     initializers: [file_source]
+      #   )
+      #   config = LaunchDarkly::Config.new(data_system: data_system_config)
+      #
+      # @example Using as a synchronizer
+      #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
+      #   data_system_config = LaunchDarkly::DataSystemConfig.new(
+      #     synchronizer: file_source
+      #   )
+      #   config = LaunchDarkly::Config.new(data_system: data_system_config)
+      #
+      # @example Using as both initializer and synchronizer
+      #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
+      #   data_system_config = LaunchDarkly::DataSystemConfig.new(
+      #     initializers: [file_source],
+      #     synchronizer: file_source
+      #   )
+      #   config = LaunchDarkly::Config.new(data_system: data_system_config)
+      #
+      def self.data_source_v2(options = {})
+        paths = options[:paths] || []
+        poll_interval = options[:poll_interval] || 1
+        force_polling = options[:force_polling] || false
+
+        lambda { |_sdk_key, config|
+          Impl::Integrations::FileDataSourceV2.new(
+            config.logger,
+            paths: paths,
+            poll_interval: poll_interval,
+            force_polling: force_polling
+          )
+        }
       end
     end
   end
