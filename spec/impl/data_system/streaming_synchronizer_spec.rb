@@ -34,7 +34,7 @@ module LaunchDarkly
         end
 
         describe '#process_message' do
-          let(:synchronizer) { StreamingDataSource.new(sdk_key, config) }
+          let(:synchronizer) { StreamingDataSourceBuilder.new.build(sdk_key, config) }
           let(:change_set_builder) { LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new }
           let(:envid) { nil }
 
@@ -312,7 +312,7 @@ change_set_builder, envid)
         end
 
         describe 'diagnostic event recording' do
-          let(:synchronizer) { StreamingDataSource.new(sdk_key, config) }
+          let(:synchronizer) { StreamingDataSourceBuilder.new.build(sdk_key, config) }
 
           it "logs successful connection when diagnostic_accumulator is provided" do
             diagnostic_accumulator = double("DiagnosticAccumulator")

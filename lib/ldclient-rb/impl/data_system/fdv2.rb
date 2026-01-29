@@ -214,7 +214,7 @@ module LaunchDarkly
             return if @stop_event.set?
 
             begin
-              initializer = initializer_builder.call(@sdk_key, @config)
+              initializer = initializer_builder.build(@sdk_key, @config)
               @logger.info { "[LDClient] Attempting to initialize via #{initializer.name}" }
 
               basis_result = initializer.fetch(@store)
@@ -269,7 +269,7 @@ module LaunchDarkly
               # Try primary synchronizer
               begin
                 @lock.synchronize do
-                  primary_sync = @primary_synchronizer_builder.call(@sdk_key, @config)
+                  primary_sync = @primary_synchronizer_builder.build(@sdk_key, @config)
                   if primary_sync.respond_to?(:set_diagnostic_accumulator) && @diagnostic_accumulator
                     primary_sync.set_diagnostic_accumulator(@diagnostic_accumulator)
                   end
@@ -304,7 +304,7 @@ module LaunchDarkly
                 next if @secondary_synchronizer_builder.nil?
 
                 @lock.synchronize do
-                  secondary_sync = @secondary_synchronizer_builder.call(@sdk_key, @config)
+                  secondary_sync = @secondary_synchronizer_builder.build(@sdk_key, @config)
                   if secondary_sync.respond_to?(:set_diagnostic_accumulator) && @diagnostic_accumulator
                     secondary_sync.set_diagnostic_accumulator(@diagnostic_accumulator)
                   end

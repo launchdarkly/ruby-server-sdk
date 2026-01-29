@@ -118,12 +118,18 @@ module LaunchDarkly
         end
       end
 
-      def self.new_http_client(uri_s, config)
+      #
+      # Creates a new persistent HTTP client with the given configuration.
+      #
+      # @param http_config [LaunchDarkly::Impl::DataSystem::HttpConfigOptions] HTTP connection settings
+      # @return [HTTP::Client]
+      #
+      def self.new_http_client(http_config)
         http_client_options = {}
-        if config.socket_factory
-          http_client_options["socket_class"] = config.socket_factory
+        if http_config.socket_factory
+          http_client_options["socket_class"] = http_config.socket_factory
         end
-        proxy = URI.parse(uri_s).find_proxy
+        proxy = URI.parse(http_config.base_uri).find_proxy
         unless proxy.nil?
           http_client_options["proxy"] = {
             proxy_address: proxy.host,
@@ -134,10 +140,10 @@ module LaunchDarkly
         end
         HTTP::Client.new(http_client_options)
           .timeout({
-            read: config.read_timeout,
-            connect: config.connect_timeout,
+            read: http_config.read_timeout,
+            connect: http_config.connect_timeout,
           })
-          .persistent(uri_s)
+          .persistent(http_config.base_uri)
       end
 
       def self.log_exception(logger, message, exc)

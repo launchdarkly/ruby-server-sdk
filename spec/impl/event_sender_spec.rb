@@ -15,7 +15,7 @@ module LaunchDarkly
 
       def make_sender(config_options = {})
         config_options = {logger: $null_log}.merge(config_options)
-        subject.new(sdk_key, Config.new(config_options), nil, 0.1)
+        subject.new(sdk_key, Config.new(config_options), 0.1)
       end
 
       def with_sender_and_server(config_options = {})
@@ -85,7 +85,7 @@ module LaunchDarkly
           config = Config.new(events_uri: "http://fake-event-server/bulk",
             socket_factory: SocketFactoryFromHash.new({"fake-event-server" => server.port}),
             logger: $null_log)
-          es = subject.new(sdk_key, config, nil, 0.1)
+          es = subject.new(sdk_key, config, 0.1)
 
           result = es.send_event_data(fake_data, "", false)
 

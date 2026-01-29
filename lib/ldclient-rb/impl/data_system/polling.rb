@@ -4,6 +4,7 @@ require "ldclient-rb/interfaces"
 require "ldclient-rb/interfaces/data_system"
 require "ldclient-rb/impl/data_system"
 require "ldclient-rb/impl/data_system/protocolv2"
+require "ldclient-rb/impl/data_system/data_source_builder_common"
 require "ldclient-rb/impl/data_source/requestor"
 require "ldclient-rb/impl/util"
 require "concurrent"
@@ -249,14 +250,15 @@ module LaunchDarkly
 
         #
         # @param sdk_key [String]
-        # @param config [LaunchDarkly::Config]
+        # @param http_config [HttpConfigOptions] HTTP connection settings
+        # @param config [LaunchDarkly::Config] Used for global header settings
         #
-        def initialize(sdk_key, config)
+        def initialize(sdk_key, http_config, config)
           @etag = nil
           @config = config
           @sdk_key = sdk_key
-          @poll_uri = config.base_uri + FDV2_POLLING_ENDPOINT
-          @http_client = Impl::Util.new_http_client(config.base_uri, config)
+          @poll_uri = http_config.base_uri + FDV2_POLLING_ENDPOINT
+          @http_client = Impl::Util.new_http_client(http_config)
             .use(:auto_inflate)
             .headers("Accept-Encoding" => "gzip")
         end
@@ -340,14 +342,15 @@ module LaunchDarkly
 
         #
         # @param sdk_key [String]
-        # @param config [LaunchDarkly::Config]
+        # @param http_config [HttpConfigOptions] HTTP connection settings
+        # @param config [LaunchDarkly::Config] Used for global header settings and payload_filter_key
         #
-        def initialize(sdk_key, config)
+        def initialize(sdk_key, http_config, config)
           @etag = nil
           @config = config
           @sdk_key = sdk_key
-          @poll_uri = config.base_uri + FDV1_POLLING_ENDPOINT
-          @http_client = Impl::Util.new_http_client(config.base_uri, config)
+          @poll_uri = http_config.base_uri + FDV1_POLLING_ENDPOINT
+          @http_client = Impl::Util.new_http_client(http_config)
             .use(:auto_inflate)
             .headers("Accept-Encoding" => "gzip")
         end
@@ -527,14 +530,24 @@ module LaunchDarkly
       # Builder for a PollingDataSource.
       #
       class PollingDataSourceBuilder
-        #
-        # @param sdk_key [String]
-        # @param config [LaunchDarkly::Config]
-        #
-        def initialize(sdk_key, config)
-          @sdk_key = sdk_key
-          @config = config
+        include DataSourceBuilderCommon
+
+        DEFAULT_BASE_URI = "https://sdk.launchdarkly.com"
+        DEFAULT_POLL_INTERVAL = 30
+
+        def initialize
           @requester = nil
+        end
+
+        #
+        # Sets the polling interval in seconds.
+        #
+        # @param secs [Float] Polling interval in seconds
+        # @return [PollingDataSourceBuilder]
+        #
+        def poll_interval(secs)
+          @poll_interval = secs
+          self
         end
 
         #
@@ -551,11 +564,14 @@ module LaunchDarkly
         #
         # Builds the PollingDataSource with the configured parameters.
         #
+        # @param sdk_key [String]
+        # @param config [LaunchDarkly::Config]
         # @return [PollingDataSource]
         #
-        def build
-          requester = @requester || HTTPPollingRequester.new(@sdk_key, @config)
-          PollingDataSource.new(@config.poll_interval, requester, @config.logger)
+        def build(sdk_key, config)
+          http_opts = build_http_config
+          requester = @requester || HTTPPollingRequester.new(sdk_key, http_opts, config)
+          PollingDataSource.new(@poll_interval || DEFAULT_POLL_INTERVAL, requester, config.logger)
         end
       end
 
@@ -563,14 +579,24 @@ module LaunchDarkly
       # Builder for an FDv1 PollingDataSource.
       #
       class FDv1PollingDataSourceBuilder
-        #
-        # @param sdk_key [String]
-        # @param config [LaunchDarkly::Config]
-        #
-        def initialize(sdk_key, config)
-          @sdk_key = sdk_key
-          @config = config
+        include DataSourceBuilderCommon
+
+        DEFAULT_BASE_URI = "https://sdk.launchdarkly.com"
+        DEFAULT_POLL_INTERVAL = 30
+
+        def initialize
           @requester = nil
+        end
+
+        #
+        # Sets the polling interval in seconds.
+        #
+        # @param secs [Float] Polling interval in seconds
+        # @return [FDv1PollingDataSourceBuilder]
+        #
+        def poll_interval(secs)
+          @poll_interval = secs
+          self
         end
 
         #
@@ -587,11 +613,14 @@ module LaunchDarkly
         #
         # Builds the PollingDataSource with the configured parameters.
         #
+        # @param sdk_key [String]
+        # @param config [LaunchDarkly::Config]
         # @return [PollingDataSource]
         #
-        def build
-          requester = @requester || HTTPFDv1PollingRequester.new(@sdk_key, @config)
-          PollingDataSource.new(@config.poll_interval, requester, @config.logger)
+        def build(sdk_key, config)
+          http_opts = build_http_config
+          requester = @requester || HTTPFDv1PollingRequester.new(sdk_key, http_opts, config)
+          PollingDataSource.new(@poll_interval || DEFAULT_POLL_INTERVAL, requester, config.logger)
         end
       end
     end
