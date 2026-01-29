@@ -265,7 +265,6 @@ EOF
           source = Impl::Integrations::FileDataSourceV2.new(
             logger,
             paths: [file.path],
-            force_polling: true,
             poll_interval: 0.1
           )
 
@@ -302,7 +301,6 @@ EOF
           source = Impl::Integrations::FileDataSourceV2.new(
             logger,
             paths: [file.path],
-            force_polling: true,
             poll_interval: 0.1
           )
 
@@ -350,7 +348,6 @@ EOF
           source = Impl::Integrations::FileDataSourceV2.new(
             logger,
             paths: [file.path],
-            force_polling: true,
             poll_interval: 0.1
           )
 
@@ -475,7 +472,7 @@ EOF
           builder = FileData.data_source_v2(paths: [file.path])
           config = LaunchDarkly::Config.new(logger: logger)
 
-          source = builder.call('sdk-key', config)
+          source = builder.build('sdk-key', config)
 
           begin
             result = source.fetch(no_selector_store)
@@ -490,10 +487,10 @@ EOF
         it "creates builder that works as synchronizer" do
           file = make_temp_file(all_properties_json)
 
-          builder = FileData.data_source_v2(paths: [file.path], force_polling: true, poll_interval: 0.1)
+          builder = FileData.data_source_v2(paths: [file.path], poll_interval: 0.1)
           config = LaunchDarkly::Config.new(logger: logger)
 
-          source = builder.call('sdk-key', config)
+          source = builder.build('sdk-key', config)
 
           updates = []
 

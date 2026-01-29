@@ -52,14 +52,11 @@ module LaunchDarkly
         # @param logger [Logger] the logger
         # @param paths [Array<String>, String] file paths to load (or a single path string)
         # @param poll_interval [Float] seconds between polling checks when watching files (default: 1)
-        # @param force_polling [Boolean] force polling even if listen gem is available (default: false)
         #
-        def initialize(logger, paths:, poll_interval: 1, force_polling: false)
+        def initialize(logger, paths:, poll_interval: 1)
           @logger = logger
           @paths = paths.is_a?(Array) ? paths : [paths]
           @poll_interval = poll_interval
-          @force_polling = force_polling
-          @use_listen = @@have_listen && !@force_polling
 
           @closed = false
           @update_queue = Queue.new
@@ -186,14 +183,12 @@ module LaunchDarkly
           @update_queue.push(nil)
         end
 
-        private
-
         #
         # Load all files and build a changeset.
         #
         # @return [LaunchDarkly::Result] A Result containing either a ChangeSet or an error message
         #
-        def load_all_to_changeset
+        private def load_all_to_changeset
           flags_dict = {}
           segments_dict = {}
 
@@ -240,7 +235,7 @@ module LaunchDarkly
         # @param flags_dict [Hash] dictionary to add flags to
         # @param segments_dict [Hash] dictionary to add segments to
         #
-        def load_file(path, flags_dict, segments_dict)
+        private def load_file(path, flags_dict, segments_dict)
           parsed = parse_content(File.read(path))
 
           (parsed[:flags] || {}).each do |key, flag|
@@ -264,9 +259,9 @@ module LaunchDarkly
         # @param content [String] file content string
         # @return [Hash] parsed dictionary with symbolized keys
         #
-        def parse_content(content)
+        private def parse_content(content)
           # Ruby's YAML parser correctly handles JSON as well
-          symbolize_all_keys(YAML.safe_load(content))
+          symbolize_all_keys(YAML.safe_load(content)) || {}
         end
 
         #
@@ -274,7 +269,7 @@ module LaunchDarkly
         #
         # @param value [Object] the value to symbolize
         # @return [Object] the value with all keys symbolized
-        def symbolize_all_keys(value)
+        private def symbolize_all_keys(value)
           if value.is_a?(Hash)
             value.map { |k, v| [k.to_sym, symbolize_all_keys(v)] }.to_h
           elsif value.is_a?(Array)
@@ -291,7 +286,7 @@ module LaunchDarkly
         # @param kind_name [String] name of the kind (for error messages)
         # @param item [Hash] item to add
         #
-        def add_item(items_dict, kind_name, item)
+        private def add_item(items_dict, kind_name, item)
           key = item[:key].to_sym
           if items_dict[key].nil?
             items_dict[key] = item
@@ -307,7 +302,7 @@ module LaunchDarkly
         # @param value [Object] flag value
         # @return [Hash] flag dictionary
         #
-        def make_flag_with_value(key, value)
+        private def make_flag_with_value(key, value)
           {
             key: key,
             on: true,
@@ -322,7 +317,7 @@ module LaunchDarkly
         #
         # Reloads all files and queues an update.
         #
-        def on_file_change
+        private def on_file_change
           @lock.synchronize do
             return if @closed
 
@@ -368,7 +363,7 @@ module LaunchDarkly
         #
         # @return [Object] auto-updater instance
         #
-        def start_listener
+        private def start_listener
           resolved_paths = @paths.map do |p|
             begin
               Pathname.new(File.absolute_path(p)).realpath.to_s
@@ -378,7 +373,7 @@ module LaunchDarkly
             end
           end.compact
 
-          if @use_listen
+          if @@have_listen
             start_listener_with_listen_gem(resolved_paths)
           else
             FileDataSourcePollerV2.new(resolved_paths, @poll_interval, method(:on_file_change), @logger)
@@ -391,7 +386,7 @@ module LaunchDarkly
         # @param resolved_paths [Array<String>] resolved file paths to watch
         # @return [Listen::Listener] the listener instance
         #
-        def start_listener_with_listen_gem(resolved_paths)
+        private def start_listener_with_listen_gem(resolved_paths)
           path_set = resolved_paths.to_set
           dir_paths = resolved_paths.map { |p| File.dirname(p) }.uniq
           opts = { latency: @poll_interval }
