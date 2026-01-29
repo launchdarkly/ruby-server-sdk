@@ -137,7 +137,7 @@ module LaunchDarkly
       # @example Using as a synchronizer
       #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
       #   data_system_config = LaunchDarkly::DataSystemConfig.new(
-      #     synchronizer: file_source
+      #     synchronizers: [file_source]
       #   )
       #   config = LaunchDarkly::Config.new(data_system: data_system_config)
       #
@@ -145,7 +145,7 @@ module LaunchDarkly
       #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
       #   data_system_config = LaunchDarkly::DataSystemConfig.new(
       #     initializers: [file_source],
-      #     synchronizer: file_source
+      #     synchronizers: [file_source]
       #   )
       #   config = LaunchDarkly::Config.new(data_system: data_system_config)
       #

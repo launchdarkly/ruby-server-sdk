@@ -36,7 +36,7 @@ module LaunchDarkly
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers([td_initializer.test_data_ds_builder])
-              .synchronizers(td_synchronizer.test_data_ds_builder)
+              .synchronizers([td_synchronizer.test_data_ds_builder])
               .build
 
             fdv2 = FDv2.new(sdk_key, config, data_system_config)
@@ -78,7 +78,7 @@ module LaunchDarkly
             td = LaunchDarkly::Integrations::TestDataV2.data_source
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
-              .synchronizers(td.test_data_ds_builder)
+              .synchronizers([td.test_data_ds_builder])
               .build
 
             fdv2 = FDv2.new(sdk_key, config, data_system_config)
@@ -110,7 +110,7 @@ module LaunchDarkly
             td = LaunchDarkly::Integrations::TestDataV2.data_source
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
-              .synchronizers(td.test_data_ds_builder)
+              .synchronizers([td.test_data_ds_builder])
               .build
 
             fdv2 = FDv2.new(sdk_key, config, data_system_config)
@@ -138,10 +138,10 @@ module LaunchDarkly
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers([td.test_data_ds_builder])
-              .synchronizers(
-                MockBuilder.new(mock_primary),
-                td.test_data_ds_builder
-              )
+              .synchronizers([
+                               MockBuilder.new(mock_primary),
+                td.test_data_ds_builder,
+                             ])
               .build
 
             changed = Concurrent::Event.new
@@ -191,10 +191,10 @@ module LaunchDarkly
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers([td.test_data_ds_builder])
-              .synchronizers(
-                MockBuilder.new(mock_primary),
-                MockBuilder.new(mock_secondary)
-              )
+              .synchronizers([
+                               MockBuilder.new(mock_primary),
+                MockBuilder.new(mock_secondary),
+                             ])
               .build
 
             changed = Concurrent::Event.new
@@ -236,7 +236,7 @@ module LaunchDarkly
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
-              .synchronizers(MockBuilder.new(mock_primary))
+              .synchronizers([MockBuilder.new(mock_primary)])
               .fdv1_compatible_synchronizer(td_fdv1.test_data_ds_builder)
               .build
 
@@ -285,7 +285,7 @@ module LaunchDarkly
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
-              .synchronizers(MockBuilder.new(mock_primary))
+              .synchronizers([MockBuilder.new(mock_primary)])
               .fdv1_compatible_synchronizer(td_fdv1.test_data_ds_builder)
               .build
 
@@ -345,7 +345,7 @@ module LaunchDarkly
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers([td_initializer.test_data_ds_builder])
-              .synchronizers(MockBuilder.new(mock_primary))
+              .synchronizers([MockBuilder.new(mock_primary)])
               .fdv1_compatible_synchronizer(td_fdv1.test_data_ds_builder)
               .build
 
@@ -403,10 +403,10 @@ module LaunchDarkly
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
-              .synchronizers(
-                MockBuilder.new(mock_primary),
-                MockBuilder.new(mock_secondary)
-              )
+              .synchronizers([
+                               MockBuilder.new(mock_primary),
+                MockBuilder.new(mock_secondary),
+                             ])
               .fdv1_compatible_synchronizer(td_fdv1.test_data_ds_builder)
               .build
 
@@ -444,7 +444,7 @@ module LaunchDarkly
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
-              .synchronizers(MockBuilder.new(mock_primary))
+              .synchronizers([MockBuilder.new(mock_primary)])
               .fdv1_compatible_synchronizer(td_fdv1.test_data_ds_builder)
               .build
 
