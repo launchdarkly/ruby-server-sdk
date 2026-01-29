@@ -223,25 +223,33 @@ module LaunchDarkly
       end
 
       #
-      # Creates an initializer that can be used with the FDv2 data system.
+      # Returns a builder for creating a data source that can be used with the FDv2 data system
+      # as either an initializer or synchronizer.
       #
-      # @param sdk_key [String] the SDK key
-      # @param config [LaunchDarkly::Config] the SDK configuration
-      # @return [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] a test data initializer
+      # @return [TestDataV2Builder] a builder for a test data source
       #
-      def build_initializer(sdk_key, config)
-        LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(self)
+      def test_data_ds_builder
+        TestDataV2Builder.new(self)
+      end
+    end
+
+    #
+    # Builder for TestDataV2 data sources (works for both initializers and synchronizers).
+    #
+    class TestDataV2Builder
+      def initialize(test_data)
+        @test_data = test_data
       end
 
       #
-      # Creates a synchronizer that can be used with the FDv2 data system.
+      # Builds the data source.
       #
-      # @param sdk_key [String] the SDK key
-      # @param config [LaunchDarkly::Config] the SDK configuration
-      # @return [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] a test data synchronizer
+      # @param sdk_key [String] the SDK key (unused, for interface compatibility)
+      # @param config [LaunchDarkly::Config] the SDK configuration (unused, for interface compatibility)
+      # @return [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] a test data source
       #
-      def build_synchronizer(sdk_key, config)
-        LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(self)
+      def build(sdk_key, config)
+        LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(@test_data)
       end
     end
   end

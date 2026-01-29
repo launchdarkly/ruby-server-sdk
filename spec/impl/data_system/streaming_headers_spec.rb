@@ -22,7 +22,7 @@ module LaunchDarkly
           )
         end
 
-        let(:synchronizer) { StreamingDataSource.new(sdk_key, config) }
+        let(:synchronizer) { StreamingDataSourceBuilder.new.build(sdk_key, config) }
 
         describe "on_error callback" do
           it "triggers FDv1 fallback when X-LD-FD-FALLBACK header is true" do
