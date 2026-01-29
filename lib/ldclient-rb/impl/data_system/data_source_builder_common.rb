@@ -56,8 +56,6 @@ module LaunchDarkly
           self
         end
 
-        private
-
         #
         # Builds an HttpConfigOptions instance from the current builder settings.
         # Uses self.class::DEFAULT_BASE_URI if base_uri was not explicitly set.
@@ -65,7 +63,7 @@ module LaunchDarkly
         #
         # @return [HttpConfigOptions]
         #
-        def build_http_config
+        private def build_http_config
           HttpConfigOptions.new(
             base_uri: @base_uri || self.class::DEFAULT_BASE_URI,
             socket_factory: @socket_factory,

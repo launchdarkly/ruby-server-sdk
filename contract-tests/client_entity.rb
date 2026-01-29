@@ -32,9 +32,7 @@ class ClientEntity
           polling = init_config[:polling]
           next unless polling
 
-          opts[:base_uri] = polling[:baseUri] if polling[:baseUri]
-          set_optional_time_prop(polling, :pollIntervalMs, opts, :poll_interval)
-          initializers << LaunchDarkly::DataSystem.polling_ds_builder
+          initializers << build_polling_ds_builder(polling)
         end
         data_system.initializers(initializers)
       end
@@ -44,41 +42,13 @@ class ClientEntity
         primary = sync_config[:primary]
         secondary = sync_config[:secondary]
 
-        primary_builder = nil
-        secondary_builder = nil
-
-        if primary
-          streaming = primary[:streaming]
-          if streaming
-            opts[:stream_uri] = streaming[:baseUri] if streaming[:baseUri]
-            set_optional_time_prop(streaming, :initialRetryDelayMs, opts, :initial_reconnect_delay)
-            primary_builder = LaunchDarkly::DataSystem.streaming_ds_builder
-          elsif primary[:polling]
-            polling = primary[:polling]
-            opts[:base_uri] = polling[:baseUri] if polling[:baseUri]
-            set_optional_time_prop(polling, :pollIntervalMs, opts, :poll_interval)
-            primary_builder = LaunchDarkly::DataSystem.polling_ds_builder
-          end
-        end
-
-        if secondary
-          streaming = secondary[:streaming]
-          if streaming
-            opts[:stream_uri] = streaming[:baseUri] if streaming[:baseUri]
-            set_optional_time_prop(streaming, :initialRetryDelayMs, opts, :initial_reconnect_delay)
-            secondary_builder = LaunchDarkly::DataSystem.streaming_ds_builder
-          elsif secondary[:polling]
-            polling = secondary[:polling]
-            opts[:base_uri] = polling[:baseUri] if polling[:baseUri]
-            set_optional_time_prop(polling, :pollIntervalMs, opts, :poll_interval)
-            secondary_builder = LaunchDarkly::DataSystem.polling_ds_builder
-          end
-        end
+        primary_builder = build_synchronizer_builder(primary)
+        secondary_builder = build_synchronizer_builder(secondary)
 
         data_system.synchronizers(primary_builder, secondary_builder) if primary_builder
 
         if primary_builder || secondary_builder
-          fallback_builder = LaunchDarkly::DataSystem.fdv1_fallback_ds_builder
+          fallback_builder = build_fdv1_fallback_builder(primary, secondary)
           data_system.fdv1_compatible_synchronizer(fallback_builder)
         end
       end
@@ -311,6 +281,69 @@ class ClientEntity
     end
 
     LaunchDarkly::LDContext.create(context)
+  end
+
+  #
+  # Builds a synchronizer builder from the contract test configuration.
+  #
+  # @param sync_config [Hash, nil] The synchronizer configuration (primary or secondary)
+  # @return [Object, nil] Returns the configured builder or nil
+  #
+  private def build_synchronizer_builder(sync_config)
+    return nil unless sync_config
+
+    streaming = sync_config[:streaming]
+    if streaming
+      build_streaming_ds_builder(streaming)
+    elsif sync_config[:polling]
+      build_polling_ds_builder(sync_config[:polling])
+    end
+  end
+
+  #
+  # Builds a streaming data source builder with the configured parameters.
+  #
+  # @param streaming_config [Hash] The streaming configuration
+  # @return [Object] Returns the configured streaming builder
+  #
+  private def build_streaming_ds_builder(streaming_config)
+    builder = LaunchDarkly::DataSystem.streaming_ds_builder
+    builder.base_uri(streaming_config[:baseUri]) if streaming_config[:baseUri]
+    builder.initial_reconnect_delay(streaming_config[:initialRetryDelayMs] / 1_000.0) if streaming_config[:initialRetryDelayMs]
+    builder
+  end
+
+  #
+  # Builds a polling data source builder with the configured parameters.
+  #
+  # @param polling_config [Hash] The polling configuration
+  # @return [Object] Returns the configured polling builder
+  #
+  private def build_polling_ds_builder(polling_config)
+    builder = LaunchDarkly::DataSystem.polling_ds_builder
+    builder.base_uri(polling_config[:baseUri]) if polling_config[:baseUri]
+    builder.poll_interval(polling_config[:pollIntervalMs] / 1_000.0) if polling_config[:pollIntervalMs]
+    builder
+  end
+
+  #
+  # Builds an FDv1 fallback polling data source builder using the first available config.
+  #
+  # @param primary [Hash, nil] The primary synchronizer configuration
+  # @param secondary [Hash, nil] The secondary synchronizer configuration
+  # @return [Object] Returns the configured FDv1 fallback builder
+  #
+  private def build_fdv1_fallback_builder(primary, secondary)
+    builder = LaunchDarkly::DataSystem.fdv1_fallback_ds_builder
+
+    # Use the first available polling config for the fallback base_uri
+    polling_config = primary&.dig(:polling) || secondary&.dig(:polling)
+    if polling_config
+      builder.base_uri(polling_config[:baseUri]) if polling_config[:baseUri]
+      builder.poll_interval(polling_config[:pollIntervalMs] / 1_000.0) if polling_config[:pollIntervalMs]
+    end
+
+    builder
   end
 
   #
