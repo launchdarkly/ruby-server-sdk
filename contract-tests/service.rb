@@ -8,6 +8,7 @@ require './client_entity'
 
 configure :development do
   disable :show_exceptions
+  set :host_authorization, { permitted_hosts: [] }
 end
 
 $log = Logger.new(STDOUT)
@@ -15,6 +16,7 @@ $log.formatter = proc {|severity, datetime, progname, msg|
   "[GLOBAL] #{datetime.strftime('%Y-%m-%d %H:%M:%S.%3N')} #{severity} #{progname} #{msg}\n"
 }
 
+set :bind, '0.0.0.0'
 set :port, 9000
 set :logging, false
 
