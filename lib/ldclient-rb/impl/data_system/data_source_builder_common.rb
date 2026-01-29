@@ -65,7 +65,7 @@ module LaunchDarkly
         #
         private def build_http_config
           HttpConfigOptions.new(
-            base_uri: @base_uri || self.class::DEFAULT_BASE_URI,
+            base_uri: (@base_uri || self.class::DEFAULT_BASE_URI).chomp("/"),
             socket_factory: @socket_factory,
             read_timeout: @read_timeout,
             connect_timeout: @connect_timeout
