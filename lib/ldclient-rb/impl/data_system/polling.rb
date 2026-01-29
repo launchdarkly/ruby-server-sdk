@@ -18,8 +18,8 @@ module LaunchDarkly
       FDV2_POLLING_ENDPOINT = "/sdk/poll"
       FDV1_POLLING_ENDPOINT = "/sdk/latest-all"
 
-      LD_ENVID_HEADER = "x-launchdarkly-env-id"
-      LD_FD_FALLBACK_HEADER = "x-launchdarkly-fd-fallback"
+      LD_ENVID_HEADER = "X-LD-EnvID"
+      LD_FD_FALLBACK_HEADER = "X-LD-FD-Fallback"
 
       #
       # Requester protocol for polling data source
