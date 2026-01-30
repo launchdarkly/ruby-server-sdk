@@ -2,6 +2,18 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.12.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.11.3...8.12.0) (2026-01-30)
+
+
+### Features
+
+* Support FDv2 through the configs new data_system_config option ([368aa3c](https://github.com/launchdarkly/ruby-server-sdk/commit/368aa3c45f46ca0ba1e706330d67d3a8d36d4c55))
+
+
+### Bug Fixes
+
+* Update feature store interface doc to align with existing code that expects symbols not strings ([595f91a](https://github.com/launchdarkly/ruby-server-sdk/commit/595f91abc26864ca52f712e7a52965b48636955e))
+
 ## [8.11.3](https://github.com/launchdarkly/ruby-server-sdk/compare/8.11.2...8.11.3) (2026-01-20)
 
 
