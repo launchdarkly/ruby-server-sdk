@@ -9,11 +9,8 @@ module LaunchDarkly
     # A mechanism for providing dynamically updatable feature flag state in a
     # simplified form to an SDK client in test scenarios using the FDv2 protocol.
     #
-    # This type is not stable, and not subject to any backwards
-    # compatibility guarantees or semantic versioning. It is not suitable for production usage.
-    #
-    # Do not use it.
-    # You have been warned.
+    # This class is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
+    # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
     #
     # Unlike {LaunchDarkly::Integrations::FileData}, this mechanism does not use any external resources. It
     # provides only the data that the application has put into it using the {#update} method.
