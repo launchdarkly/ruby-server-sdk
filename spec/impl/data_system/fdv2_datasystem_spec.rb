@@ -192,10 +192,11 @@ module LaunchDarkly
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers([td.test_data_ds_builder])
-              .synchronizers([
-                               MockBuilder.new(mock_primary),
-                MockBuilder.new(mock_secondary),
-                             ])
+              .synchronizers(
+                [
+                  MockBuilder.new(mock_primary),
+                  MockBuilder.new(mock_secondary),
+                ])
               .build
 
             changed = Concurrent::Event.new
