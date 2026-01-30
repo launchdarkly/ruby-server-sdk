@@ -304,7 +304,7 @@ module LaunchDarkly
                   @active_synchronizer = sync
                 end
 
-                @logger.info { "[LDClient] Synchronizer #{@active_synchronizer.name} is starting" }
+                @logger.info { "[LDClient] Synchronizer[#{current_index}] #{@active_synchronizer.name} is starting" }
 
                 sync_result = consume_synchronizer_results(@active_synchronizer, check_recovery: !is_primary)
 
@@ -330,7 +330,9 @@ module LaunchDarkly
                   current_index += 1
                 end
 
-                if current_index >= @synchronizer_builders.length
+                current_index = 0 if current_index >= @synchronizer_builders.length
+
+                if @synchronizer_builders.length == 0
                   @logger.warn { "[LDClient] No more synchronizers available" }
                   @data_source_status_provider.update_status(
                     LaunchDarkly::Interfaces::DataSource::Status::OFF,
