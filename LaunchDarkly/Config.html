@@ -1,0 +1,5634 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: LaunchDarkly::Config
+  
+    &mdash; LaunchDarkly Ruby SDK
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "LaunchDarkly::Config";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (C)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span>
+     &raquo; 
+    <span class="title">Config</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: LaunchDarkly::Config
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">LaunchDarkly::Config</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/ldclient-rb/config.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>This class exposes advanced configuration options for the LaunchDarkly
+client library. Most users will not need to use a custom configuration--
+the default configuration sets sane defaults for most use cases.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#all_attributes_private-instance_method" title="#all_attributes_private (instance method)">#<strong>all_attributes_private</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>True if all context attributes (other than the key) should be considered private.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#application-instance_method" title="#application (instance method)">#<strong>application</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>An object that allows configuration of application metadata.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#base_uri-instance_method" title="#base_uri (instance method)">#<strong>base_uri</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The base URL for the LaunchDarkly server.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#big_segments-instance_method" title="#big_segments (instance method)">#<strong>big_segments</strong>  &#x21d2; BigSegmentsConfig </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Configuration options related to Big Segments.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#cache_store-instance_method" title="#cache_store (instance method)">#<strong>cache_store</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A store for HTTP caching (used only in polling mode).</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#capacity-instance_method" title="#capacity (instance method)">#<strong>capacity</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The capacity of the events buffer.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#compress_events-instance_method" title="#compress_events (instance method)">#<strong>compress_events</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Should the event payload sent to LaunchDarkly use gzip compression.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#connect_timeout-instance_method" title="#connect_timeout (instance method)">#<strong>connect_timeout</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The connect timeout for network connections in seconds.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#context_keys_capacity-instance_method" title="#context_keys_capacity (instance method)">#<strong>context_keys_capacity</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The number of context keys that the event processor can remember at any one time.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#context_keys_flush_interval-instance_method" title="#context_keys_flush_interval (instance method)">#<strong>context_keys_flush_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The interval in seconds at which the event processor will reset its set of known context keys.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#data_source-instance_method" title="#data_source (instance method)">#<strong>data_source</strong>  &#x21d2; LaunchDarkly::Interfaces::DataSource|lambda </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>An object that is responsible for receiving feature flag data from LaunchDarkly.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#data_source_update_sink-instance_method" title="#data_source_update_sink (instance method)">#<strong>data_source_update_sink</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the component that allows a data source to push data into the SDK.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#data_system_config-instance_method" title="#data_system_config (instance method)">#<strong>data_system_config</strong>  &#x21d2; DataSystemConfig<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Configuration for the upcoming enhanced data system design.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#diagnostic_recording_interval-instance_method" title="#diagnostic_recording_interval (instance method)">#<strong>diagnostic_recording_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The interval at which periodic diagnostic data is sent, in seconds.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#events_uri-instance_method" title="#events_uri (instance method)">#<strong>events_uri</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The base URL for the LaunchDarkly events server.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#feature_store-instance_method" title="#feature_store (instance method)">#<strong>feature_store</strong>  &#x21d2; LaunchDarkly::Interfaces::FeatureStore </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A store for feature flags and related data.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#flush_interval-instance_method" title="#flush_interval (instance method)">#<strong>flush_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The number of seconds between flushes of the event buffer.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#hooks-instance_method" title="#hooks (instance method)">#<strong>hooks</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Initial set of hooks for the client.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initial_reconnect_delay-instance_method" title="#initial_reconnect_delay (instance method)">#<strong>initial_reconnect_delay</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The initial delay before reconnecting after an error in the SSE client.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#instance_id-instance_method" title="#instance_id (instance method)">#<strong>instance_id</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the unique identifier for this instance of the SDK.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#logger-instance_method" title="#logger (instance method)">#<strong>logger</strong>  &#x21d2; Logger </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The configured logger for the LaunchDarkly client.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#omit_anonymous_contexts-instance_method" title="#omit_anonymous_contexts (instance method)">#<strong>omit_anonymous_contexts</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets whether anonymous contexts should be omitted from index and identify events.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#payload_filter_key-instance_method" title="#payload_filter_key (instance method)">#<strong>payload_filter_key</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>LaunchDarkly Server SDKs historically downloaded all flag configuration and segments for a particular environment during initialization.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#plugins-instance_method" title="#plugins (instance method)">#<strong>plugins</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Initial set of plugins for the client.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#poll_interval-instance_method" title="#poll_interval (instance method)">#<strong>poll_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The number of seconds to wait before polling for feature flag updates.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#private_attributes-instance_method" title="#private_attributes (instance method)">#<strong>private_attributes</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A list of context attribute names that should always be considered private.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#read_timeout-instance_method" title="#read_timeout (instance method)">#<strong>read_timeout</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The read timeout for network connections in seconds.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#send_events-instance_method" title="#send_events (instance method)">#<strong>send_events</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether to send events back to LaunchDarkly.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#socket_factory-instance_method" title="#socket_factory (instance method)">#<strong>socket_factory</strong>  &#x21d2; #open </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The factory used to construct sockets for HTTP operations.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#stream_uri-instance_method" title="#stream_uri (instance method)">#<strong>stream_uri</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The base URL for the LaunchDarkly streaming server.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#wrapper_name-instance_method" title="#wrapper_name (instance method)">#<strong>wrapper_name</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>For use by wrapper libraries to set an identifying name for the wrapper being used.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#wrapper_version-instance_method" title="#wrapper_version (instance method)">#<strong>wrapper_version</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>For use by wrapper libraries to report the version of the library in use.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default-class_method" title="default (class method)">.<strong>default</strong>  &#x21d2; Config </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default LaunchDarkly client configuration.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_base_uri-class_method" title="default_base_uri (class method)">.<strong>default_base_uri</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#base_uri-instance_method" title="LaunchDarkly::Config#base_uri (method)">#base_uri</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_cache_store-class_method" title="default_cache_store (class method)">.<strong>default_cache_store</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#cache_store-instance_method" title="LaunchDarkly::Config#cache_store (method)">#cache_store</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_capacity-class_method" title="default_capacity (class method)">.<strong>default_capacity</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#capacity-instance_method" title="LaunchDarkly::Config#capacity (method)">#capacity</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_compress_events-class_method" title="default_compress_events (class method)">.<strong>default_compress_events</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#compress_events-instance_method" title="LaunchDarkly::Config#compress_events (method)">#compress_events</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_connect_timeout-class_method" title="default_connect_timeout (class method)">.<strong>default_connect_timeout</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#connect_timeout-instance_method" title="LaunchDarkly::Config#connect_timeout (method)">#connect_timeout</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_context_keys_capacity-class_method" title="default_context_keys_capacity (class method)">.<strong>default_context_keys_capacity</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#context_keys_capacity-instance_method" title="LaunchDarkly::Config#context_keys_capacity (method)">#context_keys_capacity</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_context_keys_flush_interval-class_method" title="default_context_keys_flush_interval (class method)">.<strong>default_context_keys_flush_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#context_keys_flush_interval-instance_method" title="LaunchDarkly::Config#context_keys_flush_interval (method)">#context_keys_flush_interval</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_diagnostic_recording_interval-class_method" title="default_diagnostic_recording_interval (class method)">.<strong>default_diagnostic_recording_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#diagnostic_recording_interval-instance_method" title="LaunchDarkly::Config#diagnostic_recording_interval (method)">#diagnostic_recording_interval</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_events_uri-class_method" title="default_events_uri (class method)">.<strong>default_events_uri</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#events_uri-instance_method" title="LaunchDarkly::Config#events_uri (method)">#events_uri</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_feature_store-class_method" title="default_feature_store (class method)">.<strong>default_feature_store</strong>  &#x21d2; LaunchDarkly::Interfaces::FeatureStore </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#feature_store-instance_method" title="LaunchDarkly::Config#feature_store (method)">#feature_store</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_flush_interval-class_method" title="default_flush_interval (class method)">.<strong>default_flush_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#flush_interval-instance_method" title="LaunchDarkly::Config#flush_interval (method)">#flush_interval</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_initial_reconnect_delay-class_method" title="default_initial_reconnect_delay (class method)">.<strong>default_initial_reconnect_delay</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#initial_reconnect_delay-instance_method" title="LaunchDarkly::Config#initial_reconnect_delay (method)">#initial_reconnect_delay</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_logger-class_method" title="default_logger (class method)">.<strong>default_logger</strong>  &#x21d2; Logger </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#logger-instance_method" title="LaunchDarkly::Config#logger (method)">#logger</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_offline-class_method" title="default_offline (class method)">.<strong>default_offline</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#offline%3F-instance_method" title="LaunchDarkly::Config#offline? (method)">#offline?</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_poll_interval-class_method" title="default_poll_interval (class method)">.<strong>default_poll_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#poll_interval-instance_method" title="LaunchDarkly::Config#poll_interval (method)">#poll_interval</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_read_timeout-class_method" title="default_read_timeout (class method)">.<strong>default_read_timeout</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#read_timeout-instance_method" title="LaunchDarkly::Config#read_timeout (method)">#read_timeout</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_send_events-class_method" title="default_send_events (class method)">.<strong>default_send_events</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#send_events-instance_method" title="LaunchDarkly::Config#send_events (method)">#send_events</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_stream-class_method" title="default_stream (class method)">.<strong>default_stream</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#stream%3F-instance_method" title="LaunchDarkly::Config#stream? (method)">#stream?</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_stream_uri-class_method" title="default_stream_uri (class method)">.<strong>default_stream_uri</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#stream_uri-instance_method" title="LaunchDarkly::Config#stream_uri (method)">#stream_uri</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_use_ldd-class_method" title="default_use_ldd (class method)">.<strong>default_use_ldd</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default value for <span class='object_link'><a href="#use_ldd%3F-instance_method" title="LaunchDarkly::Config#use_ldd? (method)">#use_ldd?</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#minimum_diagnostic_recording_interval-class_method" title="minimum_diagnostic_recording_interval (class method)">.<strong>minimum_diagnostic_recording_interval</strong>  &#x21d2; Float </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The minimum value for <span class='object_link'><a href="#diagnostic_recording_interval-instance_method" title="LaunchDarkly::Config#diagnostic_recording_interval (method)">#diagnostic_recording_interval</a></span>.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#diagnostic_opt_out%3F-instance_method" title="#diagnostic_opt_out? (instance method)">#<strong>diagnostic_opt_out?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set to true to opt out of sending diagnostics data.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(opts = {})  &#x21d2; Config </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Constructor for creating custom LaunchDarkly configurations.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#offline%3F-instance_method" title="#offline? (instance method)">#<strong>offline?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether the client should be initialized in offline mode.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#stream%3F-instance_method" title="#stream? (instance method)">#<strong>stream?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether streaming mode should be enabled.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#use_ldd%3F-instance_method" title="#use_ldd? (instance method)">#<strong>use_ldd?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether to use the LaunchDarkly relay proxy in daemon mode.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(opts = {})  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Constructor for creating custom LaunchDarkly configurations.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>the configuration options</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>hooks</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a customizable set of options</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>plugins</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a customizable set of options</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+  
+    
+    
+    <p class="tag_title">Options Hash (<tt>opts</tt>):</p>
+    <ul class="option">
+      
+        <li>
+          <span class="name">:logger</span>
+          <span class="type">(<tt>Logger</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#logger-instance_method" title="LaunchDarkly::Config#logger (method)">#logger</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:base_uri</span>
+          <span class="type">(<tt>String</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>&quot;https://sdk.launchdarkly.com&quot;</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#base_uri-instance_method" title="LaunchDarkly::Config#base_uri (method)">#base_uri</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:stream_uri</span>
+          <span class="type">(<tt>String</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>&quot;https://stream.launchdarkly.com&quot;</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#stream_uri-instance_method" title="LaunchDarkly::Config#stream_uri (method)">#stream_uri</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:events_uri</span>
+          <span class="type">(<tt>String</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>&quot;https://events.launchdarkly.com&quot;</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#events_uri-instance_method" title="LaunchDarkly::Config#events_uri (method)">#events_uri</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:capacity</span>
+          <span class="type">(<tt>Integer</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>10000</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#capacity-instance_method" title="LaunchDarkly::Config#capacity (method)">#capacity</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:flush_interval</span>
+          <span class="type">(<tt>Float</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>30</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#flush_interval-instance_method" title="LaunchDarkly::Config#flush_interval (method)">#flush_interval</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:read_timeout</span>
+          <span class="type">(<tt>Float</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>10</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#read_timeout-instance_method" title="LaunchDarkly::Config#read_timeout (method)">#read_timeout</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:initial_reconnect_delay</span>
+          <span class="type">(<tt>Float</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>1</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#initial_reconnect_delay-instance_method" title="LaunchDarkly::Config#initial_reconnect_delay (method)">#initial_reconnect_delay</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:connect_timeout</span>
+          <span class="type">(<tt>Float</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>2</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#connect_timeout-instance_method" title="LaunchDarkly::Config#connect_timeout (method)">#connect_timeout</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:cache_store</span>
+          <span class="type">(<tt>Object</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#cache_store-instance_method" title="LaunchDarkly::Config#cache_store (method)">#cache_store</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:feature_store</span>
+          <span class="type">(<tt>Object</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#feature_store-instance_method" title="LaunchDarkly::Config#feature_store (method)">#feature_store</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:use_ldd</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#use_ldd%3F-instance_method" title="LaunchDarkly::Config#use_ldd? (method)">#use_ldd?</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:offline</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#offline%3F-instance_method" title="LaunchDarkly::Config#offline? (method)">#offline?</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:poll_interval</span>
+          <span class="type">(<tt>Float</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>30</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#poll_interval-instance_method" title="LaunchDarkly::Config#poll_interval (method)">#poll_interval</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:stream</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>true</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#stream%3F-instance_method" title="LaunchDarkly::Config#stream? (method)">#stream?</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">all_attributes_private</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#all_attributes_private-instance_method" title="LaunchDarkly::Config#all_attributes_private (method)">#all_attributes_private</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:private_attributes</span>
+          <span class="type">(<tt>Array</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#private_attributes-instance_method" title="LaunchDarkly::Config#private_attributes (method)">#private_attributes</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:send_events</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>true</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#send_events-instance_method" title="LaunchDarkly::Config#send_events (method)">#send_events</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:context_keys_capacity</span>
+          <span class="type">(<tt>Integer</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>1000</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#context_keys_capacity-instance_method" title="LaunchDarkly::Config#context_keys_capacity (method)">#context_keys_capacity</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:context_keys_flush_interval</span>
+          <span class="type">(<tt>Float</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>300</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#context_keys_flush_interval-instance_method" title="LaunchDarkly::Config#context_keys_flush_interval (method)">#context_keys_flush_interval</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:data_source</span>
+          <span class="type">(<tt>Object</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#data_source-instance_method" title="LaunchDarkly::Config#data_source (method)">#data_source</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:diagnostic_opt_out</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>false</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#diagnostic_opt_out%3F-instance_method" title="LaunchDarkly::Config#diagnostic_opt_out? (method)">#diagnostic_opt_out?</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:diagnostic_recording_interval</span>
+          <span class="type">(<tt>Float</tt>)</span>
+          <span class="default">
+            
+              &mdash; default:
+              <tt>900</tt>
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#diagnostic_recording_interval-instance_method" title="LaunchDarkly::Config#diagnostic_recording_interval (method)">#diagnostic_recording_interval</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:wrapper_name</span>
+          <span class="type">(<tt>String</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#wrapper_name-instance_method" title="LaunchDarkly::Config#wrapper_name (method)">#wrapper_name</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:wrapper_version</span>
+          <span class="type">(<tt>String</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#wrapper_version-instance_method" title="LaunchDarkly::Config#wrapper_version (method)">#wrapper_version</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:socket_factory</span>
+          <span class="type">(<tt>#open</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#socket_factory-instance_method" title="LaunchDarkly::Config#socket_factory (method)">#socket_factory</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:big_segments</span>
+          <span class="type">(<tt><span class='object_link'><a href="BigSegmentsConfig.html" title="LaunchDarkly::BigSegmentsConfig (class)">BigSegmentsConfig</a></span></tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#big_segments-instance_method" title="LaunchDarkly::Config#big_segments (method)">#big_segments</a></span>.</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:application</span>
+          <span class="type">(<tt>Hash</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#application-instance_method" title="LaunchDarkly::Config#application (method)">#application</a></span></p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:payload_filter_key</span>
+          <span class="type">(<tt>String</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#payload_filter_key-instance_method" title="LaunchDarkly::Config#payload_filter_key (method)">#payload_filter_key</a></span></p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:omit_anonymous_contexts</span>
+          <span class="type">(<tt>Boolean</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#omit_anonymous_contexts-instance_method" title="LaunchDarkly::Config#omit_anonymous_contexts (method)">#omit_anonymous_contexts</a></span></p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:data_system_config</span>
+          <span class="type">(<tt><span class='object_link'><a href="DataSystemConfig.html" title="LaunchDarkly::DataSystemConfig (class)">DataSystemConfig</a></span></tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>See <span class='object_link'><a href="#data_system_config-instance_method" title="LaunchDarkly::Config#data_system_config (method)">#data_system_config</a></span></p>
+</div>
+          
+        </li>
+      
+    </ul>
+  
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 55</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='ivar'>@base_uri</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:base_uri</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_base_uri'><span class='object_link'><a href="#default_base_uri-class_method" title="LaunchDarkly::Config.default_base_uri (method)">default_base_uri</a></span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_chomp'>chomp</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='ivar'>@stream_uri</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:stream_uri</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_stream_uri'><span class='object_link'><a href="#default_stream_uri-class_method" title="LaunchDarkly::Config.default_stream_uri (method)">default_stream_uri</a></span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_chomp'>chomp</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='ivar'>@events_uri</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:events_uri</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_events_uri'><span class='object_link'><a href="#default_events_uri-class_method" title="LaunchDarkly::Config.default_events_uri (method)">default_events_uri</a></span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_chomp'>chomp</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='ivar'>@capacity</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:capacity</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_capacity'><span class='object_link'><a href="#default_capacity-class_method" title="LaunchDarkly::Config.default_capacity (method)">default_capacity</a></span></span>
+  <span class='ivar'>@logger</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:logger</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_logger'><span class='object_link'><a href="#default_logger-class_method" title="LaunchDarkly::Config.default_logger (method)">default_logger</a></span></span>
+  <span class='ivar'>@cache_store</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:cache_store</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_cache_store'><span class='object_link'><a href="#default_cache_store-class_method" title="LaunchDarkly::Config.default_cache_store (method)">default_cache_store</a></span></span>
+  <span class='ivar'>@flush_interval</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:flush_interval</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_flush_interval'><span class='object_link'><a href="#default_flush_interval-class_method" title="LaunchDarkly::Config.default_flush_interval (method)">default_flush_interval</a></span></span>
+  <span class='ivar'>@connect_timeout</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:connect_timeout</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_connect_timeout'><span class='object_link'><a href="#default_connect_timeout-class_method" title="LaunchDarkly::Config.default_connect_timeout (method)">default_connect_timeout</a></span></span>
+  <span class='ivar'>@read_timeout</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:read_timeout</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_read_timeout'><span class='object_link'><a href="#default_read_timeout-class_method" title="LaunchDarkly::Config.default_read_timeout (method)">default_read_timeout</a></span></span>
+  <span class='ivar'>@initial_reconnect_delay</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:initial_reconnect_delay</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_initial_reconnect_delay'><span class='object_link'><a href="#default_initial_reconnect_delay-class_method" title="LaunchDarkly::Config.default_initial_reconnect_delay (method)">default_initial_reconnect_delay</a></span></span>
+  <span class='ivar'>@feature_store</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:feature_store</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_feature_store'><span class='object_link'><a href="#default_feature_store-class_method" title="LaunchDarkly::Config.default_feature_store (method)">default_feature_store</a></span></span>
+  <span class='ivar'>@stream</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:stream</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:stream</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_stream'><span class='object_link'><a href="#default_stream-class_method" title="LaunchDarkly::Config.default_stream (method)">default_stream</a></span></span>
+  <span class='ivar'>@use_ldd</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:use_ldd</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:use_ldd</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_use_ldd'><span class='object_link'><a href="#default_use_ldd-class_method" title="LaunchDarkly::Config.default_use_ldd (method)">default_use_ldd</a></span></span>
+  <span class='ivar'>@offline</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:offline</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:offline</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_offline'><span class='object_link'><a href="#default_offline-class_method" title="LaunchDarkly::Config.default_offline (method)">default_offline</a></span></span>
+  <span class='ivar'>@poll_interval</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:poll_interval</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:poll_interval</span><span class='rbracket'>]</span> <span class='op'>&gt;</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_poll_interval'><span class='object_link'><a href="#default_poll_interval-class_method" title="LaunchDarkly::Config.default_poll_interval (method)">default_poll_interval</a></span></span> <span class='op'>?</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:poll_interval</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_poll_interval'><span class='object_link'><a href="#default_poll_interval-class_method" title="LaunchDarkly::Config.default_poll_interval (method)">default_poll_interval</a></span></span>
+  <span class='ivar'>@all_attributes_private</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:all_attributes_private</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='kw'>false</span>
+  <span class='ivar'>@private_attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:private_attributes</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='ivar'>@send_events</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:send_events</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:send_events</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_send_events'><span class='object_link'><a href="#default_send_events-class_method" title="LaunchDarkly::Config.default_send_events (method)">default_send_events</a></span></span>
+  <span class='ivar'>@compress_events</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:compress_events</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:compress_events</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_compress_events'><span class='object_link'><a href="#default_compress_events-class_method" title="LaunchDarkly::Config.default_compress_events (method)">default_compress_events</a></span></span>
+  <span class='ivar'>@context_keys_capacity</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:context_keys_capacity</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_context_keys_capacity'><span class='object_link'><a href="#default_context_keys_capacity-class_method" title="LaunchDarkly::Config.default_context_keys_capacity (method)">default_context_keys_capacity</a></span></span>
+  <span class='ivar'>@context_keys_flush_interval</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:context_keys_flush_interval</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_context_keys_flush_interval'><span class='object_link'><a href="#default_context_keys_flush_interval-class_method" title="LaunchDarkly::Config.default_context_keys_flush_interval (method)">default_context_keys_flush_interval</a></span></span>
+  <span class='ivar'>@data_source</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:data_source</span><span class='rbracket'>]</span>
+  <span class='ivar'>@diagnostic_opt_out</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:diagnostic_opt_out</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:diagnostic_opt_out</span><span class='rbracket'>]</span>
+  <span class='ivar'>@diagnostic_recording_interval</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:diagnostic_recording_interval</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:diagnostic_recording_interval</span><span class='rbracket'>]</span> <span class='op'>&gt;</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_minimum_diagnostic_recording_interval'><span class='object_link'><a href="#minimum_diagnostic_recording_interval-class_method" title="LaunchDarkly::Config.minimum_diagnostic_recording_interval (method)">minimum_diagnostic_recording_interval</a></span></span> <span class='op'>?</span>
+    <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:diagnostic_recording_interval</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_diagnostic_recording_interval'><span class='object_link'><a href="#default_diagnostic_recording_interval-class_method" title="LaunchDarkly::Config.default_diagnostic_recording_interval (method)">default_diagnostic_recording_interval</a></span></span>
+  <span class='ivar'>@wrapper_name</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:wrapper_name</span><span class='rbracket'>]</span>
+  <span class='ivar'>@wrapper_version</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:wrapper_version</span><span class='rbracket'>]</span>
+  <span class='ivar'>@socket_factory</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:socket_factory</span><span class='rbracket'>]</span>
+  <span class='ivar'>@big_segments</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:big_segments</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="BigSegmentsConfig.html" title="LaunchDarkly::BigSegmentsConfig (class)">BigSegmentsConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="BigSegmentsConfig.html#initialize-instance_method" title="LaunchDarkly::BigSegmentsConfig#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>store:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='ivar'>@application</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_validate_application_info'><span class='object_link'><a href="Impl/Util.html#validate_application_info-class_method" title="LaunchDarkly::Impl::Util.validate_application_info (method)">validate_application_info</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:application</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='ivar'>@logger</span><span class='rparen'>)</span>
+  <span class='ivar'>@payload_filter_key</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_validate_payload_filter_key'><span class='object_link'><a href="Impl/Util.html#validate_payload_filter_key-class_method" title="LaunchDarkly::Impl::Util.validate_payload_filter_key (method)">validate_payload_filter_key</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:payload_filter_key</span><span class='rbracket'>]</span> <span class='comma'>,</span> <span class='ivar'>@logger</span><span class='rparen'>)</span>
+  <span class='ivar'>@hooks</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:hooks</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_keep_if'>keep_if</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_hook'>hook</span><span class='op'>|</span> <span class='id identifier rubyid_hook'>hook</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'><span class='object_link'><a href="Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/Hooks.html" title="LaunchDarkly::Interfaces::Hooks (module)">Hooks</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/Hooks/Hook.html" title="LaunchDarkly::Interfaces::Hooks::Hook (module)">Hook</a></span></span> <span class='rbrace'>}</span>
+  <span class='ivar'>@plugins</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:plugins</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_keep_if'>keep_if</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_plugin'>plugin</span><span class='op'>|</span> <span class='id identifier rubyid_plugin'>plugin</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'><span class='object_link'><a href="Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/Plugins.html" title="LaunchDarkly::Interfaces::Plugins (module)">Plugins</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/Plugins/Plugin.html" title="LaunchDarkly::Interfaces::Plugins::Plugin (module)">Plugin</a></span></span> <span class='rbrace'>}</span>
+  <span class='ivar'>@omit_anonymous_contexts</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='symbol'>:omit_anonymous_contexts</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:omit_anonymous_contexts</span><span class='rbracket'>]</span>
+  <span class='ivar'>@data_system_config</span> <span class='op'>=</span> <span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:data_system_config</span><span class='rbracket'>]</span>
+  <span class='ivar'>@data_source_update_sink</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='ivar'>@instance_id</span> <span class='op'>=</span> <span class='kw'>nil</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="all_attributes_private-instance_method">
+  
+    #<strong>all_attributes_private</strong>  &#x21d2; <tt>Boolean</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>True if all context attributes (other than the key) should be considered private. This means
+that the attribute values will not be sent to LaunchDarkly in analytics events and will not
+appear on the LaunchDarkly dashboard.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li><span class='object_link'><a href="#private_attributes-instance_method" title="LaunchDarkly::Config#private_attributes (method)">#private_attributes</a></span></li>
+    
+  </ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+255
+256
+257</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 255</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_all_attributes_private'>all_attributes_private</span>
+  <span class='ivar'>@all_attributes_private</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="application-instance_method">
+  
+    #<strong>application</strong>  &#x21d2; <tt>Hash</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>An object that allows configuration of application metadata.</p>
+
+<p>Application metadata may be used in LaunchDarkly analytics or other product features, but does not affect feature flag evaluations.</p>
+
+<p>If you want to set non-default values for any of these fields, provide the appropriately configured hash to the <span class='object_link'><a href="" title="LaunchDarkly::Config (class)">LaunchDarkly::Config</a></span> object.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'><p>Configuring application information</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_opts'>opts</span><span class='lbracket'>[</span><span class='symbol'>:application</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+  <span class='label'>id:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>MY APPLICATION ID</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>MY APPLICATION VERSION</span><span class='tstring_end'>&quot;</span></span>
+<span class='rbrace'>}</span>
+<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'>LDConfig</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+346
+347
+348</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 346</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_application'>application</span>
+  <span class='ivar'>@application</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="base_uri-instance_method">
+  
+    #<strong>base_uri</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The base URL for the LaunchDarkly server. This is configurable mainly for testing
+purposes; most users should use the default value.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+126
+127
+128</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 126</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_base_uri'>base_uri</span>
+  <span class='ivar'>@base_uri</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="big_segments-instance_method">
+  
+    #<strong>big_segments</strong>  &#x21d2; <tt><span class='object_link'><a href="BigSegmentsConfig.html" title="LaunchDarkly::BigSegmentsConfig (class)">BigSegmentsConfig</a></span></tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Configuration options related to Big Segments.</p>
+
+<p>Big Segments are a specific type of segments. For more information, read the LaunchDarkly
+documentation: <a href="https://docs.launchdarkly.com/home/users/big-segments">https://docs.launchdarkly.com/home/users/big-segments</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="BigSegmentsConfig.html" title="LaunchDarkly::BigSegmentsConfig (class)">BigSegmentsConfig</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+328
+329
+330</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 328</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_big_segments'>big_segments</span>
+  <span class='ivar'>@big_segments</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="cache_store-instance_method">
+  
+    #<strong>cache_store</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A store for HTTP caching (used only in polling mode). This must support the semantics used by
+the <a href="https://github.com/plataformatec/faraday-http-cache"><code>faraday-http-cache</code></a> gem, although
+the SDK no longer uses Faraday. Defaults to the Rails cache in a Rails environment, or a
+thread-safe in-memory store otherwise.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+215
+216
+217</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 215</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_cache_store'>cache_store</span>
+  <span class='ivar'>@cache_store</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="capacity-instance_method">
+  
+    #<strong>capacity</strong>  &#x21d2; <tt>Integer</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The capacity of the events buffer. The client buffers up to this many
+events in memory before flushing. If the capacity is exceeded before
+the buffer is flushed, events will be discarded.
+Increasing the capacity means that events are less likely to be discarded,
+at the cost of consuming more memory.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+206
+207
+208</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 206</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_capacity'>capacity</span>
+  <span class='ivar'>@capacity</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="compress_events-instance_method">
+  
+    #<strong>compress_events</strong>  &#x21d2; <tt>Boolean</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Should the event payload sent to LaunchDarkly use gzip compression. By default this is false to prevent backward
+breaking compatibility issues with older versions of the relay proxy.</p>
+
+<p>Customers not using the relay proxy are strongly encouraged to enable this feature to reduce egress bandwidth
+cost.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+288
+289
+290</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 288</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_compress_events'>compress_events</span>
+  <span class='ivar'>@compress_events</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="connect_timeout-instance_method">
+  
+    #<strong>connect_timeout</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The connect timeout for network connections in seconds.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+235
+236
+237</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 235</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_connect_timeout'>connect_timeout</span>
+  <span class='ivar'>@connect_timeout</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="context_keys_capacity-instance_method">
+  
+    #<strong>context_keys_capacity</strong>  &#x21d2; <tt>Integer</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The number of context keys that the event processor can remember at any one time. This reduces the
+amount of duplicate context details sent in analytics events.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li><span class='object_link'><a href="#context_keys_flush_interval-instance_method" title="LaunchDarkly::Config#context_keys_flush_interval (method)">#context_keys_flush_interval</a></span></li>
+    
+  </ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+296
+297
+298</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 296</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_context_keys_capacity'>context_keys_capacity</span>
+  <span class='ivar'>@context_keys_capacity</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="context_keys_flush_interval-instance_method">
+  
+    #<strong>context_keys_flush_interval</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The interval in seconds at which the event processor will reset its set of known context keys.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li><span class='object_link'><a href="#context_keys_capacity-instance_method" title="LaunchDarkly::Config#context_keys_capacity (method)">#context_keys_capacity</a></span></li>
+    
+  </ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+303
+304
+305</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 303</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_context_keys_flush_interval'>context_keys_flush_interval</span>
+  <span class='ivar'>@context_keys_flush_interval</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="data_source-instance_method">
+  
+    #<strong>data_source</strong>  &#x21d2; <tt><span class='object_link'><a href="Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">LaunchDarkly::Interfaces::DataSource</a></span>|lambda</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>An object that is responsible for receiving feature flag data from LaunchDarkly. By default,
+the client uses its standard polling or streaming implementation; this is customizable for
+testing purposes.</p>
+
+<p>This may be set to either an object that conforms to <span class='object_link'><a href="Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">Interfaces::DataSource</a></span>,
+or a lambda (or Proc) that takes two parameters-- SDK key and <span class='object_link'><a href="" title="LaunchDarkly::Config (class)">LaunchDarkly::Config</a></span>-- and returns such an
+object.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">LaunchDarkly::Interfaces::DataSource</a></span>|lambda</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li><span class='object_link'><a href="Integrations/FileData.html" title="LaunchDarkly::Integrations::FileData (module)">Integrations::FileData</a></span></li>
+    
+      <li><span class='object_link'><a href="Integrations/TestData.html" title="LaunchDarkly::Integrations::TestData (class)">Integrations::TestData</a></span></li>
+    
+  </ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+318
+319
+320</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 318</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_data_source'>data_source</span>
+  <span class='ivar'>@data_source</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="data_source_update_sink=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="data_source_update_sink-instance_method">
+  
+    #<strong>data_source_update_sink</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Returns the component that allows a data source to push data into the SDK.</p>
+
+<p>This property should only be set by the SDK. Long term access of this
+property is not supported; it is temporarily being exposed to maintain
+backwards compatibility while the SDK structure is updated.</p>
+
+<p>Custom data source implementations should integrate with this sink if
+they want to provide support for data source status listeners.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+107
+108
+109</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 107</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_data_source_update_sink'>data_source_update_sink</span>
+  <span class='ivar'>@data_source_update_sink</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="data_system_config-instance_method">
+  
+    #<strong>data_system_config</strong>  &#x21d2; <tt><span class='object_link'><a href="DataSystemConfig.html" title="LaunchDarkly::DataSystemConfig (class)">DataSystemConfig</a></span></tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Configuration for the upcoming enhanced data system design. This is
+experimental and should not be set without direction from LaunchDarkly
+support.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="DataSystemConfig.html" title="LaunchDarkly::DataSystemConfig (class)">DataSystemConfig</a></span></tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+446
+447
+448</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 446</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_data_system_config'>data_system_config</span>
+  <span class='ivar'>@data_system_config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="diagnostic_recording_interval-instance_method">
+  
+    #<strong>diagnostic_recording_interval</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The interval at which periodic diagnostic data is sent, in seconds.</p>
+
+<p>The default is 900 (every 15 minutes) and the minimum value is 60 (every minute).</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+382
+383
+384</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 382</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_diagnostic_recording_interval'>diagnostic_recording_interval</span>
+  <span class='ivar'>@diagnostic_recording_interval</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="events_uri-instance_method">
+  
+    #<strong>events_uri</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The base URL for the LaunchDarkly events server. This is configurable mainly for testing
+purposes; most users should use the default value.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+140
+141
+142</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 140</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_events_uri'>events_uri</span>
+  <span class='ivar'>@events_uri</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="feature_store-instance_method">
+  
+    #<strong>feature_store</strong>  &#x21d2; <tt><span class='object_link'><a href="Interfaces/FeatureStore.html" title="LaunchDarkly::Interfaces::FeatureStore (module)">LaunchDarkly::Interfaces::FeatureStore</a></span></tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A store for feature flags and related data. The client uses it to store all data received
+from LaunchDarkly, and uses the last stored data when evaluating flags. Defaults to
+<span class='object_link'><a href="InMemoryFeatureStore.html" title="LaunchDarkly::InMemoryFeatureStore (class)">InMemoryFeatureStore</a></span>; for other implementations, see <span class='object_link'><a href="Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span>.</p>
+
+<p>For more information, see <a href="https://docs.launchdarkly.com/sdk/concepts/data-stores">&quot;Persistent data stores&quot;</a>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Interfaces/FeatureStore.html" title="LaunchDarkly::Interfaces::FeatureStore (module)">LaunchDarkly::Interfaces::FeatureStore</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+246
+247
+248</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 246</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_feature_store'>feature_store</span>
+  <span class='ivar'>@feature_store</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="flush_interval-instance_method">
+  
+    #<strong>flush_interval</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The number of seconds between flushes of the event buffer. Decreasing the flush interval means
+that the event buffer is less likely to reach capacity.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+181
+182
+183</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 181</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_flush_interval'>flush_interval</span>
+  <span class='ivar'>@flush_interval</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="hooks-instance_method">
+  
+    #<strong>hooks</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Initial set of hooks for the client.</p>
+
+<p>Hooks provide entrypoints which allow for observation of SDK functions.</p>
+
+<p>LaunchDarkly provides integration packages, and most applications will not
+need to implement their own hooks. Refer to the <code>launchdarkly-server-sdk-otel</code> gem
+for instrumentation.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+421
+422
+423</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 421</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_hooks'>hooks</span>
+  <span class='ivar'>@hooks</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="initial_reconnect_delay-instance_method">
+  
+    #<strong>initial_reconnect_delay</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The initial delay before reconnecting after an error in the SSE client.
+This only applies to the streaming connection.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+229
+230
+231</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 229</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initial_reconnect_delay'>initial_reconnect_delay</span>
+  <span class='ivar'>@initial_reconnect_delay</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="instance_id=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="instance_id-instance_method">
+  
+    #<strong>instance_id</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Returns the unique identifier for this instance of the SDK.</p>
+
+<p>This property should only be set by the SDK. Long term access of this
+property is not supported; it is temporarily being exposed to maintain
+backwards compatibility while the SDK structure is updated.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+119
+120
+121</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 119</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_instance_id'>instance_id</span>
+  <span class='ivar'>@instance_id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="logger-instance_method">
+  
+    #<strong>logger</strong>  &#x21d2; <tt>Logger</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The configured logger for the LaunchDarkly client. The client library uses the log to
+print warning and error messages. If not specified, this defaults to the Rails logger
+in a Rails environment, or stdout otherwise.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Logger</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+196
+197
+198</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 196</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_logger'>logger</span>
+  <span class='ivar'>@logger</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="omit_anonymous_contexts-instance_method">
+  
+    #<strong>omit_anonymous_contexts</strong>  &#x21d2; <tt>Boolean</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets whether anonymous contexts should be omitted from index and identify events.</p>
+
+<p>The default value is false. Anonymous contexts will be included in index and identify events.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+437
+438
+439</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 437</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_omit_anonymous_contexts'>omit_anonymous_contexts</span>
+  <span class='ivar'>@omit_anonymous_contexts</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="payload_filter_key-instance_method">
+  
+    #<strong>payload_filter_key</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>LaunchDarkly Server SDKs historically downloaded all flag configuration and segments for a particular environment
+during initialization.</p>
+
+<p>For some customers, this is an unacceptably large amount of data, and has contributed to performance issues within
+their products.</p>
+
+<p>Filtered environments aim to solve this problem. By allowing customers to specify subsets of an environment&#39;s
+flags using a filter key, SDKs will initialize faster and use less memory.</p>
+
+<p>This payload filter key only applies to the default streaming and polling data sources. It will not affect TestData or FileData
+data sources, nor will it be applied to any data source provided through the <span class='object_link'><a href="#data_source-instance_method" title="LaunchDarkly::Config#data_source (method)">#data_source</a></span> config property.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+361
+362
+363</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 361</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_payload_filter_key'>payload_filter_key</span>
+  <span class='ivar'>@payload_filter_key</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="plugins-instance_method">
+  
+    #<strong>plugins</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Initial set of plugins for the client.</p>
+
+<p>Plugins provide an interface which allows for initialization, access to credentials, and hook registration
+in a single interface.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+429
+430
+431</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 429</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_plugins'>plugins</span>
+  <span class='ivar'>@plugins</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="poll_interval-instance_method">
+  
+    #<strong>poll_interval</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The number of seconds to wait before polling for feature flag updates. This option has no
+effect unless streaming is disabled.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+188
+189
+190</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 188</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_poll_interval'>poll_interval</span>
+  <span class='ivar'>@poll_interval</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="private_attributes-instance_method">
+  
+    #<strong>private_attributes</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A list of context attribute names that should always be considered private. This means that the
+attribute values will not be sent to LaunchDarkly in analytics events and will not appear on
+the LaunchDarkly dashboard.</p>
+
+<p>You can also specify the same behavior for an individual flag evaluation
+by providing the context object with a list of private attributes.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li><a href="https://docs.launchdarkly.com/sdk/features/user-context-config#using-private-attributes" target="_parent" title="https://docs.launchdarkly.com/sdk/features/user-context-config#using-private-attributes">https://docs.launchdarkly.com/sdk/features/user-context-config#using-private-attributes</a></li>
+    
+      <li><span class='object_link'><a href="#all_attributes_private-instance_method" title="LaunchDarkly::Config#all_attributes_private (method)">#all_attributes_private</a></span></li>
+    
+  </ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+270
+271
+272</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 270</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_private_attributes'>private_attributes</span>
+  <span class='ivar'>@private_attributes</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="read_timeout-instance_method">
+  
+    #<strong>read_timeout</strong>  &#x21d2; <tt>Float</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The read timeout for network connections in seconds. This does not apply to the streaming
+connection, which uses a longer timeout since the server does not send data constantly.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+222
+223
+224</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 222</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_read_timeout'>read_timeout</span>
+  <span class='ivar'>@read_timeout</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="send_events-instance_method">
+  
+    #<strong>send_events</strong>  &#x21d2; <tt>Boolean</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether to send events back to LaunchDarkly. This differs from <span class='object_link'><a href="#offline%3F-instance_method" title="LaunchDarkly::Config#offline? (method)">#offline?</a></span> in that it affects
+only the sending of client-side events, not streaming or polling for events from the server.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+277
+278
+279</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 277</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_send_events'>send_events</span>
+  <span class='ivar'>@send_events</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="socket_factory-instance_method">
+  
+    #<strong>socket_factory</strong>  &#x21d2; <tt>#open</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The factory used to construct sockets for HTTP operations. The factory must
+provide the method <code>open(uri, timeout)</code>. The <code>open</code> method must return a
+connected stream that implements the <code>IO</code> class, such as a <code>TCPSocket</code>.</p>
+
+<p>Defaults to nil.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>#open</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+410
+411
+412</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 410</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_socket_factory'>socket_factory</span>
+  <span class='ivar'>@socket_factory</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="stream_uri-instance_method">
+  
+    #<strong>stream_uri</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The base URL for the LaunchDarkly streaming server. This is configurable mainly for testing
+purposes; most users should use the default value.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+133
+134
+135</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 133</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_stream_uri'>stream_uri</span>
+  <span class='ivar'>@stream_uri</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="wrapper_name-instance_method">
+  
+    #<strong>wrapper_name</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>For use by wrapper libraries to set an identifying name for the wrapper being used.</p>
+
+<p>This will be sent in User-Agent headers during requests to the LaunchDarkly servers to allow recording
+metrics on the usage of these wrapper libraries.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+391
+392
+393</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 391</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_wrapper_name'>wrapper_name</span>
+  <span class='ivar'>@wrapper_name</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="wrapper_version-instance_method">
+  
+    #<strong>wrapper_version</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>For use by wrapper libraries to report the version of the library in use.</p>
+
+<p>If <code>wrapper_name</code> is not set, this field will be ignored. Otherwise the version string will be included in
+the User-Agent headers along with the <code>wrapper_name</code> during requests to the LaunchDarkly servers.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+400
+401
+402</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 400</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_wrapper_version'>wrapper_version</span>
+  <span class='ivar'>@wrapper_version</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="default-class_method">
+  
+    .<strong>default</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default LaunchDarkly client configuration. This configuration sets
+reasonable defaults for most users.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The default LaunchDarkly configuration.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+454
+455
+456</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 454</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span>
+  <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_base_uri-class_method">
+  
+    .<strong>default_base_uri</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#base_uri-instance_method" title="LaunchDarkly::Config#base_uri (method)">#base_uri</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>&quot;<a href="https://sdk.launchdarkly.com">https://sdk.launchdarkly.com</a>&quot;</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+470
+471
+472</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 470</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_base_uri'>default_base_uri</span>
+  <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'>DataSystem</span><span class='op'>::</span><span class='const'>PollingDataSourceBuilder</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataSystem/PollingDataSourceBuilder.html#DEFAULT_BASE_URI-constant" title="LaunchDarkly::Impl::DataSystem::PollingDataSourceBuilder::DEFAULT_BASE_URI (constant)">DEFAULT_BASE_URI</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_cache_store-class_method">
+  
+    .<strong>default_cache_store</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#cache_store-instance_method" title="LaunchDarkly::Config#cache_store (method)">#cache_store</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the Rails cache if in Rails, or a simple in-memory implementation otherwise</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+494
+495
+496</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 494</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_cache_store'>default_cache_store</span>
+  <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'>Rails</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:cache</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_cache'>cache</span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/ThreadSafeMemoryStore.html" title="LaunchDarkly::Impl::ThreadSafeMemoryStore (class)">ThreadSafeMemoryStore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Impl/ThreadSafeMemoryStore.html#initialize-instance_method" title="LaunchDarkly::Impl::ThreadSafeMemoryStore#initialize (method)">new</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_capacity-class_method">
+  
+    .<strong>default_capacity</strong>  &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#capacity-instance_method" title="LaunchDarkly::Config#capacity (method)">#capacity</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>10000</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+462
+463
+464</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 462</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_capacity'>default_capacity</span>
+  <span class='int'>10000</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_compress_events-class_method">
+  
+    .<strong>default_compress_events</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#compress_events-instance_method" title="LaunchDarkly::Config#compress_events (method)">#compress_events</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>false</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+596
+597
+598</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 596</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_compress_events'>default_compress_events</span>
+  <span class='kw'>false</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_connect_timeout-class_method">
+  
+    .<strong>default_connect_timeout</strong>  &#x21d2; <tt>Float</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#connect_timeout-instance_method" title="LaunchDarkly::Config#connect_timeout (method)">#connect_timeout</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>2</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+526
+527
+528</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 526</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_connect_timeout'>default_connect_timeout</span>
+  <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'>DataSystem</span><span class='op'>::</span><span class='const'>HttpConfigOptions</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataSystem/HttpConfigOptions.html#DEFAULT_CONNECT_TIMEOUT-constant" title="LaunchDarkly::Impl::DataSystem::HttpConfigOptions::DEFAULT_CONNECT_TIMEOUT (constant)">DEFAULT_CONNECT_TIMEOUT</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_context_keys_capacity-class_method">
+  
+    .<strong>default_context_keys_capacity</strong>  &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#context_keys_capacity-instance_method" title="LaunchDarkly::Config#context_keys_capacity (method)">#context_keys_capacity</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>1000</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+604
+605
+606</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 604</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_context_keys_capacity'>default_context_keys_capacity</span>
+  <span class='int'>1000</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_context_keys_flush_interval-class_method">
+  
+    .<strong>default_context_keys_flush_interval</strong>  &#x21d2; <tt>Float</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#context_keys_flush_interval-instance_method" title="LaunchDarkly::Config#context_keys_flush_interval (method)">#context_keys_flush_interval</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>300</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+612
+613
+614</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 612</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_context_keys_flush_interval'>default_context_keys_flush_interval</span>
+  <span class='int'>300</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_diagnostic_recording_interval-class_method">
+  
+    .<strong>default_diagnostic_recording_interval</strong>  &#x21d2; <tt>Float</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#diagnostic_recording_interval-instance_method" title="LaunchDarkly::Config#diagnostic_recording_interval (method)">#diagnostic_recording_interval</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>900</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+620
+621
+622</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 620</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_diagnostic_recording_interval'>default_diagnostic_recording_interval</span>
+  <span class='int'>900</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_events_uri-class_method">
+  
+    .<strong>default_events_uri</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#events_uri-instance_method" title="LaunchDarkly::Config#events_uri (method)">#events_uri</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>&quot;<a href="https://events.launchdarkly.com">https://events.launchdarkly.com</a>&quot;</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+486
+487
+488</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 486</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_events_uri'>default_events_uri</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>https://events.launchdarkly.com</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_feature_store-class_method">
+  
+    .<strong>default_feature_store</strong>  &#x21d2; <tt><span class='object_link'><a href="Interfaces/FeatureStore.html" title="LaunchDarkly::Interfaces::FeatureStore (module)">LaunchDarkly::Interfaces::FeatureStore</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#feature_store-instance_method" title="LaunchDarkly::Config#feature_store (method)">#feature_store</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Interfaces/FeatureStore.html" title="LaunchDarkly::Interfaces::FeatureStore (module)">LaunchDarkly::Interfaces::FeatureStore</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>an <span class='object_link'><a href="InMemoryFeatureStore.html" title="LaunchDarkly::InMemoryFeatureStore (class)">InMemoryFeatureStore</a></span></p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+564
+565
+566</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 564</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_feature_store'>default_feature_store</span>
+  <span class='const'><span class='object_link'><a href="InMemoryFeatureStore.html" title="LaunchDarkly::InMemoryFeatureStore (class)">InMemoryFeatureStore</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InMemoryFeatureStore.html#initialize-instance_method" title="LaunchDarkly::InMemoryFeatureStore#initialize (method)">new</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_flush_interval-class_method">
+  
+    .<strong>default_flush_interval</strong>  &#x21d2; <tt>Float</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#flush_interval-instance_method" title="LaunchDarkly::Config#flush_interval (method)">#flush_interval</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>10</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+502
+503
+504</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 502</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_flush_interval'>default_flush_interval</span>
+  <span class='int'>10</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_initial_reconnect_delay-class_method">
+  
+    .<strong>default_initial_reconnect_delay</strong>  &#x21d2; <tt>Float</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#initial_reconnect_delay-instance_method" title="LaunchDarkly::Config#initial_reconnect_delay (method)">#initial_reconnect_delay</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>1</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+518
+519
+520</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 518</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_initial_reconnect_delay'>default_initial_reconnect_delay</span>
+  <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'>DataSystem</span><span class='op'>::</span><span class='const'>StreamingDataSourceBuilder</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataSystem/StreamingDataSourceBuilder.html#DEFAULT_INITIAL_RECONNECT_DELAY-constant" title="LaunchDarkly::Impl::DataSystem::StreamingDataSourceBuilder::DEFAULT_INITIAL_RECONNECT_DELAY (constant)">DEFAULT_INITIAL_RECONNECT_DELAY</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_logger-class_method">
+  
+    .<strong>default_logger</strong>  &#x21d2; <tt>Logger</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#logger-instance_method" title="LaunchDarkly::Config#logger (method)">#logger</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Logger</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the Rails logger if in Rails, or a default Logger at WARN level otherwise</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+534
+535
+536
+537
+538
+539
+540
+541
+542</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 534</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_logger'>default_logger</span>
+  <span class='kw'>if</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'>Rails</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:logger</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span>
+    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_log'>log</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>Logger</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='gvar'>$stdout</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_log'>log</span><span class='period'>.</span><span class='id identifier rubyid_level'>level</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>WARN</span>
+    <span class='id identifier rubyid_log'>log</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_offline-class_method">
+  
+    .<strong>default_offline</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#offline%3F-instance_method" title="LaunchDarkly::Config#offline? (method)">#offline?</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>false</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+572
+573
+574</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 572</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_offline'>default_offline</span>
+  <span class='kw'>false</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_poll_interval-class_method">
+  
+    .<strong>default_poll_interval</strong>  &#x21d2; <tt>Float</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#poll_interval-instance_method" title="LaunchDarkly::Config#poll_interval (method)">#poll_interval</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>30</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+580
+581
+582</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 580</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_poll_interval'>default_poll_interval</span>
+  <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'>DataSystem</span><span class='op'>::</span><span class='const'>PollingDataSourceBuilder</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataSystem/PollingDataSourceBuilder.html#DEFAULT_POLL_INTERVAL-constant" title="LaunchDarkly::Impl::DataSystem::PollingDataSourceBuilder::DEFAULT_POLL_INTERVAL (constant)">DEFAULT_POLL_INTERVAL</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_read_timeout-class_method">
+  
+    .<strong>default_read_timeout</strong>  &#x21d2; <tt>Float</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#read_timeout-instance_method" title="LaunchDarkly::Config#read_timeout (method)">#read_timeout</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>10</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+510
+511
+512</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 510</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_read_timeout'>default_read_timeout</span>
+  <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'>DataSystem</span><span class='op'>::</span><span class='const'>HttpConfigOptions</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataSystem/HttpConfigOptions.html#DEFAULT_READ_TIMEOUT-constant" title="LaunchDarkly::Impl::DataSystem::HttpConfigOptions::DEFAULT_READ_TIMEOUT (constant)">DEFAULT_READ_TIMEOUT</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_send_events-class_method">
+  
+    .<strong>default_send_events</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#send_events-instance_method" title="LaunchDarkly::Config#send_events (method)">#send_events</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+588
+589
+590</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 588</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_send_events'>default_send_events</span>
+  <span class='kw'>true</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_stream-class_method">
+  
+    .<strong>default_stream</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#stream%3F-instance_method" title="LaunchDarkly::Config#stream? (method)">#stream?</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>true</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+548
+549
+550</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 548</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_stream'>default_stream</span>
+  <span class='kw'>true</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_stream_uri-class_method">
+  
+    .<strong>default_stream_uri</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#stream_uri-instance_method" title="LaunchDarkly::Config#stream_uri (method)">#stream_uri</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>&quot;<a href="https://stream.launchdarkly.com">https://stream.launchdarkly.com</a>&quot;</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+478
+479
+480</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 478</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_stream_uri'>default_stream_uri</span>
+  <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'>DataSystem</span><span class='op'>::</span><span class='const'>StreamingDataSourceBuilder</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataSystem/StreamingDataSourceBuilder.html#DEFAULT_BASE_URI-constant" title="LaunchDarkly::Impl::DataSystem::StreamingDataSourceBuilder::DEFAULT_BASE_URI (constant)">DEFAULT_BASE_URI</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_use_ldd-class_method">
+  
+    .<strong>default_use_ldd</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default value for <span class='object_link'><a href="#use_ldd%3F-instance_method" title="LaunchDarkly::Config#use_ldd? (method)">#use_ldd?</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>false</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+556
+557
+558</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 556</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_use_ldd'>default_use_ldd</span>
+  <span class='kw'>false</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="minimum_diagnostic_recording_interval-class_method">
+  
+    .<strong>minimum_diagnostic_recording_interval</strong>  &#x21d2; <tt>Float</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The minimum value for <span class='object_link'><a href="#diagnostic_recording_interval-instance_method" title="LaunchDarkly::Config#diagnostic_recording_interval (method)">#diagnostic_recording_interval</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>60</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+628
+629
+630</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 628</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_minimum_diagnostic_recording_interval'>minimum_diagnostic_recording_interval</span>
+  <span class='int'>60</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="diagnostic_opt_out?-instance_method">
+  
+    #<strong>diagnostic_opt_out?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set to true to opt out of sending diagnostics data.</p>
+
+<p>Unless <code>diagnostic_opt_out</code> is set to true, the client will send some diagnostics data to the LaunchDarkly servers
+in order to assist in the development of future SDK improvements. These diagnostics consist of an initial payload
+containing some details of the SDK in use, the SDK&#39;s configuration, and the platform the SDK is being run on, as
+well as periodic information on irregular occurrences such as dropped events.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+372
+373
+374</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 372</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_diagnostic_opt_out?'>diagnostic_opt_out?</span>
+  <span class='ivar'>@diagnostic_opt_out</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="offline?-instance_method">
+  
+    #<strong>offline?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether the client should be initialized in offline mode. In offline mode, default values are
+returned for all flags and no remote network requests are made.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+172
+173
+174</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 172</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_offline?'>offline?</span>
+  <span class='ivar'>@offline</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="stream?-instance_method">
+  
+    #<strong>stream?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether streaming mode should be enabled. Streaming mode asynchronously updates
+feature flags in real-time using server-sent events. Streaming is enabled by default, and
+should only be disabled on the advice of LaunchDarkly support.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+148
+149
+150</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 148</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_stream?'>stream?</span>
+  <span class='ivar'>@stream</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="use_ldd?-instance_method">
+  
+    #<strong>use_ldd?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether to use the LaunchDarkly relay proxy in daemon mode. In this mode, the client does not
+use polling or streaming to get feature flag updates from the server, but instead reads them
+from the <span class='object_link'><a href="#feature_store-instance_method" title="LaunchDarkly::Config#feature_store (method)">feature store</a></span>, which is assumed to be a database that is populated by
+a LaunchDarkly relay proxy. For more information, see <a href="https://docs.launchdarkly.com/home/relay-proxy">&quot;The relay proxy&quot;</a>
+and <a href="https://docs.launchdarkly.com/sdk/concepts/data-stores">&quot;Using a persistent data stores&quot;</a>.</p>
+
+<p>All other properties related to streaming or polling are ignored if this option is set to true.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+163
+164
+165</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 163</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_use_ldd?'>use_ldd?</span>
+  <span class='ivar'>@use_ldd</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Fri Jan 30 22:48:06 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.38 (ruby-3.2.10).
+</div>
+
+    </div>
+  </body>
+</html>
