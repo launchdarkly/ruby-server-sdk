@@ -54,6 +54,11 @@ module LaunchDarkly
               new_state = LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING
             end
 
+            # Special handling: You can't go back to INITIALIZING after being anything else
+            if new_state == LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING && !old_status.state.nil?
+              new_state = old_status.state
+            end
+
             # No change if state is the same and no error
             return if new_state == old_status.state && new_error.nil?
 

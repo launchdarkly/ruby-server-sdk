@@ -124,7 +124,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers(nil)
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(persistent_store, :read_write)
             .build
 
@@ -180,7 +180,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers(nil)
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(persistent_store, :read_write)
             .build
 
@@ -210,7 +210,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers(nil)
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(persistent_store, :read_write)
             .build
 
@@ -240,7 +240,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers(nil)
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(persistent_store, :read_write)
             .build
 
@@ -283,7 +283,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers(nil)
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(persistent_store, :read_only)
             .build
 
@@ -307,7 +307,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers(nil)
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(persistent_store, :read_write)
             .build
 
@@ -353,7 +353,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers(nil)
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(persistent_store, :read_only)
             .build
 
@@ -401,7 +401,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers([td_initializer.test_data_ds_builder])
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(persistent_store, :read_write)
             .build
 
@@ -440,7 +440,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers(nil)
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(persistent_store, :read_write)
             .build
 
@@ -467,7 +467,7 @@ module LaunchDarkly
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
             .initializers(nil)
-            .synchronizers(td_synchronizer.test_data_ds_builder)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
             .data_store(nil, :read_write)  # No persistent store
             .build
 

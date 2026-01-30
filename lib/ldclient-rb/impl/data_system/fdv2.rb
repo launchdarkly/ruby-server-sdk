@@ -14,6 +14,30 @@ require "ldclient-rb/interfaces/data_system"
 module LaunchDarkly
   module Impl
     module DataSystem
+      #
+      # Represents the possible outcomes from consuming synchronizer results.
+      #
+      # Used by {FDv2#consume_synchronizer_results} to indicate what action the
+      # synchronizer loop should take next.
+      #
+      module SyncResult
+        # Temporarily move to the next synchronizer in the list.
+        # The current synchronizer remains available for future recovery.
+        FALLBACK = :fallback
+
+        # Return to the first synchronizer in the list.
+        # Used when recovery conditions are met on a fallback synchronizer.
+        RECOVER = :recover
+
+        # Permanently remove the current synchronizer from the list.
+        # Used for unrecoverable failures (OFF state, exceptions).
+        REMOVE = :remove
+
+        # Switch to the FDv1 protocol fallback.
+        # Replaces the synchronizer list with the FDv1 fallback synchronizer.
+        FDV1 = :fdv1
+      end
+
       # FDv2 is an implementation of the DataSystem interface that uses the Flag Delivery V2 protocol
       # for obtaining and keeping data up-to-date. Additionally, it operates with an optional persistent
       # store in read-only or read/write mode.
@@ -30,8 +54,7 @@ module LaunchDarkly
           @config = config
           @data_system_config = data_system_config
           @logger = config.logger
-          @primary_synchronizer_builder = data_system_config.primary_synchronizer
-          @secondary_synchronizer_builder = data_system_config.secondary_synchronizer
+          @synchronizer_builders = data_system_config.synchronizers || []
           @fdv1_fallback_synchronizer_builder = data_system_config.fdv1_fallback_synchronizer
           @disabled = @config.offline?
 
@@ -86,7 +109,7 @@ module LaunchDarkly
 
           # Track configuration
           @configured_with_data_sources = (@data_system_config.initializers && !@data_system_config.initializers.empty?) ||
-            !@data_system_config.primary_synchronizer.nil?
+            !@synchronizer_builders.empty?
         end
 
         # (see DataSystem#start)
@@ -246,8 +269,8 @@ module LaunchDarkly
         # @return [void]
         #
         def run_synchronizers
-          # If no primary synchronizer configured, just set ready and return
-          if @primary_synchronizer_builder.nil?
+          # If no synchronizers configured, just set ready and return
+          if @synchronizer_builders.empty?
             @ready_event.set
             return
           end
@@ -259,79 +282,64 @@ module LaunchDarkly
         end
 
         #
-        # Synchronizer loop that manages primary/secondary/fallback synchronizers.
+        # Synchronizer loop that manages synchronizers and fallbacks.
         #
         # @return [void]
         #
         def synchronizer_loop
+          # Track the current index in the synchronizer array
+          current_index = 0
+
           begin
-            while !@stop_event.set? && @primary_synchronizer_builder
-              # Try primary synchronizer
+            while !@stop_event.set? && current_index < @synchronizer_builders.length
+              synchronizer_builder = @synchronizer_builders[current_index]
+              is_primary = current_index == 0
+
               begin
                 @lock.synchronize do
-                  primary_sync = @primary_synchronizer_builder.build(@sdk_key, @config)
-                  if primary_sync.respond_to?(:set_diagnostic_accumulator) && @diagnostic_accumulator
-                    primary_sync.set_diagnostic_accumulator(@diagnostic_accumulator)
+                  sync = synchronizer_builder.build(@sdk_key, @config)
+                  if sync.respond_to?(:set_diagnostic_accumulator) && @diagnostic_accumulator
+                    sync.set_diagnostic_accumulator(@diagnostic_accumulator)
                   end
-                  @active_synchronizer = primary_sync
+                  @active_synchronizer = sync
                 end
 
-                @logger.info { "[LDClient] Primary synchronizer #{@active_synchronizer.name} is starting" }
+                @logger.info { "[LDClient] Synchronizer[#{current_index}] #{@active_synchronizer.name} is starting" }
 
-                remove_sync, fallback_v1 = consume_synchronizer_results(
-                  @active_synchronizer,
-                  method(:fallback_condition)
-                )
-
-                if remove_sync
-                  @primary_synchronizer_builder = fallback_v1 ? @fdv1_fallback_synchronizer_builder : @secondary_synchronizer_builder
-                  @secondary_synchronizer_builder = nil
-
-                  if @primary_synchronizer_builder.nil?
-                    @logger.warn { "[LDClient] No more synchronizers available" }
-                    @data_source_status_provider.update_status(
-                      LaunchDarkly::Interfaces::DataSource::Status::OFF,
-                      @data_source_status_provider.status.last_error
-                    )
-                    break
-                  end
-                else
-                  @logger.info { "[LDClient] Fallback condition met" }
-                end
+                sync_result = consume_synchronizer_results(@active_synchronizer, check_recovery: !is_primary)
 
                 break if @stop_event.set?
 
-                next if @secondary_synchronizer_builder.nil?
-
-                @lock.synchronize do
-                  secondary_sync = @secondary_synchronizer_builder.build(@sdk_key, @config)
-                  if secondary_sync.respond_to?(:set_diagnostic_accumulator) && @diagnostic_accumulator
-                    secondary_sync.set_diagnostic_accumulator(@diagnostic_accumulator)
+                case sync_result
+                when SyncResult::FDV1
+                  if @fdv1_fallback_synchronizer_builder
+                    @synchronizer_builders = [@fdv1_fallback_synchronizer_builder]
+                    current_index = 0
+                    next
                   end
-                  @logger.info { "[LDClient] Secondary synchronizer #{secondary_sync.name} is starting" }
-                  @active_synchronizer = secondary_sync
+                  # No FDv1 fallback configured, treat as regular fallback
+                  current_index += 1
+                when SyncResult::RECOVER
+                  @logger.info { "[LDClient] Recovery condition met, returning to primary synchronizer" }
+                  current_index = 0
+                when SyncResult::REMOVE
+                  @logger.info { "[LDClient] Removing synchronizer from list due to permanent failure" }
+                  @synchronizer_builders.delete_at(current_index)
+                else
+                  @logger.info { "[LDClient] Fallback condition met" }
+                  current_index += 1
                 end
 
-                remove_sync, fallback_v1 = consume_synchronizer_results(
-                  @active_synchronizer,
-                  method(:recovery_condition)
-                )
+                current_index = 0 if current_index >= @synchronizer_builders.length
 
-                if remove_sync
-                  @secondary_synchronizer_builder = nil
-                  @primary_synchronizer_builder = @fdv1_fallback_synchronizer_builder if fallback_v1
-
-                  if @primary_synchronizer_builder.nil?
-                    @logger.warn { "[LDClient] No more synchronizers available" }
-                    @data_source_status_provider.update_status(
-                      LaunchDarkly::Interfaces::DataSource::Status::OFF,
-                      @data_source_status_provider.status.last_error
-                    )
-                    break
-                  end
+                if @synchronizer_builders.length == 0
+                  @logger.warn { "[LDClient] No more synchronizers available" }
+                  @data_source_status_provider.update_status(
+                    LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                    @data_source_status_provider.status.last_error
+                  )
+                  break
                 end
-
-                @logger.info { "[LDClient] Recovery condition met, returning to primary synchronizer" }
               rescue => e
                 @logger.error { "[LDClient] Failed to build synchronizer: #{e.message}" }
                 break
@@ -353,10 +361,10 @@ module LaunchDarkly
         # Consume results from a synchronizer until a condition is met or it fails.
         #
         # @param synchronizer [Object] The synchronizer
-        # @param condition_func [Proc] Function to check if condition is met
-        # @return [Array(Boolean, Boolean)] [should_remove_sync, fallback_to_fdv1]
+        # @param check_recovery [Boolean] Whether to check recovery condition (healthy too long)
+        # @return [Symbol] One of {SyncResult::FALLBACK}, {SyncResult::RECOVER}, {SyncResult::REMOVE}, or {SyncResult::FDV1}
         #
-        def consume_synchronizer_results(synchronizer, condition_func)
+        def consume_synchronizer_results(synchronizer, check_recovery: false)
           action_queue = Queue.new
           timer = LaunchDarkly::Impl::RepeatingTask.new(10, 10, -> { action_queue.push("check") }, @logger, "FDv2-sync-cond-timer")
 
@@ -384,13 +392,14 @@ module LaunchDarkly
                 if update == "check"
                   # Check condition periodically
                   current_status = @data_source_status_provider.status
-                  return [false, false] if condition_func.call(current_status)
+                  return SyncResult::RECOVER if check_recovery && recovery_condition(current_status)
+                  return SyncResult::FALLBACK if fallback_condition(current_status)
                 end
                 next
               end
 
               @logger.info { "[LDClient] Synchronizer #{synchronizer.name} update: #{update.state}" }
-              return [false, false] if @stop_event.set?
+              return SyncResult::FALLBACK if @stop_event.set?
 
               # Handle the update
               @store.apply(update.change_set, true) if update.change_set
@@ -401,26 +410,24 @@ module LaunchDarkly
               # Update status
               @data_source_status_provider.update_status(update.state, update.error)
 
-              # Check if we should revert to FDv1 immediately
-              return [true, true] if update.revert_to_fdv1
+              return SyncResult::FDV1 if update.revert_to_fdv1
 
-              # Check for OFF state indicating permanent failure
-              return [true, false] if update.state == LaunchDarkly::Interfaces::DataSource::Status::OFF
+              return SyncResult::REMOVE if update.state == LaunchDarkly::Interfaces::DataSource::Status::OFF
             end
           rescue => e
             @logger.error { "[LDClient] Error consuming synchronizer results: #{e.message}" }
-            return [true, false]
+            return SyncResult::REMOVE
           ensure
             synchronizer.stop
             timer.stop
             sync_reader.join(0.5) if sync_reader.alive?
           end
 
-          [true, false]
+          SyncResult::REMOVE
         end
 
         #
-        # Determine if we should fallback to secondary synchronizer.
+        # Determine if we should fallback to the next synchronizer.
         #
         # @param status [LaunchDarkly::Interfaces::DataSource::Status] Current data source status
         # @return [Boolean] true if fallback condition is met
@@ -435,20 +442,14 @@ module LaunchDarkly
         end
 
         #
-        # Determine if we should try to recover to primary synchronizer.
+        # Determine if we should recover to the primary synchronizer.
         #
         # @param status [LaunchDarkly::Interfaces::DataSource::Status] Current data source status
-        # @return [Boolean] true if recovery condition is met
+        # @return [Boolean] true if recovery condition is met (healthy for too long)
         #
         def recovery_condition(status)
-          interrupted_at_runtime = status.state == LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED &&
-            Time.now - status.state_since > 60  # 1 minute
-          healthy_for_too_long = status.state == LaunchDarkly::Interfaces::DataSource::Status::VALID &&
+          status.state == LaunchDarkly::Interfaces::DataSource::Status::VALID &&
             Time.now - status.state_since > 300  # 5 minutes
-          cannot_initialize = status.state == LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING &&
-            Time.now - status.state_since > 10  # 10 seconds
-
-          interrupted_at_runtime || healthy_for_too_long || cannot_initialize
         end
 
         #

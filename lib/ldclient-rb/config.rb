@@ -703,34 +703,28 @@ module LaunchDarkly
   class DataSystemConfig
     #
     # @param initializers [Array<#build(String, Config)>, nil] The (optional) array of builders
-    # @param primary_synchronizer [#build(String, Config), nil] The (optional) builder for primary synchronizer
-    # @param secondary_synchronizer [#build(String, Config), nil] The (optional) builder for secondary synchronizer
+    # @param synchronizers [Array<#build(String, Config)>, nil] The (optional) array of synchronizer builders
     # @param data_store_mode [Symbol] The (optional) data store mode
     # @param data_store [LaunchDarkly::Interfaces::FeatureStore, nil] The (optional) data store
     # @param fdv1_fallback_synchronizer [#build(String, Config), nil]
     #   The (optional) builder for FDv1-compatible fallback synchronizer
     #
-    def initialize(initializers: nil, primary_synchronizer: nil, secondary_synchronizer: nil,
+    def initialize(initializers: nil, synchronizers: nil,
                    data_store_mode: LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil)
       @initializers = initializers
-      @primary_synchronizer = primary_synchronizer
-      @secondary_synchronizer = secondary_synchronizer
+      @synchronizers = synchronizers
       @data_store_mode = data_store_mode
       @data_store = data_store
       @fdv1_fallback_synchronizer = fdv1_fallback_synchronizer
     end
 
-    # The initializers for the data system. Each builder responds to build(sdk_key, config) and returns an Initializer.
+    # The initializer builders for the data system. Each builder responds to build(sdk_key, config) and returns an Initializer.
     # @return [Array<#build(String, Config)>, nil]
     attr_reader :initializers
 
-    # The primary synchronizer builder. Responds to build(sdk_key, config) and returns a Synchronizer.
-    # @return [#build(String, Config), nil]
-    attr_reader :primary_synchronizer
-
-    # The secondary synchronizer builder. Responds to build(sdk_key, config) and returns a Synchronizer.
-    # @return [#build(String, Config), nil]
-    attr_reader :secondary_synchronizer
+    # The synchronizer builders for the data system. Each builder responds to build(sdk_key, config) and returns a Synchronizer.
+    # @return [Array<#build(String, Config)>, nil]
+    attr_reader :synchronizers
 
     # The data store mode.
     # @return [Symbol]

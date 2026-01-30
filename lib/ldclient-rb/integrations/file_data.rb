@@ -108,11 +108,8 @@ module LaunchDarkly
       #
       # Returns a builder for the FDv2-compatible file data source.
       #
-      # This type is not stable, and not subject to any backwards
-      # compatibility guarantees or semantic versioning. It is not suitable for production usage.
-      #
-      # Do not use it.
-      # You have been warned.
+      # This method is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
+      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
       #
       # This method returns a builder proc that can be used with the FDv2 data system
       # configuration as both an Initializer and a Synchronizer. When used as an Initializer
@@ -137,7 +134,7 @@ module LaunchDarkly
       # @example Using as a synchronizer
       #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
       #   data_system_config = LaunchDarkly::DataSystemConfig.new(
-      #     synchronizer: file_source
+      #     synchronizers: [file_source]
       #   )
       #   config = LaunchDarkly::Config.new(data_system: data_system_config)
       #
@@ -145,7 +142,7 @@ module LaunchDarkly
       #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
       #   data_system_config = LaunchDarkly::DataSystemConfig.new(
       #     initializers: [file_source],
-      #     synchronizer: file_source
+      #     synchronizers: [file_source]
       #   )
       #   config = LaunchDarkly::Config.new(data_system: data_system_config)
       #

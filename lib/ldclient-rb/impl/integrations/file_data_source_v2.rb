@@ -16,12 +16,6 @@ module LaunchDarkly
       #
       # Internal implementation of both Initializer and Synchronizer protocols for file-based data.
       #
-      # This type is not stable, and not subject to any backwards
-      # compatibility guarantees or semantic versioning. It is not suitable for production usage.
-      #
-      # Do not use it.
-      # You have been warned.
-      #
       # This component reads feature flag and segment data from local files and provides them
       # via the FDv2 protocol interfaces. Each instance implements both Initializer and Synchronizer
       # protocols:

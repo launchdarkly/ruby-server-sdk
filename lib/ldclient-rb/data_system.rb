@@ -18,8 +18,7 @@ module LaunchDarkly
     class ConfigBuilder
       def initialize
         @initializers = nil
-        @primary_synchronizer = nil
-        @secondary_synchronizer = nil
+        @synchronizers = nil
         @fdv1_fallback_synchronizer = nil
         @data_store_mode = LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY
         @data_store = nil
@@ -40,13 +39,12 @@ module LaunchDarkly
       #
       # Sets the synchronizers for the data system.
       #
-      # @param primary [#build(String, Config)] Builder that responds to build(sdk_key, config) and returns the primary Synchronizer
-      # @param secondary [#build(String, Config), nil] Builder that responds to build(sdk_key, config) and returns the secondary Synchronizer
+      # @param synchronizers [Array<#build(String, Config)>]
+      #   Array of builders that respond to build(sdk_key, config) and return a Synchronizer
       # @return [ConfigBuilder] self for chaining
       #
-      def synchronizers(primary, secondary = nil)
-        @primary_synchronizer = primary
-        @secondary_synchronizer = secondary
+      def synchronizers(synchronizers)
+        @synchronizers = synchronizers
         self
       end
 
@@ -79,17 +77,11 @@ module LaunchDarkly
       # Builds the data system configuration.
       #
       # @return [DataSystemConfig]
-      # @raise [ArgumentError] if configuration is invalid
       #
       def build
-        if @secondary_synchronizer && @primary_synchronizer.nil?
-          raise ArgumentError, "Primary synchronizer must be set if secondary is set"
-        end
-
         DataSystemConfig.new(
           initializers: @initializers,
-          primary_synchronizer: @primary_synchronizer,
-          secondary_synchronizer: @secondary_synchronizer,
+          synchronizers: @synchronizers,
           data_store_mode: @data_store_mode,
           data_store: @data_store,
           fdv1_fallback_synchronizer: @fdv1_fallback_synchronizer
@@ -151,7 +143,7 @@ module LaunchDarkly
 
       builder = ConfigBuilder.new
       builder.initializers([polling_builder])
-      builder.synchronizers(streaming_builder, polling_builder)
+      builder.synchronizers([streaming_builder, polling_builder])
       builder.fdv1_compatible_synchronizer(fallback)
 
       builder
@@ -169,7 +161,7 @@ module LaunchDarkly
       fallback = fdv1_fallback_ds_builder
 
       builder = ConfigBuilder.new
-      builder.synchronizers(streaming_builder)
+      builder.synchronizers([streaming_builder])
       builder.fdv1_compatible_synchronizer(fallback)
 
       builder
@@ -187,7 +179,7 @@ module LaunchDarkly
       fallback = fdv1_fallback_ds_builder
 
       builder = ConfigBuilder.new
-      builder.synchronizers(polling_builder)
+      builder.synchronizers([polling_builder])
       builder.fdv1_compatible_synchronizer(fallback)
 
       builder

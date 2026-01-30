@@ -10,12 +10,6 @@ module LaunchDarkly
       #
       # StatusProviderV2 is the FDv2-specific implementation of {LaunchDarkly::Interfaces::DataStore::StatusProvider}.
       #
-      # This type is not stable, and not subject to any backwards
-      # compatibility guarantees or semantic versioning. It is not suitable for production usage.
-      #
-      # Do not use it.
-      # You have been warned.
-      #
       class StatusProviderV2
         include LaunchDarkly::Interfaces::DataStore::StatusProvider
 

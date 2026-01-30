@@ -51,4 +51,4 @@ runs:
         test_service_port: 9000
         enable_persistence_tests: true
         token: ${{ inputs.token }}
-        version: v3.0.0-alpha.2
+        version: v3.0.0-alpha.3
