@@ -27,7 +27,6 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "aws-sdk-dynamodb", "~> 1.57"
   spec.add_development_dependency "bigdecimal", "~> 3.1.1" # Neccessary for aws-sdk-dynamodb https://github.com/aws/aws-sdk-ruby/issues/3271
-  spec.add_development_dependency "bundler", "~> 2.2", ">= 2.2.3"
   spec.add_development_dependency "connection_pool", "~> 2.3"
   spec.add_development_dependency "diplomat", "~> 2.6"
   spec.add_development_dependency "listen", "~> 3.3" # see file_data_source.rb
