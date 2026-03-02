@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.12.2](https://github.com/launchdarkly/ruby-server-sdk/compare/8.12.1...8.12.2) (2026-03-02)
+
+
+### Bug Fixes
+
+* Bump ld-eventsource to v2.5.1 for performance improvement ([#366](https://github.com/launchdarkly/ruby-server-sdk/issues/366)) ([599c6f8](https://github.com/launchdarkly/ruby-server-sdk/commit/599c6f8f9968677030bf99372038318000a9d279)), closes [#365](https://github.com/launchdarkly/ruby-server-sdk/issues/365)
+
 ## [8.12.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.12.0...8.12.1) (2026-02-23)
 
 
