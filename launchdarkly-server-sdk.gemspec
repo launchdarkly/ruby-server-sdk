@@ -42,7 +42,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "benchmark", "~> 0.1", ">= 0.1.1"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.1"
-  spec.add_runtime_dependency "ld-eventsource", "2.5.0"
+  spec.add_runtime_dependency "ld-eventsource", "2.5.1"
   spec.add_runtime_dependency "observer", "~> 0.1.2"
   spec.add_runtime_dependency "openssl", ">= 3.1.2", "< 5.0"
   spec.add_runtime_dependency "semantic", "~> 1.6"
