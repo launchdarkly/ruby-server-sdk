@@ -114,10 +114,8 @@ class ListenerRegistry
     end
   end
 
-  private
-
   # Stores a listener, cancelling any previously registered listener with the same ID.
-  def store_listener(listener_id, listener)
+  private def store_listener(listener_id, listener)
     old_listener = nil
     @mu.synchronize do
       old_listener = @listeners[listener_id]
