@@ -65,9 +65,9 @@ module LaunchDarkly
             expect(modified.wait(1)).to be true
 
             expect(changes.length).to eq(3)
-            expect(changes[0].key).to eq(:flagkey)
-            expect(changes[1].key).to eq(:flagkey)
-            expect(changes[2].key).to eq(:flagkey)
+            expect(changes[0].key).to eq("flagkey")
+            expect(changes[1].key).to eq("flagkey")
+            expect(changes[2].key).to eq("flagkey")
 
             fdv2.stop
           end
@@ -166,8 +166,8 @@ module LaunchDarkly
             expect(changed.wait(2)).to be true
 
             expect(changes.length).to eq(2)
-            expect(changes[0].key).to eq(:flagkey)
-            expect(changes[1].key).to eq(:flagkey)
+            expect(changes[0].key).to eq("flagkey")
+            expect(changes[1].key).to eq("flagkey")
 
             fdv2.stop
           end
@@ -263,7 +263,7 @@ module LaunchDarkly
 
             # Verify we got flag changes from FDv1
             expect(changes.length).to be > 0
-            expect(changes.any? { |change| change.key == :fdv1flag }).to be true
+            expect(changes.any? { |change| change.key == "fdv1flag" }).to be true
 
             fdv2.stop
           end
@@ -318,7 +318,7 @@ module LaunchDarkly
 
             # Verify FDv1 is active and we got both changes
             expect(changes.length).to eq(2)
-            expect(changes.all? { |change| change.key == :fdv1fallbackflag }).to be true
+            expect(changes.all? { |change| change.key == "fdv1fallbackflag" }).to be true
 
             fdv2.stop
           end
@@ -369,8 +369,8 @@ module LaunchDarkly
 
             # Verify we got changes for both flags
             flag_keys = changes.map { |change| change.key }
-            expect(flag_keys).to include(:initialflag)
-            expect(flag_keys).to include(:fdv1replacementflag)
+            expect(flag_keys).to include("initialflag")
+            expect(flag_keys).to include("fdv1replacementflag")
 
             fdv2.stop
           end
