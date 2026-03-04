@@ -193,7 +193,7 @@ module LaunchDarkly
         #
         # Set the basis of the store. Any existing data is discarded.
         #
-        # @param collections [Hash{Object => Hash{String => Hash}}] Hash of data kinds to collections of items
+        # @param collections [Hash{Object => Hash{Symbol => Hash}}] Hash of data kinds to collections of items
         # @param selector [LaunchDarkly::Interfaces::DataSystem::Selector, nil] The selector
         # @param persist [Boolean] Whether to persist the data
         # @return [void]
@@ -234,7 +234,7 @@ module LaunchDarkly
         #
         # Apply a delta update to the store.
         #
-        # @param collections [Hash{Object => Hash{String => Hash}}] Hash of data kinds to collections with updates
+        # @param collections [Hash{Object => Hash{Symbol => Hash}}] Hash of data kinds to collections with updates
         # @param selector [LaunchDarkly::Interfaces::DataSystem::Selector, nil] The selector
         # @param persist [Boolean] Whether to persist the changes
         # @return [void]
@@ -336,8 +336,8 @@ module LaunchDarkly
         #
         # Compute which items changed between old and new data sets.
         #
-        # @param old_data [Hash{DataKind => Hash{String => Hash}}] Old data hash
-        # @param new_data [Hash{DataKind => Hash{String => Hash}}] New data hash
+        # @param old_data [Hash{DataKind => Hash{Symbol => Hash}}] Old data hash
+        # @param new_data [Hash{DataKind => Hash{Symbol => Hash}}] New data hash
         # @return [Set<Hash>] Set of {kind:, key:} hashes
         #
         private def compute_changed_items_for_full_data_set(old_data, new_data)
