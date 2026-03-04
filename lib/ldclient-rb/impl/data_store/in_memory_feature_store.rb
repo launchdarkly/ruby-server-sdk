@@ -58,7 +58,7 @@ module LaunchDarkly
         #
         # Initializes the store with a full set of data, replacing any existing data.
         #
-        # @param collections [Hash<LaunchDarkly::Impl::DataStore::DataKind, Hash<String, Hash>>] Hash of data kinds to collections of items
+        # @param collections [Hash<LaunchDarkly::Impl::DataStore::DataKind, Hash<Symbol, Hash>>] Hash of data kinds to collections of items
         # @return [Boolean] true if successful, false otherwise
         #
         def set_basis(collections)
@@ -80,7 +80,7 @@ module LaunchDarkly
         #
         # Applies a delta update to the store.
         #
-        # @param collections [Hash<LaunchDarkly::Impl::DataStore::DataKind, Hash<String, Hash>>] Hash of data kinds to collections with updates
+        # @param collections [Hash<LaunchDarkly::Impl::DataStore::DataKind, Hash<Symbol, Hash>>] Hash of data kinds to collections with updates
         # @return [Boolean] true if successful, false otherwise
         #
         def apply_delta(collections)
@@ -105,7 +105,7 @@ module LaunchDarkly
         #
         # Decodes a collection of items.
         #
-        # @param collections [Hash<LaunchDarkly::Impl::DataStore::DataKind, Hash<String, Hash>>] Hash of data kinds to collections
+        # @param collections [Hash<LaunchDarkly::Impl::DataStore::DataKind, Hash<Symbol, Hash>>] Hash of data kinds to collections
         # @return [Hash<LaunchDarkly::Impl::DataStore::DataKind, Hash<Symbol, Hash>>, nil] Decoded collection with symbol keys, or nil on error
         #
         private def decode_collection(collections)

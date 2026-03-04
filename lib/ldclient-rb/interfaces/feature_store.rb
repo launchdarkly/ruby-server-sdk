@@ -81,7 +81,7 @@ module LaunchDarkly
       # method should do nothing.
       #
       # @param kind [Object]  the kind of entity to delete
-      # @param key [String, Symbol]  the unique key of the entity
+      # @param key [String]  the unique key of the entity
       # @param version [Integer]  the entity must have a lower version than this to be deleted
       # @return [void]
       #
