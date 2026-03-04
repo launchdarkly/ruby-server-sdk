@@ -66,7 +66,7 @@ module LaunchDarkly
       # The returned listener represents the subscription that was created by this method
       # call; to unsubscribe, pass that object (not your listener) to {#remove_listener}.
       #
-      # @param key [Symbol]
+      # @param key [String]
       # @param context [LaunchDarkly::LDContext]
       # @param listener [#update]
       #
@@ -79,7 +79,7 @@ module LaunchDarkly
     class FlagChange
       attr_accessor :key
 
-      # @param [Symbol] key
+      # @param [String] key
       def initialize(key)
         @key = key
       end
@@ -93,7 +93,7 @@ module LaunchDarkly
       attr_accessor :old_value
       attr_accessor :new_value
 
-      # @param [Symbol] key
+      # @param [String] key
       # @param [Object] old_value
       # @param [Object] new_value
       def initialize(key, old_value, new_value)

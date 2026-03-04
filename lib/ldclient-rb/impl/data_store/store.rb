@@ -248,9 +248,10 @@ module LaunchDarkly
 
           collections.each do |kind, collection|
             collection.each do |key, item|
-              @dependency_tracker.update_dependencies_from(kind, key, item)
+              string_key = key.to_s
+              @dependency_tracker.update_dependencies_from(kind, string_key, item)
               if has_listeners
-                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key })
+                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: string_key })
               end
             end
           end
@@ -297,7 +298,7 @@ module LaunchDarkly
             if change.action == LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT && !change.object.nil?
               all_data[kind][change.key] = change.object
             elsif change.action == LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE
-              all_data[kind][change.key] = { key: change.key, deleted: true, version: change.version }
+              all_data[kind][change.key] = { key: change.key.to_s, deleted: true, version: change.version }
             end
           end
 
@@ -314,7 +315,7 @@ module LaunchDarkly
           @dependency_tracker.reset
           all_data.each do |kind, items|
             items.each do |key, item|
-              @dependency_tracker.update_dependencies_from(kind, key, item)
+              @dependency_tracker.update_dependencies_from(kind, key.to_s, item)
             end
           end
         end
@@ -356,9 +357,9 @@ module LaunchDarkly
 
               # If either is missing or versions differ, it's a change
               if old_item.nil? || new_item.nil?
-                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key })
+                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key.to_s })
               elsif old_item[:version] != new_item[:version]
-                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key })
+                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key.to_s })
               end
             end
           end

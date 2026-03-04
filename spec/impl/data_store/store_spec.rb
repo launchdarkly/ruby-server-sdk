@@ -250,6 +250,200 @@ module LaunchDarkly
           end
         end
 
+        describe "flag change events" do
+          let(:flag_change_broadcaster) { LaunchDarkly::Impl::Broadcaster.new(SynchronousExecutor.new, logger) }
+          let(:change_set_broadcaster) { LaunchDarkly::Impl::Broadcaster.new(SynchronousExecutor.new, logger) }
+          subject { Store.new(flag_change_broadcaster, change_set_broadcaster, logger) }
+
+          it "TRANSFER_FULL fires FlagChange with String keys" do
+            listener = ListenerSpy.new
+            flag_change_broadcaster.add_listener(listener)
+
+            change = LaunchDarkly::Interfaces::DataSystem::Change.new(
+              action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT,
+              kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+              key: :flag_a,
+              version: 1,
+              object: { key: "flag_a", version: 1, on: true, variations: [true, false], fallthrough: { variation: 0 } }
+            )
+
+            change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+              changes: [change],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+
+            subject.apply(change_set, false)
+
+            expect(listener.statuses.length).to eq(1)
+            expect(listener.statuses[0]).to be_a(LaunchDarkly::Interfaces::FlagChange)
+            expect(listener.statuses[0].key).to be_a(String)
+            expect(listener.statuses[0].key).to eq("flag_a")
+          end
+
+          it "TRANSFER_CHANGES fires FlagChange with String keys" do
+            # Initialize first (no listeners yet)
+            init_change = LaunchDarkly::Interfaces::DataSystem::Change.new(
+              action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT,
+              kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+              key: :flag_a,
+              version: 1,
+              object: { key: "flag_a", version: 1, on: true, variations: [true, false], fallthrough: { variation: 0 } }
+            )
+
+            init_cs = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+              changes: [init_change],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+
+            subject.apply(init_cs, false)
+
+            # Now add listener and apply delta
+            listener = ListenerSpy.new
+            flag_change_broadcaster.add_listener(listener)
+
+            delta_change = LaunchDarkly::Interfaces::DataSystem::Change.new(
+              action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT,
+              kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+              key: :flag_a,
+              version: 2,
+              object: { key: "flag_a", version: 2, on: false, variations: [true, false], fallthrough: { variation: 0 } }
+            )
+
+            delta_cs = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES,
+              changes: [delta_change],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+
+            subject.apply(delta_cs, false)
+
+            expect(listener.statuses.length).to eq(1)
+            expect(listener.statuses[0].key).to be_a(String)
+            expect(listener.statuses[0].key).to eq("flag_a")
+          end
+
+          it "prerequisite dependency propagation" do
+            # flag_b has prerequisite on flag_a
+            flag_a_data = { key: "flag_a", version: 1, on: true, variations: [true, false], fallthrough: { variation: 0 }, prerequisites: [], rules: [] }
+            flag_b_data = { key: "flag_b", version: 1, on: true, variations: [true, false], fallthrough: { variation: 0 }, prerequisites: [{ key: "flag_a", variation: 0 }], rules: [] }
+
+            init_cs = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+              changes: [
+                LaunchDarkly::Interfaces::DataSystem::Change.new(action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT, kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, key: :flag_a, version: 1, object: flag_a_data),
+                LaunchDarkly::Interfaces::DataSystem::Change.new(action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT, kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, key: :flag_b, version: 1, object: flag_b_data),
+              ],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+
+            subject.apply(init_cs, false)
+
+            # Now listen and change flag_a
+            listener = ListenerSpy.new
+            flag_change_broadcaster.add_listener(listener)
+
+            delta_cs = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES,
+              changes: [
+                LaunchDarkly::Interfaces::DataSystem::Change.new(action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT, kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, key: :flag_a, version: 2, object: flag_a_data.merge(version: 2)),
+              ],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+
+            subject.apply(delta_cs, false)
+
+            changed_keys = listener.statuses.map(&:key)
+            expect(changed_keys).to include("flag_a")
+            expect(changed_keys).to include("flag_b")
+            changed_keys.each { |k| expect(k).to be_a(String) }
+          end
+
+          it "segment dependency propagation" do
+            # flag uses segment via segmentMatch rule
+            segment_data = { key: "seg1", version: 1, included: [], excluded: [], rules: [] }
+            flag_data = {
+              key: "flag_a", version: 1, on: true, variations: [true, false], fallthrough: { variation: 0 },
+              prerequisites: [],
+              rules: [{ id: "rule1", variation: 0, clauses: [{ attribute: "", op: "segmentMatch", values: ["seg1"], negate: false }] }],
+            }
+
+            init_cs = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+              changes: [
+                LaunchDarkly::Interfaces::DataSystem::Change.new(action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT, kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, key: :flag_a, version: 1, object: flag_data),
+                LaunchDarkly::Interfaces::DataSystem::Change.new(action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT, kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT, key: :seg1, version: 1, object: segment_data),
+              ],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+
+            subject.apply(init_cs, false)
+
+            # Now listen and change the segment
+            listener = ListenerSpy.new
+            flag_change_broadcaster.add_listener(listener)
+
+            delta_cs = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES,
+              changes: [
+                LaunchDarkly::Interfaces::DataSystem::Change.new(action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT, kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT, key: :seg1, version: 2, object: segment_data.merge(version: 2)),
+              ],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+
+            subject.apply(delta_cs, false)
+
+            changed_keys = listener.statuses.map(&:key)
+            # Segment change should propagate to the flag
+            expect(changed_keys).to include("flag_a")
+            changed_keys.each { |k| expect(k).to be_a(String) }
+          end
+
+          it "DELETE fires FlagChange with String keys" do
+            # Initialize with a flag
+            init_cs = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+              changes: [
+                LaunchDarkly::Interfaces::DataSystem::Change.new(
+                  action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT,
+                  kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+                  key: :flag_a,
+                  version: 1,
+                  object: { key: "flag_a", version: 1, on: true, variations: [true, false], fallthrough: { variation: 0 } }
+                ),
+              ],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+
+            subject.apply(init_cs, false)
+
+            # Now listen and delete the flag
+            listener = ListenerSpy.new
+            flag_change_broadcaster.add_listener(listener)
+
+            delete_cs = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES,
+              changes: [
+                LaunchDarkly::Interfaces::DataSystem::Change.new(
+                  action: LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE,
+                  kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+                  key: :flag_a,
+                  version: 2,
+                  object: nil
+                ),
+              ],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+
+            subject.apply(delete_cs, false)
+
+            expect(listener.statuses.length).to eq(1)
+            expect(listener.statuses[0].key).to be_a(String)
+            expect(listener.statuses[0].key).to eq("flag_a")
+          end
+        end
+
         describe "#commit" do
           context "without persistent store" do
             it "returns nil and does nothing" do

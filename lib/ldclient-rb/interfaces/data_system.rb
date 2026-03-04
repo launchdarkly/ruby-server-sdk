@@ -206,7 +206,7 @@ module LaunchDarkly
         # @return [String] The kind ({ObjectKind})
         attr_reader :kind
 
-        # @return [Symbol] The key
+        # @return [Symbol] The key (Symbol for internal store indexing; converted to String at user-facing boundaries)
         attr_reader :key
 
         # @return [Integer] The version
@@ -218,7 +218,7 @@ module LaunchDarkly
         #
         # @param action [String] The action type ({ChangeType})
         # @param kind [String] The object kind ({ObjectKind})
-        # @param key [Symbol] The key
+        # @param key [Symbol] The key (Symbol for internal store indexing; converted to String at user-facing boundaries)
         # @param version [Integer] The version
         # @param object [Hash, nil] The object data
         #
@@ -510,7 +510,7 @@ module LaunchDarkly
         # Adds a new object to the changeset.
         #
         # @param kind [String] The object kind ({ObjectKind})
-        # @param key [Symbol] The key
+        # @param key [Symbol] The key (Symbol for internal store indexing; converted to String at user-facing boundaries)
         # @param version [Integer] The version
         # @param obj [Hash] The object data
         # @return [void]
@@ -529,7 +529,7 @@ module LaunchDarkly
         # Adds a deletion to the changeset.
         #
         # @param kind [String] The object kind ({ObjectKind})
-        # @param key [Symbol] The key
+        # @param key [Symbol] The key (Symbol for internal store indexing; converted to String at user-facing boundaries)
         # @param version [Integer] The version
         # @return [void]
         #

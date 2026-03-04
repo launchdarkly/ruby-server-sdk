@@ -26,6 +26,71 @@ module LaunchDarkly
         expect(listener.statuses[1].key).to eq(:flag2)
       end
 
+      describe "cross-type key handling" do
+        it "String FlagChange + String listener key" do
+          responses = [:initial, :second]
+          eval_fn = Proc.new { |key, _ctx| responses.shift }
+          tracker = subject.new(broadcaster, eval_fn)
+
+          listener = ListenerSpy.new
+          tracker.add_flag_value_change_listener("flag1", nil, listener)
+
+          broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new("flag1"))
+          expect(listener.statuses.count).to eq(1)
+          expect(listener.statuses[0].key).to eq("flag1")
+          expect(listener.statuses[0].key).to be_a(String)
+        end
+
+        it "String FlagChange + Symbol listener key" do
+          responses = [:initial, :second]
+          eval_fn = Proc.new { |key, _ctx| responses.shift }
+          tracker = subject.new(broadcaster, eval_fn)
+
+          listener = ListenerSpy.new
+          tracker.add_flag_value_change_listener(:flag1, nil, listener)
+
+          broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new("flag1"))
+          expect(listener.statuses.count).to eq(1)
+          expect(listener.statuses[0].key).to eq("flag1")
+          expect(listener.statuses[0].key).to be_a(String)
+        end
+
+        it "Symbol FlagChange + String listener key" do
+          responses = [:initial, :second]
+          eval_fn = Proc.new { |key, _ctx| responses.shift }
+          tracker = subject.new(broadcaster, eval_fn)
+
+          listener = ListenerSpy.new
+          tracker.add_flag_value_change_listener("flag1", nil, listener)
+
+          broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new(:flag1))
+          expect(listener.statuses.count).to eq(1)
+          expect(listener.statuses[0].key).to eq("flag1")
+          expect(listener.statuses[0].key).to be_a(String)
+        end
+
+        it "eval_fn always receives String key" do
+          received_keys = []
+          eval_fn = Proc.new { |key, _ctx| received_keys << key; :value }
+          tracker = subject.new(broadcaster, eval_fn)
+
+          listener = ListenerSpy.new
+          tracker.add_flag_value_change_listener(:flag1, nil, listener)
+
+          # The initial eval in the constructor should have passed a String
+          expect(received_keys.length).to eq(1)
+          expect(received_keys[0]).to be_a(String)
+          expect(received_keys[0]).to eq("flag1")
+
+          # Trigger an update
+          broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new("flag1"))
+
+          expect(received_keys.length).to eq(2)
+          expect(received_keys[1]).to be_a(String)
+          expect(received_keys[1]).to eq("flag1")
+        end
+      end
+
       describe "flag change listener" do
         it "listener is notified when value changes" do
           responses = [:initial, :second, :second, :final]
@@ -46,11 +111,11 @@ module LaunchDarkly
           broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new(:flag1))
           expect(listener.statuses.count).to eq(2)
 
-          expect(listener.statuses[0].key).to eq(:flag1)
+          expect(listener.statuses[0].key).to eq("flag1")
           expect(listener.statuses[0].old_value).to eq(:initial)
           expect(listener.statuses[0].new_value).to eq(:second)
 
-          expect(listener.statuses[1].key).to eq(:flag1)
+          expect(listener.statuses[1].key).to eq("flag1")
           expect(listener.statuses[1].old_value).to eq(:second)
           expect(listener.statuses[1].new_value).to eq(:final)
         end
