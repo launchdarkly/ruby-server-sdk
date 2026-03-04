@@ -42,7 +42,7 @@ module LaunchDarkly
         # @param [LaunchDarkly::Interfaces::FlagChange] flag_change
         #
         def update(flag_change)
-          return unless flag_change.key == @flag_key.to_sym
+          return unless flag_change.key == @flag_key
 
           new_eval = @eval_fn.call(@flag_key, @context)
           old_eval = @value.get_and_set(new_eval)
