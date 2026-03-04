@@ -21,27 +21,26 @@ module LaunchDarkly
       LD_ENVID_HEADER = "X-LD-EnvID"
       LD_FD_FALLBACK_HEADER = "X-LD-FD-Fallback"
 
+      # Default base URI for polling requests.
+      DEFAULT_POLLING_BASE_URI = "https://sdk.launchdarkly.com"
+
+      # Default polling interval in seconds.
+      DEFAULT_POLL_INTERVAL = 30
+
       #
-      # Requester protocol for polling data source
+      # @deprecated Use {LaunchDarkly::DataSystem::Requester} instead. This module
+      #   remains here for backward compatibility and for use by internal classes
+      #   that are loaded before the public module.
+      #
+      # @see LaunchDarkly::DataSystem::Requester
       #
       module Requester
-        #
-        # Fetches the data for the given selector.
-        # Returns a Result containing a tuple of [ChangeSet, headers],
-        # or an error if the data could not be retrieved.
-        #
-        # @param selector [LaunchDarkly::Interfaces::DataSystem::Selector, nil]
-        # @return [Result]
-        #
+        # @see LaunchDarkly::DataSystem::Requester#fetch
         def fetch(selector)
           raise NotImplementedError
         end
 
-        #
-        # Closes any persistent connections and releases resources.
-        # This method should be called when the requester is no longer needed.
-        # Implementations should handle being called multiple times gracefully.
-        #
+        # @see LaunchDarkly::DataSystem::Requester#stop
         def stop
           # Optional - implementations may override if they need cleanup
         end
@@ -526,103 +525,6 @@ module LaunchDarkly
         LaunchDarkly::Result.success(builder.finish(selector))
       end
 
-      #
-      # Builder for a PollingDataSource.
-      #
-      class PollingDataSourceBuilder
-        include DataSourceBuilderCommon
-
-        DEFAULT_BASE_URI = "https://sdk.launchdarkly.com"
-        DEFAULT_POLL_INTERVAL = 30
-
-        def initialize
-          @requester = nil
-        end
-
-        #
-        # Sets the polling interval in seconds.
-        #
-        # @param secs [Float] Polling interval in seconds
-        # @return [PollingDataSourceBuilder]
-        #
-        def poll_interval(secs)
-          @poll_interval = secs
-          self
-        end
-
-        #
-        # Sets a custom Requester for the PollingDataSource.
-        #
-        # @param requester [Requester]
-        # @return [PollingDataSourceBuilder]
-        #
-        def requester(requester)
-          @requester = requester
-          self
-        end
-
-        #
-        # Builds the PollingDataSource with the configured parameters.
-        #
-        # @param sdk_key [String]
-        # @param config [LaunchDarkly::Config]
-        # @return [PollingDataSource]
-        #
-        def build(sdk_key, config)
-          http_opts = build_http_config
-          requester = @requester || HTTPPollingRequester.new(sdk_key, http_opts, config)
-          PollingDataSource.new(@poll_interval || DEFAULT_POLL_INTERVAL, requester, config.logger)
-        end
-      end
-
-      #
-      # Builder for an FDv1 PollingDataSource.
-      #
-      class FDv1PollingDataSourceBuilder
-        include DataSourceBuilderCommon
-
-        DEFAULT_BASE_URI = "https://sdk.launchdarkly.com"
-        DEFAULT_POLL_INTERVAL = 30
-
-        def initialize
-          @requester = nil
-        end
-
-        #
-        # Sets the polling interval in seconds.
-        #
-        # @param secs [Float] Polling interval in seconds
-        # @return [FDv1PollingDataSourceBuilder]
-        #
-        def poll_interval(secs)
-          @poll_interval = secs
-          self
-        end
-
-        #
-        # Sets a custom Requester for the PollingDataSource.
-        #
-        # @param requester [Requester]
-        # @return [FDv1PollingDataSourceBuilder]
-        #
-        def requester(requester)
-          @requester = requester
-          self
-        end
-
-        #
-        # Builds the PollingDataSource with the configured parameters.
-        #
-        # @param sdk_key [String]
-        # @param config [LaunchDarkly::Config]
-        # @return [PollingDataSource]
-        #
-        def build(sdk_key, config)
-          http_opts = build_http_config
-          requester = @requester || HTTPFDv1PollingRequester.new(sdk_key, http_opts, config)
-          PollingDataSource.new(@poll_interval || DEFAULT_POLL_INTERVAL, requester, config.logger)
-        end
-      end
     end
   end
 end
