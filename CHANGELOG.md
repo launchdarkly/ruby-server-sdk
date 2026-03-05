@@ -2,6 +2,14 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.12.3](https://github.com/launchdarkly/ruby-server-sdk/compare/8.12.2...8.12.3) (2026-03-05)
+
+
+### Bug Fixes
+
+* Fix flag tracker to properly match string keys ([#370](https://github.com/launchdarkly/ruby-server-sdk/issues/370)) ([7e96729](https://github.com/launchdarkly/ruby-server-sdk/commit/7e96729706d9ca585345130a3b5458ab41b310b7))
+* Move fdv2 data source builders into public API ([#371](https://github.com/launchdarkly/ruby-server-sdk/issues/371)) ([c4a1952](https://github.com/launchdarkly/ruby-server-sdk/commit/c4a1952b3d4150a8a7024fdb763da02075eed596))
+
 ## [8.12.2](https://github.com/launchdarkly/ruby-server-sdk/compare/8.12.1...8.12.2) (2026-03-02)
 
 
