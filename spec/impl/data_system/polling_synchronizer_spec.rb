@@ -11,7 +11,7 @@ module LaunchDarkly
         let(:logger) { double("Logger", info: nil, warn: nil, error: nil, debug: nil) }
 
         class ListBasedRequester
-          include Requester
+          include LaunchDarkly::DataSystem::Requester
 
           def initialize(results)
             @results = results
@@ -24,7 +24,7 @@ module LaunchDarkly
         end
 
         class RequesterWithCleanup
-          include Requester
+          include LaunchDarkly::DataSystem::Requester
 
           attr_reader :stop_called
 
