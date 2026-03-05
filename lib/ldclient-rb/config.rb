@@ -468,7 +468,7 @@ module LaunchDarkly
     # @return [String] "https://sdk.launchdarkly.com"
     #
     def self.default_base_uri
-      Impl::DataSystem::DEFAULT_POLLING_BASE_URI
+      DataSystem::PollingDataSourceBuilder::DEFAULT_BASE_URI
     end
 
     #
@@ -476,7 +476,7 @@ module LaunchDarkly
     # @return [String] "https://stream.launchdarkly.com"
     #
     def self.default_stream_uri
-      Impl::DataSystem::DEFAULT_STREAMING_BASE_URI
+      DataSystem::StreamingDataSourceBuilder::DEFAULT_BASE_URI
     end
 
     #
@@ -516,7 +516,7 @@ module LaunchDarkly
     # @return [Float] 1
     #
     def self.default_initial_reconnect_delay
-      Impl::DataSystem::DEFAULT_INITIAL_RECONNECT_DELAY
+      DataSystem::StreamingDataSourceBuilder::DEFAULT_INITIAL_RECONNECT_DELAY
     end
 
     #
@@ -578,7 +578,7 @@ module LaunchDarkly
     # @return [Float] 30
     #
     def self.default_poll_interval
-      Impl::DataSystem::DEFAULT_POLL_INTERVAL
+      DataSystem::PollingDataSourceBuilder::DEFAULT_POLL_INTERVAL
     end
 
     #

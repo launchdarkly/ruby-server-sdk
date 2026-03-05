@@ -5,7 +5,7 @@ require "ldclient-rb/interfaces/data_system"
 require "ldclient-rb/impl/data_system"
 require "ldclient-rb/impl/data_system/protocolv2"
 require "ldclient-rb/impl/data_system/polling"  # For shared constants
-require "ldclient-rb/data_system/data_source_builder_common"
+require "ldclient-rb/data_system/streaming_data_source_builder"
 require "ldclient-rb/impl/util"
 require "concurrent"
 require "json"
@@ -20,12 +20,6 @@ module LaunchDarkly
       # Allows for up to 5 minutes to elapse without any data sent across the stream.
       # The heartbeats sent as comments on the stream will keep this from triggering.
       STREAM_READ_TIMEOUT = 5 * 60
-
-      # Default base URI for streaming connections.
-      DEFAULT_STREAMING_BASE_URI = "https://stream.launchdarkly.com"
-
-      # Default initial delay before reconnecting after an error, in seconds.
-      DEFAULT_INITIAL_RECONNECT_DELAY = 1
 
       #
       # StreamingDataSource is a Synchronizer that uses Server-Sent Events (SSE)

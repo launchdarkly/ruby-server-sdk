@@ -11,7 +11,7 @@ module LaunchDarkly
         let(:logger) { double("Logger", info: nil, warn: nil, error: nil, debug: nil) }
 
         class MockExceptionThrowingPollingRequester
-          include Requester
+          include LaunchDarkly::DataSystem::Requester
 
           def fetch(selector)
             raise "This is a mock exception for testing purposes."
@@ -19,7 +19,7 @@ module LaunchDarkly
         end
 
         class MockPollingRequester
-          include Requester
+          include LaunchDarkly::DataSystem::Requester
 
           def initialize(result)
             @result = result

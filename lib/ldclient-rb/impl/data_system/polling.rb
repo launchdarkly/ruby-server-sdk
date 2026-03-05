@@ -4,7 +4,7 @@ require "ldclient-rb/interfaces"
 require "ldclient-rb/interfaces/data_system"
 require "ldclient-rb/impl/data_system"
 require "ldclient-rb/impl/data_system/protocolv2"
-require "ldclient-rb/data_system/data_source_builder_common"
+require "ldclient-rb/data_system/polling_data_source_builder"
 require "ldclient-rb/impl/data_source/requestor"
 require "ldclient-rb/impl/util"
 require "concurrent"
@@ -20,31 +20,6 @@ module LaunchDarkly
 
       LD_ENVID_HEADER = "X-LD-EnvID"
       LD_FD_FALLBACK_HEADER = "X-LD-FD-Fallback"
-
-      # Default base URI for polling requests.
-      DEFAULT_POLLING_BASE_URI = "https://sdk.launchdarkly.com"
-
-      # Default polling interval in seconds.
-      DEFAULT_POLL_INTERVAL = 30
-
-      #
-      # @deprecated Use {LaunchDarkly::DataSystem::Requester} instead. This module
-      #   remains here for backward compatibility and for use by internal classes
-      #   that are loaded before the public module.
-      #
-      # @see LaunchDarkly::DataSystem::Requester
-      #
-      module Requester
-        # @see LaunchDarkly::DataSystem::Requester#fetch
-        def fetch(selector)
-          raise NotImplementedError
-        end
-
-        # @see LaunchDarkly::DataSystem::Requester#stop
-        def stop
-          # Optional - implementations may override if they need cleanup
-        end
-      end
 
       #
       # PollingDataSource is a data source that can retrieve information from
@@ -245,7 +220,7 @@ module LaunchDarkly
       # requests to the FDv2 polling endpoint.
       #
       class HTTPPollingRequester
-        include Requester
+        include LaunchDarkly::DataSystem::Requester
 
         #
         # @param sdk_key [String]
@@ -337,7 +312,7 @@ module LaunchDarkly
       # requests to the FDv1 polling endpoint.
       #
       class HTTPFDv1PollingRequester
-        include Requester
+        include LaunchDarkly::DataSystem::Requester
 
         #
         # @param sdk_key [String]
