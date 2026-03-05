@@ -4,100 +4,66 @@ require 'ldclient-rb/interfaces/data_system'
 require 'ldclient-rb/config'
 require 'ldclient-rb/impl/data_system/polling'
 require 'ldclient-rb/impl/data_system/streaming'
+require 'ldclient-rb/data_system/config_builder'
+require 'ldclient-rb/data_system/polling_data_source_builder'
+require 'ldclient-rb/data_system/streaming_data_source_builder'
 
 module LaunchDarkly
   #
   # Configuration for LaunchDarkly's data acquisition strategy.
   #
-  # This module provides factory methods for creating data system configurations.
+  # This module provides factory methods for creating data system configurations,
+  # as well as builder classes for constructing individual data sources (polling
+  # and streaming).
+  #
+  # == Quick Start
+  #
+  # For most users, the predefined strategies are sufficient:
+  #
+  #   # Use the default strategy (recommended)
+  #   config = LaunchDarkly::Config.new(
+  #     data_system: LaunchDarkly::DataSystem.default
+  #   )
+  #
+  #   # Use streaming only
+  #   config = LaunchDarkly::Config.new(
+  #     data_system: LaunchDarkly::DataSystem.streaming
+  #   )
+  #
+  #   # Use polling only
+  #   config = LaunchDarkly::Config.new(
+  #     data_system: LaunchDarkly::DataSystem.polling
+  #   )
+  #
+  # == Custom Configurations
+  #
+  # For advanced use cases, you can build custom configurations using the
+  # data source builders:
+  #
+  #   polling = LaunchDarkly::DataSystem.polling_ds_builder
+  #     .poll_interval(60)
+  #     .base_uri("https://custom-polling.example.com")
+  #
+  #   streaming = LaunchDarkly::DataSystem.streaming_ds_builder
+  #     .initial_reconnect_delay(2)
+  #     .base_uri("https://custom-streaming.example.com")
+  #
+  #   data_system = LaunchDarkly::DataSystem.custom
+  #     .initializers([polling])
+  #     .synchronizers([streaming, polling])
+  #
+  #   config = LaunchDarkly::Config.new(data_system: data_system)
   #
   module DataSystem
-    #
-    # Builder for the data system configuration.
-    #
-    class ConfigBuilder
-      def initialize
-        @initializers = nil
-        @synchronizers = nil
-        @fdv1_fallback_synchronizer = nil
-        @data_store_mode = LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY
-        @data_store = nil
-      end
-
-      #
-      # Sets the initializers for the data system.
-      #
-      # @param initializers [Array<#build(String, Config)>]
-      #   Array of builders that respond to build(sdk_key, config) and return an Initializer
-      # @return [ConfigBuilder] self for chaining
-      #
-      def initializers(initializers)
-        @initializers = initializers
-        self
-      end
-
-      #
-      # Sets the synchronizers for the data system.
-      #
-      # @param synchronizers [Array<#build(String, Config)>]
-      #   Array of builders that respond to build(sdk_key, config) and return a Synchronizer
-      # @return [ConfigBuilder] self for chaining
-      #
-      def synchronizers(synchronizers)
-        @synchronizers = synchronizers
-        self
-      end
-
-      #
-      # Configures the SDK with a fallback synchronizer that is compatible with
-      # the Flag Delivery v1 API.
-      #
-      # @param fallback [#build(String, Config)] Builder that responds to build(sdk_key, config) and returns the fallback Synchronizer
-      # @return [ConfigBuilder] self for chaining
-      #
-      def fdv1_compatible_synchronizer(fallback)
-        @fdv1_fallback_synchronizer = fallback
-        self
-      end
-
-      #
-      # Sets the data store configuration for the data system.
-      #
-      # @param data_store [LaunchDarkly::Interfaces::FeatureStore] The data store
-      # @param store_mode [Symbol] The store mode
-      # @return [ConfigBuilder] self for chaining
-      #
-      def data_store(data_store, store_mode)
-        @data_store = data_store
-        @data_store_mode = store_mode
-        self
-      end
-
-      #
-      # Builds the data system configuration.
-      #
-      # @return [DataSystemConfig]
-      #
-      def build
-        DataSystemConfig.new(
-          initializers: @initializers,
-          synchronizers: @synchronizers,
-          data_store_mode: @data_store_mode,
-          data_store: @data_store,
-          fdv1_fallback_synchronizer: @fdv1_fallback_synchronizer
-        )
-      end
-    end
-
     #
     # Returns a builder for creating a polling data source.
     # This is a building block that can be used with {ConfigBuilder#initializers}
     # or {ConfigBuilder#synchronizers} to create custom data system configurations.
     #
-    # @return [LaunchDarkly::Impl::DataSystem::PollingDataSourceBuilder]
+    # @return [PollingDataSourceBuilder]
     #
     def self.polling_ds_builder
-      LaunchDarkly::Impl::DataSystem::PollingDataSourceBuilder.new
+      PollingDataSourceBuilder.new
     end
 
     #
@@ -105,10 +71,10 @@ module LaunchDarkly
     # This is a building block that can be used with {ConfigBuilder#fdv1_compatible_synchronizer}
     # to provide FDv1 compatibility in custom data system configurations.
     #
-    # @return [LaunchDarkly::Impl::DataSystem::FDv1PollingDataSourceBuilder]
+    # @return [FDv1PollingDataSourceBuilder]
     #
     def self.fdv1_fallback_ds_builder
-      LaunchDarkly::Impl::DataSystem::FDv1PollingDataSourceBuilder.new
+      FDv1PollingDataSourceBuilder.new
     end
 
     #
@@ -116,10 +82,10 @@ module LaunchDarkly
     # This is a building block that can be used with {ConfigBuilder#synchronizers}
     # to create custom data system configurations.
     #
-    # @return [LaunchDarkly::Impl::DataSystem::StreamingDataSourceBuilder]
+    # @return [StreamingDataSourceBuilder]
     #
     def self.streaming_ds_builder
-      LaunchDarkly::Impl::DataSystem::StreamingDataSourceBuilder.new
+      StreamingDataSourceBuilder.new
     end
 
     #
@@ -224,4 +190,3 @@ module LaunchDarkly
     end
   end
 end
-

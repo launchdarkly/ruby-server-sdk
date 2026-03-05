@@ -26,7 +26,7 @@ module LaunchDarkly
       # An adapter which turns a normal flag change listener into a flag value change listener.
       #
       class FlagValueChangeAdapter
-        # @param [Symbol] flag_key
+        # @param [String] flag_key
         # @param [LaunchDarkly::LDContext] context
         # @param [#update] listener
         # @param [#call] eval_fn

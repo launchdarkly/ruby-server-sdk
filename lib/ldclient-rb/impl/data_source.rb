@@ -178,7 +178,7 @@ module LaunchDarkly
         private def send_change_events(affected_items)
           affected_items.each do |item|
             if item[:kind] == Impl::DataStore::FEATURES
-              @flag_change_broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new(item[:key]))
+              @flag_change_broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new(item[:key].to_s))
             end
           end
         end
