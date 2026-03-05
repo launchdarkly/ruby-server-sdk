@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: LaunchDarkly::DataSystem::PollingDataSourceBuilder
+  
+    &mdash; LaunchDarkly Ruby SDK
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "LaunchDarkly::DataSystem::PollingDataSourceBuilder";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (P)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../DataSystem.html" title="LaunchDarkly::DataSystem (module)">DataSystem</a></span></span>
+     &raquo; 
+    <span class="title">PollingDataSourceBuilder</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: LaunchDarkly::DataSystem::PollingDataSourceBuilder
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">LaunchDarkly::DataSystem::PollingDataSourceBuilder</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="DataSourceBuilderCommon.html" title="LaunchDarkly::DataSystem::DataSourceBuilderCommon (module)">DataSourceBuilderCommon</a></span></dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/ldclient-rb/data_system/polling_data_source_builder.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>Builder for a polling data source that communicates with LaunchDarkly&#39;s
+FDv2 polling endpoint.</p>
+
+<p>This builder can be used with <span class='object_link'><a href="ConfigBuilder.html#initializers-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#initializers (method)">ConfigBuilder#initializers</a></span> or
+<span class='object_link'><a href="ConfigBuilder.html#synchronizers-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#synchronizers (method)">ConfigBuilder#synchronizers</a></span> to create custom data system configurations.</p>
+
+<p>The polling data source periodically fetches data from LaunchDarkly. It
+supports conditional requests via ETags, so subsequent polls after the
+initial request only transfer data if changes have occurred.</p>
+
+<p>== Example</p>
+
+<p>polling = LaunchDarkly::DataSystem.polling_ds_builder
+    .poll_interval(60)
+    .base_uri(&quot;<a href="https://custom-endpoint.example.com%22">https://custom-endpoint.example.com&quot;</a>)</p>
+
+<p>data_system = LaunchDarkly::DataSystem.custom
+    .synchronizers([polling])</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li><span class='object_link'><a href="../DataSystem.html#polling_ds_builder-class_method" title="LaunchDarkly::DataSystem.polling_ds_builder (method)">polling_ds_builder</a></span></li>
+    
+  </ul>
+
+</div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="DEFAULT_BASE_URI-constant" class="">DEFAULT_BASE_URI =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Returns The default base URI for polling requests.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The default base URI for polling requests</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>https://sdk.launchdarkly.com</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="DEFAULT_POLL_INTERVAL-constant" class="">DEFAULT_POLL_INTERVAL =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Returns The default polling interval in seconds.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The default polling interval in seconds</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='int'>30</span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#base_uri-instance_method" title="#base_uri (instance method)">#<strong>base_uri</strong>(uri)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+    <span class="note title not_defined_here">
+      included
+      from <span class='object_link'><a href="DataSourceBuilderCommon.html#base_uri-instance_method" title="LaunchDarkly::DataSystem::DataSourceBuilderCommon#base_uri (method)">DataSourceBuilderCommon</a></span>
+    </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets the base URI for HTTP requests.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#build-instance_method" title="#build (instance method)">#<strong>build</strong>(sdk_key, config)  &#x21d2; LaunchDarkly::Impl::DataSystem::PollingDataSource </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Builds the polling data source with the configured parameters.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#connect_timeout-instance_method" title="#connect_timeout (instance method)">#<strong>connect_timeout</strong>(timeout)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+    <span class="note title not_defined_here">
+      included
+      from <span class='object_link'><a href="DataSourceBuilderCommon.html#connect_timeout-instance_method" title="LaunchDarkly::DataSystem::DataSourceBuilderCommon#connect_timeout (method)">DataSourceBuilderCommon</a></span>
+    </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets the connect timeout for HTTP connections.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>  &#x21d2; PollingDataSourceBuilder </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A new instance of PollingDataSourceBuilder.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#poll_interval-instance_method" title="#poll_interval (instance method)">#<strong>poll_interval</strong>(secs)  &#x21d2; PollingDataSourceBuilder </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets the polling interval in seconds.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#read_timeout-instance_method" title="#read_timeout (instance method)">#<strong>read_timeout</strong>(timeout)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+    <span class="note title not_defined_here">
+      included
+      from <span class='object_link'><a href="DataSourceBuilderCommon.html#read_timeout-instance_method" title="LaunchDarkly::DataSystem::DataSourceBuilderCommon#read_timeout (method)">DataSourceBuilderCommon</a></span>
+    </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets the read timeout for HTTP connections.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#requester-instance_method" title="#requester (instance method)">#<strong>requester</strong>(requester)  &#x21d2; PollingDataSourceBuilder </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets a custom <span class='object_link'><a href="Requester.html" title="LaunchDarkly::DataSystem::Requester (module)">Requester</a></span> for this polling data source.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#socket_factory-instance_method" title="#socket_factory (instance method)">#<strong>socket_factory</strong>(factory)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+    <span class="note title not_defined_here">
+      included
+      from <span class='object_link'><a href="DataSourceBuilderCommon.html#socket_factory-instance_method" title="LaunchDarkly::DataSystem::DataSourceBuilderCommon#socket_factory (method)">DataSourceBuilderCommon</a></span>
+    </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets a custom socket factory for HTTP connections.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::DataSystem::PollingDataSourceBuilder (class)">PollingDataSourceBuilder</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a new instance of PollingDataSourceBuilder.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+96
+97
+98</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/polling_data_source_builder.rb', line 96</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
+  <span class='ivar'>@requester</span> <span class='op'>=</span> <span class='kw'>nil</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="base_uri-instance_method">
+  
+    #<strong>base_uri</strong>(uri)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+    <span class="not_defined_here">
+      Originally defined in module
+        <span class='object_link'><a href="DataSourceBuilderCommon.html#base_uri-instance_method" title="LaunchDarkly::DataSystem::DataSourceBuilderCommon#base_uri (method)">DataSourceBuilderCommon</a></span>
+    </span>
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets the base URI for HTTP requests.</p>
+
+<p>Use this to point the SDK at a Relay Proxy instance or any other URI
+that implements the corresponding LaunchDarkly API.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>uri</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The base URI (e.g. &quot;<a href="https://relay.example.com%22">https://relay.example.com&quot;</a>)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the builder, for chaining</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="build-instance_method">
+  
+    #<strong>build</strong>(sdk_key, config)  &#x21d2; <tt><span class='object_link'>LaunchDarkly::Impl::DataSystem::PollingDataSource</span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Builds the polling data source with the configured parameters.</p>
+
+<p>This method is called internally by the SDK. You do not need to call it
+directly; instead, pass the builder to <span class='object_link'><a href="ConfigBuilder.html#initializers-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#initializers (method)">ConfigBuilder#initializers</a></span> or
+<span class='object_link'><a href="ConfigBuilder.html#synchronizers-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#synchronizers (method)">ConfigBuilder#synchronizers</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>sdk_key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The SDK key</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>config</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">LaunchDarkly::Config</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The SDK configuration</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'>LaunchDarkly::Impl::DataSystem::PollingDataSource</span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+144
+145
+146
+147
+148</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/polling_data_source_builder.rb', line 144</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_build'>build</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_http_opts'>http_opts</span> <span class='op'>=</span> <span class='id identifier rubyid_build_http_config'>build_http_config</span>
+  <span class='id identifier rubyid_requester'>requester</span> <span class='op'>=</span> <span class='ivar'>@requester</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'>DataSystem</span><span class='op'>::</span><span class='const'>HTTPPollingRequester</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_http_opts'>http_opts</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'>DataSystem</span><span class='op'>::</span><span class='const'>PollingDataSource</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@poll_interval</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="#DEFAULT_POLL_INTERVAL-constant" title="LaunchDarkly::DataSystem::PollingDataSourceBuilder::DEFAULT_POLL_INTERVAL (constant)">DEFAULT_POLL_INTERVAL</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_requester'>requester</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="connect_timeout-instance_method">
+  
+    #<strong>connect_timeout</strong>(timeout)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+    <span class="not_defined_here">
+      Originally defined in module
+        <span class='object_link'><a href="DataSourceBuilderCommon.html#connect_timeout-instance_method" title="LaunchDarkly::DataSystem::DataSourceBuilderCommon#connect_timeout (method)">DataSourceBuilderCommon</a></span>
+    </span>
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets the connect timeout for HTTP connections.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>timeout</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Timeout in seconds</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the builder, for chaining</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="poll_interval-instance_method">
+  
+    #<strong>poll_interval</strong>(secs)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::DataSystem::PollingDataSourceBuilder (class)">PollingDataSourceBuilder</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets the polling interval in seconds.</p>
+
+<p>This controls how frequently the SDK polls LaunchDarkly for updates.
+Lower values mean more frequent updates but higher network traffic.
+The default is <span class='object_link'><a href="#DEFAULT_POLL_INTERVAL-constant" title="LaunchDarkly::DataSystem::PollingDataSourceBuilder::DEFAULT_POLL_INTERVAL (constant)">DEFAULT_POLL_INTERVAL</a></span> seconds.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>secs</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Polling interval in seconds</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::DataSystem::PollingDataSourceBuilder (class)">PollingDataSourceBuilder</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>self for chaining</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+110
+111
+112
+113</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/polling_data_source_builder.rb', line 110</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_poll_interval'>poll_interval</span><span class='lparen'>(</span><span class='id identifier rubyid_secs'>secs</span><span class='rparen'>)</span>
+  <span class='ivar'>@poll_interval</span> <span class='op'>=</span> <span class='id identifier rubyid_secs'>secs</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="read_timeout-instance_method">
+  
+    #<strong>read_timeout</strong>(timeout)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+    <span class="not_defined_here">
+      Originally defined in module
+        <span class='object_link'><a href="DataSourceBuilderCommon.html#read_timeout-instance_method" title="LaunchDarkly::DataSystem::DataSourceBuilderCommon#read_timeout (method)">DataSourceBuilderCommon</a></span>
+    </span>
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets the read timeout for HTTP connections.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>timeout</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Timeout in seconds</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the builder, for chaining</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="requester-instance_method">
+  
+    #<strong>requester</strong>(requester)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::DataSystem::PollingDataSourceBuilder (class)">PollingDataSourceBuilder</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets a custom <span class='object_link'><a href="Requester.html" title="LaunchDarkly::DataSystem::Requester (module)">Requester</a></span> for this polling data source.</p>
+
+<p>By default, the builder uses an HTTP requester that communicates with
+LaunchDarkly&#39;s FDv2 polling endpoint. Use this method to provide a
+custom requester implementation for testing or non-standard environments.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>requester</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Requester.html" title="LaunchDarkly::DataSystem::Requester (module)">Requester</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A custom requester that implements the
+<span class='object_link'><a href="Requester.html" title="LaunchDarkly::DataSystem::Requester (module)">Requester</a></span> interface</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::DataSystem::PollingDataSourceBuilder (class)">PollingDataSourceBuilder</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>self for chaining</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+  <p class="tag_title">See Also:</p>
+  <ul class="see">
+    
+      <li><span class='object_link'><a href="Requester.html" title="LaunchDarkly::DataSystem::Requester (module)">Requester</a></span></li>
+    
+  </ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+128
+129
+130
+131</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/polling_data_source_builder.rb', line 128</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_requester'>requester</span><span class='lparen'>(</span><span class='id identifier rubyid_requester'>requester</span><span class='rparen'>)</span>
+  <span class='ivar'>@requester</span> <span class='op'>=</span> <span class='id identifier rubyid_requester'>requester</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="socket_factory-instance_method">
+  
+    #<strong>socket_factory</strong>(factory)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+    <span class="not_defined_here">
+      Originally defined in module
+        <span class='object_link'><a href="DataSourceBuilderCommon.html#socket_factory-instance_method" title="LaunchDarkly::DataSystem::DataSourceBuilderCommon#socket_factory (method)">DataSourceBuilderCommon</a></span>
+    </span>
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets a custom socket factory for HTTP connections.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>factory</span>
+      
+      
+        <span class='type'>(<tt>#open</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A socket factory that responds to +open+</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the builder, for chaining</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Thu Mar  5 16:05:17 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.38 (ruby-3.2.10).
+</div>
+
+    </div>
+  </body>
+</html>
