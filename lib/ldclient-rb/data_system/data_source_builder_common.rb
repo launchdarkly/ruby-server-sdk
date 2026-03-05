@@ -79,5 +79,4 @@ module LaunchDarkly
       end
     end
   end
-
 end

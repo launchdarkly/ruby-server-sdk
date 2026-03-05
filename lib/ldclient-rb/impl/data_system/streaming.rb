@@ -5,7 +5,7 @@ require "ldclient-rb/interfaces/data_system"
 require "ldclient-rb/impl/data_system"
 require "ldclient-rb/impl/data_system/protocolv2"
 require "ldclient-rb/impl/data_system/polling"  # For shared constants
-require "ldclient-rb/impl/data_system/data_source_builder_common"
+require "ldclient-rb/data_system/data_source_builder_common"
 require "ldclient-rb/impl/util"
 require "concurrent"
 require "json"
