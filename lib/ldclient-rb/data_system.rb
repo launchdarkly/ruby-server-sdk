@@ -546,15 +546,3 @@ module LaunchDarkly
     end
   end
 end
-
-# Backward-compatible aliases so that existing code referencing the Impl namespace
-# (including internal specs) continues to work.
-module LaunchDarkly
-  module Impl
-    module DataSystem
-      PollingDataSourceBuilder = LaunchDarkly::DataSystem::PollingDataSourceBuilder
-      FDv1PollingDataSourceBuilder = LaunchDarkly::DataSystem::FDv1PollingDataSourceBuilder
-      StreamingDataSourceBuilder = LaunchDarkly::DataSystem::StreamingDataSourceBuilder
-    end
-  end
-end
