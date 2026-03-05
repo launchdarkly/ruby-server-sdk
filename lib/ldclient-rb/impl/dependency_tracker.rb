@@ -13,7 +13,7 @@ module LaunchDarkly
       # Updates the dependency graph when an item has changed.
       #
       # @param from_kind [Object] the changed item's kind
-      # @param from_key [String] the changed item's key
+      # @param from_key [Symbol] the changed item's key
       # @param from_item [Object] the changed item (can be a Hash, model object, or nil)
       #
       def update_dependencies_from(from_kind, from_key, from_item)

@@ -147,7 +147,7 @@ module LaunchDarkly
           listener = Object.new
           listener.define_singleton_method(:update) do |flag_change|
             changes << flag_change
-            flag_changed.set if flag_change.key == :newflag
+            flag_changed.set if flag_change.key == "newflag"
           end
           fdv2.flag_change_broadcaster.add_listener(listener)
 
@@ -326,7 +326,7 @@ module LaunchDarkly
           flag_changed = Concurrent::Event.new
           listener = Object.new
           listener.define_singleton_method(:update) do |flag_change|
-            flag_changed.set if flag_change.key == :flagkey
+            flag_changed.set if flag_change.key == "flagkey"
           end
 
           fdv2.flag_change_broadcaster.add_listener(listener)
@@ -412,7 +412,7 @@ module LaunchDarkly
 
           listener = Object.new
           listener.define_singleton_method(:update) do |flag_change|
-            sync_flag_arrived.set if flag_change.key == :"sync-flag"
+            sync_flag_arrived.set if flag_change.key == "sync-flag"
           end
 
           fdv2.flag_change_broadcaster.add_listener(listener)
