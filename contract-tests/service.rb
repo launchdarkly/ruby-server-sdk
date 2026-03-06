@@ -51,6 +51,8 @@ get '/' do
       'persistent-data-store-consul',
       'persistent-data-store-dynamodb',
       'persistent-data-store-redis',
+      'flag-change-listeners',
+      'flag-value-change-listeners',
     ],
   }.to_json
 end
@@ -128,6 +130,15 @@ post '/clients/:id' do |clientId|
   when "contextComparison"
     response = {:equals => client.context_comparison(params[:contextComparison])}
     return [200, nil, response.to_json]
+  when "registerFlagChangeListener"
+    client.register_flag_change_listener(params[:registerFlagChangeListener])
+    return 201
+  when "registerFlagValueChangeListener"
+    client.register_flag_value_change_listener(params[:registerFlagValueChangeListener])
+    return 201
+  when "unregisterListener"
+    success = client.unregister_listener(params[:unregisterListener])
+    return success ? 201 : [400, nil, {:error => "no listener with that id"}.to_json]
   end
 
   return [400, nil, {:error => "Unknown command requested"}.to_json]

@@ -3,6 +3,7 @@ require 'json'
 require 'net/http'
 require 'launchdarkly-server-sdk'
 require './big_segment_store_fixture'
+require './flag_change_listener'
 require './hook'
 require 'http'
 
@@ -117,6 +118,8 @@ class ClientEntity
       config[:credential],
       LaunchDarkly::Config.new(opts),
       startWaitTimeMs / 1_000.0)
+
+    @listeners = ListenerRegistry.new(@client.flag_tracker)
   end
 
   def initialized?
@@ -225,7 +228,26 @@ class ClientEntity
     @log
   end
 
+  def register_flag_change_listener(params)
+    @listeners.register_flag_change_listener(params[:listenerId], params[:callbackUri])
+  end
+
+  def register_flag_value_change_listener(params)
+    context = LaunchDarkly::LDContext.create(params[:context])
+    @listeners.register_flag_value_change_listener(
+      params[:listenerId],
+      params[:flagKey],
+      context,
+      params[:callbackUri]
+    )
+  end
+
+  def unregister_listener(params)
+    @listeners.unregister(params[:listenerId])
+  end
+
   def close
+    @listeners.close_all
     @client.close
     @log.info("Test ended")
   end
