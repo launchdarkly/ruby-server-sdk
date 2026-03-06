@@ -66,8 +66,8 @@ class ListenerRegistry
   # @param callback_uri [String]
   def register_flag_change_listener(listener_id, callback_uri)
     listener = FlagChangeCallbackListener.new(listener_id, callback_uri)
-    store_listener(listener_id, listener)
     @tracker.add_listener(listener)
+    store_listener(listener_id, listener)
   end
 
   # Registers a flag value change listener that fires when the evaluated value of a
