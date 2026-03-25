@@ -67,10 +67,7 @@ module LaunchDarkly
                 body = gzip.close.string
               end
 
-              response = http_client.request("POST", uri, {
-                headers: headers,
-                body: body,
-              })
+              response = http_client.request("POST", uri, headers: headers, body: body)
             rescue StandardError => exn
               @logger.warn { "[LDClient] Error sending events: #{exn.inspect}." }
               next
