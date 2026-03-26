@@ -141,7 +141,7 @@ module LaunchDarkly
         HTTP::Client.new(**http_client_options)
           .timeout(
             read: http_config.read_timeout,
-            connect: http_config.connect_timeout,
+            connect: http_config.connect_timeout
           )
           .persistent(http_config.base_uri)
       end
