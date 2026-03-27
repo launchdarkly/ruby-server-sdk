@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.13.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.12.3...8.13.0) (2026-03-27)
+
+
+### Features
+
+* Expand version support for http.rb v6 ([#375](https://github.com/launchdarkly/ruby-server-sdk/issues/375)) ([2e2b66f](https://github.com/launchdarkly/ruby-server-sdk/commit/2e2b66fdc2f56b8f60b4348658d05cff83beb456)), closes [#373](https://github.com/launchdarkly/ruby-server-sdk/issues/373)
+
 ## [8.12.3](https://github.com/launchdarkly/ruby-server-sdk/compare/8.12.2...8.12.3) (2026-03-05)
 
 
