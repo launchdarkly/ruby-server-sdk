@@ -64,9 +64,7 @@ module LaunchDarkly
           unless cached.nil?
             headers["If-None-Match"] = cached.etag
           end
-          response = @http_client.request("GET", uri, {
-            headers: headers,
-          })
+          response = @http_client.request("GET", uri, headers: headers)
           status = response.status.code
           # must fully read body for persistent connections
           body = response.to_s

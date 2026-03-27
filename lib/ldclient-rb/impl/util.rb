@@ -127,22 +127,22 @@ module LaunchDarkly
       def self.new_http_client(http_config)
         http_client_options = {}
         if http_config.socket_factory
-          http_client_options["socket_class"] = http_config.socket_factory
+          http_client_options[:socket_class] = http_config.socket_factory
         end
         proxy = URI.parse(http_config.base_uri).find_proxy
         unless proxy.nil?
-          http_client_options["proxy"] = {
+          http_client_options[:proxy] = {
             proxy_address: proxy.host,
             proxy_port: proxy.port,
             proxy_username: proxy.user,
             proxy_password: proxy.password,
           }
         end
-        HTTP::Client.new(http_client_options)
-          .timeout({
+        HTTP::Client.new(**http_client_options)
+          .timeout(
             read: http_config.read_timeout,
-            connect: http_config.connect_timeout,
-          })
+            connect: http_config.connect_timeout
+          )
           .persistent(http_config.base_uri)
       end
 
