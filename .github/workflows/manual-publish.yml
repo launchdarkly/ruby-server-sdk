@@ -22,9 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: ["build-ruby-gem", "build-jruby-gem"]
 
-    outputs:
-      gem-hash: ${{ steps.publish.outputs.gem-hash }}
-
     permissions:
       id-token: write # Needed if using OIDC to get release secrets.
       contents: write
@@ -57,15 +54,8 @@ jobs:
         with:
           token: ${{secrets.GITHUB_TOKEN}}
 
-      - name: Generate checksums file
-        if: ${{ !inputs.dry_run }}
-        env:
-          HASHES: ${{ steps.publish.outputs.gem-hash }}
-        run: |
-          echo "$HASHES" | base64 -d > checksums.txt
-
       - name: Attest build provenance
         if: ${{ !inputs.dry_run }}
         uses: actions/attest@v4
         with:
-          subject-checksums: checksums.txt
+          subject-path: 'launchdarkly-server-sdk-*.gem'

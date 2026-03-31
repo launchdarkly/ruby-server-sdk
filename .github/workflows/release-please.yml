@@ -40,9 +40,6 @@ jobs:
     needs: ["release-package", "build-ruby-gem", "build-jruby-gem"]
     if: ${{ needs.release-package.outputs.release-created == 'true' }}
 
-    outputs:
-      gem-hash: ${{ steps.publish.outputs.gem-hash }}
-
     permissions:
       id-token: write # Needed if using OIDC to get release secrets.
       contents: write # Contents and pull-requests are for release-please to make releases.
@@ -75,13 +72,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate checksums file
-        env:
-          HASHES: ${{ steps.publish.outputs.gem-hash }}
-        run: |
-          echo "$HASHES" | base64 -d > checksums.txt
-
       - name: Attest build provenance
         uses: actions/attest@v4
         with:
-          subject-checksums: checksums.txt
+          subject-path: 'launchdarkly-server-sdk-*.gem'
