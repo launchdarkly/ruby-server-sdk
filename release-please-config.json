@@ -4,6 +4,7 @@
       "release-type": "ruby",
       "bump-minor-pre-major": true,
       "versioning": "default",
+      "draft": true,
       "include-component-in-tag": false,
       "include-v-in-tag": false,
       "extra-files": ["PROVENANCE.md", "lib/ldclient-rb/version.rb"]
