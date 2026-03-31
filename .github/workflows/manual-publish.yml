@@ -6,10 +6,6 @@ on:
         description: "Is this a dry run. If so no package will be published."
         type: boolean
         required: true
-      publish_release:
-        description: "Whether to publish (un-draft) the release after uploading artifacts."
-        type: boolean
-        default: true
 
 jobs:
   build-ruby-gem:
@@ -73,18 +69,3 @@ jobs:
         uses: actions/attest@v4
         with:
           subject-checksums: checksums.txt
-
-  publish-release:
-    needs: ['publish']
-    if: ${{ !inputs.dry_run && inputs.publish_release }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Publish release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          gh release edit "$(gh release list --repo ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName')"
-          --repo ${{ github.repository }}
-          --draft=false
