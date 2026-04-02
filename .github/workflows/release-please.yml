@@ -15,7 +15,6 @@ jobs:
 
     outputs:
       release-created: ${{ steps.release.outputs.release_created }}
-      upload-tag-name: ${{ steps.release.outputs.tag_name }}
 
     steps:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
@@ -40,12 +39,10 @@ jobs:
     needs: ["release-package", "build-ruby-gem", "build-jruby-gem"]
     if: ${{ needs.release-package.outputs.release-created == 'true' }}
 
-    outputs:
-      gem-hash: ${{ steps.publish.outputs.gem-hash }}
-
     permissions:
       id-token: write # Needed if using OIDC to get release secrets.
       contents: write # Contents and pull-requests are for release-please to make releases.
+      attestations: write # Needed for actions/attest.
 
     steps:
       - uses: actions/checkout@v4
@@ -72,17 +69,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  release-provenance:
-    needs: ["release-package", "publish"]
-    if: ${{ needs.release-package.outputs.release-created == 'true' }}
-
-    permissions:
-      actions: read
-      id-token: write
-      contents: write
-
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
-    with:
-      base64-subjects: "${{ needs.publish.outputs.gem-hash }}"
-      upload-assets: true
-      upload-tag-name: ${{ needs.release-package.outputs.upload-tag-name }}
+      - name: Attest build provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: 'launchdarkly-server-sdk-*.gem'
