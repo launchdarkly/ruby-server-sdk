@@ -231,9 +231,7 @@ module LaunchDarkly
 
           when LaunchDarkly::Interfaces::DataSystem::EventName::GOODBYE
             goodbye = LaunchDarkly::Impl::DataSystem::ProtocolV2::Goodbye.from_h(JSON.parse(message.data, symbolize_names: true))
-            unless goodbye.silent
-              @logger.error { "[LDClient] SSE server received error: #{goodbye.reason} (catastrophe: #{goodbye.catastrophe})" }
-            end
+            @logger.info { "[LDClient] SSE server received goodbye: #{goodbye.reason}" }
             nil
 
           when LaunchDarkly::Interfaces::DataSystem::EventName::ERROR

@@ -224,9 +224,7 @@ module LaunchDarkly
               )
             )
             goodbye = LaunchDarkly::Impl::DataSystem::ProtocolV2::Goodbye.new(
-              reason: "test reason",
-              silent: true,
-              catastrophe: false
+              reason: "test reason"
             )
             selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
 
