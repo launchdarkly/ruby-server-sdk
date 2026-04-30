@@ -134,6 +134,59 @@ module LaunchDarkly
             expect(result.value.persist).to eq(true)
           end
 
+          it "surfaces fallback_to_fdv1 on a successful response with the fallback header" do
+            # Server-directed FDv1 Fallback Directive may ride along on a 200 response that also
+            # carries a valid payload. The SDK must apply the payload AND surface the fallback
+            # signal so the data system can transition to the FDv1 Fallback Synchronizer.
+            change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
+            headers = { LD_FD_FALLBACK_HEADER => 'true' }
+            mock_requester = MockPollingRequester.new(
+              LaunchDarkly::Result.success([change_set, headers])
+            )
+            ds = PollingDataSource.new(1.0, mock_requester, logger)
+
+            fetch_result = ds.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))
+
+            expect(fetch_result).to be_a(LaunchDarkly::Interfaces::DataSystem::FetchResult)
+            expect(fetch_result.success?).to be true
+            expect(fetch_result.fallback_to_fdv1).to be true
+            expect(fetch_result.value).to be_a(LaunchDarkly::Interfaces::DataSystem::Basis)
+          end
+
+          it "surfaces fallback_to_fdv1 on an error response with the fallback header" do
+            # Even on a 500 response, the fallback header should be surfaced so the caller can
+            # branch on the directive before the recoverable-error logic kicks in.
+            headers_with_fallback = { LD_FD_FALLBACK_HEADER => 'true' }
+            error_result = LaunchDarkly::Result.fail(
+              "failure message",
+              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(500),
+              headers_with_fallback
+            )
+            mock_requester = MockPollingRequester.new(error_result)
+            ds = PollingDataSource.new(1.0, mock_requester, logger)
+
+            fetch_result = ds.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))
+
+            expect(fetch_result).to be_a(LaunchDarkly::Interfaces::DataSystem::FetchResult)
+            expect(fetch_result.success?).to be false
+            expect(fetch_result.fallback_to_fdv1).to be true
+          end
+
+          it "reports fallback_to_fdv1 as false when the header is absent on error" do
+            mock_requester = MockPollingRequester.new(
+              LaunchDarkly::Result.fail(
+                "failure message",
+                LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(500)
+              )
+            )
+            ds = PollingDataSource.new(1.0, mock_requester, logger)
+
+            fetch_result = ds.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))
+
+            expect(fetch_result.success?).to be false
+            expect(fetch_result.fallback_to_fdv1).to be false
+          end
+
           it "handles transfer changes" do
             payload_str = '{"events":[{"event": "server-intent","data": {"payloads":[{"id":"5A46PZ79FQ9D08YYKT79DECDNV","target":462,"intentCode":"xfer-changes","reason":"stale"}]}},{"event": "put-object","data": {"key":"sample-feature","kind":"flag","version":462,"object":{"key":"sample-feature","on":true,"prerequisites":[],"targets":[],"contextTargets":[],"rules":[],"fallthrough":{"variation":0},"offVariation":1,"variations":[true,false],"clientSideAvailability":{"usingMobileKey":false,"usingEnvironmentId":false},"clientSide":false,"salt":"9945e63a79a44787805b79728fee1926","trackEvents":false,"trackEventsFallthrough":false,"debugEventsUntilDate":null,"version":113,"deleted":false}}},{"event": "payload-transferred","data": {"state":"(p:5A46PZ79FQ9D08YYKT79DECDNV:462)","id":"5A46PZ79FQ9D08YYKT79DECDNV","version":462}}]}' # rubocop:disable Layout/LineLength
             change_set_result = LaunchDarkly::Impl::DataSystem.polling_payload_to_changeset(JSON.parse(payload_str, symbolize_names: true))

@@ -90,11 +90,11 @@ module LaunchDarkly
                 envid = headers[LD_ENVID_HEADER] || envid
 
                 # Check for fallback header on connection
-                if headers[LD_FD_FALLBACK_HEADER] == 'true'
+                if LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)
                   log_connection_result(true)
                   yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                     state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
-                    revert_to_fdv1: true,
+                    fallback_to_fdv1: true,
                     environment_id: envid
                   )
                   stop
@@ -150,10 +150,7 @@ module LaunchDarkly
               # Extract envid and fallback from error headers if available
               if error.respond_to?(:headers) && error.headers
                 envid = error.headers[LD_ENVID_HEADER] || envid
-
-                if error.headers[LD_FD_FALLBACK_HEADER] == 'true'
-                  fallback = true
-                end
+                fallback = true if LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(error.headers)
               end
 
               update = handle_error(error, envid, fallback)
@@ -286,7 +283,7 @@ module LaunchDarkly
               update = LaunchDarkly::Interfaces::DataSystem::Update.new(
                 state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
                 error: error_info,
-                revert_to_fdv1: true,
+                fallback_to_fdv1: true,
                 environment_id: envid
               )
               stop

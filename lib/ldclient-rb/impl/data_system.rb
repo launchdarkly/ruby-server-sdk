@@ -247,8 +247,9 @@ module LaunchDarkly
         # @return [LaunchDarkly::Interfaces::DataSource::ErrorInfo, nil] Error information if applicable
         attr_reader :error
 
-        # @return [Boolean] Whether to revert to FDv1
-        attr_reader :revert_to_fdv1
+        # @return [Boolean] Whether the LaunchDarkly server has instructed the SDK to
+        #   fall back to the FDv1 protocol.
+        attr_reader :fallback_to_fdv1
 
         # @return [String, nil] The environment ID if available
         attr_reader :environment_id
@@ -257,16 +258,20 @@ module LaunchDarkly
         # @param state [Symbol] The state of the data source
         # @param change_set [ChangeSet, nil] The change set if available
         # @param error [LaunchDarkly::Interfaces::DataSource::ErrorInfo, nil] Error information if applicable
-        # @param revert_to_fdv1 [Boolean] Whether to revert to FDv1
+        # @param fallback_to_fdv1 [Boolean] Whether to fall back to FDv1
         # @param environment_id [String, nil] The environment ID if available
         #
-        def initialize(state:, change_set: nil, error: nil, revert_to_fdv1: false, environment_id: nil)
+        def initialize(state:, change_set: nil, error: nil, fallback_to_fdv1: false, environment_id: nil)
           @state = state
           @change_set = change_set
           @error = error
-          @revert_to_fdv1 = revert_to_fdv1
+          @fallback_to_fdv1 = fallback_to_fdv1
           @environment_id = environment_id
         end
+
+        # Deprecated alias retained for backwards compatibility while FDv2 is in early access.
+        # @deprecated Prefer {#fallback_to_fdv1}.
+        alias_method :revert_to_fdv1, :fallback_to_fdv1
       end
 
       #

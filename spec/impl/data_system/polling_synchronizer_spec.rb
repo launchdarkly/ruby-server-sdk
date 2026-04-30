@@ -79,7 +79,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.intent_code).to eq(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_NONE)
@@ -111,7 +111,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.changes.length).to eq(0)
@@ -152,7 +152,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.changes.length).to eq(1)
@@ -193,7 +193,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.changes.length).to eq(1)
@@ -244,7 +244,7 @@ module LaunchDarkly
             expect(interrupted.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
             expect(interrupted.error.status_code).to eq(0)
             expect(interrupted.error.message).to eq("error for test")
-            expect(interrupted.revert_to_fdv1).to eq(false)
+            expect(interrupted.fallback_to_fdv1).to eq(false)
             expect(interrupted.environment_id).to be_nil
 
             expect(valid.change_set).not_to be_nil
@@ -291,12 +291,12 @@ module LaunchDarkly
             expect(interrupted.error).not_to be_nil
             expect(interrupted.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
             expect(interrupted.error.status_code).to eq(408)
-            expect(interrupted.revert_to_fdv1).to eq(false)
+            expect(interrupted.fallback_to_fdv1).to eq(false)
             expect(interrupted.environment_id).to be_nil
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
 
             expect(valid.change_set).not_to be_nil
@@ -333,7 +333,7 @@ module LaunchDarkly
             expect(off.error).not_to be_nil
             expect(off.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
             expect(off.error.status_code).to eq(401)
-            expect(off.revert_to_fdv1).to eq(false)
+            expect(off.fallback_to_fdv1).to eq(false)
             expect(off.environment_id).to be_nil
             expect(off.change_set).to be_nil
           end
@@ -361,7 +361,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to eq('test-env-polling-123')
           end
 
@@ -399,7 +399,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.environment_id).to eq('test-env-456')
-            expect(valid.revert_to_fdv1).to eq(true)
+            expect(valid.fallback_to_fdv1).to eq(true)
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.changes.length).to eq(1)
           end
@@ -514,7 +514,7 @@ module LaunchDarkly
 
           # When fallback header is present, status is OFF (not INTERRUPTED)
             expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
-            expect(off.revert_to_fdv1).to eq(true)
+            expect(off.fallback_to_fdv1).to eq(true)
             expect(off.environment_id).to eq('test-env-503')
           end
 
@@ -591,7 +591,7 @@ module LaunchDarkly
 
           # When fallback header is present on parse error, status is OFF
             expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
-            expect(off.revert_to_fdv1).to eq(true)
+            expect(off.fallback_to_fdv1).to eq(true)
             expect(off.environment_id).to eq('test-env-parse-error')
             expect(off.error).not_to be_nil
             expect(off.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
@@ -632,7 +632,7 @@ module LaunchDarkly
 
           # When fallback header is present on recoverable error, status is OFF
             expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
-            expect(off.revert_to_fdv1).to eq(true)
+            expect(off.fallback_to_fdv1).to eq(true)
             expect(off.environment_id).to eq('test-env-408')
             expect(off.error).not_to be_nil
             expect(off.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
@@ -674,7 +674,7 @@ module LaunchDarkly
 
             # Should use the data (VALID state) but signal future fallback
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
-            expect(valid.revert_to_fdv1).to eq(true)
+            expect(valid.fallback_to_fdv1).to eq(true)
             expect(valid.environment_id).to eq('test-env-success-fallback')
             expect(valid.error).to be_nil
             expect(valid.change_set).not_to be_nil  # Data is provided

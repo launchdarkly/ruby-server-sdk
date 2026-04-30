@@ -214,8 +214,23 @@ module LaunchDarkly
               nil
             )
 
-            # Run initializers first
-            run_initializers
+            # Run initializers first. If an initializer signals the
+            # server-directed FDv1 Fallback Directive, switch terminally to
+            # the FDv1 Fallback Synchronizer (or transition to OFF if none
+            # is configured) before entering the synchronizer phase.
+            if run_initializers
+              if @fdv1_fallback_synchronizer_builder
+                @logger.warn { "[LDClient] Falling back to FDv1 protocol" }
+                @synchronizer_builders = [@fdv1_fallback_synchronizer_builder]
+              else
+                @logger.warn { "[LDClient] Initializer requested FDv1 fallback but none configured" }
+                @synchronizer_builders = []
+                @data_source_status_provider.update_status(
+                  LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                  @data_source_status_provider.status.last_error
+                )
+              end
+            end
 
             # Run synchronizers
             run_synchronizers
@@ -228,39 +243,76 @@ module LaunchDarkly
         #
         # Run initializers to get initial data.
         #
-        # @return [void]
+        # Each initializer is tried in order until one succeeds, the system
+        # is stopped, or an initializer signals the server-directed FDv1
+        # Fallback Directive. When fallback is signalled alongside a valid
+        # payload, that payload is applied before returning so evaluations
+        # can serve the server-provided data while the FDv1 synchronizer
+        # spins up. The method returns true when fallback was requested so
+        # that the caller can switch the synchronizer list.
+        #
+        # @return [Boolean] true when an initializer requested FDv1 fallback.
         #
         def run_initializers
-          return unless @data_system_config.initializers
+          return false unless @data_system_config.initializers
 
           @data_system_config.initializers.each do |initializer_builder|
-            return if @stop_event.set?
+            return false if @stop_event.set?
 
             begin
               initializer = initializer_builder.build(@sdk_key, @config)
               @logger.info { "[LDClient] Attempting to initialize via #{initializer.name}" }
 
-              basis_result = initializer.fetch(@store)
+              fetch_result = initializer.fetch(@store)
+              fallback = fetch_result.respond_to?(:fallback_to_fdv1) && fetch_result.fallback_to_fdv1
+              # Support legacy implementations that return a bare Result.
+              basis_result = fetch_result.respond_to?(:result) ? fetch_result.result : fetch_result
 
               if basis_result.success?
                 basis = basis_result.value
                 @logger.info { "[LDClient] Initialized via #{initializer.name}" }
 
-                # Apply the basis to the store
+                # Apply the basis to the store regardless of whether
+                # fallback was signalled -- if the server returned a valid
+                # payload alongside the directive we still want evaluations
+                # to serve that data.
                 @store.apply(basis.change_set, basis.persist)
 
-                # Set ready event if and only if a selector is defined for the changeset
+                # Set ready event if and only if a selector is defined for the changeset.
+                # Even when fallback is requested, the payload that arrived with the directive
+                # has been applied to the store, so evaluations can serve it while the FDv1
+                # synchronizer spins up.
                 if basis.change_set.selector && basis.change_set.selector.defined?
                   @ready_event.set
-                  return
+                  return fallback ? true : false
                 end
               else
                 @logger.warn { "[LDClient] Initializer #{initializer.name} failed: #{basis_result.error}" }
+                if fallback
+                  # Record the underlying initializer error so that, if no FDv1 fallback is
+                  # configured, the subsequent transition to OFF carries it as last_error.
+                  @data_source_status_provider.update_status(
+                    LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING,
+                    LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
+                      LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN,
+                      0,
+                      basis_result.error || "",
+                      Time.now
+                    )
+                  )
+                end
               end
+
+              # Honor the FDv1 Fallback Directive even on an error or undefined-selector path:
+              # the directive takes precedence over the regular failover algorithm, so we must
+              # not fall through to the next initializer.
+              return true if fallback
             rescue => e
               @logger.error { "[LDClient] Initializer failed with exception: #{e.message}" }
             end
           end
+
+          false
         end
 
         #
@@ -410,7 +462,7 @@ module LaunchDarkly
               # Update status
               @data_source_status_provider.update_status(update.state, update.error)
 
-              return SyncResult::FDV1 if update.revert_to_fdv1
+              return SyncResult::FDV1 if update.fallback_to_fdv1
 
               return SyncResult::REMOVE if update.state == LaunchDarkly::Interfaces::DataSource::Status::OFF
             end

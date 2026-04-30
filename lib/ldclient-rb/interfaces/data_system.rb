@@ -559,8 +559,9 @@ module LaunchDarkly
         # @return [LaunchDarkly::Interfaces::DataSource::ErrorInfo, nil] Error information
         attr_reader :error
 
-        # @return [Boolean] Whether to revert to FDv1
-        attr_reader :revert_to_fdv1
+        # @return [Boolean] Whether the LaunchDarkly server has instructed the SDK to fall
+        #   back to the FDv1 protocol (signalled via the `X-LD-FD-Fallback` response header).
+        attr_reader :fallback_to_fdv1
 
         # @return [String, nil] The environment ID
         attr_reader :environment_id
@@ -569,15 +570,71 @@ module LaunchDarkly
         # @param state [Symbol] The data source state ({LaunchDarkly::Interfaces::DataSource::Status})
         # @param change_set [ChangeSet, nil] The change set
         # @param error [LaunchDarkly::Interfaces::DataSource::ErrorInfo, nil] Error information
-        # @param revert_to_fdv1 [Boolean] Whether to revert to FDv1
+        # @param fallback_to_fdv1 [Boolean] Whether to fall back to FDv1
         # @param environment_id [String, nil] The environment ID
         #
-        def initialize(state:, change_set: nil, error: nil, revert_to_fdv1: false, environment_id: nil)
+        def initialize(state:, change_set: nil, error: nil, fallback_to_fdv1: false, environment_id: nil)
           @state = state
           @change_set = change_set
           @error = error
-          @revert_to_fdv1 = revert_to_fdv1
+          @fallback_to_fdv1 = fallback_to_fdv1
           @environment_id = environment_id
+        end
+
+        # Deprecated alias retained so that existing callers continue to work
+        # while the FDv2 data system is in early access. Prefer
+        # {#fallback_to_fdv1}.
+        # @deprecated
+        alias_method :revert_to_fdv1, :fallback_to_fdv1
+      end
+
+      #
+      # FetchResult pairs the result of an {Initializer#fetch} call with the
+      # server-directed FDv1 Fallback Directive signal.
+      #
+      # When the LaunchDarkly server returns the `X-LD-FD-Fallback: true`
+      # response header on an initializer response, the SDK must apply any
+      # accompanying payload and then switch to the FDv1 Fallback Synchronizer.
+      # Surfacing this signal alongside the {LaunchDarkly::Result} ensures
+      # callers cannot silently drop it.
+      #
+      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
+      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
+      #
+      class FetchResult
+        # @return [LaunchDarkly::Result] A Result containing either a {Basis} or an error.
+        attr_reader :result
+
+        # @return [Boolean] Whether the server has instructed the SDK to fall back to the FDv1 protocol.
+        attr_reader :fallback_to_fdv1
+
+        #
+        # @param result [LaunchDarkly::Result] A Result containing either a Basis or an error.
+        # @param fallback_to_fdv1 [Boolean] Whether to fall back to FDv1.
+        #
+        def initialize(result:, fallback_to_fdv1: false)
+          @result = result
+          @fallback_to_fdv1 = fallback_to_fdv1
+        end
+
+        # @return [Boolean] true when the underlying Result was successful.
+        def success?
+          @result.success?
+        end
+
+        # @return [Object, nil] The {Basis} returned from a successful fetch, or nil.
+        def value
+          @result.value
+        end
+
+        # @return [String, nil] An error description, or nil on success.
+        def error
+          @result.error
+        end
+
+        # @return [Exception, nil] An optional exception describing the failure.
+        def exception
+          @result.exception
         end
       end
 
@@ -655,8 +712,14 @@ module LaunchDarkly
         #
         # Retrieves the initial data set for the data source.
         #
+        # If the LaunchDarkly server has instructed the SDK to fall back to
+        # the FDv1 protocol, the returned {FetchResult#fallback_to_fdv1} is
+        # true. The wrapped result may still carry a successful {Basis} when
+        # the directive accompanied a valid payload, in which case callers
+        # should apply the payload before switching protocols.
+        #
         # @param selector_store [SelectorStore] Provides the Selector
-        # @return [LaunchDarkly::Result<Basis, String>]
+        # @return [FetchResult]
         #
         def fetch(selector_store)
           raise NotImplementedError, "#{self.class} must implement #fetch"

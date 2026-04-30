@@ -69,7 +69,7 @@ module LaunchDarkly
             expect(update).not_to be_nil
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(update.error).to be_nil
-            expect(update.revert_to_fdv1).to eq(false)
+            expect(update.fallback_to_fdv1).to eq(false)
             expect(update.environment_id).to be_nil
             expect(update.change_set).to be_nil
           end
@@ -102,7 +102,7 @@ module LaunchDarkly
             expect(update).not_to be_nil
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(update.error).to be_nil
-            expect(update.revert_to_fdv1).to eq(false)
+            expect(update.fallback_to_fdv1).to eq(false)
             expect(update.environment_id).to be_nil
             expect(update.change_set).not_to be_nil
             expect(update.change_set.changes.length).to eq(0)
@@ -153,7 +153,7 @@ module LaunchDarkly
             expect(update).not_to be_nil
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(update.error).to be_nil
-            expect(update.revert_to_fdv1).to eq(false)
+            expect(update.fallback_to_fdv1).to eq(false)
             expect(update.environment_id).to be_nil
             expect(update.change_set).not_to be_nil
             expect(update.change_set.changes.length).to eq(1)
@@ -204,7 +204,7 @@ module LaunchDarkly
             expect(update).not_to be_nil
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(update.error).to be_nil
-            expect(update.revert_to_fdv1).to eq(false)
+            expect(update.fallback_to_fdv1).to eq(false)
             expect(update.environment_id).to be_nil
             expect(update.change_set).not_to be_nil
             expect(update.change_set.changes.length).to eq(1)
