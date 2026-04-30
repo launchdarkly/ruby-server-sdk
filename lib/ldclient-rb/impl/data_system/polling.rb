@@ -25,12 +25,58 @@ module LaunchDarkly
       # Reports whether the response headers signal that the SDK should fall
       # back to the FDv1 protocol.
       #
-      # @param headers [Hash, nil]
+      # The header lookup is case-insensitive: response header maps in this
+      # codebase arrive in three flavours -- the http gem's case-insensitive
+      # `HTTP::Headers`, plain Ruby Hashes whose keys we have downcased
+      # (e.g. {HTTPPollingRequester#fetch}), and Hashes with the canonical
+      # mixed-case key. Lookups in only one of those casings would silently
+      # drop the directive against a perfectly valid response.
+      #
+      # @param headers [#[], Hash, nil]
       # @return [Boolean]
       #
       def self.fdv1_fallback_requested?(headers)
-        return false unless headers
-        headers[LD_FD_FALLBACK_HEADER] == 'true'
+        return false if headers.nil?
+        value = lookup_header(headers, LD_FD_FALLBACK_HEADER)
+        # http gem returns arrays for repeated headers; normalize to a string.
+        value = value.first if value.is_a?(Array)
+        value == 'true'
+      end
+
+      #
+      # Performs a case-insensitive header lookup that works with both
+      # case-insensitive header containers (e.g. `HTTP::Headers`) and plain
+      # Ruby hashes -- including hashes whose keys we have downcased
+      # ourselves before reaching this code path.
+      #
+      # @param headers [#[], Hash]
+      # @param name [String]
+      # @return [String, Array, nil]
+      #
+      def self.lookup_header(headers, name)
+        return nil if headers.nil?
+
+        if headers.is_a?(Hash)
+          # Plain hash: try canonical case, then exact lowercase, then a
+          # case-insensitive scan as a final fallback.
+          value = headers[name]
+          return value unless value.nil?
+
+          downcased = name.downcase
+          value = headers[downcased]
+          return value unless value.nil?
+
+          headers.each_pair do |key, val|
+            return val if key.to_s.downcase == downcased
+          end
+          return nil
+        end
+
+        # Non-hash container (e.g. HTTP::Headers). Lookup via [] is
+        # already case-insensitive on those types.
+        return headers[name] if headers.respond_to?(:[])
+
+        nil
       end
 
       #
@@ -88,7 +134,7 @@ module LaunchDarkly
 
             if !result.success?
               fallback = LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(result.headers)
-              envid = result.headers ? result.headers[LD_ENVID_HEADER] : nil
+              envid = result.headers ? LaunchDarkly::Impl::DataSystem.lookup_header(result.headers, LD_ENVID_HEADER) : nil
 
               if result.exception.is_a?(LaunchDarkly::Impl::DataSource::UnexpectedResponseError)
                 error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
@@ -162,7 +208,7 @@ module LaunchDarkly
               yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                 state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
                 change_set: change_set,
-                environment_id: headers[LD_ENVID_HEADER],
+                environment_id: LaunchDarkly::Impl::DataSystem.lookup_header(headers, LD_ENVID_HEADER),
                 fallback_to_fdv1: fallback
               )
             end
@@ -223,7 +269,7 @@ module LaunchDarkly
 
           change_set, headers = result.value
 
-          env_id = headers[LD_ENVID_HEADER]
+          env_id = LaunchDarkly::Impl::DataSystem.lookup_header(headers, LD_ENVID_HEADER)
           env_id = nil unless env_id.is_a?(String)
 
           basis = LaunchDarkly::Interfaces::DataSystem::Basis.new(

@@ -365,12 +365,21 @@ module LaunchDarkly
                 case sync_result
                 when SyncResult::FDV1
                   if @fdv1_fallback_synchronizer_builder
+                    @logger.warn { "[LDClient] Falling back to FDv1 protocol" }
                     @synchronizer_builders = [@fdv1_fallback_synchronizer_builder]
                     current_index = 0
                     next
                   end
-                  # No FDv1 fallback configured, treat as regular fallback
-                  current_index += 1
+                  # No FDv1 fallback configured: per spec section 1.6.3(4) the
+                  # data system must HALT rather than fall through to the next
+                  # FDv2 synchronizer. Continuing to retry would reopen the
+                  # connection that just delivered the directive.
+                  @logger.warn { "[LDClient] Synchronizer requested FDv1 fallback but none configured; halting data system" }
+                  @data_source_status_provider.update_status(
+                    LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                    @data_source_status_provider.status.last_error
+                  )
+                  break
                 when SyncResult::RECOVER
                   @logger.info { "[LDClient] Recovery condition met, returning to primary synchronizer" }
                   current_index = 0

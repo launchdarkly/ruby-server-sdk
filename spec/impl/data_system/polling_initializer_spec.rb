@@ -7,6 +7,54 @@ require "ldclient-rb/interfaces"
 module LaunchDarkly
   module Impl
     module DataSystem
+      RSpec.describe ".fdv1_fallback_requested?" do
+        it "matches the canonical mixed-case header" do
+          headers = { 'X-LD-FD-Fallback' => 'true' }
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)).to be true
+        end
+
+        it "matches the downcased header (HTTPPollingRequester#fetch normalizes casing)" do
+          headers = { 'x-ld-fd-fallback' => 'true' }
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)).to be true
+        end
+
+        it "matches arbitrary mixed-case header keys" do
+          headers = { 'X-Ld-Fd-Fallback' => 'true' }
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)).to be true
+        end
+
+        it "returns false when the header is absent" do
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?({})).to be false
+        end
+
+        it "returns false when the header value is not 'true'" do
+          headers = { 'X-LD-FD-Fallback' => 'false' }
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)).to be false
+        end
+
+        it "returns false when the headers object is nil" do
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(nil)).to be false
+        end
+
+        it "works against case-insensitive containers (HTTP::Headers shape)" do
+          # The ld-eventsource gem hands us an HTTP::Headers instance whose []
+          # accessor is case-insensitive but which does not implement
+          # each_pair. Simulate that shape so the helper is exercised against
+          # exactly the API surface that broke contract tests on PR #381.
+          ci_container = Class.new do
+            def initialize(values)
+              @values = values
+            end
+
+            def [](name)
+              @values[name.to_s.downcase]
+            end
+          end
+          headers = ci_container.new('x-ld-fd-fallback' => 'true')
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)).to be true
+        end
+      end
+
       RSpec.describe PollingDataSource do
         let(:logger) { double("Logger", info: nil, warn: nil, error: nil, debug: nil) }
 
@@ -168,6 +216,42 @@ module LaunchDarkly
             fetch_result = ds.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))
 
             expect(fetch_result).to be_a(LaunchDarkly::Interfaces::DataSystem::FetchResult)
+            expect(fetch_result.success?).to be false
+            expect(fetch_result.fallback_to_fdv1).to be true
+          end
+
+          it "honors the fallback header regardless of case" do
+            # The HTTPPollingRequester downcases response header keys before
+            # handing them off, but other code paths (and other HTTP clients)
+            # may keep the canonical mixed case. Header lookup must be
+            # case-insensitive or the directive silently disappears against a
+            # perfectly valid response -- this is the bug that the contract
+            # tests caught against the initializer-phase fix.
+            change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
+            headers = { 'x-ld-fd-fallback' => 'true' } # downcased -- mirrors HTTPPollingRequester
+            mock_requester = MockPollingRequester.new(
+              LaunchDarkly::Result.success([change_set, headers])
+            )
+            ds = PollingDataSource.new(1.0, mock_requester, logger)
+
+            fetch_result = ds.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))
+
+            expect(fetch_result.success?).to be true
+            expect(fetch_result.fallback_to_fdv1).to be true
+          end
+
+          it "honors the fallback header on error responses with downcased keys" do
+            headers_with_fallback = { 'x-ld-fd-fallback' => 'true' }
+            error_result = LaunchDarkly::Result.fail(
+              "failure message",
+              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(500),
+              headers_with_fallback
+            )
+            mock_requester = MockPollingRequester.new(error_result)
+            ds = PollingDataSource.new(1.0, mock_requester, logger)
+
+            fetch_result = ds.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))
+
             expect(fetch_result.success?).to be false
             expect(fetch_result.fallback_to_fdv1).to be true
           end

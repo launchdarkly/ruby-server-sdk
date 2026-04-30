@@ -47,6 +47,11 @@ module LaunchDarkly
           @stopped = Concurrent::Event.new
           @diagnostic_accumulator = nil
           @connection_attempt_start_time = 0
+          # Set when the SSE connect handshake carries the X-LD-FD-Fallback
+          # directive. We finish applying the current payload before signalling
+          # fallback to the consumer, so evaluations can serve the streaming
+          # data while FDv1 takes over.
+          @fdv1_fallback_pending = false
         end
 
         #
@@ -85,20 +90,19 @@ module LaunchDarkly
 
           @sse = SSE::Client.new(base_uri, **opts) do |client|
             client.on_connect do |headers|
-              # Extract environment ID and check for fallback on successful connection
+              # Extract environment ID and check for fallback on successful connection.
               if headers
-                envid = headers[LD_ENVID_HEADER] || envid
+                envid = LaunchDarkly::Impl::DataSystem.lookup_header(headers, LD_ENVID_HEADER) || envid
 
-                # Check for fallback header on connection
-                if LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)
-                  log_connection_result(true)
-                  yield LaunchDarkly::Interfaces::DataSystem::Update.new(
-                    state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
-                    fallback_to_fdv1: true,
-                    environment_id: envid
-                  )
-                  stop
-                end
+                # When the server signals the FDv1 Fallback Directive on a 200
+                # SSE handshake the spec requires us to apply any payload that
+                # arrives on this stream BEFORE handing off to FDv1
+                # (Requirement 1.6.2). We therefore record the directive here
+                # but stay subscribed; when the next payload-transferred event
+                # produces a Valid update, that update carries
+                # `fallback_to_fdv1: true` and the consumer transitions only
+                # after the payload has been applied.
+                @fdv1_fallback_pending = true if LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)
               end
             end
 
@@ -108,6 +112,26 @@ module LaunchDarkly
                 if update
                   log_connection_result(true)
                   @connection_attempt_start_time = 0
+
+                  # If the connection carried the FDv1 Fallback Directive, ride
+                  # it on this Valid update. The consumer applies the
+                  # ChangeSet first, then transitions to FDv1 -- so we close
+                  # the stream after yielding to honor 1.6.3(2) (Primary
+                  # Synchronizer must be stopped once the directive engages).
+                  if @fdv1_fallback_pending && update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
+                    update = LaunchDarkly::Interfaces::DataSystem::Update.new(
+                      state: update.state,
+                      change_set: update.change_set,
+                      error: update.error,
+                      environment_id: update.environment_id || envid,
+                      fallback_to_fdv1: true
+                    )
+                    @fdv1_fallback_pending = false
+                    yield update
+                    stop
+                    next
+                  end
+
                   yield update
                 end
               rescue JSON::ParserError => e
@@ -149,7 +173,7 @@ module LaunchDarkly
 
               # Extract envid and fallback from error headers if available
               if error.respond_to?(:headers) && error.headers
-                envid = error.headers[LD_ENVID_HEADER] || envid
+                envid = LaunchDarkly::Impl::DataSystem.lookup_header(error.headers, LD_ENVID_HEADER) || envid
                 fallback = true if LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(error.headers)
               end
 
