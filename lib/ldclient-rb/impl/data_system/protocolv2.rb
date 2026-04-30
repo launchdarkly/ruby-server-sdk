@@ -160,21 +160,11 @@ module LaunchDarkly
           # @return [String] The reason for goodbye
           attr_reader :reason
 
-          # @return [Boolean] Whether the goodbye is silent
-          attr_reader :silent
-
-          # @return [Boolean] Whether this represents a catastrophic failure
-          attr_reader :catastrophe
-
           #
           # @param reason [String] The reason for goodbye
-          # @param silent [Boolean] Whether the goodbye is silent
-          # @param catastrophe [Boolean] Whether this represents a catastrophic failure
           #
-          def initialize(reason:, silent:, catastrophe:)
+          def initialize(reason:)
             @reason = reason
-            @silent = silent
-            @catastrophe = catastrophe
           end
 
           #
@@ -185,8 +175,6 @@ module LaunchDarkly
           def to_h
             {
               reason: @reason,
-              silent: @silent,
-              catastrophe: @catastrophe,
             }
           end
 
@@ -199,12 +187,10 @@ module LaunchDarkly
           #
           def self.from_h(data)
             reason = data[:reason]
-            silent = data[:silent]
-            catastrophe = data[:catastrophe]
 
-            raise ArgumentError, "Missing required fields in Goodbye" if reason.nil? || silent.nil? || catastrophe.nil?
+            raise ArgumentError, "Missing required fields in Goodbye" if reason.nil?
 
-            new(reason: reason, silent: silent, catastrophe: catastrophe)
+            new(reason: reason)
           end
         end
 
