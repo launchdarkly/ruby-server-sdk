@@ -141,7 +141,7 @@ module LaunchDarkly
 
           it "handles transfer none" do
             mock_requester = MockPollingRequester.new(
-              LaunchDarkly::Result.success([LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes, {}])
+              LaunchDarkly::Result.success(LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes, {})
             )
             ds = PollingDataSource.new(1.0, mock_requester, logger)
 
@@ -170,7 +170,7 @@ module LaunchDarkly
             change_set_result = LaunchDarkly::Impl::DataSystem.polling_payload_to_changeset(JSON.parse(payload_str, symbolize_names: true))
             expect(change_set_result.success?).to eq(true)
 
-            mock_requester = MockPollingRequester.new(LaunchDarkly::Result.success([change_set_result.value, {}]))
+            mock_requester = MockPollingRequester.new(LaunchDarkly::Result.success(change_set_result.value, {}))
             ds = PollingDataSource.new(1.0, mock_requester, logger)
 
             result = ds.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))
@@ -183,13 +183,13 @@ module LaunchDarkly
           end
 
           it "surfaces fallback_to_fdv1 on a successful response with the fallback header" do
-            # Server-directed FDv1 Fallback Directive may ride along on a 200 response that also
-            # carries a valid payload. The SDK must apply the payload AND surface the fallback
-            # signal so the data system can transition to the FDv1 Fallback Synchronizer.
+            # The fallback directive may ride along on a 200 response that also carries a valid
+            # payload. The SDK must apply the payload AND surface the fallback signal so the
+            # data system can transition to the FDv1 Fallback Synchronizer.
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = { LD_FD_FALLBACK_HEADER => 'true' }
             mock_requester = MockPollingRequester.new(
-              LaunchDarkly::Result.success([change_set, headers])
+              LaunchDarkly::Result.success(change_set, headers)
             )
             ds = PollingDataSource.new(1.0, mock_requester, logger)
 
@@ -230,7 +230,7 @@ module LaunchDarkly
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = { 'x-ld-fd-fallback' => 'true' } # downcased -- mirrors HTTPPollingRequester
             mock_requester = MockPollingRequester.new(
-              LaunchDarkly::Result.success([change_set, headers])
+              LaunchDarkly::Result.success(change_set, headers)
             )
             ds = PollingDataSource.new(1.0, mock_requester, logger)
 
@@ -276,7 +276,7 @@ module LaunchDarkly
             change_set_result = LaunchDarkly::Impl::DataSystem.polling_payload_to_changeset(JSON.parse(payload_str, symbolize_names: true))
             expect(change_set_result.success?).to eq(true)
 
-            mock_requester = MockPollingRequester.new(LaunchDarkly::Result.success([change_set_result.value, {}]))
+            mock_requester = MockPollingRequester.new(LaunchDarkly::Result.success(change_set_result.value, {}))
             ds = PollingDataSource.new(1.0, mock_requester, logger)
 
             result = ds.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))

@@ -580,12 +580,6 @@ module LaunchDarkly
           @fallback_to_fdv1 = fallback_to_fdv1
           @environment_id = environment_id
         end
-
-        # Deprecated alias retained so that existing callers continue to work
-        # while the FDv2 data system is in early access. Prefer
-        # {#fallback_to_fdv1}.
-        # @deprecated
-        alias_method :revert_to_fdv1, :fallback_to_fdv1
       end
 
       #

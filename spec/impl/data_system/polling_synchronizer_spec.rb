@@ -59,7 +59,7 @@ module LaunchDarkly
           it "handles no changes" do
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -91,7 +91,7 @@ module LaunchDarkly
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -132,7 +132,7 @@ module LaunchDarkly
             )
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -173,7 +173,7 @@ module LaunchDarkly
             builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, :flagkey, 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -213,7 +213,7 @@ module LaunchDarkly
             builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flagkey", 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(
               0.01,
@@ -259,7 +259,7 @@ module LaunchDarkly
             builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flagkey", 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             failure = LaunchDarkly::Result.fail(
               "error for test",
@@ -341,7 +341,7 @@ module LaunchDarkly
           it "captures envid from success headers" do
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = { LD_ENVID_HEADER => 'test-env-polling-123' }
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -379,7 +379,7 @@ module LaunchDarkly
               LD_ENVID_HEADER => 'test-env-456',
               LD_FD_FALLBACK_HEADER => 'true',
             }
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -410,7 +410,7 @@ module LaunchDarkly
             builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flagkey", 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers_success = { LD_ENVID_HEADER => 'test-env-success' }
-            polling_result = LaunchDarkly::Result.success([change_set, headers_success])
+            polling_result = LaunchDarkly::Result.success(change_set, headers_success)
 
             headers_error = { LD_ENVID_HEADER => 'test-env-408' }
             failure = LaunchDarkly::Result.fail(
@@ -523,7 +523,7 @@ module LaunchDarkly
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers_success = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers_success])
+            polling_result = LaunchDarkly::Result.success(change_set, headers_success)
 
             headers_error = { LD_ENVID_HEADER => 'test-env-generic' }
             failure = LaunchDarkly::Result.fail("generic error for test", nil, headers_error)
@@ -650,7 +650,7 @@ module LaunchDarkly
             }
 
             # Server sends successful response with valid data but also signals fallback
-            success_result = LaunchDarkly::Result.success([change_set, headers_with_fallback])
+            success_result = LaunchDarkly::Result.success(change_set, headers_with_fallback)
 
             synchronizer = PollingDataSource.new(
               0.01,
@@ -683,7 +683,7 @@ module LaunchDarkly
           it "closes requester when sync exits" do
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             requester = RequesterWithCleanup.new([polling_result])
             synchronizer = PollingDataSource.new(0.01, requester, logger)
@@ -703,7 +703,7 @@ module LaunchDarkly
           it "closes requester when fetch is called" do
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             requester = RequesterWithCleanup.new([polling_result])
             synchronizer = PollingDataSource.new(0.01, requester, logger)
