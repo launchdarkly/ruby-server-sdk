@@ -42,9 +42,14 @@ class ClientEntity
       if sync_configs && !sync_configs.empty?
         synchronizer_builders = sync_configs.map { |sync_config| build_synchronizer_builder(sync_config) }.compact
         data_system.synchronizers(synchronizer_builders) unless synchronizer_builders.empty?
+      end
 
-        fallback_builder = build_fdv1_fallback_builder(sync_configs)
-        data_system.fdv1_compatible_synchronizer(fallback_builder)
+      # The FDv1 Fallback Synchronizer is wired directly from a top-level
+      # dataSystem.fdv1Fallback config block -- the test harness no longer
+      # infers it from the FDv2 synchronizer chain.
+      fdv1_fallback_config = data_system_config[:fdv1Fallback]
+      if fdv1_fallback_config
+        data_system.fdv1_compatible_synchronizer(build_fdv1_fallback_builder(fdv1_fallback_config))
       end
 
       if data_system_config[:payloadFilter]
@@ -342,21 +347,17 @@ class ClientEntity
   end
 
   #
-  # Builds an FDv1 fallback polling data source builder using the first available polling config.
+  # Builds an FDv1 fallback polling data source builder from the dedicated
+  # `dataSystem.fdv1Fallback` config block. This block has the same shape as
+  # a polling config (`baseUri`, `pollIntervalMs`).
   #
-  # @param sync_configs [Array<Hash>] Array of synchronizer configurations
+  # @param fdv1_fallback_config [Hash] The FDv1 fallback configuration
   # @return [Object] Returns the configured FDv1 fallback builder
   #
-  private def build_fdv1_fallback_builder(sync_configs)
+  private def build_fdv1_fallback_builder(fdv1_fallback_config)
     builder = LaunchDarkly::DataSystem.fdv1_fallback_ds_builder
-
-    # Use the first available polling config for the fallback base_uri
-    polling_config = sync_configs.lazy.map { |c| c[:polling] }.detect { |p| p }
-    if polling_config
-      builder.base_uri(polling_config[:baseUri]) if polling_config[:baseUri]
-      builder.poll_interval(polling_config[:pollIntervalMs] / 1_000.0) if polling_config[:pollIntervalMs]
-    end
-
+    builder.base_uri(fdv1_fallback_config[:baseUri]) if fdv1_fallback_config[:baseUri]
+    builder.poll_interval(fdv1_fallback_config[:pollIntervalMs] / 1_000.0) if fdv1_fallback_config[:pollIntervalMs]
     builder
   end
 

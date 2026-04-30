@@ -53,6 +53,7 @@ get '/' do
       'persistent-data-store-redis',
       'flag-change-listeners',
       'flag-value-change-listeners',
+      'fdv1-fallback',
     ],
   }.to_json
 end
