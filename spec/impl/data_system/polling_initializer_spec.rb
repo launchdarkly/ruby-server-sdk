@@ -271,6 +271,29 @@ module LaunchDarkly
             expect(fetch_result.fallback_to_fdv1).to be false
           end
 
+          it "preserves fallback_to_fdv1 when an exception is raised after the response headers are read" do
+            # An exception can fire during Basis construction (e.g. change_set.selector
+            # is nil, so .defined? raises NoMethodError). The directive on the response
+            # headers must still ride through the rescue clause to the FetchResult so
+            # the data system can engage FDv1 instead of treating the failure as
+            # a generic transient error.
+            broken_change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+              changes: [],
+              selector: nil # <- triggers NoMethodError on change_set.selector.defined?
+            )
+            headers = { LD_FD_FALLBACK_HEADER => 'true' }
+            mock_requester = MockPollingRequester.new(
+              LaunchDarkly::Result.success(broken_change_set, headers)
+            )
+            ds = PollingDataSource.new(1.0, mock_requester, logger)
+
+            fetch_result = ds.fetch(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector))
+
+            expect(fetch_result.success?).to be false
+            expect(fetch_result.fallback_to_fdv1).to be true
+          end
+
           it "handles transfer changes" do
             payload_str = '{"events":[{"event": "server-intent","data": {"payloads":[{"id":"5A46PZ79FQ9D08YYKT79DECDNV","target":462,"intentCode":"xfer-changes","reason":"stale"}]}},{"event": "put-object","data": {"key":"sample-feature","kind":"flag","version":462,"object":{"key":"sample-feature","on":true,"prerequisites":[],"targets":[],"contextTargets":[],"rules":[],"fallthrough":{"variation":0},"offVariation":1,"variations":[true,false],"clientSideAvailability":{"usingMobileKey":false,"usingEnvironmentId":false},"clientSide":false,"salt":"9945e63a79a44787805b79728fee1926","trackEvents":false,"trackEventsFallthrough":false,"debugEventsUntilDate":null,"version":113,"deleted":false}}},{"event": "payload-transferred","data": {"state":"(p:5A46PZ79FQ9D08YYKT79DECDNV:462)","id":"5A46PZ79FQ9D08YYKT79DECDNV","version":462}}]}' # rubocop:disable Layout/LineLength
             change_set_result = LaunchDarkly::Impl::DataSystem.polling_payload_to_changeset(JSON.parse(payload_str, symbolize_names: true))

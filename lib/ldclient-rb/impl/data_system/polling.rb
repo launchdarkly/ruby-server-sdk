@@ -228,6 +228,9 @@ module LaunchDarkly
         # @return [LaunchDarkly::Interfaces::DataSystem::FetchResult]
         #
         private def poll(ss)
+          # Default to false so the rescue clause has a defined value even when an
+          # exception is raised before the header read below has had a chance to run.
+          fallback = false
           result = @requester.fetch(ss.selector)
           fallback = LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(result.headers)
 
@@ -265,12 +268,16 @@ module LaunchDarkly
             fallback_to_fdv1: fallback
           )
         rescue => e
+          # An exception can fire after we have already read the response
+          # headers (e.g. a malformed change_set whose selector is nil makes
+          # change_set.selector.defined? raise). Carry the computed fallback
+          # signal through so the directive is not silently dropped.
           msg = "Error: Exception encountered when updating flags. #{e}"
           @logger.error { "[LDClient] #{msg}" }
           @logger.debug { "[LDClient] Exception trace: #{e.backtrace}" }
           LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
             result: LaunchDarkly::Result.fail(msg, e),
-            fallback_to_fdv1: false
+            fallback_to_fdv1: fallback
           )
         end
       end
