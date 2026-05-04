@@ -72,20 +72,24 @@ module LaunchDarkly
 
           change_set_builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
           envid = nil
-          # The directive arrives in the connect-time response headers (handled
-          # by on_connect) but the SDK must apply the next full payload before
-          # transitioning. on_event has no access to the connect headers, so
-          # this local closes over both callbacks to bridge the lifecycle of a
-          # single sync invocation. A local (rather than an instance variable)
-          # is the right shape for two reasons:
-          #   1. Lifecycle -- it is scoped to one sync invocation and cannot
-          #      leak state across reconnects or to a future sync call.
-          #   2. Thread safety -- ld-eventsource guarantees on_connect,
-          #      on_event, and on_error all dispatch on the same SSE worker
-          #      thread, so reads and writes here are single-threaded by
-          #      construction. No atomic / mutex needed even on JRuby. An
-          #      instance variable would be vulnerable to cross-thread reads
-          #      if some future caller queried state from another thread.
+          # The FDv1 Fallback Directive is one-way and terminal: once any
+          # connect handshake within this sync invocation carries it, the SDK
+          # is committed to engaging FDv1 as soon as the next full payload
+          # has been applied. We therefore latch this flag to true on first
+          # observation and never reset it -- a mid-sync reconnect whose
+          # response no longer carries the directive does NOT cancel a
+          # directive seen earlier. This matches the Go and Python SDK
+          # implementations, both of which use the same latch pattern.
+          #
+          # The flag has to bridge two callbacks: on_connect sees the response
+          # headers but on_event does not. A local closed over by both blocks
+          # is correct because:
+          #   1. Scope -- bound to a single sync invocation, so a future sync
+          #      starts fresh. (Within this invocation, persistence across
+          #      reconnects is the intended semantics, per above.)
+          #   2. Thread safety -- ld-eventsource dispatches on_connect,
+          #      on_event, and on_error on the same SSE worker thread, so
+          #      reads and writes here are single-threaded by construction.
           fdv1_fallback_pending = false
 
           base_uri = @http_config.base_uri + FDV2_STREAMING_ENDPOINT
