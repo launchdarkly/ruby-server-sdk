@@ -22,6 +22,60 @@ module LaunchDarkly
       LD_FD_FALLBACK_HEADER = "X-LD-FD-Fallback"
 
       #
+      # Reports whether the response headers signal that the SDK should fall
+      # back to the FDv1 protocol. Lookup is case-insensitive so callers do
+      # not need to know whether the header map preserves canonical casing
+      # (e.g. {HTTP::Headers}) or has been normalized to lowercase (e.g.
+      # {HTTPPollingRequester#fetch}).
+      #
+      # @param headers [#[], Hash, nil]
+      # @return [Boolean]
+      #
+      def self.fdv1_fallback_requested?(headers)
+        return false if headers.nil?
+        value = lookup_header(headers, LD_FD_FALLBACK_HEADER)
+        # http gem returns arrays for repeated headers; normalize to a string.
+        value = value.first if value.is_a?(Array)
+        value == 'true'
+      end
+
+      #
+      # Performs a case-insensitive header lookup that works with both
+      # case-insensitive header containers (e.g. `HTTP::Headers`) and plain
+      # Ruby hashes -- including hashes whose keys we have downcased
+      # ourselves before reaching this code path.
+      #
+      # @param headers [#[], Hash]
+      # @param name [String]
+      # @return [String, Array, nil]
+      #
+      def self.lookup_header(headers, name)
+        return nil if headers.nil?
+
+        if headers.is_a?(Hash)
+          # Plain hash: try canonical case, then exact lowercase, then a
+          # case-insensitive scan as a final fallback.
+          value = headers[name]
+          return value unless value.nil?
+
+          downcased = name.downcase
+          value = headers[downcased]
+          return value unless value.nil?
+
+          headers.each_pair do |key, val|
+            return val if key.to_s.downcase == downcased
+          end
+          return nil
+        end
+
+        # Non-hash container (e.g. HTTP::Headers). Lookup via [] is
+        # already case-insensitive on those types.
+        return headers[name] if headers.respond_to?(:[])
+
+        nil
+      end
+
+      #
       # PollingDataSource is a data source that can retrieve information from
       # LaunchDarkly either as an Initializer or as a Synchronizer.
       #
@@ -46,10 +100,12 @@ module LaunchDarkly
         end
 
         #
-        # Fetch returns a Basis, or an error if the Basis could not be retrieved.
+        # Fetch returns a {LaunchDarkly::Interfaces::DataSystem::FetchResult}
+        # wrapping a Basis (or an error) and the FDv1 Fallback Directive
+        # signal carried on the server response.
         #
         # @param ss [LaunchDarkly::Interfaces::DataSystem::SelectorStore]
-        # @return [LaunchDarkly::Interfaces::DataSystem::Basis, nil]
+        # @return [LaunchDarkly::Interfaces::DataSystem::FetchResult]
         #
         def fetch(ss)
           poll(ss)
@@ -71,16 +127,10 @@ module LaunchDarkly
 
           until @stop.set?
             result = @requester.fetch(ss.selector)
+            fallback = LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(result.headers)
+            envid = LaunchDarkly::Impl::DataSystem.lookup_header(result.headers, LD_ENVID_HEADER)
 
             if !result.success?
-              fallback = false
-              envid = nil
-
-              if result.headers
-                fallback = result.headers[LD_FD_FALLBACK_HEADER] == 'true'
-                envid = result.headers[LD_ENVID_HEADER]
-              end
-
               if result.exception.is_a?(LaunchDarkly::Impl::DataSource::UnexpectedResponseError)
                 error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
                   LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE,
@@ -99,7 +149,7 @@ module LaunchDarkly
                       state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
                       error: error_info,
                       environment_id: envid,
-                      revert_to_fdv1: true
+                      fallback_to_fdv1: true
                     )
                     break
                   end
@@ -108,7 +158,7 @@ module LaunchDarkly
                     state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                     error: error_info,
                     environment_id: envid,
-                    revert_to_fdv1: false
+                    fallback_to_fdv1: false
                   )
                   @interrupt_event.wait(@poll_interval)
                   next
@@ -118,7 +168,7 @@ module LaunchDarkly
                   state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
                   error: error_info,
                   environment_id: envid,
-                  revert_to_fdv1: fallback
+                  fallback_to_fdv1: fallback
                 )
                 break
               end
@@ -136,7 +186,7 @@ module LaunchDarkly
                   state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
                   error: error_info,
                   environment_id: envid,
-                  revert_to_fdv1: true
+                  fallback_to_fdv1: true
                 )
                 break
               end
@@ -145,16 +195,14 @@ module LaunchDarkly
                 state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
                 error: error_info,
                 environment_id: envid,
-                revert_to_fdv1: false
+                fallback_to_fdv1: false
               )
             else
-              change_set, headers = result.value
-              fallback = headers[LD_FD_FALLBACK_HEADER] == 'true'
               yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                 state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
-                change_set: change_set,
-                environment_id: headers[LD_ENVID_HEADER],
-                revert_to_fdv1: fallback
+                change_set: result.value,
+                environment_id: envid,
+                fallback_to_fdv1: fallback
               )
             end
 
@@ -177,10 +225,14 @@ module LaunchDarkly
 
         #
         # @param ss [LaunchDarkly::Interfaces::DataSystem::SelectorStore]
-        # @return [LaunchDarkly::Result<LaunchDarkly::Interfaces::DataSystem::Basis, String>]
+        # @return [LaunchDarkly::Interfaces::DataSystem::FetchResult]
         #
         private def poll(ss)
+          # Default to false so the rescue clause has a defined value even when an
+          # exception is raised before the header read below has had a chance to run.
+          fallback = false
           result = @requester.fetch(ss.selector)
+          fallback = LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(result.headers)
 
           unless result.success?
             if result.exception.is_a?(LaunchDarkly::Impl::DataSource::UnexpectedResponseError)
@@ -189,15 +241,20 @@ module LaunchDarkly
                 status_code, "polling request", "will retry"
               )
               @logger.warn { "[LDClient] #{http_error_message_result}" } if Impl::Util.http_error_recoverable?(status_code)
-              return LaunchDarkly::Result.fail(http_error_message_result, result.exception)
+              return LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
+                result: LaunchDarkly::Result.fail(http_error_message_result, result.exception),
+                fallback_to_fdv1: fallback
+              )
             end
 
-            return LaunchDarkly::Result.fail(result.error || 'Failed to request payload', result.exception)
+            return LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
+              result: LaunchDarkly::Result.fail(result.error || 'Failed to request payload', result.exception),
+              fallback_to_fdv1: fallback
+            )
           end
 
-          change_set, headers = result.value
-
-          env_id = headers[LD_ENVID_HEADER]
+          change_set = result.value
+          env_id = LaunchDarkly::Impl::DataSystem.lookup_header(result.headers, LD_ENVID_HEADER)
           env_id = nil unless env_id.is_a?(String)
 
           basis = LaunchDarkly::Interfaces::DataSystem::Basis.new(
@@ -206,12 +263,22 @@ module LaunchDarkly
             environment_id: env_id
           )
 
-          LaunchDarkly::Result.success(basis)
+          LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
+            result: LaunchDarkly::Result.success(basis),
+            fallback_to_fdv1: fallback
+          )
         rescue => e
+          # An exception can fire after we have already read the response
+          # headers (e.g. a malformed change_set whose selector is nil makes
+          # change_set.selector.defined? raise). Carry the computed fallback
+          # signal through so the directive is not silently dropped.
           msg = "Error: Exception encountered when updating flags. #{e}"
           @logger.error { "[LDClient] #{msg}" }
           @logger.debug { "[LDClient] Exception trace: #{e.backtrace}" }
-          LaunchDarkly::Result.fail(msg, e)
+          LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
+            result: LaunchDarkly::Result.fail(msg, e),
+            fallback_to_fdv1: fallback
+          )
         end
       end
 
@@ -273,7 +340,7 @@ module LaunchDarkly
             end
 
             if status == 304
-              return LaunchDarkly::Result.success([LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes, response_headers])
+              return LaunchDarkly::Result.success(LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes, response_headers)
             end
 
             body = response.to_s
@@ -285,7 +352,7 @@ module LaunchDarkly
 
             changeset_result = LaunchDarkly::Impl::DataSystem.polling_payload_to_changeset(data)
             if changeset_result.success?
-              LaunchDarkly::Result.success([changeset_result.value, response_headers])
+              LaunchDarkly::Result.success(changeset_result.value, response_headers)
             else
               LaunchDarkly::Result.fail(changeset_result.error, changeset_result.exception, response_headers)
             end
@@ -361,7 +428,7 @@ module LaunchDarkly
             end
 
             if status == 304
-              return LaunchDarkly::Result.success([LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes, response_headers])
+              return LaunchDarkly::Result.success(LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes, response_headers)
             end
 
             body = response.to_s
@@ -373,7 +440,7 @@ module LaunchDarkly
 
             changeset_result = LaunchDarkly::Impl::DataSystem.fdv1_polling_payload_to_changeset(data)
             if changeset_result.success?
-              LaunchDarkly::Result.success([changeset_result.value, response_headers])
+              LaunchDarkly::Result.success(changeset_result.value, response_headers)
             else
               LaunchDarkly::Result.fail(changeset_result.error, changeset_result.exception, response_headers)
             end

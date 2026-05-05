@@ -220,15 +220,15 @@ module LaunchDarkly
         end
 
         describe "FDv1 fallback on polling error with header" do
-          it "falls back to FDv1 when synchronizer signals revert_to_fdv1" do
+          it "falls back to FDv1 when synchronizer signals fallback_to_fdv1" do
             mock_primary = double("primary_synchronizer")
             allow(mock_primary).to receive(:name).and_return("mock-primary")
             allow(mock_primary).to receive(:stop)
 
-            # Simulate a synchronizer that yields an OFF state with revert_to_fdv1=true
+            # Simulate a synchronizer that yields an OFF state with fallback_to_fdv1=true
             update = LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
-              revert_to_fdv1: true
+              fallback_to_fdv1: true
             )
             allow(mock_primary).to receive(:sync).and_yield(update)
 
@@ -270,14 +270,14 @@ module LaunchDarkly
         end
 
         describe "FDv1 fallback on polling success with header" do
-          it "falls back to FDv1 even when primary yields valid data with revert_to_fdv1" do
+          it "falls back to FDv1 even when primary yields valid data with fallback_to_fdv1" do
             mock_primary = double("primary_synchronizer")
             allow(mock_primary).to receive(:name).and_return("mock-primary")
             allow(mock_primary).to receive(:stop)
 
             update = LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
-              revert_to_fdv1: true
+              fallback_to_fdv1: true
             )
             allow(mock_primary).to receive(:sync).and_yield(update)
 
@@ -337,7 +337,7 @@ module LaunchDarkly
 
             update = LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
-              revert_to_fdv1: true
+              fallback_to_fdv1: true
             )
             allow(mock_primary).to receive(:sync).and_yield(update)
 
@@ -377,14 +377,14 @@ module LaunchDarkly
         end
 
         describe "no fallback without header" do
-          it "does not fall back to FDv1 when revert_to_fdv1 is false" do
+          it "does not fall back to FDv1 when fallback_to_fdv1 is false" do
             mock_primary = double("primary_synchronizer")
             allow(mock_primary).to receive(:name).and_return("mock-primary")
             allow(mock_primary).to receive(:stop)
 
             update = LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-              revert_to_fdv1: false
+              fallback_to_fdv1: false
             )
             allow(mock_primary).to receive(:sync).and_yield(update)
 
@@ -395,7 +395,7 @@ module LaunchDarkly
 
             valid_update = LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
-              revert_to_fdv1: false
+              fallback_to_fdv1: false
             )
             allow(mock_secondary).to receive(:sync).and_yield(valid_update)
 
@@ -437,7 +437,7 @@ module LaunchDarkly
 
             update = LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
-              revert_to_fdv1: true
+              fallback_to_fdv1: true
             )
             allow(mock_primary).to receive(:sync).and_yield(update)
 
@@ -466,6 +466,121 @@ module LaunchDarkly
             store = fdv2.store
             flag = store.get(LaunchDarkly::Impl::DataStore::FEATURES, :fdv1flag)
             expect(flag).not_to be_nil
+
+            fdv2.stop
+          end
+        end
+
+        describe "FDv1 fallback signalled by initializer" do
+          # Stub initializer that returns whatever FetchResult we provide, exactly once.
+          class StubInitializer
+            include LaunchDarkly::Interfaces::DataSystem::Initializer
+
+            def initialize(fetch_result)
+              @fetch_result = fetch_result
+            end
+
+            def name
+              "StubInitializer"
+            end
+
+            def fetch(_selector_store)
+              @fetch_result
+            end
+          end
+
+          class StubInitializerBuilder
+            def initialize(fetch_result)
+              @fetch_result = fetch_result
+            end
+
+            def build(_sdk_key, _config)
+              StubInitializer.new(@fetch_result)
+            end
+          end
+
+          it "switches to the FDv1 fallback synchronizer when an initializer requests fallback" do
+            # Initializer returns a successful payload AND fallback_to_fdv1 -- the SDK should
+            # apply the payload, then run only the FDv1 fallback synchronizer.
+            td_initializer = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_initializer.update(td_initializer.flag("initialflag").on(true))
+            initializer_fetch = td_initializer.test_data_ds_builder.build(sdk_key, config).fetch(nil)
+            fallback_fetch = LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
+              result: initializer_fetch.result,
+              fallback_to_fdv1: true
+            )
+
+            # Mock primary synchronizer must not be invoked because the directive switches the
+            # synchronizer list to the FDv1 fallback before sync runs.
+            mock_primary = double("primary_synchronizer")
+            allow(mock_primary).to receive(:name).and_return("mock-primary")
+            allow(mock_primary).to receive(:stop)
+            allow(mock_primary).to receive(:sync)
+
+            td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_fdv1.update(td_fdv1.flag("fdv1flag").on(true))
+
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers([StubInitializerBuilder.new(fallback_fetch)])
+              .synchronizers([MockBuilder.new(mock_primary)])
+              .fdv1_compatible_synchronizer(td_fdv1.test_data_ds_builder)
+              .build
+
+            changed = Concurrent::Event.new
+            seen_keys = []
+
+            listener = Object.new
+            listener.define_singleton_method(:update) do |flag_change|
+              seen_keys << flag_change.key
+              changed.set if seen_keys.include?("fdv1flag")
+            end
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+            fdv2.flag_change_broadcaster.add_listener(listener)
+
+            ready_event = fdv2.start
+            expect(ready_event.wait(2)).to be true
+            expect(changed.wait(2)).to be true
+
+            # Initializer payload must have been applied -- the FDv1 fallback synchronizer is then
+            # responsible for continued updates.
+            expect(seen_keys).to include("initialflag")
+            expect(seen_keys).to include("fdv1flag")
+            expect(mock_primary).not_to have_received(:sync)
+
+            fdv2.stop
+          end
+
+          it "transitions the data source status to OFF when fallback is requested but no FDv1 fallback configured" do
+            # An initializer error accompanied by fallback_to_fdv1 with no FDv1 fallback configured
+            # must produce an OFF status -- the directive takes precedence over the regular failover
+            # algorithm, which would otherwise leave the system stuck in INITIALIZING.
+            error_fetch = LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
+              result: LaunchDarkly::Result.fail(
+                "boom",
+                LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(500)
+              ),
+              fallback_to_fdv1: true
+            )
+
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers([StubInitializerBuilder.new(error_fetch)])
+              .synchronizers(nil)
+              .build
+
+            off_status = Concurrent::Event.new
+            listener = Object.new
+            listener.define_singleton_method(:update) do |status|
+              off_status.set if status.state == LaunchDarkly::Interfaces::DataSource::Status::OFF
+            end
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+            fdv2.data_source_status_provider.add_listener(listener)
+
+            ready_event = fdv2.start
+            expect(ready_event.wait(2)).to be true
+            expect(off_status.wait(2)).to be true
+            expect(fdv2.data_source_status_provider.status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
 
             fdv2.stop
           end

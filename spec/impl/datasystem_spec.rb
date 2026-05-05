@@ -103,7 +103,7 @@ module LaunchDarkly
           expect(update.state).to eq(:valid)
           expect(update.change_set).to be_nil
           expect(update.error).to be_nil
-          expect(update.revert_to_fdv1).to be false
+          expect(update.fallback_to_fdv1).to be false
           expect(update.environment_id).to be_nil
         end
 
@@ -115,14 +115,14 @@ module LaunchDarkly
             state: :interrupted,
             change_set: change_set,
             error: error,
-            revert_to_fdv1: true,
+            fallback_to_fdv1: true,
             environment_id: "env-123"
           )
 
           expect(update.state).to eq(:interrupted)
           expect(update.change_set).to eq(change_set)
           expect(update.error).to eq(error)
-          expect(update.revert_to_fdv1).to be true
+          expect(update.fallback_to_fdv1).to be true
           expect(update.environment_id).to eq("env-123")
         end
       end
