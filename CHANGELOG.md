@@ -2,6 +2,14 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.13.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.13.0...8.13.1) (2026-05-05)
+
+
+### Bug Fixes
+
+* Honor x-ld-fd-fallback header in fdv2 initializer phase ([#381](https://github.com/launchdarkly/ruby-server-sdk/issues/381)) ([6147499](https://github.com/launchdarkly/ruby-server-sdk/commit/6147499bef2033603e3bc15e74bc2901e106cdde))
+* parse FDv2 goodbye events with only a reason field ([#380](https://github.com/launchdarkly/ruby-server-sdk/issues/380)) ([4f5a396](https://github.com/launchdarkly/ruby-server-sdk/commit/4f5a396fb963fdecf8c1f815ff9c616060f4f97e))
+
 ## [8.13.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.12.3...8.13.0) (2026-03-27)
 
 
