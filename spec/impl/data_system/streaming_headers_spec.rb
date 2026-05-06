@@ -37,7 +37,7 @@ module LaunchDarkly
 
             update = synchronizer.send(:handle_error, error_with_fallback, "test-env-123", true)
 
-            expect(update.revert_to_fdv1).to be true
+            expect(update.fallback_to_fdv1).to be true
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
             expect(update.environment_id).to eq("test-env-123")
           end
@@ -53,7 +53,7 @@ module LaunchDarkly
 
             update = synchronizer.send(:handle_error, error_without_fallback, "test-env-456", false)
 
-            expect(update.revert_to_fdv1).to be_falsy
+            expect(update.fallback_to_fdv1).to be_falsy
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
           end
 

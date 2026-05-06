@@ -59,7 +59,7 @@ module LaunchDarkly
           it "handles no changes" do
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -79,7 +79,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.intent_code).to eq(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_NONE)
@@ -91,7 +91,7 @@ module LaunchDarkly
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -111,7 +111,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.changes.length).to eq(0)
@@ -132,7 +132,7 @@ module LaunchDarkly
             )
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -152,7 +152,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.changes.length).to eq(1)
@@ -173,7 +173,7 @@ module LaunchDarkly
             builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, :flagkey, 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -193,7 +193,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.changes.length).to eq(1)
@@ -213,7 +213,7 @@ module LaunchDarkly
             builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flagkey", 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(
               0.01,
@@ -244,7 +244,7 @@ module LaunchDarkly
             expect(interrupted.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
             expect(interrupted.error.status_code).to eq(0)
             expect(interrupted.error.message).to eq("error for test")
-            expect(interrupted.revert_to_fdv1).to eq(false)
+            expect(interrupted.fallback_to_fdv1).to eq(false)
             expect(interrupted.environment_id).to be_nil
 
             expect(valid.change_set).not_to be_nil
@@ -259,7 +259,7 @@ module LaunchDarkly
             builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flagkey", 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             failure = LaunchDarkly::Result.fail(
               "error for test",
@@ -291,12 +291,12 @@ module LaunchDarkly
             expect(interrupted.error).not_to be_nil
             expect(interrupted.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
             expect(interrupted.error.status_code).to eq(408)
-            expect(interrupted.revert_to_fdv1).to eq(false)
+            expect(interrupted.fallback_to_fdv1).to eq(false)
             expect(interrupted.environment_id).to be_nil
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to be_nil
 
             expect(valid.change_set).not_to be_nil
@@ -333,7 +333,7 @@ module LaunchDarkly
             expect(off.error).not_to be_nil
             expect(off.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
             expect(off.error.status_code).to eq(401)
-            expect(off.revert_to_fdv1).to eq(false)
+            expect(off.fallback_to_fdv1).to eq(false)
             expect(off.environment_id).to be_nil
             expect(off.change_set).to be_nil
           end
@@ -341,7 +341,7 @@ module LaunchDarkly
           it "captures envid from success headers" do
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = { LD_ENVID_HEADER => 'test-env-polling-123' }
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -361,7 +361,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.error).to be_nil
-            expect(valid.revert_to_fdv1).to eq(false)
+            expect(valid.fallback_to_fdv1).to eq(false)
             expect(valid.environment_id).to eq('test-env-polling-123')
           end
 
@@ -379,7 +379,7 @@ module LaunchDarkly
               LD_ENVID_HEADER => 'test-env-456',
               LD_FD_FALLBACK_HEADER => 'true',
             }
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             synchronizer = PollingDataSource.new(0.01, ListBasedRequester.new([polling_result]), logger)
             updates = []
@@ -399,7 +399,7 @@ module LaunchDarkly
 
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(valid.environment_id).to eq('test-env-456')
-            expect(valid.revert_to_fdv1).to eq(true)
+            expect(valid.fallback_to_fdv1).to eq(true)
             expect(valid.change_set).not_to be_nil
             expect(valid.change_set.changes.length).to eq(1)
           end
@@ -410,7 +410,7 @@ module LaunchDarkly
             builder.add_delete(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, "flagkey", 101)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers_success = { LD_ENVID_HEADER => 'test-env-success' }
-            polling_result = LaunchDarkly::Result.success([change_set, headers_success])
+            polling_result = LaunchDarkly::Result.success(change_set, headers_success)
 
             headers_error = { LD_ENVID_HEADER => 'test-env-408' }
             failure = LaunchDarkly::Result.fail(
@@ -514,7 +514,7 @@ module LaunchDarkly
 
           # When fallback header is present, status is OFF (not INTERRUPTED)
             expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
-            expect(off.revert_to_fdv1).to eq(true)
+            expect(off.fallback_to_fdv1).to eq(true)
             expect(off.environment_id).to eq('test-env-503')
           end
 
@@ -523,7 +523,7 @@ module LaunchDarkly
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
             change_set = builder.finish(LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300))
             headers_success = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers_success])
+            polling_result = LaunchDarkly::Result.success(change_set, headers_success)
 
             headers_error = { LD_ENVID_HEADER => 'test-env-generic' }
             failure = LaunchDarkly::Result.fail("generic error for test", nil, headers_error)
@@ -591,7 +591,7 @@ module LaunchDarkly
 
           # When fallback header is present on parse error, status is OFF
             expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
-            expect(off.revert_to_fdv1).to eq(true)
+            expect(off.fallback_to_fdv1).to eq(true)
             expect(off.environment_id).to eq('test-env-parse-error')
             expect(off.error).not_to be_nil
             expect(off.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
@@ -632,7 +632,7 @@ module LaunchDarkly
 
           # When fallback header is present on recoverable error, status is OFF
             expect(off.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
-            expect(off.revert_to_fdv1).to eq(true)
+            expect(off.fallback_to_fdv1).to eq(true)
             expect(off.environment_id).to eq('test-env-408')
             expect(off.error).not_to be_nil
             expect(off.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
@@ -650,7 +650,7 @@ module LaunchDarkly
             }
 
             # Server sends successful response with valid data but also signals fallback
-            success_result = LaunchDarkly::Result.success([change_set, headers_with_fallback])
+            success_result = LaunchDarkly::Result.success(change_set, headers_with_fallback)
 
             synchronizer = PollingDataSource.new(
               0.01,
@@ -674,7 +674,7 @@ module LaunchDarkly
 
             # Should use the data (VALID state) but signal future fallback
             expect(valid.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
-            expect(valid.revert_to_fdv1).to eq(true)
+            expect(valid.fallback_to_fdv1).to eq(true)
             expect(valid.environment_id).to eq('test-env-success-fallback')
             expect(valid.error).to be_nil
             expect(valid.change_set).not_to be_nil  # Data is provided
@@ -683,7 +683,7 @@ module LaunchDarkly
           it "closes requester when sync exits" do
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             requester = RequesterWithCleanup.new([polling_result])
             synchronizer = PollingDataSource.new(0.01, requester, logger)
@@ -703,7 +703,7 @@ module LaunchDarkly
           it "closes requester when fetch is called" do
             change_set = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes
             headers = {}
-            polling_result = LaunchDarkly::Result.success([change_set, headers])
+            polling_result = LaunchDarkly::Result.success(change_set, headers)
 
             requester = RequesterWithCleanup.new([polling_result])
             synchronizer = PollingDataSource.new(0.01, requester, logger)

@@ -71,31 +71,38 @@ module LaunchDarkly
         # Implementation of the Initializer.fetch method.
         #
         # Reads all configured files once and returns their contents as a Basis.
+        # File-based data sources never request the FDv1 Fallback Directive,
+        # so the returned {FetchResult} always reports `fallback_to_fdv1: false`.
         #
         # @param selector_store [LaunchDarkly::Interfaces::DataSystem::SelectorStore] Provides the Selector (unused for file data)
-        # @return [LaunchDarkly::Result] A Result containing either a Basis or an error message
+        # @return [LaunchDarkly::Interfaces::DataSystem::FetchResult]
         #
         def fetch(selector_store)
-          @lock.synchronize do
-            if @closed
-              return LaunchDarkly::Result.fail('FileDataV2 source has been closed')
+          result =
+            begin
+              @lock.synchronize do
+                if @closed
+                  next LaunchDarkly::Result.fail('FileDataV2 source has been closed')
+                end
+
+                load_result = load_all_to_changeset
+                next load_result unless load_result.success?
+
+                change_set = load_result.value
+                basis = LaunchDarkly::Interfaces::DataSystem::Basis.new(
+                  change_set: change_set,
+                  persist: false,
+                  environment_id: nil
+                )
+
+                LaunchDarkly::Result.success(basis)
+              end
+            rescue => e
+              @logger.error { "[LDClient] Error fetching file data: #{e.message}" }
+              LaunchDarkly::Result.fail("Error fetching file data: #{e.message}", e)
             end
 
-            result = load_all_to_changeset
-            return result unless result.success?
-
-            change_set = result.value
-            basis = LaunchDarkly::Interfaces::DataSystem::Basis.new(
-              change_set: change_set,
-              persist: false,
-              environment_id: nil
-            )
-
-            LaunchDarkly::Result.success(basis)
-          end
-        rescue => e
-          @logger.error { "[LDClient] Error fetching file data: #{e.message}" }
-          LaunchDarkly::Result.fail("Error fetching file data: #{e.message}", e)
+          LaunchDarkly::Interfaces::DataSystem::FetchResult.new(result: result, fallback_to_fdv1: false)
         end
 
         #
@@ -110,14 +117,14 @@ module LaunchDarkly
         #
         def sync(selector_store)
           # First yield initial data
-          initial_result = fetch(selector_store)
-          unless initial_result.success?
+          initial_fetch = fetch(selector_store)
+          unless initial_fetch.success?
             yield LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
               error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
                 LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA,
                 0,
-                initial_result.error,
+                initial_fetch.error,
                 Time.now
               )
             )
@@ -126,7 +133,7 @@ module LaunchDarkly
 
           yield LaunchDarkly::Interfaces::DataSystem::Update.new(
             state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
-            change_set: initial_result.value.change_set
+            change_set: initial_fetch.value.change_set
           )
 
           # Start watching for file changes

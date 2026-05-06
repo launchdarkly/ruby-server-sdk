@@ -69,7 +69,7 @@ module LaunchDarkly
             expect(update).not_to be_nil
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(update.error).to be_nil
-            expect(update.revert_to_fdv1).to eq(false)
+            expect(update.fallback_to_fdv1).to eq(false)
             expect(update.environment_id).to be_nil
             expect(update.change_set).to be_nil
           end
@@ -102,7 +102,7 @@ module LaunchDarkly
             expect(update).not_to be_nil
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(update.error).to be_nil
-            expect(update.revert_to_fdv1).to eq(false)
+            expect(update.fallback_to_fdv1).to eq(false)
             expect(update.environment_id).to be_nil
             expect(update.change_set).not_to be_nil
             expect(update.change_set.changes.length).to eq(0)
@@ -153,7 +153,7 @@ module LaunchDarkly
             expect(update).not_to be_nil
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(update.error).to be_nil
-            expect(update.revert_to_fdv1).to eq(false)
+            expect(update.fallback_to_fdv1).to eq(false)
             expect(update.environment_id).to be_nil
             expect(update.change_set).not_to be_nil
             expect(update.change_set.changes.length).to eq(1)
@@ -204,7 +204,7 @@ module LaunchDarkly
             expect(update).not_to be_nil
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
             expect(update.error).to be_nil
-            expect(update.revert_to_fdv1).to eq(false)
+            expect(update.fallback_to_fdv1).to eq(false)
             expect(update.environment_id).to be_nil
             expect(update.change_set).not_to be_nil
             expect(update.change_set.changes.length).to eq(1)
@@ -306,6 +306,72 @@ change_set_builder, envid)
             # Only delete should be in the changeset (put was reset by error)
             expect(update.change_set.changes.length).to eq(1)
             expect(update.change_set.changes[0].action).to eq(LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE)
+          end
+
+          it "stamps fallback_to_fdv1 on a TRANSFER_NONE update when the directive is pending" do
+            server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
+              payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(
+                id: "id",
+                target: 300,
+                code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_NONE,
+                reason: "up-to-date"
+              )
+            )
+            event = MockSSEEvent.new(
+              LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
+              JSON.generate(server_intent.to_h)
+            )
+
+            update = synchronizer.send(:process_message, event, change_set_builder, envid, fdv1_fallback_pending: true)
+
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+            expect(update.fallback_to_fdv1).to eq(true)
+          end
+
+          it "stamps fallback_to_fdv1 on a PAYLOAD_TRANSFERRED update when the directive is pending" do
+            server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
+              payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(
+                id: "id",
+                target: 300,
+                code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+                reason: "cant-catchup"
+              )
+            )
+            selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
+
+            synchronizer.send(:process_message, MockSSEEvent.new(
+              LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
+              JSON.generate(server_intent.to_h)
+            ), change_set_builder, envid)
+            update = synchronizer.send(:process_message, MockSSEEvent.new(
+              LaunchDarkly::Interfaces::DataSystem::EventName::PAYLOAD_TRANSFERRED,
+              JSON.generate(selector.to_h)
+            ), change_set_builder, envid, fdv1_fallback_pending: true)
+
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+            expect(update.fallback_to_fdv1).to eq(true)
+            expect(update.change_set).not_to be_nil
+          end
+
+          it "does not stamp fallback_to_fdv1 on intermediate (non-payload-completing) events" do
+            # The directive is only meaningful once it can ride along on a Valid result that
+            # the consumer can act on. PUT_OBJECT, DELETE_OBJECT, GOODBYE, ERROR don't
+            # produce Updates -- intermediate events return nil even when the directive is
+            # pending. The signal arrives with the next payload-completing event.
+            put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.new(
+              version: 100,
+              kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+              key: "flagkey",
+              object: { key: "flagkey" }
+            )
+            event = MockSSEEvent.new(
+              LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT,
+              JSON.generate(put.to_h)
+            )
+
+            update = synchronizer.send(:process_message, event, change_set_builder, envid, fdv1_fallback_pending: true)
+
+            expect(update).to be_nil
           end
         end
 

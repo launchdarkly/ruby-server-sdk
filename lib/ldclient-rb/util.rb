@@ -16,10 +16,11 @@ module LaunchDarkly
     # Create a successful result with the provided value.
     #
     # @param value [Object, nil]
+    # @param headers [Hash, nil] Optional headers associated with the result
     # @return [Result]
     #
-    def self.success(value)
-      Result.new(value)
+    def self.success(value, headers = nil)
+      Result.new(value, nil, nil, headers)
     end
 
     #

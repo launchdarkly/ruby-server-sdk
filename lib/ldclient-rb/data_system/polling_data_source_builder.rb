@@ -21,9 +21,9 @@ module LaunchDarkly
     #     include LaunchDarkly::DataSystem::Requester
     #
     #     def fetch(selector)
-    #       # Fetch data and return a Result containing [ChangeSet, headers]
-    #       # ...
-    #       LaunchDarkly::Result.success([change_set, {}])
+    #       # Fetch data and return a Result whose value is a ChangeSet and
+    #       # whose headers carry any response metadata (e.g. directives).
+    #       LaunchDarkly::Result.success(change_set, response_headers)
     #     end
     #
     #     def stop
@@ -43,8 +43,10 @@ module LaunchDarkly
       # @param selector [LaunchDarkly::Interfaces::DataSystem::Selector, nil]
       #   The selector describing what data to fetch. May be nil if no
       #   selector is available (e.g., on the first request).
-      # @return [LaunchDarkly::Result] A Result containing a tuple of
-      #   [ChangeSet, headers] on success, or an error message on failure.
+      # @return [LaunchDarkly::Result] A Result whose `value` is a
+      #   {LaunchDarkly::Interfaces::DataSystem::ChangeSet} on success and
+      #   whose `headers` carry response headers in either case (so callers
+      #   can inspect directives such as `X-LD-FD-Fallback`).
       #
       def fetch(selector)
         raise NotImplementedError
