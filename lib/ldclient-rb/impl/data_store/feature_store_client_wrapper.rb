@@ -65,6 +65,18 @@ module LaunchDarkly
           @store.initialized?
         end
 
+        #
+        # Passthrough for the FDv2 store coordinator. If the wrapped store supports
+        # disabling its cache (e.g. {LaunchDarkly::Integrations::Util::CachingStoreWrapper}),
+        # forward the call; otherwise no-op.
+        #
+        # @return [void]
+        #
+        def disable_cache
+          return unless @store.respond_to?(:disable_cache)
+          wrapper { @store.disable_cache }
+        end
+
         # (see LaunchDarkly::Interfaces::FeatureStore#stop)
         def stop
           poller_to_stop = nil

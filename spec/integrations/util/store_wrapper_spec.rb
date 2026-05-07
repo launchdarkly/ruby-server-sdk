@@ -247,6 +247,68 @@ module LaunchDarkly
         end
       end
 
+      describe "#disable_cache" do
+        it "releases the cache so subsequent reads bypass it" do
+          core = MockCore.new
+          wrapper = subject.new(core, { expiration: 30 })
+          item = { key: "flag", version: 1 }
+          core.force_set(THINGS, item)
+
+          # prime the cache
+          expect(wrapper.get(THINGS, "flag")).to eq item
+
+          # change underlying value; cached value should still be returned
+          itemv2 = { key: "flag", version: 2 }
+          core.force_set(THINGS, itemv2)
+          expect(wrapper.get(THINGS, "flag")).to eq item
+
+          wrapper.disable_cache
+
+          # after disable, reads see the underlying value
+          expect(wrapper.get(THINGS, "flag")).to eq itemv2
+        end
+
+        it "is a safe no-op when caching is disabled at config time" do
+          wrapper = subject.new(MockCore.new, { expiration: 0 })
+          expect { wrapper.disable_cache }.not_to raise_error
+        end
+
+        it "is idempotent" do
+          wrapper = subject.new(MockCore.new, { expiration: 30 })
+          wrapper.disable_cache
+          expect { wrapper.disable_cache }.not_to raise_error
+        end
+
+        it "does not repopulate the cache on upsert after disable" do
+          core = MockCore.new
+          wrapper = subject.new(core, { expiration: 30 })
+          wrapper.init({ THINGS => {} })
+          wrapper.disable_cache
+
+          item = { key: "flag", version: 1 }
+          wrapper.upsert(THINGS, item)
+
+          # mutate underlying value; if a read came from cache it would still see the upserted item
+          itemv2 = { key: "flag", version: 2 }
+          core.force_set(THINGS, itemv2)
+          expect(wrapper.get(THINGS, "flag")).to eq itemv2
+        end
+
+        it "does not repopulate the cache on get after disable" do
+          core = MockCore.new
+          wrapper = subject.new(core, { expiration: 30 })
+          wrapper.disable_cache
+
+          item = { key: "flag", version: 1 }
+          core.force_set(THINGS, item)
+          expect(wrapper.get(THINGS, "flag")).to eq item
+
+          itemv2 = { key: "flag", version: 2 }
+          core.force_set(THINGS, itemv2)
+          expect(wrapper.get(THINGS, "flag")).to eq itemv2
+        end
+      end
+
       class MockCore
         def initialize
           @data = {}

@@ -50,8 +50,12 @@ module LaunchDarkly
       # @option opts [String] :prefix (default_prefix)  namespace prefix to add to all hash keys used by LaunchDarkly
       # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
       # @option opts [Integer] :max_connections  size of the Redis connection pool
-      # @option opts [Integer] :expiration (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching
-      # @option opts [Integer] :capacity (1000)  maximum number of items in the cache
+      # @option opts [Integer] :expiration (15)  expiration time for the in-memory cache, in seconds; 0 for no local caching.
+      #   When the SDK is configured to use FDv2, the persistent-store cache is automatically
+      #   dropped once the in-memory store has been initialized, so this setting only affects
+      #   the brief bootstrap window before the first set of flag data has been received.
+      # @option opts [Integer] :capacity (1000)  maximum number of items in the cache.
+      #   Same FDv2 caveat as `:expiration` applies.
       # @option opts [Object] :pool  custom connection pool, if desired
       # @option opts [Boolean] :pool_shutdown_on_close whether calling `close` should shutdown the custom connection pool;
       #   this is true by default, and should be set to false only if you are managing the pool yourself and want its

@@ -221,6 +221,12 @@ module LaunchDarkly
           # Switch to memory store as active
           @active_store = @memory_store
 
+          # In-memory store is now authoritative. Disable the persistent-store cache
+          # so we don't hold a duplicate copy of every flag. Done before the
+          # persistent_store.init below so the wrapper can skip its cache-population
+          # loop on this very call.
+          disable_persistent_cache
+
           # Persist to persistent store if configured and writable
           @persistent_store.init(collections) if should_persist?
 
@@ -269,6 +275,24 @@ module LaunchDarkly
 
           # Send change events
           send_change_events(affected_items) unless affected_items.empty?
+        end
+
+        #
+        # Disable the persistent store's in-memory cache, if it has one. The FDv2 in-memory
+        # store is now the source of truth, so the cache is dead weight and would just
+        # hold a duplicate copy of every flag.
+        #
+        # @return [void]
+        #
+        private def disable_persistent_cache
+          return if @persistent_store.nil?
+          return unless @persistent_store.respond_to?(:disable_cache)
+
+          begin
+            @persistent_store.disable_cache
+          rescue => e
+            @logger.warn { "[LDClient] Failed to disable persistent store cache: #{e.message}" }
+          end
         end
 
         #
