@@ -6,9 +6,6 @@ module LaunchDarkly
       #
       # EventName represents the name of an event that can be sent by the server for FDv2.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       module EventName
         # Specifies that an object should be added to the data set with upsert semantics.
         PUT_OBJECT = :"put-object"
@@ -35,9 +32,6 @@ module LaunchDarkly
       #
       # ObjectKind represents the kind of object.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       module ObjectKind
         # Represents a feature flag.
         FLAG = "flag"
@@ -49,9 +43,6 @@ module LaunchDarkly
       #
       # ChangeType specifies if an object is being upserted or deleted.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       module ChangeType
         # Represents an object being upserted.
         PUT = "put"
@@ -62,9 +53,6 @@ module LaunchDarkly
 
       #
       # IntentCode represents the various intents that can be sent by the server.
-      #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
       #
       module IntentCode
         # The server intends to send a full data set.
@@ -80,9 +68,6 @@ module LaunchDarkly
       #
       # DataStoreMode represents the mode of operation of a Data Store in FDV2 mode.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       module DataStoreMode
         # Indicates that the data store is read-only. Data will never be written back to the store by the SDK.
         READ_ONLY = :read_only
@@ -94,9 +79,6 @@ module LaunchDarkly
 
       #
       # Selector represents a particular snapshot of data.
-      #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
       #
       class Selector
         # @return [String] The state
@@ -196,9 +178,6 @@ module LaunchDarkly
       #
       # Change represents a change to a piece of data, such as an update or deletion.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       class Change
         # @return [String] The action ({ChangeType})
         attr_reader :action
@@ -234,9 +213,6 @@ module LaunchDarkly
       #
       # ChangeSet represents a list of changes to be applied.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       class ChangeSet
         # @return [String] The intent code ({IntentCode})
         attr_reader :intent_code
@@ -262,9 +238,6 @@ module LaunchDarkly
       #
       # Basis represents the initial payload of data that a data source can provide.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       class Basis
         # @return [ChangeSet] The change set
         attr_reader :change_set
@@ -289,9 +262,6 @@ module LaunchDarkly
 
       #
       # Payload represents a payload delivered in a streaming response.
-      #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
       #
       class Payload
         # @return [String] The payload ID
@@ -357,9 +327,6 @@ module LaunchDarkly
       #
       # ServerIntent represents the type of change associated with the payload.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       class ServerIntent
         # @return [Payload] The payload
         attr_reader :payload
@@ -404,9 +371,6 @@ module LaunchDarkly
 
       #
       # ChangeSetBuilder is a helper for constructing a ChangeSet.
-      #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
       #
       class ChangeSetBuilder
         # @return [String, nil] The current intent ({IntentCode})
@@ -546,9 +510,6 @@ module LaunchDarkly
       #
       # Update represents the results of a synchronizer's ongoing sync method.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       class Update
         # @return [Symbol] The data source state ({LaunchDarkly::Interfaces::DataSource::Status})
         attr_reader :state
@@ -592,9 +553,6 @@ module LaunchDarkly
       # Surfacing this signal alongside the {LaunchDarkly::Result} ensures
       # callers cannot silently drop it.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       class FetchResult
         # @return [LaunchDarkly::Result] A Result containing either a {Basis} or an error.
         attr_reader :result
@@ -635,9 +593,6 @@ module LaunchDarkly
       #
       # SelectorStore represents a component capable of providing Selectors for data retrieval.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       module SelectorStore
         #
         # Returns a Selector object that defines the criteria for data retrieval.
@@ -651,9 +606,6 @@ module LaunchDarkly
 
       #
       # ReadOnlyStore represents a read-only store interface for retrieving data.
-      #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
       #
       module ReadOnlyStore
         #
@@ -690,9 +642,6 @@ module LaunchDarkly
       #
       # Initializer represents a component capable of retrieving a single data result.
       #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
-      #
       module Initializer
         #
         # Returns the name of the initializer.
@@ -722,9 +671,6 @@ module LaunchDarkly
 
       #
       # Synchronizer represents a component capable of synchronizing data from an external source.
-      #
-      # This type is not stable, and not subject to any backwards compatibility guarantees or semantic versioning.
-      # It is in early access. If you want access to this feature please join the EAP. https://launchdarkly.com/docs/sdk/features/data-saving-mode
       #
       module Synchronizer
         #

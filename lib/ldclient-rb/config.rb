@@ -697,9 +697,6 @@ module LaunchDarkly
   #
   # Configuration for LaunchDarkly's data acquisition strategy.
   #
-  # This is not stable and is not subject to any backwards compatibility guarantees
-  # or semantic versioning. It is not suitable for production usage.
-  #
   class DataSystemConfig
     #
     # @param initializers [Array<#build(String, Config)>, nil] The (optional) array of builders

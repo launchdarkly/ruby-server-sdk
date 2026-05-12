@@ -12,9 +12,6 @@ module LaunchDarkly
         #
         # DeleteObject specifies the deletion of a particular object.
         #
-        # This type is not stable, and not subject to any backwards
-        # compatibility guarantees or semantic versioning. It is not suitable for production usage.
-        #
         class DeleteObject
           # @return [Integer] The version
           attr_reader :version
@@ -78,9 +75,6 @@ module LaunchDarkly
 
         #
         # PutObject specifies the addition of a particular object with upsert semantics.
-        #
-        # This type is not stable, and not subject to any backwards
-        # compatibility guarantees or semantic versioning. It is not suitable for production usage.
         #
         class PutObject
           # @return [Integer] The version
@@ -153,9 +147,6 @@ module LaunchDarkly
         #
         # Goodbye represents a goodbye event.
         #
-        # This type is not stable, and not subject to any backwards
-        # compatibility guarantees or semantic versioning. It is not suitable for production usage.
-        #
         class Goodbye
           # @return [String] The reason for goodbye
           attr_reader :reason
@@ -196,9 +187,6 @@ module LaunchDarkly
 
         #
         # Error represents an error event.
-        #
-        # This type is not stable, and not subject to any backwards
-        # compatibility guarantees or semantic versioning. It is not suitable for production usage.
         #
         class Error
           # @return [String] The payload ID
