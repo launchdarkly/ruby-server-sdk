@@ -93,6 +93,10 @@ module LaunchDarkly
           def stop
             @wrapper.stop
           end
+
+          def disable_cache
+            @wrapper.disable_cache
+          end
         end
 
         class RedisStoreImplBase

@@ -61,50 +61,52 @@ module LaunchDarkly
           @core.init_internal(all_data)
           @inited.make_true
 
-          unless @cache.nil?
-            @cache.clear
+          cache = @cache
+          unless cache.nil?
+            cache.clear
             all_data.each do |kind, items|
-              @cache[kind] = items_if_not_deleted(items)
+              cache[kind] = items_if_not_deleted(items)
               items.each do |key, item|
-                @cache[item_cache_key(kind, key)] = [item]
+                cache[item_cache_key(kind, key)] = [item]
               end
             end
           end
         end
 
         def get(kind, key)
-          unless @cache.nil?
-            cache_key = item_cache_key(kind, key)
-            cached = @cache[cache_key] # note, item entries in the cache are wrapped in an array so we can cache nil values
+          cache = @cache
+          cache_key = item_cache_key(kind, key)
+          unless cache.nil?
+            cached = cache[cache_key] # note, item entries in the cache are wrapped in an array so we can cache nil values
             return item_if_not_deleted(cached[0]) unless cached.nil?
           end
 
           item = @core.get_internal(kind, key)
 
-          unless @cache.nil?
-            @cache[cache_key] = [item]
-          end
+          cache[cache_key] = [item] unless cache.nil?
 
           item_if_not_deleted(item)
         end
 
         def all(kind)
-          unless @cache.nil?
-            items = @cache[all_cache_key(kind)]
+          cache = @cache
+          unless cache.nil?
+            items = cache[all_cache_key(kind)]
             return items unless items.nil?
           end
 
           items = items_if_not_deleted(@core.get_all_internal(kind))
-          @cache[all_cache_key(kind)] = items unless @cache.nil?
+          cache[all_cache_key(kind)] = items unless cache.nil?
           items
         end
 
         def upsert(kind, item)
           new_state = @core.upsert_internal(kind, item)
 
-          unless @cache.nil?
-            @cache[item_cache_key(kind, item[:key])] = [new_state]
-            @cache.delete(all_cache_key(kind))
+          cache = @cache
+          unless cache.nil?
+            cache[item_cache_key(kind, item[:key])] = [new_state]
+            cache.delete(all_cache_key(kind))
           end
         end
 
@@ -115,18 +117,36 @@ module LaunchDarkly
         def initialized?
           return true if @inited.value
 
-          if @cache.nil?
+          cache = @cache
+          if cache.nil?
             result = @core.initialized_internal?
           else
-            result = @cache[inited_cache_key]
+            result = cache[inited_cache_key]
             if result.nil?
               result = @core.initialized_internal?
-              @cache[inited_cache_key] = result
+              cache[inited_cache_key] = result
             end
           end
 
           @inited.make_true if result
           result
+        end
+
+        #
+        # Disable the in-memory cache. Releases the cache reference so subsequent operations
+        # bypass it and go directly to the underlying core. Safe to call multiple times.
+        #
+        # Called by the FDv2 store coordinator once the in-memory store has become the
+        # source of truth and the persistent-store cache is no longer useful. Internal --
+        # not part of the public API.
+        #
+        # @return [void]
+        #
+        def disable_cache
+          cache = @cache
+          return if cache.nil?
+          @cache = nil
+          cache.clear
         end
 
         def stop

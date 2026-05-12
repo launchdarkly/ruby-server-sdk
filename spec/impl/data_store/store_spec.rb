@@ -41,7 +41,7 @@ module LaunchDarkly
         class StubPersistentStore
           include LaunchDarkly::Interfaces::FeatureStore
 
-          attr_reader :init_called_count, :upsert_calls, :data, :init_errors
+          attr_reader :init_called_count, :upsert_calls, :data, :init_errors, :disable_cache_called_count
 
           def initialize(should_fail: false)
             @data = {
@@ -53,6 +53,11 @@ module LaunchDarkly
             @upsert_calls = []
             @should_fail = should_fail
             @init_errors = []
+            @disable_cache_called_count = 0
+          end
+
+          def disable_cache
+            @disable_cache_called_count += 1
           end
 
           def init(all_data)
@@ -100,6 +105,39 @@ module LaunchDarkly
             @init_called_count = 0
             @upsert_calls = []
             @init_errors = []
+            @disable_cache_called_count = 0
+          end
+        end
+
+        # Stub feature store that does NOT respond to disable_cache (custom user store).
+        class NonDisablingPersistentStore
+          include LaunchDarkly::Interfaces::FeatureStore
+
+          attr_reader :init_called_count
+
+          def initialize
+            @init_called_count = 0
+            @data = {}
+          end
+
+          def init(all_data)
+            @init_called_count += 1
+            @data = all_data
+          end
+
+          def get(_kind, _key); nil; end
+          def all(kind); @data[kind] || {}; end
+          def upsert(_kind, _item); end
+          def delete(_kind, _key, _version); end
+          def initialized?; @init_called_count > 0; end
+          def stop; end
+        end
+
+        # Stub feature store whose disable_cache raises -- to verify Store keeps operating.
+        class RaisingPersistentStore < StubPersistentStore
+          def disable_cache
+            super
+            raise RuntimeError, "boom"
           end
         end
 
@@ -576,6 +614,82 @@ module LaunchDarkly
 
               expect(persistent_store.upsert_calls).to be_empty
             end
+          end
+        end
+
+        describe "FDv2 cache lifecycle" do
+          let(:flag_change) do
+            LaunchDarkly::Interfaces::DataSystem::Change.new(
+              action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT,
+              kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+              key: flag_key,
+              version: 1,
+              object: flag_data
+            )
+          end
+
+          let(:full_change_set) do
+            LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+              changes: [flag_change],
+              selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            )
+          end
+
+          it "disables the persistent store cache when the memory store receives its first full payload" do
+            persistent = StubPersistentStore.new
+            subject.with_persistence(persistent, true, nil)
+
+            subject.apply(full_change_set, true)
+
+            expect(persistent.disable_cache_called_count).to eq(1)
+          end
+
+          it "disables the cache even when persist is false (read-only persistent store)" do
+            persistent = StubPersistentStore.new
+            subject.with_persistence(persistent, false, nil)
+
+            subject.apply(full_change_set, false)
+
+            expect(persistent.disable_cache_called_count).to eq(1)
+          end
+
+          it "tolerates a persistent store that does not respond to disable_cache" do
+            persistent = NonDisablingPersistentStore.new
+            subject.with_persistence(persistent, true, nil)
+
+            expect { subject.apply(full_change_set, true) }.not_to raise_error
+            expect(persistent.init_called_count).to eq(1)
+          end
+
+          it "logs a warning if disable_cache raises but continues operating" do
+            persistent = RaisingPersistentStore.new
+            subject.with_persistence(persistent, true, nil)
+            expect(logger).to receive(:warn)
+
+            expect { subject.apply(full_change_set, true) }.not_to raise_error
+            expect(persistent.init_called_count).to eq(1)
+            expect(persistent.disable_cache_called_count).to eq(1)
+          end
+
+          it "keeps Store#commit working after the cache is disabled" do
+            persistent = StubPersistentStore.new
+            subject.with_persistence(persistent, true, nil)
+            subject.apply(full_change_set, true)
+
+            persistent.reset_tracking
+            expect(subject.commit).to be_nil
+            expect(persistent.init_called_count).to eq(1)
+          end
+
+          it "is called on every full transfer (idempotent under repeated set_basis)" do
+            persistent = StubPersistentStore.new
+            subject.with_persistence(persistent, true, nil)
+
+            subject.apply(full_change_set, true)
+            subject.apply(full_change_set, true)
+
+            expect(persistent.disable_cache_called_count).to eq(2)
           end
         end
       end
