@@ -1,12 +1,5 @@
 {
   "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
-  "packageRules": [
-    {
-      "enabled": false,
-      "matchDatasources": ["npm"],
-      "matchPackageNames": ["*"]
-    }
-  ],
   "vulnerabilityAlerts": {
     "enabled": true
   },
