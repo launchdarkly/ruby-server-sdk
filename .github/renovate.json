@@ -1,0 +1,7 @@
+{
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "osvVulnerabilityAlerts": true
+}

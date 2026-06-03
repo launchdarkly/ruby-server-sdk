@@ -45,7 +45,7 @@ jobs:
       attestations: write # Needed for actions/attest.
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.3.1
 
       - uses: ./.github/actions/setup
         with:
@@ -70,6 +70,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Attest build provenance
-        uses: actions/attest@v4
+        uses: actions/attest@v4.1.0
         with:
           subject-path: 'launchdarkly-server-sdk-*.gem'
