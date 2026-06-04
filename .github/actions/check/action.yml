@@ -37,7 +37,7 @@ runs:
 
     - name: Run contract tests v2
       if: ${{ inputs.flaky != 'true' }}
-      uses: launchdarkly/gh-actions/actions/contract-tests@5adb11fd6953e1bc35d9cf1fc1b4374c464e3a8b # contract-tests-v1
+      uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1
       with:
         test_service_port: 9000
         enable_persistence_tests: true
@@ -46,7 +46,7 @@ runs:
 
     - name: Run contract tests v3
       if: ${{ inputs.flaky != 'true' }}
-      uses: launchdarkly/gh-actions/actions/contract-tests@5adb11fd6953e1bc35d9cf1fc1b4374c464e3a8b # contract-tests-v1
+      uses: launchdarkly/gh-actions/actions/contract-tests@contract-tests-v1
       with:
         test_service_port: 9000
         enable_persistence_tests: true
