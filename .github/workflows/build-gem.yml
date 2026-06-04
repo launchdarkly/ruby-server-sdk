@@ -23,9 +23,9 @@ jobs:
       FLAKY: ${{ startsWith(inputs.version, 'jruby') && 'true' || 'false' }}
 
     steps:
-      - uses: actions/checkout@v4.3.1
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - uses: launchdarkly/gh-actions/actions/persistent-stores@persistent-stores-v0
+      - uses: launchdarkly/gh-actions/actions/persistent-stores@68e9b2f165f60934308f18e4b75623c30b905c38 # persistent-stores-v0
         with:
           redis: true
           consul: true
@@ -43,7 +43,7 @@ jobs:
       - name: Build gemspec
         run: gem build launchdarkly-server-sdk.gemspec --platform=$BUILD_PLATFORM
 
-      - uses: actions/upload-artifact@v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: ${{ inputs.upload-artifact }}
         with:
           name: gems-${{ inputs.version }}
