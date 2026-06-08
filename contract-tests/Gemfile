@@ -11,7 +11,7 @@ gem 'sinatra', '>= 4.1'
 gem 'rubocop', '~> 1.37', group: 'development'
 gem 'rubocop-performance', '~> 1.15', group: 'development'
 
-gem "connection_pool", "~> 2.4"
+gem "connection_pool", "~> 3.0"
 gem "redis", "~> 5.3"
 
 gem "diplomat", "~> 2.6"
