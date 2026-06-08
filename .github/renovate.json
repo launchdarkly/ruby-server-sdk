@@ -1,7 +1,4 @@
 {
-  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
-  "vulnerabilityAlerts": {
-    "enabled": true
-  },
-  "osvVulnerabilityAlerts": true
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>launchdarkly/gh-actions//renovate/sdk-ruby"]
 }

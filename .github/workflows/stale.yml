@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   sdk-close-stale:
-    uses: launchdarkly/gh-actions/.github/workflows/sdk-stale.yml@2e6676d8c7ed1a59114d08faa22e3dbf085a1a64 # main
+    uses: launchdarkly/gh-actions/.github/workflows/sdk-stale.yml@main

@@ -12,4 +12,4 @@ permissions:
 
 jobs:
   lint-pr-title:
-    uses: launchdarkly/gh-actions/.github/workflows/lint-pr-title.yml@2e6676d8c7ed1a59114d08faa22e3dbf085a1a64 # main
+    uses: launchdarkly/gh-actions/.github/workflows/lint-pr-title.yml@main
