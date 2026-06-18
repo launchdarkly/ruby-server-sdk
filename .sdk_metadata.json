@@ -24,6 +24,9 @@
         "experimentation": {
           "introduced": "6.2"
         },
+        "fdv2": {
+          "introduced": "8.12"
+        },
         "fileDataSource": {
           "introduced": "5.4.1"
         },
