@@ -35,6 +35,7 @@ module LaunchDarkly
           if @paths.is_a? String
             @paths = [ @paths ]
           end
+          @allow_duplicates = options[:allow_duplicates] || false
           @auto_update = options[:auto_update]
           @use_listen = @auto_update && @@have_listen && !options[:force_polling]
           @poll_interval = options[:poll_interval] || 1
@@ -139,7 +140,7 @@ module LaunchDarkly
           items = all_data[kind]
           raise ArgumentError, "Received unknown item kind #{kind[:namespace]} in add_data" if items.nil? # shouldn't be possible since we preinitialize the hash
           key = item[:key].to_sym
-          unless items[key].nil?
+          unless items[key].nil? || @allow_duplicates
             raise ArgumentError, "#{kind[:namespace]} key \"#{item[:key]}\" was used more than once"
           end
           items[key] = Model.deserialize(kind, item)
