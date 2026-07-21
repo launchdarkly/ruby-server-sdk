@@ -291,10 +291,14 @@ class ClientEntity
     if params[:privateAttributes]
       context[:_meta] = {
         privateAttributes: params[:privateAttributes].map do |attribute|
+          # LDContext.create re-parses each _meta private attribute as a
+          # reference string, so hand it the raw path rather than a Reference
+          # object. For a literal name this is the escaped single-component
+          # form (e.g. "/address/street" -> "/~1address~1street").
           if attribute[:literal]
-            LaunchDarkly::Reference.create_literal(attribute[:value])
+            LaunchDarkly::Reference.create_literal(attribute[:value]).raw_path
           else
-            LaunchDarkly::Reference.create(attribute[:value])
+            LaunchDarkly::Reference.create(attribute[:value]).raw_path
           end
         end,
       }
