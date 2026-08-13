@@ -100,6 +100,9 @@ module LaunchDarkly
             @store.with_persistence(wrapper, writable, @data_store_status_provider)
           end
 
+          @environment_id = nil
+          @environment_id_lock = Mutex.new
+
           # Threading
           @stop_event = Concurrent::Event.new
           @ready_event = Concurrent::Event.new
@@ -183,6 +186,11 @@ module LaunchDarkly
         # (see DataSystem#flag_change_broadcaster)
         def flag_change_broadcaster
           @flag_change_broadcaster
+        end
+
+        # (see DataSystem#environment_id)
+        def environment_id
+          @environment_id_lock.synchronize { @environment_id }
         end
 
         # (see DataSystem#data_availability)
@@ -270,6 +278,7 @@ module LaunchDarkly
               if basis_result.success?
                 basis = basis_result.value
                 @logger.info { "[LDClient] Initialized via #{initializer.name}" }
+                record_environment_id(basis.environment_id)
 
                 # Apply the basis to the store regardless of whether fallback was signalled.
                 # If the server returned a valid payload alongside the directive we still want
@@ -460,7 +469,10 @@ module LaunchDarkly
               @store.apply(update.change_set, true) if update.change_set
 
               # Set ready event on valid update
-              @ready_event.set if update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
+              if update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
+                @ready_event.set
+                record_environment_id(update.environment_id)
+              end
 
               # Update status
               @data_source_status_provider.update_status(update.state, update.error)
@@ -479,6 +491,18 @@ module LaunchDarkly
           end
 
           SyncResult::REMOVE
+        end
+
+        #
+        # Retains the environment ID reported by a successful connection to LaunchDarkly.
+        #
+        # @param environment_id [String, nil]
+        # @return [void]
+        #
+        def record_environment_id(environment_id)
+          return unless environment_id.is_a?(String) && !environment_id.empty?
+
+          @environment_id_lock.synchronize { @environment_id = environment_id }
         end
 
         #

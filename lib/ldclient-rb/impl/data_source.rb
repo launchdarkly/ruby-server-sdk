@@ -7,6 +7,27 @@ require "set"
 module LaunchDarkly
   module Impl
     module DataSource
+      LD_ENVID_HEADER = "X-LD-EnvID"
+
+      #
+      # Records the environment ID reported by LaunchDarkly, when the response headers provide one and the sink is
+      # able to hold it. Externally implemented sinks are not required to support this.
+      #
+      # @param sink [LaunchDarkly::Interfaces::DataSource::UpdateSink, nil]
+      # @param headers [#[], nil]
+      # @return [void]
+      #
+      def self.record_environment_id(sink, headers)
+        return if headers.nil? || !sink.respond_to?(:set_environment_id)
+
+        environment_id = headers[LD_ENVID_HEADER]
+        # The http gem returns arrays for repeated headers; normalize to a string.
+        environment_id = environment_id.first if environment_id.is_a?(Array)
+        return unless environment_id.is_a?(String) && !environment_id.empty?
+
+        sink.set_environment_id(environment_id)
+      end
+
       class StatusProvider
         include LaunchDarkly::Interfaces::DataSource::StatusProvider
 
@@ -41,10 +62,26 @@ module LaunchDarkly
           @dependency_tracker = LaunchDarkly::Impl::DependencyTracker.new
 
           @mutex = Mutex.new
+          @environment_id = nil
           @current_status = LaunchDarkly::Interfaces::DataSource::Status.new(
             LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING,
             Time.now,
             nil)
+        end
+
+        #
+        # @return [String, nil] The environment ID reported by LaunchDarkly, if known
+        #
+        def environment_id
+          @mutex.synchronize { @environment_id }
+        end
+
+        #
+        # @param environment_id [String]
+        # @return [void]
+        #
+        def set_environment_id(environment_id)
+          @mutex.synchronize { @environment_id = environment_id }
         end
 
         def init(all_data)

@@ -421,7 +421,7 @@ module LaunchDarkly
       # Hooks can be added and we want to ensure all correct stages for a given hook execute. For example, we do not
       # want to trigger the after_evaluation method without also triggering the before_evaluation method.
       hooks = @hooks.dup
-      evaluation_series_context = Interfaces::Hooks::EvaluationSeriesContext.new(key, context, default, method)
+      evaluation_series_context = Interfaces::Hooks::EvaluationSeriesContext.new(key, context, default, method, @data_system.environment_id)
 
       [hooks, evaluation_series_context]
     end

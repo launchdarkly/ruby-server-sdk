@@ -120,6 +120,15 @@ module LaunchDarkly
       end
 
       #
+      # Returns the ID of the environment the SDK is connected to, if LaunchDarkly has reported one.
+      #
+      # @return [String, nil]
+      #
+      def environment_id
+        raise NotImplementedError, "#{self.class} must implement #environment_id"
+      end
+
+      #
       # Represents the availability of data in the SDK.
       #
       class DataAvailability

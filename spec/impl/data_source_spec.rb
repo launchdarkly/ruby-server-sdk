@@ -15,6 +15,29 @@ module LaunchDarkly
         expect(sink.current_status.last_error).to be_nil
       end
 
+      it "has no environment ID until one is reported" do
+        expect(sink.environment_id).to be_nil
+      end
+
+      it "records the environment ID from response headers" do
+        DataSource.record_environment_id(sink, { "X-LD-EnvID" => "env-abc" })
+        expect(sink.environment_id).to eq("env-abc")
+      end
+
+      it "ignores responses without a usable environment ID" do
+        DataSource.record_environment_id(sink, nil)
+        DataSource.record_environment_id(sink, {})
+        DataSource.record_environment_id(sink, { "X-LD-EnvID" => "" })
+        expect(sink.environment_id).to be_nil
+      end
+
+      it "does not overwrite a known environment ID with an unusable one" do
+        DataSource.record_environment_id(sink, { "X-LD-EnvID" => "env-abc" })
+        DataSource.record_environment_id(sink, { "X-LD-EnvID" => "" })
+        DataSource.record_environment_id(sink, {})
+        expect(sink.environment_id).to eq("env-abc")
+      end
+
       it "setting status to interrupted while initializing maintains initializing state" do
         sink.update_status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED, nil)
         expect(sink.current_status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING)

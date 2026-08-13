@@ -68,6 +68,39 @@ module LaunchDarkly
       end
     end
 
+    describe 'environment ID' do
+      def with_connect_handler(processor)
+        connection = double("connection", on_event: nil, on_error: nil)
+        handler = nil
+        allow(connection).to receive(:on_connect) { |&block| handler = block }
+        allow(SSE::Client).to receive(:new) do |_uri, **_opts, &block|
+          block.call(connection)
+          double("SSE::Client", close: nil)
+        end
+
+        processor.start
+        begin
+          yield handler
+        ensure
+          processor.stop
+        end
+      end
+
+      it 'is recorded from the connection response headers' do
+        with_connect_handler(processor) do |handler|
+          handler.call({ "X-LD-EnvID" => "env-abc" })
+          expect(config.data_source_update_sink.environment_id).to eq("env-abc")
+        end
+      end
+
+      it 'is not recorded when the header is absent' do
+        with_connect_handler(processor) do |handler|
+          handler.call({})
+          expect(config.data_source_update_sink.environment_id).to be_nil
+        end
+      end
+    end
+
     describe '#log_connection_result' do
       it "logs successful connection when diagnostic_accumulator is provided" do
         diagnostic_accumulator = double("DiagnosticAccumulator")
