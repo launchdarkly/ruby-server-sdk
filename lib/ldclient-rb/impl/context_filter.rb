@@ -100,18 +100,29 @@ module LaunchDarkly
       #
       private def check_whole_attribute_private(attribute, private_attributes, redacted, redact_all)
         if @all_attributes_private || redact_all
-          redacted << attribute
+          redacted << redaction_name(attribute)
           return true
         end
 
         private_attributes.each do |private_attribute|
           if private_attribute.component(0) == attribute && private_attribute.depth == 1
-            redacted << attribute
+            redacted << redaction_name(attribute)
             return true
           end
         end
 
         false
+      end
+
+      #
+      # Convert an attribute name into the attribute reference used to report it
+      # as redacted.
+      #
+      # @param attribute [Symbol]
+      # @return [Symbol]
+      #
+      private def redaction_name(attribute)
+        LaunchDarkly::Reference.create_literal(attribute).raw_path.to_sym
       end
 
       #
