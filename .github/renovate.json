@@ -1,4 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>launchdarkly/gh-actions//renovate/sdk-ruby"]
+  "extends": ["github>launchdarkly/gh-actions//renovate/sdk-ruby"],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["* * * * *"]
+  },
+  "osvVulnerabilityAlerts": true
 }
