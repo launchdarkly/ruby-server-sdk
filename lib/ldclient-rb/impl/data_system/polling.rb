@@ -313,7 +313,7 @@ module LaunchDarkly
           query_params << ["filter", @config.payload_filter_key] unless @config.payload_filter_key.nil?
 
           if selector && selector.defined?
-            query_params << ["selector", selector.state]
+            query_params << ["basis", selector.state]
           end
 
           uri = @poll_uri
