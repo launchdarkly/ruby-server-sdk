@@ -70,7 +70,7 @@ module LaunchDarkly
         filtered[:anonymous] = true if anonymous
 
         redacted = []
-        private_attributes = @private_attributes.concat(context.private_attributes)
+        private_attributes = @private_attributes + context.private_attributes
 
         name = context.get_value(:name)
         if !name.nil? && !check_whole_attribute_private(:name, private_attributes, redacted, anonymous && redact_anonymous)
