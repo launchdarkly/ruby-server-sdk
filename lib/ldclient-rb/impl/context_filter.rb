@@ -84,7 +84,10 @@ module LaunchDarkly
           end
         end
 
-        filtered[:_meta] = {redactedAttributes: redacted} unless redacted.empty?
+        # A hash can hold both the string and the symbol form of one name. Each
+        # form redacts a value, but the reference names one attribute, so report
+        # it once.
+        filtered[:_meta] = {redactedAttributes: redacted.uniq} unless redacted.empty?
 
         filtered
       end

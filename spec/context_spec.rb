@@ -391,6 +391,38 @@ module LaunchDarkly
             expect(org_context.get_value_for_reference(ref)).to matcher
           end
         end
+
+        it "with complex attributes that have string keys" do
+          address = JSON.parse('{"city":"Oakland","state":"CA","zip":94612}')
+          tags = ["LaunchDarkly", "Feature Flags"]
+          nested = JSON.parse('{"upper":{"middle":{"name":"Middle Level","inner":{"levels":[0,1,2]}},"name":"Upper Level"}}')
+
+          org_context = subject.create({ key: 'ld', kind: 'org', name: 'LaunchDarkly', anonymous: true, address: address, tags: tags, nested: nested })
+
+          [
+            ['/address', eq(address)],
+            ['/address/city', eq('Oakland')],
+
+            ['/tags', eq(tags)],
+
+            ['/nested/upper/name', eq('Upper Level')],
+            ['/nested/upper/middle/name', eq('Middle Level')],
+            ['/nested/upper/middle/inner/levels', eq([0, 1, 2])],
+          ].each do |(reference, matcher)|
+            ref = Reference.create(reference)
+            expect(org_context.get_value_for_reference(ref)).to matcher
+          end
+        end
+
+        it "with a string top level attribute name" do
+          address = { city: "Oakland" }
+
+          org_context = subject.create({ :key => 'ld', :kind => 'org', "address" => address })
+
+          expect(org_context.get_value_for_reference(Reference.create('/address'))).to eq(address)
+          expect(org_context.get_value_for_reference(Reference.create('/address/city'))).to eq('Oakland')
+          expect(org_context.get_value("address")).to eq(address)
+        end
       end
     end
 
