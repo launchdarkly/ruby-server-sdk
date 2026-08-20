@@ -230,9 +230,9 @@ module LaunchDarkly
         name = reference.component(i)
 
         return nil unless value.is_a?(Hash)
-        return nil unless value.has_key?(name)
 
-        value = value[name]
+        found, value = LaunchDarkly::Impl::Context.fetch_attribute(value, name)
+        return nil unless found
       end
 
       value
@@ -418,7 +418,10 @@ module LaunchDarkly
       when :anonymous
         @anonymous
       else
-        @attributes&.fetch(name, nil)
+        return nil if @attributes.nil?
+
+        _, value = LaunchDarkly::Impl::Context.fetch_attribute(@attributes, name)
+        value
       end
     end
 

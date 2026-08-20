@@ -137,11 +137,11 @@ module LaunchDarkly
             next unless private_attribute.depth == (current_path.count + 1)
 
             component = private_attribute.component(current_path.count)
-            next unless component == k
+            next unless LaunchDarkly::Impl::Context.same_attribute_name?(component, k)
 
             match = true
             (0...current_path.count).each do |i|
-              unless private_attribute.component(i) == current_path[i]
+              unless LaunchDarkly::Impl::Context.same_attribute_name?(private_attribute.component(i), current_path[i])
                 match = false
                 break
               end

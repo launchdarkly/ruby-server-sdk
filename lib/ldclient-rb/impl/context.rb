@@ -79,6 +79,40 @@ module LaunchDarkly
       end
 
       #
+      # Attribute reference components are always symbols, but application data
+      # can use string keys. For example, JSON.parse makes string keys by
+      # default. The two forms name the same JSON property, so this method
+      # compares them as equal.
+      #
+      # @param component [Symbol]
+      # @param key [any]
+      # @return [Boolean]
+      #
+      def self.same_attribute_name?(component, key)
+        component == key || component.to_s == key.to_s
+      end
+
+      #
+      # Read an attribute out of a hash by reference component name. The hash
+      # can use either symbol or string keys. A symbol key takes precedence.
+      #
+      # The first element of the returned array is true if the hash has the
+      # attribute. The second element is the value, or nil if there is none.
+      #
+      # @param hash [Hash]
+      # @param name [Symbol]
+      # @return [Array(Boolean, any)]
+      #
+      def self.fetch_attribute(hash, name)
+        return true, hash[name] if hash.has_key?(name)
+
+        string_name = name.to_s
+        return true, hash[string_name] if hash.has_key?(string_name)
+
+        [false, nil]
+      end
+
+      #
       # @param kind [String]
       # @param key [String]
       # @return [String]
