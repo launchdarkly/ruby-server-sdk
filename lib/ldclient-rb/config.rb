@@ -400,6 +400,30 @@ module LaunchDarkly
     attr_reader :wrapper_version
 
     #
+    # Returns a copy of this configuration with different wrapper information.
+    #
+    # This is intended for use by wrapper libraries, such as the LaunchDarkly OpenFeature provider, which need to
+    # identify themselves rather than the application which created the configuration.
+    #
+    # The copy is shallow: it shares the objects the original configuration references, such as the feature store,
+    # the logger, and the socket factory. Mutating one of those objects affects both configurations.
+    #
+    # @param wrapper_name [String, nil] see {#wrapper_name}
+    # @param wrapper_version [String, nil] see {#wrapper_version}
+    #
+    # @return [LaunchDarkly::Config]
+    #
+    def with_wrapper_information(wrapper_name, wrapper_version = nil)
+      updated = dup
+      updated.wrapper_name = wrapper_name
+      updated.wrapper_version = wrapper_version
+
+      updated
+    end
+
+    protected attr_writer :wrapper_name, :wrapper_version
+
+    #
     # The factory used to construct sockets for HTTP operations. The factory must
     # provide the method `open(uri, timeout)`. The `open` method must return a
     # connected stream that implements the `IO` class, such as a `TCPSocket`.
