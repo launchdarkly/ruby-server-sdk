@@ -405,6 +405,9 @@ module LaunchDarkly
     # This is intended for use by wrapper libraries, such as the LaunchDarkly OpenFeature provider, which need to
     # identify themselves rather than the application which created the configuration.
     #
+    # The copy is shallow: it shares the objects the original configuration references, such as the feature store,
+    # the logger, and the socket factory. Mutating one of those objects affects both configurations.
+    #
     # @param wrapper_name [String, nil] see {#wrapper_name}
     # @param wrapper_version [String, nil] see {#wrapper_version}
     #
