@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/data_source"
 require "ldclient-rb/impl/model/serialization"
 require "ldclient-rb/impl/util"
 require "ldclient-rb/in_memory_store"
@@ -54,6 +55,7 @@ module LaunchDarkly
 
           uri = Impl::Util.add_payload_filter_key(@config.stream_uri + "/all", @config)
           @es = SSE::Client.new(uri, **opts) do |conn|
+            conn.on_connect { |response_headers| DataSource.record_environment_id(@data_source_update_sink, response_headers) }
             conn.on_event { |event| process_message(event) }
             conn.on_error { |err|
               log_connection_result(false)

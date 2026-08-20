@@ -46,6 +46,18 @@ module LaunchDarkly
         end
       end
 
+      it "returns the response headers" do
+        expected_data = DataSetBuilder.new.flag(FlagBuilder.new("x").build)
+        with_server do |server|
+          with_requestor(server.base_uri.to_s) do |requestor|
+            server.setup_ok_response("/", expected_data.to_json, "application/json", { "X-LD-EnvID" => "env-abc" })
+            data, headers = requestor.request_all_data_with_headers
+            expect(data).to eq expected_data.to_store_data
+            expect(headers["X-LD-EnvID"]).to eq "env-abc"
+          end
+        end
+      end
+
       it "logs debug output" do
         logger = ::Logger.new($stdout)
         logger.level = ::Logger::DEBUG

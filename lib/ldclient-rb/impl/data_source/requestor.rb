@@ -40,8 +40,18 @@ module LaunchDarkly
         end
 
         def request_all_data()
-          all_data = JSON.parse(make_request("/sdk/latest-all"), symbolize_names: true)
-          Impl::Model.make_all_store_data(all_data, @config.logger)
+          request_all_data_with_headers.first
+        end
+
+        #
+        # Requests the full data set, also returning the headers of the response it was retrieved from.
+        #
+        # @return [Array(Hash, HTTP::Headers)]
+        #
+        def request_all_data_with_headers
+          body, headers = make_request("/sdk/latest-all")
+          all_data = JSON.parse(body, symbolize_names: true)
+          [Impl::Model.make_all_store_data(all_data, @config.logger), headers]
         end
 
         def stop
@@ -80,7 +90,7 @@ module LaunchDarkly
             etag = response.headers["etag"]
             @cache.write(uri, CacheEntry.new(etag, body)) unless etag.nil?
           end
-          body
+          [body, response.headers]
         end
 
         def fix_encoding(body, content_type)

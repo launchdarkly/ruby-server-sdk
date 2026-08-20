@@ -34,6 +34,7 @@ class Hook
         context: @context_filter.filter(evaluation_series_context.context),
         defaultValue: evaluation_series_context.default_value,
         method: evaluation_series_context.method,
+        environmentId: evaluation_series_context.environment_id,
       },
       evaluationSeriesData: data,
       stage: 'beforeEvaluation',
@@ -58,6 +59,7 @@ class Hook
         context: @context_filter.filter(evaluation_series_context.context),
         defaultValue: evaluation_series_context.default_value,
         method: evaluation_series_context.method,
+        environmentId: evaluation_series_context.environment_id,
       },
       evaluationSeriesData: data,
       evaluationDetail: {
