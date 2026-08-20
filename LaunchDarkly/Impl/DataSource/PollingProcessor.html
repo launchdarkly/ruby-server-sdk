@@ -305,17 +305,17 @@
       <pre class="lines">
 
 
-12
 13
 14
 15
 16
 17
 18
-19</pre>
+19
+20</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 12</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 13</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='comma'>,</span> <span class='id identifier rubyid_requestor'>requestor</span><span class='rparen'>)</span>
   <span class='ivar'>@config</span> <span class='op'>=</span> <span class='id identifier rubyid_config'>config</span>
@@ -392,12 +392,12 @@
       <pre class="lines">
 
 
-21
 22
-23</pre>
+23
+24</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 21</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 22</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='ivar'>@initialized</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
@@ -449,7 +449,6 @@
       <pre class="lines">
 
 
-36
 37
 38
 39
@@ -491,14 +490,17 @@
 75
 76
 77
-78</pre>
+78
+79
+80</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 36</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 37</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_poll'>poll</span>
   <span class='kw'>begin</span>
-    <span class='id identifier rubyid_all_data'>all_data</span> <span class='op'>=</span> <span class='ivar'>@requestor</span><span class='period'>.</span><span class='id identifier rubyid_request_all_data'>request_all_data</span>
+    <span class='id identifier rubyid_all_data'>all_data</span><span class='comma'>,</span> <span class='id identifier rubyid_headers'>headers</span> <span class='op'>=</span> <span class='id identifier rubyid_request_all_data'>request_all_data</span>
+    <span class='const'><span class='object_link'><a href="../DataSource.html" title="LaunchDarkly::Impl::DataSource (module)">DataSource</a></span></span><span class='period'>.</span><span class='id identifier rubyid_record_environment_id'><span class='object_link'><a href="../DataSource.html#record_environment_id-class_method" title="LaunchDarkly::Impl::DataSource.record_environment_id (method)">record_environment_id</a></span></span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_data_source_update_sink'>data_source_update_sink</span><span class='comma'>,</span> <span class='id identifier rubyid_headers'>headers</span><span class='rparen'>)</span>
     <span class='kw'>if</span> <span class='id identifier rubyid_all_data'>all_data</span>
       <span class='id identifier rubyid_update_sink_or_data_store'>update_sink_or_data_store</span><span class='period'>.</span><span class='id identifier rubyid_init'>init</span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='rparen'>)</span>
       <span class='kw'>if</span> <span class='ivar'>@initialized</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
@@ -586,15 +588,15 @@
       <pre class="lines">
 
 
-25
 26
 27
 28
 29
-30</pre>
+30
+31</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 25</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 26</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start'>start</span>
   <span class='kw'>return</span> <span class='ivar'>@ready</span> <span class='kw'>unless</span> <span class='ivar'>@started</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
@@ -649,12 +651,12 @@
       <pre class="lines">
 
 
-32
 33
-34</pre>
+34
+35</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 32</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/polling.rb', line 33</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='id identifier rubyid_stop_with_error_info'>stop_with_error_info</span>
@@ -669,9 +671,9 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun  1 20:00:12 2026 by
+  Generated on Thu Aug 20 21:48:09 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.44 (ruby-3.2.10).
+  0.9.45 (ruby-3.2.11).
 </div>
 
     </div>

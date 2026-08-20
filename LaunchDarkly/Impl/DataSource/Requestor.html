@@ -203,6 +203,28 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#request_all_data_with_headers-instance_method" title="#request_all_data_with_headers (instance method)">#<strong>request_all_data_with_headers</strong>  &#x21d2; Array(Hash, HTTP::Headers) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>Requests the full data set, also returning the headers of the response it was retrieved from.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#stop-instance_method" title="#stop (instance method)">#<strong>stop</strong>  &#x21d2; Object </a>
     
 
@@ -359,15 +381,87 @@
 
 42
 43
-44
-45</pre>
+44</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/requestor.rb', line 42</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_request_all_data'>request_all_data</span><span class='lparen'>(</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_all_data'>all_data</span> <span class='op'>=</span> <span class='const'>JSON</span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_make_request'>make_request</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/sdk/latest-all</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='comma'>,</span> <span class='label'>symbolize_names:</span> <span class='kw'>true</span><span class='rparen'>)</span>
-  <span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Model.html" title="LaunchDarkly::Impl::Model (module)">Model</a></span></span><span class='period'>.</span><span class='id identifier rubyid_make_all_store_data'><span class='object_link'><a href="../Model.html#make_all_store_data-class_method" title="LaunchDarkly::Impl::Model.make_all_store_data (method)">make_all_store_data</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='comma'>,</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_request_all_data_with_headers'>request_all_data_with_headers</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="request_all_data_with_headers-instance_method">
+  
+    #<strong>request_all_data_with_headers</strong>  &#x21d2; <tt>Array(Hash, HTTP::Headers)</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Requests the full data set, also returning the headers of the response it was retrieved from.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array(Hash, HTTP::Headers)</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+51
+52
+53
+54
+55</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/requestor.rb', line 51</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_request_all_data_with_headers'>request_all_data_with_headers</span>
+  <span class='id identifier rubyid_body'>body</span><span class='comma'>,</span> <span class='id identifier rubyid_headers'>headers</span> <span class='op'>=</span> <span class='id identifier rubyid_make_request'>make_request</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/sdk/latest-all</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_all_data'>all_data</span> <span class='op'>=</span> <span class='const'>JSON</span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_body'>body</span><span class='comma'>,</span> <span class='label'>symbolize_names:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Model.html" title="LaunchDarkly::Impl::Model (module)">Model</a></span></span><span class='period'>.</span><span class='id identifier rubyid_make_all_store_data'><span class='object_link'><a href="../Model.html#make_all_store_data-class_method" title="LaunchDarkly::Impl::Model.make_all_store_data (method)">make_all_store_data</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_all_data'>all_data</span><span class='comma'>,</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_headers'>headers</span><span class='rbracket'>]</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -416,15 +510,15 @@
       <pre class="lines">
 
 
-47
-48
-49
-50
-51
-52</pre>
+57
+58
+59
+60
+61
+62</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/requestor.rb', line 47</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/requestor.rb', line 57</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='kw'>begin</span>
@@ -442,9 +536,9 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun  1 20:00:12 2026 by
+  Generated on Thu Aug 20 21:48:09 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.44 (ruby-3.2.10).
+  0.9.45 (ruby-3.2.11).
 </div>
 
     </div>

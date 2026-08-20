@@ -175,6 +175,33 @@
       <li class="public ">
   <span class="summary_signature">
     
+      <a href="#environment_id-instance_method" title="#environment_id (instance method)">#<strong>environment_id</strong>  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The ID of the LaunchDarkly environment the SDK is connected to, if known.</p></div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#key-instance_method" title="#key (instance method)">#<strong>key</strong>  &#x21d2; Object </a>
     
 
@@ -242,7 +269,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(key, context, default_value, method)  &#x21d2; EvaluationSeriesContext </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(key, context, default_value, method, environment_id = nil)  &#x21d2; EvaluationSeriesContext </a>
     
 
     
@@ -273,7 +300,7 @@
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(key, context, default_value, method)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Interfaces::Hooks::EvaluationSeriesContext (class)">EvaluationSeriesContext</a></span></tt> 
+    #<strong>initialize</strong>(key, context, default_value, method, environment_id = nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Interfaces::Hooks::EvaluationSeriesContext (class)">EvaluationSeriesContext</a></span></tt> 
   
 
   
@@ -333,6 +360,19 @@
       
     </li>
   
+    <li>
+      
+        <span class='name'>environment_id</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+    </li>
+  
 </ul>
 
 
@@ -342,21 +382,23 @@
       <pre class="lines">
 
 
-79
-80
-81
-82
-83
-84</pre>
+88
+89
+90
+91
+92
+93
+94</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/hooks.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/hooks.rb', line 88</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default_value'>default_value</span><span class='comma'>,</span> <span class='id identifier rubyid_method'>method</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default_value'>default_value</span><span class='comma'>,</span> <span class='id identifier rubyid_method'>method</span><span class='comma'>,</span> <span class='id identifier rubyid_environment_id'>environment_id</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@key</span> <span class='op'>=</span> <span class='id identifier rubyid_key'>key</span>
   <span class='ivar'>@context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span>
   <span class='ivar'>@default_value</span> <span class='op'>=</span> <span class='id identifier rubyid_default_value'>default_value</span>
   <span class='ivar'>@method</span> <span class='op'>=</span> <span class='id identifier rubyid_method'>method</span>
+  <span class='ivar'>@environment_id</span> <span class='op'>=</span> <span class='id identifier rubyid_environment_id'>environment_id</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -453,6 +495,61 @@
       
       <span id=""></span>
       <div class="method_details ">
+  <h3 class="signature " id="environment_id-instance_method">
+  
+    #<strong>environment_id</strong>  &#x21d2; <tt>String</tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The ID of the LaunchDarkly environment the SDK is connected to, if known. This is only available once the
+SDK has received data from LaunchDarkly.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+79
+80
+81</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/hooks.rb', line 79</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_environment_id'>environment_id</span>
+  <span class='ivar'>@environment_id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
   <h3 class="signature " id="key-instance_method">
   
     #<strong>key</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
@@ -538,9 +635,9 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun  1 20:00:11 2026 by
+  Generated on Thu Aug 20 21:48:09 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.44 (ruby-3.2.10).
+  0.9.45 (ruby-3.2.11).
 </div>
 
     </div>
