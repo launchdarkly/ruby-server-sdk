@@ -71,16 +71,26 @@ module LaunchDarkly
         attr_reader :method
 
         #
+        # The ID of the LaunchDarkly environment the SDK is connected to, if known. This is only available once the
+        # SDK has received data from LaunchDarkly.
+        #
+        # @return [String, nil]
+        #
+        attr_reader :environment_id
+
+        #
         # @param key [String]
         # @param context [LaunchDarkly::LDContext]
         # @param default_value [any]
         # @param method [Symbol]
+        # @param environment_id [String, nil]
         #
-        def initialize(key, context, default_value, method)
+        def initialize(key, context, default_value, method, environment_id = nil)
           @key = key
           @context = context
           @default_value = default_value
           @method = method
+          @environment_id = environment_id
         end
       end
     end

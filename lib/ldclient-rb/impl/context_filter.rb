@@ -73,12 +73,12 @@ module LaunchDarkly
         private_attributes = @private_attributes + context.private_attributes
 
         name = context.get_value(:name)
-        if !name.nil? && !check_whole_attribute_private(:name, private_attributes, redacted, anonymous && redact_anonymous)
+        if !name.nil? && !check_whole_attribute_private(Reference.create_literal(:name), private_attributes, redacted, anonymous && redact_anonymous)
           filtered[:name] = name
         end
 
         context.get_custom_attribute_names.each do |attribute|
-          unless check_whole_attribute_private(attribute, private_attributes, redacted, anonymous && redact_anonymous)
+          unless check_whole_attribute_private(Reference.create_literal(attribute), private_attributes, redacted, anonymous && redact_anonymous)
             value = context.get_value(attribute)
             filtered[attribute] = redact_json_value(nil, attribute, value, private_attributes, redacted)
           end
@@ -92,7 +92,7 @@ module LaunchDarkly
       #
       # Check if an entire attribute should be redacted.
       #
-      # @param attribute [Symbol]
+      # @param attribute [Reference]
       # @param private_attributes [Array<Reference>]
       # @param redacted [Array<Symbol>]
       # @param redact_all [Boolean]
@@ -100,13 +100,13 @@ module LaunchDarkly
       #
       private def check_whole_attribute_private(attribute, private_attributes, redacted, redact_all)
         if @all_attributes_private || redact_all
-          redacted << attribute
+          redacted << attribute.raw_path.to_sym
           return true
         end
 
         private_attributes.each do |private_attribute|
-          if private_attribute.component(0) == attribute && private_attribute.depth == 1
-            redacted << attribute
+          if private_attribute.component(0) == attribute.component(0) && private_attribute.depth == 1
+            redacted << attribute.raw_path.to_sym
             return true
           end
         end
