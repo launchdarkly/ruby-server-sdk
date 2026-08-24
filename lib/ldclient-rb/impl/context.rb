@@ -93,21 +93,23 @@ module LaunchDarkly
       end
 
       #
-      # Read an attribute out of a hash by reference component name. The hash
-      # can use either symbol or string keys. A symbol key takes precedence.
+      # Read an attribute out of a hash by name. The hash can use symbol or
+      # string keys, and the name can be either form. An exact match wins, then
+      # the other form. A symbol therefore takes precedence when the hash holds
+      # both forms of one name.
       #
       # The first element of the returned array is true if the hash has the
       # attribute. The second element is the value, or nil if there is none.
       #
       # @param hash [Hash]
-      # @param name [Symbol]
+      # @param name [Symbol, String]
       # @return [Array(Boolean, any)]
       #
       def self.fetch_attribute(hash, name)
         return true, hash[name] if hash.has_key?(name)
 
-        string_name = name.to_s
-        return true, hash[string_name] if hash.has_key?(string_name)
+        alternate = name.is_a?(Symbol) ? name.to_s : name.to_sym
+        return true, hash[alternate] if hash.has_key?(alternate)
 
         [false, nil]
       end

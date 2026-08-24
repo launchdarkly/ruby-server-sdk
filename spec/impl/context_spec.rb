@@ -30,6 +30,44 @@ module LaunchDarkly
           expect(subject.validate_key(input)).to eq(expected)
         end
       end
+
+      it "compares attribute names in either direction" do
+        [
+          [:email, "email"],
+          ["email", :email],
+          [:email, :email],
+          ["email", "email"],
+        ].each do |(component, key)|
+          expect(subject.same_attribute_name?(component, key)).to be true
+        end
+
+        expect(subject.same_attribute_name?(:email, "other")).to be false
+      end
+
+      it "fetches an attribute for either key type by either name type" do
+        [
+          [{ email: "value" }, :email],
+          [{ email: "value" }, "email"],
+          [{ "email" => "value" }, :email],
+          [{ "email" => "value" }, "email"],
+        ].each do |(hash, name)|
+          expect(subject.fetch_attribute(hash, name)).to eq([true, "value"])
+        end
+
+        expect(subject.fetch_attribute({ email: "value" }, :other)).to eq([false, nil])
+      end
+
+      it "prefers an exact match when a hash holds both forms of a name" do
+        hash = { :email => "symbol", "email" => "string" }
+
+        expect(subject.fetch_attribute(hash, :email)).to eq([true, "symbol"])
+        expect(subject.fetch_attribute(hash, "email")).to eq([true, "string"])
+      end
+
+      it "reports a missing attribute as absent rather than nil valued" do
+        expect(subject.fetch_attribute({ email: nil }, :email)).to eq([true, nil])
+        expect(subject.fetch_attribute({}, :email)).to eq([false, nil])
+      end
     end
   end
 end
