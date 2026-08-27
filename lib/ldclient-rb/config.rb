@@ -262,6 +262,10 @@ module LaunchDarkly
     # You can also specify the same behavior for an individual flag evaluation
     # by providing the context object with a list of private attributes.
     #
+    # Each entry is an attribute reference. A reference addresses attributes by
+    # symbol name, so it cannot make an attribute private if that attribute was
+    # given a string name. Refer to {LDContext} for the symbol requirement.
+    #
     # @see https://docs.launchdarkly.com/sdk/features/user-context-config#using-private-attributes
     #
     # @return [Array<String>]

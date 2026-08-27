@@ -12,6 +12,10 @@ module LaunchDarkly
   # or to identify an attribute or nested value that should be considered
   # private.
   #
+  # A Reference holds its path components as symbols, whichever form the input
+  # string used. It therefore addresses only context attributes that have symbol
+  # names, which is the form a context requires.
+  #
   # Parsing and validation are done at the time that the Reference is
   # constructed. If a Reference instance was created from an invalid string, it
   # is considered invalid and its {Reference#error} attribute will return a
