@@ -36,25 +36,25 @@ module LaunchDarkly
 
         describe "hash" do
           it "constant instances are equal to themselves" do
-            expect(FEATURES.hash).to be FEATURES.hash
-            expect(SEGMENTS.hash).to be SEGMENTS.hash
+            expect(FEATURES.hash).to eq FEATURES.hash
+            expect(SEGMENTS.hash).to eq SEGMENTS.hash
           end
 
           it "same constructions are equal" do
-            expect(FEATURES.hash).to be DataKind.new(namespace: "features", priority: 1).hash
-            expect(DataKind.new(namespace: "features", priority: 1).hash).to be DataKind.new(namespace: "features", priority: 1).hash
+            expect(FEATURES.hash).to eq DataKind.new(namespace: "features", priority: 1).hash
+            expect(DataKind.new(namespace: "features", priority: 1).hash).to eq DataKind.new(namespace: "features", priority: 1).hash
 
-            expect(SEGMENTS.hash).to be DataKind.new(namespace: "segments", priority: 0).hash
-            expect(DataKind.new(namespace: "segments", priority: 0).hash).to be DataKind.new(namespace: "segments", priority: 0).hash
+            expect(SEGMENTS.hash).to eq DataKind.new(namespace: "segments", priority: 0).hash
+            expect(DataKind.new(namespace: "segments", priority: 0).hash).to eq DataKind.new(namespace: "segments", priority: 0).hash
           end
 
           it "distinct namespaces are not equal" do
-            expect(DataKind.new(namespace: "features", priority: 1).hash).not_to be DataKind.new(namespace: "segments", priority: 1).hash
+            expect(DataKind.new(namespace: "features", priority: 1).hash).not_to eq DataKind.new(namespace: "segments", priority: 1).hash
           end
 
           it "distinct priorities are not equal" do
-            expect(DataKind.new(namespace: "features", priority: 1).hash).not_to be DataKind.new(namespace: "features", priority: 2).hash
-            expect(DataKind.new(namespace: "segments", priority: 1).hash).not_to be DataKind.new(namespace: "segments", priority: 2).hash
+            expect(DataKind.new(namespace: "features", priority: 1).hash).not_to eq DataKind.new(namespace: "features", priority: 2).hash
+            expect(DataKind.new(namespace: "segments", priority: 1).hash).not_to eq DataKind.new(namespace: "segments", priority: 2).hash
           end
         end
       end
