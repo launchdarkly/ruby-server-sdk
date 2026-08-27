@@ -138,6 +138,18 @@ module LaunchDarkly
         expect(filtered[:address]).to eq({ street: "123 Easy St", self: { street: "123 Easy St" } })
       end
 
+      it "matches private references against the paths present in the output for cyclic values" do
+        address = { street: "123 Easy St", city: "Springfield" }
+        address[:self] = address
+        filter = ContextFilter.new(false, ["/address/street"])
+        context = LDContext.create({ kind: "user", key: "user-key", address: address })
+
+        filtered = filter.filter(context)
+
+        expect(filtered[:address]).to eq({ city: "Springfield", self: { street: "123 Easy St", city: "Springfield" } })
+        expect(filtered[:_meta][:redactedAttributes]).to eq([:"/address/street"])
+      end
+
       it "keeps a value that appears in more than one branch" do
         shared = { city: "Springfield" }
         filter = ContextFilter.new(false, [])

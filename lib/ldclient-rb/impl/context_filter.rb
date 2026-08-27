@@ -143,7 +143,15 @@ module LaunchDarkly
         current_path << name
 
         # The chain of hashes from the attribute root down to this value. A
-        # nested value that points back into this chain is a cycle.
+        # nested value that points back into this chain is a cycle and is
+        # omitted.
+        #
+        # The comparison is by object identity, which keeps the check cheap.
+        # Context creation copies each top-level attribute value, so a cycle
+        # through that value appears once in the output before it is cut.
+        # Private attribute references match the paths that appear in the
+        # output. Cyclic values are not valid context data; this check only
+        # prevents unbounded recursion.
         branch = visited + [value]
 
         value.each do |k, v|
