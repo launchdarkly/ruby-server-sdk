@@ -6,6 +6,17 @@ module LaunchDarkly
   # LDContext is a collection of attributes that can be referenced in flag
   # evaluations and analytics events.
   #
+  # Every attribute name must be a symbol. This applies to the built-in
+  # properties, such as :key and :kind, and to custom attributes at every level
+  # of nesting. The SDK addresses attributes by symbol, so it cannot find an
+  # attribute that has a string name. Such an attribute is invisible to flag
+  # evaluation and to private attribute redaction.
+  #
+  # Take care with data that arrives as JSON. `JSON.parse` returns string keys
+  # by default, so pass `symbolize_names: true` before you build a context from
+  # it. Note that the `"name": value` form in a hash literal already produces a
+  # symbol, so a hand-written literal is safe.
+  #
   # To create an LDContext of a single kind, such as a user, you may use
   # {LDContext#create} or {LDContext#with_key}.
   #
@@ -148,6 +159,9 @@ module LaunchDarkly
     #
     # Return an array of top level attribute keys (excluding built-in attributes)
     #
+    # The keys come back in the form the caller supplied. A string key is
+    # returned as a string, even though the SDK cannot address it.
+    #
     # @return [Array<Symbol>]
     #
     def get_custom_attribute_names
@@ -171,6 +185,9 @@ module LaunchDarkly
     # This method does not support complex expressions for getting individual
     # values out of JSON objects or arrays, such as "/address/street". Use
     # {#get_value_for_reference} for that purpose.
+    #
+    # The lookup treats the name as a symbol. An attribute that was stored under
+    # a string name is therefore not found, and the result is nil.
     #
     # If the value is found, the return value is the attribute value;
     # otherwise, it is nil.
@@ -199,6 +216,10 @@ module LaunchDarkly
     # For a multi-kind context, the only supported attribute name is "kind".
     # Use {#individual_context} to inspect a Context for a particular kind and
     # then get its attributes.
+    #
+    # A Reference holds its path components as symbols, so each step of the
+    # lookup matches a symbol key. A path that crosses an attribute with a
+    # string name resolves to nil.
     #
     # If the value is found, the return value is the attribute value;
     # otherwise, it is nil.
@@ -439,6 +460,14 @@ module LaunchDarkly
     # The provided hash must match the format as outlined in the
     # {https://docs.launchdarkly.com/sdk/features/user-config SDK
     # documentation}.
+    #
+    # Every key in the hash must be a symbol, at the top level and inside any
+    # nested attribute value. Refer to the {LDContext} class documentation for
+    # why, and for the JSON.parse caveat.
+    #
+    # A string key does not make the context invalid, with two exceptions. The
+    # context requires a symbol :kind and a symbol :key, so a hash that supplies
+    # those as strings is invalid.
     #
     # @param data [Hash]
     # @return [LDContext]
