@@ -113,6 +113,9 @@ to use the Reference type directly.</p>
 <p>It can be used to retrieve a value with LDContext.get_value_for_reference()
 or to identify an attribute or nested value that should be considered
 private.</p>
+<p>A Reference holds its path components as symbols, whichever form the input
+string used. It therefore addresses only context attributes that have symbol
+names, which is the form a context requires.</p>
 <p>Parsing and validation are done at the time that the Reference is
 constructed. If a Reference instance was created from an invalid string, it
 is considered invalid and its <span class='object_link'><a href="#error-instance_method" title="LaunchDarkly::Reference#error (method)">#error</a></span> attribute will return a
@@ -449,15 +452,15 @@ are supported.</p>
       <pre class="lines">
 
 
-104
-105
-106
-107
 108
-109</pre>
+109
+110
+111
+112
+113</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 104</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 108</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_raw_path'>raw_path</span><span class='comma'>,</span> <span class='id identifier rubyid_components'>components</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_error'>error</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@raw_path</span> <span class='op'>=</span> <span class='id identifier rubyid_raw_path'>raw_path</span>
@@ -524,12 +527,12 @@ reference syntax.</p>
       <pre class="lines">
 
 
-89
-90
-91</pre>
+93
+94
+95</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 89</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 93</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_error'>error</span>
   <span class='ivar'>@error</span>
@@ -583,12 +586,12 @@ is &quot;/a&quot; would be represented as &quot;~1a&quot;).</p>
       <pre class="lines">
 
 
-102
-103
-104</pre>
+106
+107
+108</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 102</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 106</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_raw_path'>raw_path</span>
   <span class='ivar'>@raw_path</span>
@@ -663,10 +666,6 @@ that takes this Reference as a parameter will consider it invalid.</p>
       <pre class="lines">
 
 
-127
-128
-129
-130
 131
 132
 133
@@ -696,10 +695,14 @@ that takes this Reference as a parameter will consider it invalid.</p>
 157
 158
 159
-160</pre>
+160
+161
+162
+163
+164</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 127</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 131</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create'>create</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Symbol</span><span class='rparen'>)</span>
@@ -802,10 +805,6 @@ slash), or to Reference.create(&quot;/a~1b&quot;).</p>
       <pre class="lines">
 
 
-179
-180
-181
-182
 183
 184
 185
@@ -814,10 +813,14 @@ slash), or to Reference.create(&quot;/a~1b&quot;).</p>
 188
 189
 190
-191</pre>
+191
+192
+193
+194
+195</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 179</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 183</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create_literal'>create_literal</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>String</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Symbol</span><span class='rparen'>)</span>
@@ -862,12 +865,12 @@ slash), or to Reference.create(&quot;/a~1b&quot;).</p>
       <pre class="lines">
 
 
-232
-233
-234</pre>
+236
+237
+238</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 232</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 236</span>
 
 <span class='kw'>def</span> <span class='op'>==</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
   <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='op'>&amp;&amp;</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_components'>components</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_components'>components</span>
@@ -936,14 +939,14 @@ Reference.create(&quot;/a/b&quot;).component(1) # returns &quot;b&quot;</p>
       <pre class="lines">
 
 
-226
-227
-228
-229
-230</pre>
+230
+231
+232
+233
+234</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 226</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 230</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_component'>component</span><span class='lparen'>(</span><span class='id identifier rubyid_index'>index</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>if</span> <span class='id identifier rubyid_index'>index</span> <span class='op'>&lt;</span> <span class='int'>0</span> <span class='op'>||</span> <span class='id identifier rubyid_index'>index</span> <span class='op'>&gt;=</span> <span class='id identifier rubyid_depth'>depth</span>
@@ -997,12 +1000,12 @@ NewRef(&quot;/a/b&quot;).Depth() returns 2.</p>
       <pre class="lines">
 
 
-205
-206
-207</pre>
+209
+210
+211</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 205</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 209</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_depth'>depth</span>
   <span class='ivar'>@components</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span>
@@ -1027,12 +1030,12 @@ NewRef(&quot;/a/b&quot;).Depth() returns 2.</p>
       <pre class="lines">
 
 
-237
-238
-239</pre>
+241
+242
+243</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 237</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 241</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_hash'>hash</span>
   <span class='lparen'>(</span><span class='lbracket'>[</span><span class='id identifier rubyid_error'>error</span><span class='rbracket'>]</span> <span class='op'>+</span> <span class='id identifier rubyid_components'>components</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_hash'>hash</span>
@@ -1094,12 +1097,12 @@ NewRef(&quot;/a/b&quot;).Depth() returns 2.</p>
       <pre class="lines">
 
 
-247
-248
-249</pre>
+251
+252
+253</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 247</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/reference.rb', line 251</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
   <span class='const'>JSON</span><span class='period'>.</span><span class='id identifier rubyid_generate'>generate</span><span class='lparen'>(</span><span class='ivar'>@raw_path</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
@@ -1114,7 +1117,7 @@ NewRef(&quot;/a/b&quot;).Depth() returns 2.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu Aug 20 21:48:07 2026 by
+  Generated on Fri Aug 28 14:25:47 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

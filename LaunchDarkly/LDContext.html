@@ -106,6 +106,15 @@
   <div class="discussion">
     <p>LDContext is a collection of attributes that can be referenced in flag
 evaluations and analytics events.</p>
+<p>Every attribute name must be a symbol. This applies to the built-in
+properties, such as :key and :kind, and to custom attributes at every level
+of nesting. The SDK addresses attributes by symbol, so it cannot find an
+attribute that has a string name. Such an attribute is invisible to flag
+evaluation and to private attribute redaction.</p>
+<p>Take care with data that arrives as JSON. <code>JSON.parse</code> returns string keys
+by default, so pass <code>symbolize_names: true</code> before you build a context from
+it. Note that the <code>&quot;name&quot;: value</code> form in a hash literal already produces a
+symbol, so a hand-written literal is safe.</p>
 <p>To create an LDContext of a single kind, such as a user, you may use
 <span class='object_link'><a href="#create-class_method" title="LaunchDarkly::LDContext.create (method)">LDContext.create</a></span> or <span class='object_link'><a href="#with_key-class_method" title="LaunchDarkly::LDContext.with_key (method)">LDContext.with_key</a></span>.</p>
 <p>To create an LDContext with multiple kinds, use <span class='object_link'><a href="#create_multi-class_method" title="LaunchDarkly::LDContext.create_multi (method)">LDContext.create_multi</a></span>.</p>
@@ -855,25 +864,25 @@ context, and the associated errors by calling <span class='object_link'><a href=
       <pre class="lines">
 
 
-62
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
 73
 74
 75
 76
-77</pre>
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 62</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 73</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_fully_qualified_key'>fully_qualified_key</span><span class='comma'>,</span> <span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_anonymous'>anonymous</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_private_attributes'>private_attributes</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_error'>error</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_contexts'>contexts</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@key</span> <span class='op'>=</span> <span class='id identifier rubyid_key'>key</span>
@@ -943,12 +952,12 @@ context, and the associated errors by calling <span class='object_link'><a href=
       <pre class="lines">
 
 
-48
-49
-50</pre>
+59
+60
+61</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 48</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 59</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_error'>error</span>
   <span class='ivar'>@error</span>
@@ -1000,12 +1009,12 @@ context, and the associated errors by calling <span class='object_link'><a href=
       <pre class="lines">
 
 
-42
-43
-44</pre>
+53
+54
+55</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 42</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 53</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_fully_qualified_key'>fully_qualified_key</span>
   <span class='ivar'>@fully_qualified_key</span>
@@ -1057,12 +1066,12 @@ context, and the associated errors by calling <span class='object_link'><a href=
       <pre class="lines">
 
 
-39
-40
-41</pre>
+50
+51
+52</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 39</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 50</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_key'>key</span>
   <span class='ivar'>@key</span>
@@ -1114,12 +1123,12 @@ context, and the associated errors by calling <span class='object_link'><a href=
       <pre class="lines">
 
 
-45
-46
-47</pre>
+56
+57
+58</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 45</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 56</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_kind'>kind</span>
   <span class='ivar'>@kind</span>
@@ -1150,6 +1159,12 @@ context, and the associated errors by calling <span class='object_link'><a href=
     <p>Create a single kind context from the provided hash.</p>
 <p>The provided hash must match the format as outlined in the
 <a href="https://docs.launchdarkly.com/sdk/features/user-config" target="_parent" title="SDK documentation">SDK documentation</a>.</p>
+<p>Every key in the hash must be a symbol, at the top level and inside any
+nested attribute value. Refer to the <span class='object_link'><a href="" title="LaunchDarkly::LDContext (class)">LaunchDarkly::LDContext</a></span> class documentation for
+why, and for the JSON.parse caveat.</p>
+<p>A string key does not make the context invalid, with two exceptions. The
+context requires a symbol :kind and a symbol :key, so a hash that supplies
+those as strings is invalid.</p>
 
   </div>
 </div>
@@ -1190,25 +1205,25 @@ context, and the associated errors by calling <span class='object_link'><a href=
       <pre class="lines">
 
 
-446
-447
-448
-449
-450
-451
-452
-453
-454
-455
-456
-457
-458
-459
-460
-461</pre>
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 446</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 475</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create'>create</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_create_invalid_context'>create_invalid_context</span><span class='lparen'>(</span><span class='const'>ERR_NOT_HASH</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
@@ -1292,36 +1307,36 @@ multi-kind context wrapping that one single-kind.</p>
       <pre class="lines">
 
 
-481
-482
-483
-484
-485
-486
-487
-488
-489
-490
-491
-492
-493
-494
-495
-496
-497
-498
-499
-500
-501
-502
-503
-504
-505
-506
-507</pre>
+510
+511
+512
+513
+514
+515
+516
+517
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532
+533
+534
+535
+536</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 481</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 510</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create_multi'>create_multi</span><span class='lparen'>(</span><span class='id identifier rubyid_contexts'>contexts</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_create_invalid_context'>create_invalid_context</span><span class='lparen'>(</span><span class='const'>ERR_KIND_MULTI_NON_CONTEXT_ARRAY</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_contexts'>contexts</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Array</span><span class='rparen'>)</span>
@@ -1408,12 +1423,12 @@ a key and kind type.</p>
       <pre class="lines">
 
 
-432
-433
-434</pre>
+453
+454
+455</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 432</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 453</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_with_key'>with_key</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_kind'>kind</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="#KIND_DEFAULT-constant" title="LaunchDarkly::LDContext::KIND_DEFAULT (constant)">KIND_DEFAULT</a></span></span><span class='rparen'>)</span>
   <span class='id identifier rubyid_create'>create</span><span class='lparen'>(</span><span class='lbrace'>{</span><span class='label'>key:</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='label'>kind:</span> <span class='id identifier rubyid_kind'>kind</span><span class='rbrace'>}</span><span class='rparen'>)</span>
@@ -1487,37 +1502,37 @@ a hash is provided, it is first converted to an LDContext using the
       <pre class="lines">
 
 
-312
-313
-314
-315
-316
-317
-318
-319
-320
-321
-322
-323
-324
-325
-326
-327
-328
-329
-330
-331
-332
 333
 334
 335
 336
 337
 338
-339</pre>
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 312</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 333</span>
 
 <span class='kw'>def</span> <span class='op'>==</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_other'>other</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::LDContext (class)">LDContext</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create'><span class='object_link'><a href="#create-class_method" title="LaunchDarkly::LDContext.create (method)">create</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Hash</span>
@@ -1595,13 +1610,13 @@ same as calling <code>LDContext.individual_context</code>.</p>
       <pre class="lines">
 
 
-352
-353
-354
-355</pre>
+373
+374
+375
+376</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 352</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 373</span>
 
 <span class='kw'>def</span> <span class='op'>[]</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_key'>key</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Symbol</span> <span class='kw'>or</span> <span class='id identifier rubyid_key'>key</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>String</span>
@@ -1624,6 +1639,8 @@ same as calling <code>LDContext.individual_context</code>.</p>
 </h3><div class="docstring">
   <div class="discussion">
     <p>Return an array of top level attribute keys (excluding built-in attributes)</p>
+<p>The keys come back in the form the caller supplied. A string key is
+returned as a string, even though the SDK cannot address it.</p>
 
   </div>
 </div>
@@ -1649,14 +1666,14 @@ same as calling <code>LDContext.individual_context</code>.</p>
       <pre class="lines">
 
 
-153
-154
-155
-156
-157</pre>
+167
+168
+169
+170
+171</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 153</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 167</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_custom_attribute_names'>get_custom_attribute_names</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='ivar'>@attributes</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -1690,6 +1707,8 @@ then get its attributes.</p>
 <p>This method does not support complex expressions for getting individual
 values out of JSON objects or arrays, such as &quot;/address/street&quot;. Use
 <span class='object_link'><a href="#get_value_for_reference-instance_method" title="LaunchDarkly::LDContext#get_value_for_reference (method)">#get_value_for_reference</a></span> for that purpose.</p>
+<p>The lookup treats the name as a symbol. An attribute that was stored under
+a string name is therefore not found, and the result is nil.</p>
 <p>If the value is found, the return value is the attribute value;
 otherwise, it is nil.</p>
 
@@ -1732,13 +1751,13 @@ otherwise, it is nil.</p>
       <pre class="lines">
 
 
-181
-182
-183
-184</pre>
+198
+199
+200
+201</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 181</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 198</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_value'>get_value</span><span class='lparen'>(</span><span class='id identifier rubyid_attribute'>attribute</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_reference'>reference</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Reference.html" title="LaunchDarkly::Reference (class)">Reference</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create_literal'><span class='object_link'><a href="Reference.html#create_literal-class_method" title="LaunchDarkly::Reference.create_literal (method)">create_literal</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_attribute'>attribute</span><span class='rparen'>)</span>
@@ -1773,6 +1792,9 @@ for more details.</p>
 <p>For a multi-kind context, the only supported attribute name is &quot;kind&quot;.
 Use <span class='object_link'><a href="#individual_context-instance_method" title="LaunchDarkly::LDContext#individual_context (method)">#individual_context</a></span> to inspect a Context for a particular kind and
 then get its attributes.</p>
+<p>A Reference holds its path components as symbols, so each step of the
+lookup matches a symbol key. A path that crosses an attribute with a
+string name resolves to nil.</p>
 <p>If the value is found, the return value is the attribute value;
 otherwise, it is nil.</p>
 
@@ -1815,27 +1837,6 @@ otherwise, it is nil.</p>
       <pre class="lines">
 
 
-209
-210
-211
-212
-213
-214
-215
-216
-217
-218
-219
-220
-221
-222
-223
-224
-225
-226
-227
-228
-229
 230
 231
 232
@@ -1845,10 +1846,31 @@ otherwise, it is nil.</p>
 236
 237
 238
-239</pre>
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 209</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 230</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_value_for_reference'>get_value_for_reference</span><span class='lparen'>(</span><span class='id identifier rubyid_reference'>reference</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_valid?'>valid?</span>
@@ -1958,32 +1980,32 @@ or null if none.</p></div>
       <pre class="lines">
 
 
-280
-281
-282
-283
-284
-285
-286
-287
-288
-289
-290
-291
-292
-293
-294
-295
-296
-297
-298
-299
-300
 301
-302</pre>
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 280</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 301</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_individual_context'>individual_context</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_valid?'>valid?</span>
@@ -2056,14 +2078,14 @@ zero.</p>
       <pre class="lines">
 
 
-250
-251
-252
-253
-254</pre>
+271
+272
+273
+274
+275</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 250</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 271</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_individual_context_count'>individual_context_count</span>
   <span class='kw'>return</span> <span class='int'>0</span> <span class='kw'>unless</span> <span class='id identifier rubyid_valid?'>valid?</span>
@@ -2112,15 +2134,15 @@ zero.</p>
       <pre class="lines">
 
 
-129
-130
-131
-132
-133
-134</pre>
+140
+141
+142
+143
+144
+145</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 129</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 140</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_keys'>keys</span>
   <span class='kw'>return</span> <span class='lbrace'>{</span><span class='rbrace'>}</span> <span class='kw'>unless</span> <span class='id identifier rubyid_valid?'>valid?</span>
@@ -2170,15 +2192,15 @@ zero.</p>
       <pre class="lines">
 
 
-141
-142
-143
-144
-145
-146</pre>
+152
+153
+154
+155
+156
+157</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 141</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 152</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_kinds'>kinds</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>unless</span> <span class='id identifier rubyid_valid?'>valid?</span>
@@ -2231,12 +2253,12 @@ zero.</p>
       <pre class="lines">
 
 
-93
-94
-95</pre>
+104
+105
+106</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 93</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 104</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_multi_kind?'>multi_kind?</span>
   <span class='ivar'>@is_multi</span>
@@ -2286,13 +2308,13 @@ zero.</p>
       <pre class="lines">
 
 
-85
-86
-87
-88</pre>
+96
+97
+98
+99</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 96</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_private_attributes'>private_attributes</span>
   <span class='comment'># TODO(sc-227265): Return a set instead of an array.
@@ -2341,22 +2363,22 @@ message.</p>
       <pre class="lines">
 
 
-373
-374
-375
-376
-377
-378
-379
-380
-381
-382
-383
-384
-385</pre>
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 373</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 394</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_h'>to_h</span>
   <span class='kw'>return</span> <span class='lbrace'>{</span><span class='label'>error:</span> <span class='id identifier rubyid_error'>error</span><span class='rbrace'>}</span> <span class='kw'>unless</span> <span class='id identifier rubyid_valid?'>valid?</span>
@@ -2428,12 +2450,12 @@ message.</p>
       <pre class="lines">
 
 
-363
-364
-365</pre>
+384
+385
+386</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 363</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 384</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
   <span class='const'>JSON</span><span class='period'>.</span><span class='id identifier rubyid_generate'>generate</span><span class='lparen'>(</span><span class='id identifier rubyid_to_h'>to_h</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
@@ -2483,12 +2505,12 @@ message.</p>
       <pre class="lines">
 
 
-100
-101
-102</pre>
+111
+112
+113</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 100</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 111</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_valid?'>valid?</span>
   <span class='ivar'>@error</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -2528,15 +2550,15 @@ single-kind contexts. This may result in an invalid context (e.g. all single-kin
       <pre class="lines">
 
 
-117
-118
-119
-120
-121
-122</pre>
+128
+129
+130
+131
+132
+133</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 117</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/context.rb', line 128</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_without_anonymous_contexts'>without_anonymous_contexts</span>
   <span class='id identifier rubyid_contexts'>contexts</span> <span class='op'>=</span> <span class='id identifier rubyid_multi_kind?'>multi_kind?</span> <span class='op'>?</span> <span class='ivar'>@contexts</span> <span class='op'>:</span> <span class='lbracket'>[</span><span class='kw'>self</span><span class='rbracket'>]</span>
@@ -2554,7 +2576,7 @@ single-kind contexts. This may result in an invalid context (e.g. all single-kin
 </div>
 
       <div id="footer">
-  Generated on Thu Aug 20 21:48:07 2026 by
+  Generated on Fri Aug 28 14:25:46 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

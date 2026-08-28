@@ -191,7 +191,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(all_attributes_private, private_attributes)  &#x21d2; ContextFilter </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(all_attributes_private, private_attributes, logger = nil)  &#x21d2; ContextFilter </a>
     
 
     
@@ -222,7 +222,7 @@
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(all_attributes_private, private_attributes)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::ContextFilter (class)">ContextFilter</a></span></tt> 
+    #<strong>initialize</strong>(all_attributes_private, private_attributes, logger = nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::ContextFilter (class)">ContextFilter</a></span></tt> 
   
 
   
@@ -264,6 +264,19 @@
       
     </li>
   
+    <li>
+      
+        <span class='name'>logger</span>
+      
+      
+        <span class='type'>(<tt>Logger</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+    </li>
+  
 </ul>
 
 <p class="tag_title">Since:</p>
@@ -287,21 +300,25 @@
       <pre class="lines">
 
 
-8
-9
-10
 11
 12
 13
 14
 15
-16</pre>
+16
+17
+18
+19
+20
+21</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/context_filter.rb', line 8</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/context_filter.rb', line 11</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_all_attributes_private'>all_attributes_private</span><span class='comma'>,</span> <span class='id identifier rubyid_private_attributes'>private_attributes</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_all_attributes_private'>all_attributes_private</span><span class='comma'>,</span> <span class='id identifier rubyid_private_attributes'>private_attributes</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@all_attributes_private</span> <span class='op'>=</span> <span class='id identifier rubyid_all_attributes_private'>all_attributes_private</span>
+  <span class='ivar'>@logger</span> <span class='op'>=</span> <span class='id identifier rubyid_logger'>logger</span>
+  <span class='ivar'>@non_symbol_name_logged</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>AtomicBoolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
 
   <span class='ivar'>@private_attributes</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='id identifier rubyid_private_attributes'>private_attributes</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_attribute'>attribute</span><span class='op'>|</span>
@@ -392,12 +409,12 @@ redaction applied.</p>
       <pre class="lines">
 
 
-25
-26
-27</pre>
+30
+31
+32</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/context_filter.rb', line 25</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/context_filter.rb', line 30</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_filter'>filter</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_internal_filter'>internal_filter</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -480,12 +497,12 @@ for key, kind, and anonymous.</p>
       <pre class="lines">
 
 
-39
-40
-41</pre>
+44
+45
+46</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/context_filter.rb', line 39</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/context_filter.rb', line 44</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_filter_redact_anonymous'>filter_redact_anonymous</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_internal_filter'>internal_filter</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -500,7 +517,7 @@ for key, kind, and anonymous.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu Aug 20 21:48:08 2026 by
+  Generated on Fri Aug 28 14:25:47 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>
