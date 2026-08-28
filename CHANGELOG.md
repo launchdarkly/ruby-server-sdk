@@ -2,6 +2,14 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.15.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.15.0...8.15.1) (2026-08-28)
+
+
+### Bug Fixes
+
+* Omit non-symbol context attributes and protect against cyclic values ([#423](https://github.com/launchdarkly/ruby-server-sdk/issues/423)) ([8dae87e](https://github.com/launchdarkly/ruby-server-sdk/commit/8dae87ef694d9fc37d5e0e347b240f13ed2b846e))
+* Publish the OFF data source status before releasing polling waiters ([#429](https://github.com/launchdarkly/ruby-server-sdk/issues/429)) ([d604c19](https://github.com/launchdarkly/ruby-server-sdk/commit/d604c19d4f8c81ac17d0637a7f9406192782c6d0))
+
 ## [8.15.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.14.0...8.15.0) (2026-08-20)
 
 
