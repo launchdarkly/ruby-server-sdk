@@ -138,10 +138,7 @@ module LaunchDarkly
       return if pid == @owner_pid
       return unless fork_breaks_client?
 
-      warned_pid = @fork_warned_pid.get
-      return if warned_pid == pid
-
-      if @fork_warned_pid.compare_and_set(warned_pid, pid)
+      if @fork_warned_pid.get_and_set(pid) != pid
         @config.logger.warn { FORK_WARNING_MESSAGE }
       end
     end
