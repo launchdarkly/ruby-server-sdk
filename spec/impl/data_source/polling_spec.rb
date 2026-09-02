@@ -78,8 +78,11 @@ module LaunchDarkly
           expect(store.get(Impl::DataStore::FEATURES, "flagkey")).to eq(flag)
           expect(store.get(Impl::DataStore::SEGMENTS, "segkey")).to eq(segment)
 
-          expect(listener.statuses.count).to eq(1)
-          expect(listener.statuses[0].state).to eq(Interfaces::DataSource::Status::VALID)
+          # The poll thread sets the ready event before it publishes the VALID
+          # status, so wait for the listener to receive it.
+          statuses = listener.wait_for_status
+          expect(statuses.count).to eq(1)
+          expect(statuses[0].state).to eq(Interfaces::DataSource::Status::VALID)
         end
       end
     end
@@ -166,9 +169,13 @@ module LaunchDarkly
           expect(finished).to be false
           expect(processor.initialized?).to be false
 
-          expect(listener.statuses.count).to eq(2)
+          # The ready event is never set for a recoverable error, so the wait
+          # above only passes time. Wait for the poll thread to publish the
+          # INTERRUPTED status before asserting on it.
+          statuses = listener.wait_for_count(2)
+          expect(statuses.count).to eq(2)
 
-          s = listener.statuses[1]
+          s = statuses[1]
           expect(s.state).to eq(Interfaces::DataSource::Status::INTERRUPTED)
           expect(s.last_error.status_code).to eq(status)
         end
