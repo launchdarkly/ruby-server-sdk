@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.16.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.15.1...8.16.0) (2026-09-02)
+
+
+### Features
+
+* Warn when the SDK is used in a forked process without postfork ([#430](https://github.com/launchdarkly/ruby-server-sdk/issues/430)) ([14c5f1d](https://github.com/launchdarkly/ruby-server-sdk/commit/14c5f1d8d3d3782dbd1a68a85e81e7164a410b3d))
+
 ## [8.15.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.15.0...8.15.1) (2026-08-28)
 
 
