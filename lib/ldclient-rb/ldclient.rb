@@ -33,10 +33,6 @@ module LaunchDarkly
 
     def_delegators :@config, :logger
 
-    # @!method flush
-    #   Delegates to {LaunchDarkly::EventProcessorMethods#flush}.
-    def_delegator :@event_processor, :flush
-
     # @!method data_store_status_provider
     #   Delegates to the data system {LaunchDarkly::Impl::DataSystem#data_store_status_provider}.
     #   @return [LaunchDarkly::Interfaces::DataStore::StatusProvider]
@@ -79,6 +75,12 @@ module LaunchDarkly
       config.instance_id = SecureRandom.uuid
       @config = config
 
+      # The pid of the process that owns this client's background threads. A child process that
+      # inherits this client after a fork has a different pid. See #check_forked.
+      @owner_pid = Process.pid
+      # The pid of the process in which the fork warning was last logged, or nil.
+      @fork_warned_pid = Concurrent::AtomicReference.new(nil)
+
       start_up(wait_for_sec)
     end
 
@@ -97,6 +99,10 @@ module LaunchDarkly
     # reason, it is recommended that any listener or hook integrations be added postfork unless you are certain it can
     # survive the forking process.
     #
+    # If the SDK is used in a forked child process before this method is called, it logs a warning once per process.
+    # The warning says that flag updates and analytics events will not work until `postfork` is called. Calling this
+    # method clears that condition for the current process.
+    #
     # @param wait_for_sec [Float] maximum time (in seconds) to wait for initialization
     #
     def postfork(wait_for_sec = 5)
@@ -105,7 +111,49 @@ module LaunchDarkly
       @big_segment_store_manager = nil
       @flag_tracker = nil
 
+      @owner_pid = Process.pid
+      @fork_warned_pid.set(nil)
+
       start_up(wait_for_sec)
+    end
+
+    FORK_WARNING_MESSAGE = "[LDClient] This process was forked after the LDClient was created. Background threads do not " +
+      "survive a fork, so flag updates and analytics events will not work in this process. Call LDClient#postfork after forking."
+    private_constant :FORK_WARNING_MESSAGE
+
+    #
+    # Log a warning once per process if this client is used in a process that was forked after the client was created.
+    #
+    # Ruby threads do not survive a fork. A child process that inherits a client has no stream thread, no event
+    # dispatcher thread, and no timer tasks, so flag updates and analytics events stop working. The SDK does not
+    # repair this by itself; the application must call {#postfork}.
+    #
+    # The check compares the current pid with the pid recorded in the constructor or in {#postfork}. It is a single
+    # `getpid` call, which is cheap compared to a flag evaluation. The "already warned" state is stored as the pid in
+    # which the warning was logged, not as a boolean. A boolean would be copied into every child on fork, so a
+    # grandchild process would inherit "already warned" from its parent and never get its own warning.
+    #
+    private def check_forked
+      pid = Process.pid
+      return if pid == @owner_pid
+      return unless fork_breaks_client?
+
+      if @fork_warned_pid.get_and_set(pid) != pid
+        @config.logger.warn { FORK_WARNING_MESSAGE }
+      end
+    end
+
+    #
+    # Return true if this configuration needs background threads. Offline mode has none. LDD mode with events
+    # disabled reads flags from the persistent store and sends nothing, so a fork does not break it.
+    #
+    # @return [Boolean]
+    #
+    private def fork_breaks_client?
+      return false if @config.offline?
+      return false if @config.use_ldd? && !@config.send_events
+
+      true
     end
 
     private def start_up(wait_for_sec)
@@ -281,6 +329,7 @@ module LaunchDarkly
     # @return the variation for the provided context, or the default value if there's an error
     #
     def variation(key, context, default)
+      check_forked
       context = Impl::Context::make_context(context)
       result = evaluate_with_hooks(key, context, default, :variation) do
         detail, _, _ = variation_with_flag(key, context, default)
@@ -314,6 +363,7 @@ module LaunchDarkly
     # @return [EvaluationDetail] an object describing the result
     #
     def variation_detail(key, context, default)
+      check_forked
       context = Impl::Context::make_context(context)
       result = evaluate_with_hooks(key, context, default, :variation_detail) do
         detail, _, _ = evaluate_internal(key, context, default, true)
@@ -439,6 +489,7 @@ module LaunchDarkly
     # @return [Array<Symbol, Interfaces::Migrations::OpTracker>]
     #
     def migration_variation(key, context, default_stage)
+      check_forked
       unless Migrations::VALID_STAGES.include? default_stage
         @config.logger.error { "[LDClient] default_stage #{default_stage} is not a valid stage; continuing with 'off' as default" }
         default_stage = Migrations::STAGE_OFF
@@ -480,6 +531,7 @@ module LaunchDarkly
     # @return [void]
     #
     def identify(context)
+      check_forked
       context = LaunchDarkly::Impl::Context.make_context(context)
       unless context.valid?
         @config.logger.warn("Identify called with invalid context: #{context.error}")
@@ -516,6 +568,7 @@ module LaunchDarkly
     # @return [void]
     #
     def track(event_name, context, data = nil, metric_value = nil)
+      check_forked
       context = LaunchDarkly::Impl::Context.make_context(context)
       unless context.valid?
         @config.logger.warn("Track called with invalid context: #{context.error}")
@@ -536,6 +589,7 @@ module LaunchDarkly
     # @param tracker [LaunchDarkly::Interfaces::Migrations::OpTracker]
     #
     def track_migration_op(tracker)
+      check_forked
       unless tracker.is_a? LaunchDarkly::Interfaces::Migrations::OpTracker
         @config.logger.error { "invalid op tracker received in track_migration_op" }
         return
@@ -570,6 +624,8 @@ module LaunchDarkly
     #
     def all_flags_state(context, options={})
       return FeatureFlagsState.new(false) if @config.offline?
+
+      check_forked
 
       unless initialized?
         if @data_system.store.initialized?
@@ -629,10 +685,23 @@ module LaunchDarkly
     end
 
     #
+    # Tells the client that all pending analytics events should be delivered as soon as possible.
+    #
+    # Delegates to {LaunchDarkly::EventProcessorMethods#flush}.
+    #
+    # @return [void]
+    #
+    def flush
+      check_forked
+      @event_processor.flush
+    end
+
+    #
     # Releases all network connections and other resources held by the client, making it no longer usable.
     #
     # @return [void]
     def close
+      check_forked
       @config.logger.info { "[LDClient] Closing LaunchDarkly client..." }
       @data_system.stop
       @event_processor.stop
