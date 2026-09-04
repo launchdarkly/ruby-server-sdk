@@ -1,12 +1,17 @@
+require "concurrent/atomics"
+
 module LaunchDarkly
   module Impl
     class ContextFilter
       #
       # @param all_attributes_private [Boolean]
       # @param private_attributes [Array<String>]
+      # @param logger [Logger, nil]
       #
-      def initialize(all_attributes_private, private_attributes)
+      def initialize(all_attributes_private, private_attributes, logger = nil)
         @all_attributes_private = all_attributes_private
+        @logger = logger
+        @non_symbol_name_logged = Concurrent::AtomicBoolean.new(false)
 
         @private_attributes = []
         private_attributes.each do |attribute|
@@ -73,14 +78,19 @@ module LaunchDarkly
         private_attributes = @private_attributes + context.private_attributes
 
         name = context.get_value(:name)
-        if !name.nil? && !check_whole_attribute_private(:name, private_attributes, redacted, anonymous && redact_anonymous)
+        if !name.nil? && !check_whole_attribute_private(Reference.create_literal(:name), private_attributes, redacted, anonymous && redact_anonymous)
           filtered[:name] = name
         end
 
         context.get_custom_attribute_names.each do |attribute|
-          unless check_whole_attribute_private(attribute, private_attributes, redacted, anonymous && redact_anonymous)
+          unless attribute.is_a?(Symbol)
+            log_non_symbol_name(attribute)
+            next
+          end
+
+          unless check_whole_attribute_private(Reference.create_literal(attribute), private_attributes, redacted, anonymous && redact_anonymous)
             value = context.get_value(attribute)
-            filtered[attribute] = redact_json_value(nil, attribute, value, private_attributes, redacted)
+            filtered[attribute] = redact_json_value(nil, attribute, value, private_attributes, redacted, [])
           end
         end
 
@@ -92,7 +102,7 @@ module LaunchDarkly
       #
       # Check if an entire attribute should be redacted.
       #
-      # @param attribute [Symbol]
+      # @param attribute [Reference]
       # @param private_attributes [Array<Reference>]
       # @param redacted [Array<Symbol>]
       # @param redact_all [Boolean]
@@ -100,13 +110,13 @@ module LaunchDarkly
       #
       private def check_whole_attribute_private(attribute, private_attributes, redacted, redact_all)
         if @all_attributes_private || redact_all
-          redacted << attribute
+          redacted << attribute.raw_path.to_sym
           return true
         end
 
         private_attributes.each do |private_attribute|
-          if private_attribute.component(0) == attribute && private_attribute.depth == 1
-            redacted << attribute
+          if private_attribute.component(0) == attribute.component(0) && private_attribute.depth == 1
+            redacted << attribute.raw_path.to_sym
             return true
           end
         end
@@ -122,16 +132,34 @@ module LaunchDarkly
       # @param value [any]
       # @param private_attributes [Array<Reference>]
       # @param redacted [Array<Symbol>]
+      # @param visited [Array<Hash>]
       # @return [any]
       #
-      private def redact_json_value(parent_path, name, value, private_attributes, redacted)
+      private def redact_json_value(parent_path, name, value, private_attributes, redacted, visited)
         return value unless value.is_a?(Hash)
 
         ret = {}
         current_path = parent_path.clone || []
         current_path << name
 
+        # The chain of hashes from the attribute root down to this value. A
+        # nested value that points back into this chain is a cycle and is
+        # omitted.
+        #
+        # The comparison is by object identity, which keeps the check cheap.
+        # Context creation copies each top-level attribute value, so a cycle
+        # through that value appears once in the output before it is cut.
+        # Private attribute references match the paths that appear in the
+        # output. Cyclic values are not valid context data; this check only
+        # prevents unbounded recursion.
+        branch = visited + [value]
+
         value.each do |k, v|
+          unless k.is_a?(Symbol)
+            log_non_symbol_name(k)
+            next
+          end
+
           was_redacted = false
           private_attributes.each do |private_attribute|
             next unless private_attribute.depth == (current_path.count + 1)
@@ -155,11 +183,33 @@ module LaunchDarkly
           end
 
           unless was_redacted
-            ret[k] = redact_json_value(current_path, k, v, private_attributes, redacted)
+            next if v.is_a?(Hash) && branch.any? { |seen| seen.equal?(v) }
+
+            ret[k] = redact_json_value(current_path, k, v, private_attributes, redacted, branch)
           end
         end
 
         ret
+      end
+
+      #
+      # Log the first attribute found with a non-symbol name. Later
+      # occurrences are not logged to prevent log spam.
+      #
+      # Attribute references cannot address non-symbol names, so these
+      # attributes cannot be evaluated or redacted. They are omitted from
+      # analytics events.
+      #
+      # @param name [any]
+      #
+      private def log_non_symbol_name(name)
+        return if @logger.nil?
+        return unless @non_symbol_name_logged.make_true
+
+        @logger.error do
+          "[LDClient] Context attributes with non-symbol names cannot be evaluated or redacted, " \
+            "so they are omitted from analytics events (first occurrence: #{name.inspect}). This message is logged once."
+        end
       end
     end
   end

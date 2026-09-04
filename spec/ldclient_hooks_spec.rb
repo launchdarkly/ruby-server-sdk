@@ -1,5 +1,6 @@
 require "ldclient-rb"
 
+require "http_util"
 require "mock_components"
 require "model_builders"
 require "spec_helper"
@@ -112,6 +113,37 @@ module LaunchDarkly
           expect(detail.value).to eq "value"
           expect(detail.variation_index).to eq 0
           expect(detail.reason).to eq EvaluationReason::fallthrough
+        end
+      end
+
+      it "hook receives no environment ID when LaunchDarkly has not reported one" do
+        environment_id = :unset
+        config_hook = MockHook.new(->(_, _) { }, ->(series_context, _, _) { environment_id = series_context.environment_id })
+        with_client(test_config(hooks: [config_hook])) do |client|
+          client.variation("doesntmatter", basic_context, "default")
+
+          expect(environment_id).to be_nil
+        end
+      end
+
+      it "hook receives the environment ID reported by LaunchDarkly" do
+        environment_id = nil
+        config_hook = MockHook.new(->(_, _) { }, ->(series_context, _, _) { environment_id = series_context.environment_id })
+
+        with_server do |poll_server|
+          poll_server.setup_ok_response("/sdk/latest-all", { flags: {}, segments: {} }.to_json, "application/json", { "X-LD-EnvID" => "env-abc" })
+
+          config = test_config(
+            stream: false,
+            data_source: nil,
+            base_uri: poll_server.base_uri.to_s,
+            hooks: [config_hook]
+          )
+          with_client(config) do |client|
+            client.variation("doesntmatter", basic_context, "default")
+
+            expect(environment_id).to eq "env-abc"
+          end
         end
       end
 

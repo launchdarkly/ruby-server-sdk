@@ -84,6 +84,43 @@ module LaunchDarkly
       end
     end
 
+    describe 'environment ID' do
+      flag = Impl::Model::FeatureFlag.new({ key: 'flagkey', version: 1 })
+      all_data = {
+        Impl::DataStore::FEATURES => { flagkey: flag },
+        Impl::DataStore::SEGMENTS => {},
+      }
+
+      it 'is recorded from the response headers' do
+        allow(requestor).to receive(:request_all_data_with_headers).and_return([all_data, { "X-LD-EnvID" => "env-abc" }])
+        store = InMemoryFeatureStore.new
+        with_processor(store) do |processor|
+          config = processor.instance_variable_get(:@config)
+          processor.start.wait
+          expect(config.data_source_update_sink.environment_id).to eq("env-abc")
+        end
+      end
+
+      it 'is not recorded when the header is absent' do
+        allow(requestor).to receive(:request_all_data_with_headers).and_return([all_data, {}])
+        store = InMemoryFeatureStore.new
+        with_processor(store) do |processor|
+          config = processor.instance_variable_get(:@config)
+          processor.start.wait
+          expect(config.data_source_update_sink.environment_id).to be_nil
+        end
+      end
+
+      it 'is not recorded for an error response' do
+        allow(requestor).to receive(:request_all_data_with_headers).and_raise(Impl::DataSource::UnexpectedResponseError.new(503))
+        with_processor(InMemoryFeatureStore.new, true) do |processor|
+          config = processor.instance_variable_get(:@config)
+          processor.start.wait(1)
+          expect(config.data_source_update_sink.environment_id).to be_nil
+        end
+      end
+    end
+
     describe 'connection error' do
       it 'does not cause immediate failure, does not set initialized' do
         allow(requestor).to receive(:request_all_data).and_raise(StandardError.new("test error"))

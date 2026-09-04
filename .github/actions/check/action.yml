@@ -15,15 +15,18 @@ runs:
     - name: Skip flaky tests for jruby
       if: ${{ inputs.flaky == 'true' }}
       shell: bash
-      run: echo "SPEC_TAGS=-t '~flaky'" >> $GITHUB_ENV
+      run: echo "SPEC_TAGS=~flaky" >> $GITHUB_ENV
 
+    # The tag is quoted here rather than in GITHUB_ENV. A quote written into
+    # GITHUB_ENV becomes part of the value, and a bare ~flaky would undergo
+    # tilde expansion.
     - name: Run tests
       shell: bash
-      run: bundle exec rspec spec $SPEC_TAGS
+      run: bundle exec rspec spec ${SPEC_TAGS:+--tag "$SPEC_TAGS"}
 
     - name: Run RuboCop
       shell: bash
-      run: bundle exec rubocop --parallel
+      run: bundle exec rubocop
 
     - name: Build contract tests
       if: ${{ inputs.flaky != 'true' }}
@@ -51,4 +54,4 @@ runs:
         test_service_port: 9000
         enable_persistence_tests: true
         token: ${{ inputs.token }}
-        version: v3.0.0-alpha.6
+        version: v3

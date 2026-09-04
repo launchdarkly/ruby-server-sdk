@@ -2,6 +2,36 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.16.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.15.1...8.16.0) (2026-09-02)
+
+
+### Features
+
+* Warn when the SDK is used in a forked process without postfork ([#430](https://github.com/launchdarkly/ruby-server-sdk/issues/430)) ([14c5f1d](https://github.com/launchdarkly/ruby-server-sdk/commit/14c5f1d8d3d3782dbd1a68a85e81e7164a410b3d))
+
+## [8.15.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.15.0...8.15.1) (2026-08-28)
+
+
+### Bug Fixes
+
+* Omit non-symbol context attributes and protect against cyclic values ([#423](https://github.com/launchdarkly/ruby-server-sdk/issues/423)) ([8dae87e](https://github.com/launchdarkly/ruby-server-sdk/commit/8dae87ef694d9fc37d5e0e347b240f13ed2b846e))
+* Publish the OFF data source status before releasing polling waiters ([#429](https://github.com/launchdarkly/ruby-server-sdk/issues/429)) ([d604c19](https://github.com/launchdarkly/ruby-server-sdk/commit/d604c19d4f8c81ac17d0637a7f9406192782c6d0))
+
+## [8.15.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.14.0...8.15.0) (2026-08-20)
+
+
+### Features
+
+* Add Config#with_wrapper_information ([#421](https://github.com/launchdarkly/ruby-server-sdk/issues/421)) ([2de2b75](https://github.com/launchdarkly/ruby-server-sdk/commit/2de2b75975a4df0f6bff4aee93716ba6c40ef83a))
+* Add environment ID support for hooks ([#414](https://github.com/launchdarkly/ruby-server-sdk/issues/414)) ([257e0af](https://github.com/launchdarkly/ruby-server-sdk/commit/257e0af6760d37821cc06008a99688d867a9d15f))
+
+
+### Bug Fixes
+
+* Escape attribute names reported in redactedAttributes ([#415](https://github.com/launchdarkly/ruby-server-sdk/issues/415)) ([447296f](https://github.com/launchdarkly/ruby-server-sdk/commit/447296f2eeccbda7b88e8b320fb09b7dee01903a))
+* Send the FDv2 polling selector as the "basis" query parameter ([#418](https://github.com/launchdarkly/ruby-server-sdk/issues/418)) ([1084931](https://github.com/launchdarkly/ruby-server-sdk/commit/10849318754ff756f7912c6ab772d2fbc51409d5))
+* Stop per-context private attributes from accumulating between contexts ([#416](https://github.com/launchdarkly/ruby-server-sdk/issues/416)) ([2fd26ea](https://github.com/launchdarkly/ruby-server-sdk/commit/2fd26ea43d4b56276199094ced98f780f2ec1bb5))
+
 ## [8.14.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.13.0...8.14.0) (2026-05-12)
 
 

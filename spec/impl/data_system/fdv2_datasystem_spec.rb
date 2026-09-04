@@ -125,6 +125,95 @@ module LaunchDarkly
           end
         end
 
+        describe "environment ID" do
+          def basis_with_environment_id(environment_id)
+            LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
+              result: LaunchDarkly::Result.success(
+                LaunchDarkly::Interfaces::DataSystem::Basis.new(
+                  change_set: LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.empty(
+                    LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "state", version: 1)
+                  ),
+                  persist: true,
+                  environment_id: environment_id
+                )
+              )
+            )
+          end
+
+          def mock_initializer(fetch_result)
+            initializer = double("initializer")
+            allow(initializer).to receive(:name).and_return("mock-initializer")
+            allow(initializer).to receive(:fetch).and_return(fetch_result)
+            initializer
+          end
+
+          def mock_synchronizer(updates)
+            synchronizer = double("synchronizer")
+            allow(synchronizer).to receive(:name).and_return("mock-synchronizer")
+            allow(synchronizer).to receive(:stop)
+            allow(synchronizer).to receive(:sync) { |_store, &block| updates.each { |update| block.call(update) } }
+            synchronizer
+          end
+
+          def with_data_system(initializers, synchronizers)
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers(initializers)
+              .synchronizers(synchronizers)
+              .build
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+            begin
+              fdv2.start.wait(2)
+              yield fdv2
+            ensure
+              fdv2.stop
+            end
+          end
+
+          it "is not available before initialization" do
+            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers(nil)
+              .synchronizers([td.test_data_ds_builder])
+              .build
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+            expect(fdv2.environment_id).to be_nil
+          end
+
+          it "is retained from the initializer basis" do
+            with_data_system([MockBuilder.new(mock_initializer(basis_with_environment_id("env-abc")))], []) do |fdv2|
+              expect(fdv2.environment_id).to eq("env-abc")
+            end
+          end
+
+          it "is retained from a valid synchronizer update" do
+            update = LaunchDarkly::Interfaces::DataSystem::Update.new(
+              state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
+              environment_id: "env-abc"
+            )
+
+            with_data_system(nil, [MockBuilder.new(mock_synchronizer([update]))]) do |fdv2|
+              expect(fdv2.environment_id).to eq("env-abc")
+            end
+          end
+
+          it "ignores updates without a usable environment ID" do
+            interrupted = LaunchDarkly::Interfaces::DataSystem::Update.new(
+              state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
+              environment_id: "env-from-error"
+            )
+            valid = LaunchDarkly::Interfaces::DataSystem::Update.new(
+              state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
+              environment_id: ""
+            )
+
+            with_data_system(nil, [MockBuilder.new(mock_synchronizer([interrupted, valid]))]) do |fdv2|
+              expect(fdv2.environment_id).to be_nil
+            end
+          end
+        end
+
         describe "secondary synchronizer fallback" do
           it "falls back to secondary synchronizer when primary fails" do
             mock_primary = double("primary_synchronizer")

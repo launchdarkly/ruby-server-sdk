@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/data_source"
 require "ldclient-rb/impl/repeating_task"
 require "ldclient-rb/impl/util"
 
@@ -35,7 +36,8 @@ module LaunchDarkly
 
         def poll
           begin
-            all_data = @requestor.request_all_data
+            all_data, headers = request_all_data
+            DataSource.record_environment_id(@config.data_source_update_sink, headers)
             if all_data
               update_sink_or_data_store.init(all_data)
               if @initialized.make_true
@@ -65,8 +67,11 @@ module LaunchDarkly
                 error_info
               )
             else
-              @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
+              # Publish the OFF status before releasing anyone waiting on the
+              # ready event, so a client that returns from start can rely on the
+              # data source status already reflecting the failure.
               stop_with_error_info error_info
+              @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
             end
           rescue StandardError => e
             Impl::Util.log_exception(@config.logger, "Exception while polling", e)
@@ -90,6 +95,17 @@ module LaunchDarkly
         #
         private def update_sink_or_data_store
           @config.data_source_update_sink || @config.feature_store
+        end
+
+        #
+        # Requestors provided by application code may not be able to report the response headers.
+        #
+        # @return [Array(Hash, HTTP::Headers, nil)]
+        #
+        private def request_all_data
+          return @requestor.request_all_data_with_headers if @requestor.respond_to?(:request_all_data_with_headers)
+
+          [@requestor.request_all_data, nil]
         end
 
         #

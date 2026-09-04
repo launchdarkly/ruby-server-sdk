@@ -262,6 +262,10 @@ module LaunchDarkly
     # You can also specify the same behavior for an individual flag evaluation
     # by providing the context object with a list of private attributes.
     #
+    # Each entry is an attribute reference. A reference addresses attributes by
+    # symbol name, so it cannot make an attribute private if that attribute was
+    # given a string name. Refer to {LDContext} for the symbol requirement.
+    #
     # @see https://docs.launchdarkly.com/sdk/features/user-context-config#using-private-attributes
     #
     # @return [Array<String>]
@@ -401,6 +405,30 @@ module LaunchDarkly
     # @return [String]
     #
     attr_reader :wrapper_version
+
+    #
+    # Returns a copy of this configuration with different wrapper information.
+    #
+    # This is intended for use by wrapper libraries, such as the LaunchDarkly OpenFeature provider, which need to
+    # identify themselves rather than the application which created the configuration.
+    #
+    # The copy is shallow: it shares the objects the original configuration references, such as the feature store,
+    # the logger, and the socket factory. Mutating one of those objects affects both configurations.
+    #
+    # @param wrapper_name [String, nil] see {#wrapper_name}
+    # @param wrapper_version [String, nil] see {#wrapper_version}
+    #
+    # @return [LaunchDarkly::Config]
+    #
+    def with_wrapper_information(wrapper_name, wrapper_version = nil)
+      updated = dup
+      updated.wrapper_name = wrapper_name
+      updated.wrapper_version = wrapper_version
+
+      updated
+    end
+
+    protected attr_writer :wrapper_name, :wrapper_version
 
     #
     # The factory used to construct sockets for HTTP operations. The factory must

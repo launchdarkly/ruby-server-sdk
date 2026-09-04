@@ -121,6 +121,11 @@ module LaunchDarkly
           @flag_change_broadcaster
         end
 
+        # (see DataSystem#environment_id)
+        def environment_id
+          @data_source_update_sink.environment_id
+        end
+
         #
         # (see DataSystem#data_availability)
         #

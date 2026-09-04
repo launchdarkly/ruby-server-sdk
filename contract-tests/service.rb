@@ -46,6 +46,7 @@ get '/' do
       'instance-id',
       'anonymous-redaction',
       'evaluation-hooks',
+      'hook-environment-id',
       'omit-anonymous-contexts',
       'client-prereq-events',
       'persistent-data-store-consul',

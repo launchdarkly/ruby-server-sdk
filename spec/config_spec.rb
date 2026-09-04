@@ -99,6 +99,34 @@ module LaunchDarkly
         end
       end
     end
+    describe "with_wrapper_information" do
+      it "returns a copy with the provided wrapper information" do
+        config = subject.new(wrapper_name: "original", wrapper_version: "1.0.0", offline: true)
+
+        wrapped = config.with_wrapper_information("wrapper", "2.0.0")
+
+        expect(wrapped.wrapper_name).to eq "wrapper"
+        expect(wrapped.wrapper_version).to eq "2.0.0"
+        expect(wrapped.offline?).to eq true
+      end
+
+      it "does not modify the original configuration" do
+        config = subject.new(wrapper_name: "original", wrapper_version: "1.0.0")
+
+        config.with_wrapper_information("wrapper", "2.0.0")
+
+        expect(config.wrapper_name).to eq "original"
+        expect(config.wrapper_version).to eq "1.0.0"
+      end
+
+      it "defaults the wrapper version to nil" do
+        config = subject.new(wrapper_name: "original", wrapper_version: "1.0.0")
+
+        wrapped = config.with_wrapper_information("wrapper")
+
+        expect(wrapped.wrapper_version).to be_nil
+      end
+    end
     describe ".omit_anonymous_contexts" do
       it "defaults to false" do
         expect(subject.new.omit_anonymous_contexts).to eq false
