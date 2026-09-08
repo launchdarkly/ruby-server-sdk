@@ -441,12 +441,12 @@ module LaunchDarkly
               .build
 
             changed = Concurrent::Event.new
-            changes = []
+            flag_keys = Concurrent::Array.new
 
             listener = Object.new
             listener.define_singleton_method(:update) do |flag_change|
-              changes << flag_change
-              changed.set if changes.length >= 2
+              flag_keys << flag_change.key
+              changed.set if flag_keys.include?("initialflag") && flag_keys.include?("fdv1replacementflag")
             end
 
             fdv2 = FDv2.new(sdk_key, config, data_system_config)
@@ -454,12 +454,7 @@ module LaunchDarkly
 
             ready_event = fdv2.start
             expect(ready_event.wait(2)).to be true
-            expect(changed.wait(3)).to be true
-
-            # Verify we got changes for both flags
-            flag_keys = changes.map { |change| change.key }
-            expect(flag_keys).to include("initialflag")
-            expect(flag_keys).to include("fdv1replacementflag")
+            expect(changed.wait(3)).to be(true), "expected changes for both flags, got #{flag_keys.to_a}"
 
             fdv2.stop
           end
