@@ -129,7 +129,7 @@ module LaunchDarkly
           # Start the main coordination thread
           main_thread = Thread.new { run_main_loop }
           main_thread.name = "FDv2-main"
-          @threads << main_thread
+          @lock.synchronize { @threads << main_thread }
 
           @ready_event
         end
@@ -148,12 +148,19 @@ module LaunchDarkly
             end
           end
 
-          # Wait for all threads to complete
-          @threads.each do |thread|
-            next unless thread.alive?
+          # Wait for all threads to complete, including any started while we were joining
+          joined = []
+          loop do
+            pending = @lock.synchronize { @threads.dup } - joined
+            break if pending.empty?
 
-            thread.join(5.0) # 5 second timeout
-            @logger.warn { "[LDClient] Thread #{thread.name} did not terminate in time" } if thread.alive?
+            pending.each do |thread|
+              joined << thread
+              next unless thread.alive?
+
+              thread.join(5.0) # 5 second timeout
+              @logger.warn { "[LDClient] Thread #{thread.name} did not terminate in time" } if thread.alive?
+            end
           end
 
           # Close the store
@@ -333,7 +340,7 @@ module LaunchDarkly
           # Start synchronizer loop in a separate thread
           sync_thread = Thread.new { synchronizer_loop }
           sync_thread.name = "FDv2-synchronizers"
-          @threads << sync_thread
+          @lock.synchronize { @threads << sync_thread }
         end
 
         #
@@ -470,8 +477,8 @@ module LaunchDarkly
 
               # Set ready event on valid update
               if update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
-                @ready_event.set
                 record_environment_id(update.environment_id)
+                @ready_event.set
               end
 
               # Update status
