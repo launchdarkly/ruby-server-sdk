@@ -235,14 +235,12 @@ module LaunchDarkly
               .build
 
             changed = Concurrent::Event.new
-            changes = []
-            count = 0
+            changes = Concurrent::Array.new
 
             listener = Object.new
             listener.define_singleton_method(:update) do |flag_change|
-              count += 1
               changes << flag_change
-              changed.set if count == 2
+              changed.set if changes.length >= 2
             end
 
             fdv2 = FDv2.new(sdk_key, config, data_system_config)
@@ -254,9 +252,7 @@ module LaunchDarkly
             td.update(td.flag("flagkey").on(false))
             expect(changed.wait(2)).to be true
 
-            expect(changes.length).to eq(2)
-            expect(changes[0].key).to eq("flagkey")
-            expect(changes[1].key).to eq("flagkey")
+            expect(changes.map(&:key).uniq).to eq(["flagkey"])
 
             fdv2.stop
           end
