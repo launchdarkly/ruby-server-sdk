@@ -2,6 +2,18 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.17.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.16.0...8.17.0) (2026-09-08)
+
+
+### Features
+
+* warn that payload filtering has no effect with FDv2 ([#434](https://github.com/launchdarkly/ruby-server-sdk/issues/434)) ([fbe6fb4](https://github.com/launchdarkly/ruby-server-sdk/commit/fbe6fb4928f7dda42b99bc9ed5863a9acf323fab))
+
+
+### Bug Fixes
+
+* Stop repeating tasks promptly instead of waiting out the sleep ([#432](https://github.com/launchdarkly/ruby-server-sdk/issues/432)) ([b4baad3](https://github.com/launchdarkly/ruby-server-sdk/commit/b4baad334a499d2f2c6bf522b3dfd91c19df0b54))
+
 ## [8.16.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.15.1...8.16.0) (2026-09-02)
 
 
