@@ -697,6 +697,25 @@ module LaunchDarkly
             FDv2.new(sdk_key, LaunchDarkly::Config.new(logger: logger), data_system_config)
           end
         end
+
+        describe "data source status" do
+          it "publishes the valid status before releasing ready waiters" do
+            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td.update(td.flag("flagkey").on(true))
+
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .synchronizers([td.test_data_ds_builder])
+              .build
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+            ready_event = fdv2.start
+            expect(ready_event.wait(2)).to be true
+            expect(fdv2.data_source_status_provider.status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            fdv2.stop
+          end
+        end
       end
     end
   end

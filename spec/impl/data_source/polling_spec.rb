@@ -78,11 +78,27 @@ module LaunchDarkly
           expect(store.get(Impl::DataStore::FEATURES, "flagkey")).to eq(flag)
           expect(store.get(Impl::DataStore::SEGMENTS, "segkey")).to eq(segment)
 
-          # The poll thread sets the ready event before it publishes the VALID
-          # status, so wait for the listener to receive it.
-          statuses = listener.wait_for_status
-          expect(statuses.count).to eq(1)
-          expect(statuses[0].state).to eq(Interfaces::DataSource::Status::VALID)
+          expect(listener.statuses.count).to eq(1)
+          expect(listener.statuses[0].state).to eq(Interfaces::DataSource::Status::VALID)
+        end
+      end
+
+      it 'publishes the valid status before releasing ready waiters' do
+        allow(requestor).to receive(:request_all_data).and_return(all_data)
+        store = InMemoryFeatureStore.new
+        with_processor(store) do |processor|
+          # The broadcaster notifies listeners inline on the poll thread, so a
+          # listener that sees the ready event already set proves the status was
+          # published too late.
+          ready = processor.instance_variable_get(:@ready)
+          ready_set_when_notified = nil
+          status_broadcaster.add_listener(CallbackListener.new(->(_status) { ready_set_when_notified = ready.set? }))
+
+          config = processor.instance_variable_get(:@config)
+          processor.start.wait
+
+          expect(ready_set_when_notified).to be false
+          expect(config.data_source_update_sink.current_status.state).to eq(Interfaces::DataSource::Status::VALID)
         end
       end
     end

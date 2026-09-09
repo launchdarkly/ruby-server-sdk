@@ -473,14 +473,16 @@ module LaunchDarkly
               # Handle the update
               @store.apply(update.change_set, true) if update.change_set
 
-              # Set ready event on valid update
-              if update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
-                @ready_event.set
-                record_environment_id(update.environment_id)
-              end
+              valid = update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
+              record_environment_id(update.environment_id) if valid
 
               # Update status
               @data_source_status_provider.update_status(update.state, update.error)
+
+              # Publish the status before releasing anyone waiting on the ready
+              # event, so a client that returns from start can rely on the data
+              # source status already reflecting the update.
+              @ready_event.set if valid
 
               return SyncResult::FDV1 if update.fallback_to_fdv1
 
