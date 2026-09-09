@@ -42,8 +42,8 @@ end
 #
 # A data source can deliver events from its own thread. A spec that starts a
 # data source and then reads `statuses` at once can run before the event
-# arrives. Use `wait_for_count` or `wait_for_status` to block until the events
-# you expect have arrived, then assert on the returned array.
+# arrives. Use `wait_for_count` to block until the events you expect have
+# arrived, then assert on the returned array.
 #
 class ListenerSpy
   def initialize
@@ -87,16 +87,6 @@ class ListenerSpy
       end
       @statuses.dup
     end
-  end
-
-  #
-  # Blocks until at least one event has arrived, or until the timeout passes.
-  #
-  # @param timeout [Numeric] the maximum time to wait, in seconds
-  # @return [Array]
-  #
-  def wait_for_status(timeout: 2)
-    wait_for_count(1, timeout: timeout)
   end
 end
 
