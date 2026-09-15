@@ -81,6 +81,10 @@ module LaunchDarkly
       # The pid of the process in which the fork warning was last logged, or nil.
       @fork_warned_pid = Concurrent::AtomicReference.new(nil)
 
+      # Each flag lets the matching cached-data warning log once per client.
+      @cached_data_evaluation_warned = Concurrent::AtomicBoolean.new(false)
+      @cached_data_all_flags_warned = Concurrent::AtomicBoolean.new(false)
+
       start_up(wait_for_sec)
     end
 
@@ -629,7 +633,9 @@ module LaunchDarkly
 
       unless initialized?
         if @data_system.store.initialized?
-            @config.logger.warn { "Called all_flags_state before client initialization; using last known values from data store" }
+          if @cached_data_all_flags_warned.make_true
+            @config.logger.warn { "Called all_flags_state before client initialization; using last known values from data store. This message is logged once." }
+          end
         else
             @config.logger.warn { "Called all_flags_state before client initialization. Data store not available; returning empty state" }
             return FeatureFlagsState.new(false)
@@ -765,7 +771,9 @@ module LaunchDarkly
 
       if @data_system.data_availability != Impl::DataSystem::DataAvailability::REFRESHED
         if @data_system.data_availability == Impl::DataSystem::DataAvailability::CACHED
-          @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store" }
+          if @cached_data_evaluation_warned.make_true
+            @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store. This message is logged once." }
+          end
         else
           @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
           detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
