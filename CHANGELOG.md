@@ -2,6 +2,18 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.18.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.17.0...8.18.0) (2026-09-16)
+
+
+### Features
+
+* Expand version support for JSON gem v3 ([e6c7412](https://github.com/launchdarkly/ruby-server-sdk/commit/e6c7412eff9d219ed4ae448fe7cf45050998765a))
+
+
+### Bug Fixes
+
+* Log the cached-data evaluation warning only once per client ([#438](https://github.com/launchdarkly/ruby-server-sdk/issues/438)) ([bcb6e73](https://github.com/launchdarkly/ruby-server-sdk/commit/bcb6e736300a614e366066bcf5dff03e705eacc2))
+
 ## [8.17.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.16.0...8.17.0) (2026-09-08)
 
 
