@@ -16,6 +16,7 @@ on:
 jobs:
   build-gem:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     env:
       LD_SKIP_DATABASE_TESTS: 0
