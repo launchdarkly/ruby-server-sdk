@@ -82,6 +82,25 @@ module LaunchDarkly
           expect(listener.statuses[0].state).to eq(Interfaces::DataSource::Status::VALID)
         end
       end
+
+      it 'publishes the valid status before releasing ready waiters' do
+        allow(requestor).to receive(:request_all_data).and_return(all_data)
+        store = InMemoryFeatureStore.new
+        with_processor(store) do |processor|
+          # The broadcaster notifies listeners inline on the poll thread, so a
+          # listener that sees the ready event already set proves the status was
+          # published too late.
+          ready = processor.instance_variable_get(:@ready)
+          ready_set_when_notified = nil
+          status_broadcaster.add_listener(CallbackListener.new(->(_status) { ready_set_when_notified = ready.set? }))
+
+          config = processor.instance_variable_get(:@config)
+          processor.start.wait
+
+          expect(ready_set_when_notified).to be false
+          expect(config.data_source_update_sink.current_status.state).to eq(Interfaces::DataSource::Status::VALID)
+        end
+      end
     end
 
     describe 'environment ID' do
@@ -166,9 +185,13 @@ module LaunchDarkly
           expect(finished).to be false
           expect(processor.initialized?).to be false
 
-          expect(listener.statuses.count).to eq(2)
+          # The ready event is never set for a recoverable error, so the wait
+          # above only passes time. Wait for the poll thread to publish the
+          # INTERRUPTED status before asserting on it.
+          statuses = listener.wait_for_count(2)
+          expect(statuses.count).to eq(2)
 
-          s = listener.statuses[1]
+          s = statuses[1]
           expect(s.state).to eq(Interfaces::DataSource::Status::INTERRUPTED)
           expect(s.last_error.status_code).to eq(status)
         end

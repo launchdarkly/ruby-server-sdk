@@ -38,14 +38,20 @@ module LaunchDarkly
           begin
             all_data, headers = request_all_data
             DataSource.record_environment_id(@config.data_source_update_sink, headers)
+            newly_initialized = false
             if all_data
               update_sink_or_data_store.init(all_data)
-              if @initialized.make_true
-                @config.logger.info { "[LDClient] Polling connection initialized" }
-                @ready.set
-              end
+              newly_initialized = @initialized.make_true
             end
             @config.data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::VALID, nil)
+
+            if newly_initialized
+              @config.logger.info { "[LDClient] Polling connection initialized" }
+              # Publish the VALID status before releasing anyone waiting on the
+              # ready event, so a client that returns from start can rely on the
+              # data source status already reflecting the successful poll.
+              @ready.set
+            end
           rescue JSON::ParserError => e
             @config.logger.error { "[LDClient] JSON parsing failed for polling response." }
             error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
