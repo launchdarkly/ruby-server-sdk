@@ -68,13 +68,16 @@ module LaunchDarkly
 
           def get_all_internal(kind)
             items_out = {}
-            results = Diplomat::Kv.get(kind_key(kind), { recurse: true }, :return)
+            prefix = kind_key(kind)
+            results = Diplomat::Kv.get(prefix, { recurse: true }, :return)
             (results == "" ? [] : results).each do |result|
               value = result[:value]
-              unless value.nil?
-                item = Model.deserialize(kind, value)
-                items_out[item[:key].to_sym] = item
-              end
+              next if value.nil?
+              db_key = result[:key].to_s
+              next unless db_key.start_with?(prefix)
+              # Use the key that the item is stored under, not the key inside the item. A deleted
+              # item (a "tombstone") is not guaranteed to carry a key of its own.
+              items_out[db_key[prefix.length..].to_sym] = Model.deserialize(kind, value)
             end
             items_out
           end
