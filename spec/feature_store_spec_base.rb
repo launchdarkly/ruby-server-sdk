@@ -15,6 +15,10 @@ require "spec_helper"
 #   def clear_data
 #     # clear any existing data from the database, taking @options[:prefix] into account if any
 #   end
+#   def write_raw_item(kind, key, item)
+#     # write the item straight to the database as JSON, under the given key, taking
+#     # @options[:prefix] into account if any
+#   end
 # end
 #
 # describe "my persistent feature store" do
@@ -241,6 +245,22 @@ shared_examples "persistent_feature_store" do |store_tester_class|
               store1.init({ $things_kind => { $key1.to_sym => $thing1 } })
               ensure_stop(store_tester.create_feature_store) do |store2|
                 expect(store2.get($things_kind, $key1)).to eq $thing1
+              end
+            end
+          end
+
+          it "can read all items when one of them is a tombstone with no key" do
+            # Other LaunchDarkly SDKs write a deleted item with only a version, and no key of its
+            # own. The store must read such an item back under the key it is stored under, and must
+            # not let it spoil the rest of the collection.
+            ensure_stop(store_tester.create_feature_store) do |store1|
+              store1.init({ $things_kind => { $key1.to_sym => $thing1 } })
+              store_tester.write_raw_item($things_kind, "deleted-thing", { version: 99, deleted: true })
+
+              # A second instance reads through to the database instead of its own cache.
+              ensure_stop(store_tester.create_feature_store) do |store2|
+                expect(store2.all($things_kind)).to eq({ $key1.to_sym => $thing1 })
+                expect(store2.get($things_kind, "deleted-thing")).to be_nil
               end
             end
           end

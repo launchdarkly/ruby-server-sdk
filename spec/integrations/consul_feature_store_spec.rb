@@ -17,6 +17,10 @@ module LaunchDarkly
         Diplomat::Kv.delete(@actual_prefix + '/', recurse: true)
       end
 
+      def write_raw_item(kind, key, item)
+        Diplomat::Kv.put("#{@actual_prefix}/#{kind[:namespace]}/#{key}", item.to_json)
+      end
+
       def create_feature_store
         Consul.new_feature_store(@options)
       end

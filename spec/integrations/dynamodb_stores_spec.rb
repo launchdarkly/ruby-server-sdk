@@ -93,6 +93,18 @@ module LaunchDarkly
         LaunchDarkly::Integrations::DynamoDB::new_feature_store(TABLE_NAME, @options)
       end
 
+      def write_raw_item(kind, key, item)
+        self.class.create_test_client.put_item(
+          table_name: TABLE_NAME,
+          item: {
+            "namespace" => @actual_prefix + kind[:namespace],
+            "key" => key,
+            LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore::VERSION_ATTRIBUTE => item[:version],
+            LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBFeatureStoreCore::ITEM_JSON_ATTRIBUTE => item.to_json,
+          }
+        )
+      end
+
       def create_big_segment_store
         LaunchDarkly::Integrations::DynamoDB::new_big_segment_store(TABLE_NAME, @options)
       end
