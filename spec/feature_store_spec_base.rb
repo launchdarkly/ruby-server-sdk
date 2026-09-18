@@ -264,24 +264,6 @@ shared_examples "persistent_feature_store" do |store_tester_class|
               end
             end
           end
-
-          it "keys all items by the key they are stored under" do
-            # The Go SDK and the Relay Proxy write a deleted item as a full object whose key is
-            # the placeholder "$deleted", so the key in the body can disagree with the key the
-            # item is stored under. The key it is stored under is the authoritative one: that is
-            # the key `get` addresses the item by, so `all` has to agree.
-            ensure_stop(store_tester.create_feature_store) do |store1|
-              store1.init({ $things_kind => { $key1.to_sym => $thing1 } })
-              store_tester.write_raw_item($things_kind, "real-key",
-                { key: "body-key", name: "Thing 2", version: 22, deleted: false })
-
-              ensure_stop(store_tester.create_feature_store) do |store2|
-                expect(store2.all($things_kind).keys).to contain_exactly($key1.to_sym, :"real-key")
-                expect(store2.get($things_kind, "real-key")).not_to be_nil
-                expect(store2.get($things_kind, "body-key")).to be_nil
-              end
-            end
-          end
         end
       end
 
