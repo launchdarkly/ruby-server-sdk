@@ -69,9 +69,6 @@ module LaunchDarkly
           def get_all_internal(kind)
             items_out = {}
             prefix = kind_key(kind)
-            # Use get_all, not a recursive get. A recursive get returns the bare value string
-            # when only one key matches the prefix; get_all always returns key/value pairs.
-            # :return means "give back an empty list if no key matches, don't throw an error".
             Diplomat::Kv.get_all(prefix, {}, :return).each do |result|
               value = result[:value]
               next if value.nil?
