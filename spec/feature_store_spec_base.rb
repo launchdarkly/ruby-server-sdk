@@ -278,6 +278,19 @@ shared_examples "persistent_feature_store" do |store_tester_class|
             end
           end
 
+          it "can read all items when a kind holds no items" do
+            # A brand-new store holds no items. Some database clients report this as an error
+            # or a sentinel value rather than an empty list.
+            ensure_stop(store_tester.create_feature_store) do |store1|
+              store1.init({ $things_kind => {} })
+
+              # A second instance reads through to the database instead of its own cache.
+              ensure_stop(store_tester.create_feature_store) do |store2|
+                expect(store2.all($things_kind)).to eq({})
+              end
+            end
+          end
+
           it "can read all items when the single item is a tombstone with no key" do
             # This is the single-item case where the one item is also a deleted item with no
             # key of its own, as happens for a one-flag project or after every flag is deleted.
