@@ -264,6 +264,47 @@ shared_examples "persistent_feature_store" do |store_tester_class|
               end
             end
           end
+
+          it "can read all items when a kind holds a single item" do
+            # A store must treat a collection of one as a collection. Some database clients
+            # return a single matching row on its own, rather than in a list.
+            ensure_stop(store_tester.create_feature_store) do |store1|
+              store1.init({ $things_kind => { $key1.to_sym => $thing1 } })
+
+              # A second instance reads through to the database instead of its own cache.
+              ensure_stop(store_tester.create_feature_store) do |store2|
+                expect(store2.all($things_kind)).to eq({ $key1.to_sym => $thing1 })
+              end
+            end
+          end
+
+          it "can read all items when a kind holds no items" do
+            # A brand-new store holds no items. Some database clients report this as an error
+            # or a sentinel value rather than an empty list.
+            ensure_stop(store_tester.create_feature_store) do |store1|
+              store1.init({ $things_kind => {} })
+
+              # A second instance reads through to the database instead of its own cache.
+              ensure_stop(store_tester.create_feature_store) do |store2|
+                expect(store2.all($things_kind)).to eq({})
+              end
+            end
+          end
+
+          it "can read all items when the single item is a tombstone with no key" do
+            # This is the single-item case where the one item is also a deleted item with no
+            # key of its own, as happens for a one-flag project or after every flag is deleted.
+            ensure_stop(store_tester.create_feature_store) do |store1|
+              store1.init({ $things_kind => {} })
+              store_tester.write_raw_item($things_kind, "deleted-thing", { version: 99, deleted: true })
+
+              # A second instance reads through to the database instead of its own cache.
+              ensure_stop(store_tester.create_feature_store) do |store2|
+                expect(store2.all($things_kind)).to eq({})
+                expect(store2.get($things_kind, "deleted-thing")).to be_nil
+              end
+            end
+          end
         end
       end
 
