@@ -115,6 +115,32 @@ module LaunchDarkly
 
           expect(stopped.wait(5)).to be true
         end
+
+        it "does not start the availability poller after stop" do
+          sink = double
+          store = double
+          checks = Concurrent::AtomicFixnum.new(0)
+
+          allow(store).to receive(:stop)
+          allow(store).to receive(:monitoring_enabled?).and_return(true)
+          allow(store).to receive(:all).and_raise(StandardError.new('read error'))
+          allow(sink).to receive(:update_status)
+          allow(store).to receive(:available?) { checks.increment; true }
+
+          wrapper = FeatureStoreClientWrapper.new(store, sink, $null_log)
+          wrapper.stop
+
+          begin
+            wrapper.all(:features)
+            raise "all should have raised exception"
+          rescue StandardError
+            # Ignored. On a running wrapper this would start the poller.
+          end
+
+          # The poller is the only caller of available?, so it never ran.
+          sleep 1
+          expect(checks.value).to eq 0
+        end
       end
     end
   end
