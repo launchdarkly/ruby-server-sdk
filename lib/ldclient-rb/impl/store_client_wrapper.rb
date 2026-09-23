@@ -23,6 +23,7 @@ module LaunchDarkly
 
         @mutex = Mutex.new # Covers the following variables
         @last_available = true
+        @stopped = false
         # @type [LaunchDarkly::Impl::RepeatingTask, nil]
         @poller = nil
       end
@@ -53,12 +54,14 @@ module LaunchDarkly
 
       def stop
         @store.stop
-        @mutex.synchronize do
-          return if @poller.nil?
 
-          @poller.stop
+        poller = @mutex.synchronize do
+          @stopped = true
+          task = @poller
           @poller = nil
+          task
         end
+        poller&.stop
       end
 
       def monitoring_enabled?
@@ -87,12 +90,12 @@ module LaunchDarkly
         @store_update_sink.update_status(status)
 
         if available
-          @mutex.synchronize do
-            return if @poller.nil?
-
-            @poller.stop
+          poller = @mutex.synchronize do
+            task = @poller
             @poller = nil
+            task
           end
+          poller&.stop
 
           return
         end
@@ -102,6 +105,9 @@ module LaunchDarkly
         task = Impl::RepeatingTask.new(0.5, 0, -> { self.check_availability }, @logger, 'LD/StoreWrapper#check_availability')
 
         @mutex.synchronize do
+          # A read can fail after stop, and a poller started then would never be stopped.
+          next if @stopped
+
           @poller = task
           @poller.start
         end
