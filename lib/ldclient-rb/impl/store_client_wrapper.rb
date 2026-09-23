@@ -53,12 +53,13 @@ module LaunchDarkly
 
       def stop
         @store.stop
-        @mutex.synchronize do
-          return if @poller.nil?
 
-          @poller.stop
+        poller = @mutex.synchronize do
+          task = @poller
           @poller = nil
+          task
         end
+        poller&.stop
       end
 
       def monitoring_enabled?
@@ -87,12 +88,12 @@ module LaunchDarkly
         @store_update_sink.update_status(status)
 
         if available
-          @mutex.synchronize do
-            return if @poller.nil?
-
-            @poller.stop
+          poller = @mutex.synchronize do
+            task = @poller
             @poller = nil
+            task
           end
+          poller&.stop
 
           return
         end
