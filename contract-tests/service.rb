@@ -17,7 +17,7 @@ $log.formatter = proc {|severity, datetime, progname, msg|
 }
 
 set :bind, '0.0.0.0'
-set :port, 9000
+set :port, (ENV['PORT'] || 9000).to_i
 set :logging, false
 
 clients = {}
@@ -55,6 +55,7 @@ get '/' do
       'flag-change-listeners',
       'flag-value-change-listeners',
       'fdv1-fallback',
+      'flag-overrides',
     ],
   }.to_json
 end
