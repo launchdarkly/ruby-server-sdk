@@ -384,6 +384,83 @@ module LaunchDarkly
       end
     end
 
+    describe "override-affected evaluations" do
+      let(:future_time) { (Time.now.to_f * 1000).to_i + 1000000 }
+
+      it "does not produce a feature event even when the flag tracks events" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, 'default', true, nil, nil, nil, false, true)
+
+          output = flush_and_get_events(ep, sender)
+          expect(output).to contain_exactly(
+            eq(index_event(default_config, context)),
+            include(:kind => "summary")
+          )
+        end
+      end
+
+      it "does not produce a debug event even when the flag is in debug mode" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, 'default', true, future_time, nil, nil, false, true)
+
+          output = flush_and_get_events(ep, sender)
+          expect(output).to contain_exactly(
+            eq(index_event(default_config, context)),
+            include(:kind => "summary")
+          )
+        end
+      end
+
+      it "is counted in a summary counter that carries the override-affected marker" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, 'default', true, nil, nil, nil, false, true)
+          ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, 'default', true, nil, nil, nil, false, true)
+
+          output = flush_and_get_events(ep, sender)
+          summary = output.detect { |e| e[:kind] == "summary" }
+          expect(summary[:features][:flagkey][:counters]).to contain_exactly(
+            { version: 11, variation: 1, value: "value", count: 2, overrideAffected: true }
+          )
+        end
+      end
+
+      it "is counted separately from other evaluations of the same flag, version, and variation" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, 'default', false, nil, nil, nil, false, true)
+          ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, 'default', false)
+
+          output = flush_and_get_events(ep, sender)
+          summary = output.detect { |e| e[:kind] == "summary" }
+          expect(summary[:features][:flagkey][:counters]).to contain_exactly(
+            { version: 11, variation: 1, value: "value", count: 1, overrideAffected: true },
+            { version: 11, variation: 1, value: "value", count: 1 }
+          )
+        end
+      end
+
+      it "does not add the marker to counters for other evaluations" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          ep.record_eval_event(context, 'flagkey', 11, 1, 'value', nil, 'default', false)
+
+          output = flush_and_get_events(ep, sender)
+          summary = output.detect { |e| e[:kind] == "summary" }
+          expect(summary[:features][:flagkey][:counters]).to eq([{ version: 11, variation: 1, value: "value", count: 1 }])
+        end
+      end
+
+      it "keeps a marked prerequisite record out of the individual events" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          ep.record_eval_event(context, 'prereq', 11, 1, 'value', nil, nil, true, nil, 'top', nil, false, true)
+
+          output = flush_and_get_events(ep, sender)
+          expect(output).to contain_exactly(
+            eq(index_event(default_config, context)),
+            include(:kind => "summary")
+          )
+        end
+      end
+    end
+
     it "queues custom event with context" do
       with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
         ep.record_custom_event(context, 'eventkey', { thing: 'stuff' }, 1.5)
