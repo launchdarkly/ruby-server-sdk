@@ -54,6 +54,7 @@ module LaunchDarkly
         # @param next_version [#call, nil] if given, invoked once per reload and the returned
         #   version is stamped on every entry.
         # @param off_value_flags [Boolean] passed to {FileData.merge}
+        # @param log_prefix [String] the prefix of every log line this reloader writes
         #
         def initialize(paths:, logger:, apply:, on_error: nil,
                        duplicate_keys_handling: DuplicateKeysHandling::FAIL,
@@ -62,9 +63,11 @@ module LaunchDarkly
                        retry_delay: DEFAULT_RETRY_DELAY,
                        skip_unchanged: false,
                        next_version: nil,
-                       off_value_flags: false)
+                       off_value_flags: false,
+                       log_prefix: "[LDClient]")
           @paths = paths
           @logger = logger
+          @log_prefix = log_prefix
           @apply = apply
           @on_error = on_error
           @duplicate_keys_handling = duplicate_keys_handling
@@ -156,9 +159,9 @@ module LaunchDarkly
             break if action == :stop
 
             if action == :reload
-              @logger.info { "[LDClient] Reloading flag data after detecting a change" }
+              @logger.info { "#{@log_prefix} Reloading flag data after detecting a change" }
             else
-              @logger.debug { "[LDClient] Retrying flag data load after earlier failure" }
+              @logger.debug { "#{@log_prefix} Retrying flag data load after earlier failure" }
             end
             ok = reload(retrying: action == :retry)
             @mutex.synchronize do
@@ -168,7 +171,7 @@ module LaunchDarkly
             end
           end
         rescue => e
-          Util.log_exception(@logger, "Unexpected error in file data reloader", e)
+          Util.log_exception(@logger, "#{@log_prefix} Unexpected error in file data reloader", e)
         end
 
         #
@@ -230,7 +233,7 @@ module LaunchDarkly
                 content = FileData.read_file(path)
               rescue ReadError => e
                 if e.missing && @skip_missing_paths
-                  @logger.debug { "[LDClient] File #{path} does not exist; it contributes no data" }
+                  @logger.debug { "#{@log_prefix} File #{path} does not exist; it contributes no data" }
                   files << FileSummary.new(path, false, 0, 0)
                   next
                 end
@@ -294,12 +297,12 @@ module LaunchDarkly
           # level and do not re-invoke on_error.
           message = error.message
           if message == @last_error_message
-            @logger.debug { "[LDClient] Unable to load flags: #{message}" }
+            @logger.debug { "#{@log_prefix} Unable to load flags: #{message}" }
             return false
           end
 
           @last_error_message = message
-          @logger.error { "[LDClient] Unable to load flags: #{message}" }
+          @logger.error { "#{@log_prefix} Unable to load flags: #{message}" }
           @on_error&.call(error)
           false
         end
