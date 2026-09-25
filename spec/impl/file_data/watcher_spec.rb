@@ -114,6 +114,38 @@ module LaunchDarkly
           end
         end
 
+        it "watches a directory that contains an unreadable subdirectory" do
+          skip "the current user can read every directory" if Process.uid.zero?
+
+          Dir.mkdir(path("private"))
+          File.chmod(0o000, path("private"))
+          begin
+            File.write(path("a.json"), "{}")
+            logger = CapturingLogger.new
+            with_watcher([path("a.json")], logger: logger) do |_watcher, calls|
+              expect(logger.output).not_to include("Unable to watch data files")
+              sleep 0.3
+              File.write(path("a.json"), '{"flagValues": {}}')
+              expect(wait_for { calls.value >= 1 }).to be true
+            end
+          ensure
+            File.chmod(0o755, path("private"))
+          end
+        end
+
+        it "uses inotify on Linux and runs it on a named thread that stop ends" do
+          skip "rb-inotify is not available on this platform" unless Watcher.inotify_available?
+
+          File.write(path("a.json"), "{}")
+          watcher = Watcher.new([path("a.json")], -> {}, $null_log)
+          threads = Thread.list.select { |t| t.name == "LD/FileDataWatcher" }
+          expect(threads.length).to eq 1
+
+          watcher.stop
+
+          expect(threads[0].alive?).to be false
+        end
+
         it "does not invoke the callback after it is stopped" do
           File.write(path("a.json"), "{}")
           with_watcher([path("a.json")]) do |watcher, calls|
