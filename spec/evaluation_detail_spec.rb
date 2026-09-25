@@ -45,6 +45,17 @@ module LaunchDarkly
       [ EvaluationReason::fallthrough().with_big_segments_status(BigSegmentsStatus::HEALTHY), EvaluationReason::FALLTHROUGH,
         { "kind" => "FALLTHROUGH", "bigSegmentsStatus" => "HEALTHY" }, "FALLTHROUGH",
         [ EvaluationReason::fallthrough ] ],
+      [ EvaluationReason::off.with_override_affected(true), EvaluationReason::OFF,
+        { "kind" => "OFF", "overrideAffected" => true }, "OFF",
+        [ EvaluationReason::off ] ],
+      [ EvaluationReason::rule_match(1, "x").with_big_segments_status(BigSegmentsStatus::STALE).with_override_affected(true),
+        EvaluationReason::RULE_MATCH,
+        { "kind" => "RULE_MATCH", "ruleIndex" => 1, "ruleId" => "x", "bigSegmentsStatus" => "STALE", "overrideAffected" => true },
+        "RULE_MATCH(1,x)",
+        [ EvaluationReason::rule_match(1, "x"), EvaluationReason::rule_match(1, "x").with_override_affected(true) ] ],
+      [ EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG).with_override_affected(true), EvaluationReason::ERROR,
+        { "kind" => "ERROR", "errorKind" => "MALFORMED_FLAG", "overrideAffected" => true }, "ERROR(MALFORMED_FLAG)",
+        [ EvaluationReason::error(EvaluationReason::ERROR_MALFORMED_FLAG) ] ],
     ]
     values.each_index do |i|
       params = values[i]
@@ -98,6 +109,70 @@ module LaunchDarkly
         EvaluationReason::ERROR_MALFORMED_FLAG, EvaluationReason::ERROR_USER_NOT_SPECIFIED, EvaluationReason::ERROR_EXCEPTION ]
       errors.each do |e|
         expect(EvaluationReason::error(e)).to be EvaluationReason::error(e)
+      end
+    end
+
+    describe "override affected indicator" do
+      it "is false by default" do
+        expect(EvaluationReason::off.override_affected).to be false
+        expect(EvaluationReason::rule_match(0, "x").override_affected).to be false
+        expect(EvaluationReason::error(EvaluationReason::ERROR_FLAG_NOT_FOUND).override_affected).to be false
+      end
+
+      it "returns the same instance when the indicator does not change" do
+        expect(EvaluationReason::off.with_override_affected(false)).to be EvaluationReason::off
+        marked = EvaluationReason::off.with_override_affected(true)
+        expect(marked.with_override_affected(true)).to be marked
+      end
+
+      it "returns a new instance when the indicator changes and keeps the other properties" do
+        base = EvaluationReason::rule_match(2, "y", true).with_big_segments_status(BigSegmentsStatus::HEALTHY)
+        marked = base.with_override_affected(true)
+
+        expect(marked).not_to be base
+        expect(marked.override_affected).to be true
+        expect(marked.kind).to eq EvaluationReason::RULE_MATCH
+        expect(marked.rule_index).to eq 2
+        expect(marked.rule_id).to eq "y"
+        expect(marked.in_experiment).to be true
+        expect(marked.big_segments_status).to eq BigSegmentsStatus::HEALTHY
+        expect(marked).not_to eq base
+        expect(marked.with_override_affected(false)).to eq base
+      end
+
+      it "coerces the indicator to a boolean" do
+        expect(EvaluationReason::off.with_override_affected(nil)).to be EvaluationReason::off
+        expect(EvaluationReason::off.with_override_affected("yes").override_affected).to be true
+      end
+
+      it "is omitted from the JSON representation when false" do
+        expect(EvaluationReason::off.as_json).not_to have_key(:overrideAffected)
+        expect(EvaluationReason::fallthrough(true).as_json).not_to have_key(:overrideAffected)
+        expect(JSON.parse(EvaluationReason::off.to_json)).to eq({ "kind" => "OFF" })
+      end
+
+      it "is written as true in the JSON representation when set" do
+        expect(EvaluationReason::fallthrough(true).with_override_affected(true).as_json).to eq(
+          { kind: :FALLTHROUGH, inExperiment: true, overrideAffected: true })
+      end
+
+      it "is exposed through []" do
+        expect(EvaluationReason::off[:overrideAffected]).to be false
+        expect(EvaluationReason::off.with_override_affected(true)[:overrideAffected]).to be true
+      end
+
+      it "takes part in equality with a hash" do
+        marked = EvaluationReason::off.with_override_affected(true)
+        expect(marked == { kind: "OFF", overrideAffected: true }).to be true
+        expect(marked == { kind: "OFF" }).to be false
+        expect(EvaluationReason::off == { kind: "OFF" }).to be true
+        expect(EvaluationReason::off == { kind: "OFF", overrideAffected: true }).to be false
+      end
+
+      it "keeps the indicator when the big segments status changes" do
+        marked = EvaluationReason::off.with_override_affected(true).with_big_segments_status(BigSegmentsStatus::STALE)
+        expect(marked.override_affected).to be true
+        expect(marked.big_segments_status).to eq BigSegmentsStatus::STALE
       end
     end
 

@@ -69,7 +69,7 @@ module LaunchDarkly
         context = LDContext.create({ key: 'x' })
         detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
         expected_prereqs = [
-          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough())),
+          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough()), false),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).with_unknown_flag('feature2').build
         (result, state) = e.evaluate(flag, context)
@@ -103,7 +103,7 @@ module LaunchDarkly
         context = LDContext.create({ key: 'x' })
         detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
         expected_prereqs = [
-          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new(nil, nil, EvaluationReason::prerequisite_failed('feature2'))),
+          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new(nil, nil, EvaluationReason::prerequisite_failed('feature2')), false),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).with_unknown_flag('feature2').build
         (result, state) = e.evaluate(flag, context)
@@ -138,7 +138,7 @@ module LaunchDarkly
         context = LDContext.create({ key: 'x' })
         detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
         expected_prereqs = [
-          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::off)),
+          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::off), false),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).build
         (result, state) = e.evaluate(flag, context)
@@ -171,7 +171,7 @@ module LaunchDarkly
         context = LDContext.create({ key: 'x' })
         detail = EvaluationDetail.new('b', 1, EvaluationReason::prerequisite_failed('feature1'))
         expected_prereqs = [
-          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough)),
+          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('d', 0, EvaluationReason::fallthrough), false),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).build
         (result, state) = e.evaluate(flag, context)
@@ -204,7 +204,7 @@ module LaunchDarkly
         context = LDContext.create({ key: 'x' })
         detail = EvaluationDetail.new('a', 0, EvaluationReason::fallthrough)
         expected_prereqs = [
-          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::fallthrough)),
+          PrerequisiteEvalRecord.new(flag1, flag, EvaluationDetail.new('e', 1, EvaluationReason::fallthrough), false),
         ]
         e = EvaluatorBuilder.new(logger).with_flag(flag1).build
         (result, state) = e.evaluate(flag, context)
