@@ -118,6 +118,32 @@ module LaunchDarkly
   end
 
   #
+  # An event processor for tests that records the evaluation records the client hands to it.
+  #
+  class RecordingEventProcessor
+    include EventProcessorMethods
+
+    EvalRecord = Struct.new(:context, :key, :version, :variation, :value, :reason, :default, :track_events,
+      :debug_until, :prereq_of, :sampling_ratio, :exclude_from_summaries, :override_affected)
+
+    attr_reader :records
+
+    def initialize
+      @records = []
+      @lock = Mutex.new
+    end
+
+    def record_eval_event(*args)
+      @lock.synchronize { @records << EvalRecord.new(*args) }
+    end
+
+    # Returns the records for a flag key, in order.
+    def records_for(key)
+      @lock.synchronize { @records.select { |r| r.key == key } }
+    end
+  end
+
+  #
   # A flag change listener for tests that collects the changed keys.
   #
   class CollectingFlagChangeListener
