@@ -203,7 +203,7 @@ module LaunchDarkly
         expect(fast_retry_state).to receive(:record_failure).with(:normal).and_call_original
 
         with_handlers(processor) do |handlers|
-          handlers[:on_error].call(SSE::Errors::StreamClosedError.new)
+          handlers[:on_error].call(SSE::Errors::StreamClosedByServerError.new)
           expect(states).to eq([Interfaces::DataSource::Status::INTERRUPTED])
           expect(listener.statuses.last.last_error.kind).to eq(Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
         end
@@ -263,7 +263,7 @@ module LaunchDarkly
           # The handler passed its stopped check just before stop reported OFF.
           config.data_source_update_sink.update_status(Interfaces::DataSource::Status::OFF, nil)
           handlers[:on_error].call(http_error(503))
-          handlers[:on_error].call(SSE::Errors::StreamClosedError.new)
+          handlers[:on_error].call(SSE::Errors::StreamClosedByServerError.new)
 
           expect(states).to eq([Interfaces::DataSource::Status::OFF])
         end
@@ -274,7 +274,7 @@ module LaunchDarkly
           processor.stop
           started_at = Time.now
           handlers[:on_error].call(http_error(401))
-          handlers[:on_error].call(SSE::Errors::StreamClosedError.new)
+          handlers[:on_error].call(SSE::Errors::StreamClosedByServerError.new)
 
           expect(Time.now - started_at).to be < 1
           expect(states).to eq([Interfaces::DataSource::Status::OFF])

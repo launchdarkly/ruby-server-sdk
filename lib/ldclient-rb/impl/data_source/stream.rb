@@ -97,7 +97,7 @@ module LaunchDarkly
             return
           end
 
-          if err.is_a?(SSE::Errors::StreamClosedError)
+          if err.is_a?(SSE::Errors::StreamClosedByServerError)
             error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
               LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR, 0, err.to_s, Time.now)
             handle_failure(:normal, error_info) do |delay|

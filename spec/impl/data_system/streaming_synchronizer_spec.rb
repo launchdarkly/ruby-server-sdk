@@ -381,7 +381,7 @@ change_set_builder, envid)
           it "reports a server-initiated stream close as a network error" do
             expect(logger).to receive(:warn)
 
-            update = synchronizer.send(:handle_error, SSE::Errors::StreamClosedError.new, "env-abc", false)
+            update = synchronizer.send(:handle_error, SSE::Errors::StreamClosedByServerError.new, "env-abc", false)
 
             expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
             expect(update.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
