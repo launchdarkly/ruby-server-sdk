@@ -98,6 +98,7 @@ module LaunchDarkly
         #   is parsed as it is.
         # @param skip_unchanged [Boolean] if true, `apply` is not invoked when the files' raw
         #   contents are byte-identical to the last successfully applied contents.
+        # @param log_prefix [String] the prefix of every log line this reloader writes
         # @param clock [#call, nil] returns the seconds of a monotonic clock, for the time a file has
         #   been held back; nil for the system's. Scheduling always uses the system's clock.
         #
@@ -107,9 +108,11 @@ module LaunchDarkly
                        debounce_delay: DEFAULT_DEBOUNCE_DELAY,
                        retry_delay: DEFAULT_RETRY_DELAY,
                        skip_unchanged: false,
+                       log_prefix: "[LDClient]",
                        clock: nil)
           @paths = paths
           @logger = logger
+          @log_prefix = log_prefix
           @apply = apply
           @on_error = on_error
           @duplicate_keys_handling = duplicate_keys_handling
@@ -222,7 +225,7 @@ module LaunchDarkly
 
             # An unexpected error must not end the worker: no reload would happen after it.
             begin
-              @logger.info { "[LDClient] Reloading flag data after detecting a change" } if action == :reload
+              @logger.info { "#{@log_prefix} Reloading flag data after detecting a change" } if action == :reload
               retry_in = reload(retrying: action == :retry)
               @mutex.synchronize do
                 # A pending retry is superseded by this reload. The reload either succeeded, or it
@@ -241,7 +244,7 @@ module LaunchDarkly
         end
 
         private def log_unexpected_error(error)
-          Util.log_exception(@logger, "Unexpected error in file data reloader", error)
+          Util.log_exception(@logger, "#{@log_prefix} Unexpected error in file data reloader", error)
         end
 
         #
@@ -297,9 +300,9 @@ module LaunchDarkly
 
             if retrying
               if @read_again_pending
-                @logger.debug { "[LDClient] Reading flag data again after a file was found empty" }
+                @logger.debug { "#{@log_prefix} Reading flag data again after a file was found empty" }
               else
-                @logger.debug { "[LDClient] Retrying flag data load after earlier failure" }
+                @logger.debug { "#{@log_prefix} Retrying flag data load after earlier failure" }
               end
             end
             @read_again_pending = false
@@ -350,7 +353,7 @@ module LaunchDarkly
                 reached << path
               end
               if e.missing && @skip_missing_paths
-                @logger.debug { "[LDClient] File #{path} does not exist; it contributes no data" }
+                @logger.debug { "#{@log_prefix} File #{path} does not exist; it contributes no data" }
                 had_content[path] = false
                 append_to_digest(digest, path, nil)
                 files << FileSummary.new(path, false, 0, 0)
@@ -521,7 +524,7 @@ module LaunchDarkly
           retry_at = nil
           paths.each do |path|
             @logger.debug do
-              "[LDClient] File #{path} is empty, possibly while it is being rewritten; reading it again before applying it"
+              "#{@log_prefix} File #{path} is empty, possibly while it is being rewritten; reading it again before applying it"
             end
             empty = @empty_files[path]
             over = [empty.since + @retry_delay, empty.first_held + MAX_HOLD_RETRY_DELAYS * @retry_delay].min
@@ -540,12 +543,12 @@ module LaunchDarkly
           # level and do not re-invoke on_error.
           message = error.message
           if message == @last_error_message
-            @logger.debug { "[LDClient] Unable to load flags: #{message}" }
+            @logger.debug { "#{@log_prefix} Unable to load flags: #{message}" }
             return @retry_delay
           end
 
           @last_error_message = message
-          @logger.error { "[LDClient] Unable to load flags: #{message}" }
+          @logger.error { "#{@log_prefix} Unable to load flags: #{message}" }
           @on_error&.call(error)
           @retry_delay
         end
