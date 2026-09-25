@@ -8,6 +8,9 @@ gem "puma", "~> 8.0"
 gem "rackup", "~> 2.2"
 gem 'sinatra', '>= 4.1'
 
+# The file-based override source uses the listen gem for its watching change detection mode.
+gem 'listen', '~> 3.3'
+
 gem 'rubocop', '~> 1.37', group: 'development'
 gem 'rubocop-performance', '~> 1.15', group: 'development'
 
