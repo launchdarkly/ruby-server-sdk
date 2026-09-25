@@ -55,8 +55,8 @@ module LaunchDarkly
           'key1' => EventSummaryFlagInfo.new(
             'default1', {
               11 => {
-                1 => EventSummaryFlagVariationCounter.new('value1', 2),
-                2 => EventSummaryFlagVariationCounter.new('value2', 1),
+                1 => { false => EventSummaryFlagVariationCounter.new('value1', 2) },
+                2 => { false => EventSummaryFlagVariationCounter.new('value2', 1) },
               },
             },
             Set.new(["user"])
@@ -64,7 +64,7 @@ module LaunchDarkly
           'key2' => EventSummaryFlagInfo.new(
             'default2', {
               22 => {
-                1 => EventSummaryFlagVariationCounter.new('value99', 1),
+                1 => { false => EventSummaryFlagVariationCounter.new('value99', 1) },
               },
             },
             Set.new(["user"])
@@ -72,7 +72,31 @@ module LaunchDarkly
           'badkey' => EventSummaryFlagInfo.new(
             'default3', {
               nil => {
-                nil => EventSummaryFlagVariationCounter.new('default3', 1),
+                nil => { false => EventSummaryFlagVariationCounter.new('default3', 1) },
+              },
+            },
+            Set.new(["user"])
+          ),
+        }
+        expect(data.counters).to eq expected_counters
+      end
+
+      it "counts override-affected evaluations separately from other evaluations of the same flag, version, and variation" do
+        es = subject.new
+        plain = make_eval_event(0, context, 'key1', 11, 1, 'value1', nil, 'default1')
+        marked = LaunchDarkly::Impl::EvalEvent.new(0, context, 'key1', 11, 1, 'value1', nil, 'default1',
+          false, nil, nil, nil, false, true)
+        [plain, marked, marked].each { |e| es.summarize_event(e) }
+        data = es.snapshot
+
+        expected_counters = {
+          'key1' => EventSummaryFlagInfo.new(
+            'default1', {
+              11 => {
+                1 => {
+                  false => EventSummaryFlagVariationCounter.new('value1', 1),
+                  true => EventSummaryFlagVariationCounter.new('value1', 2),
+                },
               },
             },
             Set.new(["user"])

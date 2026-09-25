@@ -26,7 +26,8 @@ module LaunchDarkly
 
     class EvalEvent < Event
       def initialize(timestamp, context, key, version = nil, variation = nil, value = nil, reason = nil, default = nil,
-        track_events = false, debug_until = nil, prereq_of = nil, sampling_ratio = nil, exclude_from_summaries = false)
+        track_events = false, debug_until = nil, prereq_of = nil, sampling_ratio = nil, exclude_from_summaries = false,
+        override_affected = false)
         super(timestamp, context, sampling_ratio, exclude_from_summaries)
         @key = key
         @version = version
@@ -38,6 +39,7 @@ module LaunchDarkly
         @track_events = track_events if track_events
         @debug_until = debug_until if debug_until
         @prereq_of = prereq_of if prereq_of
+        @override_affected = true if override_affected
       end
 
       attr_reader :key
@@ -49,6 +51,14 @@ module LaunchDarkly
       attr_reader :track_events
       attr_reader :debug_until
       attr_reader :prereq_of
+
+      # True if an override affected the evaluation, directly or through a prerequisite or segment.
+      # Such an evaluation appears only in the summary counters, under a counter that carries the
+      # override-affected marker. It produces no individual feature event and no debug event.
+      # @return [Boolean]
+      def override_affected
+        @override_affected ? true : false
+      end
     end
 
     class MigrationOpEvent < Event
