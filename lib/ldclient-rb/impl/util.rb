@@ -164,6 +164,25 @@ module LaunchDarkly
         message = http_error_recoverable?(status) ? recoverable_message : "giving up permanently"
         "HTTP error #{status}#{desc} for #{context} - #{message}"
       end
+
+      #
+      # @param status [Integer]
+      # @param context [String] what failed, such as "polling request"
+      # @param delay [Numeric] seconds until the next attempt
+      # @return [String]
+      #
+      def self.http_error_retry_message(status, context, delay)
+        desc = (status == 401 || status == 403) ? " (invalid SDK key)" : ""
+        "HTTP error #{status}#{desc} for #{context} - #{retry_message(delay)}"
+      end
+
+      #
+      # @param delay [Numeric] seconds until the next attempt
+      # @return [String]
+      #
+      def self.retry_message(delay)
+        format("will retry in %.1fs", delay)
+      end
     end
   end
 end
