@@ -12,7 +12,8 @@ module LaunchDarkly
     PrerequisiteEvalRecord = Struct.new(
       :prereq_flag,     # the prerequisite flag that we evaluated
       :prereq_of_flag,  # the flag that it was a prerequisite of
-      :detail           # the EvaluationDetail representing the evaluation result
+      :detail,          # the EvaluationDetail representing the evaluation result
+      :override_affected # true if a definition read by the prerequisite's own evaluation came from the override store
     )
 
     class EvaluationException < StandardError
@@ -35,6 +36,9 @@ module LaunchDarkly
         @segment_stack = EvaluatorStack.new(nil)
         @prerequisites = []
         @depth = 0
+        # Reading the flag's own definition is the first read of the evaluation, so the marking
+        # starts from the flag's override marker.
+        @override_affected = original_flag.override?
       end
 
       def record_evaluated_prereq_key(key)
@@ -45,6 +49,10 @@ module LaunchDarkly
       attr_reader :prerequisites
       attr_reader :prereq_stack
       attr_reader :segment_stack
+      # True if the evaluation in progress has read a definition that carries the override marker.
+      # While a prerequisite is evaluated, this holds the marking of the prerequisite's own subtree.
+      # The marking propagates upward only.
+      attr_accessor :override_affected
     end
 
     #
@@ -130,7 +138,8 @@ module LaunchDarkly
         :detail,  # the EvaluationDetail representing the evaluation result
         :prereq_evals,  # an array of PrerequisiteEvalRecord instances, or nil
         :big_segments_status,
-        :big_segments_membership
+        :big_segments_membership,
+        :override_affected # true if any definition read during the evaluation came from the override store
       )
 
       # Helper function used internally to construct an EvaluationDetail for an error result.
@@ -152,23 +161,25 @@ module LaunchDarkly
         result = EvalResult.new
         begin
           detail = eval_internal(flag, context, result, state)
+
+          unless result.big_segments_status.nil?
+            # If big_segments_status is non-nil at the end of the evaluation, it means a query was done at
+            # some point and we will want to include the status in the evaluation reason.
+            detail = EvaluationDetail.new(detail.value, detail.variation_index,
+              detail.reason.with_big_segments_status(result.big_segments_status))
+          end
         rescue EvaluationException => exn
           Impl::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
-          result.detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(exn.error_kind))
-          return result, state
+          detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(exn.error_kind))
         rescue => exn
           Impl::Util.log_exception(@logger, "Unexpected error when evaluating flag #{flag.key}", exn)
-          result.detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
-          return result, state
+          detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
         end
 
-        unless result.big_segments_status.nil?
-          # If big_segments_status is non-nil at the end of the evaluation, it means a query was done at
-          # some point and we will want to include the status in the evaluation reason.
-          detail = EvaluationDetail.new(detail.value, detail.variation_index,
-            detail.reason.with_big_segments_status(result.big_segments_status))
-        end
-        result.detail = detail
+        # Error results are marked too. A malformed override definition yields an error reason, and an
+        # override still affected that result.
+        result.override_affected = state.override_affected
+        result.detail = mark_override_affected(detail, state.override_affected)
         [result, state]
       end
 
@@ -240,15 +251,27 @@ module LaunchDarkly
               @logger.error { "[LDClient] Could not retrieve prerequisite flag \"#{prereq_key}\" when evaluating \"#{flag.key}\"" }
               prereq_ok = false
             else
-              state.depth += 1
-              prereq_res = eval_internal(prereq_flag, context, eval_result, state)
-              state.depth -= 1
+              # The prerequisite's own record reflects only the definitions that its own subtree read.
+              # Its marking starts from its own definition. When it is done, the marking propagates
+              # upward into this flag's marking, also when the evaluation ends with an error.
+              parent_affected = state.override_affected
+              state.override_affected = prereq_flag.override?
+              prereq_affected = state.override_affected
+              begin
+                state.depth += 1
+                prereq_res = eval_internal(prereq_flag, context, eval_result, state)
+              ensure
+                state.depth -= 1
+                prereq_affected = state.override_affected
+                state.override_affected = parent_affected || prereq_affected
+              end
               # Note that if the prerequisite flag is off, we don't consider it a match no matter what its
               # off variation was. But we still need to evaluate it in order to generate an event.
               if !prereq_flag.on || prereq_res.variation_index != prerequisite.variation
                 prereq_ok = false
               end
-              prereq_eval = PrerequisiteEvalRecord.new(prereq_flag, flag, prereq_res)
+              prereq_res = mark_override_affected(prereq_res, prereq_affected)
+              prereq_eval = PrerequisiteEvalRecord.new(prereq_flag, flag, prereq_res, prereq_affected)
               eval_result.prereq_evals = [] if eval_result.prereq_evals.nil?
               eval_result.prereq_evals.push(prereq_eval)
             end
@@ -294,7 +317,15 @@ module LaunchDarkly
             end
 
             segment = @get_segment.call(v)
-            !segment.nil? && segment_match_context(segment, context, eval_result, state)
+            if segment.nil?
+              false
+            else
+              # The segment definition was read, so an override segment marks the evaluation here. A
+              # match is not required: a negated clause turns a non-match into a match, so the
+              # definition shapes the result either way.
+              state.override_affected = true if segment.override?
+              segment_match_context(segment, context, eval_result, state)
+            end
           }
           clause.negate ? !result : result
         else
@@ -480,6 +511,19 @@ module LaunchDarkly
 
         weight = rule.weight.to_f / 100000.0
         bucket.nil? || bucket < weight
+      end
+
+      # Returns the detail with its reason marked as override-affected when the evaluation read a
+      # definition from the override store. Returns the same detail otherwise, so that the precomputed
+      # detail instances stay shared.
+      #
+      # @param detail [LaunchDarkly::EvaluationDetail]
+      # @param override_affected [Boolean]
+      # @return [LaunchDarkly::EvaluationDetail]
+      private def mark_override_affected(detail, override_affected)
+        return detail unless override_affected
+
+        EvaluationDetail.new(detail.value, detail.variation_index, detail.reason.with_override_affected(true))
       end
 
       private def get_value_for_variation_or_rollout(flag, vr, context, precomputed_results)
