@@ -82,10 +82,13 @@ module LaunchDarkly
       # @param duplicate_keys_handling [Symbol] one of the {DuplicateKeysHandling} values
       # @param logger [Logger, nil] receives data model validation messages
       # @param version [Integer, nil] a version to stamp on every entry
+      # @param off_value_flags [Boolean] if true, a flag key to value entry expands into a flag that is
+      #   off and serves the value as its off variation. See {FileData.make_flag_with_value}.
       # @return [MergeResult]
       # @raise [MergeError] if the documents cannot be combined
       #
-      def self.merge(documents, duplicate_keys_handling: DuplicateKeysHandling::FAIL, logger: nil, version: nil)
+      def self.merge(documents, duplicate_keys_handling: DuplicateKeysHandling::FAIL, logger: nil, version: nil,
+                     off_value_flags: false)
         flags = {}
         segments = {}
         summaries = []
@@ -100,7 +103,7 @@ module LaunchDarkly
           end
 
           document.flag_values.each do |key, value|
-            data = make_flag_with_value(key.to_s, value, version || 1)
+            data = make_flag_with_value(key.to_s, value, version || 1, off: off_value_flags)
             item = Model.deserialize(DataStore::FEATURES, data, logger)
             summary.flags += 1 if insert(flags, "flag", key, item, duplicate_keys_handling)
           end

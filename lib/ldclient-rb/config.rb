@@ -736,14 +736,18 @@ module LaunchDarkly
     # @param data_store [LaunchDarkly::Interfaces::FeatureStore, nil] The (optional) data store
     # @param fdv1_fallback_synchronizer [#build(String, Config), nil]
     #   The (optional) builder for FDv1-compatible fallback synchronizer
+    # @param overrides [#build(String, Config), nil] The (optional) builder for an override source.
+    #   Flag overrides are currently experimental and subject to change.
     #
     def initialize(initializers: nil, synchronizers: nil,
-                   data_store_mode: LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil)
+                   data_store_mode: LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil,
+                   overrides: nil)
       @initializers = initializers
       @synchronizers = synchronizers
       @data_store_mode = data_store_mode
       @data_store = data_store
       @fdv1_fallback_synchronizer = fdv1_fallback_synchronizer
+      @overrides = overrides
     end
 
     # The initializer builders for the data system. Each builder responds to build(sdk_key, config) and returns an Initializer.
@@ -765,5 +769,11 @@ module LaunchDarkly
     # The FDv1-compatible fallback synchronizer builder. Responds to build(sdk_key, config) and returns a Synchronizer.
     # @return [#build(String, Config), nil]
     attr_reader :fdv1_fallback_synchronizer
+
+    # The override source builder. Responds to build(sdk_key, config) and returns an
+    # {LaunchDarkly::Interfaces::Overrides::OverrideSource}. Flag overrides are currently
+    # experimental and subject to change.
+    # @return [#build(String, Config), nil]
+    attr_reader :overrides
   end
 end

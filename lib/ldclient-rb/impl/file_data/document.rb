@@ -158,19 +158,35 @@ module LaunchDarkly
       # Expands a flag key to value entry into a full flag definition that returns the given
       # value for every context.
       #
+      # By default the flag is on and serves the value through its fallthrough, which is how the
+      # file data sources have always expanded these entries. With `off: true` the flag is off and
+      # serves the value as its off variation, so an evaluation reports the OFF reason kind. The
+      # override source uses that form.
+      #
       # @param key [String]
       # @param value [Object]
       # @param version [Integer]
+      # @param off [Boolean]
       # @return [Hash]
       #
-      def self.make_flag_with_value(key, value, version = 1)
-        {
-          key: key,
-          on: true,
-          version: version,
-          fallthrough: { variation: 0 },
-          variations: [value],
-        }
+      def self.make_flag_with_value(key, value, version = 1, off: false)
+        if off
+          {
+            key: key,
+            on: false,
+            version: version,
+            offVariation: 0,
+            variations: [value],
+          }
+        else
+          {
+            key: key,
+            on: true,
+            version: version,
+            fallthrough: { variation: 0 },
+            variations: [value],
+          }
+        end
       end
 
       #

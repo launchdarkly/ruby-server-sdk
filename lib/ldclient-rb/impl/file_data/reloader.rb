@@ -53,6 +53,7 @@ module LaunchDarkly
         #   contents are byte-identical to the last successfully applied contents.
         # @param next_version [#call, nil] if given, invoked once per reload and the returned
         #   version is stamped on every entry.
+        # @param off_value_flags [Boolean] passed to {FileData.merge}
         #
         def initialize(paths:, logger:, apply:, on_error: nil,
                        duplicate_keys_handling: DuplicateKeysHandling::FAIL,
@@ -60,7 +61,8 @@ module LaunchDarkly
                        debounce_delay: DEFAULT_DEBOUNCE_DELAY,
                        retry_delay: DEFAULT_RETRY_DELAY,
                        skip_unchanged: false,
-                       next_version: nil)
+                       next_version: nil,
+                       off_value_flags: false)
           @paths = paths
           @logger = logger
           @apply = apply
@@ -71,6 +73,7 @@ module LaunchDarkly
           @retry_delay = retry_delay
           @skip_unchanged = skip_unchanged
           @next_version = next_version
+          @off_value_flags = off_value_flags
 
           # Guards the scheduling state below and wakes the worker.
           @mutex = Mutex.new
@@ -246,7 +249,8 @@ module LaunchDarkly
               merged = FileData.merge(documents,
                 duplicate_keys_handling: @duplicate_keys_handling,
                 logger: @logger,
-                version: @next_version&.call)
+                version: @next_version&.call,
+                off_value_flags: @off_value_flags)
             rescue => e
               return record_failure(e)
             end

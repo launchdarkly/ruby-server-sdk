@@ -180,6 +180,27 @@ module LaunchDarkly
         end
 
         #
+        # Retrieves an item from the active store.
+        #
+        # @param kind [LaunchDarkly::Impl::DataStore::DataKind]
+        # @param key [String, Symbol]
+        # @return [Object, nil] the item, or nil if it is unknown or deleted
+        #
+        def get(kind, key)
+          get_active_store.get(kind, key)
+        end
+
+        #
+        # Retrieves all items of a kind from the active store.
+        #
+        # @param kind [LaunchDarkly::Impl::DataStore::DataKind]
+        # @return [Hash{Symbol => Object}]
+        #
+        def all(kind)
+          get_active_store.all(kind)
+        end
+
+        #
         # Get the data store status provider for the persistent store, if configured.
         #
         # @return [LaunchDarkly::Impl::DataStore::StatusProviderV2, nil] The data store status provider for the persistent store, if configured

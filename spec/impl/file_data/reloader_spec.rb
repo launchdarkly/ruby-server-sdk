@@ -319,6 +319,17 @@ module LaunchDarkly
           end
         end
 
+        it "expands flag values into off flags when asked" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_reloader([a], off_value_flags: true) do |reloader, recorder|
+            reloader.reload_now
+
+            expect(recorder.applied[0].flags[:flag1].on).to be false
+            expect(recorder.applied[0].flags[:flag1].off_variation).to eq(0)
+          end
+        end
+
         it "runs reloads one at a time even when triggers overlap" do
           a = write("a.json", values_doc({ flag1: "a" }))
           active = Concurrent::AtomicFixnum.new(0)

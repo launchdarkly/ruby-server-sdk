@@ -109,6 +109,16 @@ module LaunchDarkly
       end
 
       #
+      # Returns whether the data system was built with an override source. The value is fixed at
+      # construction. Flag overrides are currently experimental and subject to change.
+      #
+      # @return [Boolean]
+      #
+      def override_source_configured?
+        raise NotImplementedError, "#{self.class} must implement #override_source_configured?"
+      end
+
+      #
       # Sets the diagnostic accumulator for streaming initialization metrics.
       # This should be called before start() to ensure metrics are collected.
       #
