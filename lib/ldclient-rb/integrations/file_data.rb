@@ -1,5 +1,7 @@
+require 'ldclient-rb/impl/file_data'
 require 'ldclient-rb/impl/integrations/file_data_source'
 require 'ldclient-rb/impl/integrations/file_data_source_v2'
+require 'ldclient-rb/impl/integrations/file_override_source'
 
 module LaunchDarkly
   module Integrations
@@ -81,6 +83,11 @@ module LaunchDarkly
     # If the data source encounters any error in any file-- malformed content, a missing file, or a
     # duplicate key-- it will not load flags from any of the files.
     #
+    # The same file format serves the file-based override source, {FileData.override_source}, which
+    # supplies flag and segment overrides that take precedence over LaunchDarkly data instead of
+    # replacing the connection to LaunchDarkly. Flag overrides are currently experimental and subject
+    # to change.
+    #
     module FileData
       #
       # Returns a factory for the file data source component.
@@ -148,6 +155,139 @@ module LaunchDarkly
         poll_interval = options[:poll_interval] || 1
 
         FileDataSourceV2Builder.new(paths, poll_interval)
+      end
+
+      #
+      # Returns a builder for a file-based override source. Flag overrides are currently experimental
+      # and subject to change.
+      #
+      # Overrides are flag and segment definitions that take precedence over data received from
+      # LaunchDarkly at evaluation time, on a per-key basis. They exist for resilience during an
+      # incident. An operator can force one or more flags to a known state on a running application,
+      # whether or not the application can reach LaunchDarkly, by writing them to a file. The override
+      # stays in effect until it is removed from the file. Flags not present in the files are
+      # completely unaffected.
+      #
+      # The files use the same document format as the file data source: a JSON or YAML document with
+      # optional `flags`, `flagValues`, and `segments` members. A `flagValues` entry expands into a
+      # flag that serves the given value for every context. When several files are configured, their
+      # entries are combined in the configured order, and the duplicate keys handling decides what
+      # happens when the same key appears in more than one file.
+      #
+      # A reload replaces the entire set of overrides, so removing an entry from a file removes the
+      # override. A configured file that does not exist contributes no overrides. It can be created
+      # later, and deleting a file removes its overrides. A file that exists but cannot be read or
+      # parsed fails that whole reload. The previously loaded overrides stay in effect, the failure is
+      # logged, and the source retries after a short delay and recovers on its own once the file is
+      # readable. Whenever the set of overrides in effect changes, including at startup, the source
+      # logs the overrides in effect and what each file supplied, at Info level.
+      #
+      # An evaluation that an override affects, directly or through a prerequisite or segment, is
+      # marked: its reason reports {EvaluationReason#override_affected}, it produces no individual
+      # analytics event, and it is counted under a separate summary counter.
+      #
+      # Pass the returned builder to {LaunchDarkly::DataSystem::ConfigBuilder#overrides}. The
+      # configuration is validated when the client is created, and an invalid configuration raises
+      # `ArgumentError` from `LDClient.new`.
+      #
+      # @example
+      #   overrides = LaunchDarkly::Integrations::FileData.override_source(paths: ["/etc/launchdarkly/overrides.json"])
+      #   config = LaunchDarkly::Config.new(data_system: LaunchDarkly::DataSystem.default.overrides(overrides))
+      #   client = LaunchDarkly::LDClient.new(sdk_key, config)
+      #
+      # @param options [Hash] the configuration options
+      # @option options [Array<String>, String] :paths  One or more files, in precedence order. Required.
+      #   Paths may be absolute or relative to the current working directory.
+      # @option options [Symbol] :duplicate_keys_handling  What to do when the same key appears in more
+      #   than one file. `:fail` (the default) treats the reload as failed and keeps the previous
+      #   overrides. `:ignore` keeps the entry from the first configured file that defines the key.
+      # @option options [Symbol] :change_detection  How the source detects file changes. `:polling` (the
+      #   default) examines the files on an interval and works on every file system, including network
+      #   mounts and directories whose contents are swapped through symbolic links. `:watching` uses file
+      #   system change notifications through the `listen` gem, which the host application must provide.
+      # @option options [Numeric] :poll_interval  Seconds between examinations of the files in polling
+      #   mode. The default is 1. An interval below 1 is raised to 1 with a warning.
+      # @return [FileOverrideSourceBuilder] a builder for {LaunchDarkly::DataSystem::ConfigBuilder#overrides}
+      #
+      def self.override_source(options = {})
+        FileOverrideSourceBuilder.new(options)
+      end
+    end
+
+    #
+    # Builder for the file-based override source. Create it with {FileData.override_source}.
+    #
+    # Flag overrides are currently experimental and subject to change.
+    #
+    class FileOverrideSourceBuilder
+      # The default interval, in seconds, between examinations of the files in polling mode.
+      DEFAULT_POLL_INTERVAL = 1
+
+      # The shortest allowed polling interval, in seconds. A configured interval below this is raised
+      # to it. The minimum exists only to prevent a tight loop over the file system.
+      MINIMUM_POLL_INTERVAL = 1
+
+      DUPLICATE_KEYS_HANDLING_VALUES = [:fail, :ignore].freeze
+      CHANGE_DETECTION_VALUES = [:polling, :watching].freeze
+      OPTION_KEYS = [:paths, :duplicate_keys_handling, :change_detection, :poll_interval].freeze
+      private_constant :DUPLICATE_KEYS_HANDLING_VALUES, :CHANGE_DETECTION_VALUES, :OPTION_KEYS
+
+      #
+      # @param options [Hash] see {FileData.override_source}
+      #
+      def initialize(options)
+        raise ArgumentError, "options for the file-based override source must be a Hash" unless options.is_a?(Hash)
+
+        @options = options
+      end
+
+      #
+      # Builds the override source. Called by the SDK when the client is created.
+      #
+      # @param sdk_key [String] unused
+      # @param config [LaunchDarkly::Config] the client configuration, for its logger
+      # @return [LaunchDarkly::Interfaces::Overrides::OverrideSource]
+      # @raise [ArgumentError] if the options are invalid
+      #
+      def build(sdk_key, config)
+        unknown = @options.keys - OPTION_KEYS
+        raise ArgumentError, "unknown options for the file-based override source: #{unknown.join(', ')}" unless unknown.empty?
+
+        paths = Impl::FileData.absolute_paths(@options[:paths] || [])
+        raise ArgumentError, "no file paths were specified for the file-based override source" if paths.empty?
+
+        duplicate_keys_handling = @options.fetch(:duplicate_keys_handling, :fail)
+        unless DUPLICATE_KEYS_HANDLING_VALUES.include?(duplicate_keys_handling)
+          raise ArgumentError,
+            "unrecognized duplicate keys handling #{duplicate_keys_handling.inspect} for the file-based override source"
+        end
+
+        change_detection = @options.fetch(:change_detection, :polling)
+        unless CHANGE_DETECTION_VALUES.include?(change_detection)
+          raise ArgumentError, "unrecognized change detection mode #{change_detection.inspect} for the file-based override source"
+        end
+        if change_detection == :watching && !Impl::FileData::Watcher.available?
+          raise ArgumentError, "change detection mode :watching for the file-based override source requires the listen gem"
+        end
+
+        poll_interval = @options.fetch(:poll_interval, DEFAULT_POLL_INTERVAL)
+        unless poll_interval.is_a?(Numeric)
+          raise ArgumentError, "poll interval #{poll_interval.inspect} for the file-based override source must be a number"
+        end
+        if change_detection == :polling && poll_interval < MINIMUM_POLL_INTERVAL
+          config.logger.warn do
+            "#{Impl::Integrations::FileOverrideSource::LOG_PREFIX} Poll interval #{poll_interval}s is below the minimum; using #{MINIMUM_POLL_INTERVAL}s"
+          end
+          poll_interval = MINIMUM_POLL_INTERVAL
+        end
+
+        Impl::Integrations::FileOverrideSource.new(
+          paths: paths,
+          duplicate_keys_handling: duplicate_keys_handling,
+          change_detection: change_detection,
+          poll_interval: poll_interval,
+          logger: config.logger
+        )
       end
     end
 
