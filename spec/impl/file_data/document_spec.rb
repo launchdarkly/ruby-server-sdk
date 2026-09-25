@@ -151,6 +151,18 @@ module LaunchDarkly
         it "uses the given version" do
           expect(FileData.make_flag_with_value("flag1", true, 7)[:version]).to eq(7)
         end
+
+        it "builds a flag that is off and serves the value as its off variation when asked" do
+          flag = FileData.make_flag_with_value("flag1", "value1", 3, off: true)
+
+          expect(flag).to eq({
+            key: "flag1",
+            on: false,
+            version: 3,
+            offVariation: 0,
+            variations: ["value1"],
+          })
+        end
       end
 
       describe "absolute_paths" do
