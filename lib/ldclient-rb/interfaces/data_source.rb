@@ -183,16 +183,19 @@ module LaunchDarkly
         #
         # In streaming mode, this means that the stream connection failed, or had to be dropped due to some
         # other error, and will be retried after a backoff delay. In polling mode, it means that the last poll
-        # request failed, and a new poll request will be made after the configured polling interval.
+        # request failed, and a new poll request will be made after the polling interval, or after a longer
+        # backoff delay for unexpected error types.
         #
         INTERRUPTED = :interrupted
 
         #
         # Indicates that the data source has been permanently shut down.
         #
-        # This could be because it encountered an unrecoverable error (for instance, the LaunchDarkly service
-        # rejected the SDK key; an invalid SDK key will never become valid), or because the SDK client was
-        # explicitly shut down.
+        # This could be because the SDK client was explicitly shut down. In the FDv2 data system, it can also
+        # mean the data source stopped after an error it does not retry.
+        #
+        # Unless the SDK is configured with {LaunchDarkly::Config#data_system_config}, no other state follows
+        # this one.
         #
         OFF = :off
 

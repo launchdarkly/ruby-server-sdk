@@ -55,6 +55,8 @@ get '/' do
       'flag-change-listeners',
       'flag-value-change-listeners',
       'fdv1-fallback',
+      'retry-conformance-fdv1-streaming',
+      'retry-conformance-fdv1-polling',
     ],
   }.to_json
 end

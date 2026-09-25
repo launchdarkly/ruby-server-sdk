@@ -1,5 +1,6 @@
 require "ldclient-rb/impl/data_source"
 require "ldclient-rb/impl/model/serialization"
+require "ldclient-rb/impl/retry_state"
 require "ldclient-rb/impl/util"
 require "ldclient-rb/in_memory_store"
 
@@ -31,6 +32,8 @@ module LaunchDarkly
           @started = Concurrent::AtomicBoolean.new(false)
           @stopped = Concurrent::AtomicBoolean.new(false)
           @ready = Concurrent::Event.new
+          @stop_event = Concurrent::Event.new
+          @retry_state = Impl::RetryState.for_streaming(@config.initial_reconnect_delay, @config.logger)
           @connection_attempt_start_time = 0
         end
 
@@ -49,7 +52,9 @@ module LaunchDarkly
             read_timeout: READ_TIMEOUT_SECONDS,
             logger: @config.logger,
             socket_factory: @config.socket_factory,
-            reconnect_time: @config.initial_reconnect_delay,
+            # The SDK waits in the failure handlers instead. This must be an Integer: the SSE client
+            # multiplies it by a power of two, and a Float 0.0 becomes NaN once that power overflows.
+            reconnect_time: 0,
           }
           log_connection_started
 
@@ -57,38 +62,7 @@ module LaunchDarkly
           @es = SSE::Client.new(uri, **opts) do |conn|
             conn.on_connect { |response_headers| DataSource.record_environment_id(@data_source_update_sink, response_headers) }
             conn.on_event { |event| process_message(event) }
-            conn.on_error { |err|
-              log_connection_result(false)
-              case err
-              when SSE::Errors::HTTPStatusError
-                status = err.status
-                error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-                  LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE, status, nil, Time.now)
-                message = Util.http_error_message(status, "streaming connection", "will retry")
-                @config.logger.error { "[LDClient] #{message}" }
-
-                if Util.http_error_recoverable?(status)
-                  @data_source_update_sink&.update_status(
-                    LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-                    error_info
-                  )
-                else
-                  @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
-                  stop_with_error_info error_info
-                end
-              when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError
-                @data_source_update_sink&.update_status(
-                  LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-                  LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR, 0, err.to_s, Time.now)
-                )
-
-              else
-                @data_source_update_sink&.update_status(
-                  LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-                  LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN, 0, err.to_s, Time.now)
-                )
-              end
-            }
+            conn.on_error { |err| handle_error(err) }
           end
 
           @ready
@@ -106,9 +80,63 @@ module LaunchDarkly
         def stop_with_error_info(error_info = nil)
           if @stopped.make_true
             @es.close
+            @stop_event.set
             @data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::OFF, error_info)
             @config.logger.info { "[LDClient] Stream connection stopped" }
           end
+        end
+
+        def handle_error(err)
+          if err.is_a?(SSE::Errors::HTTPStatusError)
+            status = err.status
+            error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
+              LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE, status, nil, Time.now)
+            handle_failure(Impl::RetryState.classify_http_status(status), error_info) do |delay|
+              @config.logger.error { "[LDClient] #{Util.http_error_retry_message(status, 'streaming connection', delay)}" }
+            end
+            return
+          end
+
+          if err.is_a?(SSE::Errors::StreamClosedError)
+            error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
+              LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR, 0, err.to_s, Time.now)
+            handle_failure(:normal, error_info) do |delay|
+              @config.logger.warn { "[LDClient] The server closed the streaming connection - #{Util.retry_message(delay)}" }
+            end
+            return
+          end
+
+          error_kind = case err
+                       when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError
+                         LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR
+                       else
+                         LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN
+                       end
+          error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(error_kind, 0, err.to_s, Time.now)
+          handle_failure(:normal, error_info) do |delay|
+            @config.logger.warn { "[LDClient] Error on streaming connection: #{err} - #{Util.retry_message(delay)}" }
+          end
+        end
+
+        #
+        # Records a failure, reports it, and waits before the next attempt. The SSE client calls this on its
+        # worker thread before it reconnects, so the wait is the reconnect delay, and {#stop} ends it at once.
+        #
+        # @param kind [Symbol] `:normal` or `:unexpected`
+        # @param error_info [LaunchDarkly::Interfaces::DataSource::ErrorInfo]
+        # @yieldparam delay [Numeric] seconds until the next attempt, for the log message
+        #
+        def handle_failure(kind, error_info)
+          return if @stopped.value
+
+          log_connection_result(false)
+          @retry_state.record_failure(kind)
+          delay = @retry_state.next_delay
+          yield delay
+          @data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED, error_info)
+
+          @stop_event.wait([delay, Impl::RetryState::MAX_WAIT].min)
+          log_connection_started
         end
 
         #
@@ -162,6 +190,7 @@ module LaunchDarkly
               @config.logger.warn { "[LDClient] Unknown message received: #{method}" }
             end
 
+            @retry_state.record_success
             @data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::VALID, nil)
           rescue JSON::ParserError => e
             @config.logger.error { "[LDClient] JSON parsing failed for method #{method}. Ignoring event." }
