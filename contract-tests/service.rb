@@ -17,7 +17,7 @@ $log.formatter = proc {|severity, datetime, progname, msg|
 }
 
 set :bind, '0.0.0.0'
-set :port, 9000
+set :port, (ENV['PORT'] || 9000).to_i
 set :logging, false
 
 clients = {}
@@ -60,6 +60,7 @@ get '/' do
       'wrapper',
       'service-endpoints',
       'tls:verify-peer',
+      'flag-overrides',
     ],
   }.to_json
 end
