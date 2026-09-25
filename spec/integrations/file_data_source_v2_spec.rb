@@ -384,6 +384,91 @@ EOF
           end
         end
 
+        it "keeps the last good data after a malformed update and recovers when the file is fixed" do
+          file = make_temp_file(flag_values_only_json)
+
+          source = Impl::Integrations::FileDataSourceV2.new(
+            logger,
+            paths: [file.path],
+            poll_interval: 0.1
+          )
+
+          updates = Queue.new
+
+          begin
+            sync_thread = Thread.new do
+              source.sync(no_selector_store) do |update|
+                updates << update
+              end
+            end
+
+            initial = updates.pop(timeout: 5)
+            expect(initial).not_to be_nil, "Did not receive initial update"
+            expect(initial.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            sleep 0.2 # Ensure filesystem timestamp changes
+            IO.write(file, '{"flagValues"')
+
+            interrupted = updates.pop(timeout: 5)
+            expect(interrupted).not_to be_nil, "Did not receive update after file became invalid"
+            expect(interrupted.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+            expect(interrupted.change_set).to be_nil
+
+            sleep 0.2
+            IO.write(file, '{"flagValues": {"flag3": "value3"}}')
+
+            recovered = updates.pop(timeout: 5)
+            expect(recovered).not_to be_nil, "Did not receive update after file was fixed"
+            expect(recovered.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+            expect(recovered.change_set.changes.map(&:key)).to eq([:flag3])
+          ensure
+            source.stop
+            sync_thread&.join(2)
+          end
+        end
+
+        it "reports an interrupted status when a file is deleted and recovers when it is recreated" do
+          file = make_temp_file(flag_values_only_json)
+
+          source = Impl::Integrations::FileDataSourceV2.new(
+            logger,
+            paths: [file.path],
+            poll_interval: 0.1
+          )
+
+          updates = Queue.new
+
+          begin
+            sync_thread = Thread.new do
+              source.sync(no_selector_store) do |update|
+                updates << update
+              end
+            end
+
+            initial = updates.pop(timeout: 5)
+            expect(initial).not_to be_nil, "Did not receive initial update"
+            expect(initial.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            sleep 0.2
+            File.delete(file.path)
+
+            interrupted = updates.pop(timeout: 5)
+            expect(interrupted).not_to be_nil, "Did not receive update after file was deleted"
+            expect(interrupted.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+
+            sleep 0.2
+            IO.write(file.path, '{"flagValues": {"flag3": "value3"}}')
+
+            recovered = updates.pop(timeout: 5)
+            expect(recovered).not_to be_nil, "Did not receive update after file was recreated"
+            expect(recovered.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+            expect(recovered.change_set.changes.map(&:key)).to eq([:flag3])
+          ensure
+            source.stop
+            sync_thread&.join(2)
+          end
+        end
+
         it "can be stopped" do
           file = make_temp_file(all_properties_json)
 
