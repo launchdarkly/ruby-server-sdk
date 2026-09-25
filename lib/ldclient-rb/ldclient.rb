@@ -702,6 +702,17 @@ module LaunchDarkly
         end
 
         requires_experiment_data = experiment?(f, detail.reason)
+        track_events = f[:trackEvents] || requires_experiment_data
+        track_reason = requires_experiment_data
+        debug_events_until_date = f[:debugEventsUntilDate]
+        if eval_result&.override_affected
+          # A consumer of this state sends individual events according to these fields. An
+          # override-affected evaluation produces no individual events, so the state turns them off
+          # for this flag. The flag, its value, and its reason stay.
+          track_events = false
+          track_reason = false
+          debug_events_until_date = nil
+        end
         flag_state = {
           key: f[:key],
           value: detail.value,
@@ -710,9 +721,9 @@ module LaunchDarkly
           # A failed evaluation has no evaluation state, so it reports no prerequisites.
           prerequisites: eval_state&.prerequisites,
           version: f[:version],
-          trackEvents: f[:trackEvents] || requires_experiment_data,
-          trackReason: requires_experiment_data,
-          debugEventsUntilDate: f[:debugEventsUntilDate],
+          trackEvents: track_events,
+          trackReason: track_reason,
+          debugEventsUntilDate: debug_events_until_date,
         }
 
         state.add_flag(flag_state, with_reasons, details_only_if_tracked)
@@ -837,22 +848,25 @@ module LaunchDarkly
       begin
         (res, _) = @evaluator.evaluate(feature, context)
         unless res.prereq_evals.nil?
+          # Each prerequisite record carries the marking of the prerequisite's own evaluation, not
+          # the marking of the evaluation that requested it.
           res.prereq_evals.each do |prereq_eval|
-            record_prereq_flag_eval(prereq_eval.prereq_flag, prereq_eval.prereq_of_flag, context, prereq_eval.detail, with_reasons)
+            record_prereq_flag_eval(prereq_eval.prereq_flag, prereq_eval.prereq_of_flag, context, prereq_eval.detail,
+              with_reasons, prereq_eval.override_affected)
           end
         end
         detail = res.detail
         if detail.default_value?
           detail = EvaluationDetail.new(default, nil, detail.reason)
         end
-        record_flag_eval(feature, context, detail, default, with_reasons)
+        record_flag_eval(feature, context, detail, default, with_reasons, res.override_affected)
         [detail, feature, nil]
       rescue => exn
         Impl::Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         # The flag definition was read before the failure, so its own marker decides the marking.
         reason = EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(override_item?(feature))
         detail = EvaluationDetail.new(default, nil, reason)
-        record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
+        record_flag_eval_error(feature, context, default, detail.reason, with_reasons, feature.override?)
         [detail, feature, exn.to_s]
       end
     end
@@ -864,7 +878,7 @@ module LaunchDarkly
       @data_system.override_items(Impl::DataStore::FEATURES)[key.to_sym]
     end
 
-    private def record_flag_eval(flag, context, detail, default, with_reasons)
+    private def record_flag_eval(flag, context, detail, default, with_reasons, override_affected)
       add_experiment_data = experiment?(flag, detail.reason)
       @event_processor.record_eval_event(
         context,
@@ -878,11 +892,12 @@ module LaunchDarkly
         flag[:debugEventsUntilDate],
         nil,
         flag[:samplingRatio],
-        !!flag[:excludeFromSummaries]
+        !!flag[:excludeFromSummaries],
+        override_affected
       )
     end
 
-    private def record_prereq_flag_eval(prereq_flag, prereq_of_flag, context, detail, with_reasons)
+    private def record_prereq_flag_eval(prereq_flag, prereq_of_flag, context, detail, with_reasons, override_affected)
       add_experiment_data = experiment?(prereq_flag, detail.reason)
       @event_processor.record_eval_event(
         context,
@@ -896,13 +911,15 @@ module LaunchDarkly
         prereq_flag[:debugEventsUntilDate],
         prereq_of_flag[:key],
         prereq_flag[:samplingRatio],
-        !!prereq_flag[:excludeFromSummaries]
+        !!prereq_flag[:excludeFromSummaries],
+        override_affected
       )
     end
 
-    private def record_flag_eval_error(flag, context, default, reason, with_reasons)
+    private def record_flag_eval_error(flag, context, default, reason, with_reasons, override_affected)
       @event_processor.record_eval_event(context, flag[:key], flag[:version], nil, default, with_reasons ? reason : nil, default,
-        flag[:trackEvents], flag[:debugEventsUntilDate], nil, flag[:samplingRatio], !!flag[:excludeFromSummaries])
+        flag[:trackEvents], flag[:debugEventsUntilDate], nil, flag[:samplingRatio], !!flag[:excludeFromSummaries],
+        override_affected)
     end
 
     #
@@ -913,8 +930,9 @@ module LaunchDarkly
     # @param with_reasons [Boolean]
     #
     private def record_unknown_flag_eval(flag_key, context, default, reason, with_reasons)
+      # Nothing was read from the override store, so the evaluation is not marked.
       @event_processor.record_eval_event(context, flag_key, nil, nil, default, with_reasons ? reason : nil, default,
-        false, nil, nil, 1, false)
+        false, nil, nil, 1, false, false)
     end
 
     #
