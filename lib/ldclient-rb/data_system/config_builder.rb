@@ -23,6 +23,7 @@ module LaunchDarkly
         @fdv1_fallback_synchronizer = nil
         @data_store_mode = LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY
         @data_store = nil
+        @overrides = nil
       end
 
       #
@@ -86,6 +87,35 @@ module LaunchDarkly
       end
 
       #
+      # Configures the SDK with an override source. Flag overrides are currently experimental and
+      # subject to change.
+      #
+      # Overrides are flag and segment definitions that take precedence over data received from
+      # LaunchDarkly at evaluation time, on a per-key basis. They exist for resilience during an
+      # incident. Overrides let an operator force one or more flags to a known state on a running
+      # client, whether or not the client can reach LaunchDarkly. Flags not present in the override
+      # data are completely unaffected.
+      #
+      # The override source is not a data source. It has no effect on the client's initialization
+      # status, data availability, or data source status. Without a configured source, or while
+      # the source supplies no overrides, the SDK behaves as it would without this feature.
+      #
+      # At most one override source can be configured. A later call replaces an earlier one.
+      #
+      # @example
+      #   overrides = LaunchDarkly::Integrations::FileData.override_source(paths: ["/etc/launchdarkly/overrides.json"])
+      #   config = LaunchDarkly::Config.new(data_system: LaunchDarkly::DataSystem.default.overrides(overrides))
+      #
+      # @param source [#build(String, Config), nil] a builder that responds to build(sdk_key, config)
+      #   and returns a {LaunchDarkly::Interfaces::Overrides::OverrideSource}, or nil to remove one
+      # @return [ConfigBuilder] self for chaining
+      #
+      def overrides(source)
+        @overrides = source
+        self
+      end
+
+      #
       # Builds the data system configuration.
       #
       # @return [DataSystemConfig]
@@ -96,7 +126,8 @@ module LaunchDarkly
           synchronizers: @synchronizers,
           data_store_mode: @data_store_mode,
           data_store: @data_store,
-          fdv1_fallback_synchronizer: @fdv1_fallback_synchronizer
+          fdv1_fallback_synchronizer: @fdv1_fallback_synchronizer,
+          overrides: @overrides
         )
       end
     end

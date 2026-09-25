@@ -8,6 +8,7 @@ require "ldclient-rb/impl/data_store/feature_store_client_wrapper"
 require "ldclient-rb/impl/data_source/status_provider"
 require "ldclient-rb/impl/data_store/status_provider"
 require "ldclient-rb/impl/broadcaster"
+require "ldclient-rb/impl/overrides"
 require "ldclient-rb/impl/repeating_task"
 require "ldclient-rb/interfaces/data_system"
 
@@ -118,6 +119,21 @@ module LaunchDarkly
           # Track configuration
           @configured_with_data_sources = (@data_system_config.initializers && !@data_system_config.initializers.empty?) ||
             !@synchronizer_builders.empty?
+
+          # The following are nil unless an override source is configured. The layer holds override
+          # entries. The overlay serves them in preference to the store's data at the store read
+          # boundary. The source populates the layer at runtime. The override system is separate
+          # from the initializer and synchronizer pipeline and never affects data availability.
+          @override_layer = nil
+          @overlay = nil
+          @override_source = nil
+          if @data_system_config.overrides && !@disabled
+            # An invalid override source configuration raises here, so LDClient.new reports it
+            # the same way as other invalid component configuration.
+            @override_source = @data_system_config.overrides.build(@sdk_key, @config)
+            @override_layer = LaunchDarkly::Impl::Overrides::Layer.new
+            @overlay = LaunchDarkly::Impl::Overrides::Overlay.new(@store, @override_layer)
+          end
         end
 
         # (see DataSystem#start)
@@ -131,6 +147,13 @@ module LaunchDarkly
           @stop_event.reset
           @ready_event.reset
 
+          # The override source starts before the run loop, so a source that loads synchronously has
+          # its overrides in place before the client begins evaluating.
+          if @override_source
+            sink = LaunchDarkly::Impl::Overrides::Sink.new(@override_layer, @store, @flag_change_broadcaster, @logger)
+            @override_source.start(sink)
+          end
+
           # Start the main coordination thread
           main_thread = Thread.new { run_main_loop }
           main_thread.name = "FDv2-main"
@@ -141,6 +164,14 @@ module LaunchDarkly
 
         # (see DataSystem#stop)
         def stop
+          if @override_source
+            begin
+              @override_source.stop
+            rescue => e
+              @logger.error { "[LDClient] Error stopping override source: #{e.message}" }
+            end
+          end
+
           @stop_event.set
 
           @lock.synchronize do
@@ -175,7 +206,14 @@ module LaunchDarkly
 
         # (see DataSystem#store)
         def store
+          return @overlay if @overlay
+
           @store.get_active_store
+        end
+
+        # (see DataSystem#override_source_configured?)
+        def override_source_configured?
+          !@override_source.nil?
         end
 
         # (see DataSystem#data_source_status_provider)
