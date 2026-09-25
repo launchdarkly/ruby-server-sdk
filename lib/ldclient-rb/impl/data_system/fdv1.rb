@@ -101,6 +101,11 @@ module LaunchDarkly
           @store_wrapper
         end
 
+        # (see DataSystem#override_source_configured?)
+        def override_source_configured?
+          false
+        end
+
         # (see DataSystem#set_diagnostic_accumulator)
         def set_diagnostic_accumulator(diagnostic_accumulator)
           @diagnostic_accumulator = diagnostic_accumulator

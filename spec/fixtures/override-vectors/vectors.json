@@ -1,0 +1,316 @@
+{
+  "schemaVersion": "0.4.0",
+  "vectors": [
+    {
+      "description": "An override takes precedence over LaunchDarkly data for the same flag key",
+      "group": "precedence",
+      "launchDarklyData": {
+        "initialized": true,
+        "flags": {
+          "flag-a": {
+            "key": "flag-a",
+            "version": 7,
+            "on": true,
+            "variations": ["ld-value"],
+            "fallthrough": { "variation": 0 },
+            "offVariation": 0,
+            "salt": "salt-a"
+          }
+        },
+        "segments": {}
+      },
+      "overrides": {
+        "flagValues": { "flag-a": "override-value" }
+      },
+      "evaluate": {
+        "flagKey": "flag-a",
+        "context": { "kind": "user", "key": "user-1" },
+        "defaultValue": "fallback"
+      },
+      "expect": {
+        "value": "override-value",
+        "variationIndex": 0,
+        "reason": { "kind": "OFF", "overrideAffected": true },
+        "summaryOverrideAffected": true
+      }
+    },
+    {
+      "description": "An overridden flag is served when the SDK has not initialized from LaunchDarkly",
+      "group": "uninitialized",
+      "launchDarklyData": {
+        "initialized": false,
+        "flags": {},
+        "segments": {}
+      },
+      "overrides": {
+        "flagValues": { "flag-a": "override-value" }
+      },
+      "evaluate": {
+        "flagKey": "flag-a",
+        "context": { "kind": "user", "key": "user-1" },
+        "defaultValue": "fallback"
+      },
+      "expect": {
+        "value": "override-value",
+        "variationIndex": 0,
+        "reason": { "kind": "OFF", "overrideAffected": true },
+        "summaryOverrideAffected": true
+      }
+    },
+    {
+      "description": "A flag absent from the override layer is evaluated from LaunchDarkly data and is not marked",
+      "group": "passthrough",
+      "launchDarklyData": {
+        "initialized": true,
+        "flags": {
+          "flag-b": {
+            "key": "flag-b",
+            "version": 3,
+            "on": true,
+            "variations": ["off-value", "ld-value"],
+            "fallthrough": { "variation": 1 },
+            "offVariation": 0,
+            "salt": "salt-b"
+          }
+        },
+        "segments": {}
+      },
+      "overrides": {
+        "flagValues": { "flag-a": "override-value" }
+      },
+      "evaluate": {
+        "flagKey": "flag-b",
+        "context": { "kind": "user", "key": "user-1" },
+        "defaultValue": "fallback"
+      },
+      "expect": {
+        "value": "ld-value",
+        "variationIndex": 1,
+        "reason": { "kind": "FALLTHROUGH" },
+        "summaryOverrideAffected": false
+      }
+    },
+    {
+      "description": "A flag absent from the override layer still short-circuits when the SDK has not initialized",
+      "group": "passthrough",
+      "launchDarklyData": {
+        "initialized": false,
+        "flags": {},
+        "segments": {}
+      },
+      "overrides": {
+        "flagValues": { "flag-a": "override-value" }
+      },
+      "evaluate": {
+        "flagKey": "flag-b",
+        "context": { "kind": "user", "key": "user-1" },
+        "defaultValue": "fallback"
+      },
+      "expect": {
+        "value": "fallback",
+        "variationIndex": null,
+        "reason": { "kind": "ERROR", "errorKind": "CLIENT_NOT_READY" }
+      }
+    },
+    {
+      "description": "A full flag override with a matching targeting rule serves the rule's variation and is marked",
+      "group": "full-evaluation",
+      "launchDarklyData": {
+        "initialized": true,
+        "flags": {},
+        "segments": {}
+      },
+      "overrides": {
+        "flags": {
+          "flag-c": {
+            "key": "flag-c",
+            "version": 1,
+            "on": true,
+            "variations": ["default-value", "eu-value"],
+            "fallthrough": { "variation": 0 },
+            "offVariation": 0,
+            "rules": [
+              {
+                "id": "rule-eu",
+                "variation": 1,
+                "clauses": [
+                  {
+                    "contextKind": "user",
+                    "attribute": "region",
+                    "op": "in",
+                    "values": ["eu"],
+                    "negate": false
+                  }
+                ]
+              }
+            ],
+            "salt": "salt-c"
+          }
+        }
+      },
+      "evaluate": {
+        "flagKey": "flag-c",
+        "context": { "kind": "user", "key": "user-1", "region": "eu" },
+        "defaultValue": "fallback"
+      },
+      "expect": {
+        "value": "eu-value",
+        "variationIndex": 1,
+        "reason": { "kind": "RULE_MATCH", "ruleIndex": 0, "ruleId": "rule-eu", "overrideAffected": true },
+        "summaryOverrideAffected": true
+      }
+    },
+    {
+      "description": "An override flag resolves a referenced segment through the merged view while the SDK is uninitialized",
+      "group": "merged-view",
+      "launchDarklyData": {
+        "initialized": false,
+        "flags": {},
+        "segments": {}
+      },
+      "overrides": {
+        "flags": {
+          "flag-d": {
+            "key": "flag-d",
+            "version": 1,
+            "on": true,
+            "variations": ["default-value", "member-value"],
+            "fallthrough": { "variation": 0 },
+            "offVariation": 0,
+            "rules": [
+              {
+                "id": "rule-seg",
+                "variation": 1,
+                "clauses": [
+                  {
+                    "attribute": "",
+                    "op": "segmentMatch",
+                    "values": ["seg-1"],
+                    "negate": false
+                  }
+                ]
+              }
+            ],
+            "salt": "salt-d"
+          }
+        },
+        "segments": {
+          "seg-1": {
+            "key": "seg-1",
+            "version": 1,
+            "included": ["user-1"],
+            "excluded": [],
+            "salt": "seg-salt-1"
+          }
+        }
+      },
+      "evaluate": {
+        "flagKey": "flag-d",
+        "context": { "kind": "user", "key": "user-1" },
+        "defaultValue": "fallback"
+      },
+      "expect": {
+        "value": "member-value",
+        "variationIndex": 1,
+        "reason": { "kind": "RULE_MATCH", "ruleIndex": 0, "ruleId": "rule-seg", "overrideAffected": true },
+        "summaryOverrideAffected": true
+      }
+    },
+    {
+      "description": "A flag is marked overrideAffected when it matches via an overridden segment",
+      "group": "marking",
+      "launchDarklyData": {
+        "initialized": true,
+        "flags": {
+          "flag-f": {
+            "key": "flag-f",
+            "version": 4,
+            "on": true,
+            "variations": ["default-value", "member-value"],
+            "fallthrough": { "variation": 0 },
+            "offVariation": 0,
+            "rules": [
+              {
+                "id": "rule-seg",
+                "variation": 1,
+                "clauses": [
+                  {
+                    "attribute": "",
+                    "op": "segmentMatch",
+                    "values": ["seg-2"],
+                    "negate": false
+                  }
+                ]
+              }
+            ],
+            "salt": "salt-f"
+          }
+        },
+        "segments": {
+          "seg-2": {
+            "key": "seg-2",
+            "version": 1,
+            "included": [],
+            "excluded": [],
+            "salt": "seg-salt-2"
+          }
+        }
+      },
+      "overrides": {
+        "segments": {
+          "seg-2": {
+            "key": "seg-2",
+            "version": 2,
+            "included": ["user-1"],
+            "excluded": [],
+            "salt": "seg-salt-2"
+          }
+        }
+      },
+      "evaluate": {
+        "flagKey": "flag-f",
+        "context": { "kind": "user", "key": "user-1" },
+        "defaultValue": "fallback"
+      },
+      "expect": {
+        "value": "member-value",
+        "variationIndex": 1,
+        "reason": { "kind": "RULE_MATCH", "ruleIndex": 0, "ruleId": "rule-seg", "overrideAffected": true },
+        "summaryOverrideAffected": true
+      }
+    },
+    {
+      "description": "A malformed override flag returns the caller default with an error reason and is marked overrideAffected",
+      "group": "error-handling",
+      "launchDarklyData": {
+        "initialized": true,
+        "flags": {},
+        "segments": {}
+      },
+      "overrides": {
+        "flags": {
+          "flag-e": {
+            "key": "flag-e",
+            "version": 1,
+            "on": true,
+            "variations": ["only-value"],
+            "fallthrough": { "variation": 5 },
+            "offVariation": 0,
+            "salt": "salt-e"
+          }
+        }
+      },
+      "evaluate": {
+        "flagKey": "flag-e",
+        "context": { "kind": "user", "key": "user-1" },
+        "defaultValue": "fallback"
+      },
+      "expect": {
+        "value": "fallback",
+        "variationIndex": null,
+        "reason": { "kind": "ERROR", "errorKind": "MALFORMED_FLAG", "overrideAffected": true },
+        "summaryOverrideAffected": true
+      }
+    }
+  ]
+}
