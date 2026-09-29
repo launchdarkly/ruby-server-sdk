@@ -715,6 +715,26 @@ module LaunchDarkly
 
             fdv2.stop
           end
+
+          it "publishes the valid status when an initializer supplies the basis" do
+            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td.update(td.flag("flagkey").on(true))
+
+            # With no synchronizers, the initializer is the only thing that can
+            # report a status, so this is the whole lifetime of the data system.
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers([td.test_data_ds_builder])
+              .synchronizers(nil)
+              .build
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+            ready_event = fdv2.start
+            expect(ready_event.wait(2)).to be true
+            expect(fdv2.data_source_status_provider.status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            fdv2.stop
+          end
         end
       end
     end

@@ -292,6 +292,13 @@ module LaunchDarkly
 
                 # Set ready event if and only if a selector is defined for the changeset.
                 if basis.change_set.selector && basis.change_set.selector.defined?
+                  # Publish the status before releasing anyone waiting on the ready
+                  # event, so a client that returns from start can rely on the data
+                  # source status already reflecting the applied basis.
+                  @data_source_status_provider.update_status(
+                    LaunchDarkly::Interfaces::DataSource::Status::VALID,
+                    nil
+                  )
                   @ready_event.set
                   return fallback
                 end
