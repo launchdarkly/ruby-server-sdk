@@ -32,6 +32,25 @@ module LaunchDarkly
         end
       end
 
+      #
+      # Waits for a status matching the given predicate, ignoring any statuses that were already
+      # queued. Observers are only notified when the status changes, and the manager starts polling
+      # as soon as it is constructed, so a test cannot assume which statuses it will observe.
+      #
+      def next_status_matching(statuses, timeout = 5)
+        deadline = Time.now + timeout
+        loop do
+          begin
+            status = statuses.pop(true)
+          rescue ThreadError
+            raise "timed out waiting for expected status" if Time.now >= deadline
+            sleep 0.01
+            next
+          end
+          return status if yield status
+        end
+      end
+
       context "membership query" do
         it "with uncached result and healthy status" do
           expected_membership = { 'key1' => true, 'key2' => true }
@@ -178,18 +197,13 @@ module LaunchDarkly
           with_manager(BigSegmentsConfig.new(store: store, status_poll_interval: 0.01)) do |m|
             m.status_provider.add_observer(SimpleObserver.new(->(value) { statuses << value }))
 
-            status1 = statuses.pop
-            expect(status1.available).to be(true)
+            expect(m.status_provider.status.available).to be(true)
 
             should_fail.make_true
-
-            status2 = statuses.pop
-            expect(status2.available).to be(false)
+            next_status_matching(statuses) { |status| !status.available }
 
             should_fail.make_false
-
-            status3 = statuses.pop
-            expect(status3.available).to be(true)
+            next_status_matching(statuses) { |status| status.available }
           end
         end
 
@@ -205,18 +219,13 @@ module LaunchDarkly
           with_manager(BigSegmentsConfig.new(store: store, status_poll_interval: 0.01)) do |m|
             m.status_provider.add_observer(SimpleObserver.new(->(value) { statuses << value }))
 
-            status1 = statuses.pop
-            expect(status1.stale).to be(false)
+            expect(m.status_provider.status.stale).to be(false)
 
             should_be_stale.make_true
-
-            status2 = statuses.pop
-            expect(status2.stale).to be(true)
+            next_status_matching(statuses) { |status| status.stale }
 
             should_be_stale.make_false
-
-            status3 = statuses.pop
-            expect(status3.stale).to be(false)
+            next_status_matching(statuses) { |status| !status.stale }
           end
         end
       end

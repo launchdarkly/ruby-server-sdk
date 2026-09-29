@@ -487,7 +487,7 @@ module LaunchDarkly
     SUMMARY_KIND = 'summary'
 
     def initialize(config)
-      @context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes)
+      @context_filter = LaunchDarkly::Impl::ContextFilter.new(config.all_attributes_private, config.private_attributes, config.logger)
     end
 
     # Transforms events into the format used for event sending.

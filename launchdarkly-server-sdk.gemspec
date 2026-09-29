@@ -51,5 +51,5 @@ Gem::Specification.new do |spec|
   # that LD library are always associated with a new SDK version.
 
   spec.add_runtime_dependency "http", ">= 4.4.0", "< 7.0.0"
-  spec.add_runtime_dependency "json", "~> 2.3"
+  spec.add_runtime_dependency "json", ">= 2.3", "< 4"
 end

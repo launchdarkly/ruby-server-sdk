@@ -2,6 +2,45 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.18.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.17.0...8.18.0) (2026-09-16)
+
+
+### Features
+
+* Expand version support for JSON gem v3 ([e6c7412](https://github.com/launchdarkly/ruby-server-sdk/commit/e6c7412eff9d219ed4ae448fe7cf45050998765a))
+
+
+### Bug Fixes
+
+* Log the cached-data evaluation warning only once per client ([#438](https://github.com/launchdarkly/ruby-server-sdk/issues/438)) ([bcb6e73](https://github.com/launchdarkly/ruby-server-sdk/commit/bcb6e736300a614e366066bcf5dff03e705eacc2))
+
+## [8.17.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.16.0...8.17.0) (2026-09-08)
+
+
+### Features
+
+* warn that payload filtering has no effect with FDv2 ([#434](https://github.com/launchdarkly/ruby-server-sdk/issues/434)) ([fbe6fb4](https://github.com/launchdarkly/ruby-server-sdk/commit/fbe6fb4928f7dda42b99bc9ed5863a9acf323fab))
+
+
+### Bug Fixes
+
+* Stop repeating tasks promptly instead of waiting out the sleep ([#432](https://github.com/launchdarkly/ruby-server-sdk/issues/432)) ([b4baad3](https://github.com/launchdarkly/ruby-server-sdk/commit/b4baad334a499d2f2c6bf522b3dfd91c19df0b54))
+
+## [8.16.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.15.1...8.16.0) (2026-09-02)
+
+
+### Features
+
+* Warn when the SDK is used in a forked process without postfork ([#430](https://github.com/launchdarkly/ruby-server-sdk/issues/430)) ([14c5f1d](https://github.com/launchdarkly/ruby-server-sdk/commit/14c5f1d8d3d3782dbd1a68a85e81e7164a410b3d))
+
+## [8.15.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.15.0...8.15.1) (2026-08-28)
+
+
+### Bug Fixes
+
+* Omit non-symbol context attributes and protect against cyclic values ([#423](https://github.com/launchdarkly/ruby-server-sdk/issues/423)) ([8dae87e](https://github.com/launchdarkly/ruby-server-sdk/commit/8dae87ef694d9fc37d5e0e347b240f13ed2b846e))
+* Publish the OFF data source status before releasing polling waiters ([#429](https://github.com/launchdarkly/ruby-server-sdk/issues/429)) ([d604c19](https://github.com/launchdarkly/ruby-server-sdk/commit/d604c19d4f8c81ac17d0637a7f9406192782c6d0))
+
 ## [8.15.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.14.0...8.15.0) (2026-08-20)
 
 

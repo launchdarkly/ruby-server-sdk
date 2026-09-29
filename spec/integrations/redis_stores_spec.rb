@@ -37,6 +37,12 @@ module LaunchDarkly
         Redis::new_feature_store(@options)
       end
 
+      def write_raw_item(kind, key, item)
+        with_redis_test_client do |client|
+          client.hset("#{@actual_prefix}:#{kind[:namespace]}", key, item.to_json)
+        end
+      end
+
       def create_big_segment_store
         Redis.new_big_segment_store(@options)
       end

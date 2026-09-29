@@ -30,6 +30,33 @@ module LaunchDarkly
           segment_out = Model.deserialize(Impl::DataStore::SEGMENTS, json, nil)
           expect(segment_out.data).to eq segment_in
         end
+
+        # Other LaunchDarkly SDKs write a deleted item to a persistent store with only a version,
+        # and no key of its own. The store knows the key, because it is the key the item is stored
+        # under, so a tombstone must deserialize without one.
+        [ Impl::DataStore::FEATURES, Impl::DataStore::SEGMENTS ].each do |kind|
+          it "deserializes a tombstone with no key for #{kind[:namespace]}" do
+            item_in = { version: 99, deleted: true }
+            item_out = Model.deserialize(kind, item_in.to_json, nil)
+
+            expect(item_out.key).to be_nil
+            expect(item_out.version).to eq 99
+            expect(item_out.deleted).to be true
+            # The store re-serializes what it read, so the original data must survive unchanged.
+            expect(item_out.data).to eq item_in
+          end
+
+          it "deserializes a tombstone with a placeholder key for #{kind[:namespace]}" do
+            # The Go SDK and the Relay Proxy write a deleted item as a full object whose key is
+            # the placeholder "$deleted".
+            item_in = { key: "$deleted", version: 99, deleted: true }
+            item_out = Model.deserialize(kind, item_in.to_json, nil)
+
+            expect(item_out.key).to eq "$deleted"
+            expect(item_out.deleted).to be true
+            expect(item_out.data).to eq item_in
+          end
+        end
       end
     end
   end

@@ -59,6 +59,79 @@ module LaunchDarkly
         expect(no_more_items).to be true
       end
 
+      it "stops promptly when stopped during a long start delay" do
+        ran = Concurrent::Event.new
+        task = RepeatingTask.new(10, 10, -> { ran.set }, null_logger, "test")
+        task.start
+        started_at = Time.now
+        task.stop
+        elapsed = Time.now - started_at
+
+        expect(elapsed).to be < 1
+        expect(ran.set?).to be false
+      end
+
+      it "stops promptly when stopped while waiting between runs" do
+        ran = Concurrent::Event.new
+        task = RepeatingTask.new(10, 0, -> { ran.set }, null_logger, "test")
+        begin
+          task.start
+          expect(ran.wait(1)).to be true
+          started_at = Time.now
+          task.stop
+          elapsed = Time.now - started_at
+
+          expect(elapsed).to be < 1
+        ensure
+          task.stop
+        end
+      end
+
+      it "can be stopped before it is started" do
+        task = RepeatingTask.new(0.01, 0, -> {}, null_logger, "test")
+
+        expect { task.stop }.not_to raise_error
+      end
+
+      it "does not run the task if stopped before it is started" do
+        ran = Concurrent::Event.new
+        task = RepeatingTask.new(0.01, 0, -> { ran.set }, null_logger, "test")
+        task.stop
+        task.start
+        begin
+          expect(ran.wait(0.1)).to be false
+        ensure
+          task.stop
+        end
+      end
+
+      it "can be stopped more than once" do
+        task = RepeatingTask.new(10, 0, -> {}, null_logger, "test")
+        task.start
+        task.stop
+
+        expect { task.stop }.not_to raise_error
+      end
+
+      it "keeps running after the task raises an exception" do
+        queue = Queue.new
+        calls = 0
+        task = RepeatingTask.new(0.01, 0,
+          -> {
+            calls += 1
+            queue << calls
+            raise "boom" if calls == 1
+          },
+          null_logger, "test")
+        begin
+          task.start
+          expect(queue.pop).to eq(1)
+          expect(queue.pop).to eq(2)
+        ensure
+          task.stop
+        end
+      end
+
       it "can be stopped from within the task" do
         counter = 0
         stopped = Concurrent::Event.new

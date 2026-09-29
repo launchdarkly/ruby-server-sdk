@@ -113,7 +113,10 @@ module LaunchDarkly
               resp = @client.query(req)
               resp.items.each do |item|
                 item_out = unmarshal_item(kind, item)
-                items_out[item_out[:key].to_sym] = item_out
+                next if item_out.nil?
+                # Use the sort key that the item is stored under, not the key inside the item. A
+                # deleted item (a "tombstone") is not guaranteed to carry a key of its own.
+                items_out[item[SORT_KEY].to_sym] = item_out
               end
               break if resp.last_evaluated_key.nil? || resp.last_evaluated_key.length == 0
               req.exclusive_start_key = resp.last_evaluated_key

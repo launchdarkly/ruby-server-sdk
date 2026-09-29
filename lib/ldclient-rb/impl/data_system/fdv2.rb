@@ -54,6 +54,11 @@ module LaunchDarkly
           @config = config
           @data_system_config = data_system_config
           @logger = config.logger
+
+          unless config.payload_filter_key.nil?
+            @logger.warn { "[LDClient] Payload filtering is not supported with the FDv2 data system; the configured payload filter has no effect on FDv2 requests" }
+          end
+
           @synchronizer_builders = data_system_config.synchronizers || []
           @fdv1_fallback_synchronizer_builder = data_system_config.fdv1_fallback_synchronizer
           @disabled = @config.offline?

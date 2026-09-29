@@ -262,6 +262,10 @@ module LaunchDarkly
     # You can also specify the same behavior for an individual flag evaluation
     # by providing the context object with a list of private attributes.
     #
+    # Each entry is an attribute reference. A reference addresses attributes by
+    # symbol name, so it cannot make an attribute private if that attribute was
+    # given a string name. Refer to {LDContext} for the symbol requirement.
+    #
     # @see https://docs.launchdarkly.com/sdk/features/user-context-config#using-private-attributes
     #
     # @return [Array<String>]
@@ -357,6 +361,9 @@ module LaunchDarkly
     #
     # This payload filter key only applies to the default streaming and polling data sources. It will not affect TestData or FileData
     # data sources, nor will it be applied to any data source provided through the {#data_source} config property.
+    #
+    # Payload filtering is not supported with the FDv2 data system, so this key has no effect on requests made by FDv2
+    # data sources.
     #
     attr_reader :payload_filter_key
 

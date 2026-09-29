@@ -67,8 +67,11 @@ module LaunchDarkly
                 error_info
               )
             else
-              @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
+              # Publish the OFF status before releasing anyone waiting on the
+              # ready event, so a client that returns from start can rely on the
+              # data source status already reflecting the failure.
               stop_with_error_info error_info
+              @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
             end
           rescue StandardError => e
             Impl::Util.log_exception(@config.logger, "Exception while polling", e)
