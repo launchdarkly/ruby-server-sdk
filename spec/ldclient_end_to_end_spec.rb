@@ -26,12 +26,16 @@ module LaunchDarkly
       end
     end
 
-    it "fails in polling mode with 401 error" do
+    it "waits the full start time and stays uninitialized in polling mode with 401 error" do
       with_server do |poll_server|
         poll_server.setup_status_response("/sdk/latest-all", 401)
 
-        with_client(test_config(stream: false, data_source: nil, base_uri: poll_server.base_uri.to_s)) do |client|
+        config = test_config(stream: false, data_source: nil, base_uri: poll_server.base_uri.to_s)
+        started_at = Time.now
+        ensure_close(LDClient.new(sdk_key, config, 1)) do |client|
+          expect(Time.now - started_at).to be >= 1
           expect(client.initialized?).to be false
+          expect(client.data_source_status_provider.status.state).not_to eq(Interfaces::DataSource::Status::OFF)
           expect(client.variation(ALWAYS_TRUE_FLAG[:key], basic_context, false)).to be false
         end
       end

@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/retry_state"
 require "ldclient-rb/impl/util"
 
 require "concurrent/atomics"
@@ -5,8 +6,10 @@ require "concurrent/atomics"
 module LaunchDarkly
   module Impl
     #
-    # Runs a task again and again on a worker thread, with a fixed interval
-    # between runs.
+    # Runs a task again and again on a worker thread.
+    #
+    # The interval is read after each run, and the wait starts when the run
+    # returns.
     #
     # The worker waits on an event instead of calling `sleep`, so `stop` can
     # wake it at once even if `stop` runs before the worker starts waiting.
@@ -17,7 +20,7 @@ module LaunchDarkly
       attr_reader :name
 
       #
-      # @param interval [Numeric] seconds between the start of one run and the start of the next
+      # @param interval [Numeric, #call] seconds between runs, or an object that returns them
       # @param start_delay [Numeric, nil] seconds to wait before the first run
       # @param task [Proc] the code to run
       # @param logger [Logger]
@@ -39,14 +42,13 @@ module LaunchDarkly
           @stop_event.wait(@start_delay) unless @start_delay.nil? || @start_delay == 0
 
           until @stopped.value do
-            started_at = Time.now
             begin
               @task.call
             rescue => e
               Impl::Util.log_exception(@logger, "Uncaught exception from repeating task", e)
             end
-            delta = @interval - (Time.now - started_at)
-            @stop_event.wait(delta) if delta > 0
+            delay = @interval.respond_to?(:call) ? @interval.call : @interval
+            @stop_event.wait([delay, RetryState::MAX_WAIT].min) if delay > 0
           end
         end
 

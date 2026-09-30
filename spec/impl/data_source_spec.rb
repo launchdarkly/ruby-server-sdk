@@ -10,6 +10,33 @@ module LaunchDarkly
       let(:flag_change_broadcaster) { LaunchDarkly::Impl::Broadcaster.new(executor, $null_log) }
       let(:sink) { subject.new(store, status_broadcaster, flag_change_broadcaster) }
 
+      it "ignores every status after OFF" do
+        listener = ListenerSpy.new
+        status_broadcaster.add_listener(listener)
+        error = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
+          LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR, 0, "late", Time.now)
+
+        sink.update_status(LaunchDarkly::Interfaces::DataSource::Status::OFF, nil)
+        sink.update_status(LaunchDarkly::Interfaces::DataSource::Status::VALID, nil)
+        sink.update_status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED, error)
+        sink.update_status(LaunchDarkly::Interfaces::DataSource::Status::OFF, error)
+
+        expect(listener.statuses.map(&:state)).to eq([LaunchDarkly::Interfaces::DataSource::Status::OFF])
+        expect(sink.current_status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+        expect(sink.current_status.last_error).to be_nil
+      end
+
+      it "ignores a store error after OFF" do
+        listener = ListenerSpy.new
+        status_broadcaster.add_listener(listener)
+        allow(store).to receive(:init).and_raise(StandardError.new("store failure"))
+
+        sink.update_status(LaunchDarkly::Interfaces::DataSource::Status::OFF, nil)
+        expect { sink.init({}) }.to raise_error(StandardError)
+
+        expect(listener.statuses.map(&:state)).to eq([LaunchDarkly::Interfaces::DataSource::Status::OFF])
+      end
+
       it "defaults to initializing" do
         expect(sink.current_status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING)
         expect(sink.current_status.last_error).to be_nil

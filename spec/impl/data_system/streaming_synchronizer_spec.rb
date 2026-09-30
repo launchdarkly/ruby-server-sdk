@@ -375,6 +375,20 @@ change_set_builder, envid)
           end
         end
 
+        describe '#handle_error' do
+          let(:synchronizer) { LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new.build(sdk_key, config) }
+
+          it "reports a server-initiated stream close as a network error" do
+            expect(logger).to receive(:warn)
+
+            update = synchronizer.send(:handle_error, SSE::Errors::StreamClosedByServerError.new, "env-abc", false)
+
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+            expect(update.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
+            expect(update.environment_id).to eq("env-abc")
+          end
+        end
+
         describe 'diagnostic event recording' do
           let(:synchronizer) { LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new.build(sdk_key, config) }
 

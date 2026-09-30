@@ -59,6 +59,63 @@ module LaunchDarkly
         expect(no_more_items).to be true
       end
 
+      it "reads a callable interval after each run" do
+        runs = Queue.new
+        run_count = 0
+        intervals = []
+        interval = -> {
+          intervals << run_count
+          0.01
+        }
+        task = RepeatingTask.new(interval, 0, -> { run_count += 1; runs << run_count }, null_logger, "test")
+        begin
+          task.start
+          3.times { runs.pop }
+        ensure
+          task.stop
+        end
+        expect(intervals.take(2)).to eq([1, 2])
+      end
+
+      [["a numeric", 0.1], ["a callable", -> { 0.1 }]].each do |desc, interval|
+        it "starts #{desc} interval when the run returns" do
+          ends = Queue.new
+          starts = Queue.new
+          task = RepeatingTask.new(interval, 0,
+            -> {
+              starts << Time.now
+              sleep(0.1)
+              ends << Time.now
+            },
+            null_logger, "test")
+          begin
+            task.start
+            starts.pop
+            first_end = ends.pop
+            second_start = starts.pop
+            expect(second_start - first_end).to be >= 0.09
+          ensure
+            task.stop
+          end
+        end
+      end
+
+      it "stops promptly when stopped during a long callable interval" do
+        ran = Concurrent::Event.new
+        task = RepeatingTask.new(-> { 1e20 }, 0, -> { ran.set }, null_logger, "test")
+        begin
+          task.start
+          expect(ran.wait(1)).to be true
+          sleep(0.05)
+          expect(task.instance_variable_get(:@worker).alive?).to be true
+          started_at = Time.now
+          task.stop
+          expect(Time.now - started_at).to be < 1
+        ensure
+          task.stop
+        end
+      end
+
       it "stops promptly when stopped during a long start delay" do
         ran = Concurrent::Event.new
         task = RepeatingTask.new(10, 10, -> { ran.set }, null_logger, "test")

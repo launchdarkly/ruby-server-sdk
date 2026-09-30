@@ -332,7 +332,8 @@ module LaunchDarkly
 
             @logger.warn { "[LDClient] #{error_info.message}" }
 
-          when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError
+          when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError,
+               SSE::Errors::StreamClosedByServerError
             @logger.warn { "[LDClient] Network error on stream connection: #{error}, will retry" }
 
             update = LaunchDarkly::Interfaces::DataSystem::Update.new(

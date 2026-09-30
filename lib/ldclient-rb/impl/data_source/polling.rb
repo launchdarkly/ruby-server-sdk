@@ -1,5 +1,6 @@
 require "ldclient-rb/impl/data_source"
 require "ldclient-rb/impl/repeating_task"
+require "ldclient-rb/impl/retry_state"
 require "ldclient-rb/impl/util"
 
 require "concurrent/atomics"
@@ -16,7 +17,8 @@ module LaunchDarkly
           @initialized = Concurrent::AtomicBoolean.new(false)
           @started = Concurrent::AtomicBoolean.new(false)
           @ready = Concurrent::Event.new
-          @task = Impl::RepeatingTask.new(@config.poll_interval, 0, -> { self.poll }, @config.logger, 'LD/PollingDataSource')
+          @retry_state = Impl::RetryState.for_polling(@config.poll_interval, @config.logger)
+          @task = Impl::RepeatingTask.new(-> { @retry_state.next_delay }, 0, -> { self.poll }, @config.logger, 'LD/PollingDataSource')
         end
 
         def initialized?
@@ -45,9 +47,11 @@ module LaunchDarkly
                 @ready.set
               end
             end
+            @retry_state.record_success
             @config.data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::VALID, nil)
           rescue JSON::ParserError => e
-            @config.logger.error { "[LDClient] JSON parsing failed for polling response." }
+            @retry_state.record_failure(:normal)
+            @config.logger.error { "[LDClient] JSON parsing failed for polling response - #{Util.retry_message(@retry_state.next_delay)}" }
             error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
               LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA,
               0,
@@ -56,25 +60,15 @@ module LaunchDarkly
             )
             @config.data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED, error_info)
           rescue Impl::DataSource::UnexpectedResponseError => e
+            @retry_state.record_failure(Impl::RetryState.classify_http_status(e.status))
             error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
               LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE, e.status, nil, Time.now)
-            message = Util.http_error_message(e.status, "polling request", "will retry")
+            message = Util.http_error_retry_message(e.status, "polling request", @retry_state.next_delay)
             @config.logger.error { "[LDClient] #{message}" }
-
-            if Util.http_error_recoverable?(e.status)
-              @config.data_source_update_sink&.update_status(
-                LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-                error_info
-              )
-            else
-              # Publish the OFF status before releasing anyone waiting on the
-              # ready event, so a client that returns from start can rely on the
-              # data source status already reflecting the failure.
-              stop_with_error_info error_info
-              @ready.set  # if client was waiting on us, make it stop waiting - has no effect if already set
-            end
+            @config.data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED, error_info)
           rescue StandardError => e
-            Impl::Util.log_exception(@config.logger, "Exception while polling", e)
+            @retry_state.record_failure(:normal)
+            Impl::Util.log_exception(@config.logger, "Exception while polling - #{Util.retry_message(@retry_state.next_delay)}", e)
             @config.data_source_update_sink&.update_status(
               LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
               LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN, 0, e.to_s, Time.now)

@@ -303,8 +303,9 @@ module LaunchDarkly
     # If this returns false, it means that the client did not succeed in connecting to
     # LaunchDarkly within the time limit that you specified in the constructor. It could
     # still succeed in connecting at a later time (on another thread), or it could have
-    # given up permanently (for instance, if your SDK key is invalid). In the meantime,
-    # any call to {#variation} or {#variation_detail} will behave as follows:
+    # received an error that needs to be fixed (for instance, if your SDK key is
+    # invalid). In the meantime, any call to {#variation} or {#variation_detail} will
+    # behave as follows:
     #
     # 1. It will check whether the feature store already contains data (that is, you
     # are using a database-backed store and it was populated by a previous run of this
