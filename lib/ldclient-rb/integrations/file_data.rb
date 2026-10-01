@@ -170,7 +170,8 @@ module LaunchDarkly
       #
       # The files use the same document format as the file data source: a JSON or YAML document with
       # optional `flags`, `flagValues`, and `segments` members. A `flagValues` entry expands into a
-      # flag that serves the given value for every context. When several files are configured, their
+      # flag that is on and serves the given value as its fallthrough for every context. When several
+      # files are configured, their
       # entries are combined in the configured order, and the duplicate keys handling decides what
       # happens when the same key appears in more than one file.
       #

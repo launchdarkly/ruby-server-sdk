@@ -178,14 +178,15 @@ module LaunchDarkly
           end
         end
 
-        it "expands a flag value into a flag that is off and serves the value" do
+        it "expands a flag value into a flag that is on and serves the value by fallthrough" do
           a = write("a.json", values_doc({ flag1: "a" }))
 
           with_source([a]) do |_source, sink|
             flag = sink.snapshots[0][0][0]
-            expect(flag.on).to be false
-            expect(flag.off_variation).to eq 0
-            expect(flag.off_result.reason).to eq EvaluationReason.off
+            expect(flag.on).to be true
+            expect(flag.off_variation).to be_nil
+            expect(flag.fallthrough.variation).to eq 0
+            expect(flag.variations).to eq ["a"]
           end
         end
 
@@ -418,7 +419,7 @@ module LaunchDarkly
           with_client(overrides) do |client|
             detail = client.variation_detail("flag", context, "default")
             expect(detail.value).to eq "override-value"
-            expect(detail.reason).to eq EvaluationReason.off.with_override_affected(true)
+            expect(detail.reason).to eq EvaluationReason.fallthrough.with_override_affected(true)
             expect(client.variation("other", context, false)).to be true
 
             write("a.json", "{}")
