@@ -30,7 +30,7 @@
       "expect": {
         "value": "override-value",
         "variationIndex": 0,
-        "reason": { "kind": "OFF", "overrideAffected": true },
+        "reason": { "kind": "FALLTHROUGH", "overrideAffected": true },
         "summaryOverrideAffected": true
       }
     },
@@ -53,7 +53,7 @@
       "expect": {
         "value": "override-value",
         "variationIndex": 0,
-        "reason": { "kind": "OFF", "overrideAffected": true },
+        "reason": { "kind": "FALLTHROUGH", "overrideAffected": true },
         "summaryOverrideAffected": true
       }
     },
