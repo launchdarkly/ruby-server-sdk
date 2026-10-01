@@ -156,8 +156,9 @@ module LaunchDarkly
 
       #
       # Expands a flag key to value entry into a full flag definition that returns the given
-      # value for every context. The flag is off and serves the value as its off variation, so
-      # an evaluation reports the OFF reason kind.
+      # value for every context. The flag is on, has the value as its only variation, and
+      # serves that variation as its fallthrough, so an evaluation reports the FALLTHROUGH
+      # reason kind.
       #
       # @param key [String]
       # @param value [Object]
@@ -166,9 +167,9 @@ module LaunchDarkly
       def self.make_flag_with_value(key, value)
         {
           key: key,
-          on: false,
+          on: true,
           version: 1,
-          offVariation: 0,
+          fallthrough: { variation: 0 },
           variations: [value],
         }
       end

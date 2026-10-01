@@ -33,16 +33,16 @@ module LaunchDarkly
           expect(result.empty?).to be false
         end
 
-        it "expands a flag value into an off flag that serves the value for every context" do
+        it "expands a flag value into a flag that serves the value by fallthrough for every context" do
           result = FileData.merge([document(flag_values: { flag2: "value2" })])
 
           flag = result.flags[:flag2]
           expect(flag.key).to eq("flag2")
-          expect(flag.on).to be false
+          expect(flag.on).to be true
           expect(flag.version).to eq(1)
           expect(flag.variations).to eq(["value2"])
-          expect(flag.off_variation).to eq(0)
-          expect(flag.off_result.reason).to eq(EvaluationReason.off)
+          expect(flag.off_variation).to be_nil
+          expect(flag.fallthrough.variation).to eq(0)
         end
 
         it "reports an empty result for no documents" do

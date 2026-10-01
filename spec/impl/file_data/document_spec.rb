@@ -136,14 +136,14 @@ module LaunchDarkly
       end
 
       describe "make_flag_with_value" do
-        it "builds a flag that is off and serves the value as its off variation" do
+        it "builds a flag that is on and serves the value as its fallthrough" do
           flag = FileData.make_flag_with_value("flag1", "value1")
 
           expect(flag).to eq({
             key: "flag1",
-            on: false,
+            on: true,
             version: 1,
-            offVariation: 0,
+            fallthrough: { variation: 0 },
             variations: ["value1"],
           })
         end
