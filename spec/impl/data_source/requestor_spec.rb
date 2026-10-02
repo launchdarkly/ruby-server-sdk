@@ -16,6 +16,31 @@ module LaunchDarkly
       end
     end
 
+    it "abandons a connect attempt after the connect timeout" do
+      socket_factory = HangingSocketFactory.new
+      requestor = Impl::DataSource::Requestor.new(sdk_key, Config.new(
+        base_uri: "http://sdk.example.com",
+        connect_timeout: 0.2,
+        socket_factory: socket_factory,
+        logger: $null_log
+      ))
+
+      request_thread = Thread.new do
+        requestor.request_all_data
+      rescue StandardError
+        # A timed-out connect raises; only the blocked duration matters here.
+      end
+      begin
+        # Without the connect timeout, the attempt blocks until the thread is killed.
+        blocked = socket_factory.first_blocked_duration(3)
+        expect(blocked).not_to be_nil
+        expect(blocked).to be < 1
+      ensure
+        request_thread.kill unless request_thread.join(5)
+        requestor.stop
+      end
+    end
+
     describe "request_all_flags", flaky: true do
       it "uses expected URI and headers" do
         with_server do |server|

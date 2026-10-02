@@ -97,6 +97,7 @@ module LaunchDarkly
           opts = {
             headers: headers,
             read_timeout: STREAM_READ_TIMEOUT,
+            connect_timeout: @http_config.connect_timeout,
             logger: @logger,
             socket_factory: @http_config.socket_factory,
             reconnect_time: @initial_reconnect_delay,
