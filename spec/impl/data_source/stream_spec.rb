@@ -101,6 +101,31 @@ module LaunchDarkly
       end
     end
 
+    describe 'SSE client options' do
+      def captured_sse_options(processor)
+        captured = nil
+        allow(SSE::Client).to receive(:new) do |_uri, **opts|
+          captured = opts
+          double("SSE::Client", close: nil)
+        end
+
+        processor.start
+        processor.stop
+        captured
+      end
+
+      it 'passes the default connect timeout' do
+        opts = captured_sse_options(processor)
+        expect(opts[:connect_timeout]).to eq(Config.default_connect_timeout)
+      end
+
+      it 'passes a configured connect timeout' do
+        config = Config.new(connect_timeout: 0.5)
+        opts = captured_sse_options(subject.new("sdk_key", config))
+        expect(opts[:connect_timeout]).to eq(0.5)
+      end
+    end
+
     describe '#log_connection_result' do
       it "logs successful connection when diagnostic_accumulator is provided" do
         diagnostic_accumulator = double("DiagnosticAccumulator")

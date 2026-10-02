@@ -375,6 +375,35 @@ change_set_builder, envid)
           end
         end
 
+        describe 'SSE client options' do
+          let(:config) { LaunchDarkly::Config.new(logger: $null_log) }
+
+          def captured_sse_options(synchronizer)
+            captured = nil
+            allow(SSE::Client).to receive(:new) do |_uri, **opts|
+              captured = opts
+              double("SSE::Client", close: nil)
+            end
+
+            # Stop first so that sync returns as soon as it creates the client.
+            synchronizer.stop
+            synchronizer.sync(double("SelectorStore"))
+            captured
+          end
+
+          it "passes the default connect timeout" do
+            synchronizer = LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new.build(sdk_key, config)
+            opts = captured_sse_options(synchronizer)
+            expect(opts[:connect_timeout]).to eq(HttpConfigOptions::DEFAULT_CONNECT_TIMEOUT)
+          end
+
+          it "passes a configured connect timeout" do
+            synchronizer = LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new.connect_timeout(0.5).build(sdk_key, config)
+            opts = captured_sse_options(synchronizer)
+            expect(opts[:connect_timeout]).to eq(0.5)
+          end
+        end
+
         describe 'diagnostic event recording' do
           let(:synchronizer) { LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new.build(sdk_key, config) }
 
