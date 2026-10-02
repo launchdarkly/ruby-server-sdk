@@ -39,13 +39,15 @@ module LaunchDarkly
           @stop_event.wait(@start_delay) unless @start_delay.nil? || @start_delay == 0
 
           until @stopped.value do
-            started_at = Time.now
+            started_at = Impl::Util.monotonic_seconds
             begin
               @task.call
             rescue => e
               Impl::Util.log_exception(@logger, "Uncaught exception from repeating task", e)
             end
-            delta = @interval - (Time.now - started_at)
+            # The run must be measured on the monotonic clock: a wall-clock step would
+            # make this wait negative (immediate re-run) or stretch it by the step size.
+            delta = @interval - (Impl::Util.monotonic_seconds - started_at)
             @stop_event.wait(delta) if delta > 0
           end
         end

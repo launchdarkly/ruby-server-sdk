@@ -12,6 +12,17 @@ module LaunchDarkly
         (Time.now.to_f * 1000).to_i
       end
 
+      #
+      # Seconds on the monotonic clock. Use this for measuring intervals and
+      # durations; use the wall clock only for values reported outside the
+      # process.
+      #
+      # @return [Float]
+      #
+      def self.monotonic_seconds
+        Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_second)
+      end
+
       def self.default_http_headers(sdk_key, config)
         ret = { "Authorization" => sdk_key, "User-Agent" => "RubyClient/" + LaunchDarkly::VERSION }
 
