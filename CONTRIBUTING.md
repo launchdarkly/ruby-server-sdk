@@ -16,6 +16,8 @@ We encourage pull requests and other contributions from the community. Before su
 
 This SDK is built with [Bundler](https://bundler.io/). To install Bundler, run `gem install bundler`. You might need `sudo` to execute the command successfully.
 
+The `Gemfile` declares a [cooldown](https://blog.rubygems.org/2026/06/03/cooldown-let-new-gems-be-vetted.html), so dependencies only resolve to versions that have been published for at least seven days. `ld-eventsource` is exempt, because we publish it ourselves and generally want to build against a release immediately. Cooldown requires Bundler 4.0.13 or later; older versions ignore the setting and resolve to the newest matching version. Pass `--cooldown 0` to reach a version inside the window, for instance when a security fix has just been released.
+
 To install the runtime dependencies:
 
 ```
