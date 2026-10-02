@@ -47,9 +47,6 @@ module LaunchDarkly
 
             if newly_initialized
               @config.logger.info { "[LDClient] Polling connection initialized" }
-              # Publish the VALID status before releasing anyone waiting on the
-              # ready event, so a client that returns from start can rely on the
-              # data source status already reflecting the successful poll.
               @ready.set
             end
           rescue JSON::ParserError => e
