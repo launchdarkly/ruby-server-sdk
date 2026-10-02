@@ -1,3 +1,4 @@
+require "ldclient-rb/impl/util"
 
 module LaunchDarkly
   module Impl
@@ -7,10 +8,17 @@ module LaunchDarkly
     #   * made thread-safe
     #   * removed many unused methods
     #   * reading a key does not reset its expiration time, only writing
+    #   * expiration is measured on a monotonic clock, so wall-clock steps cannot
+    #     retain entries past their TTL or evict them early
     class ExpiringCache
-      def initialize(max_size, ttl)
+      MONOTONIC_CLOCK = -> { Impl::Util.monotonic_seconds }
+      private_constant :MONOTONIC_CLOCK
+
+      # @param clock [#call] returns seconds on a monotonic clock; injectable for tests
+      def initialize(max_size, ttl, clock: MONOTONIC_CLOCK)
         @max_size = max_size
         @ttl = ttl
+        @clock = clock
         @data_lru = {}
         @data_ttl = {}
         @lock = Mutex.new
@@ -31,7 +39,7 @@ module LaunchDarkly
           @data_ttl.delete(key)
 
           @data_lru[key] = val
-          @data_ttl[key] = Time.now.to_f
+          @data_ttl[key] = @clock.call
 
           if @data_lru.size > @max_size
             key, _ = @data_lru.first # hashes have a FIFO ordering in Ruby
@@ -63,7 +71,7 @@ module LaunchDarkly
       private
 
       def ttl_evict
-        ttl_horizon = Time.now.to_f - @ttl
+        ttl_horizon = @clock.call - @ttl
         key, time = @data_ttl.first
 
         until time.nil? || time > ttl_horizon

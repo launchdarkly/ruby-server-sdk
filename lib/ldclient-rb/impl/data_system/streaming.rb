@@ -47,6 +47,7 @@ module LaunchDarkly
           @stopped = Concurrent::Event.new
           @diagnostic_accumulator = nil
           @connection_attempt_start_time = 0
+          @connection_attempt_started_monotonic = nil
         end
 
         #
@@ -118,7 +119,7 @@ module LaunchDarkly
                 next unless update
 
                 log_connection_result(true)
-                @connection_attempt_start_time = 0
+                @connection_attempt_started_monotonic = nil
 
                 yield update
 
@@ -366,16 +367,18 @@ module LaunchDarkly
 
         private def log_connection_started
           @connection_attempt_start_time = Impl::Util.current_time_millis
+          @connection_attempt_started_monotonic = Impl::Util.monotonic_seconds
         end
 
         private def log_connection_result(is_success)
           return unless @diagnostic_accumulator
-          return unless @connection_attempt_start_time > 0
+          return if @connection_attempt_started_monotonic.nil?
 
-          current_time = Impl::Util.current_time_millis
-          elapsed = current_time - @connection_attempt_start_time
-          @diagnostic_accumulator.record_stream_init(@connection_attempt_start_time, !is_success, elapsed >= 0 ? elapsed : 0)
-          @connection_attempt_start_time = 0
+          # The monotonic stamp is both the "attempt in flight" sentinel and the
+          # duration base; the wall-clock value is only the reported timestamp.
+          elapsed = ((Impl::Util.monotonic_seconds - @connection_attempt_started_monotonic) * 1_000).to_i
+          @diagnostic_accumulator.record_stream_init(@connection_attempt_start_time, !is_success, elapsed)
+          @connection_attempt_started_monotonic = nil
         end
       end
 

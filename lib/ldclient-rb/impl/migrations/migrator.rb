@@ -270,7 +270,7 @@ module LaunchDarkly
         # @return [LaunchDarkly::Migrations::OperationResult]
         #
         def run()
-          start = Time.now
+          start = Impl::Util.monotonic_seconds
 
           begin
             result = @fn.call(@payload)
@@ -279,7 +279,7 @@ module LaunchDarkly
             result = LaunchDarkly::Result.fail("'#{origin}' operation raised an exception", e)
           end
 
-          @tracker.latency(@origin, (Time.now - start) * 1_000) if @measure_latency
+          @tracker.latency(@origin, (Impl::Util.monotonic_seconds - start) * 1_000) if @measure_latency
           @tracker.error(@origin) if @measure_errors && !result.success?
           @tracker.invoked(@origin)
 
