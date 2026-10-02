@@ -404,6 +404,23 @@ change_set_builder, envid)
             expect(opts[:connect_timeout]).to eq(0.5)
           end
 
+          it "passes the configured client options" do
+            socket_factory = Object.new
+            synchronizer = LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new
+              .socket_factory(socket_factory)
+              .initial_reconnect_delay(3)
+              .build(sdk_key, config)
+            opts = captured_sse_options(synchronizer)
+            expect(opts).to eq(
+              headers: Impl::Util.default_http_headers(sdk_key, config),
+              read_timeout: STREAM_READ_TIMEOUT,
+              connect_timeout: HttpConfigOptions::DEFAULT_CONNECT_TIMEOUT,
+              logger: $null_log,
+              socket_factory: socket_factory,
+              reconnect_time: 3
+            )
+          end
+
           it "abandons a connect attempt after the connect timeout" do
             socket_factory = HangingSocketFactory.new
             synchronizer = LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new
@@ -411,12 +428,12 @@ change_set_builder, envid)
               .connect_timeout(0.2)
               .socket_factory(socket_factory)
               .build(sdk_key, config)
-            selector_store = double("SelectorStore", selector: nil)
+            selector_store = Struct.new(:selector).new(nil)
 
             sync_thread = Thread.new { synchronizer.sync(selector_store) { |_update| } }
             begin
               # Without the connect timeout, the attempt blocks for the SSE client default of 10 seconds.
-              blocked = socket_factory.blocked_durations.pop(timeout: 3)
+              blocked = socket_factory.first_blocked_duration(3)
               expect(blocked).not_to be_nil
               expect(blocked).to be < 1
             ensure

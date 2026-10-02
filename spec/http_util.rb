@@ -104,14 +104,14 @@ class SocketFactoryFromHash
   end
 end
 
-# A socket factory whose connect attempts never complete. Each attempt pushes
-# the time it blocked onto a queue when the HTTP client's connect timeout
-# interrupts it.
+# A socket factory whose connect attempts never complete. The HTTP client's
+# connect timeout interrupts each attempt, and the factory records how long the
+# attempt blocked.
 class HangingSocketFactory
-  attr_reader :blocked_durations
-
   def initialize
-    @blocked_durations = Queue.new
+    @lock = Mutex.new
+    @interrupted = ConditionVariable.new
+    @blocked_durations = []
   end
 
   def open(_host, _port)
@@ -119,7 +119,25 @@ class HangingSocketFactory
     begin
       sleep
     ensure
-      @blocked_durations << Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+      blocked = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+      @lock.synchronize do
+        @blocked_durations << blocked
+        @interrupted.broadcast
+      end
+    end
+  end
+
+  # Waits for the first connect attempt to end. Returns how long that attempt
+  # blocked, or nil if no attempt ends within the timeout.
+  def first_blocked_duration(timeout)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+    @lock.synchronize do
+      while @blocked_durations.empty?
+        remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        return nil if remaining <= 0
+        @interrupted.wait(@lock, remaining)
+      end
+      @blocked_durations.first
     end
   end
 end

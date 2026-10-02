@@ -126,6 +126,20 @@ module LaunchDarkly
         expect(opts[:connect_timeout]).to eq(0.5)
       end
 
+      it 'passes the configured client options' do
+        socket_factory = Object.new
+        config = Config.new(socket_factory: socket_factory, initial_reconnect_delay: 3, logger: $null_log)
+        opts = captured_sse_options(subject.new("sdk_key", config))
+        expect(opts).to eq(
+          headers: Impl::Util.default_http_headers("sdk_key", config),
+          read_timeout: Impl::DataSource::READ_TIMEOUT_SECONDS,
+          connect_timeout: Config.default_connect_timeout,
+          logger: $null_log,
+          socket_factory: socket_factory,
+          reconnect_time: 3
+        )
+      end
+
       it 'abandons a connect attempt after the connect timeout' do
         socket_factory = HangingSocketFactory.new
         config = Config.new(
@@ -139,7 +153,7 @@ module LaunchDarkly
         processor.start
         begin
           # Without the connect timeout, the attempt blocks for the SSE client default of 10 seconds.
-          blocked = socket_factory.blocked_durations.pop(timeout: 3)
+          blocked = socket_factory.first_blocked_duration(3)
           expect(blocked).not_to be_nil
           expect(blocked).to be < 1
         ensure
