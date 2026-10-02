@@ -103,3 +103,23 @@ class SocketFactoryFromHash
     TCPSocket.new '127.0.0.1', @ports[uri]
   end
 end
+
+# A socket factory whose connect attempts never complete. Each attempt pushes
+# the time it blocked onto a queue when the HTTP client's connect timeout
+# interrupts it.
+class HangingSocketFactory
+  attr_reader :blocked_durations
+
+  def initialize
+    @blocked_durations = Queue.new
+  end
+
+  def open(_host, _port)
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    begin
+      sleep
+    ensure
+      @blocked_durations << Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+    end
+  end
+end

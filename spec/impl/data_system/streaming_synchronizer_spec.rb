@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "http_util"
 require "ldclient-rb/impl/data_system/streaming"
 require "ldclient-rb/interfaces"
 require "json"
@@ -401,6 +402,27 @@ change_set_builder, envid)
             synchronizer = LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new.connect_timeout(0.5).build(sdk_key, config)
             opts = captured_sse_options(synchronizer)
             expect(opts[:connect_timeout]).to eq(0.5)
+          end
+
+          it "abandons a connect attempt after the connect timeout" do
+            socket_factory = HangingSocketFactory.new
+            synchronizer = LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new
+              .base_uri("http://stream.example.com")
+              .connect_timeout(0.2)
+              .socket_factory(socket_factory)
+              .build(sdk_key, config)
+            selector_store = double("SelectorStore", selector: nil)
+
+            sync_thread = Thread.new { synchronizer.sync(selector_store) { |_update| } }
+            begin
+              # Without the connect timeout, the attempt blocks for the SSE client default of 10 seconds.
+              blocked = socket_factory.blocked_durations.pop(timeout: 3)
+              expect(blocked).not_to be_nil
+              expect(blocked).to be < 1
+            ensure
+              synchronizer.stop
+              sync_thread.join(5)
+            end
           end
         end
 

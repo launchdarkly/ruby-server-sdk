@@ -2,6 +2,7 @@ require "ldclient-rb/impl/data_source/stream"
 require "ld-eventsource"
 require "model_builders"
 require "spec_helper"
+require "http_util"
 
 module LaunchDarkly
   describe Impl::DataSource::StreamProcessor do
@@ -123,6 +124,27 @@ module LaunchDarkly
         config = Config.new(connect_timeout: 0.5)
         opts = captured_sse_options(subject.new("sdk_key", config))
         expect(opts[:connect_timeout]).to eq(0.5)
+      end
+
+      it 'abandons a connect attempt after the connect timeout' do
+        socket_factory = HangingSocketFactory.new
+        config = Config.new(
+          stream_uri: "http://stream.example.com",
+          connect_timeout: 0.2,
+          socket_factory: socket_factory,
+          logger: $null_log
+        )
+        processor = subject.new("sdk_key", config)
+
+        processor.start
+        begin
+          # Without the connect timeout, the attempt blocks for the SSE client default of 10 seconds.
+          blocked = socket_factory.blocked_durations.pop(timeout: 3)
+          expect(blocked).not_to be_nil
+          expect(blocked).to be < 1
+        ensure
+          processor.stop
+        end
       end
     end
 
