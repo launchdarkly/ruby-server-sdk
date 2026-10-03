@@ -19,9 +19,10 @@ module LaunchDarkly
       # scans the whole directory tree under each watched directory.
       #
       # The watcher observes the directory of each file, so a configured file that does not exist
-      # yet is picked up when it appears. If a directory does not exist, the watcher logs the
-      # problem and retries once per second until it does. When the watches are in place after a
-      # retry, the callback runs once, so that a change made while there was no watch is not missed.
+      # yet is picked up when it appears. If a directory does not exist, or is deleted while it is
+      # watched, the watcher logs the problem and retries once per second until it exists. When the
+      # watches are in place after a retry, the callback runs once, so that a change made while
+      # there was no watch is not missed.
       #
       # @private
       #
@@ -29,8 +30,13 @@ module LaunchDarkly
         # Seconds between attempts to set up the watches after a failure.
         RETRY_INTERVAL = 1.0
 
-        INOTIFY_EVENTS = [:create, :modify, :close_write, :attrib, :delete, :moved_to, :moved_from].freeze
+        INOTIFY_EVENTS = [:create, :modify, :close_write, :attrib, :delete, :moved_to, :moved_from,
+                          :delete_self, :move_self].freeze
         private_constant :INOTIFY_EVENTS
+
+        # The inotify event flags that mean the watched directory itself is gone.
+        INOTIFY_DIRECTORY_LOST = [:delete_self, :move_self].freeze
+        private_constant :INOTIFY_DIRECTORY_LOST
 
         #
         # Returns true if a change notification mechanism can be loaded.
@@ -86,11 +92,7 @@ module LaunchDarkly
           @retry_task = nil
           @last_error_message = nil
 
-          return if try_start
-
-          @retry_task = RepeatingTask.new(RETRY_INTERVAL, RETRY_INTERVAL, method(:retry_start), logger,
-            "LD/FileDataWatcherRetry")
-          @retry_task.start
+          schedule_retry unless try_start
         end
 
         #
@@ -100,22 +102,60 @@ module LaunchDarkly
         def stop
           return unless @stopped.make_true
 
-          @retry_task&.stop
-          listener = @lock.synchronize do
-            l = @listener
+          listener, retry_task = @lock.synchronize do
+            pair = [@listener, @retry_task]
             @listener = nil
-            l
+            @retry_task = nil
+            pair
           end
+          retry_task&.stop
           listener&.stop
+        end
+
+        #
+        # Starts the task that attempts to set up the watches once per second, unless it already
+        # runs or the watcher is stopped.
+        #
+        private def schedule_retry
+          @lock.synchronize do
+            return if @stopped.value || !@retry_task.nil?
+
+            @retry_task = RepeatingTask.new(RETRY_INTERVAL, RETRY_INTERVAL, method(:retry_start), @logger,
+              "LD/FileDataWatcherRetry")
+            @retry_task.start
+          end
         end
 
         private def retry_start
           return if @stopped.value
           return unless try_start
 
+          retry_task = @lock.synchronize do
+            task = @retry_task
+            @retry_task = nil
+            task
+          end
           # This runs on the retry task's own thread, which RepeatingTask#stop allows.
-          @retry_task.stop
+          retry_task&.stop
           @on_change.call unless @stopped.value
+        end
+
+        #
+        # Handles the loss of a watched directory. The notification mechanism reports it on its
+        # own thread, and the watches end with the directory, so they are torn down and set up
+        # again through the same retry as at start, once the directory exists.
+        #
+        private def directory_lost(directory)
+          listener = @lock.synchronize do
+            return if @stopped.value || @listener.nil?
+
+            l = @listener
+            @listener = nil
+            l
+          end
+          @logger.warn { "[LDClient] Directory #{directory} no longer exists; its data files are watched again when it exists" }
+          listener.stop
+          schedule_retry
         end
 
         #
@@ -160,7 +200,13 @@ module LaunchDarkly
           begin
             names_by_directory.each do |directory, names|
               notifier.watch(directory, *INOTIFY_EVENTS) do |event|
-                @on_change.call if names.include?(event.name) && !@stopped.value
+                next if @stopped.value
+
+                if (event.flags & INOTIFY_DIRECTORY_LOST).empty?
+                  @on_change.call if names.include?(event.name)
+                else
+                  directory_lost(directory)
+                end
               end
             end
           rescue
@@ -216,12 +262,13 @@ module LaunchDarkly
 
           #
           # Stops the notifier and waits briefly for its thread. Closing the notifier ends the
-          # blocking read that the thread is in.
+          # blocking read that the thread is in. A callback can call this on the notifier's own
+          # thread, which then ends when the callback returns.
           #
           def stop
             @notifier.stop
             @notifier.close
-            @thread.join(2)
+            @thread.join(2) unless Thread.current == @thread
           end
         end
         private_constant :InotifyListener

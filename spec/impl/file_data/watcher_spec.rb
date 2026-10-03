@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "capturing_logger"
+require "fileutils"
 require "tmpdir"
 require "ldclient-rb/impl/file_data"
 
@@ -110,6 +111,29 @@ module LaunchDarkly
 
             sleep 0.3
             File.write(File.join(missing_dir, "a.json"), "{}")
+            expect(wait_for { calls.value > before }).to be true
+          end
+        end
+
+        it "logs when a watched directory is deleted and watches it again once it exists again" do
+          logger = CapturingLogger.new
+          Dir.mkdir(path("sub"))
+          File.write(path("sub/a.json"), "{}")
+          with_watcher([path("sub/a.json")], logger: logger) do |_watcher, calls|
+            sleep 0.3
+            FileUtils.rm_rf(path("sub"))
+            expect(wait_for { logger.output.include?("WARN") }).to be true
+            expect(logger.output).to match(/WARN.*#{Regexp.escape(path('sub'))}/)
+            before = calls.value
+
+            Dir.mkdir(path("sub"))
+            File.write(path("sub/a.json"), "{}")
+            # The watches are set up on the next retry, and the callback runs once at that point.
+            expect(wait_for { calls.value > before }).to be true
+            before = calls.value
+
+            sleep 0.3
+            File.write(path("sub/a.json"), '{"flagValues": {}}')
             expect(wait_for { calls.value > before }).to be true
           end
         end
