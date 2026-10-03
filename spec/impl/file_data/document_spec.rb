@@ -151,8 +151,10 @@ module LaunchDarkly
 
       describe "absolute_paths" do
         it "converts relative paths to absolute paths and accepts a single string" do
+          absolute = File.absolute_path("/x/y.json")
+
           expect(FileData.absolute_paths("a/b.json")).to eq([File.absolute_path("a/b.json")])
-          expect(FileData.absolute_paths(["/x/y.json", "z.json"])).to eq(["/x/y.json", File.absolute_path("z.json")])
+          expect(FileData.absolute_paths([absolute, "z.json"])).to eq([absolute, File.absolute_path("z.json")])
         end
       end
     end
