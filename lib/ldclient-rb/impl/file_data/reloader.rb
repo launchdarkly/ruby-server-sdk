@@ -3,7 +3,6 @@
 require "ldclient-rb/impl/file_data/document"
 require "ldclient-rb/impl/file_data/merge"
 require "ldclient-rb/impl/file_data/poller"
-require "ldclient-rb/impl/util"
 
 require "digest"
 
@@ -244,7 +243,8 @@ module LaunchDarkly
         end
 
         private def log_unexpected_error(error)
-          Util.log_exception(@logger, "#{@log_prefix} Unexpected error in file data reloader", error)
+          @logger.error { "#{@log_prefix} Unexpected error in file data reloader: #{error.inspect}" }
+          @logger.debug { "#{@log_prefix} Exception trace: #{error.backtrace}" }
         end
 
         #
