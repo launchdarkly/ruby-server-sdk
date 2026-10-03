@@ -44,6 +44,12 @@ module LaunchDarkly
         true
       end
 
+      # Returns the next item from the queue, or nil when none arrives within the timeout.
+      # Queue#pop accepts a timeout only from Ruby 3.2 on, and the gem supports earlier runtimes.
+      def pop_with_timeout(queue, timeout)
+        wait_for(timeout) { !queue.empty? } ? queue.pop : nil
+      end
+
       def flag_json(key, version: nil)
         data = { key: key, on: true, fallthrough: { variation: 0 }, variations: ["a"] }
         data[:version] = version unless version.nil?
@@ -261,9 +267,13 @@ module LaunchDarkly
           end
         end
 
+        def listen_enabled?
+          Impl::Integrations::FileDataSourceV2.class_variable_get(:@@have_listen)
+        end
+
         def without_listen
           klass = Impl::Integrations::FileDataSourceV2
-          had_listen = klass.class_variable_get(:@@have_listen)
+          had_listen = listen_enabled?
           klass.class_variable_set(:@@have_listen, false)
           begin
             yield
@@ -272,14 +282,23 @@ module LaunchDarkly
           end
         end
 
+        def poller_threads
+          Thread.list.select { |t| t.name == "LD/FileDataSourceV2" }
+        end
+
         def with_sync(paths, poll_interval: 0.1)
           source = Impl::Integrations::FileDataSourceV2.new(logger, paths: paths, poll_interval: poll_interval)
           updates = Queue.new
+          pollers_before = poller_threads
           thread = Thread.new { source.sync(no_selector_store) { |update| updates << update } }
           begin
-            initial = updates.pop(timeout: 5)
+            initial = pop_with_timeout(updates, 5)
             expect(initial).not_to be_nil
             expect(initial.state).to eq Interfaces::DataSource::Status::VALID
+            # The source starts change detection after it yields the initial data. A polling
+            # source has recorded the files' modification times once its poller thread exists,
+            # so a change made after that is one the poller can see.
+            expect(wait_for { (poller_threads - pollers_before).any? }).to be true unless listen_enabled?
             yield updates
           ensure
             source.stop
@@ -344,9 +363,16 @@ module LaunchDarkly
           skip "the listen gem is not installed" unless defined?(Listen)
 
           file = make_temp_file({ flagValues: { value1: "x" } }.to_json)
-          expect(Listen).to receive(:to).and_call_original
+          listened = Queue.new
+          allow(Listen).to receive(:to).and_wrap_original do |original, *args, **options, &block|
+            listened << true
+            original.call(*args, **options, &block)
+          end
 
-          with_sync([file.path]) { |_updates| }
+          with_sync([file.path]) do |_updates|
+            # The source starts the listener after it yields the initial data.
+            expect(pop_with_timeout(listened, 5)).to be true
+          end
         end
 
         it "compares only the modification time when polling" do
@@ -358,7 +384,7 @@ module LaunchDarkly
               IO.write(file, { flagValues: { value1: "a much longer value than before" } }.to_json)
               File.utime(mtime, mtime, file.path)
 
-              expect(updates.pop(timeout: 0.6)).to be_nil
+              expect(pop_with_timeout(updates, 0.6)).to be_nil
             end
           end
         end
@@ -371,7 +397,7 @@ module LaunchDarkly
               file.close
               File.delete(file.path)
 
-              expect(updates.pop(timeout: 0.6)).to be_nil
+              expect(pop_with_timeout(updates, 0.6)).to be_nil
             end
           end
         end
@@ -384,10 +410,10 @@ module LaunchDarkly
             with_sync([file.path]) do |updates|
               IO.write(file, { flagValues: { value1: "y" } }.to_json)
 
-              update = updates.pop(timeout: 5)
+              update = pop_with_timeout(updates, 5)
               expect(update).not_to be_nil
               expect(update.state).to eq Interfaces::DataSource::Status::VALID
-              expect(updates.pop(timeout: 0.6)).to be_nil
+              expect(pop_with_timeout(updates, 0.6)).to be_nil
             end
           end
         end
