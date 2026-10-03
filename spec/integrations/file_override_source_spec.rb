@@ -119,6 +119,12 @@ module LaunchDarkly
           expect { build(paths: nil) }.to raise_error(ArgumentError, /no file paths/)
         end
 
+        it "rejects a file path that is not a non-empty string" do
+          expect { build(paths: [""]) }.to raise_error(ArgumentError, /must be non-empty strings/)
+          expect { build(paths: ["a.json", nil]) }.to raise_error(ArgumentError, /must be non-empty strings/)
+          expect { build(paths: [:a]) }.to raise_error(ArgumentError, /must be non-empty strings/)
+        end
+
         it "rejects options that are not a hash and unknown option keys" do
           expect { FileData.override_source("x") }.to raise_error(ArgumentError, /must be a Hash/)
           expect { build(paths: ["a.json"], path: "b.json") }.to raise_error(ArgumentError, /unknown options.*path/)

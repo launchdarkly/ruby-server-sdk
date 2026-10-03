@@ -198,7 +198,7 @@ module LaunchDarkly
       #
       # @param options [Hash] the configuration options
       # @option options [Array<String>, String] :paths  One or more files, in precedence order. Required.
-      #   Paths may be absolute or relative to the current working directory.
+      #   Each path must be a non-empty String, absolute or relative to the current working directory.
       # @option options [Symbol] :duplicate_keys_handling  What to do when the same key appears in more
       #   than one file. `:fail` (the default) treats the reload as failed and keeps the previous
       #   overrides. `:ignore` keeps the entry from the first configured file that defines the key.
@@ -254,8 +254,15 @@ module LaunchDarkly
         unknown = @options.keys - OPTION_KEYS
         raise ArgumentError, "unknown options for the file-based override source: #{unknown.join(', ')}" unless unknown.empty?
 
-        paths = Impl::FileData.absolute_paths(@options[:paths] || [])
+        paths = Array(@options[:paths])
         raise ArgumentError, "no file paths were specified for the file-based override source" if paths.empty?
+
+        invalid = paths.reject { |path| path.is_a?(String) && !path.empty? }
+        unless invalid.empty?
+          raise ArgumentError,
+            "file paths for the file-based override source must be non-empty strings; got #{invalid.map(&:inspect).join(', ')}"
+        end
+        paths = Impl::FileData.absolute_paths(paths)
 
         duplicate_keys_handling = @options.fetch(:duplicate_keys_handling, :fail)
         unless DUPLICATE_KEYS_HANDLING_VALUES.include?(duplicate_keys_handling)
