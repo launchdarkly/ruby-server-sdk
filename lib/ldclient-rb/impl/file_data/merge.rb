@@ -22,8 +22,8 @@ module LaunchDarkly
       end
 
       #
-      # Raised when documents cannot be combined, for example because a key is duplicated or an
-      # entry is not an object.
+      # Raised when documents cannot be combined, for example because a key is duplicated, an
+      # entry is not an object, or an entry cannot be deserialized into the data model.
       #
       class MergeError < StandardError
       end
@@ -93,7 +93,7 @@ module LaunchDarkly
 
           document.flags.each do |key, data|
             data = prepare_entry("flag", key, data)
-            item = Model.deserialize(DataStore::FEATURES, data, logger)
+            item = deserialize(DataStore::FEATURES, "flag", key, data, logger)
             summary.flags += 1 if insert(flags, "flag", key, item, duplicate_keys_handling)
           end
 
@@ -105,7 +105,7 @@ module LaunchDarkly
 
           document.segments.each do |key, data|
             data = prepare_entry("segment", key, data)
-            item = Model.deserialize(DataStore::SEGMENTS, data, logger)
+            item = deserialize(DataStore::SEGMENTS, "segment", key, data, logger)
             summary.segments += 1 if insert(segments, "segment", key, item, duplicate_keys_handling)
           end
 
@@ -125,6 +125,17 @@ module LaunchDarkly
         data[:key] = key.to_s if data[:key].nil?
         data[:version] = 1 if data[:version].nil?
         data
+      end
+
+      #
+      # Deserializes one entry into its data model class. The model classes raise for a value
+      # that does not fit the schema, and that failure is reported as a merge error that names
+      # the entry.
+      #
+      private_class_method def self.deserialize(kind, category, key, data, logger)
+        Model.deserialize(kind, data, logger)
+      rescue => e
+        raise MergeError, "#{category} \"#{key}\" is not valid: #{e.message}"
       end
 
       #
