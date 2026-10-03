@@ -36,11 +36,14 @@ module LaunchDarkly
         # @param logger [Logger]
         # @param apply [#call] invoked with each successfully merged {MergeResult}. Calls are
         #   serialized, so implementations do not need their own synchronization against other
-        #   reloads. `apply` and `on_error` must not call back into {#stop}.
+        #   reloads. An exception from `apply` is a failed reload: it is reported through
+        #   `on_error`, the result is not remembered as applied, and the reload is retried.
+        #   `apply` and `on_error` must not call back into {#stop}.
         # @param on_error [#call, nil] invoked with the error when a reload fails, once per distinct
         #   failure. With automatic retries, repeats of an identical failure do not re-invoke it. A
         #   success re-arms it. The error is a {ReadError} when a file could not be read or parsed,
-        #   or a {MergeError} otherwise. The reloader logs failures itself.
+        #   a {MergeError} when the documents could not be combined, or the exception that `apply`
+        #   raised. The reloader logs failures itself.
         # @param duplicate_keys_handling [Symbol] one of the {DuplicateKeysHandling} values
         # @param skip_missing_paths [Boolean] when true, a configured file that does not exist is a
         #   file with no content, and the reload succeeds with the data of the files that exist.
@@ -265,12 +268,19 @@ module LaunchDarkly
             # the last success. The consumer heard about the failure through on_error and may
             # have moved to an interrupted state. Only apply tells it that things are good again.
             recovering = !@last_error_message.nil?
-            @last_error_message = nil
             hexdigest = digest.hexdigest
             return true if @skip_unchanged && !recovering && hexdigest == @last_good_digest
 
+            # Nothing is remembered until the consumer has accepted the result. A result that
+            # apply rejects must not become the baseline that skip-unchanged compares against,
+            # and must not count as a recovery.
+            begin
+              @apply.call(merged)
+            rescue => e
+              return record_failure(e)
+            end
+            @last_error_message = nil
             @last_good_digest = hexdigest
-            @apply.call(merged)
             true
           end
         end

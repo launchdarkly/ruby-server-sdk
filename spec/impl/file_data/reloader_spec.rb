@@ -38,18 +38,26 @@ module LaunchDarkly
           true
         end
 
-        # Collects apply and on_error calls in a thread-safe way.
+        # Collects apply and on_error calls in a thread-safe way. It raises from the first `reject`
+        # apply calls, as a consumer that cannot use a result does.
         class Recorder
           attr_reader :applied, :errors
 
-          def initialize
+          def initialize(reject: 0)
             @lock = Mutex.new
             @applied = []
             @errors = []
+            @reject = reject
           end
 
           def apply(merged)
-            @lock.synchronize { @applied << merged }
+            @lock.synchronize do
+              if @reject > 0
+                @reject -= 1
+                raise ArgumentError, "the result was rejected"
+              end
+              @applied << merged
+            end
           end
 
           def on_error(error)
@@ -65,8 +73,8 @@ module LaunchDarkly
           Reloader.new(paths: paths, logger: logger, apply: recorder.method(:apply), on_error: recorder.method(:on_error), **options)
         end
 
-        def with_reloader(paths, logger: $null_log, **options)
-          recorder = Recorder.new
+        def with_reloader(paths, logger: $null_log, reject: 0, **options)
+          recorder = Recorder.new(reject: reject)
           reloader = make_reloader(paths, recorder, logger: logger, **options)
           begin
             yield reloader, recorder
@@ -301,6 +309,47 @@ module LaunchDarkly
 
             expect(recorder.applied.length).to eq(2)
             expect(recorder.errors.length).to eq(1)
+          end
+        end
+
+        it "reports an exception from apply as a failed reload and applies the same content on the retry" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_reloader([a], reject: 1, retry_delay: 0.1) do |reloader, recorder|
+            expect(reloader.reload_now).to be false
+            expect(recorder.applied).to be_empty
+            expect(recorder.errors.length).to eq(1)
+            expect(recorder.errors[0]).to be_a(ArgumentError)
+
+            # The retry applies the content that was rejected, so a consumer that recovers sees it.
+            expect(wait_for { recorder.applied.length == 1 }).to be true
+            expect(recorder.flag_values).to eq({ flag1: "a" })
+          end
+        end
+
+        it "does not skip content as unchanged after apply rejected it" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_reloader([a], reject: 1, retry_delay: 0, skip_unchanged: true) do |reloader, recorder|
+            expect(reloader.reload_now).to be false
+
+            # The same content again. It was never applied, so it is not skipped as unchanged.
+            expect(reloader.reload_now).to be true
+            expect(recorder.flag_values).to eq({ flag1: "a" })
+          end
+        end
+
+        it "reloads on a later trigger after apply raised during a triggered reload" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_reloader([a], reject: 1, debounce_delay: 0, retry_delay: 0) do |reloader, recorder|
+            reloader.trigger
+            expect(wait_for { recorder.errors.length == 1 }).to be true
+
+            write("a.json", values_doc({ flag1: "b" }))
+            reloader.trigger
+            expect(wait_for { recorder.applied.length == 1 }).to be true
+            expect(recorder.flag_values).to eq({ flag1: "b" })
           end
         end
 
