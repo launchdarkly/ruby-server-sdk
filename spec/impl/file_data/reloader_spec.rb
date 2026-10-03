@@ -353,6 +353,20 @@ module LaunchDarkly
           end
         end
 
+        it "reports a repeated rejection by apply once" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_reloader([a], reject: 2, retry_delay: 0) do |reloader, recorder|
+            expect(reloader.reload_now).to be false
+            expect(reloader.reload_now).to be false
+
+            # The second rejection repeats the first, so on_error is not invoked again.
+            expect(recorder.errors.length).to eq(1)
+            expect(reloader.reload_now).to be true
+            expect(recorder.applied.length).to eq(1)
+          end
+        end
+
         it "runs reloads one at a time even when triggers overlap" do
           a = write("a.json", values_doc({ flag1: "a" }))
           active = Concurrent::AtomicFixnum.new(0)
