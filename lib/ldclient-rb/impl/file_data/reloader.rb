@@ -2,7 +2,6 @@
 
 require "ldclient-rb/impl/file_data/document"
 require "ldclient-rb/impl/file_data/merge"
-require "ldclient-rb/impl/util"
 
 require "digest"
 
@@ -167,7 +166,8 @@ module LaunchDarkly
             end
           end
         rescue => e
-          Util.log_exception(@logger, "#{@log_prefix} Unexpected error in file data reloader", e)
+          @logger.error { "#{@log_prefix} Unexpected error in file data reloader: #{e.inspect}" }
+          @logger.debug { "#{@log_prefix} Exception trace: #{e.backtrace}" }
         end
 
         #
