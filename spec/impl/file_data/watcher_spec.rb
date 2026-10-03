@@ -116,6 +116,8 @@ module LaunchDarkly
         end
 
         it "logs when a watched directory is deleted and watches it again once it exists again" do
+          skip "rb-inotify is not available on this platform" unless Watcher.inotify_available?
+
           logger = CapturingLogger.new
           Dir.mkdir(path("sub"))
           File.write(path("sub/a.json"), "{}")
