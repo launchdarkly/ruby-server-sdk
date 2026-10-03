@@ -137,6 +137,10 @@ module LaunchDarkly
           end
           # This runs on the retry task's own thread, which RepeatingTask#stop allows.
           retry_task&.stop
+          # The new watches can report the loss of their directory before the retry task is
+          # released above. That report finds the task still present and leaves the watches to
+          # it, so when they are gone the retry is started again here.
+          schedule_retry if @lock.synchronize { @listener.nil? }
           @on_change.call unless @stopped.value
         end
 

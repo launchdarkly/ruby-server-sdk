@@ -140,6 +140,33 @@ module LaunchDarkly
           end
         end
 
+        it "keeps retrying when a directory is lost again as soon as its watches are set up" do
+          skip "rb-inotify is not available on this platform" unless Watcher.inotify_available?
+
+          with_watcher([path("sub/a.json")]) do |watcher, calls|
+            # Take the directory away as soon as the watches are set up, and wait until the loss
+            # has been handled, so that it is reported while the retry that set up the watches
+            # is still finishing.
+            lost_once = false
+            allow(watcher).to receive(:try_start).and_wrap_original do |original|
+              started = original.call
+              if started && !lost_once
+                lost_once = true
+                FileUtils.rm_rf(path("sub"))
+                wait_for { Thread.list.none? { |t| t.name == "LD/FileDataWatcher" } }
+              end
+              started
+            end
+
+            Dir.mkdir(path("sub"))
+            expect(wait_for { calls.value >= 1 }).to be true
+
+            # The retry that follows the second loss sets the watches up once the directory exists.
+            Dir.mkdir(path("sub"))
+            expect(wait_for { calls.value >= 2 }).to be true
+          end
+        end
+
         it "watches a directory that contains an unreadable subdirectory" do
           skip "the current user can read every directory" if Process.uid.zero?
 
