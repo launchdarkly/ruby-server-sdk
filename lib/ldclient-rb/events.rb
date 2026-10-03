@@ -44,7 +44,8 @@ module LaunchDarkly
       debug_until = nil,
       prereq_of = nil,
       sampling_ratio = nil,
-      exclude_from_summaries = false
+      exclude_from_summaries = false,
+      override_affected = false
     )
     end
 
@@ -176,10 +177,11 @@ module LaunchDarkly
       debug_until = nil,
       prereq_of = nil,
       sampling_ratio = nil,
-      exclude_from_summaries = false
+      exclude_from_summaries = false,
+      override_affected = false
     )
       post_to_inbox(LaunchDarkly::Impl::EvalEvent.new(timestamp, context, key, version, variation, value, reason,
-        default, track_events, debug_until, prereq_of, sampling_ratio, exclude_from_summaries))
+        default, track_events, debug_until, prereq_of, sampling_ratio, exclude_from_summaries, override_affected))
     end
 
     def record_identify_event(context)
@@ -328,8 +330,10 @@ module LaunchDarkly
       will_add_full_event = false
       debug_event = nil
       if event.is_a?(LaunchDarkly::Impl::EvalEvent)
-        will_add_full_event = event.track_events
-        if should_debug_event(event)
+        # An override-affected evaluation appears only in the summary counters. It produces no
+        # individual feature event and no debug event, whatever the flag's configuration requests.
+        will_add_full_event = event.track_events && !event.override_affected
+        if !event.override_affected && should_debug_event(event)
           debug_event = LaunchDarkly::Impl::DebugEvent.new(event)
         end
       else
@@ -630,18 +634,22 @@ module LaunchDarkly
       summary.counters.each do |flagKey, flagInfo|
         counters = []
         flagInfo.versions.each do |version, variations|
-          variations.each do |variation, counter|
-            c = {
-              value: counter.value,
-              count: counter.count,
-            }
-            c[:variation] = variation unless variation.nil?
-            if version.nil?
-              c[:unknown] = true
-            else
-              c[:version] = version
+          variations.each do |variation, counters_by_marker|
+            counters_by_marker.each do |override_affected, counter|
+              c = {
+                value: counter.value,
+                count: counter.count,
+              }
+              c[:variation] = variation unless variation.nil?
+              if version.nil?
+                c[:unknown] = true
+              else
+                c[:version] = version
+              end
+              # The marker is present only for override-affected counters, like the unknown marker.
+              c[:overrideAffected] = true if override_affected
+              counters.push(c)
             end
-            counters.push(c)
           end
         end
         flags[flagKey] = { default: flagInfo.default, counters: counters, contextKinds: flagInfo.context_kinds.to_a }
