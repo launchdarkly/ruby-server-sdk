@@ -27,6 +27,14 @@ module LaunchDarkly
         file
       end
 
+      # Moves a file's modification time into the past. The pollers compare modification times,
+      # so a write that follows at once registers as a change even where the file system records
+      # the time in whole seconds.
+      def backdate(file)
+        past = Time.now - 10
+        File.utime(past, past, file.path)
+      end
+
       def wait_for(timeout = 5)
         deadline = Time.now + timeout
         until yield
@@ -87,6 +95,7 @@ module LaunchDarkly
         it "numbers versions per file in load order and keeps counting across reloads" do
           file1 = make_temp_file({ flags: { flag1: flag_json("flag1", version: 99) }, flagValues: { value1: true } }.to_json)
           file2 = make_temp_file({ segments: { seg1: { key: "seg1" } } }.to_json)
+          backdate(file2)
 
           with_data_source({ paths: [file1.path, file2.path], auto_update: true, force_polling: true, poll_interval: 0.1 }) do |ds|
             ds.start
@@ -94,7 +103,6 @@ module LaunchDarkly
             expect(flag_version("value1")).to eq 1
             expect(@store.get(Impl::DataStore::SEGMENTS, "seg1").version).to eq 2
 
-            sleep 0.2
             IO.write(file2, { segments: { seg1: { key: "seg1" }, seg2: { key: "seg2" } } }.to_json)
             expect(wait_for { @store.get(Impl::DataStore::SEGMENTS, "seg2") }).to be true
             expect(flag_version("flag1")).to eq 3
@@ -190,6 +198,7 @@ module LaunchDarkly
 
           with_data_source({ paths: [file.path], auto_update: true, force_polling: true, poll_interval: 0.1 }) do |ds|
             ds.start
+            file.close
             File.delete(file.path)
             sleep 0.5
 
@@ -201,10 +210,10 @@ module LaunchDarkly
 
         it "reloads on every polling interval after the first change" do
           file = make_temp_file({ flagValues: { value1: "x" } }.to_json)
+          backdate(file)
 
           with_data_source({ paths: [file.path], auto_update: true, force_polling: true, poll_interval: 0.1 }) do |ds|
             ds.start
-            sleep 0.2
             IO.write(file, { flagValues: { value1: "y" } }.to_json)
             expect(wait_for { @store.init_count >= 2 }).to be true
 
@@ -359,6 +368,7 @@ module LaunchDarkly
             file = make_temp_file({ flagValues: { value1: "x" } }.to_json)
 
             with_sync([file.path]) do |updates|
+              file.close
               File.delete(file.path)
 
               expect(updates.pop(timeout: 0.6)).to be_nil
@@ -369,9 +379,9 @@ module LaunchDarkly
         it "reloads once per change when polling" do
           without_listen do
             file = make_temp_file({ flagValues: { value1: "x" } }.to_json)
+            backdate(file)
 
             with_sync([file.path]) do |updates|
-              sleep 0.2
               IO.write(file, { flagValues: { value1: "y" } }.to_json)
 
               update = updates.pop(timeout: 5)
