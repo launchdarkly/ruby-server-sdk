@@ -113,6 +113,11 @@ module LaunchDarkly
           expect { FileData.merge([document(segments: { seg1: [] })]) }.to raise_error(MergeError, /segment "seg1" is not an object/)
         end
 
+        it "fails when an entry cannot be deserialized into the data model" do
+          expect { FileData.merge([document(flags: { flag1: { rules: 5 } })]) }.to raise_error(MergeError, /flag "flag1"/)
+          expect { FileData.merge([document(segments: { seg1: { rules: 5 } })]) }.to raise_error(MergeError, /segment "seg1"/)
+        end
+
         it "passes the logger to model validation" do
           logger = CapturingLogger.new
           bad = { key: "flag1", on: true, variations: ["a"], fallthrough: { variation: 5 } }
