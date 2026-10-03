@@ -435,6 +435,19 @@ module LaunchDarkly
             expect(logger.output).to include("Reloading flag data after detecting a change")
           end
         end
+
+        it "writes the configured prefix once on the log line for an unexpected error" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+          logger = CapturingLogger.new
+          allow(FileData).to receive(:read_file).and_raise(RuntimeError, "unexpected")
+
+          with_reloader([a], logger: logger, debounce_delay: 0, log_prefix: "[LDClient] Prefix:") do |reloader, _recorder|
+            reloader.trigger
+
+            expect(wait_for { logger.output.include?("Unexpected error") }).to be true
+            expect(logger.output).to match(/ERROR -- : \[LDClient\] Prefix: Unexpected error in file data reloader/)
+          end
+        end
       end
     end
   end
