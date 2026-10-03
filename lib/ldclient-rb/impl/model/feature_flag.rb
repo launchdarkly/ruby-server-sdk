@@ -25,6 +25,7 @@ module LaunchDarkly
           @key = data[:key]
           @version = data[:version]
           @deleted = !!data[:deleted]
+          @override = false
           return if @deleted
           migration_settings = data[:migration] || {}
           @migration_settings = MigrationSettings.new(migration_settings[:checkRatio])
@@ -96,6 +97,35 @@ module LaunchDarkly
         # @return [String]
         attr_reader :salt
 
+        #
+        # True if this definition came from the SDK's override store rather than from LaunchDarkly
+        # data. The marker is not part of the flag data and is never serialized. Only the SDK
+        # components that manage override entries set it, through {#as_override}. Evaluation reads
+        # it to mark the evaluations it affects. Every other reader treats a marked definition the
+        # same as any other.
+        #
+        # Flag overrides are currently experimental and subject to change.
+        #
+        # @return [Boolean]
+        #
+        def override?
+          @override
+        end
+
+        #
+        # Returns a shallow copy of this flag that carries the override marker. The copy shares its
+        # data with this flag. Nothing writes to that data. This flag is not changed.
+        #
+        # Flag overrides are currently experimental and subject to change.
+        #
+        # @return [FeatureFlag]
+        #
+        def as_override
+          copy = dup
+          copy.override = true
+          copy
+        end
+
         # This method allows us to read properties of the object as if it's just a hash. Currently this is
         # necessary because some data store logic is still written to expect hashes; we can remove it once
         # we migrate entirely to using attributes of the class.
@@ -115,6 +145,10 @@ module LaunchDarkly
         def to_json(*a)
           as_json.to_json(*a)
         end
+
+        protected
+
+        attr_writer :override
       end
 
       class Prerequisite

@@ -150,6 +150,15 @@ module LaunchDarkly
     # @return [Symbol]
     attr_reader :big_segments_status
 
+    # True if an override affected this evaluation, directly or transitively. It is true when the
+    # evaluated flag came from the SDK's override store. It is also true when a prerequisite flag at
+    # any depth, or a segment read during the evaluation, came from the override store. In the JSON
+    # representation, the `overrideAffected` property appears only when this is true.
+    #
+    # Flag overrides are currently experimental and subject to change.
+    # @return [Boolean]
+    attr_reader :override_affected
+
     # Returns an instance whose {#kind} is {#OFF}.
     # @return [EvaluationReason]
     def self.off
@@ -216,12 +225,14 @@ module LaunchDarkly
       if other.is_a? EvaluationReason
         @kind == other.kind && @rule_index == other.rule_index && @rule_id == other.rule_id &&
           @prerequisite_key == other.prerequisite_key && @error_kind == other.error_kind &&
-          @big_segments_status == other.big_segments_status
+          @big_segments_status == other.big_segments_status &&
+          @override_affected == other.override_affected
       elsif other.is_a? Hash
         @kind.to_s == other[:kind] && @rule_index == other[:ruleIndex] && @rule_id == other[:ruleId] &&
           @prerequisite_key == other[:prerequisiteKey] &&
           (other[:errorKind] == @error_kind.nil? ? nil : @error_kind.to_s) &&
-          (other[:bigSegmentsStatus] == @big_segments_status.nil? ? nil : @big_segments_status.to_s)
+          (other[:bigSegmentsStatus] == @big_segments_status.nil? ? nil : @big_segments_status.to_s) &&
+          !!other[:overrideAffected] == @override_affected
       end
     end
 
@@ -286,6 +297,8 @@ module LaunchDarkly
       unless @big_segments_status.nil?
         ret[:bigSegmentsStatus] = @big_segments_status
       end
+      # The property is written only when true, so the wire format of an ordinary evaluation is unchanged.
+      ret[:overrideAffected] = true if @override_affected
       ret
     end
 
@@ -312,6 +325,8 @@ module LaunchDarkly
         @error_kind.nil? ? nil : @error_kind.to_s
       when :bigSegmentsStatus
         @big_segments_status.nil? ? nil : @big_segments_status.to_s
+      when :overrideAffected
+        @override_affected
       else
         nil
       end
@@ -319,7 +334,24 @@ module LaunchDarkly
 
     def with_big_segments_status(big_segments_status)
       return self if @big_segments_status == big_segments_status
-      EvaluationReason.new(@kind, @rule_index, @rule_id, @prerequisite_key, @error_kind, @in_experiment, big_segments_status)
+      EvaluationReason.new(@kind, @rule_index, @rule_id, @prerequisite_key, @error_kind, @in_experiment,
+        big_segments_status, @override_affected)
+    end
+
+    #
+    # Returns a reason that is the same as this one apart from the {#override_affected} indicator.
+    # Returns this instance when the indicator already has the given value.
+    #
+    # Flag overrides are currently experimental and subject to change.
+    #
+    # @param override_affected [Boolean]
+    # @return [EvaluationReason]
+    #
+    def with_override_affected(override_affected)
+      override_affected = !!override_affected
+      return self if @override_affected == override_affected
+      EvaluationReason.new(@kind, @rule_index, @rule_id, @prerequisite_key, @error_kind, @in_experiment,
+        @big_segments_status, override_affected)
     end
 
     #
@@ -327,7 +359,7 @@ module LaunchDarkly
     # but should use class methods like {#off} to avoid creating unnecessary instances.
     #
     def initialize(kind, rule_index, rule_id, prerequisite_key, error_kind, in_experiment=nil,
-        big_segments_status = nil)
+        big_segments_status = nil, override_affected = false)
       @kind = kind.to_sym
       @rule_index = rule_index
       @rule_id = rule_id
@@ -337,6 +369,7 @@ module LaunchDarkly
       @error_kind = error_kind
       @in_experiment = in_experiment
       @big_segments_status = big_segments_status
+      @override_affected = !!override_affected
     end
 
     private_class_method def self.make_error(error_kind)
