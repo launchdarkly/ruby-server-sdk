@@ -7,6 +7,29 @@ require "time"
 
 module LaunchDarkly
   module Impl
+    describe EventSender do
+      it "abandons a connect attempt after the connect timeout" do
+        socket_factory = HangingSocketFactory.new
+        sender = EventSender.new("sdk_key", Config.new(
+          events_uri: "http://events.example.com",
+          connect_timeout: 0.2,
+          socket_factory: socket_factory,
+          logger: $null_log
+        ), 0.1)
+
+        send_thread = Thread.new { sender.send_event_data("[]", "events", false) }
+        begin
+          # Without the connect timeout, the attempt blocks until the thread is killed.
+          blocked = socket_factory.first_blocked_duration(3)
+          expect(blocked).not_to be_nil
+          expect(blocked).to be < 1
+        ensure
+          send_thread.kill unless send_thread.join(5)
+          sender.stop
+        end
+      end
+    end
+
     describe EventSender, flaky: true do
       subject { EventSender }
 
