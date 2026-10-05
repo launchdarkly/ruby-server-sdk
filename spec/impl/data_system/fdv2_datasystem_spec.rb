@@ -446,9 +446,6 @@ module LaunchDarkly
             listener = Object.new
             listener.define_singleton_method(:update) do |flag_change|
               changes << flag_change
-              # The FDv1 payload replaces the initializer's data, so it reports
-              # the removed flag as well as the added one. Wait for the added
-              # flag itself; a count can be reached before it arrives.
               changed.set if flag_change.key == "fdv1replacementflag"
             end
 
