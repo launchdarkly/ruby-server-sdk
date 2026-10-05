@@ -441,12 +441,12 @@ module LaunchDarkly
               .build
 
             changed = Concurrent::Event.new
-            changes = []
+            changes = Concurrent::Array.new
 
             listener = Object.new
             listener.define_singleton_method(:update) do |flag_change|
               changes << flag_change
-              changed.set if changes.length >= 2
+              changed.set if flag_change.key == "fdv1replacementflag"
             end
 
             fdv2 = FDv2.new(sdk_key, config, data_system_config)
