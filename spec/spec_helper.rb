@@ -1,6 +1,7 @@
 require "simplecov" if ENV['LD_ENABLE_CODE_COVERAGE'] == '1'
 
 require "ldclient-rb"
+require "timecop"
 
 $null_log = ::Logger.new($stdout)
 $null_log.level = ::Logger::FATAL
@@ -96,5 +97,10 @@ RSpec.configure do |config|
     expectations.max_formatted_output_length = 1000 # otherwise rspec tends to abbreviate our failure output and make it unreadable
   end
   config.before(:each) do
+  end
+  config.after(:each) do
+    # Safety net: a spec that leaks a frozen or travelled clock would silently
+    # corrupt the rest of a randomized run.
+    Timecop.return
   end
 end

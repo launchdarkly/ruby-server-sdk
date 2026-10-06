@@ -1,6 +1,7 @@
 require "ldclient-rb/impl/repeating_task"
 
 require "concurrent/atomics"
+require "timecop"
 
 require "spec_helper"
 
@@ -57,6 +58,34 @@ module LaunchDarkly
           end
         end
         expect(no_more_items).to be true
+      end
+
+      it "schedules the next run from the monotonic clock, unaffected by wall-clock steps" do
+        runs = Queue.new
+        stepped = false
+        task = RepeatingTask.new(10, 0,
+          -> {
+            unless stepped
+              stepped = true
+              # Freeze before signaling the main thread. Cross-thread Timecop is
+              # safe here only because #stop joins the worker, so this freeze
+              # always completes before the ensure's Timecop.return below.
+              Timecop.freeze(Time.now + 3600)
+            end
+            runs << :ran
+          },
+          null_logger, "test")
+        begin
+          task.start
+          expect(runs.pop).to eq :ran
+          # Before the monotonic fix, the forward wall step made the computed wait
+          # negative, so the next run fired immediately instead of after the interval.
+          sleep(0.3)
+          expect(runs).to be_empty
+        ensure
+          task.stop
+          Timecop.return
+        end
       end
 
       it "stops promptly when stopped during a long start delay" do

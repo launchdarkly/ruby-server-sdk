@@ -490,6 +490,23 @@ change_set_builder, envid)
             synchronizer.send(:log_connection_result, true)
           end
 
+          it "measures duration on the monotonic clock, unaffected by wall-clock steps" do
+            diagnostic_accumulator = double("DiagnosticAccumulator")
+
+            synchronizer.set_diagnostic_accumulator(diagnostic_accumulator)
+
+            expect(diagnostic_accumulator).to receive(:record_stream_init) do |_timestamp, _failed, duration|
+              # A backward wall-clock step used to produce a negative duration here.
+              expect(duration).to be >= 0
+              expect(duration).to be < 1000
+            end
+
+            synchronizer.send(:log_connection_started)
+            Timecop.freeze(Time.now - 120) do
+              synchronizer.send(:log_connection_result, true)
+            end
+          end
+
           it "only logs once per connection attempt" do
             diagnostic_accumulator = double("DiagnosticAccumulator")
             expect(diagnostic_accumulator).to receive(:record_stream_init).once
