@@ -447,7 +447,8 @@ we will never modify the membership properties after they're queried</p>
 27
 28
 29
-30</pre>
+30
+31</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 18</span>
@@ -458,6 +459,7 @@ we will never modify the membership properties after they're queried</p>
   <span class='ivar'>@status_provider</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="BigSegmentStoreStatusProviderImpl.html" title="LaunchDarkly::Impl::BigSegmentStoreStatusProviderImpl (class)">BigSegmentStoreStatusProviderImpl</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="BigSegmentStoreStatusProviderImpl.html#initialize-instance_method" title="LaunchDarkly::Impl::BigSegmentStoreStatusProviderImpl#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='tlambda'>-&gt;</span> <span class='tlambeg'>{</span> <span class='id identifier rubyid_get_status'>get_status</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span> <span class='op'>=</span> <span class='id identifier rubyid_logger'>logger</span>
   <span class='ivar'>@last_status</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='ivar'>@poll_lock</span> <span class='op'>=</span> <span class='const'>Mutex</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
 
   <span class='kw'>unless</span> <span class='ivar'>@store</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='ivar'>@cache</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="ExpiringCache.html" title="LaunchDarkly::Impl::ExpiringCache (class)">ExpiringCache</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ExpiringCache.html#initialize-instance_method" title="LaunchDarkly::Impl::ExpiringCache#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_big_segments_config'>big_segments_config</span><span class='period'>.</span><span class='id identifier rubyid_context_cache_size'>context_cache_size</span><span class='comma'>,</span> <span class='id identifier rubyid_big_segments_config'>big_segments_config</span><span class='period'>.</span><span class='id identifier rubyid_context_cache_time'>context_cache_time</span><span class='rparen'>)</span>
@@ -519,12 +521,12 @@ we will never modify the membership properties after they're queried</p>
       <pre class="lines">
 
 
-32
 33
-34</pre>
+34
+35</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 32</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 33</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_status_provider'>status_provider</span>
   <span class='ivar'>@status_provider</span>
@@ -583,12 +585,12 @@ we will never modify the membership properties after they're queried</p>
       <pre class="lines">
 
 
-83
-84
-85</pre>
+104
+105
+106</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 83</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 104</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_hash_for_context_key'>hash_for_context_key</span><span class='lparen'>(</span><span class='id identifier rubyid_context_key'>context_key</span><span class='rparen'>)</span>
   <span class='const'>Digest</span><span class='op'>::</span><span class='const'>SHA256</span><span class='period'>.</span><span class='id identifier rubyid_base64digest'>base64digest</span><span class='lparen'>(</span><span class='id identifier rubyid_context_key'>context_key</span><span class='rparen'>)</span>
@@ -646,7 +648,6 @@ we will never modify the membership properties after they're queried</p>
       <pre class="lines">
 
 
-39
 40
 41
 42
@@ -664,10 +665,11 @@ we will never modify the membership properties after they're queried</p>
 54
 55
 56
-57</pre>
+57
+58</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 39</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 40</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_context_membership'>get_context_membership</span><span class='lparen'>(</span><span class='id identifier rubyid_context_key'>context_key</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='ivar'>@store</span>
@@ -682,11 +684,11 @@ we will never modify the membership properties after they're queried</p>
       <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="BigSegmentMembershipResult.html" title="LaunchDarkly::Impl::BigSegmentMembershipResult (class)">BigSegmentMembershipResult</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>nil</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html" title="LaunchDarkly::BigSegmentsStatus (module)">BigSegmentsStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html#STORE_ERROR-constant" title="LaunchDarkly::BigSegmentsStatus::STORE_ERROR (constant)">STORE_ERROR</a></span></span><span class='rparen'>)</span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
-  <span class='id identifier rubyid_poll_store_and_update_status'>poll_store_and_update_status</span> <span class='kw'>unless</span> <span class='ivar'>@last_status</span>
-  <span class='kw'>unless</span> <span class='ivar'>@last_status</span><span class='period'>.</span><span class='id identifier rubyid_available'>available</span>
+  <span class='id identifier rubyid_status'>status</span> <span class='op'>=</span> <span class='id identifier rubyid_get_status'>get_status</span>
+  <span class='kw'>unless</span> <span class='id identifier rubyid_status'>status</span><span class='period'>.</span><span class='id identifier rubyid_available'>available</span>
     <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="BigSegmentMembershipResult.html" title="LaunchDarkly::Impl::BigSegmentMembershipResult (class)">BigSegmentMembershipResult</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_membership'>membership</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html" title="LaunchDarkly::BigSegmentsStatus (module)">BigSegmentsStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html#STORE_ERROR-constant" title="LaunchDarkly::BigSegmentsStatus::STORE_ERROR (constant)">STORE_ERROR</a></span></span><span class='rparen'>)</span>
   <span class='kw'>end</span>
-  <span class='const'><span class='object_link'><a href="BigSegmentMembershipResult.html" title="LaunchDarkly::Impl::BigSegmentMembershipResult (class)">BigSegmentMembershipResult</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_membership'>membership</span><span class='comma'>,</span> <span class='ivar'>@last_status</span><span class='period'>.</span><span class='id identifier rubyid_stale'>stale</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html" title="LaunchDarkly::BigSegmentsStatus (module)">BigSegmentsStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html#STALE-constant" title="LaunchDarkly::BigSegmentsStatus::STALE (constant)">STALE</a></span></span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html" title="LaunchDarkly::BigSegmentsStatus (module)">BigSegmentsStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html#HEALTHY-constant" title="LaunchDarkly::BigSegmentsStatus::HEALTHY (constant)">HEALTHY</a></span></span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="BigSegmentMembershipResult.html" title="LaunchDarkly::Impl::BigSegmentMembershipResult (class)">BigSegmentMembershipResult</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_membership'>membership</span><span class='comma'>,</span> <span class='id identifier rubyid_status'>status</span><span class='period'>.</span><span class='id identifier rubyid_stale'>stale</span> <span class='op'>?</span> <span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html" title="LaunchDarkly::BigSegmentsStatus (module)">BigSegmentsStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html#STALE-constant" title="LaunchDarkly::BigSegmentsStatus::STALE (constant)">STALE</a></span></span> <span class='op'>:</span> <span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html" title="LaunchDarkly::BigSegmentsStatus (module)">BigSegmentsStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../BigSegmentsStatus.html#HEALTHY-constant" title="LaunchDarkly::BigSegmentsStatus::HEALTHY (constant)">HEALTHY</a></span></span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -735,15 +737,39 @@ we will never modify the membership properties after they're queried</p>
       <pre class="lines">
 
 
-59
 60
-61</pre>
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 59</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 60</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_status'>get_status</span>
-  <span class='ivar'>@last_status</span> <span class='op'>||</span> <span class='id identifier rubyid_poll_store_and_update_status'>poll_store_and_update_status</span>
+  <span class='id identifier rubyid_status'>status</span> <span class='op'>=</span> <span class='ivar'>@last_status</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_status'>status</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span>
+
+  <span class='id identifier rubyid_new_status'>new_status</span> <span class='op'>=</span> <span class='ivar'>@poll_lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
+    <span class='comment'># Another caller may have finished a poll while we waited for the lock.
+</span>    <span class='id identifier rubyid_status'>status</span> <span class='op'>=</span> <span class='ivar'>@last_status</span>
+    <span class='kw'>return</span> <span class='id identifier rubyid_status'>status</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span>
+
+    <span class='id identifier rubyid_query_store_status'>query_store_status</span>
+  <span class='kw'>end</span>
+  <span class='ivar'>@status_provider</span><span class='period'>.</span><span class='id identifier rubyid_update_status'>update_status</span><span class='lparen'>(</span><span class='id identifier rubyid_new_status'>new_status</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_new_status'>new_status</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -792,36 +818,18 @@ we will never modify the membership properties after they're queried</p>
       <pre class="lines">
 
 
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
-74
-75
 76
-77</pre>
+77
+78
+79
+80
+81</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 63</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 76</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_poll_store_and_update_status'>poll_store_and_update_status</span>
-  <span class='id identifier rubyid_new_status'>new_status</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Interfaces/BigSegmentStoreStatus.html" title="LaunchDarkly::Interfaces::BigSegmentStoreStatus (class)">BigSegmentStoreStatus</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Interfaces/BigSegmentStoreStatus.html#initialize-instance_method" title="LaunchDarkly::Interfaces::BigSegmentStoreStatus#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span> <span class='comment'># default to &quot;unavailable&quot; if we don&#39;t get a new status below
-</span>  <span class='kw'>unless</span> <span class='ivar'>@store</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
-    <span class='kw'>begin</span>
-      <span class='id identifier rubyid_metadata'>metadata</span> <span class='op'>=</span> <span class='ivar'>@store</span><span class='period'>.</span><span class='id identifier rubyid_get_metadata'>get_metadata</span>
-      <span class='id identifier rubyid_new_status'>new_status</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Interfaces/BigSegmentStoreStatus.html" title="LaunchDarkly::Interfaces::BigSegmentStoreStatus (class)">BigSegmentStoreStatus</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Interfaces/BigSegmentStoreStatus.html#initialize-instance_method" title="LaunchDarkly::Interfaces::BigSegmentStoreStatus#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>true</span><span class='comma'>,</span> <span class='op'>!</span><span class='id identifier rubyid_metadata'>metadata</span> <span class='op'>||</span> <span class='id identifier rubyid_stale?'>stale?</span><span class='lparen'>(</span><span class='id identifier rubyid_metadata'>metadata</span><span class='period'>.</span><span class='id identifier rubyid_last_up_to_date'>last_up_to_date</span><span class='rparen'>)</span><span class='rparen'>)</span>
-    <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
-      <span class='const'><span class='object_link'><a href="../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_log_exception'><span class='object_link'><a href="Util.html#log_exception-class_method" title="LaunchDarkly::Impl::Util.log_exception (method)">log_exception</a></span></span><span class='lparen'>(</span><span class='ivar'>@logger</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Big Segment store status query returned error</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span>
-    <span class='kw'>end</span>
-  <span class='kw'>end</span>
-  <span class='ivar'>@last_status</span> <span class='op'>=</span> <span class='id identifier rubyid_new_status'>new_status</span>
+  <span class='id identifier rubyid_new_status'>new_status</span> <span class='op'>=</span> <span class='ivar'>@poll_lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_query_store_status'>query_store_status</span> <span class='rbrace'>}</span>
   <span class='ivar'>@status_provider</span><span class='period'>.</span><span class='id identifier rubyid_update_status'>update_status</span><span class='lparen'>(</span><span class='id identifier rubyid_new_status'>new_status</span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_new_status'>new_status</span>
@@ -886,12 +894,12 @@ we will never modify the membership properties after they're queried</p>
       <pre class="lines">
 
 
-79
-80
-81</pre>
+100
+101
+102</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 100</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stale?'>stale?</span><span class='lparen'>(</span><span class='id identifier rubyid_timestamp'>timestamp</span><span class='rparen'>)</span>
   <span class='op'>!</span><span class='id identifier rubyid_timestamp'>timestamp</span> <span class='op'>||</span> <span class='lparen'>(</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_current_time_millis'><span class='object_link'><a href="Util.html#current_time_millis-class_method" title="LaunchDarkly::Impl::Util.current_time_millis (method)">current_time_millis</a></span></span> <span class='op'>-</span> <span class='id identifier rubyid_timestamp'>timestamp</span><span class='rparen'>)</span> <span class='op'>&gt;=</span> <span class='ivar'>@stale_after_millis</span><span class='rparen'>)</span>
@@ -943,13 +951,13 @@ we will never modify the membership properties after they're queried</p>
       <pre class="lines">
 
 
-34
 35
 36
-37</pre>
+37
+38</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 34</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 35</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='ivar'>@poll_worker</span><span class='period'>.</span><span class='id identifier rubyid_stop'>stop</span> <span class='kw'>unless</span> <span class='ivar'>@poll_worker</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -965,7 +973,7 @@ we will never modify the membership properties after they're queried</p>
 </div>
 
       <div id="footer">
-  Generated on Wed Sep 16 20:25:24 2026 by
+  Generated on Tue Oct  6 15:03:12 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

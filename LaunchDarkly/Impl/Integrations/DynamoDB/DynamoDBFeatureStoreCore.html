@@ -662,7 +662,10 @@
 119
 120
 121
-122</pre>
+122
+123
+124
+125</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 109</span>
@@ -674,7 +677,10 @@
     <span class='id identifier rubyid_resp'>resp</span> <span class='op'>=</span> <span class='ivar'>@client</span><span class='period'>.</span><span class='id identifier rubyid_query'>query</span><span class='lparen'>(</span><span class='id identifier rubyid_req'>req</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_items'>items</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_item'>item</span><span class='op'>|</span>
       <span class='id identifier rubyid_item_out'>item_out</span> <span class='op'>=</span> <span class='id identifier rubyid_unmarshal_item'>unmarshal_item</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_item'>item</span><span class='rparen'>)</span>
-      <span class='id identifier rubyid_items_out'>items_out</span><span class='lbracket'>[</span><span class='id identifier rubyid_item_out'>item_out</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_item_out'>item_out</span>
+      <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_item_out'>item_out</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+      <span class='comment'># Use the sort key that the item is stored under, not the key inside the item. A
+</span>      <span class='comment'># deleted item (a &quot;tombstone&quot;) is not guaranteed to carry a key of its own.
+</span>      <span class='id identifier rubyid_items_out'>items_out</span><span class='lbracket'>[</span><span class='id identifier rubyid_item'>item</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="DynamoDBStoreImplBase.html#SORT_KEY-constant" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBStoreImplBase::SORT_KEY (constant)">SORT_KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_item_out'>item_out</span>
     <span class='kw'>end</span>
     <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_last_evaluated_key'>last_evaluated_key</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_last_evaluated_key'>last_evaluated_key</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>==</span> <span class='int'>0</span>
     <span class='id identifier rubyid_req'>req</span><span class='period'>.</span><span class='id identifier rubyid_exclusive_start_key'>exclusive_start_key</span> <span class='op'>=</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_last_evaluated_key'>last_evaluated_key</span>
@@ -911,13 +917,13 @@
       <pre class="lines">
 
 
-148
-149
-150
-151</pre>
+151
+152
+153
+154</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 148</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 151</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized_internal?'>initialized_internal?</span>
   <span class='id identifier rubyid_resp'>resp</span> <span class='op'>=</span> <span class='id identifier rubyid_get_item_by_keys'>get_item_by_keys</span><span class='lparen'>(</span><span class='id identifier rubyid_inited_key'>inited_key</span><span class='comma'>,</span> <span class='id identifier rubyid_inited_key'>inited_key</span><span class='rparen'>)</span>
@@ -970,9 +976,6 @@
       <pre class="lines">
 
 
-124
-125
-126
 127
 128
 129
@@ -992,10 +995,13 @@
 143
 144
 145
-146</pre>
+146
+147
+148
+149</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 124</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/integrations/dynamodb_impl.rb', line 127</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_upsert_internal'>upsert_internal</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_encoded_item'>encoded_item</span> <span class='op'>=</span> <span class='id identifier rubyid_marshal_item'>marshal_item</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_new_item'>new_item</span><span class='rparen'>)</span>
@@ -1030,7 +1036,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Sep 16 20:25:26 2026 by
+  Generated on Tue Oct  6 15:03:15 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

@@ -489,7 +489,8 @@
 92
 93
 94
-95</pre>
+95
+96</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 41</span>
@@ -503,6 +504,7 @@
   <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span>
     <span class='label'>headers:</span> <span class='id identifier rubyid_headers'>headers</span><span class='comma'>,</span>
     <span class='label'>read_timeout:</span> <span class='const'><span class='object_link'><a href="../DataSource.html#READ_TIMEOUT_SECONDS-constant" title="LaunchDarkly::Impl::DataSource::READ_TIMEOUT_SECONDS (constant)">READ_TIMEOUT_SECONDS</a></span></span><span class='comma'>,</span>
+    <span class='label'>connect_timeout:</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_connect_timeout'>connect_timeout</span><span class='comma'>,</span>
     <span class='label'>logger:</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span>
     <span class='label'>socket_factory:</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_socket_factory'>socket_factory</span><span class='comma'>,</span>
     <span class='label'>reconnect_time:</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_initial_reconnect_delay'>initial_reconnect_delay</span><span class='comma'>,</span>
@@ -596,12 +598,12 @@
       <pre class="lines">
 
 
-97
 98
-99</pre>
+99
+100</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 97</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 98</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='id identifier rubyid_stop_with_error_info'>stop_with_error_info</span>
@@ -616,7 +618,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Sep 16 20:25:26 2026 by
+  Generated on Tue Oct  6 15:03:14 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

@@ -273,13 +273,13 @@ to do make notifications happen is to call the Observer methods &quot;changed&qu
       <pre class="lines">
 
 
-99
-100
-101
-102</pre>
+120
+121
+122
+123</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 99</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 120</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_status_fn'>status_fn</span><span class='rparen'>)</span>
   <span class='ivar'>@status_fn</span> <span class='op'>=</span> <span class='id identifier rubyid_status_fn'>status_fn</span>
@@ -339,12 +339,12 @@ to do make notifications happen is to call the Observer methods &quot;changed&qu
       <pre class="lines">
 
 
-104
-105
-106</pre>
+125
+126
+127</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 104</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 125</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_status'>status</span>
   <span class='ivar'>@status_fn</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span>
@@ -396,16 +396,16 @@ to do make notifications happen is to call the Observer methods &quot;changed&qu
       <pre class="lines">
 
 
-108
-109
-110
-111
-112
-113
-114</pre>
+129
+130
+131
+132
+133
+134
+135</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 108</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/big_segments.rb', line 129</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_update_status'>update_status</span><span class='lparen'>(</span><span class='id identifier rubyid_new_status'>new_status</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='op'>!</span><span class='ivar'>@last_status</span> <span class='op'>||</span> <span class='id identifier rubyid_new_status'>new_status</span> <span class='op'>!=</span> <span class='ivar'>@last_status</span>
@@ -424,7 +424,7 @@ to do make notifications happen is to call the Observer methods &quot;changed&qu
 </div>
 
       <div id="footer">
-  Generated on Wed Sep 16 20:25:24 2026 by
+  Generated on Tue Oct  6 15:03:12 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>
