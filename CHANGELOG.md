@@ -2,6 +2,19 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.18.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.18.0...8.18.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* Pass connect_timeout to the streaming SSE client ([#458](https://github.com/launchdarkly/ruby-server-sdk/issues/458)) ([f4a07af](https://github.com/launchdarkly/ruby-server-sdk/commit/f4a07af582aa65b397bf0d577014253ceda423e0))
+* Prevent close from hanging after a persistent store read fails ([91b7c9c](https://github.com/launchdarkly/ruby-server-sdk/commit/91b7c9caf6bcabd1faa8ab91bed85bd4c787faac))
+* Prevent flags from falling back to defaults when a deleted item has no key ([afb9f3d](https://github.com/launchdarkly/ruby-server-sdk/commit/afb9f3d164eb40e843eca2b2e8084ca31211031d))
+* Prevent flags from falling back to defaults when Consul holds one item ([8891226](https://github.com/launchdarkly/ruby-server-sdk/commit/88912263cdf5d63a2ad533bdc249a20845222cd3))
+* Prevent the store availability poller from outliving the client ([91b7c9c](https://github.com/launchdarkly/ruby-server-sdk/commit/91b7c9caf6bcabd1faa8ab91bed85bd4c787faac))
+* Publish the data source status before releasing ready waiters ([#431](https://github.com/launchdarkly/ruby-server-sdk/issues/431)) ([0e224b9](https://github.com/launchdarkly/ruby-server-sdk/commit/0e224b95c96812db368aef6d871de1762191ecbe))
+* Reuse an in-flight big segment status poll instead of querying twice ([#460](https://github.com/launchdarkly/ruby-server-sdk/issues/460)) ([96cca28](https://github.com/launchdarkly/ruby-server-sdk/commit/96cca285d00577bd73a16864d8c3cedb2b09b3bc))
+
 ## [8.18.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.17.0...8.18.0) (2026-09-16)
 
 
