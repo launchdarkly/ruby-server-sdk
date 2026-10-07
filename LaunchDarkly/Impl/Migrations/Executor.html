@@ -528,7 +528,7 @@
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/migrations/migrator.rb', line 272</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_start'>start</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span>
+  <span class='id identifier rubyid_start'>start</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_monotonic_seconds'><span class='object_link'><a href="../Util.html#monotonic_seconds-class_method" title="LaunchDarkly::Impl::Util.monotonic_seconds (method)">monotonic_seconds</a></span></span>
 
   <span class='kw'>begin</span>
     <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='ivar'>@fn</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='ivar'>@payload</span><span class='rparen'>)</span>
@@ -537,7 +537,7 @@
     <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Result.html" title="LaunchDarkly::Result (class)">Result</a></span></span><span class='period'>.</span><span class='id identifier rubyid_fail'><span class='object_link'><a href="../../Result.html#fail-class_method" title="LaunchDarkly::Result.fail (method)">fail</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_origin'>origin</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39; operation raised an exception</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 
-  <span class='ivar'>@tracker</span><span class='period'>.</span><span class='id identifier rubyid_latency'>latency</span><span class='lparen'>(</span><span class='ivar'>@origin</span><span class='comma'>,</span> <span class='lparen'>(</span><span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span> <span class='op'>-</span> <span class='id identifier rubyid_start'>start</span><span class='rparen'>)</span> <span class='op'>*</span> <span class='int'>1_000</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@measure_latency</span>
+  <span class='ivar'>@tracker</span><span class='period'>.</span><span class='id identifier rubyid_latency'>latency</span><span class='lparen'>(</span><span class='ivar'>@origin</span><span class='comma'>,</span> <span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_monotonic_seconds'><span class='object_link'><a href="../Util.html#monotonic_seconds-class_method" title="LaunchDarkly::Impl::Util.monotonic_seconds (method)">monotonic_seconds</a></span></span> <span class='op'>-</span> <span class='id identifier rubyid_start'>start</span><span class='rparen'>)</span> <span class='op'>*</span> <span class='int'>1_000</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@measure_latency</span>
   <span class='ivar'>@tracker</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='ivar'>@origin</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@measure_errors</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_success?'>success?</span>
   <span class='ivar'>@tracker</span><span class='period'>.</span><span class='id identifier rubyid_invoked'>invoked</span><span class='lparen'>(</span><span class='ivar'>@origin</span><span class='rparen'>)</span>
 
@@ -553,7 +553,7 @@
 </div>
 
       <div id="footer">
-  Generated on Tue Oct  6 15:03:15 2026 by
+  Generated on Wed Oct  7 16:03:33 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

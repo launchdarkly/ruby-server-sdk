@@ -186,7 +186,7 @@ It maintains the current status of the data source and broadcasts status changes
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(status_broadcaster)  &#x21d2; StatusProviderV2 </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(status_broadcaster, clock: MONOTONIC_CLOCK)  &#x21d2; StatusProviderV2 </a>
     
 
     
@@ -291,7 +291,7 @@ It maintains the current status of the data source and broadcasts status changes
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(status_broadcaster)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::DataSource::StatusProviderV2 (class)">StatusProviderV2</a></span></tt> 
+    #<strong>initialize</strong>(status_broadcaster, clock: MONOTONIC_CLOCK)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::DataSource::StatusProviderV2 (class)">StatusProviderV2</a></span></tt> 
   
 
   
@@ -325,6 +325,22 @@ It maintains the current status of the data source and broadcasts status changes
       
     </li>
   
+    <li>
+      
+        <span class='name'>clock</span>
+      
+      
+        <span class='type'>(<tt>#call</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>MONOTONIC_CLOCK</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>returns seconds on a monotonic clock; injectable for tests</p></div>
+      
+    </li>
+  
 </ul>
 
 <p class="tag_title">Since:</p>
@@ -348,26 +364,30 @@ It maintains the current status of the data source and broadcasts status changes
       <pre class="lines">
 
 
-27
-28
-29
-30
-31
 32
 33
 34
-35</pre>
+35
+36
+37
+38
+39
+40
+41
+42</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/status_provider.rb', line 27</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/status_provider.rb', line 32</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_status_broadcaster'>status_broadcaster</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_status_broadcaster'>status_broadcaster</span><span class='comma'>,</span> <span class='label'>clock:</span> <span class='const'>MONOTONIC_CLOCK</span><span class='rparen'>)</span>
   <span class='ivar'>@status_broadcaster</span> <span class='op'>=</span> <span class='id identifier rubyid_status_broadcaster'>status_broadcaster</span>
+  <span class='ivar'>@clock</span> <span class='op'>=</span> <span class='id identifier rubyid_clock'>clock</span>
   <span class='ivar'>@status</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html#initialize-instance_method" title="LaunchDarkly::Interfaces::DataSource::Status#initialize (method)">new</a></span></span><span class='lparen'>(</span>
     <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html#INITIALIZING-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING (constant)">INITIALIZING</a></span></span><span class='comma'>,</span>
     <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span><span class='comma'>,</span>
     <span class='kw'>nil</span>
   <span class='rparen'>)</span>
+  <span class='ivar'>@state_since_monotonic</span> <span class='op'>=</span> <span class='ivar'>@clock</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span>
   <span class='ivar'>@lock</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>ReadWriteLock</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -516,14 +536,14 @@ Status::INITIALIZING.</p>
       <pre class="lines">
 
 
-38
-39
-40
-41
-42</pre>
+45
+46
+47
+48
+49</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/status_provider.rb', line 38</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/status_provider.rb', line 45</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_status'>status</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_read_lock'>with_read_lock</span> <span class='kw'>do</span>
@@ -614,32 +634,6 @@ after a successful startup.</p>
       <pre class="lines">
 
 
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66
-67
-68
-69
-70
 71
 72
 73
@@ -647,12 +641,47 @@ after a successful startup.</p>
 75
 76
 77
-78</pre>
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/status_provider.rb', line 45</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/status_provider.rb', line 71</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_update_status'>update_status</span><span class='lparen'>(</span><span class='id identifier rubyid_new_state'>new_state</span><span class='comma'>,</span> <span class='id identifier rubyid_new_error'>new_error</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>if</span> <span class='id identifier rubyid_new_state'>new_state</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+
   <span class='id identifier rubyid_status_to_broadcast'>status_to_broadcast</span> <span class='op'>=</span> <span class='kw'>nil</span>
 
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_with_write_lock'>with_write_lock</span> <span class='kw'>do</span>
@@ -672,7 +701,12 @@ after a successful startup.</p>
     <span class='comment'># No change if state is the same and no error
 </span>    <span class='kw'>return</span> <span class='kw'>if</span> <span class='id identifier rubyid_new_state'>new_state</span> <span class='op'>==</span> <span class='id identifier rubyid_old_status'>old_status</span><span class='period'>.</span><span class='id identifier rubyid_state'>state</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_new_error'>new_error</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
 
-    <span class='id identifier rubyid_new_since'>new_since</span> <span class='op'>=</span> <span class='id identifier rubyid_new_state'>new_state</span> <span class='op'>==</span> <span class='id identifier rubyid_old_status'>old_status</span><span class='period'>.</span><span class='id identifier rubyid_state'>state</span> <span class='op'>?</span> <span class='ivar'>@status</span><span class='period'>.</span><span class='id identifier rubyid_state_since'>state_since</span> <span class='op'>:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_new_state'>new_state</span> <span class='op'>==</span> <span class='id identifier rubyid_old_status'>old_status</span><span class='period'>.</span><span class='id identifier rubyid_state'>state</span>
+      <span class='id identifier rubyid_new_since'>new_since</span> <span class='op'>=</span> <span class='ivar'>@status</span><span class='period'>.</span><span class='id identifier rubyid_state_since'>state_since</span>
+    <span class='kw'>else</span>
+      <span class='id identifier rubyid_new_since'>new_since</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span>
+      <span class='ivar'>@state_since_monotonic</span> <span class='op'>=</span> <span class='ivar'>@clock</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span>
+    <span class='kw'>end</span>
     <span class='id identifier rubyid_new_error'>new_error</span> <span class='op'>=</span> <span class='ivar'>@status</span><span class='period'>.</span><span class='id identifier rubyid_last_error'>last_error</span> <span class='kw'>if</span> <span class='id identifier rubyid_new_error'>new_error</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
 
     <span class='ivar'>@status</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html#initialize-instance_method" title="LaunchDarkly::Interfaces::DataSource::Status#initialize (method)">new</a></span></span><span class='lparen'>(</span>
@@ -696,7 +730,7 @@ after a successful startup.</p>
 </div>
 
       <div id="footer">
-  Generated on Tue Oct  6 15:03:14 2026 by
+  Generated on Wed Oct  7 16:03:33 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>
