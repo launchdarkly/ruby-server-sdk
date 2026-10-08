@@ -44,6 +44,19 @@ module LaunchDarkly
           end
         end
 
+        # Returns the call count once it has stopped changing for a moment. One edit can produce a
+        # burst of notifications, and a count taken in the middle of the burst would make the rest
+        # of it look like a later signal.
+        def settled(calls)
+          count = calls.value
+          loop do
+            sleep 0.2
+            break if calls.value == count
+            count = calls.value
+          end
+          count
+        end
+
         it "reports that the listen gem is available" do
           expect(Watcher.available?).to be true
         end
@@ -143,7 +156,8 @@ module LaunchDarkly
         it "keeps retrying when a directory is lost again as soon as its watches are set up" do
           skip "rb-inotify is not available on this platform" unless Watcher.inotify_available?
 
-          with_watcher([path("sub/a.json")]) do |watcher, calls|
+          logger = CapturingLogger.new
+          with_watcher([path("sub/a.json")], logger: logger) do |watcher, calls|
             # Take the directory away as soon as the watches are set up, and wait until the loss
             # has been handled, so that it is reported while the retry that set up the watches
             # is still finishing.
@@ -153,7 +167,9 @@ module LaunchDarkly
               if started && !lost_once
                 lost_once = true
                 FileUtils.rm_rf(path("sub"))
-                wait_for { Thread.list.none? { |t| t.name == "LD/FileDataWatcher" } }
+                # The loss has been handled once it is logged. The inotify thread cannot mark it,
+                # as it used to: each directory has its own watch now, and the thread outlives one.
+                wait_for { logger.output.include?("no longer exists") }
               end
               started
             end
@@ -214,6 +230,75 @@ module LaunchDarkly
           with_watcher([path("not-yet/a.json")]) do |watcher, _calls|
             watcher.stop
             expect(Thread.list.map(&:name)).not_to include("LD/FileDataWatcherRetry")
+          end
+        end
+
+        it "watches the directories that exist while another one is missing" do
+          logger = CapturingLogger.new
+          Dir.mkdir(path("sub"))
+          File.write(path("sub/a.json"), "{}")
+          missing_dir = path("not-yet")
+          with_watcher([path("sub/a.json"), File.join(missing_dir, "b.json")], logger: logger) do |_watcher, calls|
+            expect(logger.output).to include("directory does not exist: #{missing_dir}")
+            sleep 0.3
+            # The directory that exists is watched at once, not only when every directory exists.
+            File.write(path("sub/a.json"), '{"flagValues": {}}')
+            expect(wait_for { calls.value >= 1 }).to be true
+            before = settled(calls)
+
+            Dir.mkdir(missing_dir)
+            # The watch is set up on the next retry, and the callback runs once at that point.
+            expect(wait_for { calls.value > before }).to be true
+            # Nothing is missing any more, so the retry ends and does not signal again.
+            expect(wait_for { Thread.list.none? { |t| t.name == "LD/FileDataWatcherRetry" } }).to be true
+            before = settled(calls)
+            sleep 0.3
+            expect(calls.value).to eq(before)
+
+            File.write(File.join(missing_dir, "b.json"), "{}")
+            expect(wait_for { calls.value > before }).to be true
+          end
+        end
+
+        it "watches a lost directory again while another directory is still missing" do
+          skip "rb-inotify is not available on this platform" unless Watcher.inotify_available?
+
+          logger = CapturingLogger.new
+          Dir.mkdir(path("sub"))
+          File.write(path("sub/a.json"), "{}")
+          with_watcher([path("sub/a.json"), path("not-yet/b.json")], logger: logger) do |_watcher, calls|
+            FileUtils.rm_rf(path("sub"))
+            expect(wait_for { logger.output.match?(/WARN.*#{Regexp.escape(path('sub'))}/) }).to be true
+            before = settled(calls)
+
+            Dir.mkdir(path("sub"))
+            File.write(path("sub/a.json"), "{}")
+            # The directory is watched again on the next retry, which signals once at that point,
+            # although the other directory is still missing.
+            expect(wait_for { calls.value > before }).to be true
+            before = settled(calls)
+
+            File.write(path("sub/a.json"), '{"flagValues": {}}')
+            expect(wait_for { calls.value > before }).to be true
+            expect(Dir.exist?(path("not-yet"))).to be false
+            expect(logger.output).to include("directory does not exist: #{path('not-yet')}")
+          end
+        end
+
+        it "stops while a directory is missing and runs no callback afterwards" do
+          Dir.mkdir(path("sub"))
+          File.write(path("sub/a.json"), "{}")
+          with_watcher([path("sub/a.json"), path("not-yet/b.json")]) do |watcher, calls|
+            sleep 0.3
+            watcher.stop
+            expect(Thread.list.map(&:name)).not_to include("LD/FileDataWatcherRetry")
+            expect(Thread.list.map(&:name)).not_to include("LD/FileDataWatcher") if Watcher.inotify_available?
+
+            Dir.mkdir(path("not-yet"))
+            File.write(path("not-yet/b.json"), "{}")
+            File.write(path("sub/a.json"), '{"flagValues": {}}')
+            sleep 0.5
+            expect(calls.value).to eq(0)
           end
         end
       end
