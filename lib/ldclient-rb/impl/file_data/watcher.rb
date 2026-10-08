@@ -19,10 +19,10 @@ module LaunchDarkly
       # scans the whole directory tree under each watched directory.
       #
       # The watcher observes the directory of each file, so a configured file that does not exist
-      # yet is picked up when it appears. If a directory does not exist, or is deleted while it is
-      # watched, the watcher logs the problem and retries once per second until it exists. When the
-      # watches are in place after a retry, the callback runs once, so that a change made while
-      # there was no watch is not missed.
+      # yet is picked up when it appears. Each directory is watched on its own: one that does not
+      # exist, or that is deleted while it is watched, is logged and retried once per second until
+      # it exists, while the other directories stay watched. When a retry sets up a watch, the
+      # callback runs once, so that a change made while there was no watch is not missed.
       #
       # @private
       #
@@ -37,6 +37,11 @@ module LaunchDarkly
         # The inotify event flags that mean the watched directory itself is gone.
         INOTIFY_DIRECTORY_LOST = [:delete_self, :move_self].freeze
         private_constant :INOTIFY_DIRECTORY_LOST
+
+        # The watch on one real directory: the configured directories that resolve to it, the
+        # names of the configured files in it, and a callable that removes the watch.
+        WatchedDirectory = Struct.new(:directories, :names, :close)
+        private_constant :WatchedDirectory
 
         #
         # Returns true if a change notification mechanism can be loaded.
@@ -88,11 +93,18 @@ module LaunchDarkly
           @logger = logger
           @stopped = Concurrent::AtomicBoolean.new(false)
           @lock = Mutex.new
-          @listener = nil
           @retry_task = nil
           @last_error_message = nil
+          # The directories of the configured paths, in configuration order. A directory is in
+          # @missing until it is watched, and then in @watched under its real path. The lock
+          # guards both, @retry_task, and @inotify.
+          @directories = paths.map { |p| File.dirname(p) }.uniq
+          @missing = Set.new(@directories)
+          @watched = {}
+          @inotify = nil
 
-          schedule_retry unless try_start
+          try_start
+          schedule_retry unless @lock.synchronize { @missing.empty? }
         end
 
         #
@@ -102,19 +114,21 @@ module LaunchDarkly
         def stop
           return unless @stopped.make_true
 
-          listener, retry_task = @lock.synchronize do
-            pair = [@listener, @retry_task]
-            @listener = nil
+          closers, retry_task, inotify = @lock.synchronize do
+            state = [@watched.values.map(&:close), @retry_task, @inotify]
+            @watched.clear
             @retry_task = nil
-            pair
+            @inotify = nil
+            state
           end
           retry_task&.stop
-          listener&.stop
+          closers.each(&:call)
+          inotify&.stop
         end
 
         #
-        # Starts the task that attempts to set up the watches once per second, unless it already
-        # runs or the watcher is stopped.
+        # Starts the task that attempts to watch the missing directories once per second, unless
+        # it already runs or the watcher is stopped.
         #
         private def schedule_retry
           @lock.synchronize do
@@ -128,113 +142,157 @@ module LaunchDarkly
 
         private def retry_start
           return if @stopped.value
-          return unless try_start
 
+          added = try_start
+          # The task ends when nothing is missing. A directory lost meanwhile is back in @missing
+          # before its loss report calls schedule_retry, so either the task is kept here or that
+          # call starts a new one.
           retry_task = @lock.synchronize do
+            next nil unless @missing.empty?
+
             task = @retry_task
             @retry_task = nil
             task
           end
           # This runs on the retry task's own thread, which RepeatingTask#stop allows.
           retry_task&.stop
-          # The new watches can report the loss of their directory before the retry task is
-          # released above. That report finds the task still present and leaves the watches to
-          # it, so when they are gone the retry is started again here.
-          schedule_retry if @lock.synchronize { @listener.nil? }
-          @on_change.call unless @stopped.value
+          @on_change.call if added && !@stopped.value
         end
 
         #
         # Handles the loss of a watched directory. The notification mechanism reports it on its
-        # own thread, and the watches end with the directory, so they are torn down and set up
-        # again through the same retry as at start, once the directory exists.
+        # own thread. The watch ends with the directory, so it is removed and set up again through
+        # the same retry as at start, once the directory exists. The other directories keep their
+        # watches.
         #
-        private def directory_lost(directory)
-          listener = @lock.synchronize do
-            return if @stopped.value || @listener.nil?
+        private def directory_lost(real_directory)
+          entry = @lock.synchronize do
+            return if @stopped.value
 
-            l = @listener
-            @listener = nil
-            l
+            e = @watched.delete(real_directory)
+            return if e.nil?
+
+            @missing.merge(e.directories)
+            e
           end
-          @logger.warn { "[LDClient] Directory #{directory} no longer exists; its data files are watched again when it exists" }
-          listener.stop
+          @logger.warn { "[LDClient] Directory #{real_directory} no longer exists; its data files are watched again when it exists" }
+          entry.close.call
           schedule_retry
         end
 
         #
-        # Sets up the watches. Returns false, after logging, if that is not possible yet.
+        # Watches each missing directory that exists now. Returns true if at least one watch was
+        # added. The directories that are still missing, and any watch that could not be set up,
+        # are logged together, so that an unchanged situation repeats at debug level.
         #
         private def try_start
-          directories = @paths.map { |p| File.dirname(p) }.uniq
-          missing = directories.reject { |d| File.directory?(d) }
-          unless missing.empty?
-            log_setup_failure("directory does not exist: #{missing.join(', ')}")
-            return false
+          added = false
+          missing = []
+          problems = []
+          @lock.synchronize { @directories.select { |d| @missing.include?(d) } }.each do |directory|
+            unless File.directory?(directory)
+              missing << directory
+              next
+            end
+            begin
+              added = true if watch_directory(directory)
+            rescue => e
+              problems << e.message
+            end
           end
+          problems.unshift("directory does not exist: #{missing.join(', ')}") unless missing.empty?
+          if problems.empty?
+            @last_error_message = nil
+          else
+            log_setup_failure(problems.join("; "))
+          end
+          added
+        end
 
-          listener = Watcher.inotify_available? ? start_inotify : start_listen
-
+        #
+        # Watches the real directory of a configured directory, and records the names of the
+        # configured files in it. Two configured directories can resolve to the same real
+        # directory, which then has one watch for the names in both. Returns false if the watcher
+        # is stopped.
+        #
+        private def watch_directory(directory)
+          real_directory = File.realpath(directory)
+          names = @paths.select { |p| File.dirname(p) == directory }.map { |p| File.basename(p) }
           @lock.synchronize do
-            if @stopped.value
-              listener.stop
-            else
-              @listener = listener
+            return false if @stopped.value
+
+            entry = @watched[real_directory]
+            if entry.nil?
+              entry = WatchedDirectory.new(Set.new, Set.new, add_watch(real_directory))
+              @watched[real_directory] = entry
             end
+            entry.directories << directory
+            entry.names.merge(names)
+            @missing.delete(directory)
           end
-          @last_error_message = nil
           true
-        rescue => e
-          log_setup_failure(e.message)
-          false
         end
 
         #
-        # Watches the real directory of each file, without descending into subdirectories, and
-        # reports events whose file name is one of the watched names in that directory.
+        # Adds the notification mechanism's watch on a real directory and returns a callable that
+        # removes it. Called with the lock held, so that stop sees either no watch or a recorded
+        # one.
         #
-        private def start_inotify
-          names_by_directory = {}
-          @paths.each do |p|
-            real_directory = File.realpath(File.dirname(p))
-            (names_by_directory[real_directory] ||= Set.new) << File.basename(p)
-          end
+        private def add_watch(real_directory)
+          Watcher.inotify_available? ? add_inotify_watch(real_directory) : start_listen(real_directory)
+        end
 
-          notifier = INotify::Notifier.new
-          begin
-            names_by_directory.each do |directory, names|
-              notifier.watch(directory, *INOTIFY_EVENTS) do |event|
-                next if @stopped.value
-
-                if (event.flags & INOTIFY_DIRECTORY_LOST).empty?
-                  @on_change.call if names.include?(event.name)
-                else
-                  directory_lost(directory)
-                end
-              end
+        #
+        # Adds a watch on the directory itself, without descending into subdirectories, to the one
+        # inotify notifier, which is created with the first watch.
+        #
+        private def add_inotify_watch(real_directory)
+          @inotify ||= InotifyListener.new(INotify::Notifier.new, @logger)
+          watch = @inotify.watch(real_directory) { |event| inotify_event(real_directory, event) }
+          lambda do
+            begin
+              watch.close
+            rescue SystemCallError
+              # The kernel already removed the watch along with the directory.
             end
-          rescue
-            notifier.close
-            raise
           end
-          InotifyListener.new(notifier, @logger)
+        end
+
+        private def inotify_event(real_directory, event)
+          return if @stopped.value
+
+          if (event.flags & INOTIFY_DIRECTORY_LOST).empty?
+            @on_change.call if watched_name?(real_directory, event.name)
+          else
+            directory_lost(real_directory)
+          end
         end
 
         #
-        # Watches the real directory of each file with the `listen` gem, which reports paths under
-        # the real directory, so the paths to match are built the same way.
+        # Watches a real directory with the `listen` gem, which reports paths under the real
+        # directory, so a reported path is matched by its directory and name.
         #
-        private def start_listen
-          directories = @paths.map { |p| File.dirname(p) }.uniq
-          real_directories = directories.map { |d| File.realpath(d) }
-          watched = Set.new(@paths.map { |p| File.join(File.realpath(File.dirname(p)), File.basename(p)) })
+        private def start_listen(real_directory)
+          listener = Listen.to(real_directory) do |modified, added, removed|
+            next if @stopped.value
 
-          listener = Listen.to(*real_directories) do |modified, added, removed|
-            changed = (modified + added + removed).any? { |p| watched.include?(p) }
+            changed = (modified + added + removed).any? do |p|
+              File.dirname(p) == real_directory && watched_name?(real_directory, File.basename(p))
+            end
             @on_change.call if changed && !@stopped.value
           end
           listener.start
-          listener
+          -> { listener.stop }
+        end
+
+        #
+        # Returns true if the name is one of the configured files in the watched real directory.
+        #
+        private def watched_name?(real_directory, name)
+          @lock.synchronize do
+            entry = @watched[real_directory]
+            !entry.nil? && entry.names.include?(name)
+          end
         end
 
         private def log_setup_failure(message)
@@ -247,7 +305,8 @@ module LaunchDarkly
         end
 
         #
-        # Runs an inotify notifier on its own thread and stops it on request.
+        # Runs an inotify notifier on its own thread, takes watches for it over time, and stops it
+        # on request.
         #
         class InotifyListener
           def initialize(notifier, logger)
@@ -262,6 +321,14 @@ module LaunchDarkly
               end
             end
             @thread.name = "LD/FileDataWatcher"
+          end
+
+          #
+          # Adds a watch on a directory and returns the notifier's watch object, whose `close`
+          # removes the watch again.
+          #
+          def watch(directory, &callback)
+            @notifier.watch(directory, *INOTIFY_EVENTS, &callback)
           end
 
           #
