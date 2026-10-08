@@ -49,14 +49,11 @@ module LaunchDarkly
         end
 
         #
-        # The current status together with the seconds the data source has spent
-        # in its current state, read atomically under one lock acquisition so the
-        # duration can never be paired with a stale state.
+        # Returns the current status and the seconds it has been in that state.
         #
-        # The duration is measured on the monotonic clock, so a wall-clock step
-        # cannot distort it. `status.state_since` remains the wall-clock time
-        # reported to applications; this duration is the value to use when it
-        # decides behavior.
+        # One lock acquisition keeps the pair consistent. The seconds are
+        # monotonic — use them for duration decisions instead of arithmetic on
+        # the wall-clock `state_since`.
         #
         # @private
         # @return [Array(LaunchDarkly::Interfaces::DataSource::Status, Float)]

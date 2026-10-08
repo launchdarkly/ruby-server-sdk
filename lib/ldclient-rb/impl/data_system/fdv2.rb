@@ -515,6 +515,9 @@ module LaunchDarkly
         #
         # Determine if we should fallback to the next synchronizer.
         #
+        # The caller supplies the elapsed time because the monotonic baseline is
+        # private to the status provider; see StatusProviderV2#status_and_seconds_in_state.
+        #
         # @param status [LaunchDarkly::Interfaces::DataSource::Status] Current data source status
         # @param seconds_in_state [Float] monotonic seconds spent in status.state
         # @return [Boolean] true if fallback condition is met
@@ -530,6 +533,9 @@ module LaunchDarkly
 
         #
         # Determine if we should recover to the primary synchronizer.
+        #
+        # The caller supplies the elapsed time because the monotonic baseline is
+        # private to the status provider; see StatusProviderV2#status_and_seconds_in_state.
         #
         # @param status [LaunchDarkly::Interfaces::DataSource::Status] Current data source status
         # @param seconds_in_state [Float] monotonic seconds spent in status.state
