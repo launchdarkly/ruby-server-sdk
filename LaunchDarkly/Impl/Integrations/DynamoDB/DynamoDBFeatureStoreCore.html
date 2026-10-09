@@ -683,7 +683,7 @@
 </span>      <span class='id identifier rubyid_items_out'>items_out</span><span class='lbracket'>[</span><span class='id identifier rubyid_item'>item</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="DynamoDBStoreImplBase.html#SORT_KEY-constant" title="LaunchDarkly::Impl::Integrations::DynamoDB::DynamoDBStoreImplBase::SORT_KEY (constant)">SORT_KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_item_out'>item_out</span>
     <span class='kw'>end</span>
     <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_last_evaluated_key'>last_evaluated_key</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_last_evaluated_key'>last_evaluated_key</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>==</span> <span class='int'>0</span>
-    <span class='id identifier rubyid_req'>req</span><span class='period'>.</span><span class='id identifier rubyid_exclusive_start_key'>exclusive_start_key</span> <span class='op'>=</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_last_evaluated_key'>last_evaluated_key</span>
+    <span class='id identifier rubyid_req'>req</span><span class='lbracket'>[</span><span class='symbol'>:exclusive_start_key</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_resp'>resp</span><span class='period'>.</span><span class='id identifier rubyid_last_evaluated_key'>last_evaluated_key</span>
   <span class='kw'>end</span>
   <span class='id identifier rubyid_items_out'>items_out</span>
 <span class='kw'>end</span></pre>
@@ -1036,7 +1036,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Oct  7 16:03:33 2026 by
+  Generated on Fri Oct  9 22:46:19 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>
