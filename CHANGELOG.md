@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.18.3](https://github.com/launchdarkly/ruby-server-sdk/compare/8.18.2...8.18.3) (2026-10-09)
+
+
+### Bug Fixes
+
+* Prevent the DynamoDB store from failing when flags or segments exceed 1 MB ([#464](https://github.com/launchdarkly/ruby-server-sdk/issues/464)) ([3777ee1](https://github.com/launchdarkly/ruby-server-sdk/commit/3777ee173468af1d28821165b47f86c39e13bf7e))
+
 ## [8.18.2](https://github.com/launchdarkly/ruby-server-sdk/compare/8.18.1...8.18.2) (2026-10-06)
 
 
