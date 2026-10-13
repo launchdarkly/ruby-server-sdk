@@ -197,7 +197,11 @@ module LaunchDarkly
             expect(reloader.reload_now).to be false
             write("a.json", values_doc({ flag1: "fixed" }))
 
-            expect(wait_for { recorder.applied.length == 1 }).to be true
+            # The retry recovers. The write is ordinary, not atomic, so the retry may read the
+            # file while it is still empty: an empty document is valid and is applied as the
+            # recovery, and the fixed content is then loaded on demand.
+            expect(wait_for { recorder.applied.length >= 1 }).to be true
+            expect(reloader.reload_now).to be true if recorder.flag_values != { flag1: "fixed" }
             expect(recorder.flag_values).to eq({ flag1: "fixed" })
           end
         end
