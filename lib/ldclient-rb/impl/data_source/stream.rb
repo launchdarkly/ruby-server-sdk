@@ -54,8 +54,7 @@ module LaunchDarkly
             connect_timeout: @config.connect_timeout,
             logger: @config.logger,
             socket_factory: @config.socket_factory,
-            # The SDK waits in the failure handlers instead. This must be an Integer: the SSE client
-            # multiplies it by a power of two, and a Float 0.0 becomes NaN once that power overflows.
+            # The SDK waits in its error handler before each reconnect, so the SSE client adds no delay.
             reconnect_time: 0,
           }
           log_connection_started
