@@ -33,6 +33,21 @@ module LaunchDarkly
         Aws::DynamoDB::Client.new(DYNAMODB_OPTS)
       end
 
+      # DynamoDB returns at most 1 MB per Query page. A small page limit makes the real server page small data sets.
+      # The returned array records each Query request that the client sends.
+      def self.create_paging_client(page_size)
+        client = create_test_client
+        queries = []
+        client.handle(step: :initialize) do |context|
+          if context.operation_name == :query
+            context.params[:limit] = page_size
+            queries << context.params.dup
+          end
+          @handler.call(context)
+        end
+        [client, queries]
+      end
+
       def self.create_table_if_necessary
         client = create_test_client
         begin
@@ -81,7 +96,7 @@ module LaunchDarkly
             end
           end
           break if resp.last_evaluated_key.nil? || resp.last_evaluated_key.length == 0
-          req.exclusive_start_key = resp.last_evaluated_key
+          req[:exclusive_start_key] = resp.last_evaluated_key
         end
         requests = items_to_delete.map do |item|
           { delete_request: { key: item } }
@@ -160,6 +175,52 @@ module LaunchDarkly
         ensure_stop(tester.create_feature_store) do |store|
           expect(store.monitoring_enabled?).to be true
           expect(store.available?).to be true
+        end
+      end
+
+      describe "with a Query result that needs more than one page" do
+        let(:tester) { DynamoDBStoreTester.new(DynamoDBStoreTester::FEATURE_STORE_BASE_OPTS) }
+        let(:flags) do
+          (1..5).to_h do |i|
+            key = "flag#{i}"
+            [key.to_sym, { key: key, version: 1 }]
+          end
+        end
+
+        before { tester.clear_data }
+
+        def create_paging_store(page_size)
+          client, queries = DynamoDBStoreTester.create_paging_client(page_size)
+          opts = DynamoDBStoreTester::FEATURE_STORE_BASE_OPTS.merge(existing_client: client, expiration: 0)
+          [LaunchDarkly::Integrations::DynamoDB.new_feature_store(DynamoDBStoreTester::TABLE_NAME, opts), queries]
+        end
+
+        it "reads every page in all" do
+          ensure_stop(tester.create_feature_store) do |store|
+            store.init({ LaunchDarkly::Impl::DataStore::FEATURES => flags })
+          end
+
+          store, queries = create_paging_store(2)
+          ensure_stop(store) do
+            expect(store.all(LaunchDarkly::Impl::DataStore::FEATURES).keys).to match_array(flags.keys)
+          end
+          expect(queries.count { |q| q[:exclusive_start_key] }).to be >= 2
+        end
+
+        it "reads every page of existing keys in init and deletes the keys that are not in the new data" do
+          ensure_stop(tester.create_feature_store) do |store|
+            store.init({ LaunchDarkly::Impl::DataStore::FEATURES => flags })
+          end
+
+          store, queries = create_paging_store(2)
+          ensure_stop(store) do
+            store.init({ LaunchDarkly::Impl::DataStore::FEATURES => { flag1: flags[:flag1] } })
+          end
+          expect(queries.count { |q| q[:exclusive_start_key] }).to be >= 2
+
+          ensure_stop(tester.create_feature_store) do |reader|
+            expect(reader.all(LaunchDarkly::Impl::DataStore::FEATURES).keys).to eq([:flag1])
+          end
         end
       end
 

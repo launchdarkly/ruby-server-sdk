@@ -1,6 +1,8 @@
 require 'ldclient-rb/interfaces'
 require 'ldclient-rb/impl/migrations/migrator'
 
+require 'timecop'
+
 require "events_test_util"
 require "mock_components"
 require "model_builders"
@@ -698,6 +700,31 @@ module LaunchDarkly
               end
             end
           end
+        end
+      end
+
+      describe Executor do
+        it "measures latency on the monotonic clock, unaffected by wall-clock steps" do
+          recorded = nil
+          tracker = double("tracker")
+          allow(tracker).to receive(:latency) { |_origin, ms| recorded = ms }
+          allow(tracker).to receive(:invoked)
+
+          fn = ->(_) {
+            Timecop.freeze(Time.now + 3600)
+            LaunchDarkly::Result.success(nil)
+          }
+
+          executor = Executor.new($null_log, LaunchDarkly::Migrations::ORIGIN_OLD, fn, tracker, true, false, nil)
+          begin
+            executor.run
+          ensure
+            Timecop.return
+          end
+
+          expect(recorded).to be >= 0
+          # An hour of wall-clock step must not leak into the measured latency.
+          expect(recorded).to be < 1_000
         end
       end
     end

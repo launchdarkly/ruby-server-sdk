@@ -1,8 +1,8 @@
-require "http_util"
 require "ldclient-rb/impl/data_source/stream"
 require "ld-eventsource"
 require "model_builders"
 require "spec_helper"
+require "http_util"
 
 module LaunchDarkly
   describe Impl::DataSource::StreamProcessor do
@@ -445,6 +445,67 @@ module LaunchDarkly
       end
     end
 
+    describe 'SSE client options' do
+      def captured_sse_options(processor)
+        captured = nil
+        allow(SSE::Client).to receive(:new) do |_uri, **opts|
+          captured = opts
+          double("SSE::Client", close: nil)
+        end
+
+        processor.start
+        processor.stop
+        captured
+      end
+
+      it 'passes the default connect timeout' do
+        opts = captured_sse_options(processor)
+        expect(opts[:connect_timeout]).to eq(Config.default_connect_timeout)
+      end
+
+      it 'passes a configured connect timeout' do
+        config = Config.new(connect_timeout: 0.5)
+        opts = captured_sse_options(subject.new("sdk_key", config))
+        expect(opts[:connect_timeout]).to eq(0.5)
+      end
+
+      it 'passes the configured client options' do
+        socket_factory = Object.new
+        config = Config.new(socket_factory: socket_factory, initial_reconnect_delay: 3, logger: $null_log)
+        opts = captured_sse_options(subject.new("sdk_key", config))
+        expect(opts).to eq(
+          headers: Impl::Util.default_http_headers("sdk_key", config),
+          read_timeout: Impl::DataSource::READ_TIMEOUT_SECONDS,
+          connect_timeout: Config.default_connect_timeout,
+          logger: $null_log,
+          socket_factory: socket_factory,
+          # The SDK owns the reconnect delay, so the configured initial_reconnect_delay does not reach the SSE client.
+          reconnect_time: 0
+        )
+      end
+
+      it 'abandons a connect attempt after the connect timeout' do
+        socket_factory = HangingSocketFactory.new
+        config = Config.new(
+          stream_uri: "http://stream.example.com",
+          connect_timeout: 0.2,
+          socket_factory: socket_factory,
+          logger: $null_log
+        )
+        processor = subject.new("sdk_key", config)
+
+        processor.start
+        begin
+          # Without the connect timeout, the attempt blocks for the SSE client default of 10 seconds.
+          blocked = socket_factory.first_blocked_duration(3)
+          expect(blocked).not_to be_nil
+          expect(blocked).to be < 1
+        ensure
+          processor.stop
+        end
+      end
+    end
+
     describe '#log_connection_result' do
       it "logs successful connection when diagnostic_accumulator is provided" do
         diagnostic_accumulator = double("DiagnosticAccumulator")
@@ -488,6 +549,23 @@ module LaunchDarkly
         processor.send(:log_connection_started)
         sleep(0.01) # Small delay to ensure measurable duration
         processor.send(:log_connection_result, true)
+      end
+
+      it "measures duration on the monotonic clock, unaffected by wall-clock steps" do
+        diagnostic_accumulator = double("DiagnosticAccumulator")
+
+        processor = subject.new("sdk_key", config, diagnostic_accumulator)
+
+        expect(diagnostic_accumulator).to receive(:record_stream_init) do |_timestamp, _failed, duration|
+          # A backward wall-clock step used to produce a negative duration here.
+          expect(duration).to be >= 0
+          expect(duration).to be < 1000
+        end
+
+        processor.send(:log_connection_started)
+        Timecop.freeze(Time.now - 120) do
+          processor.send(:log_connection_result, true)
+        end
       end
 
       it "only logs once per connection attempt" do

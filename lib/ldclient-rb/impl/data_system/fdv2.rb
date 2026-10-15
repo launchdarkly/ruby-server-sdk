@@ -292,6 +292,10 @@ module LaunchDarkly
 
                 # Set ready event if and only if a selector is defined for the changeset.
                 if basis.change_set.selector && basis.change_set.selector.defined?
+                  @data_source_status_provider.update_status(
+                    LaunchDarkly::Interfaces::DataSource::Status::VALID,
+                    nil
+                  )
                   @ready_event.set
                   return fallback
                 end
@@ -459,10 +463,12 @@ module LaunchDarkly
                 break if update == "quit"
 
                 if update == "check"
-                  # Check condition periodically
-                  current_status = @data_source_status_provider.status
-                  return SyncResult::RECOVER if check_recovery && recovery_condition(current_status)
-                  return SyncResult::FALLBACK if fallback_condition(current_status)
+                  # Check condition periodically. One atomic read pairs the status with
+                  # its monotonic time-in-state, so a verdict can never pair a stale
+                  # state with a fresh duration.
+                  current_status, seconds_in_state = @data_source_status_provider.status_and_seconds_in_state
+                  return SyncResult::RECOVER if check_recovery && recovery_condition(current_status, seconds_in_state)
+                  return SyncResult::FALLBACK if fallback_condition(current_status, seconds_in_state)
                 end
                 next
               end
@@ -473,14 +479,13 @@ module LaunchDarkly
               # Handle the update
               @store.apply(update.change_set, true) if update.change_set
 
-              # Set ready event on valid update
-              if update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
-                @ready_event.set
-                record_environment_id(update.environment_id)
-              end
+              valid = update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
+              record_environment_id(update.environment_id) if valid
 
               # Update status
               @data_source_status_provider.update_status(update.state, update.error)
+
+              @ready_event.set if valid
 
               return SyncResult::FDV1 if update.fallback_to_fdv1
 
@@ -514,13 +519,14 @@ module LaunchDarkly
         # Determine if we should fallback to the next synchronizer.
         #
         # @param status [LaunchDarkly::Interfaces::DataSource::Status] Current data source status
+        # @param seconds_in_state [Float] monotonic seconds spent in status.state
         # @return [Boolean] true if fallback condition is met
         #
-        def fallback_condition(status)
+        def fallback_condition(status, seconds_in_state)
           interrupted_at_runtime = status.state == LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED &&
-            Time.now - status.state_since > 60  # 1 minute
+            seconds_in_state > 60  # 1 minute
           cannot_initialize = status.state == LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING &&
-            Time.now - status.state_since > 10  # 10 seconds
+            seconds_in_state > 10  # 10 seconds
 
           interrupted_at_runtime || cannot_initialize
         end
@@ -529,11 +535,12 @@ module LaunchDarkly
         # Determine if we should recover to the primary synchronizer.
         #
         # @param status [LaunchDarkly::Interfaces::DataSource::Status] Current data source status
+        # @param seconds_in_state [Float] monotonic seconds spent in status.state
         # @return [Boolean] true if recovery condition is met (healthy for too long)
         #
-        def recovery_condition(status)
+        def recovery_condition(status, seconds_in_state)
           status.state == LaunchDarkly::Interfaces::DataSource::Status::VALID &&
-            Time.now - status.state_since > 300  # 5 minutes
+            seconds_in_state > 300  # 5 minutes
         end
 
         #

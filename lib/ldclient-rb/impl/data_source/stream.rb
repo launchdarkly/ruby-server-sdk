@@ -35,6 +35,7 @@ module LaunchDarkly
           @stop_event = Concurrent::Event.new
           @retry_state = Impl::RetryState.for_streaming(@config.initial_reconnect_delay, @config.logger)
           @connection_attempt_start_time = 0
+          @connection_attempt_started_monotonic = nil
         end
 
         def initialized?
@@ -50,6 +51,7 @@ module LaunchDarkly
           opts = {
             headers: headers,
             read_timeout: READ_TIMEOUT_SECONDS,
+            connect_timeout: @config.connect_timeout,
             logger: @config.logger,
             socket_factory: @config.socket_factory,
             # The SDK waits in the failure handlers instead. This must be an Integer: the SSE client
@@ -221,13 +223,16 @@ module LaunchDarkly
 
         def log_connection_started
           @connection_attempt_start_time = Impl::Util::current_time_millis
+          @connection_attempt_started_monotonic = Impl::Util.monotonic_seconds
         end
 
         def log_connection_result(is_success)
-          if !@diagnostic_accumulator.nil? && @connection_attempt_start_time > 0
-            @diagnostic_accumulator.record_stream_init(@connection_attempt_start_time, !is_success,
-              Impl::Util::current_time_millis - @connection_attempt_start_time)
-            @connection_attempt_start_time = 0
+          if !@diagnostic_accumulator.nil? && !@connection_attempt_started_monotonic.nil?
+            # The monotonic stamp is both the "attempt in flight" sentinel and the
+            # duration base; the wall-clock value is only the reported timestamp.
+            duration_millis = ((Impl::Util.monotonic_seconds - @connection_attempt_started_monotonic) * 1_000).to_i
+            @diagnostic_accumulator.record_stream_init(@connection_attempt_start_time, !is_success, duration_millis)
+            @connection_attempt_started_monotonic = nil
           end
         end
       end

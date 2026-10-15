@@ -2,6 +2,7 @@
 
 require "concurrent"
 require "forwardable"
+require "ldclient-rb/impl/util"
 require "ldclient-rb/interfaces"
 
 module LaunchDarkly
@@ -19,18 +20,24 @@ module LaunchDarkly
         extend Forwardable
         def_delegators :@status_broadcaster, :add_listener, :remove_listener
 
+        MONOTONIC_CLOCK = -> { Impl::Util.monotonic_seconds }
+        private_constant :MONOTONIC_CLOCK
+
         #
         # Creates a new status provider.
         #
         # @param status_broadcaster [LaunchDarkly::Impl::Broadcaster] Broadcaster for status changes
+        # @param clock [#call] returns seconds on a monotonic clock; injectable for tests
         #
-        def initialize(status_broadcaster)
+        def initialize(status_broadcaster, clock: MONOTONIC_CLOCK)
           @status_broadcaster = status_broadcaster
+          @clock = clock
           @status = LaunchDarkly::Interfaces::DataSource::Status.new(
             LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING,
             Time.now,
             nil
           )
+          @state_since_monotonic = @clock.call
           @lock = Concurrent::ReadWriteLock.new
         end
 
@@ -41,8 +48,29 @@ module LaunchDarkly
           end
         end
 
+        #
+        # The current status together with the seconds the data source has spent
+        # in its current state, read atomically under one lock acquisition so the
+        # duration can never be paired with a stale state.
+        #
+        # The duration is measured on the monotonic clock, so a wall-clock step
+        # cannot distort it. `status.state_since` remains the wall-clock time
+        # reported to applications; this duration is the value to use when it
+        # decides behavior.
+        #
+        # @private
+        # @return [Array(LaunchDarkly::Interfaces::DataSource::Status, Float)]
+        #
+        def status_and_seconds_in_state
+          @lock.with_read_lock do
+            [@status, @clock.call - @state_since_monotonic]
+          end
+        end
+
         # (see LaunchDarkly::Interfaces::DataSource::UpdateSink#update_status)
         def update_status(new_state, new_error)
+          return if new_state.nil?
+
           status_to_broadcast = nil
 
           @lock.with_write_lock do
@@ -62,7 +90,12 @@ module LaunchDarkly
             # No change if state is the same and no error
             return if new_state == old_status.state && new_error.nil?
 
-            new_since = new_state == old_status.state ? @status.state_since : Time.now
+            if new_state == old_status.state
+              new_since = @status.state_since
+            else
+              new_since = Time.now
+              @state_since_monotonic = @clock.call
+            end
             new_error = @status.last_error if new_error.nil?
 
             @status = LaunchDarkly::Interfaces::DataSource::Status.new(

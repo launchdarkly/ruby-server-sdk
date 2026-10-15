@@ -45,6 +45,9 @@ module LaunchDarkly
         end
 
         describe "#start" do
+          # Some examples start a real processor. Stop it so no thread outlives the example.
+          after { subject.stop }
+
           it "returns a Concurrent::Event" do
             ready_event = subject.start
             expect(ready_event).to be_a(Concurrent::Event)
@@ -272,6 +275,9 @@ module LaunchDarkly
         end
 
         describe "integration with diagnostic accumulator" do
+          # These examples start a real processor. Stop it so no thread outlives the example.
+          after { subject.stop }
+
           it "passes diagnostic accumulator to streaming processor" do
             diagnostic_accumulator = double("DiagnosticAccumulator")
             subject.set_diagnostic_accumulator(diagnostic_accumulator)

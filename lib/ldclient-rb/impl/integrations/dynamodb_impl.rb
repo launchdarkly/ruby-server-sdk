@@ -119,7 +119,7 @@ module LaunchDarkly
                 items_out[item[SORT_KEY].to_sym] = item_out
               end
               break if resp.last_evaluated_key.nil? || resp.last_evaluated_key.length == 0
-              req.exclusive_start_key = resp.last_evaluated_key
+              req[:exclusive_start_key] = resp.last_evaluated_key
             end
             items_out
           end
@@ -212,7 +212,7 @@ module LaunchDarkly
                   keys.add([ namespace, key ])
                 end
                 break if resp.last_evaluated_key.nil? || resp.last_evaluated_key.length == 0
-                req.exclusive_start_key = resp.last_evaluated_key
+                req[:exclusive_start_key] = resp.last_evaluated_key
               end
             end
             keys

@@ -228,6 +228,57 @@ module LaunchDarkly
             next_status_matching(statuses) { |status| !status.stale }
           end
         end
+
+        #
+        # A request that arrives while a poll is already running should wait for that poll instead of
+        # starting its own. The store signals when it has entered a query and then stays there long
+        # enough for the request to overlap it, so the race is forced rather than left to timing.
+        #
+        context "request during an in-flight poll" do
+          let(:long_poll_interval) { 30 }
+          let(:query_time) { 0.3 }
+
+          def slow_metadata_store(queries, query_started)
+            store = double
+            allow(store).to receive(:get_metadata) do
+              queries.increment
+              query_started.set
+              sleep(query_time)
+              always_up_to_date
+            end
+            allow(store).to receive(:stop)
+            store
+          end
+
+          it "the status getter reuses the result instead of querying again" do
+            queries = Concurrent::AtomicFixnum.new
+            query_started = Concurrent::Event.new
+            store = slow_metadata_store(queries, query_started)
+
+            with_manager(BigSegmentsConfig.new(store: store, status_poll_interval: long_poll_interval)) do |m|
+              expect(query_started.wait(5)).to be(true) # the startup poll is now inside the store
+
+              expect(m.status_provider.status.available).to be(true)
+              expect(queries.value).to eq(1)
+            end
+          end
+
+          it "a membership query reuses the result instead of querying again" do
+            queries = Concurrent::AtomicFixnum.new
+            query_started = Concurrent::Event.new
+            store = slow_metadata_store(queries, query_started)
+            expected_membership = { 'key1' => true }
+            allow(store).to receive(:get_membership).with(context_hash).and_return(expected_membership)
+
+            with_manager(BigSegmentsConfig.new(store: store, status_poll_interval: long_poll_interval)) do |m|
+              expect(query_started.wait(5)).to be(true) # the startup poll is now inside the store
+
+              expected_result = BigSegmentMembershipResult.new(expected_membership, BigSegmentsStatus::HEALTHY)
+              expect(m.get_context_membership(context_key)).to eq(expected_result)
+              expect(queries.value).to eq(1)
+            end
+          end
+        end
       end
     end
   end

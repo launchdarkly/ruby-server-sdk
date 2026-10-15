@@ -441,12 +441,12 @@ module LaunchDarkly
               .build
 
             changed = Concurrent::Event.new
-            changes = []
+            changes = Concurrent::Array.new
 
             listener = Object.new
             listener.define_singleton_method(:update) do |flag_change|
               changes << flag_change
-              changed.set if changes.length >= 2
+              changed.set if flag_change.key == "fdv1replacementflag"
             end
 
             fdv2 = FDv2.new(sdk_key, config, data_system_config)
@@ -695,6 +695,45 @@ module LaunchDarkly
             expect(logger).not_to receive(:warn)
 
             FDv2.new(sdk_key, LaunchDarkly::Config.new(logger: logger), data_system_config)
+          end
+        end
+
+        describe "data source status" do
+          it "publishes the valid status before releasing ready waiters" do
+            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td.update(td.flag("flagkey").on(true))
+
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .synchronizers([td.test_data_ds_builder])
+              .build
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+            ready_event = fdv2.start
+            expect(ready_event.wait(2)).to be true
+            expect(fdv2.data_source_status_provider.status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            fdv2.stop
+          end
+
+          it "publishes the valid status when an initializer supplies the basis" do
+            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td.update(td.flag("flagkey").on(true))
+
+            # With no synchronizers, the initializer is the only thing that can
+            # report a status, so this is the whole lifetime of the data system.
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers([td.test_data_ds_builder])
+              .synchronizers(nil)
+              .build
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+            ready_event = fdv2.start
+            expect(ready_event.wait(2)).to be true
+            expect(fdv2.data_source_status_provider.status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            fdv2.stop
           end
         end
       end

@@ -21,6 +21,7 @@ module LaunchDarkly
         @status_provider = BigSegmentStoreStatusProviderImpl.new(-> { get_status })
         @logger = logger
         @last_status = nil
+        @poll_lock = Mutex.new
 
         unless @store.nil?
           @cache = ExpiringCache.new(big_segments_config.context_cache_size, big_segments_config.context_cache_time)
@@ -49,18 +50,41 @@ module LaunchDarkly
             return BigSegmentMembershipResult.new(nil, BigSegmentsStatus::STORE_ERROR)
           end
         end
-        poll_store_and_update_status unless @last_status
-        unless @last_status.available
+        status = get_status
+        unless status.available
           return BigSegmentMembershipResult.new(membership, BigSegmentsStatus::STORE_ERROR)
         end
-        BigSegmentMembershipResult.new(membership, @last_status.stale ? BigSegmentsStatus::STALE : BigSegmentsStatus::HEALTHY)
+        BigSegmentMembershipResult.new(membership, status.stale ? BigSegmentsStatus::STALE : BigSegmentsStatus::HEALTHY)
       end
 
       def get_status
-        @last_status || poll_store_and_update_status
+        status = @last_status
+        return status if status
+
+        new_status = @poll_lock.synchronize do
+          # Another caller may have finished a poll while we waited for the lock.
+          status = @last_status
+          return status if status
+
+          query_store_status
+        end
+        @status_provider.update_status(new_status)
+
+        new_status
       end
 
       def poll_store_and_update_status
+        new_status = @poll_lock.synchronize { query_store_status }
+        @status_provider.update_status(new_status)
+
+        new_status
+      end
+
+      #
+      # Queries the store and caches the result. Callers hold @poll_lock, so this must not notify
+      # observers - a listener that calls back into the manager would deadlock on the mutex.
+      #
+      private def query_store_status
         new_status = Interfaces::BigSegmentStoreStatus.new(false, false) # default to "unavailable" if we don't get a new status below
         unless @store.nil?
           begin
@@ -71,9 +95,6 @@ module LaunchDarkly
           end
         end
         @last_status = new_status
-        @status_provider.update_status(new_status)
-
-        new_status
       end
 
       def stale?(timestamp)
