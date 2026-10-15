@@ -150,8 +150,6 @@ module LaunchDarkly
           @attempts += 1
         end
 
-        # Ruby Integers have arbitrary precision, so `2**n` does not overflow. A Float product that
-        # reaches Infinity is still cut down to the ceiling.
         delay = [@min_delay * (2**(@attempts - 1)), @max_delay].min
         jitter = @random.rand * delay / 2
         @next_delay = [delay - jitter, @operating_cadence].max
