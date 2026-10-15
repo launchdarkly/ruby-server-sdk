@@ -255,32 +255,61 @@ module LaunchDarkly
         expect(next_delay(processor)).to eq(Config.default_poll_interval)
       end
 
-      it 'logs the real delay for an HTTP error' do
-        allow(Impl::RetryState).to receive(:for_polling).and_return(
-          Impl::RetryState.for_polling(30, logger, random: double("random", rand: 0.0)))
-        allow(requestor).to receive(:request_all_data).and_raise(Impl::DataSource::UnexpectedResponseError.new(401))
-        expect(logger).to receive(:error) do |&block|
-          expect(block.call).to eq("[LDClient] HTTP error 401 (invalid SDK key) for polling request - will retry in 300.0s")
+      it 'warns and uses the default interval for an infinite poll interval' do
+        allow(requestor).to receive(:request_all_data).and_return(all_data)
+        expect(logger).to receive(:warn) do |&block|
+          expect(block.call).to include("poll_interval must be a positive, finite number")
         end
+        config = Config.new(poll_interval: Float::INFINITY, logger: logger)
+        expect(config.poll_interval).to eq(Float::INFINITY)
+        config.data_source_update_sink = Impl::DataSource::UpdateSink.new(config.feature_store, status_broadcaster, flag_change_broadcaster)
+        processor = subject.new(config, requestor)
 
-        make_processor.poll
+        processor.poll
+        expect(next_delay(processor)).to eq(Config.default_poll_interval)
+      end
+
+      [
+        [401, :error, "[LDClient] HTTP error 401 (invalid SDK key) for polling request - will retry in 300.0s"],
+        [503, :warn, "[LDClient] HTTP error 503 for polling request - will retry in 30.0s"],
+      ].each do |status, level, message|
+        it "logs HTTP error #{status} once at #{level}, with the delay" do
+          allow(Impl::RetryState).to receive(:for_polling).and_return(
+            Impl::RetryState.for_polling(30, logger, random: double("random", rand: 0.0)))
+          allow(requestor).to receive(:request_all_data).and_raise(Impl::DataSource::UnexpectedResponseError.new(status))
+          logs = []
+          %i[error warn].each do |name|
+            allow(logger).to receive(name) { |&block| logs << [name, block.call] }
+          end
+
+          make_processor.poll
+          expect(logs).to eq([[level, message]])
+        end
       end
     end
 
     describe 'stop' do
-      it 'stops promptly rather than continuing to wait for poll interval' do
+      it 'stops promptly during a backoff wait' do
+        polled = Concurrent::Event.new
+        allow(requestor).to receive(:request_all_data) do
+          polled.set
+          raise Impl::DataSource::UnexpectedResponseError.new(401)
+        end
         listener = ListenerSpy.new
         status_broadcaster.add_listener(listener)
 
         with_processor(InMemoryFeatureStore.new) do |processor|
-          sleep(1)  # somewhat arbitrary, but should ensure that it has started polling
+          processor.start
+          expect(polled.wait(1)).to be true
+          sleep(0.1)  # let the worker start its wait of at least 150s
           start_time = Time.now
           processor.stop
-          end_time = Time.now
-          expect(end_time - start_time).to be <(Config.default_poll_interval - 5)
+          expect(Time.now - start_time).to be < 1
 
-          expect(listener.statuses.count).to eq(1)
-          expect(listener.statuses[0].state).to eq(Interfaces::DataSource::Status::OFF)
+          expect(requestor).to have_received(:request_all_data).once
+          # INTERRUPTED stays INITIALIZING before the first success.
+          expect(listener.statuses.map(&:state)).to eq(
+            [Interfaces::DataSource::Status::INITIALIZING, Interfaces::DataSource::Status::OFF])
         end
       end
 

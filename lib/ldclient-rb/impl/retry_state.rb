@@ -1,3 +1,5 @@
+require "ldclient-rb/config"
+
 module LaunchDarkly
   module Impl
     #
@@ -36,29 +38,8 @@ module LaunchDarkly
       # wait raises `RangeError`. This is about 31 years, so the bound has no effect in practice.
       MAX_WAIT = 1_000_000_000
 
-      # The 4xx statuses that are still normal failures. Every other 4xx is unexpected.
-      NORMAL_4XX_STATUSES = [400, 408, 429].freeze
-      private_constant :NORMAL_4XX_STATUSES
-
       MONOTONIC_CLOCK = -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
       private_constant :MONOTONIC_CLOCK
-
-      #
-      # Classifies an HTTP status.
-      #
-      # `400`, `408`, `429` and every `5xx` are normal. Every other `4xx`, including `401` and `403`,
-      # is unexpected.
-      #
-      # @param status [Integer]
-      # @return [Symbol] `:normal` or `:unexpected`
-      #
-      def self.classify_http_status(status)
-        if status >= 400 && status < 500 && !NORMAL_4XX_STATUSES.include?(status)
-          :unexpected
-        else
-          :normal
-        end
-      end
 
       #
       # Builds the retry state for a streaming data source.
@@ -173,8 +154,8 @@ module LaunchDarkly
           @attempts += 1
         end
 
-        # Integer exponentiation does not overflow, and a Float product that becomes Infinity is
-        # still cut down to the ceiling.
+        # Ruby Integers have arbitrary precision, so `2**n` does not overflow. A Float product that
+        # reaches Infinity is still cut down to the ceiling.
         delay = [@min_delay * (2**(@attempts - 1)), @max_delay].min
         jitter = @random.rand * delay / 2
         @next_delay = [delay - jitter, @operating_cadence].max

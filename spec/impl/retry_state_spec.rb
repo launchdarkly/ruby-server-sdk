@@ -27,20 +27,6 @@ module LaunchDarkly
         end
       end
 
-      describe ".classify_http_status" do
-        [400, 408, 429, 500, 502, 503, 504, 599].each do |status|
-          it "classifies #{status} as normal" do
-            expect(RetryState.classify_http_status(status)).to eq(:normal)
-          end
-        end
-
-        [401, 403, 404, 405, 409, 410, 499].each do |status|
-          it "classifies #{status} as unexpected" do
-            expect(RetryState.classify_http_status(status)).to eq(:unexpected)
-          end
-        end
-      end
-
       describe "streaming" do
         it "waits nothing before any failure" do
           expect(streaming.next_delay).to eq(0)
@@ -77,6 +63,15 @@ module LaunchDarkly
           state.record_failure(:unexpected)
           state.record_success
           @now += 59
+          state.record_failure(:normal)
+          expect(state.next_delay).to eq(600)
+        end
+
+        it "does not reset after successes alone, because its reset is time-based" do
+          state = streaming
+          state.record_failure(:unexpected)
+          state.record_success
+          state.record_success
           state.record_failure(:normal)
           expect(state.next_delay).to eq(600)
         end

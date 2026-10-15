@@ -17,6 +17,10 @@ module LaunchDarkly
     # @private
     #
     class RepeatingTask
+      # The wait, in seconds, when a callable interval raises or returns a value that is not a positive
+      # number. It is long enough to stop a busy loop and short enough not to stall the task for long.
+      FALLBACK_INTERVAL = 1
+
       attr_reader :name
 
       #
@@ -47,12 +51,25 @@ module LaunchDarkly
             rescue => e
               Impl::Util.log_exception(@logger, "Uncaught exception from repeating task", e)
             end
-            delay = @interval.respond_to?(:call) ? @interval.call : @interval
+            delay = next_delay
             @stop_event.wait([delay, RetryState::MAX_WAIT].min) if delay > 0
           end
         end
 
         @worker.name = @name
+      end
+
+      private def next_delay
+        return @interval if @interval.is_a?(Numeric)
+
+        delay = @interval.call
+        return delay if delay.is_a?(Numeric) && delay > 0
+
+        @logger.warn { "[LDClient] Repeating task #{@name} got an invalid interval #{delay.inspect}; waiting #{FALLBACK_INTERVAL}s" }
+        FALLBACK_INTERVAL
+      rescue => e
+        Impl::Util.log_exception(@logger, "Exception while reading the interval of repeating task #{@name}", e)
+        FALLBACK_INTERVAL
       end
 
       #

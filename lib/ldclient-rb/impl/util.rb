@@ -151,12 +151,29 @@ module LaunchDarkly
         logger.debug { "[LDClient] Exception trace: #{exc.backtrace}" }
       end
 
-      def self.http_error_recoverable?(status)
-        if status >= 400 && status < 500
-          status == 400 || status == 408 || status == 429
+      # The 4xx statuses that are still normal failures. Every other 4xx is unexpected.
+      NORMAL_4XX_STATUSES = [400, 408, 429].freeze
+      private_constant :NORMAL_4XX_STATUSES
+
+      #
+      # Classifies an HTTP error status.
+      #
+      # `400`, `408`, `429` and every status outside the 4xx range are normal. Every other `4xx`,
+      # including `401` and `403`, is unexpected.
+      #
+      # @param status [Integer]
+      # @return [Symbol] `:normal` or `:unexpected`
+      #
+      def self.classify_http_status(status)
+        if status >= 400 && status < 500 && !NORMAL_4XX_STATUSES.include?(status)
+          :unexpected
         else
-          true
+          :normal
         end
+      end
+
+      def self.http_error_recoverable?(status)
+        classify_http_status(status) == :normal
       end
 
       def self.http_error_message(status, context, recoverable_message)
@@ -168,12 +185,29 @@ module LaunchDarkly
       #
       # @param status [Integer]
       # @param context [String] what failed, such as "polling request"
+      # @return [String]
+      #
+      def self.http_error_description(status, context)
+        desc = (status == 401 || status == 403) ? " (invalid SDK key)" : ""
+        "HTTP error #{status}#{desc} for #{context}"
+      end
+
+      #
+      # @param status [Integer]
+      # @param context [String] what failed, such as "polling request"
       # @param delay [Numeric] seconds until the next attempt
       # @return [String]
       #
       def self.http_error_retry_message(status, context, delay)
-        desc = (status == 401 || status == 403) ? " (invalid SDK key)" : ""
-        "HTTP error #{status}#{desc} for #{context} - #{retry_message(delay)}"
+        "#{http_error_description(status, context)} - #{retry_message(delay)}"
+      end
+
+      #
+      # @param kind [Symbol] `:normal` or `:unexpected`
+      # @return [Symbol] the log level for a failure of this kind
+      #
+      def self.failure_log_level(kind)
+        kind == :unexpected ? :error : :warn
       end
 
       #

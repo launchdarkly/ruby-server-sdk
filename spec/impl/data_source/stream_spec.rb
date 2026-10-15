@@ -1,3 +1,4 @@
+require "http_util"
 require "ldclient-rb/impl/data_source/stream"
 require "ld-eventsource"
 require "model_builders"
@@ -52,30 +53,22 @@ module LaunchDarkly
         expect(processor.instance_variable_get(:@config).logger).to receive :warn
         processor.send(:process_message, SSE::StreamEvent.new(type: :get, data: "", id: nil))
       end
-      it "status listener will trigger error when JSON is invalid" do
+      it "raises for invalid JSON and leaves the status to the error handler" do
         listener = ListenerSpy.new
         status_broadcaster.add_listener(listener)
 
-        begin
-          processor.send(:process_message, invalid_message)
-        rescue
-          # Ignored
-        end
-
-        expect(listener.statuses.count).to eq(2)
-        expect(listener.statuses[1].state).to eq(Interfaces::DataSource::Status::INTERRUPTED)
-        expect(listener.statuses[1].last_error.kind).to eq(Interfaces::DataSource::ErrorInfo::INVALID_DATA)
+        expect { processor.send(:process_message, invalid_message) }.to raise_error(JSON::ParserError)
+        expect(listener.statuses.map(&:state)).not_to include(Interfaces::DataSource::Status::INTERRUPTED)
       end
     end
 
     # Replaces the SSE client with a double, and yields the handlers the processor registers on it.
-    def with_handlers(processor)
+    def with_handlers(processor, sse_client = double("SSE::Client", close: nil))
       handlers = {}
       connection = double("connection")
       %i[on_connect on_event on_error].each do |name|
         allow(connection).to receive(name) { |&block| handlers[name] = block }
       end
-      sse_client = double("SSE::Client", close: nil)
       allow(SSE::Client).to receive(:new) do |_uri, **opts, &block|
         handlers[:opts] = opts
         block.call(connection)
@@ -209,17 +202,32 @@ module LaunchDarkly
         end
       end
 
-      it 'logs the real delay for an HTTP error' do
-        allow(Impl::RetryState).to receive(:for_streaming).and_return(
-          Impl::RetryState.new(normal_initial_delay: 0.001, normal_ceiling_delay: 0.001, extended_initial_delay: 0.3,
-            extended_ceiling_delay: 0.3, reset_policy: Impl::RetryState::AfterConsecutiveSuccesses.new(2),
-            random: double("random", rand: 0.0)))
-        expect(logger).to receive(:error) do |&block|
-          expect(block.call).to eq("[LDClient] HTTP error 401 (invalid SDK key) for streaming connection - will retry in 0.3s")
-        end
+      [
+        ["error 401", -> { SSE::Errors::HTTPStatusError.new(401, "") }, :error,
+          "[LDClient] HTTP error 401 (invalid SDK key) for streaming connection - will retry in 0.3s"],
+        ["error 503", -> { SSE::Errors::HTTPStatusError.new(503, "") }, :warn,
+          "[LDClient] HTTP error 503 for streaming connection - will retry in 0.0s"],
+        ["invalid data", -> { JSON::ParserError.new("bad") }, :error,
+          "[LDClient] Invalid data on streaming connection: bad - will retry in 0.0s"],
+        ["a server close", -> { SSE::Errors::StreamClosedByServerError.new }, :warn,
+          "[LDClient] The server closed the streaming connection - will retry in 0.0s"],
+        ["another error", -> { StandardError.new("boom") }, :warn,
+          "[LDClient] Error on streaming connection: boom - will retry in 0.0s"],
+      ].each do |desc, make_error, level, message|
+        it "logs #{desc} once at #{level}, with the delay" do
+          allow(Impl::RetryState).to receive(:for_streaming).and_return(
+            Impl::RetryState.new(normal_initial_delay: 0.001, normal_ceiling_delay: 0.001, extended_initial_delay: 0.3,
+              extended_ceiling_delay: 0.3, reset_policy: Impl::RetryState::AfterConsecutiveSuccesses.new(2),
+              random: double("random", rand: 0.0)))
+          logs = []
+          %i[error warn].each do |name|
+            allow(logger).to receive(name) { |&block| logs << [name, block.call] }
+          end
 
-        with_handlers(processor) do |handlers|
-          handlers[:on_error].call(http_error(401))
+          with_handlers(processor) do |handlers|
+            handlers[:on_error].call(make_error.call)
+          end
+          expect(logs).to eq([[level, message]])
         end
       end
 
@@ -269,6 +277,95 @@ module LaunchDarkly
         end
       end
 
+      # A retry state with a fixed normal delay and no jitter.
+      def retry_state_with_delay(delay)
+        Impl::RetryState.new(normal_initial_delay: delay, normal_ceiling_delay: delay, extended_initial_delay: delay,
+          extended_ceiling_delay: delay, reset_policy: Impl::RetryState::AfterConsecutiveSuccesses.new(2),
+          random: double("random", rand: 0.0))
+      end
+
+      # Sends an event the way the SSE client does: an error raised by the handler goes to on_error.
+      def deliver_event(handlers, event)
+        handlers[:on_event].call(event)
+      rescue StandardError => e
+        handlers[:on_error].call(e)
+      end
+
+      it 'reports invalid data as one failure, one INVALID_DATA status and one wait' do
+        use_fast_retry_state
+        expect(fast_retry_state).to receive(:record_failure).once.with(:normal).and_call_original
+        expect(processor.instance_variable_get(:@stop_event)).to receive(:wait).once.and_call_original
+
+        with_handlers(processor) do |handlers|
+          handlers[:on_connect].call({})
+          deliver_event(handlers, SSE::StreamEvent.new(:put, '{Hi there}'))
+
+          expect(states).to eq([Interfaces::DataSource::Status::INTERRUPTED])
+          expect(listener.statuses.last.last_error.kind).to eq(Interfaces::DataSource::ErrorInfo::INVALID_DATA)
+        end
+      end
+
+      it 'waits the recorded delay before it reconnects after invalid data' do
+        allow(Impl::RetryState).to receive(:for_streaming).and_return(retry_state_with_delay(0.2))
+
+        with_handlers(processor) do |handlers|
+          started_at = Time.now
+          deliver_event(handlers, SSE::StreamEvent.new(:put, '{Hi there}'))
+          expect(Time.now - started_at).to be >= 0.15
+        end
+      end
+
+      it 'does not count an unknown event type as healthy' do
+        use_fast_retry_state
+        expect(fast_retry_state).not_to receive(:record_success)
+
+        with_handlers(processor) do |handlers|
+          handlers[:on_connect].call({})
+          handlers[:on_event].call(SSE::StreamEvent.new(:unknown, "{}"))
+        end
+      end
+
+      it 'waits before it reconnects even if reporting the failure raises' do
+        allow(Impl::RetryState).to receive(:for_streaming).and_return(retry_state_with_delay(0.2))
+        sink = config.data_source_update_sink
+        allow(sink).to receive(:update_status).and_call_original
+        allow(sink).to receive(:update_status).with(Interfaces::DataSource::Status::INTERRUPTED, anything)
+          .and_raise(StandardError.new("sink failure"))
+
+        with_handlers(processor) do |handlers|
+          started_at = Time.now
+          expect { handlers[:on_error].call(http_error(503)) }.to raise_error(StandardError, "sink failure")
+          expect(Time.now - started_at).to be >= 0.15
+        end
+      end
+
+      it 'can be stopped before it is started' do
+        expect { processor.stop }.not_to raise_error
+        expect(states).to eq([Interfaces::DataSource::Status::OFF])
+        expect(logger).not_to have_received(:error)
+      end
+
+      it 'closes the SSE client at once if it was stopped before the client existed' do
+        processor.stop
+        with_handlers(processor) do |_handlers, sse_client|
+          expect(sse_client).to have_received(:close)
+        end
+      end
+
+      it 'reports OFF and wakes a waiting handler when closing the SSE client raises' do
+        sse_client = double("SSE::Client")
+        allow(sse_client).to receive(:close).and_raise(IOError.new("close failure"))
+
+        with_handlers(processor, sse_client) do |handlers|
+          waiter = Thread.new { handlers[:on_error].call(http_error(401)) }
+          expect(waiter.join(0.2)).to be_nil
+
+          expect { processor.stop }.not_to raise_error
+          expect(waiter.join(1)).not_to be_nil
+          expect(states.last).to eq(Interfaces::DataSource::Status::OFF)
+        end
+      end
+
       it 'does not report a status or wait after it is stopped' do
         with_handlers(processor) do |handlers|
           processor.stop
@@ -278,6 +375,72 @@ module LaunchDarkly
 
           expect(Time.now - started_at).to be < 1
           expect(states).to eq([Interfaces::DataSource::Status::OFF])
+        end
+      end
+    end
+
+    describe 'with a real SSE client' do
+      # The SSE worker thread can log after the example ends, so this cannot be a test double.
+      let(:logger) { $null_log }
+
+      # Not a test double, because the SSE worker thread can use it after the example ends.
+      let(:no_jitter) { Object.new.tap { |r| r.define_singleton_method(:rand) { 0.0 } } }
+
+      # Starts a processor against a server that answers every stream request with 503, and yields the
+      # processor, the times at which the requests arrived, and the SSE worker thread.
+      def with_failing_stream(retry_delay)
+        allow(Impl::RetryState).to receive(:for_streaming).and_return(
+          Impl::RetryState.new(normal_initial_delay: retry_delay, normal_ceiling_delay: retry_delay,
+            extended_initial_delay: retry_delay, extended_ceiling_delay: retry_delay,
+            reset_policy: Impl::RetryState::AfterConsecutiveSuccesses.new(2), random: no_jitter))
+        request_times = Queue.new
+        with_server do |server|
+          server.setup_response("/all") do |_req, res|
+            request_times << Time.now
+            res.status = 503
+          end
+          config = Config.new(stream_uri: server.base_uri.to_s, logger: logger)
+          config.data_source_update_sink = Impl::DataSource::UpdateSink.new(config.feature_store, status_broadcaster, flag_change_broadcaster)
+          processor = subject.new("sdk_key", config)
+          threads_before = Thread.list
+          processor.start
+          sse_thread = (Thread.list - threads_before).detect { |t| t.name == "LD/SSEClient" }
+          begin
+            yield processor, request_times, sse_thread
+          ensure
+            processor.stop
+          end
+        end
+      end
+
+      def pop_within(queue, seconds)
+        deadline = Time.now + seconds
+        while Time.now < deadline
+          return queue.pop(true) unless queue.empty?
+          sleep(0.01)
+        end
+        nil
+      end
+
+      it 'does not reconnect before the retry delay' do
+        with_failing_stream(0.5) do |_processor, request_times|
+          first = pop_within(request_times, 5)
+          second = pop_within(request_times, 5)
+          expect(first).not_to be_nil
+          expect(second).not_to be_nil
+          expect(second - first).to be >= 0.45
+        end
+      end
+
+      it 'ends the retry wait at once when stopped, with no further request' do
+        with_failing_stream(30) do |processor, request_times, sse_thread|
+          expect(pop_within(request_times, 5)).not_to be_nil
+          sleep(0.2)
+          expect(sse_thread).to be_alive
+
+          processor.stop
+          expect(sse_thread.join(1)).not_to be_nil
+          expect(pop_within(request_times, 0.5)).to be_nil
         end
       end
     end

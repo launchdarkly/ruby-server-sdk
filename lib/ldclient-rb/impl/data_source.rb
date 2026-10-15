@@ -138,8 +138,7 @@ module LaunchDarkly
           @mutex.synchronize do
             old_status = @current_status
 
-            # A poll or stream connection that was still in flight when the data source stopped must not
-            # report after OFF.
+            # OFF is final: no status is reported after it.
             return if old_status.state == LaunchDarkly::Interfaces::DataSource::Status::OFF
 
             if new_state == LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED && old_status.state == LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING

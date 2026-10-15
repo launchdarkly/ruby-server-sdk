@@ -148,6 +148,8 @@ module LaunchDarkly
         # {Status::INITIALIZING} because {Status::INTERRUPTED} is only meaningful
         # after a successful startup.
         #
+        # After a {Status::OFF} status, the SDK ignores every later update.
+        #
         # @param new_state [Symbol]
         # @param new_error [ErrorInfo, nil]
         #
@@ -161,9 +163,10 @@ module LaunchDarkly
         #
         # The initial state of the data source when the SDK is being initialized.
         #
-        # If it encounters an error that requires it to retry initialization, the state will remain at
-        # {INITIALIZING} until it either succeeds and becomes {VALID}, or permanently fails and
-        # becomes {OFF}.
+        # If it encounters an error while it initializes, it retries, and the state remains at
+        # {INITIALIZING} until it succeeds and becomes {VALID}. This is also true for an error that needs
+        # to be fixed, such as a rejected SDK key. In the FDv2 data system, it can instead become {OFF}
+        # after an error it does not retry.
         #
 
         INITIALIZING = :initializing

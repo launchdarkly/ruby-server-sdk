@@ -60,11 +60,12 @@ module LaunchDarkly
             )
             @config.data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED, error_info)
           rescue Impl::DataSource::UnexpectedResponseError => e
-            @retry_state.record_failure(Impl::RetryState.classify_http_status(e.status))
+            kind = Util.classify_http_status(e.status)
+            @retry_state.record_failure(kind)
             error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
               LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE, e.status, nil, Time.now)
             message = Util.http_error_retry_message(e.status, "polling request", @retry_state.next_delay)
-            @config.logger.error { "[LDClient] #{message}" }
+            @config.logger.public_send(Util.failure_log_level(kind)) { "[LDClient] #{message}" }
             @config.data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED, error_info)
           rescue StandardError => e
             @retry_state.record_failure(:normal)

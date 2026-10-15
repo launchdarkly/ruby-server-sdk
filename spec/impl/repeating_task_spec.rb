@@ -100,6 +100,28 @@ module LaunchDarkly
         end
       end
 
+      [
+        ["raises", -> { raise "interval failure" }],
+        ["returns nil", -> { nil }],
+        ["returns zero", -> { 0 }],
+      ].each do |desc, interval|
+        it "logs and keeps running when a callable interval #{desc}" do
+          logger = double("logger").as_null_object
+          ran = Concurrent::Event.new
+          stub_const("LaunchDarkly::Impl::RepeatingTask::FALLBACK_INTERVAL", 0.05)
+          runs = 0
+          task = RepeatingTask.new(interval, 0, -> { runs += 1; ran.set if runs >= 2 }, logger, "test")
+          begin
+            task.start
+            expect(ran.wait(1)).to be true
+            expect(task.instance_variable_get(:@worker).alive?).to be true
+          ensure
+            task.stop
+          end
+          expect(logger).to have_received(desc == "raises" ? :error : :warn).at_least(:once)
+        end
+      end
+
       it "stops promptly when stopped during a long callable interval" do
         ran = Concurrent::Event.new
         task = RepeatingTask.new(-> { 1e20 }, 0, -> { ran.set }, null_logger, "test")
