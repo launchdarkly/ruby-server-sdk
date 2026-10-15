@@ -94,38 +94,36 @@ module LaunchDarkly
         end
 
         def handle_error(err)
-          if err.is_a?(SSE::Errors::HTTPStatusError)
+          status = 0
+          message = err.to_s
+          kind = :normal
+          level = :warn
+
+          case err
+          when SSE::Errors::HTTPStatusError
             status = err.status
+            message = nil
             kind = Util.classify_http_status(status)
-            error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-              LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE, status, nil, Time.now)
-            handle_failure(kind, error_info, Util.failure_log_level(kind),
-              Util.http_error_description(status, "streaming connection"))
-            return
+            level = Util.failure_log_level(kind)
+            error_kind = LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE
+            description = Util.http_error_description(status, "streaming connection")
+          when JSON::ParserError
+            level = :error
+            error_kind = LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA
+            description = "Invalid data on streaming connection: #{err}"
+          when SSE::Errors::StreamClosedByServerError
+            error_kind = LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR
+            description = "The server closed the streaming connection"
+          when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError
+            error_kind = LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR
+            description = "Error on streaming connection: #{err}"
+          else
+            error_kind = LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN
+            description = "Error on streaming connection: #{err}"
           end
 
-          if err.is_a?(JSON::ParserError)
-            error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-              LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA, 0, err.to_s, Time.now)
-            handle_failure(:normal, error_info, :error, "Invalid data on streaming connection: #{err}")
-            return
-          end
-
-          if err.is_a?(SSE::Errors::StreamClosedByServerError)
-            error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-              LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR, 0, err.to_s, Time.now)
-            handle_failure(:normal, error_info, :warn, "The server closed the streaming connection")
-            return
-          end
-
-          error_kind = case err
-                       when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError
-                         LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR
-                       else
-                         LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN
-                       end
-          error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(error_kind, 0, err.to_s, Time.now)
-          handle_failure(:normal, error_info, :warn, "Error on streaming connection: #{err}")
+          error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(error_kind, status, message, Time.now)
+          handle_failure(kind, error_info, level, description)
         end
 
         #
