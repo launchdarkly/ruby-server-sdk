@@ -148,6 +148,8 @@ module LaunchDarkly
         # {Status::INITIALIZING} because {Status::INTERRUPTED} is only meaningful
         # after a successful startup.
         #
+        # After a {Status::OFF} status, the SDK ignores every later update.
+        #
         # @param new_state [Symbol]
         # @param new_error [ErrorInfo, nil]
         #
@@ -161,9 +163,10 @@ module LaunchDarkly
         #
         # The initial state of the data source when the SDK is being initialized.
         #
-        # If it encounters an error that requires it to retry initialization, the state will remain at
-        # {INITIALIZING} until it either succeeds and becomes {VALID}, or permanently fails and
-        # becomes {OFF}.
+        # If it encounters an error while it initializes, it retries, and the state remains at
+        # {INITIALIZING} until it succeeds and becomes {VALID}. This is also true for an error that needs
+        # to be fixed, such as a rejected SDK key. In the FDv2 data system, it can instead become {OFF}
+        # after an error it does not retry.
         #
 
         INITIALIZING = :initializing
@@ -183,16 +186,19 @@ module LaunchDarkly
         #
         # In streaming mode, this means that the stream connection failed, or had to be dropped due to some
         # other error, and will be retried after a backoff delay. In polling mode, it means that the last poll
-        # request failed, and a new poll request will be made after the configured polling interval.
+        # request failed, and a new poll request will be made after the polling interval, or after a longer
+        # backoff delay for unexpected error types.
         #
         INTERRUPTED = :interrupted
 
         #
         # Indicates that the data source has been permanently shut down.
         #
-        # This could be because it encountered an unrecoverable error (for instance, the LaunchDarkly service
-        # rejected the SDK key; an invalid SDK key will never become valid), or because the SDK client was
-        # explicitly shut down.
+        # This could be because the SDK client was explicitly shut down. In the FDv2 data system, it can also
+        # mean the data source stopped after an error it does not retry.
+        #
+        # Unless the SDK is configured with {LaunchDarkly::Config#data_system_config}, no other state follows
+        # this one.
         #
         OFF = :off
 

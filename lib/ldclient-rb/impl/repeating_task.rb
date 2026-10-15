@@ -5,8 +5,10 @@ require "concurrent/atomics"
 module LaunchDarkly
   module Impl
     #
-    # Runs a task again and again on a worker thread, with a fixed interval
-    # between runs.
+    # Runs a task again and again on a worker thread.
+    #
+    # The interval is read after each run, and the wait starts when the run
+    # returns.
     #
     # The worker waits on an event instead of calling `sleep`, so `stop` can
     # wake it at once even if `stop` runs before the worker starts waiting.
@@ -14,10 +16,15 @@ module LaunchDarkly
     # @private
     #
     class RepeatingTask
+      # The wait, in seconds, when a callable interval raises or returns a value that is not a usable
+      # number. It must not be 0: a broken callable would then run the task back to back, which for
+      # polling is a tight loop of HTTP requests.
+      FALLBACK_INTERVAL = 1
+
       attr_reader :name
 
       #
-      # @param interval [Numeric] seconds between the start of one run and the start of the next
+      # @param interval [Numeric, #call] seconds between runs, or an object that returns them
       # @param start_delay [Numeric, nil] seconds to wait before the first run
       # @param task [Proc] the code to run
       # @param logger [Logger]
@@ -39,20 +46,30 @@ module LaunchDarkly
           @stop_event.wait(@start_delay) unless @start_delay.nil? || @start_delay == 0
 
           until @stopped.value do
-            started_at = Impl::Util.monotonic_seconds
             begin
               @task.call
             rescue => e
               Impl::Util.log_exception(@logger, "Uncaught exception from repeating task", e)
             end
-            # The run must be measured on the monotonic clock: a wall-clock step would
-            # make this wait negative (immediate re-run) or stretch it by the step size.
-            delta = @interval - (Impl::Util.monotonic_seconds - started_at)
-            @stop_event.wait(delta) if delta > 0
+            delay = next_delay
+            @stop_event.wait([delay, Util::TIMEOUT_MAX].min) if delay > 0
           end
         end
 
         @worker.name = @name
+      end
+
+      private def next_delay
+        return @interval if @interval.is_a?(Numeric)
+
+        delay = @interval.call
+        return delay if delay.is_a?(Numeric) && delay >= 0
+
+        @logger.error { "[LDClient] Repeating task #{@name} got an invalid interval #{delay.inspect}; waiting #{FALLBACK_INTERVAL}s" }
+        FALLBACK_INTERVAL
+      rescue => e
+        Impl::Util.log_exception(@logger, "Exception while reading the interval of repeating task #{@name}", e)
+        FALLBACK_INTERVAL
       end
 
       #

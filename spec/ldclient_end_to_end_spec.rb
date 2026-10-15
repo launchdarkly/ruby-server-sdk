@@ -26,13 +26,42 @@ module LaunchDarkly
       end
     end
 
-    it "fails in polling mode with 401 error" do
+    it "waits the full start time and stays uninitialized in polling mode with 401 error" do
       with_server do |poll_server|
         poll_server.setup_status_response("/sdk/latest-all", 401)
 
-        with_client(test_config(stream: false, data_source: nil, base_uri: poll_server.base_uri.to_s)) do |client|
+        config = test_config(stream: false, data_source: nil, base_uri: poll_server.base_uri.to_s)
+        started_at = Time.now
+        ensure_close(LDClient.new(sdk_key, config, 1)) do |client|
+          expect(Time.now - started_at).to be >= 1
           expect(client.initialized?).to be false
+          status = client.data_source_status_provider.status
+          expect(status.state).to eq(Interfaces::DataSource::Status::INITIALIZING)
+          expect(status.last_error.status_code).to eq(401)
           expect(client.variation(ALWAYS_TRUE_FLAG[:key], basic_context, false)).to be false
+        end
+      end
+    end
+
+    it "waits the full start time, stays uninitialized, and keeps retrying in streaming mode with 401 error" do
+      # A short retry delay, so that the retries happen within the start wait.
+      allow(Impl::RetryState).to receive(:for_streaming).and_return(
+        Impl::RetryState.new(normal_initial_delay: 0.05, normal_ceiling_delay: 0.05, extended_initial_delay: 0.05,
+          extended_ceiling_delay: 0.05, reset_policy: Impl::RetryState::AfterConsecutiveSuccesses.new(2)))
+
+      with_server do |stream_server|
+        stream_server.setup_status_response("/all", 401)
+
+        # The SSE worker thread can log after the example ends, so the logger cannot be a test double.
+        config = test_config(stream: true, data_source: nil, stream_uri: stream_server.base_uri.to_s, logger: $null_log)
+        started_at = Time.now
+        ensure_close(LDClient.new(sdk_key, config, 1)) do |client|
+          expect(Time.now - started_at).to be >= 1
+          expect(client.initialized?).to be false
+          status = client.data_source_status_provider.status
+          expect(status.state).to eq(Interfaces::DataSource::Status::INITIALIZING)
+          expect(status.last_error.status_code).to eq(401)
+          expect(stream_server.requests.count).to be >= 3
         end
       end
     end

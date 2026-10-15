@@ -60,6 +60,107 @@ module LaunchDarkly
         expect(no_more_items).to be true
       end
 
+      it "reads a callable interval after each run" do
+        runs = Queue.new
+        run_count = 0
+        intervals = []
+        interval = -> {
+          intervals << run_count
+          0.01
+        }
+        task = RepeatingTask.new(interval, 0, -> { run_count += 1; runs << run_count }, null_logger, "test")
+        begin
+          task.start
+          3.times { runs.pop }
+        ensure
+          task.stop
+        end
+        expect(intervals.take(2)).to eq([1, 2])
+      end
+
+      [["a numeric", 0.1], ["a callable", -> { 0.1 }]].each do |desc, interval|
+        it "starts #{desc} interval when the run returns" do
+          ends = Queue.new
+          starts = Queue.new
+          task = RepeatingTask.new(interval, 0,
+            -> {
+              starts << Time.now
+              sleep(0.1)
+              ends << Time.now
+            },
+            null_logger, "test")
+          begin
+            task.start
+            starts.pop
+            first_end = ends.pop
+            second_start = starts.pop
+            expect(second_start - first_end).to be >= 0.09
+          ensure
+            task.stop
+          end
+        end
+      end
+
+      # Runs the task with a callable interval until it has run twice, and returns the gap between the runs.
+      def gap_between_runs(interval, logger)
+        run_times = Queue.new
+        task = RepeatingTask.new(interval, 0, -> { run_times << Time.now }, logger, "test")
+        begin
+          task.start
+          first = run_times.pop
+          second = run_times.pop
+          expect(task.instance_variable_get(:@worker).alive?).to be true
+          second - first
+        ensure
+          task.stop
+        end
+      end
+
+      it "has a fallback interval above zero" do
+        expect(RepeatingTask::FALLBACK_INTERVAL).to be > 0
+      end
+
+      it "does not wait or log when a callable interval returns zero" do
+        logger = double("logger").as_null_object
+        stub_const("LaunchDarkly::Impl::RepeatingTask::FALLBACK_INTERVAL", 0.3)
+
+        expect(gap_between_runs(-> { 0 }, logger)).to be < 0.2
+        expect(logger).not_to have_received(:error)
+        expect(logger).not_to have_received(:warn)
+      end
+
+      [
+        ["raises", -> { raise "interval failure" }],
+        ["returns nil", -> { nil }],
+        ["returns a negative number", -> { -1 }],
+        ["returns NaN", -> { Float::NAN }],
+      ].each do |desc, interval|
+        it "logs at error and waits the fallback interval when a callable interval #{desc}" do
+          logger = double("logger").as_null_object
+          stub_const("LaunchDarkly::Impl::RepeatingTask::FALLBACK_INTERVAL", 0.3)
+
+          expect(gap_between_runs(interval, logger)).to be >= 0.25
+          expect(logger).to have_received(:error).at_least(:once)
+          expect(logger).not_to have_received(:warn)
+        end
+      end
+
+      it "stops promptly when stopped during a long callable interval" do
+        ran = Concurrent::Event.new
+        task = RepeatingTask.new(-> { 1e20 }, 0, -> { ran.set }, null_logger, "test")
+        begin
+          task.start
+          expect(ran.wait(1)).to be true
+          sleep(0.05)
+          expect(task.instance_variable_get(:@worker).alive?).to be true
+          started_at = Time.now
+          task.stop
+          expect(Time.now - started_at).to be < 1
+        ensure
+          task.stop
+        end
+      end
+
       it "schedules the next run from the monotonic clock, unaffected by wall-clock steps" do
         runs = Queue.new
         stepped = false

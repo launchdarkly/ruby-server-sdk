@@ -18,6 +18,22 @@ module LaunchDarkly
         end
       end
 
+      describe ".classify_http_status" do
+        [400, 408, 429, 500, 502, 503, 504, 599, 304].each do |status|
+          it "classifies #{status} as normal" do
+            expect(Util.classify_http_status(status)).to eq(:normal)
+            expect(Util.http_error_recoverable?(status)).to be true
+          end
+        end
+
+        [401, 403, 404, 405, 409, 410, 499].each do |status|
+          it "classifies #{status} as unexpected" do
+            expect(Util.classify_http_status(status)).to eq(:unexpected)
+            expect(Util.http_error_recoverable?(status)).to be false
+          end
+        end
+      end
+
       describe "payload filter key validation" do
         let(:logger) { double }
 

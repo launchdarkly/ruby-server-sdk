@@ -138,6 +138,9 @@ module LaunchDarkly
           @mutex.synchronize do
             old_status = @current_status
 
+            # OFF is final: no status is reported after it.
+            return if old_status.state == LaunchDarkly::Interfaces::DataSource::Status::OFF
+
             if new_state == LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED && old_status.state == LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING
               # See {LaunchDarkly::Interfaces::DataSource::UpdateSink#update_status} for more information
               new_state = LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING
