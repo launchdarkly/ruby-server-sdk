@@ -34,10 +34,6 @@ module LaunchDarkly
       # How many polls in a row must succeed before polling's retry state resets.
       POLLING_RESET_SUCCESSES = 2
 
-      # The longest wait a caller should pass to `Concurrent::Event#wait`, in seconds. A much longer
-      # wait raises `RangeError`. This is about 31 years, so the bound has no effect in practice.
-      MAX_WAIT = 1_000_000_000
-
       MONOTONIC_CLOCK = -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
       private_constant :MONOTONIC_CLOCK
 

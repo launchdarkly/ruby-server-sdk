@@ -1,4 +1,3 @@
-require "ldclient-rb/impl/retry_state"
 require "ldclient-rb/impl/util"
 
 require "concurrent/atomics"
@@ -17,8 +16,9 @@ module LaunchDarkly
     # @private
     #
     class RepeatingTask
-      # The wait, in seconds, when a callable interval raises or returns a value that is not a positive
-      # number. It is long enough to stop a busy loop and short enough not to stall the task for long.
+      # The wait, in seconds, when a callable interval raises or returns a value that is not a usable
+      # number. It must not be 0: a broken callable would then run the task back to back, which for
+      # polling is a tight loop of HTTP requests.
       FALLBACK_INTERVAL = 1
 
       attr_reader :name
@@ -52,7 +52,7 @@ module LaunchDarkly
               Impl::Util.log_exception(@logger, "Uncaught exception from repeating task", e)
             end
             delay = next_delay
-            @stop_event.wait([delay, RetryState::MAX_WAIT].min) if delay > 0
+            @stop_event.wait([delay, Util::TIMEOUT_MAX].min) if delay > 0
           end
         end
 
@@ -63,9 +63,9 @@ module LaunchDarkly
         return @interval if @interval.is_a?(Numeric)
 
         delay = @interval.call
-        return delay if delay.is_a?(Numeric) && delay > 0
+        return delay if delay.is_a?(Numeric) && delay >= 0
 
-        @logger.warn { "[LDClient] Repeating task #{@name} got an invalid interval #{delay.inspect}; waiting #{FALLBACK_INTERVAL}s" }
+        @logger.error { "[LDClient] Repeating task #{@name} got an invalid interval #{delay.inspect}; waiting #{FALLBACK_INTERVAL}s" }
         FALLBACK_INTERVAL
       rescue => e
         Impl::Util.log_exception(@logger, "Exception while reading the interval of repeating task #{@name}", e)

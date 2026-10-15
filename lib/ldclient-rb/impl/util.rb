@@ -4,6 +4,10 @@ require "http"
 module LaunchDarkly
   module Impl
     module Util
+      # The longest wait to pass to `Concurrent::Event#wait`, in seconds. A wait above about 1e19 seconds
+      # raises `RangeError`. About 31 years is the same in practice as honoring a longer wait.
+      TIMEOUT_MAX = 1_000_000_000
+
       def self.bool?(aObject)
          [true,false].include? aObject
       end

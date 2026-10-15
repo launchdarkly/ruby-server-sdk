@@ -100,25 +100,47 @@ module LaunchDarkly
         end
       end
 
+      # Runs the task with a callable interval until it has run twice, and returns the gap between the runs.
+      def gap_between_runs(interval, logger)
+        run_times = Queue.new
+        task = RepeatingTask.new(interval, 0, -> { run_times << Time.now }, logger, "test")
+        begin
+          task.start
+          first = run_times.pop
+          second = run_times.pop
+          expect(task.instance_variable_get(:@worker).alive?).to be true
+          second - first
+        ensure
+          task.stop
+        end
+      end
+
+      it "has a fallback interval above zero" do
+        expect(RepeatingTask::FALLBACK_INTERVAL).to be > 0
+      end
+
+      it "does not wait or log when a callable interval returns zero" do
+        logger = double("logger").as_null_object
+        stub_const("LaunchDarkly::Impl::RepeatingTask::FALLBACK_INTERVAL", 0.3)
+
+        expect(gap_between_runs(-> { 0 }, logger)).to be < 0.2
+        expect(logger).not_to have_received(:error)
+        expect(logger).not_to have_received(:warn)
+      end
+
       [
         ["raises", -> { raise "interval failure" }],
         ["returns nil", -> { nil }],
-        ["returns zero", -> { 0 }],
+        ["returns a negative number", -> { -1 }],
+        ["returns NaN", -> { Float::NAN }],
       ].each do |desc, interval|
-        it "logs and keeps running when a callable interval #{desc}" do
+        it "logs at error and waits the fallback interval when a callable interval #{desc}" do
           logger = double("logger").as_null_object
-          ran = Concurrent::Event.new
-          stub_const("LaunchDarkly::Impl::RepeatingTask::FALLBACK_INTERVAL", 0.05)
-          runs = 0
-          task = RepeatingTask.new(interval, 0, -> { runs += 1; ran.set if runs >= 2 }, logger, "test")
-          begin
-            task.start
-            expect(ran.wait(1)).to be true
-            expect(task.instance_variable_get(:@worker).alive?).to be true
-          ensure
-            task.stop
-          end
-          expect(logger).to have_received(desc == "raises" ? :error : :warn).at_least(:once)
+          stub_const("LaunchDarkly::Impl::RepeatingTask::FALLBACK_INTERVAL", 0.3)
+
+          expect(gap_between_runs(interval, logger)).to be >= 0.25
+          expect(logger).to have_received(:error).at_least(:once)
+          expect(logger).not_to have_received(:warn)
         end
       end
 

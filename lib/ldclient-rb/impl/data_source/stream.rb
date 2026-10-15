@@ -147,7 +147,7 @@ module LaunchDarkly
             @data_source_update_sink&.update_status(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED, error_info)
           ensure
             # The SSE client reconnects as soon as this returns, also when it returns by raising.
-            @stop_event.wait([delay, Impl::RetryState::MAX_WAIT].min)
+            @stop_event.wait([delay, Util::TIMEOUT_MAX].min)
             log_connection_started
           end
         end
