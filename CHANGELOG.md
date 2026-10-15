@@ -2,6 +2,21 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.19.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.18.3...8.19.0) (2026-10-15)
+
+
+### Features
+
+* Retry indefinitely after a data source failure instead of stopping permanently ([fa29bf8](https://github.com/launchdarkly/ruby-server-sdk/commit/fa29bf8870e6dea11dd7f005ef01c9504940ed34))
+
+
+### Bug Fixes
+
+* Log normal HTTP errors from a data source at warn instead of error ([fa29bf8](https://github.com/launchdarkly/ruby-server-sdk/commit/fa29bf8870e6dea11dd7f005ef01c9504940ed34))
+* Measure a repeating task's interval from when the task returns ([fa29bf8](https://github.com/launchdarkly/ruby-server-sdk/commit/fa29bf8870e6dea11dd7f005ef01c9504940ed34))
+* Update ld-eventsource to 3.0.1 ([fa29bf8](https://github.com/launchdarkly/ruby-server-sdk/commit/fa29bf8870e6dea11dd7f005ef01c9504940ed34))
+* Warn and use the documented default for an invalid poll interval or initial reconnect delay ([fa29bf8](https://github.com/launchdarkly/ruby-server-sdk/commit/fa29bf8870e6dea11dd7f005ef01c9504940ed34))
+
 ## [8.18.3](https://github.com/launchdarkly/ruby-server-sdk/compare/8.18.2...8.18.3) (2026-10-09)
 
 
