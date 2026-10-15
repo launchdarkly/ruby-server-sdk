@@ -44,7 +44,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.1"
   # Keep this an exact version: the SDK depends on this library's behavior, so test
   # each new version with the SDK before release.
-  spec.add_runtime_dependency "ld-eventsource", "3.0.0"
+  spec.add_runtime_dependency "ld-eventsource", "3.0.1"
   spec.add_runtime_dependency "observer", "~> 0.1.2"
   spec.add_runtime_dependency "openssl", ">= 3.1.2", "< 5.0"
   spec.add_runtime_dependency "semantic", "~> 1.6"
