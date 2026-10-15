@@ -582,6 +582,7 @@ will trigger status change events to any registered listeners.</p>
 previous state was Status::INITIALIZING, the state will remain at
 Status::INITIALIZING because Status::INTERRUPTED is only meaningful
 after a successful startup.</p>
+<p>After a Status::OFF status, the SDK ignores every later update.</p>
 
   </div>
 </div>
@@ -730,7 +731,7 @@ after a successful startup.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct  9 22:46:19 2026 by
+  Generated on Thu Oct 15 15:28:26 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

@@ -114,6 +114,50 @@
 </ul>
 
 </div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="TIMEOUT_MAX-constant" class="">TIMEOUT_MAX =
+          <div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This constant is part of a private API.</strong>
+  You should avoid using this constant if possible, as it may be removed or be changed in the future.
+</p>
+<p>The longest wait to pass to <code>Concurrent::Event#wait</code>, in seconds. A wait above about 1e19 seconds
+raises <code>RangeError</code>. About 31 years is the same in practice as honoring a longer wait.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='int'>1_000_000_000</span></pre></dd>
+      
+    </dl>
+  
+
 
 
 
@@ -197,6 +241,28 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#classify_http_status-class_method" title="classify_http_status (class method)">.<strong>classify_http_status</strong>(status)  &#x21d2; Symbol </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>Classifies an HTTP error status.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#current_time_millis-class_method" title="current_time_millis (class method)">.<strong>current_time_millis</strong>  &#x21d2; Object </a>
     
 
@@ -241,6 +307,50 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#failure_log_level-class_method" title="failure_log_level (class method)">.<strong>failure_log_level</strong>(kind)  &#x21d2; Symbol </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>The log level for a failure of this kind.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#http_error_description-class_method" title="http_error_description (class method)">.<strong>http_error_description</strong>(status, context)  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#http_error_message-class_method" title="http_error_message (class method)">.<strong>http_error_message</strong>(status, context, recoverable_message)  &#x21d2; Object </a>
     
 
@@ -264,6 +374,28 @@
   <span class="summary_signature">
     
       <a href="#http_error_recoverable%3F-class_method" title="http_error_recoverable? (class method)">.<strong>http_error_recoverable?</strong>(status)  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#http_error_retry_message-class_method" title="http_error_retry_message (class method)">.<strong>http_error_retry_message</strong>(status, context, delay)  &#x21d2; String </a>
     
 
     
@@ -344,6 +476,28 @@
 
   
     <span class="summary_desc"><div class='inline'><p>Creates a new persistent HTTP client with the given configuration.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#retry_message-class_method" title="retry_message (class method)">.<strong>retry_message</strong>(delay)  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
   
 </li>
 
@@ -505,10 +659,6 @@
       <pre class="lines">
 
 
-118
-119
-120
-121
 122
 123
 124
@@ -517,10 +667,14 @@
 127
 128
 129
-130</pre>
+130
+131
+132
+133
+134</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 118</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 122</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_add_payload_filter_key'>add_payload_filter_key</span><span class='lparen'>(</span><span class='id identifier rubyid_uri'>uri</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_uri'>uri</span> <span class='kw'>if</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_payload_filter_key'>payload_filter_key</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -595,10 +749,6 @@
       <pre class="lines">
 
 
-47
-48
-49
-50
 51
 52
 53
@@ -606,10 +756,14 @@
 55
 56
 57
-58</pre>
+58
+59
+60
+61
+62</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 47</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 51</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_application_header_value'>application_header_value</span><span class='lparen'>(</span><span class='id identifier rubyid_application'>application</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_parts'>parts</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
@@ -683,15 +837,113 @@
       <pre class="lines">
 
 
-7
-8
-9</pre>
+11
+12
+13</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 7</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 11</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_bool?'>bool?</span><span class='lparen'>(</span><span class='id identifier rubyid_aObject'>aObject</span><span class='rparen'>)</span>
    <span class='lbracket'>[</span><span class='kw'>true</span><span class='comma'>,</span><span class='kw'>false</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span> <span class='id identifier rubyid_aObject'>aObject</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="classify_http_status-class_method">
+  
+    .<strong>classify_http_status</strong>(status)  &#x21d2; <tt>Symbol</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Classifies an HTTP error status.</p>
+<p><code>400</code>, <code>408</code>, <code>429</code> and every status outside the 4xx range are normal. Every other <code>4xx</code>,
+including <code>401</code> and <code>403</code>, is unexpected.</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>status</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p><code>:normal</code> or <code>:unexpected</code></p></div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+182
+183
+184
+185
+186
+187
+188</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 182</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_classify_http_status'>classify_http_status</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>&gt;=</span> <span class='int'>400</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>&lt;</span> <span class='int'>500</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='const'>NORMAL_4XX_STATUSES</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span>
+    <span class='symbol'>:unexpected</span>
+  <span class='kw'>else</span>
+    <span class='symbol'>:normal</span>
+  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -740,12 +992,12 @@
       <pre class="lines">
 
 
-11
-12
-13</pre>
+15
+16
+17</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 11</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 15</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_current_time_millis'>current_time_millis</span>
   <span class='lparen'>(</span><span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span><span class='period'>.</span><span class='id identifier rubyid_to_f'>to_f</span> <span class='op'>*</span> <span class='int'>1000</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_i'>to_i</span>
@@ -797,10 +1049,6 @@
       <pre class="lines">
 
 
-26
-27
-28
-29
 30
 31
 32
@@ -811,10 +1059,14 @@
 37
 38
 39
-40</pre>
+40
+41
+42
+43
+44</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 26</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 30</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default_http_headers'>default_http_headers</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_ret'>ret</span> <span class='op'>=</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Authorization</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>User-Agent</span><span class='tstring_end'>&quot;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>RubyClient/</span><span class='tstring_end'>&quot;</span></span> <span class='op'>+</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../LaunchDarkly.html#VERSION-constant" title="LaunchDarkly::VERSION (constant)">VERSION</a></span></span> <span class='rbrace'>}</span>
@@ -830,6 +1082,198 @@
   <span class='id identifier rubyid_ret'>ret</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>X-LaunchDarkly-Tags</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_app_value'>app_value</span> <span class='kw'>unless</span> <span class='id identifier rubyid_app_value'>app_value</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_app_value'>app_value</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
 
   <span class='id identifier rubyid_ret'>ret</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="failure_log_level-class_method">
+  
+    .<strong>failure_log_level</strong>(kind)  &#x21d2; <tt>Symbol</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Returns the log level for a failure of this kind.</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>kind</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p><code>:normal</code> or <code>:unexpected</code></p></div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the log level for a failure of this kind</p></div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+224
+225
+226</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 224</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_failure_log_level'>failure_log_level</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='symbol'>:unexpected</span> <span class='op'>?</span> <span class='symbol'>:error</span> <span class='op'>:</span> <span class='symbol'>:warn</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="http_error_description-class_method">
+  
+    .<strong>http_error_description</strong>(status, context)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>status</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>what failed, such as &quot;polling request&quot;</p></div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+205
+206
+207
+208</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 205</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_http_error_description'>http_error_description</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_desc'>desc</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='int'>401</span> <span class='op'>||</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='int'>403</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> (invalid SDK key)</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>HTTP error </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_status'>status</span><span class='embexpr_end'>}</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_desc'>desc</span><span class='embexpr_end'>}</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -878,14 +1322,14 @@
       <pre class="lines">
 
 
-173
-174
-175
-176
-177</pre>
+194
+195
+196
+197
+198</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 173</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 194</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_http_error_message'>http_error_message</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_recoverable_message'>recoverable_message</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_desc'>desc</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='int'>401</span> <span class='op'>||</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='int'>403</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> (invalid SDK key)</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span>
@@ -952,23 +1396,128 @@
       <pre class="lines">
 
 
-165
-166
-167
-168
-169
-170
-171</pre>
+190
+191
+192</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 165</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 190</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_http_error_recoverable?'>http_error_recoverable?</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span>
-  <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>&gt;=</span> <span class='int'>400</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>&lt;</span> <span class='int'>500</span>
-    <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='int'>400</span> <span class='op'>||</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='int'>408</span> <span class='op'>||</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='int'>429</span>
-  <span class='kw'>else</span>
-    <span class='kw'>true</span>
-  <span class='kw'>end</span>
+  <span class='id identifier rubyid_classify_http_status'>classify_http_status</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='symbol'>:normal</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="http_error_retry_message-class_method">
+  
+    .<strong>http_error_retry_message</strong>(status, context, delay)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>status</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>what failed, such as &quot;polling request&quot;</p></div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>delay</span>
+      
+      
+        <span class='type'>(<tt>Numeric</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>seconds until the next attempt</p></div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+216
+217
+218</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 216</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_http_error_retry_message'>http_error_retry_message</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_delay'>delay</span><span class='rparen'>)</span>
+  <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_http_error_description'>http_error_description</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'> - </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_retry_message'>retry_message</span><span class='lparen'>(</span><span class='id identifier rubyid_delay'>delay</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1017,13 +1566,13 @@
       <pre class="lines">
 
 
-160
-161
-162
-163</pre>
+164
+165
+166
+167</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 160</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 164</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_log_exception'>log_exception</span><span class='lparen'>(</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_message'>message</span><span class='comma'>,</span> <span class='id identifier rubyid_exc'>exc</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_exc'>exc</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
@@ -1091,12 +1640,12 @@ process.</p>
       <pre class="lines">
 
 
-22
-23
-24</pre>
+26
+27
+28</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 22</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 26</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_monotonic_seconds'>monotonic_seconds</span>
   <span class='const'>Process</span><span class='period'>.</span><span class='id identifier rubyid_clock_gettime'>clock_gettime</span><span class='lparen'>(</span><span class='const'>Process</span><span class='op'>::</span><span class='const'>CLOCK_MONOTONIC</span><span class='comma'>,</span> <span class='symbol'>:float_second</span><span class='rparen'>)</span>
@@ -1179,10 +1728,6 @@ process.</p>
       <pre class="lines">
 
 
-138
-139
-140
-141
 142
 143
 144
@@ -1199,10 +1744,14 @@ process.</p>
 155
 156
 157
-158</pre>
+158
+159
+160
+161
+162</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 138</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 142</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_http_client'>new_http_client</span><span class='lparen'>(</span><span class='id identifier rubyid_http_config'>http_config</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_http_client_options'>http_client_options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
@@ -1224,6 +1773,94 @@ process.</p>
       <span class='label'>connect:</span> <span class='id identifier rubyid_http_config'>http_config</span><span class='period'>.</span><span class='id identifier rubyid_connect_timeout'>connect_timeout</span>
     <span class='rparen'>)</span>
     <span class='period'>.</span><span class='id identifier rubyid_persistent'>persistent</span><span class='lparen'>(</span><span class='id identifier rubyid_http_config'>http_config</span><span class='period'>.</span><span class='id identifier rubyid_base_uri'>base_uri</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="retry_message-class_method">
+  
+    .<strong>retry_message</strong>(delay)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>delay</span>
+      
+      
+        <span class='type'>(<tt>Numeric</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>seconds until the next attempt</p></div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+232
+233
+234</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 232</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_retry_message'>retry_message</span><span class='lparen'>(</span><span class='id identifier rubyid_delay'>delay</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_format'>format</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>will retry in %.1fs</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_delay'>delay</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1311,15 +1948,15 @@ process.</p>
       <pre class="lines">
 
 
-89
-90
-91
-92
 93
-94</pre>
+94
+95
+96
+97
+98</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 89</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 93</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_validate_application_info'>validate_application_info</span><span class='lparen'>(</span><span class='id identifier rubyid_app'>app</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
@@ -1424,10 +2061,6 @@ process.</p>
       <pre class="lines">
 
 
-66
-67
-68
-69
 70
 71
 72
@@ -1440,10 +2073,14 @@ process.</p>
 79
 80
 81
-82</pre>
+82
+83
+84
+85
+86</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 66</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 70</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_validate_application_value'>validate_application_value</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
@@ -1548,18 +2185,18 @@ process.</p>
       <pre class="lines">
 
 
-101
-102
-103
-104
 105
 106
 107
 108
-109</pre>
+109
+110
+111
+112
+113</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 101</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/util.rb', line 105</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_validate_payload_filter_key'>validate_payload_filter_key</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>if</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -1580,7 +2217,7 @@ process.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct  9 22:46:14 2026 by
+  Generated on Thu Oct 15 15:28:22 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

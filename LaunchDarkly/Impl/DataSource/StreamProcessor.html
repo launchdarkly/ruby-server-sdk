@@ -283,7 +283,6 @@
       <pre class="lines">
 
 
-24
 25
 26
 27
@@ -295,10 +294,13 @@
 33
 34
 35
-36</pre>
+36
+37
+38
+39</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 24</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 25</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='comma'>,</span> <span class='id identifier rubyid_diagnostic_accumulator'>diagnostic_accumulator</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@sdk_key</span> <span class='op'>=</span> <span class='id identifier rubyid_sdk_key'>sdk_key</span>
@@ -310,6 +312,8 @@
   <span class='ivar'>@started</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>AtomicBoolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
   <span class='ivar'>@stopped</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>AtomicBoolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
   <span class='ivar'>@ready</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>Event</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='ivar'>@stop_event</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>Event</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='ivar'>@retry_state</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'>RetryState</span><span class='period'>.</span><span class='id identifier rubyid_for_streaming'>for_streaming</span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_initial_reconnect_delay'>initial_reconnect_delay</span><span class='comma'>,</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
   <span class='ivar'>@connection_attempt_start_time</span> <span class='op'>=</span> <span class='int'>0</span>
   <span class='ivar'>@connection_attempt_started_monotonic</span> <span class='op'>=</span> <span class='kw'>nil</span>
 <span class='kw'>end</span></pre>
@@ -380,12 +384,12 @@
       <pre class="lines">
 
 
-38
-39
-40</pre>
+41
+42
+43</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 38</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 41</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='ivar'>@initialized</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
@@ -437,9 +441,6 @@
       <pre class="lines">
 
 
-42
-43
-44
 45
 46
 47
@@ -467,35 +468,10 @@
 69
 70
 71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91
-92
-93
-94
-95
-96
-97</pre>
+72</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 42</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 45</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start'>start</span>
   <span class='kw'>return</span> <span class='ivar'>@ready</span> <span class='kw'>unless</span> <span class='ivar'>@started</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
@@ -509,7 +485,8 @@
     <span class='label'>connect_timeout:</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_connect_timeout'>connect_timeout</span><span class='comma'>,</span>
     <span class='label'>logger:</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span>
     <span class='label'>socket_factory:</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_socket_factory'>socket_factory</span><span class='comma'>,</span>
-    <span class='label'>reconnect_time:</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_initial_reconnect_delay'>initial_reconnect_delay</span><span class='comma'>,</span>
+    <span class='comment'># The SDK waits in its error handler before each reconnect, so the SSE client adds no delay.
+</span>    <span class='label'>reconnect_time:</span> <span class='int'>0</span><span class='comma'>,</span>
   <span class='rbrace'>}</span>
   <span class='id identifier rubyid_log_connection_started'>log_connection_started</span>
 
@@ -517,39 +494,10 @@
   <span class='ivar'>@es</span> <span class='op'>=</span> <span class='const'>SSE</span><span class='op'>::</span><span class='const'>Client</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_uri'>uri</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_conn'>conn</span><span class='op'>|</span>
     <span class='id identifier rubyid_conn'>conn</span><span class='period'>.</span><span class='id identifier rubyid_on_connect'>on_connect</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_response_headers'>response_headers</span><span class='op'>|</span> <span class='const'><span class='object_link'><a href="../DataSource.html" title="LaunchDarkly::Impl::DataSource (module)">DataSource</a></span></span><span class='period'>.</span><span class='id identifier rubyid_record_environment_id'><span class='object_link'><a href="../DataSource.html#record_environment_id-class_method" title="LaunchDarkly::Impl::DataSource.record_environment_id (method)">record_environment_id</a></span></span><span class='lparen'>(</span><span class='ivar'>@data_source_update_sink</span><span class='comma'>,</span> <span class='id identifier rubyid_response_headers'>response_headers</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
     <span class='id identifier rubyid_conn'>conn</span><span class='period'>.</span><span class='id identifier rubyid_on_event'>on_event</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_event'>event</span><span class='op'>|</span> <span class='id identifier rubyid_process_message'>process_message</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
-    <span class='id identifier rubyid_conn'>conn</span><span class='period'>.</span><span class='id identifier rubyid_on_error'>on_error</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_err'>err</span><span class='op'>|</span>
-      <span class='id identifier rubyid_log_connection_result'>log_connection_result</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
-      <span class='kw'>case</span> <span class='id identifier rubyid_err'>err</span>
-      <span class='kw'>when</span> <span class='const'>SSE</span><span class='op'>::</span><span class='const'>Errors</span><span class='op'>::</span><span class='const'>HTTPStatusError</span>
-        <span class='id identifier rubyid_status'>status</span> <span class='op'>=</span> <span class='id identifier rubyid_err'>err</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span>
-        <span class='id identifier rubyid_error_info'>error_info</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo (class)">ErrorInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html#initialize-instance_method" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo#initialize (method)">new</a></span></span><span class='lparen'>(</span>
-          <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo (class)">ErrorInfo</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html#ERROR_RESPONSE-constant" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE (constant)">ERROR_RESPONSE</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span><span class='rparen'>)</span>
-        <span class='id identifier rubyid_message'>message</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_http_error_message'><span class='object_link'><a href="../Util.html#http_error_message-class_method" title="LaunchDarkly::Impl::Util.http_error_message (method)">http_error_message</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>streaming connection</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>will retry</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-        <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>[LDClient] </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
-
-        <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_http_error_recoverable?'><span class='object_link'><a href="../Util.html#http_error_recoverable%3F-class_method" title="LaunchDarkly::Impl::Util.http_error_recoverable? (method)">http_error_recoverable?</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span>
-          <span class='ivar'>@data_source_update_sink</span><span class='op'>&amp;.</span><span class='id identifier rubyid_update_status'>update_status</span><span class='lparen'>(</span>
-            <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html#INTERRUPTED-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED (constant)">INTERRUPTED</a></span></span><span class='comma'>,</span>
-            <span class='id identifier rubyid_error_info'>error_info</span>
-          <span class='rparen'>)</span>
-        <span class='kw'>else</span>
-          <span class='ivar'>@ready</span><span class='period'>.</span><span class='id identifier rubyid_set'>set</span>  <span class='comment'># if client was waiting on us, make it stop waiting - has no effect if already set
-</span>          <span class='id identifier rubyid_stop_with_error_info'>stop_with_error_info</span> <span class='id identifier rubyid_error_info'>error_info</span>
-        <span class='kw'>end</span>
-      <span class='kw'>when</span> <span class='const'>SSE</span><span class='op'>::</span><span class='const'>Errors</span><span class='op'>::</span><span class='const'>HTTPContentTypeError</span><span class='comma'>,</span> <span class='const'>SSE</span><span class='op'>::</span><span class='const'>Errors</span><span class='op'>::</span><span class='const'>HTTPProxyError</span><span class='comma'>,</span> <span class='const'>SSE</span><span class='op'>::</span><span class='const'>Errors</span><span class='op'>::</span><span class='const'>ReadTimeoutError</span>
-        <span class='ivar'>@data_source_update_sink</span><span class='op'>&amp;.</span><span class='id identifier rubyid_update_status'>update_status</span><span class='lparen'>(</span>
-          <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html#INTERRUPTED-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED (constant)">INTERRUPTED</a></span></span><span class='comma'>,</span>
-          <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo (class)">ErrorInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html#initialize-instance_method" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo (class)">ErrorInfo</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html#NETWORK_ERROR-constant" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR (constant)">NETWORK_ERROR</a></span></span><span class='comma'>,</span> <span class='int'>0</span><span class='comma'>,</span> <span class='id identifier rubyid_err'>err</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='comma'>,</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span><span class='rparen'>)</span>
-        <span class='rparen'>)</span>
-
-      <span class='kw'>else</span>
-        <span class='ivar'>@data_source_update_sink</span><span class='op'>&amp;.</span><span class='id identifier rubyid_update_status'>update_status</span><span class='lparen'>(</span>
-          <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html#INTERRUPTED-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED (constant)">INTERRUPTED</a></span></span><span class='comma'>,</span>
-          <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo (class)">ErrorInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html#initialize-instance_method" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo (class)">ErrorInfo</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/ErrorInfo.html#UNKNOWN-constant" title="LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span> <span class='int'>0</span><span class='comma'>,</span> <span class='id identifier rubyid_err'>err</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='comma'>,</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span><span class='rparen'>)</span>
-        <span class='rparen'>)</span>
-      <span class='kw'>end</span>
-    <span class='rbrace'>}</span>
+    <span class='id identifier rubyid_conn'>conn</span><span class='period'>.</span><span class='id identifier rubyid_on_error'>on_error</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_err'>err</span><span class='op'>|</span> <span class='id identifier rubyid_handle_error'>handle_error</span><span class='lparen'>(</span><span class='id identifier rubyid_err'>err</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
   <span class='kw'>end</span>
+  <span class='comment'># stop can run before @es is set, and then it has no client to close.
+</span>  <span class='ivar'>@es</span><span class='period'>.</span><span class='id identifier rubyid_close'>close</span> <span class='kw'>if</span> <span class='ivar'>@stopped</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
 
   <span class='ivar'>@ready</span>
 <span class='kw'>end</span></pre>
@@ -600,12 +548,12 @@
       <pre class="lines">
 
 
-99
-100
-101</pre>
+74
+75
+76</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 99</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source/stream.rb', line 74</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stop'>stop</span>
   <span class='id identifier rubyid_stop_with_error_info'>stop_with_error_info</span>
@@ -620,7 +568,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Oct  9 22:46:19 2026 by
+  Generated on Thu Oct 15 15:28:26 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

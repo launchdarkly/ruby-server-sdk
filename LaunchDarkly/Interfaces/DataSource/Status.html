@@ -124,9 +124,10 @@
           <div class="docstring">
   <div class="discussion">
     <p>The initial state of the data source when the SDK is being initialized.</p>
-<p>If it encounters an error that requires it to retry initialization, the state will remain at
-<span class='object_link'><a href="#INITIALIZING-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING (constant)">INITIALIZING</a></span> until it either succeeds and becomes <span class='object_link'><a href="#VALID-constant" title="LaunchDarkly::Interfaces::DataSource::Status::VALID (constant)">VALID</a></span>, or permanently fails and
-becomes <span class='object_link'><a href="#OFF-constant" title="LaunchDarkly::Interfaces::DataSource::Status::OFF (constant)">OFF</a></span>.</p>
+<p>If it encounters an error while it initializes, it retries, and the state remains at
+<span class='object_link'><a href="#INITIALIZING-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING (constant)">INITIALIZING</a></span> until it succeeds and becomes <span class='object_link'><a href="#VALID-constant" title="LaunchDarkly::Interfaces::DataSource::Status::VALID (constant)">VALID</a></span>. This is also true for an error that needs
+to be fixed, such as a rejected SDK key. In the FDv2 data system, it can instead become <span class='object_link'><a href="#OFF-constant" title="LaunchDarkly::Interfaces::DataSource::Status::OFF (constant)">OFF</a></span>
+after an error it does not retry.</p>
 
   </div>
 </div>
@@ -161,7 +162,8 @@ request succeeded.</p>
     <p>Indicates that the data source encountered an error that it will attempt to recover from.</p>
 <p>In streaming mode, this means that the stream connection failed, or had to be dropped due to some
 other error, and will be retried after a backoff delay. In polling mode, it means that the last poll
-request failed, and a new poll request will be made after the configured polling interval.</p>
+request failed, and a new poll request will be made after the polling interval, or after a longer
+backoff delay for unexpected error types.</p>
 
   </div>
 </div>
@@ -176,9 +178,10 @@ request failed, and a new poll request will be made after the configured polling
           <div class="docstring">
   <div class="discussion">
     <p>Indicates that the data source has been permanently shut down.</p>
-<p>This could be because it encountered an unrecoverable error (for instance, the LaunchDarkly service
-rejected the SDK key; an invalid SDK key will never become valid), or because the SDK client was
-explicitly shut down.</p>
+<p>This could be because the SDK client was explicitly shut down. In the FDv2 data system, it can also
+mean the data source stopped after an error it does not retry.</p>
+<p>Unless the SDK is configured with <span class='object_link'><a href="../../Config.html#data_system_config-instance_method" title="LaunchDarkly::Config#data_system_config (method)">Config#data_system_config</a></span>, no other state follows
+this one.</p>
 
   </div>
 </div>
@@ -347,14 +350,14 @@ explicitly shut down.</p>
       <pre class="lines">
 
 
-206
-207
-208
-209
-210</pre>
+212
+213
+214
+215
+216</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 206</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 212</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_state'>state</span><span class='comma'>,</span> <span class='id identifier rubyid_state_since'>state_since</span><span class='comma'>,</span> <span class='id identifier rubyid_last_error'>last_error</span><span class='rparen'>)</span>
   <span class='ivar'>@state</span> <span class='op'>=</span> <span class='id identifier rubyid_state'>state</span>
@@ -413,12 +416,12 @@ explicitly shut down.</p>
       <pre class="lines">
 
 
-204
-205
-206</pre>
+210
+211
+212</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 204</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 210</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_last_error'>last_error</span>
   <span class='ivar'>@last_error</span>
@@ -470,12 +473,12 @@ explicitly shut down.</p>
       <pre class="lines">
 
 
-200
-201
-202</pre>
+206
+207
+208</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 200</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 206</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_state'>state</span>
   <span class='ivar'>@state</span>
@@ -527,12 +530,12 @@ explicitly shut down.</p>
       <pre class="lines">
 
 
-202
-203
-204</pre>
+208
+209
+210</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 202</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 208</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_state_since'>state_since</span>
   <span class='ivar'>@state_since</span>
@@ -548,7 +551,7 @@ explicitly shut down.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct  9 22:46:18 2026 by
+  Generated on Thu Oct 15 15:28:25 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

@@ -384,6 +384,7 @@ will trigger status change events to any registered listeners.</p>
 previous state was <span class='object_link'><a href="Status.html#INITIALIZING-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING (constant)">Status::INITIALIZING</a></span>, the state will remain at
 <span class='object_link'><a href="Status.html#INITIALIZING-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING (constant)">Status::INITIALIZING</a></span> because <span class='object_link'><a href="Status.html#INTERRUPTED-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED (constant)">Status::INTERRUPTED</a></span> is only meaningful
 after a successful startup.</p>
+<p>After a <span class='object_link'><a href="Status.html#OFF-constant" title="LaunchDarkly::Interfaces::DataSource::Status::OFF (constant)">Status::OFF</a></span> status, the SDK ignores every later update.</p>
 
   </div>
 </div>
@@ -422,10 +423,10 @@ after a successful startup.</p>
       <pre class="lines">
 
 
-154</pre>
+156</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 154</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/interfaces/data_source.rb', line 156</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_update_status'>update_status</span><span class='lparen'>(</span><span class='id identifier rubyid_new_state'>new_state</span><span class='comma'>,</span> <span class='id identifier rubyid_new_error'>new_error</span><span class='rparen'>)</span> <span class='kw'>end</span></pre>
     </td>
@@ -507,7 +508,7 @@ otherwise, the method should do nothing.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct  9 22:46:15 2026 by
+  Generated on Thu Oct 15 15:28:22 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

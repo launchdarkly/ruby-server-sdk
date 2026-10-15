@@ -888,7 +888,10 @@
 154
 155
 156
-157</pre>
+157
+158
+159
+160</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_source.rb', line 133</span>
@@ -900,6 +903,9 @@
 
   <span class='ivar'>@mutex</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
     <span class='id identifier rubyid_old_status'>old_status</span> <span class='op'>=</span> <span class='ivar'>@current_status</span>
+
+    <span class='comment'># OFF is final: no status is reported after it.
+</span>    <span class='kw'>return</span> <span class='kw'>if</span> <span class='id identifier rubyid_old_status'>old_status</span><span class='period'>.</span><span class='id identifier rubyid_state'>state</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html#OFF-constant" title="LaunchDarkly::Interfaces::DataSource::Status::OFF (constant)">OFF</a></span></span>
 
     <span class='kw'>if</span> <span class='id identifier rubyid_new_state'>new_state</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html#INTERRUPTED-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED (constant)">INTERRUPTED</a></span></span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_old_status'>old_status</span><span class='period'>.</span><span class='id identifier rubyid_state'>state</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource.html" title="LaunchDarkly::Interfaces::DataSource (module)">DataSource</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html" title="LaunchDarkly::Interfaces::DataSource::Status (class)">Status</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Interfaces/DataSource/Status.html#INITIALIZING-constant" title="LaunchDarkly::Interfaces::DataSource::Status::INITIALIZING (constant)">INITIALIZING</a></span></span>
       <span class='comment'># See {LaunchDarkly::Interfaces::DataSource::UpdateSink#update_status} for more information
@@ -1003,7 +1009,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Oct  9 22:46:17 2026 by
+  Generated on Thu Oct 15 15:28:24 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

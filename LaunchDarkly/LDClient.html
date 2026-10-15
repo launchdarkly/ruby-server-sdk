@@ -737,12 +737,12 @@ is (as far as the SDK knows) currently operational and tracking changes in this 
       <pre class="lines">
 
 
-723
 724
-725</pre>
+725
+726</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 723</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 724</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_big_segment_store_status_provider'>big_segment_store_status_provider</span>
   <span class='ivar'>@big_segment_store_status_provider</span>
@@ -959,7 +959,6 @@ of the JSON data if you are passing the flag state to the front end.</p></div>
       <pre class="lines">
 
 
-629
 630
 631
 632
@@ -1021,10 +1020,11 @@ of the JSON data if you are passing the flag state to the front end.</p></div>
 688
 689
 690
-691</pre>
+691
+692</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 629</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 630</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_flags_state'>all_flags_state</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span>
@@ -1118,16 +1118,16 @@ of the JSON data if you are passing the flag state to the front end.</p></div>
       <pre class="lines">
 
 
-709
 710
 711
 712
 713
 714
-715</pre>
+715
+716</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 709</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 710</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1264,12 +1264,12 @@ listener model.</p>
       <pre class="lines">
 
 
-732
 733
-734</pre>
+734
+735</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 732</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 733</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flag_tracker'>flag_tracker</span>
   <span class='ivar'>@flag_tracker</span>
@@ -1304,13 +1304,13 @@ listener model.</p>
       <pre class="lines">
 
 
-700
 701
 702
-703</pre>
+703
+704</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 700</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 701</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flush'>flush</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1369,7 +1369,6 @@ until later; see <span class='object_link'><a href="#flush-instance_method" titl
       <pre class="lines">
 
 
-537
 538
 539
 540
@@ -1383,10 +1382,11 @@ until later; see <span class='object_link'><a href="#flush-instance_method" titl
 548
 549
 550
-551</pre>
+551
+552</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 537</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 538</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_identify'>identify</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1423,8 +1423,9 @@ until later; see <span class='object_link'><a href="#flush-instance_method" titl
 <p>If this returns false, it means that the client did not succeed in connecting to
 LaunchDarkly within the time limit that you specified in the constructor. It could
 still succeed in connecting at a later time (on another thread), or it could have
-given up permanently (for instance, if your SDK key is invalid). In the meantime,
-any call to <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span> or <span class='object_link'><a href="#variation_detail-instance_method" title="LaunchDarkly::LDClient#variation_detail (method)">#variation_detail</a></span> will behave as follows:</p>
+received an error that needs to be fixed (for instance, if your SDK key is
+invalid). In the meantime, any call to <span class='object_link'><a href="#variation-instance_method" title="LaunchDarkly::LDClient#variation (method)">#variation</a></span> or <span class='object_link'><a href="#variation_detail-instance_method" title="LaunchDarkly::LDClient#variation_detail (method)">#variation_detail</a></span> will
+behave as follows:</p>
 <ol>
 <li>
 <p>It will check whether the feature store already contains data (that is, you
@@ -1464,14 +1465,14 @@ parameter of <span class='object_link'><a href="#variation-instance_method" titl
       <pre class="lines">
 
 
-318
 319
 320
 321
-322</pre>
+322
+323</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 318</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 319</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='kw'>return</span> <span class='kw'>true</span> <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span> <span class='op'>||</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_use_ldd?'>use_ldd?</span>
@@ -1559,7 +1560,6 @@ a valid stage, then a default stage of 'off' will be used instead.</p>
       <pre class="lines">
 
 
-495
 496
 497
 498
@@ -1585,10 +1585,11 @@ a valid stage, then a default stage of 'off' will be used instead.</p>
 518
 519
 520
-521</pre>
+521
+522</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 495</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 496</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_migration_variation'>migration_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1888,7 +1889,6 @@ for Data Export.</p></div>
       <pre class="lines">
 
 
-574
 575
 576
 577
@@ -1897,10 +1897,11 @@ for Data Export.</p></div>
 580
 581
 582
-583</pre>
+583
+584</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 574</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 575</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_track'>track</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_metric_value'>metric_value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1960,7 +1961,6 @@ automatically.</p>
       <pre class="lines">
 
 
-595
 596
 597
 598
@@ -1975,10 +1975,11 @@ automatically.</p>
 607
 608
 609
-610</pre>
+610
+611</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 595</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 596</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_track_migration_op'>track_migration_op</span><span class='lparen'>(</span><span class='id identifier rubyid_tracker'>tracker</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -2089,7 +2090,6 @@ condition making it impossible to find or evaluate the flag</p></div>
       <pre class="lines">
 
 
-335
 336
 337
 338
@@ -2098,10 +2098,11 @@ condition making it impossible to find or evaluate the flag</p></div>
 341
 342
 343
-344</pre>
+344
+345</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 335</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 336</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation'>variation</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -2215,7 +2216,6 @@ condition making it impossible to find or evaluate the flag</p></div>
       <pre class="lines">
 
 
-369
 370
 371
 372
@@ -2224,10 +2224,11 @@ condition making it impossible to find or evaluate the flag</p></div>
 375
 376
 377
-378</pre>
+378
+379</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 369</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 370</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation_detail'>variation_detail</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -2249,7 +2250,7 @@ condition making it impossible to find or evaluate the flag</p></div>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct  9 22:46:16 2026 by
+  Generated on Thu Oct 15 15:28:24 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>
