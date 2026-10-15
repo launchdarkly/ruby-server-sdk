@@ -113,6 +113,15 @@ module LaunchDarkly
           expect(source.poll_interval).to eq 2.5
         end
 
+        it "drops a path listed more than once with a warning" do
+          # Under the default fail handling the same file listed twice would make every one of its
+          # keys a duplicate of itself. The repeat is ignored and the first occurrence keeps its place.
+          source = build(paths: ["a.json", "b.json", "a.json"])
+
+          expect(source.paths).to eq [File.absolute_path("a.json"), File.absolute_path("b.json")]
+          expect(logger.output).to include("File paths list the same file more than once")
+        end
+
         it "rejects a configuration with no file paths" do
           expect { build({}) }.to raise_error(ArgumentError, /no file paths/)
           expect { build(paths: []) }.to raise_error(ArgumentError, /no file paths/)
