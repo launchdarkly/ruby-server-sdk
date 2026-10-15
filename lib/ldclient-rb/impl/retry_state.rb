@@ -1,4 +1,5 @@
 require "ldclient-rb/config"
+require "ldclient-rb/impl/util"
 
 module LaunchDarkly
   module Impl
@@ -34,7 +35,7 @@ module LaunchDarkly
       # How many polls in a row must succeed before polling's retry state resets.
       POLLING_RESET_SUCCESSES = 2
 
-      MONOTONIC_CLOCK = -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
+      MONOTONIC_CLOCK = -> { Impl::Util.monotonic_seconds }
       private_constant :MONOTONIC_CLOCK
 
       #
