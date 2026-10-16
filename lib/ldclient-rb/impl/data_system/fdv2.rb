@@ -133,6 +133,10 @@ module LaunchDarkly
             @override_source = @data_system_config.overrides.build(@sdk_key, @config)
             @override_layer = LaunchDarkly::Impl::Overrides::Layer.new
             @overlay = LaunchDarkly::Impl::Overrides::Overlay.new(@store, @override_layer)
+            # A LaunchDarkly change to a flag or segment that an override entry depends on must
+            # notify that entry's flag as well. The store reaches those entries through the
+            # layer's dependency graph.
+            @store.set_external_dependencies(@override_layer)
           end
         end
 

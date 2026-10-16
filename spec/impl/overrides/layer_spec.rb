@@ -11,8 +11,22 @@ module LaunchDarkly
         let(:flag_a) { Flags.from_hash({ key: "a", version: 1, on: false, offVariation: 0, variations: ["a"] }) }
         let(:flag_b) { Flags.from_hash({ key: "b", version: 2, on: false, offVariation: 0, variations: ["b"] }) }
         let(:segment_s) { Segments.from_hash({ key: "s", version: 3, included: ["user"] }) }
+        let(:top) do
+          Flags.from_hash({ key: "top", version: 1, on: true, fallthrough: { variation: 0 }, offVariation: 0, variations: ["t"],
+                            prerequisites: [{ key: "mid", variation: 0 }] })
+        end
+        let(:mid) do
+          Flags.from_hash({ key: "mid", version: 1, on: true, fallthrough: { variation: 0 }, offVariation: 0, variations: ["m"],
+                            rules: [{ id: "r", variation: 0, clauses: [Clauses.match_segment("seg")] }] })
+        end
 
         subject(:layer) { Layer.new }
+
+        def affected_by(kind, key)
+          affected = Set.new
+          layer.add_affected_items(affected, { kind: kind, key: key })
+          affected
+        end
 
         it "is empty when created" do
           expect(layer.empty?).to be true
@@ -76,6 +90,26 @@ module LaunchDarkly
           expect(previous[DataStore::FEATURES].keys).to eq([:a])
           expect(current[DataStore::FEATURES].keys).to eq([:b])
           expect(current[DataStore::SEGMENTS].keys).to eq([:s])
+        end
+
+        it "adds the entries that depend on an item, starting from a key given as a string or a symbol" do
+          layer.set_all({ top: top, mid: mid, a: flag_a }, {})
+
+          # The segment is not an override entry; the chain still starts from it.
+          expected = Set[{ kind: DataStore::SEGMENTS, key: "seg" }, { kind: DataStore::FEATURES, key: "mid" },
+                         { kind: DataStore::FEATURES, key: "top" }]
+          expect(affected_by(DataStore::SEGMENTS, "seg")).to eq expected
+          expect(affected_by(DataStore::SEGMENTS, :seg)).to eq expected
+          expect(affected_by(DataStore::FEATURES, :a)).to eq Set[{ kind: DataStore::FEATURES, key: "a" }]
+        end
+
+        it "rebuilds the dependency graph on each replacement" do
+          layer.set_all({ top: top }, {})
+          expect(affected_by(DataStore::FEATURES, "mid")).to eq Set[{ kind: DataStore::FEATURES, key: "mid" },
+                                                                    { kind: DataStore::FEATURES, key: "top" }]
+
+          layer.set_all({}, {})
+          expect(affected_by(DataStore::FEATURES, "mid")).to eq Set[{ kind: DataStore::FEATURES, key: "mid" }]
         end
 
         it "returns frozen contents that cannot be modified" do
