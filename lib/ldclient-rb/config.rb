@@ -468,9 +468,7 @@ module LaunchDarkly
     attr_reader :omit_anonymous_contexts
 
     #
-    # Configuration for the upcoming enhanced data system design. This is
-    # experimental and should not be set without direction from LaunchDarkly
-    # support.
+    # Configuration for the upcoming enhanced data system design.
     #
     # @return [DataSystemConfig, nil]
     #
