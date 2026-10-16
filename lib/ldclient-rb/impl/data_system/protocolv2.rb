@@ -1,4 +1,5 @@
 require 'json'
+require 'ldclient-rb/interfaces/data_system'
 
 module LaunchDarkly
   module Impl
@@ -8,6 +9,26 @@ module LaunchDarkly
         # This module contains the protocol definitions and data types for the
         # LaunchDarkly data system version 2 (FDv2).
         #
+
+        SUPPORTED_KINDS = [
+          LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+          LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
+        ].freeze
+
+        #
+        # Returns true if put-object or delete-object data names a kind this SDK
+        # does not support. Such objects are ignored so that payloads carrying
+        # newer kinds can still be applied.
+        #
+        # @param data [Hash] The hash representation of the event data
+        # @return [Boolean]
+        #
+        def self.unsupported_kind?(data)
+          return false unless data.is_a?(Hash)
+
+          kind = data[:kind]
+          !kind.nil? && !SUPPORTED_KINDS.include?(kind)
+        end
 
         #
         # DeleteObject specifies the deletion of a particular object.

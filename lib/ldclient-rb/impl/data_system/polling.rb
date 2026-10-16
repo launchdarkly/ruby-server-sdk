@@ -497,6 +497,8 @@ module LaunchDarkly
             builder.start(server_intent.payload.code)
 
           when LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT
+            next if LaunchDarkly::Impl::DataSystem::ProtocolV2.unsupported_kind?(event[:data])
+
             begin
               put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.from_h(event[:data])
             rescue ArgumentError => e
@@ -506,6 +508,8 @@ module LaunchDarkly
             builder.add_put(put.kind, put.key, put.version, put.object)
 
           when LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT
+            next if LaunchDarkly::Impl::DataSystem::ProtocolV2.unsupported_kind?(event[:data])
+
             begin
               delete_object = LaunchDarkly::Impl::DataSystem::ProtocolV2::DeleteObject.from_h(event[:data])
             rescue ArgumentError => e
