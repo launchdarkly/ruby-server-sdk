@@ -246,13 +246,19 @@ module LaunchDarkly
             nil
 
           when LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT
-            put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.from_h(JSON.parse(message.data, symbolize_names: true))
-            change_set_builder.add_put(put.kind, put.key, put.version, put.object)
+            data = JSON.parse(message.data, symbolize_names: true)
+            unless LaunchDarkly::Impl::DataSystem::ProtocolV2.unsupported_kind?(data)
+              put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.from_h(data)
+              change_set_builder.add_put(put.kind, put.key, put.version, put.object)
+            end
             nil
 
           when LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT
-            delete_object = LaunchDarkly::Impl::DataSystem::ProtocolV2::DeleteObject.from_h(JSON.parse(message.data, symbolize_names: true))
-            change_set_builder.add_delete(delete_object.kind, delete_object.key, delete_object.version)
+            data = JSON.parse(message.data, symbolize_names: true)
+            unless LaunchDarkly::Impl::DataSystem::ProtocolV2.unsupported_kind?(data)
+              delete_object = LaunchDarkly::Impl::DataSystem::ProtocolV2::DeleteObject.from_h(data)
+              change_set_builder.add_delete(delete_object.kind, delete_object.key, delete_object.version)
+            end
             nil
 
           when LaunchDarkly::Interfaces::DataSystem::EventName::GOODBYE
