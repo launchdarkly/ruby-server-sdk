@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "ldclient-rb/impl/data_store"
+require "ldclient-rb/impl/dependency_tracker"
 
 require "concurrent/atomics"
 
@@ -20,6 +21,10 @@ module LaunchDarkly
       # atomic reference and swapped on update, so the layer holds exactly one snapshot at any
       # instant.
       #
+      # Each snapshot also carries the dependency graph of its entries. The store consults it so
+      # that a LaunchDarkly change to a prerequisite or a segment also notifies the override
+      # entries that depend on it.
+      #
       class Layer
         EMPTY_CONTENTS = {
           DataStore::FEATURES => {}.freeze,
@@ -27,8 +32,12 @@ module LaunchDarkly
         }.freeze
         private_constant :EMPTY_CONTENTS
 
+        # The layer contents keyed by data kind, with the dependency graph of those entries.
+        Snapshot = Struct.new(:contents, :dependencies)
+        private_constant :Snapshot
+
         def initialize
-          @contents = Concurrent::AtomicReference.new(EMPTY_CONTENTS)
+          @snapshot = Concurrent::AtomicReference.new(Snapshot.new(EMPTY_CONTENTS, DependencyTracker.new).freeze)
         end
 
         #
@@ -47,8 +56,34 @@ module LaunchDarkly
             DataStore::FEATURES => flags.transform_values(&:as_override).freeze,
             DataStore::SEGMENTS => segments.transform_values(&:as_override).freeze,
           }.freeze
-          previous = @contents.get_and_set(replacement)
-          [previous, replacement]
+          dependencies = DependencyTracker.new
+          replacement.each do |kind, items|
+            items.each do |key, item|
+              # The graph keys items by string, the form in which the data model names
+              # prerequisites and segments.
+              dependencies.update_dependencies_from(kind, key.to_s, item)
+            rescue StandardError
+              # An entry whose dependency fields cannot be read contributes no edges. It is still
+              # served, and the remaining entries are still tracked.
+            end
+          end
+          previous = @snapshot.get_and_set(Snapshot.new(replacement, dependencies).freeze)
+          [previous.contents, replacement]
+        end
+
+        #
+        # Adds the given item and every override entry that directly or indirectly depends on it
+        # to the set. The item itself need not be an override entry: a LaunchDarkly flag or
+        # segment that an override entry references is a valid starting point. Items are
+        # `{ kind:, key: }` hashes. The key given may be a string or a symbol; the items added
+        # carry string keys.
+        #
+        # @param items_out [Set<Hash>]
+        # @param item [Hash] `{ kind:, key: }`
+        # @return [void]
+        #
+        def add_affected_items(items_out, item)
+          @snapshot.get.dependencies.add_affected_items(items_out, { kind: item[:kind], key: item[:key].to_s })
         end
 
         #
@@ -59,7 +94,7 @@ module LaunchDarkly
         # @return [Object, nil]
         #
         def get(kind, key)
-          items = @contents.get[kind]
+          items = @snapshot.get.contents[kind]
           return nil if items.nil?
 
           items[key.to_sym]
@@ -72,7 +107,7 @@ module LaunchDarkly
         # @return [Hash{Symbol => Object}]
         #
         def all(kind)
-          @contents.get[kind] || {}
+          @snapshot.get.contents[kind] || {}
         end
 
         #
@@ -81,7 +116,7 @@ module LaunchDarkly
         # @return [Hash]
         #
         def contents
-          @contents.get
+          @snapshot.get.contents
         end
 
         #
@@ -90,7 +125,7 @@ module LaunchDarkly
         # @return [Boolean]
         #
         def empty?
-          @contents.get.each_value.all?(&:empty?)
+          @snapshot.get.contents.each_value.all?(&:empty?)
         end
       end
     end

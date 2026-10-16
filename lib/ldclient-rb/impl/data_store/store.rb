@@ -38,8 +38,13 @@ module LaunchDarkly
           # Source of truth for flag evaluations once initialized
           @memory_store = InMemoryFeatureStoreV2.new(logger)
 
-          # Used to track dependencies between items in the store
+          # Used to track dependencies between items in the store. Items are keyed by string,
+          # the form in which the data model names prerequisites and segments.
           @dependency_tracker = LaunchDarkly::Impl::DependencyTracker.new(logger)
+
+          # A second dependency graph, such as the override layer's, whose items may depend on
+          # items in this store. Set once when the data system is built, before any data.
+          @external_dependencies = nil
 
           # Broadcasters for events
           @flag_change_broadcaster = flag_change_broadcaster
@@ -201,6 +206,20 @@ module LaunchDarkly
         end
 
         #
+        # Registers a second dependency graph whose items may depend on items in this store. A
+        # change to an item in this store then also notifies the external items that depend on
+        # it, directly or through any chain of dependencies in either graph.
+        #
+        # @param dependencies [#add_affected_items, nil] a graph answering `add_affected_items(items_out, { kind:, key: })`
+        # @return [void]
+        #
+        def set_external_dependencies(dependencies)
+          @lock.synchronize do
+            @external_dependencies = dependencies
+          end
+        end
+
+        #
         # Get the data store status provider for the persistent store, if configured.
         #
         # @return [LaunchDarkly::Impl::DataStore::StatusProviderV2, nil] The data store status provider for the persistent store, if configured
@@ -275,9 +294,9 @@ module LaunchDarkly
 
           collections.each do |kind, collection|
             collection.each do |key, item|
-              @dependency_tracker.update_dependencies_from(kind, key, item)
+              @dependency_tracker.update_dependencies_from(kind, key.to_s, item)
               if has_listeners
-                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key })
+                add_affected_items(affected_items, { kind: kind, key: key })
               end
             end
           end
@@ -359,7 +378,38 @@ module LaunchDarkly
           @dependency_tracker.reset
           all_data.each do |kind, items|
             items.each do |key, item|
-              @dependency_tracker.update_dependencies_from(kind, key, item)
+              @dependency_tracker.update_dependencies_from(kind, key.to_s, item)
+            end
+          end
+        end
+
+        #
+        # Adds the item and everything that depends on it to the set, following this store's own
+        # dependency graph and the external one. Every item reached through either graph is
+        # expanded through both, so a dependency chain may cross between them any number of
+        # times. Keys are compared as strings, so a change keyed by symbol reaches the same
+        # dependents as one keyed by string.
+        #
+        # @param items_out [Set<Hash>] Set of {kind:, key:} hashes
+        # @param initial_modified_item [Hash] {kind:, key:} hash
+        # @return [void]
+        #
+        private def add_affected_items(items_out, initial_modified_item)
+          pending = [{ kind: initial_modified_item[:kind], key: initial_modified_item[:key].to_s }]
+          until pending.empty?
+            current = pending.pop
+            # Each graph gets its own working set: a tracker does not expand an item that is
+            # already present, so a shared set would stop the second graph at the start.
+            via_store = Set.new
+            @dependency_tracker.add_affected_items(via_store, current)
+            via_external = Set.new
+            @external_dependencies&.add_affected_items(via_external, current)
+            (via_store | via_external).each do |reached|
+              item = { kind: reached[:kind], key: reached[:key].to_s }
+              next if items_out.include?(item)
+
+              items_out.add(item)
+              pending << item
             end
           end
         end
@@ -401,9 +451,9 @@ module LaunchDarkly
 
               # If either is missing or versions differ, it's a change
               if old_item.nil? || new_item.nil?
-                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key })
+                add_affected_items(affected_items, { kind: kind, key: key })
               elsif old_item[:version] != new_item[:version]
-                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key })
+                add_affected_items(affected_items, { kind: kind, key: key })
               end
             end
           end

@@ -2,6 +2,7 @@ require "spec_helper"
 require "capturing_logger"
 require "model_builders"
 require "override_test_components"
+require "ldclient-rb/integrations/test_data_v2"
 
 module LaunchDarkly
   describe LDClient, "with flag overrides" do
@@ -235,6 +236,24 @@ module LaunchDarkly
           source.update([prereq_ld.merge(version: 200, variations: ["p2"])])
 
           expect(listener.collect).to eq %w[dependent prereq]
+        end
+      end
+
+      it "fires for an override flag when the LaunchDarkly prerequisite it depends on changes" do
+        td = Integrations::TestDataV2.data_source
+        td.update(td.flag("prereq").on(true))
+        override_dependent = { key: "override-dependent", version: 1, on: true, prerequisites: [{ key: "prereq", variation: 0 }],
+                               fallthrough: { variation: 0 }, offVariation: 0, variations: ["d"] }
+        source = TestOverrideSource.new([override_dependent])
+        config = DataSystem.custom.synchronizers([td.test_data_ds_builder]).overrides(source).build
+        with_client(config, wait: 5) do |client|
+          expect(client.initialized?).to be true
+          listener = CollectingFlagChangeListener.new
+          client.flag_tracker.add_listener(listener)
+
+          td.update(td.flag("prereq").on(false))
+
+          expect(listener.collect).to eq %w[override-dependent prereq]
         end
       end
 
