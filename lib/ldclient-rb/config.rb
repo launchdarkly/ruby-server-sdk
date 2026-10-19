@@ -468,9 +468,9 @@ module LaunchDarkly
     attr_reader :omit_anonymous_contexts
 
     #
-    # Configuration for the upcoming enhanced data system design. This is
-    # experimental and should not be set without direction from LaunchDarkly
-    # support.
+    # Configuration for the data system, which controls how the SDK gets
+    # flag and segment data. When set, it overrides {#feature_store},
+    # {#data_source}, {#stream?}, and {#use_ldd?}.
     #
     # @return [DataSystemConfig, nil]
     #
