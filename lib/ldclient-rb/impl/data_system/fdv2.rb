@@ -34,7 +34,8 @@ module LaunchDarkly
         REMOVE = :remove
 
         # Switch to the FDv1 protocol fallback.
-        # Replaces the synchronizer list with the FDv1 fallback synchronizer.
+        # FDv2 is stopped, but its synchronizers are retained so that it can be
+        # retried once the fallback TTL elapses.
         FDV1 = :fdv1
       end
 
@@ -114,6 +115,10 @@ module LaunchDarkly
           @lock = Mutex.new
           @active_synchronizer = nil
           @threads = []
+
+          # TTL, in seconds, of the most recent FDv1 Fallback Directive. Only
+          # accessed from the main and synchronizer threads, which run in turn.
+          @fdv1_fallback_ttl = nil
 
           # Track configuration
           @configured_with_data_sources = (@data_system_config.initializers && !@data_system_config.initializers.empty?) ||
@@ -228,10 +233,12 @@ module LaunchDarkly
             )
 
             # Run initializers first. If an initializer signals the
-            # server-directed FDv1 Fallback Directive, switch terminally to
-            # the FDv1 Fallback Synchronizer (or transition to OFF if none
-            # is configured) before entering the synchronizer phase.
-            if run_initializers
+            # server-directed FDv1 Fallback Directive, the synchronizer phase
+            # starts in FDv1 fallback. If there are no FDv2 synchronizers to
+            # recover to, switch to the FDv1 Fallback Synchronizer (or
+            # transition to OFF if none is configured).
+            if run_initializers && @synchronizer_builders.empty?
+              @fdv1_fallback_ttl = nil
               if @fdv1_fallback_synchronizer_builder
                 @logger.warn { "[LDClient] Falling back to FDv1 protocol" }
                 @synchronizer_builders = [@fdv1_fallback_synchronizer_builder]
@@ -278,6 +285,7 @@ module LaunchDarkly
 
               fetch_result = initializer.fetch(@store)
               fallback = fetch_result.fallback_to_fdv1
+              @fdv1_fallback_ttl = LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl(fetch_result.fdv1_fallback_ttl) if fallback
               basis_result = fetch_result.result
 
               if basis_result.success?
@@ -356,6 +364,16 @@ module LaunchDarkly
 
           begin
             while !@stop_event.set? && current_index < @synchronizer_builders.length
+              unless @fdv1_fallback_ttl.nil?
+                ttl = @fdv1_fallback_ttl
+                @fdv1_fallback_ttl = nil
+                break unless run_fdv1_fallback(ttl)
+
+                @logger.info { "[LDClient] FDv1 fallback TTL elapsed; attempting to recover to FDv2" }
+                current_index = 0
+                next
+              end
+
               synchronizer_builder = @synchronizer_builders[current_index]
               is_primary = current_index == 0
 
@@ -376,22 +394,8 @@ module LaunchDarkly
 
                 case sync_result
                 when SyncResult::FDV1
-                  if @fdv1_fallback_synchronizer_builder
-                    @logger.warn { "[LDClient] Falling back to FDv1 protocol" }
-                    @synchronizer_builders = [@fdv1_fallback_synchronizer_builder]
-                    current_index = 0
-                    next
-                  end
-                  # No FDv1 fallback configured: the data system must HALT
-                  # rather than fall through to the next FDv2 synchronizer.
-                  # Continuing to retry would reopen the connection that just
-                  # delivered the directive.
-                  @logger.warn { "[LDClient] Synchronizer requested FDv1 fallback but none configured; halting data system" }
-                  @data_source_status_provider.update_status(
-                    LaunchDarkly::Interfaces::DataSource::Status::OFF,
-                    @data_source_status_provider.status.last_error
-                  )
-                  break
+                  # The fallback runs before the next FDv2 synchronizer is built.
+                  next
                 when SyncResult::RECOVER
                   @logger.info { "[LDClient] Recovery condition met, returning to primary synchronizer" }
                   current_index = 0
@@ -431,15 +435,70 @@ module LaunchDarkly
         end
 
         #
+        # Stays off FDv2 until the FDv1 fallback TTL elapses, running the FDv1
+        # Fallback Synchronizer in the meantime if one is configured. FDv2's
+        # synchronizers are retained so they can be retried afterwards.
+        #
+        # @param ttl [Integer] seconds to stay off FDv2
+        # @return [Boolean] true when the TTL elapsed; false if the data system was stopped
+        #
+        def run_fdv1_fallback(ttl)
+          deadline = Impl::Util.monotonic_seconds + ttl
+
+          if @fdv1_fallback_synchronizer_builder
+            @logger.warn { "[LDClient] Falling back to FDv1 protocol; will retry FDv2 in #{ttl}s" }
+
+            loop do
+              remaining = deadline - Impl::Util.monotonic_seconds
+              break if @stop_event.set? || remaining <= 0
+
+              @lock.synchronize do
+                sync = @fdv1_fallback_synchronizer_builder.build(@sdk_key, @config)
+                if sync.respond_to?(:set_diagnostic_accumulator) && @diagnostic_accumulator
+                  sync.set_diagnostic_accumulator(@diagnostic_accumulator)
+                end
+                @active_synchronizer = sync
+              end
+
+              sync_result = consume_synchronizer_results(@active_synchronizer, recover_after: remaining)
+              break if sync_result == SyncResult::RECOVER
+
+              if sync_result == SyncResult::REMOVE
+                @logger.warn { "[LDClient] FDv1 fallback synchronizer failed; will retry FDv2 when the fallback TTL elapses" }
+                break
+              end
+            end
+          else
+            @logger.warn { "[LDClient] Synchronizer requested FDv1 fallback but none configured; will retry FDv2 in #{ttl}s" }
+            @data_source_status_provider.update_status(
+              LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
+              @data_source_status_provider.status.last_error
+            )
+            # Nothing will deliver data until FDv2 is retried, so do not make
+            # the application wait for it.
+            @ready_event.set
+          end
+
+          # The FDv1 synchronizer cannot itself direct a fallback.
+          @fdv1_fallback_ttl = nil
+
+          remaining = deadline - Impl::Util.monotonic_seconds
+          @stop_event.wait(remaining) if remaining > 0
+          !@stop_event.set?
+        end
+
+        #
         # Consume results from a synchronizer until a condition is met or it fails.
         #
         # @param synchronizer [Object] The synchronizer
         # @param check_recovery [Boolean] Whether to check recovery condition (healthy too long)
+        # @param recover_after [Float, nil] If set, return {SyncResult::RECOVER} after this many seconds
         # @return [Symbol] One of {SyncResult::FALLBACK}, {SyncResult::RECOVER}, {SyncResult::REMOVE}, or {SyncResult::FDV1}
         #
-        def consume_synchronizer_results(synchronizer, check_recovery: false)
+        def consume_synchronizer_results(synchronizer, check_recovery: false, recover_after: nil)
           action_queue = Queue.new
           timer = LaunchDarkly::Impl::RepeatingTask.new(10, 10, -> { action_queue.push("check") }, @logger, "FDv2-sync-cond-timer")
+          recovery_task = (Concurrent::ScheduledTask.execute(recover_after) { action_queue.push("recover") } unless recover_after.nil?)
 
           # Start reader thread
           sync_reader = Thread.new do
@@ -461,6 +520,7 @@ module LaunchDarkly
 
               if update.is_a?(String)
                 break if update == "quit"
+                return SyncResult::RECOVER if update == "recover"
 
                 if update == "check"
                   # Check condition periodically. One atomic read pairs the status with
@@ -487,7 +547,10 @@ module LaunchDarkly
 
               @ready_event.set if valid
 
-              return SyncResult::FDV1 if update.fallback_to_fdv1
+              if update.fallback_to_fdv1
+                @fdv1_fallback_ttl = LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl(update.fdv1_fallback_ttl)
+                return SyncResult::FDV1
+              end
 
               return SyncResult::REMOVE if update.state == LaunchDarkly::Interfaces::DataSource::Status::OFF
             end
@@ -497,6 +560,7 @@ module LaunchDarkly
           ensure
             synchronizer.stop
             timer.stop
+            recovery_task&.cancel
             sync_reader.join(0.5) if sync_reader.alive?
           end
 

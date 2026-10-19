@@ -151,11 +151,24 @@ module LaunchDarkly
           # @return [String] The reason for goodbye
           attr_reader :reason
 
+          # @return [Object, nil] The raw protocolFallbackTTL value, in seconds. When the
+          #   field is present, the server is directing the SDK to fall back to FDv1.
+          attr_reader :protocol_fallback_ttl
+
           #
           # @param reason [String] The reason for goodbye
+          # @param protocol_fallback_ttl [Object, nil] The raw protocolFallbackTTL value
           #
-          def initialize(reason:)
+          def initialize(reason:, protocol_fallback_ttl: nil)
             @reason = reason
+            @protocol_fallback_ttl = protocol_fallback_ttl
+          end
+
+          #
+          # @return [Boolean] true if the server is directing the SDK to fall back to FDv1.
+          #
+          def fallback_to_fdv1?
+            !@protocol_fallback_ttl.nil?
           end
 
           #
@@ -164,9 +177,9 @@ module LaunchDarkly
           # @return [Hash]
           #
           def to_h
-            {
-              reason: @reason,
-            }
+            h = { reason: @reason }
+            h[:protocolFallbackTTL] = @protocol_fallback_ttl unless @protocol_fallback_ttl.nil?
+            h
           end
 
           #
@@ -181,7 +194,7 @@ module LaunchDarkly
 
             raise ArgumentError, "Missing required fields in Goodbye" if reason.nil?
 
-            new(reason: reason)
+            new(reason: reason, protocol_fallback_ttl: data[:protocolFallbackTTL])
           end
         end
 

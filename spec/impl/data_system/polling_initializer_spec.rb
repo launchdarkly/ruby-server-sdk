@@ -55,6 +55,36 @@ module LaunchDarkly
         end
       end
 
+      RSpec.describe ".fdv1_fallback_ttl" do
+        [1, 60, 3600, "1", "120", "3600"].each do |ttl|
+          it "uses the valid TTL #{ttl.inspect} unchanged" do
+            expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl(ttl)).to eq(Integer(ttl))
+          end
+        end
+
+        [nil, 0, -1, 3601, 1.5, "", "0", "-5", "3601", "1.5", "abc"].each do |ttl|
+          it "uses a jittered 1 hour default for the invalid TTL #{ttl.inspect}" do
+            expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl(ttl)).to be_between(1800, 3600)
+          end
+        end
+
+        it "jitters the default by subtracting up to 30 minutes" do
+          allow(Random).to receive(:rand).with(0..1800).and_return(0, 1800)
+
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl(nil)).to eq(3600)
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl(nil)).to eq(1800)
+        end
+
+        it "reads the TTL from the X-LD-FD-Fallback-TTL header" do
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl_from_headers({ 'X-LD-FD-Fallback-TTL' => '120' })).to eq(120)
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl_from_headers({ 'x-ld-fd-fallback-ttl' => ['120'] })).to eq(120)
+        end
+
+        it "uses the default when the X-LD-FD-Fallback-TTL header is absent" do
+          expect(LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl_from_headers({})).to be_between(1800, 3600)
+        end
+      end
+
       RSpec.describe PollingDataSource do
         let(:logger) { double("Logger", info: nil, warn: nil, error: nil, debug: nil) }
 

@@ -92,6 +92,7 @@ module LaunchDarkly
           #      on_event, and on_error on the same SSE worker thread, so
           #      reads and writes here are single-threaded by construction.
           fdv1_fallback_pending = false
+          fdv1_fallback_ttl = nil
 
           base_uri = @http_config.base_uri + FDV2_STREAMING_ENDPOINT
           headers = Impl::Util.default_http_headers(@sdk_key, @config)
@@ -110,13 +111,17 @@ module LaunchDarkly
                 # Per-environment identifier: server sends it on every connect,
                 # but it never changes once known so only assign once.
                 envid ||= LaunchDarkly::Impl::DataSystem.lookup_header(headers, LD_ENVID_HEADER)
-                fdv1_fallback_pending = true if LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)
+                if LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(headers)
+                  fdv1_fallback_pending = true
+                  fdv1_fallback_ttl = LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl_from_headers(headers)
+                end
               end
             end
 
             client.on_event do |event|
               begin
-                update = process_message(event, change_set_builder, envid, fdv1_fallback_pending: fdv1_fallback_pending)
+                update = process_message(event, change_set_builder, envid,
+                  fdv1_fallback_pending: fdv1_fallback_pending, fdv1_fallback_ttl: fdv1_fallback_ttl)
                 next unless update
 
                 log_connection_result(true)
@@ -124,11 +129,12 @@ module LaunchDarkly
 
                 yield update
 
-                # When the FDv1 Fallback Directive rode along on a Valid update, close
-                # the stream so the primary synchronizer is stopped once the directive
-                # engages. process_message marks the Update with fallback_to_fdv1 only
-                # on payloads that complete a transfer, so the consumer has already
-                # applied the ChangeSet by the time we get here.
+                # When the FDv1 Fallback Directive rode along on a Valid update, or
+                # arrived in a goodbye event, close the stream so the primary
+                # synchronizer is stopped once the directive engages. process_message
+                # marks a Valid Update with fallback_to_fdv1 only on payloads that
+                # complete a transfer, so the consumer has already applied the
+                # ChangeSet by the time we get here.
                 if update.fallback_to_fdv1
                   fdv1_fallback_pending = false
                   stop
@@ -169,13 +175,17 @@ module LaunchDarkly
             client.on_error do |error|
               log_connection_result(false)
               fallback = false
+              fallback_ttl = nil
 
               if error.respond_to?(:headers) && error.headers
                 envid ||= LaunchDarkly::Impl::DataSystem.lookup_header(error.headers, LD_ENVID_HEADER)
-                fallback = true if LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(error.headers)
+                if LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(error.headers)
+                  fallback = true
+                  fallback_ttl = LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl_from_headers(error.headers)
+                end
               end
 
-              update = handle_error(error, envid, fallback)
+              update = handle_error(error, envid, fallback, fallback_ttl)
               yield update if update
             end
 
@@ -218,9 +228,11 @@ module LaunchDarkly
         #   or PAYLOAD_TRANSFERRED) is marked with fallback_to_fdv1: true so
         #   the consumer can engage the FDv1 Fallback Synchronizer after
         #   applying the in-flight ChangeSet.
+        # @param fdv1_fallback_ttl [Integer, nil] the TTL, in seconds, that
+        #   accompanied the pending directive.
         # @return [LaunchDarkly::Interfaces::DataSystem::Update, nil]
         #
-        private def process_message(message, change_set_builder, envid, fdv1_fallback_pending: false)
+        private def process_message(message, change_set_builder, envid, fdv1_fallback_pending: false, fdv1_fallback_ttl: nil)
           event_type = message.type
 
           # Handle heartbeat
@@ -240,7 +252,8 @@ module LaunchDarkly
               return LaunchDarkly::Interfaces::DataSystem::Update.new(
                 state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
                 environment_id: envid,
-                fallback_to_fdv1: fdv1_fallback_pending
+                fallback_to_fdv1: fdv1_fallback_pending,
+                fdv1_fallback_ttl: fdv1_fallback_ttl
               )
             end
             nil
@@ -258,7 +271,14 @@ module LaunchDarkly
           when LaunchDarkly::Interfaces::DataSystem::EventName::GOODBYE
             goodbye = LaunchDarkly::Impl::DataSystem::ProtocolV2::Goodbye.from_h(JSON.parse(message.data, symbolize_names: true))
             @logger.info { "[LDClient] SSE server received goodbye: #{goodbye.reason}" }
-            nil
+            return nil unless goodbye.fallback_to_fdv1?
+
+            LaunchDarkly::Interfaces::DataSystem::Update.new(
+              state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
+              environment_id: envid,
+              fallback_to_fdv1: true,
+              fdv1_fallback_ttl: LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl(goodbye.protocol_fallback_ttl)
+            )
 
           when LaunchDarkly::Interfaces::DataSystem::EventName::ERROR
             error = LaunchDarkly::Impl::DataSystem::ProtocolV2::Error.from_h(JSON.parse(message.data, symbolize_names: true))
@@ -276,7 +296,8 @@ module LaunchDarkly
               state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
               change_set: change_set,
               environment_id: envid,
-              fallback_to_fdv1: fdv1_fallback_pending
+              fallback_to_fdv1: fdv1_fallback_pending,
+              fdv1_fallback_ttl: fdv1_fallback_ttl
             )
 
           else
@@ -291,9 +312,10 @@ module LaunchDarkly
         # @param error [Exception]
         # @param envid [String, nil]
         # @param fallback [Boolean]
+        # @param fallback_ttl [Integer, nil]
         # @return [LaunchDarkly::Interfaces::DataSystem::Update, nil]
         #
-        private def handle_error(error, envid, fallback)
+        private def handle_error(error, envid, fallback, fallback_ttl = nil)
           return nil if @stopped.set?
 
           update = nil
@@ -312,6 +334,7 @@ module LaunchDarkly
                 state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
                 error: error_info,
                 fallback_to_fdv1: true,
+                fdv1_fallback_ttl: fallback_ttl,
                 environment_id: envid
               )
               stop
