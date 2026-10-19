@@ -356,8 +356,8 @@ change_set_builder, envid)
 
           it "does not stamp fallback_to_fdv1 on intermediate (non-payload-completing) events" do
             # The directive is only meaningful once it can ride along on a Valid result that
-            # the consumer can act on. PUT_OBJECT, DELETE_OBJECT, GOODBYE, ERROR don't
-            # produce Updates -- intermediate events return nil even when the directive is
+            # the consumer can act on. PUT_OBJECT, DELETE_OBJECT, ERROR, and a GOODBYE without a
+            # TTL don't produce Updates -- intermediate events return nil even when the directive is
             # pending. The signal arrives with the next payload-completing event.
             put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.new(
               version: 100,
@@ -373,6 +373,51 @@ change_set_builder, envid)
             update = synchronizer.send(:process_message, event, change_set_builder, envid, fdv1_fallback_pending: true)
 
             expect(update).to be_nil
+          end
+
+          it "carries the header TTL on the payload-completing update" do
+            server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
+              payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(
+                id: "id",
+                target: 300,
+                code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_NONE,
+                reason: "up-to-date"
+              )
+            )
+
+            update = synchronizer.send(:process_message, MockSSEEvent.new(
+              LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT,
+              JSON.generate(server_intent.to_h)
+            ), change_set_builder, envid, fdv1_fallback_pending: true, fdv1_fallback_ttl: 120)
+
+            expect(update.fallback_to_fdv1).to eq(true)
+            expect(update.fdv1_fallback_ttl).to eq(120)
+          end
+
+          it "signals FDv1 fallback with the goodbye's protocolFallbackTTL" do
+            goodbye = LaunchDarkly::Impl::DataSystem::ProtocolV2::Goodbye.new(
+              reason: "fallback",
+              protocol_fallback_ttl: 120
+            )
+
+            update = synchronizer.send(:process_message, MockSSEEvent.new(
+              LaunchDarkly::Interfaces::DataSystem::EventName::GOODBYE,
+              JSON.generate(goodbye.to_h)
+            ), change_set_builder, envid)
+
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+            expect(update.fallback_to_fdv1).to eq(true)
+            expect(update.fdv1_fallback_ttl).to eq(120)
+          end
+
+          it "uses the jittered default for an invalid goodbye protocolFallbackTTL" do
+            update = synchronizer.send(:process_message, MockSSEEvent.new(
+              LaunchDarkly::Interfaces::DataSystem::EventName::GOODBYE,
+              JSON.generate({ reason: "fallback", protocolFallbackTTL: 0 })
+            ), change_set_builder, envid)
+
+            expect(update.fallback_to_fdv1).to eq(true)
+            expect(update.fdv1_fallback_ttl).to be_between(1800, 3600)
           end
         end
 
