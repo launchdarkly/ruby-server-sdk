@@ -38,7 +38,8 @@ module LaunchDarkly
           # Source of truth for flag evaluations once initialized
           @memory_store = InMemoryFeatureStoreV2.new(logger)
 
-          # Used to track dependencies between items in the store
+          # Used to track dependencies between items in the store. Items are keyed by string,
+          # the form in which the data model names prerequisites and segments.
           @dependency_tracker = LaunchDarkly::Impl::DependencyTracker.new(logger)
 
           # Broadcasters for events
@@ -254,9 +255,9 @@ module LaunchDarkly
 
           collections.each do |kind, collection|
             collection.each do |key, item|
-              @dependency_tracker.update_dependencies_from(kind, key, item)
+              @dependency_tracker.update_dependencies_from(kind, key.to_s, item)
               if has_listeners
-                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key })
+                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key.to_s })
               end
             end
           end
@@ -338,7 +339,7 @@ module LaunchDarkly
           @dependency_tracker.reset
           all_data.each do |kind, items|
             items.each do |key, item|
-              @dependency_tracker.update_dependencies_from(kind, key, item)
+              @dependency_tracker.update_dependencies_from(kind, key.to_s, item)
             end
           end
         end
@@ -380,9 +381,9 @@ module LaunchDarkly
 
               # If either is missing or versions differ, it's a change
               if old_item.nil? || new_item.nil?
-                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key })
+                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key.to_s })
               elsif old_item[:version] != new_item[:version]
-                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key })
+                @dependency_tracker.add_affected_items(affected_items, { kind: kind, key: key.to_s })
               end
             end
           end
