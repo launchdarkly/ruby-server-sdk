@@ -116,6 +116,87 @@ module LaunchDarkly
     end
   end
 
+  #
+  # A Big Segment store whose metadata queries wait for the test to supply each result.
+  #
+  # The status poller notifies observers of one result before it starts its next query. Once a
+  # test sees a query start, every earlier result has been delivered, and the poller stays in that
+  # query until the test supplies another result.
+  #
+  # Call {#release} before closing the client. The poller cannot stop while a query is waiting.
+  #
+  class GatedBigSegmentStore
+    def initialize
+      @lock = Mutex.new
+      @changed = ConditionVariable.new
+      @results = []
+      @last_result = nil
+      @queries_started = 0
+      @released = false
+    end
+
+    def get_metadata
+      result = @lock.synchronize do
+        @queries_started += 1
+        @changed.broadcast
+        @changed.wait(@lock) while @results.empty? && !@released
+        @last_result = @results.shift unless @results.empty?
+        @last_result
+      end
+      raise result if result.is_a?(Exception)
+      result
+    end
+
+    def get_membership(_context_hash)
+      nil
+    end
+
+    def stop
+    end
+
+    # Supplies the result of the next metadata query.
+    def queue_metadata(last_up_to_date)
+      queue_result(Interfaces::BigSegmentStoreMetadata.new(last_up_to_date.to_f * 1000))
+    end
+
+    # Makes the next metadata query raise the given error.
+    def queue_metadata_error(ex)
+      queue_result(ex)
+    end
+
+    #
+    # Blocks until the store has received `count` metadata queries, or until the timeout passes.
+    #
+    # @return [Boolean] false if the queries did not start within the timeout
+    #
+    def wait_for_queries(count, timeout: 5)
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+      @lock.synchronize do
+        while @queries_started < count
+          remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          return false if remaining <= 0
+          @changed.wait(@lock, remaining)
+        end
+        true
+      end
+    end
+
+    # Stops queries from waiting. Waiting and later queries return the last result again.
+    def release
+      @lock.synchronize do
+        @released = true
+        @changed.broadcast
+      end
+    end
+
+    private def queue_result(result)
+      @lock.synchronize do
+        @results << result
+        @changed.broadcast
+      end
+    end
+  end
+
   class SimpleObserver
     def initialize(fn)
       @fn = fn
