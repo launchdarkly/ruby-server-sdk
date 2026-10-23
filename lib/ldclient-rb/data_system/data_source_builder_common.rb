@@ -30,9 +30,13 @@ module LaunchDarkly
       end
 
       #
-      # Sets a custom socket factory for HTTP connections.
+      # Sets a custom socket factory for this data source's HTTP connections.
       #
-      # @param factory [#open] A socket factory that responds to +open+
+      # The factory must provide the method +open(host, port)+, as described in
+      # {LaunchDarkly::Config#socket_factory}. This data source does not use the
+      # factory set in {LaunchDarkly::Config#socket_factory}.
+      #
+      # @param factory [#open] A socket factory that responds to +open(host, port)+
       # @return [self] the builder, for chaining
       #
       def socket_factory(factory)

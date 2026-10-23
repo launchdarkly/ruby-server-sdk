@@ -94,13 +94,15 @@ def with_server(enable_compression: false)
   end
 end
 
+# A socket factory that maps host names to addresses, so tests can use fake host
+# names. It connects to the port the HTTP client passes in.
 class SocketFactoryFromHash
-  def initialize(ports = {})
-    @ports = ports
+  def initialize(addresses = {})
+    @addresses = addresses
   end
 
-  def open(uri, timeout)
-    TCPSocket.new '127.0.0.1', @ports[uri]
+  def open(host, port)
+    TCPSocket.new @addresses.fetch(host), port
   end
 end
 
