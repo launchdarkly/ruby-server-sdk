@@ -288,6 +288,90 @@ module LaunchDarkly
           end
         end
 
+        describe "flag change notifications" do
+          # Deliver each change event on the calling thread, so no expectation has to wait.
+          let(:flag_change_broadcaster) { LaunchDarkly::Impl::Broadcaster.new(Concurrent::ImmediateExecutor.new, logger) }
+          let(:changed_keys) { [] }
+
+          before do
+            keys = changed_keys
+            listener = Object.new
+            listener.define_singleton_method(:update) { |flag_change| keys << flag_change.key }
+            flag_change_broadcaster.add_listener(listener)
+          end
+
+          # Data sources key each change by symbol, so these helpers do the same.
+          def put(kind, item)
+            LaunchDarkly::Interfaces::DataSystem::Change.new(
+              action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT, kind: kind, key: item[:key].to_sym,
+              version: item[:version], object: item
+            )
+          end
+
+          def flag_put(key, version, prerequisite: nil, segment: nil)
+            data = { key: key, version: version, on: true, fallthrough: { variation: 0 }, offVariation: 0, variations: ["v"] }
+            data[:prerequisites] = [{ key: prerequisite, variation: 0 }] if prerequisite
+            data[:rules] = [{ id: "r", variation: 0, clauses: [{ attribute: "key", op: "segmentMatch", values: [segment] }] }] if segment
+            put(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, data)
+          end
+
+          def segment_put(key, version)
+            put(LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT, { key: key, version: version, included: ["user"] })
+          end
+
+          def apply(intent, *changes)
+            subject.apply(LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: intent, changes: changes, selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            ), false)
+          end
+
+          def full(*changes)
+            apply(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL, *changes)
+          end
+
+          def delta(*changes)
+            apply(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES, *changes)
+          end
+
+          # The sorted keys of the flags that the store reports as changed while the block runs.
+          def changed_flags
+            changed_keys.clear
+            yield
+            changed_keys.sort
+          end
+
+          it "notifies each flag that depends on a prerequisite changed in a delta" do
+            full(flag_put("a", 1, prerequisite: "b"), flag_put("b", 1, prerequisite: "c"), flag_put("c", 1), flag_put("e", 1))
+
+            expect(changed_flags { delta(flag_put("c", 2)) }).to eq %w[a b c]
+          end
+
+          it "follows a dependency that a delta added" do
+            full(flag_put("a", 1, prerequisite: "b"), flag_put("c", 1))
+            delta(flag_put("b", 1, prerequisite: "c"))
+
+            expect(changed_flags { delta(flag_put("c", 2)) }).to eq %w[a b c]
+          end
+
+          it "notifies each flag that uses a segment changed in a delta" do
+            full(flag_put("d", 1, segment: "seg"), segment_put("seg", 1), flag_put("e", 1))
+
+            expect(changed_flags { delta(segment_put("seg", 2)) }).to eq %w[d]
+          end
+
+          it "notifies only the flags that a full data set affects" do
+            full(flag_put("a", 1, prerequisite: "b"), flag_put("b", 1, prerequisite: "c"), flag_put("c", 1),
+              flag_put("d", 1, segment: "seg"), segment_put("seg", 1), flag_put("e", 1))
+
+            # The new data set changes the version of c and removes seg.
+            changed = changed_flags do
+              full(flag_put("a", 1, prerequisite: "b"), flag_put("b", 1, prerequisite: "c"), flag_put("c", 2),
+                flag_put("d", 1, segment: "seg"), flag_put("e", 1))
+            end
+            expect(changed).to eq %w[a b c d]
+          end
+        end
+
         describe "#commit" do
           context "without persistent store" do
             it "returns nil and does nothing" do
