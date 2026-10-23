@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.19.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.19.0...8.19.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* Notify dependent flags when an FDv2 prerequisite or segment changes ([#470](https://github.com/launchdarkly/ruby-server-sdk/issues/470)) ([6d79abe](https://github.com/launchdarkly/ruby-server-sdk/commit/6d79abe6c6c764a70a1b941034e4570ae78fd08c))
+
 ## [8.19.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.18.3...8.19.0) (2026-10-15)
 
 
