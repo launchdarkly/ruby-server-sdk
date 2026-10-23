@@ -478,7 +478,8 @@ forward, calls to get data will serve from the memory store.</p>
 56
 57
 58
-59</pre>
+59
+60</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 32</span>
@@ -492,7 +493,8 @@ forward, calls to get data will serve from the memory store.</p>
   <span class='comment'># Source of truth for flag evaluations once initialized
 </span>  <span class='ivar'>@memory_store</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="InMemoryFeatureStoreV2.html" title="LaunchDarkly::Impl::DataStore::InMemoryFeatureStoreV2 (class)">InMemoryFeatureStoreV2</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="InMemoryFeatureStoreV2.html#initialize-instance_method" title="LaunchDarkly::Impl::DataStore::InMemoryFeatureStoreV2#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
 
-  <span class='comment'># Used to track dependencies between items in the store
+  <span class='comment'># Used to track dependencies between items in the store. Items are keyed by string,
+</span>  <span class='comment'># the form in which the data model names prerequisites and segments.
 </span>  <span class='ivar'>@dependency_tracker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../DependencyTracker.html" title="LaunchDarkly::Impl::DependencyTracker (class)">DependencyTracker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../DependencyTracker.html#initialize-instance_method" title="LaunchDarkly::Impl::DependencyTracker#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
 
   <span class='comment'># Broadcasters for events
@@ -597,7 +599,6 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-115
 116
 117
 118
@@ -618,10 +619,11 @@ forward, calls to get data will serve from the memory store.</p>
 133
 134
 135
-136</pre>
+136
+137</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 115</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 116</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_apply'>apply</span><span class='lparen'>(</span><span class='id identifier rubyid_change_set'>change_set</span><span class='comma'>,</span> <span class='id identifier rubyid_persist'>persist</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_collections'>collections</span> <span class='op'>=</span> <span class='id identifier rubyid_changes_to_store_data'>changes_to_store_data</span><span class='lparen'>(</span><span class='id identifier rubyid_change_set'>change_set</span><span class='period'>.</span><span class='id identifier rubyid_changes'>changes</span><span class='rparen'>)</span>
@@ -708,7 +710,6 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-94
 95
 96
 97
@@ -720,10 +721,11 @@ forward, calls to get data will serve from the memory store.</p>
 103
 104
 105
-106</pre>
+106
+107</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 94</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 95</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -801,7 +803,6 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-143
 144
 145
 146
@@ -818,10 +819,11 @@ forward, calls to get data will serve from the memory store.</p>
 157
 158
 159
-160</pre>
+160
+161</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 143</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 144</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_commit'>commit</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -904,14 +906,14 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-167
 168
 169
 170
-171</pre>
+171
+172</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 167</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 168</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_active_store'>get_active_store</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -981,14 +983,14 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-187
 188
 189
 190
-191</pre>
+191
+192</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 187</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 188</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_data_store_status_provider'>get_data_store_status_provider</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -1055,12 +1057,12 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-178
 179
-180</pre>
+180
+181</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 178</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 179</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='id identifier rubyid_get_active_store'>get_active_store</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
@@ -1125,14 +1127,14 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-83
 84
 85
 86
-87</pre>
+87
+88</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 83</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 84</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_selector'>selector</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -1250,7 +1252,6 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-69
 70
 71
 72
@@ -1261,10 +1262,11 @@ forward, calls to get data will serve from the memory store.</p>
 77
 78
 79
-80</pre>
+80
+81</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 69</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 70</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_with_persistence'>with_persistence</span><span class='lparen'>(</span><span class='id identifier rubyid_persistent_store'>persistent_store</span><span class='comma'>,</span> <span class='id identifier rubyid_writable'>writable</span><span class='comma'>,</span> <span class='id identifier rubyid_status_provider'>status_provider</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -1288,7 +1290,7 @@ forward, calls to get data will serve from the memory store.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu Oct 15 15:28:26 2026 by
+  Generated on Fri Oct 23 20:04:54 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>
