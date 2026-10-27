@@ -24,8 +24,6 @@ module LaunchDarkly
         # @return [Boolean]
         #
         def self.unsupported_kind?(data)
-          return false unless data.is_a?(Hash)
-
           kind = data[:kind]
           !kind.nil? && !SUPPORTED_KINDS.include?(kind)
         end

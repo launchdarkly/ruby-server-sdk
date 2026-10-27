@@ -281,6 +281,19 @@ change_set_builder, envid)
             expect(update.change_set.changes[1].key).to eq(:segmentkey)
           end
 
+          it "rejects put and delete objects whose data is not an object" do
+            [
+              LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT,
+              LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT,
+            ].each do |event_name|
+              ['"x"', "[]", "null", "5"].each do |data|
+                expect {
+                  synchronizer.send(:process_message, MockSSEEvent.new(event_name, data), change_set_builder, envid)
+                }.to raise_error(ArgumentError, "#{event_name} data must be an object")
+              end
+            end
+          end
+
           it "swallows goodbye events" do
             server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
               payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(
