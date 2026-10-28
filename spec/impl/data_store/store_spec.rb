@@ -7,6 +7,7 @@ require "ldclient-rb/impl/data_store"
 require "ldclient-rb/impl/overrides"
 require "ldclient-rb/interfaces/data_system"
 require "model_builders"
+require "override_test_components"
 
 module LaunchDarkly
   module Impl
@@ -304,12 +305,12 @@ module LaunchDarkly
             # Every key that arrives within the settle time after the first one, sorted.
             def collect(timeout = 2, settle = 0.3)
               keys = []
-              first = @keys.pop(timeout: timeout)
+              first = TestQueues.pop_within(@keys, timeout)
               return keys if first.nil?
 
               keys << first
               loop do
-                key = @keys.pop(timeout: settle)
+                key = TestQueues.pop_within(@keys, settle)
                 break if key.nil?
 
                 keys << key
