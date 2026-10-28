@@ -191,7 +191,7 @@ module LaunchDarkly
       def payload(ep, sender)
         ep.flush
         ep.wait_until_inactive
-        sender.analytics_payloads.pop(timeout: 5)
+        TestQueues.pop_within(sender.analytics_payloads, 5)
       end
 
       it "sends only an index event and a marked summary counter for an overridden flag that tracks events" do
