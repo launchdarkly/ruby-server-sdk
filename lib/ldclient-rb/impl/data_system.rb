@@ -109,13 +109,16 @@ module LaunchDarkly
       end
 
       #
-      # Returns whether the data system was built with an override source. The value is fixed at
-      # construction. Flag overrides are currently experimental and subject to change.
+      # Returns the override store's entries of the given kind, without LaunchDarkly data. The
+      # result is empty when no override source is configured or the store holds none. The
+      # returned hash must not be modified. Flag overrides are currently experimental and subject
+      # to change.
       #
-      # @return [Boolean]
+      # @param kind [LaunchDarkly::Impl::DataStore::DataKind]
+      # @return [Hash{Symbol => Object}]
       #
-      def override_source_configured?
-        raise NotImplementedError, "#{self.class} must implement #override_source_configured?"
+      def override_items(kind)
+        raise NotImplementedError, "#{self.class} must implement #override_items"
       end
 
       #

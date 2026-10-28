@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "capturing_logger"
 require "model_builders"
 require "override_test_components"
 require "ldclient-rb/impl/data_system/fdv2"
@@ -34,7 +35,7 @@ module LaunchDarkly
 
         it "reports that no override source is configured by default" do
           with_fdv2(config_with) do |fdv2|
-            expect(fdv2.override_source_configured?).to be false
+            expect(fdv2.override_items(DataStore::FEATURES)).to eq({})
             expect(fdv2.store).not_to be_a(Overrides::Overlay)
           end
         end
@@ -42,7 +43,7 @@ module LaunchDarkly
         it "builds the override source at construction with the SDK key and configuration" do
           source = TestOverrideSource.new
           with_fdv2(config_with(overrides: source)) do |fdv2|
-            expect(fdv2.override_source_configured?).to be true
+            expect(fdv2.store).to be_a(Overrides::Overlay)
             expect(source.build_args).to eq [sdk_key, config]
             expect(source.started?).to be false
           end
@@ -143,15 +144,48 @@ module LaunchDarkly
           expect(Thread.list.map(&:name)).not_to include("FDv2-main")
         end
 
-        it "does not build the override source when the SDK is offline" do
+        it "ignores a snapshot that the source supplies while it stops" do
           source = TestOverrideSource.new([override_flag])
-          offline = LaunchDarkly::Config.new(logger: $null_log, offline: true)
+          late = override_flag.merge(key: "late")
+          source.define_singleton_method(:stop) { update([late]) }
+          fdv2 = FDv2.new(sdk_key, config, config_with(overrides: source, synchronizers: [HangingSynchronizer.new]))
+          fdv2.start
+          fdv2.stop
+
+          expect(fdv2.override_items(DataStore::FEATURES).keys).to eq [:flag]
+        end
+
+        it "starts without overrides when the source raises from start" do
+          source = TestOverrideSource.new([override_flag])
+          source.define_singleton_method(:start) do |sink|
+            sink.set_overrides([{ key: "flag", version: 1, on: false, offVariation: 0, variations: ["override"] }], [])
+            raise "source failed"
+          end
+          logger = CapturingLogger.new
+          logged = LaunchDarkly::Config.new(logger: logger)
+          fdv2 = FDv2.new(sdk_key, logged, config_with(overrides: source, synchronizers: [HangingSynchronizer.new]))
+          begin
+            expect { fdv2.start }.not_to raise_error
+            expect(source.stopped?).to be true
+            expect(fdv2.override_items(DataStore::FEATURES)).to eq({})
+            expect(fdv2.store.get(DataStore::FEATURES, "flag")).to be_nil
+            expect(logger.output).to include("Unable to start the override source; the client runs without overrides")
+          ensure
+            fdv2.stop
+          end
+        end
+
+        it "does not build the override source when the SDK is offline, and logs that" do
+          source = TestOverrideSource.new([override_flag])
+          logger = CapturingLogger.new
+          offline = LaunchDarkly::Config.new(logger: logger, offline: true)
           with_fdv2(config_with(overrides: source), config: offline) do |fdv2|
             fdv2.start
 
             expect(source.build_args).to be_nil
-            expect(fdv2.override_source_configured?).to be false
+            expect(fdv2.override_items(DataStore::FEATURES)).to eq({})
             expect(fdv2.store.get(DataStore::FEATURES, "flag")).to be_nil
+            expect(logger.output).to include("Offline mode is enabled; the override source is not started and no overrides are served")
           end
         end
       end

@@ -101,9 +101,9 @@ module LaunchDarkly
           @store_wrapper
         end
 
-        # (see DataSystem#override_source_configured?)
-        def override_source_configured?
-          false
+        # (see DataSystem#override_items)
+        def override_items(_kind)
+          {}
         end
 
         # (see DataSystem#set_diagnostic_accumulator)

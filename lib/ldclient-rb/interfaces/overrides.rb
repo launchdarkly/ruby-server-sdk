@@ -59,7 +59,11 @@ module LaunchDarkly
         # called. A failed load leaves the previously supplied store untouched by not calling
         # the sink.
         #
-        # The SDK calls this method at most once, before any call to `stop`.
+        # The SDK calls this method at most once, before any call to `stop`. An exception raised
+        # from it does not prevent the client from starting: the SDK logs the exception, stops the
+        # source, removes any snapshot the source supplied, and the client runs without overrides.
+        # A source that cannot load its data should log that and retry rather than raise, as the
+        # SDK's file-based source does.
         #
         # @param sink [OverrideSink]
         # @return [void]
@@ -69,7 +73,9 @@ module LaunchDarkly
         end
 
         #
-        # Stops the source and releases any resources it holds.
+        # Stops the source and releases any resources it holds. An exception raised from it is
+        # logged and does not stop the client from shutting down. A snapshot that the source
+        # supplies after the SDK begins to stop it is ignored.
         #
         # @return [void]
         #

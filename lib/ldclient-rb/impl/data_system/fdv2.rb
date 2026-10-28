@@ -10,6 +10,7 @@ require "ldclient-rb/impl/data_store/status_provider"
 require "ldclient-rb/impl/broadcaster"
 require "ldclient-rb/impl/overrides"
 require "ldclient-rb/impl/repeating_task"
+require "ldclient-rb/impl/util"
 require "ldclient-rb/interfaces/data_system"
 
 module LaunchDarkly
@@ -127,7 +128,10 @@ module LaunchDarkly
           @override_layer = nil
           @overlay = nil
           @override_source = nil
-          if @data_system_config.overrides && !@disabled
+          @override_sink = nil
+          if @data_system_config.overrides && @disabled
+            @logger.warn { "[LDClient] Offline mode is enabled; the override source is not started and no overrides are served" }
+          elsif @data_system_config.overrides
             # An invalid override source configuration raises here, so LDClient.new reports it
             # the same way as other invalid component configuration.
             @override_source = @data_system_config.overrides.build(@sdk_key, @config)
@@ -153,10 +157,7 @@ module LaunchDarkly
 
           # The override source starts before the run loop, so a source that loads synchronously has
           # its overrides in place before the client begins evaluating.
-          if @override_source
-            sink = LaunchDarkly::Impl::Overrides::Sink.new(@override_layer, @store, @flag_change_broadcaster, @logger)
-            @override_source.start(sink)
-          end
+          start_override_source if @override_source
 
           # Start the main coordination thread
           main_thread = Thread.new { run_main_loop }
@@ -169,11 +170,11 @@ module LaunchDarkly
         # (see DataSystem#stop)
         def stop
           if @override_source
-            begin
-              @override_source.stop
-            rescue => e
-              @logger.error { "[LDClient] Error stopping override source: #{e.message}" }
-            end
+            # The sink stops accepting snapshots first, so a snapshot that the source supplies while
+            # it stops cannot update the layer or notify listeners while the system shuts down. The
+            # sink does not exist if the system was never started.
+            @override_sink&.close
+            stop_override_source("Error stopping override source")
           end
 
           @stop_event.set
@@ -215,9 +216,11 @@ module LaunchDarkly
           @store.get_active_store
         end
 
-        # (see DataSystem#override_source_configured?)
-        def override_source_configured?
-          !@override_source.nil?
+        # (see DataSystem#override_items)
+        def override_items(kind)
+          return {} if @override_layer.nil?
+
+          @override_layer.all(kind)
         end
 
         # (see DataSystem#data_source_status_provider)
@@ -256,6 +259,43 @@ module LaunchDarkly
         end
 
         private
+
+        #
+        # Starts the override source. The source has no effect on initialization, and a source that
+        # fails to start does not prevent the client from operating: the failure is logged, the
+        # source is stopped, and the client runs without overrides. The SDK's own file-based source
+        # does not raise from start; it logs a failed load and retries it. A custom source could
+        # raise, and an application in an incident is better served by a client that runs without
+        # its overrides than by one that does not start.
+        #
+        def start_override_source
+          @override_sink = LaunchDarkly::Impl::Overrides::Sink.new(@override_layer, @store, @flag_change_broadcaster, @logger)
+          begin
+            @override_source.start(@override_sink)
+          rescue => e
+            LaunchDarkly::Impl::Util.log_exception(@logger, "Unable to start the override source; the client runs without overrides", e)
+            stop_override_source("Error stopping override source after it failed to start")
+            # The source may have supplied a snapshot before it failed. Clearing the layer removes
+            # it, so the client runs without overrides as logged, and a late snapshot from the
+            # stopped source is ignored.
+            @override_sink.close_and_clear
+          end
+        end
+
+        #
+        # Stops the override source and forgets it. A custom source can raise from stop; that is
+        # logged and not raised, so the rest of the system still stops, or still starts after a
+        # failed start.
+        #
+        def stop_override_source(failure_message)
+          source = @override_source
+          @override_source = nil
+          begin
+            source.stop
+          rescue => e
+            @logger.error { "[LDClient] #{failure_message}: #{e.message}" }
+          end
+        end
 
         #
         # Main coordination loop that manages initializers and synchronizers.
