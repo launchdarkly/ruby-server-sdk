@@ -6,6 +6,23 @@ require "concurrent"
 
 module LaunchDarkly
   #
+  # Queue helpers for tests. Queue#pop accepts a timeout only from Ruby 3.2, and the SDK also runs
+  # on Ruby 3.1 and JRuby 9.4, where that call returns at once.
+  #
+  module TestQueues
+    # Waits up to the given number of seconds for an item from the queue, and returns it or nil.
+    def self.pop_within(queue, seconds)
+      deadline = Time.now + seconds
+      loop do
+        return queue.pop(true) unless queue.empty?
+        return nil if Time.now >= deadline
+
+        sleep 0.01
+      end
+    end
+  end
+
+  #
   # An override source for tests. It supplies the given definitions when started, keeps the sink
   # so that a test can supply further snapshots, and records its lifecycle. It acts as its own
   # builder so that it can be passed to ConfigBuilder#overrides directly.
@@ -131,7 +148,7 @@ module LaunchDarkly
 
     # Waits for the next change and returns its key, or nil after the timeout.
     def next_key(timeout = 2)
-      @changes.pop(timeout: timeout)
+      TestQueues.pop_within(@changes, timeout)
     end
 
     # Collects every key that arrives within the settle time after the first one.

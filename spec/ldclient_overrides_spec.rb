@@ -337,7 +337,7 @@ module LaunchDarkly
 
           source.update([override_flag])
 
-          change = changes.pop(timeout: 2)
+          change = TestQueues.pop_within(changes, 2)
           expect(change).not_to be_nil
           expect(change.old_value).to eq "ld-value"
           expect(change.new_value).to eq "override-value"
