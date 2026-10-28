@@ -264,8 +264,9 @@ module LaunchDarkly
         end
         paths = Impl::FileData.absolute_paths(paths)
         # A path listed more than once would make every entry of that file a duplicate of itself, so
-        # the repeats are dropped and the first occurrence keeps its place in the order.
-        unique_paths = paths.uniq
+        # the repeats are dropped and the first occurrence keeps its place in the order. File names
+        # on Windows ignore case, so there paths that differ only in case name the same file.
+        unique_paths = Gem.win_platform? ? paths.uniq(&:downcase) : paths.uniq
         if unique_paths.size != paths.size
           config.logger.warn do
             "#{Impl::Integrations::FileOverrideSource::LOG_PREFIX} File paths list the same file more than once; the repeats are ignored"
