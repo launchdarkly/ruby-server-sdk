@@ -170,8 +170,10 @@ module LaunchDarkly
       #
       # The files use the same document format as the file data source: a JSON or YAML document with
       # optional `flags`, `flagValues`, and `segments` members. A `flagValues` entry expands into a
-      # flag that is on and serves the given value as its fallthrough for every context. When several
-      # files are configured, their
+      # flag that is on and serves the given value as its fallthrough for every context. Such a flag is
+      # not available to client-side SDKs, so `all_flags_state` with `client_side_only: true` leaves it
+      # out, even when the flag it overrides is available to them. To override such a flag, define it
+      # in `flags` with `"clientSide": true`. When several files are configured, their
       # entries are combined in the configured order, and the duplicate keys handling decides what
       # happens when the same key appears in more than one file.
       #
