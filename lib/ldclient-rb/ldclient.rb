@@ -688,7 +688,9 @@ module LaunchDarkly
           (eval_result, eval_state) = @evaluator.evaluate(f, context)
           detail = eval_result.detail
         rescue => exn
-          detail = EvaluationDetail.new(nil, nil, EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION))
+          # The flag definition was read before the failure, so its own marker decides the marking.
+          reason = EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(f.override?)
+          detail = EvaluationDetail.new(nil, nil, reason)
           Impl::Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
         end
 
@@ -698,7 +700,8 @@ module LaunchDarkly
           value: detail.value,
           variation: detail.variation_index,
           reason: detail.reason,
-          prerequisites: eval_state.prerequisites,
+          # A failed evaluation has no evaluation state, so it reports no prerequisites.
+          prerequisites: eval_state&.prerequisites,
           version: f[:version],
           trackEvents: f[:trackEvents] || requires_experiment_data,
           trackReason: requires_experiment_data,
@@ -839,7 +842,9 @@ module LaunchDarkly
         [detail, feature, nil]
       rescue => exn
         Impl::Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
-        detail = Evaluator.error_result(EvaluationReason::ERROR_EXCEPTION, default)
+        # The flag definition was read before the failure, so its own marker decides the marking.
+        reason = EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(feature.override?)
+        detail = EvaluationDetail.new(default, nil, reason)
         record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
         [detail, feature, exn.to_s]
       end
