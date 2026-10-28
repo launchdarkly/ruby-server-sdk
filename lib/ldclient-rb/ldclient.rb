@@ -707,7 +707,7 @@ module LaunchDarkly
         debug_events_until_date = f[:debugEventsUntilDate]
         # A failed evaluation has no result, so the flag's own marker decides, as it does for the
         # reason.
-        override_affected = eval_result.nil? ? f.override? : eval_result.override_affected
+        override_affected = eval_result.nil? ? override_item?(f) : eval_result.override_affected
         if override_affected
           # A consumer of this state sends individual events according to these fields. An
           # override-affected evaluation produces no individual events, so the state turns them off
@@ -869,7 +869,7 @@ module LaunchDarkly
         # The flag definition was read before the failure, so its own marker decides the marking.
         reason = EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(override_item?(feature))
         detail = EvaluationDetail.new(default, nil, reason)
-        record_flag_eval_error(feature, context, default, detail.reason, with_reasons, feature.override?)
+        record_flag_eval_error(feature, context, default, detail.reason, with_reasons, override_item?(feature))
         [detail, feature, exn.to_s]
       end
     end
