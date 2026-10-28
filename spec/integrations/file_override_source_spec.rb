@@ -459,6 +459,25 @@ module LaunchDarkly
           end
         end
 
+        it "leaves a flagValues entry out of a client-side state and keeps a definition with clientSide" do
+          # A flagValues entry is not available to client-side SDKs. A full definition that sets
+          # clientSide is, so that is how an operator overrides a flag that client-side SDKs use.
+          a = write("a.json", JSON.generate({
+            flagValues: { "value-flag": true },
+            flags: {
+              "full-flag": { key: "full-flag", version: 1, on: true, variations: [true],
+                             fallthrough: { variation: 0 }, clientSide: true },
+            },
+          }))
+
+          with_client(FileData.override_source(paths: [a])) do |client|
+            expect(client.all_flags_state(context).values_map.keys).to include("value-flag", "full-flag")
+            state = client.all_flags_state(context, client_side_only: true)
+            expect(state.valid?).to be true
+            expect(state.values_map).to eq({ "full-flag" => true })
+          end
+        end
+
         it "reports invalid options from client construction" do
           data_system = DataSystem.custom.overrides(FileData.override_source(paths: [])).build
 
