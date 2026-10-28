@@ -151,6 +151,25 @@ module LaunchDarkly
         end
       end
 
+      it "turns off event tracking for an overridden flag whose evaluation raises" do
+        # A failed evaluation has no result, so the flag's own marker decides, as it does for the
+        # reason and for the event of a single evaluation.
+        source = TestOverrideSource.new([flag("direct", "override")])
+        with_recording_client(data_system(overrides: source, flags: { normal: flag("normal", "n") })) do |client, _|
+          allow(client.instance_variable_get(:@evaluator)).to receive(:evaluate).and_raise("evaluation failed")
+
+          meta = client.all_flags_state(context, with_reasons: true).as_json["$flagsState"]
+
+          expect(meta["direct"]).not_to have_key(:trackEvents)
+          expect(meta["direct"]).not_to have_key(:trackReason)
+          expect(meta["direct"]).not_to have_key(:debugEventsUntilDate)
+          expect(meta["direct"][:reason].override_affected).to be true
+          expect(meta["normal"][:trackEvents]).to be true
+          expect(meta["normal"][:debugEventsUntilDate]).to eq debug_until
+          expect(meta["normal"][:reason].override_affected).to be false
+        end
+      end
+
       it "turns off tracking that an experiment would otherwise require" do
         experiment = flag("experiment", "e", track: false).merge(trackEventsFallthrough: true)
         source = TestOverrideSource.new([experiment])

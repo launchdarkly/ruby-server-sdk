@@ -705,7 +705,10 @@ module LaunchDarkly
         track_events = f[:trackEvents] || requires_experiment_data
         track_reason = requires_experiment_data
         debug_events_until_date = f[:debugEventsUntilDate]
-        if eval_result&.override_affected
+        # A failed evaluation has no result, so the flag's own marker decides, as it does for the
+        # reason.
+        override_affected = eval_result.nil? ? f.override? : eval_result.override_affected
+        if override_affected
           # A consumer of this state sends individual events according to these fields. An
           # override-affected evaluation produces no individual events, so the state turns them off
           # for this flag. The flag, its value, and its reason stay.
