@@ -689,7 +689,7 @@ module LaunchDarkly
           detail = eval_result.detail
         rescue => exn
           # The flag definition was read before the failure, so its own marker decides the marking.
-          reason = EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(f.override?)
+          reason = EvaluationReason::error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(override_item?(f))
           detail = EvaluationDetail.new(nil, nil, reason)
           Impl::Util.log_exception(@config.logger, "Error evaluating flag \"#{k}\" in all_flags_state", exn)
         end
@@ -843,7 +843,7 @@ module LaunchDarkly
       rescue => exn
         Impl::Util.log_exception(@config.logger, "Error evaluating feature flag \"#{key}\"", exn)
         # The flag definition was read before the failure, so its own marker decides the marking.
-        reason = EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(feature.override?)
+        reason = EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(override_item?(feature))
         detail = EvaluationDetail.new(default, nil, reason)
         record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
         [detail, feature, exn.to_s]
@@ -908,6 +908,18 @@ module LaunchDarkly
     private def record_unknown_flag_eval(flag_key, context, default, reason, with_reasons)
       @event_processor.record_eval_event(context, flag_key, nil, nil, default, with_reasons ? reason : nil, default,
         false, nil, nil, 1, false)
+    end
+
+    #
+    # Whether a stored flag carries the override marker. The FeatureStore interface documents its
+    # entities as hashes, and a custom store can return one. Only the SDK's model objects carry the
+    # marker; a hash never came from the override store.
+    #
+    # @param item [Object] a flag as returned by the store
+    # @return [Boolean]
+    #
+    private def override_item?(item)
+      item.respond_to?(:override?) && item.override?
     end
 
     private def experiment?(flag, reason)

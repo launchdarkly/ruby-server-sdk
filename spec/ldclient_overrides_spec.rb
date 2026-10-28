@@ -136,6 +136,29 @@ module LaunchDarkly
         end
       end
 
+      it "returns the EXCEPTION result for a flag that a custom store returns as a plain hash" do
+        # The FeatureStore interface documents its entities as hashes, while the SDK's own stores
+        # return model objects. The evaluator raises on a plain hash, and that failure must still give
+        # the EXCEPTION result, with or without an override source, as it did before overrides.
+        flag_hash = { key: "plain", version: 1, on: false, offVariation: 0, variations: ["value"] }
+        store = InMemoryFeatureStore.new
+        store.define_singleton_method(:initialized?) { true }
+        store.define_singleton_method(:get) { |kind, key| kind == Impl::DataStore::FEATURES && key == "plain" ? flag_hash : nil }
+        store.define_singleton_method(:all) { |kind| kind == Impl::DataStore::FEATURES ? { plain: flag_hash } : {} }
+        [nil, TestOverrideSource.new([override_flag.merge(key: "other")])].each do |source|
+          builder = DataSystem.custom.data_store(store, :read_only)
+          builder.overrides(source) if source
+          with_client(builder.build) do |client|
+            detail = client.variation_detail("plain", context, "default")
+            expect(detail.value).to eq "default"
+            expect(detail.reason).to eq EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION)
+
+            meta = client.all_flags_state(context, with_reasons: true).as_json["$flagsState"]
+            expect(meta["plain"][:reason]).to eq EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION)
+          end
+        end
+      end
+
       it "keeps the marking when a migration stage is not a valid stage" do
         source = TestOverrideSource.new([override_flag.merge(variations: ["not-a-stage"])])
         with_client(data_system(overrides: source, flags: { flag: ld_flag })) do |client|
@@ -293,6 +316,31 @@ module LaunchDarkly
           expect(json["$flagsState"]["flag"][:reason]).to eq(
             EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(true))
           expect(json["$flagsState"]["normal"][:reason]).to eq EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION)
+        end
+      end
+
+      it "reports no prerequisites for a flag whose evaluation raises after a flag with prerequisites" do
+        # Each invocation of the block gets its own local variables, so a failed flag cannot pick up
+        # the evaluation state of the flag evaluated before it.
+        prereq = { key: "prereq", version: 1, on: false, offVariation: 0, variations: ["p"] }
+        holder = { key: "holder", version: 1, on: true, fallthrough: { variation: 0 }, variations: ["h"],
+                   prerequisites: [{ key: "prereq", variation: 0 }] }
+        failing = { key: "failing", version: 1, on: false, offVariation: 0, variations: ["f"] }
+        with_client(data_system(flags: { prereq: prereq, holder: holder, failing: failing })) do |client|
+          order = []
+          allow(client.instance_variable_get(:@evaluator)).to receive(:evaluate).and_wrap_original do |original, flag, ctx|
+            order << flag[:key]
+            raise "evaluation failed" if flag[:key] == "failing"
+            original.call(flag, ctx)
+          end
+
+          meta = client.all_flags_state(context, with_reasons: true).as_json["$flagsState"]
+
+          # The flag evaluated just before the failing one has a prerequisite.
+          expect(order[order.index("failing") - 1]).to eq "holder"
+          expect(meta["holder"][:prerequisites]).to eq ["prereq"]
+          expect(meta["failing"]).not_to have_key(:prerequisites)
+          expect(meta["failing"][:reason]).to eq EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION)
         end
       end
 
