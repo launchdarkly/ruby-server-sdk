@@ -22,6 +22,23 @@ module LaunchDarkly
       builder.build
     end
 
+    # A store that holds the given LaunchDarkly flags but no init marker, like a persistent store
+    # that LaunchDarkly data was written to before an interrupted initialization.
+    def store_without_init_marker(*flags)
+      store = InMemoryFeatureStore.new
+      flags.each { |f| store.upsert(Impl::DataStore::FEATURES, Impl::Model.deserialize(Impl::DataStore::FEATURES, f)) }
+      expect(store.initialized?).to be false
+      store
+    end
+
+    # A client with a data source that never delivers data, reading LaunchDarkly data from the given
+    # store.
+    def uninitialized_data_system_with_store(store, overrides: nil)
+      builder = DataSystem.custom.synchronizers([HangingSynchronizer.new]).data_store(store, :read_write)
+      builder.overrides(overrides) if overrides
+      builder.build
+    end
+
     def with_client(data_system_config, wait: nil, logger: $null_log)
       config = Config.new(data_system_config: data_system_config, send_events: false, logger: logger)
       wait = data_system_config.synchronizers.nil? ? 5 : 0 if wait.nil?
@@ -143,6 +160,20 @@ module LaunchDarkly
         end
       end
 
+      it "does not serve LaunchDarkly data from a store without an init marker for a flag that is not overridden" do
+        # Configuring a source changes nothing for a flag that it does not override: the result is
+        # the not-ready default, as it is without a source.
+        [nil, TestOverrideSource.new([override_flag.merge(key: "other")])].each do |source|
+          store = store_without_init_marker(ld_flag)
+          with_client(uninitialized_data_system_with_store(store, overrides: source)) do |client|
+            detail = client.variation_detail("flag", context, "default")
+
+            expect(detail.value).to eq "default"
+            expect(detail.reason).to eq EvaluationReason.error(EvaluationReason::ERROR_CLIENT_NOT_READY)
+          end
+        end
+      end
+
       it "still short-circuits when no override source is configured" do
         with_client(data_system(initialized: false)) do |client|
           detail = client.variation_detail("flag", context, "default")
@@ -193,6 +224,45 @@ module LaunchDarkly
           state = client.all_flags_state(context)
 
           expect(state.valid?).to be false
+        end
+      end
+
+      it "returns an invalid state before initialization when the override store is empty and the store holds LaunchDarkly data without an init marker" do
+        [nil, TestOverrideSource.new([])].each do |source|
+          with_client(uninitialized_data_system_with_store(store_without_init_marker(ld_flag), overrides: source)) do |client|
+            state = client.all_flags_state(context)
+
+            expect(state.valid?).to be false
+            expect(state.values_map).to eq({})
+          end
+        end
+      end
+
+      it "returns only the overridden flags before initialization when the store holds LaunchDarkly data without an init marker" do
+        source = TestOverrideSource.new([override_flag.merge(key: "other")])
+        with_client(uninitialized_data_system_with_store(store_without_init_marker(ld_flag), overrides: source)) do |client|
+          state = client.all_flags_state(context)
+
+          expect(state.valid?).to be true
+          expect(state.values_map).to eq({ "other" => "override-value" })
+        end
+      end
+
+      it "returns an invalid state and logs the failure when the store cannot list its flags, even with overrides" do
+        # A daemon-mode client reads its store directly. A state of the overrides alone would look
+        # complete to a consumer that bootstraps from it.
+        store = InMemoryFeatureStore.new
+        store.define_singleton_method(:all) { |_kind| raise "store failed" }
+        source = TestOverrideSource.new([override_flag])
+        logger = CapturingLogger.new
+        with_client(DataSystem.custom.data_store(store, :read_only).overrides(source).build, logger: logger) do |client|
+          expect(client.initialized?).to be true
+          state = client.all_flags_state(context)
+
+          expect(state.valid?).to be false
+          expect(state.values_map).to eq({})
+          expect(logger.output).to include("Unable to read flags for all_flags_state")
+          expect(logger.output).to include("store failed")
         end
       end
 
@@ -286,15 +356,36 @@ module LaunchDarkly
         expect(source.stopped?).to be true
       end
 
-      it "has no effect when the client is offline" do
+      it "has no effect when the client is offline, and logs that" do
         source = TestOverrideSource.new([override_flag])
-        config = Config.new(data_system_config: data_system(overrides: source), offline: true, logger: $null_log)
+        logger = CapturingLogger.new
+        config = Config.new(data_system_config: data_system(overrides: source), offline: true, logger: logger)
         client = LDClient.new("sdk-key", config, 0)
         begin
           expect(source.started?).to be false
           expect(client.variation("flag", context, "default")).to eq "default"
+          expect(logger.output).to include("Offline mode is enabled; the override source is not started and no overrides are served")
         ensure
           client.close
+        end
+      end
+
+      it "starts and runs without overrides when the source raises from start" do
+        # The SDK's own source never raises from start. A custom source could, and that must not
+        # keep the client from starting. The snapshot it supplied before failing is removed.
+        source = TestOverrideSource.new([override_flag])
+        source.define_singleton_method(:start) do |sink|
+          sink.set_overrides([{ key: "flag", version: 1, on: false, offVariation: 0, variations: ["override-value"] }], [])
+          raise "source failed"
+        end
+        logger = CapturingLogger.new
+        with_client(data_system(overrides: source, flags: { flag: ld_flag }), logger: logger) do |client|
+          expect(source.stopped?).to be true
+          expect(logger.output).to include("Unable to start the override source; the client runs without overrides")
+
+          detail = client.variation_detail("flag", context, "default")
+          expect(detail.value).to eq "ld-value"
+          expect(detail.reason.override_affected).to be false
         end
       end
     end

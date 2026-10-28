@@ -37,6 +37,7 @@ module LaunchDarkly
           @flag_change_broadcaster = flag_change_broadcaster
           @logger = logger
           @lock = Mutex.new
+          @closed = false
         end
 
         #
@@ -47,26 +48,41 @@ module LaunchDarkly
         # (see LaunchDarkly::Interfaces::Overrides::OverrideSink#set_overrides)
         #
         def set_overrides(flags, segments)
+          return log_ignored_snapshot if @closed
+
           flag_items = index_items(DataStore::FEATURES, flags)
           segment_items = index_items(DataStore::SEGMENTS, segments)
 
           @lock.synchronize do
-            # Computing affected flags requires snapshots of the merged view before and after the
-            # replacement. Skip all of that work when nothing is listening.
-            unless @flag_change_broadcaster.has_listeners?
-              @layer.set_all(flag_items, segment_items)
-              return
-            end
+            return log_ignored_snapshot if @closed
 
-            previous, current = @layer.set_all(flag_items, segment_items)
-            old_merged = merged_view(previous)
-            new_merged = merged_view(current)
+            apply(flag_items, segment_items)
+          end
+        end
 
-            affected = Sink.affected_flag_keys(previous, current, old_merged, new_merged)
-            @logger.debug { "[LDClient] Override update affected #{affected.length} flag(s)" } unless affected.empty?
-            affected.each do |key|
-              @flag_change_broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new(key))
-            end
+        #
+        # Stops accepting snapshots. Used when the client closes: a snapshot that the source
+        # supplies while it stops is ignored. The layer keeps its contents.
+        #
+        # @return [void]
+        #
+        def close
+          @lock.synchronize do
+            @closed = true
+          end
+        end
+
+        #
+        # Stops accepting snapshots and clears the layer. Used when the source failed to start: a
+        # snapshot the source supplied before failing is removed, so the client runs without
+        # overrides, and a late snapshot from the stopped source is ignored.
+        #
+        # @return [void]
+        #
+        def close_and_clear
+          @lock.synchronize do
+            @closed = true
+            apply({}, {})
           end
         end
 
@@ -135,6 +151,32 @@ module LaunchDarkly
             end
           end
           tracker
+        end
+
+        #
+        # Replaces the layer and notifies listeners of the affected flags. Called inside @lock.
+        #
+        private def apply(flag_items, segment_items)
+          # Computing affected flags requires snapshots of the merged view before and after the
+          # replacement. Skip all of that work when nothing is listening.
+          unless @flag_change_broadcaster.has_listeners?
+            @layer.set_all(flag_items, segment_items)
+            return
+          end
+
+          previous, current = @layer.set_all(flag_items, segment_items)
+          old_merged = merged_view(previous)
+          new_merged = merged_view(current)
+
+          affected = Sink.affected_flag_keys(previous, current, old_merged, new_merged)
+          @logger.debug { "[LDClient] Override update affected #{affected.length} flag(s)" } unless affected.empty?
+          affected.each do |key|
+            @flag_change_broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new(key))
+          end
+        end
+
+        private def log_ignored_snapshot
+          @logger.debug { "[LDClient] Ignoring an override snapshot supplied after the override source was closed" }
         end
 
         #

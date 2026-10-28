@@ -102,6 +102,9 @@ module LaunchDarkly
       #
       # At most one override source can be configured. A later call replaces an earlier one.
       #
+      # When the client is offline, the source is not built or started: no overrides are served,
+      # and a configuration error in the source is not reported. The SDK logs a warning instead.
+      #
       # @example
       #   overrides = LaunchDarkly::Integrations::FileData.override_source(paths: ["/etc/launchdarkly/overrides.json"])
       #   config = LaunchDarkly::Config.new(data_system: LaunchDarkly::DataSystem.default.overrides(overrides))

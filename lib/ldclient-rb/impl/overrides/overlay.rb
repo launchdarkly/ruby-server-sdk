@@ -43,23 +43,14 @@ module LaunchDarkly
         #
         # Returns the union of the base store's items and the layer's items. The override entry
         # wins for any key present in both. This includes keys the base holds only as deleted
-        # items.
-        #
-        # When the base store fails and the layer holds entries, the result is the layer's entries
-        # alone, with no error. A per-key read serves those entries whatever the state of the base,
-        # so an all-flags read does the same. When the layer is empty, the base error is raised.
+        # items. A failure of the base store is raised, as it is without the overlay: the layer's
+        # entries alone would be an incomplete result.
         #
         # (see LaunchDarkly::Interfaces::DataSystem::ReadOnlyStore#all)
         #
         def all(kind)
+          base_items = @base.all(kind)
           overrides = @layer.all(kind)
-          begin
-            base_items = @base.all(kind)
-          rescue
-            raise if overrides.empty?
-
-            base_items = {}
-          end
           return base_items if overrides.empty?
 
           base_items.merge(overrides)

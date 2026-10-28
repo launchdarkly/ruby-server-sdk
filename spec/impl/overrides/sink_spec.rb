@@ -77,6 +77,31 @@ module LaunchDarkly
           expect { sink.set_overrides([], [{ key: "", version: 1 }]) }.to raise_error(ArgumentError, /has no key/)
         end
 
+        it "keeps the layer and ignores later snapshots after close" do
+          sink.set_overrides([flag("a", "x")], [])
+          listener = listen
+
+          sink.close
+          sink.set_overrides([flag("b", "y")], [])
+
+          expect(layer.get(DataStore::FEATURES, "a")).not_to be_nil
+          expect(layer.get(DataStore::FEATURES, "b")).to be_nil
+          expect(changed_keys(listener)).to eq []
+        end
+
+        it "clears the layer, notifies the removal, and ignores later snapshots after close_and_clear" do
+          sink.set_overrides([flag("a", "x")], [])
+          listener = listen
+
+          sink.close_and_clear
+          expect(layer.empty?).to be true
+          expect(changed_keys(listener)).to eq %w[a]
+
+          sink.set_overrides([flag("b", "y")], [])
+          expect(layer.empty?).to be true
+          expect(changed_keys(listener)).to eq %w[a]
+        end
+
         it "does not notify when nothing is listening but still replaces the layer" do
           expect(broadcaster).not_to receive(:broadcast)
 

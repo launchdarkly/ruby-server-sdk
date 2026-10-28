@@ -179,10 +179,6 @@ module LaunchDarkly
         @data_system = Impl::DataSystem::FDv2.new(@sdk_key, @config, data_system_config)
       end
 
-      # True when the data system was built with an override source. The override store is then
-      # consulted before the not-initialized short-circuit.
-      @overrides_configured = @data_system.override_source_configured?
-
       # Components not managed by data system
       @big_segment_store_manager = Impl::BigSegmentStoreManager.new(@config.big_segments, @config.logger)
       @big_segment_store_status_provider = @big_segment_store_manager.status_provider
@@ -641,19 +637,22 @@ module LaunchDarkly
 
       check_forked
 
-      overrides_only = false
+      override_features = nil
       unless initialized?
         if @data_system.store.initialized?
           if @cached_data_all_flags_warned.make_true
             @config.logger.warn { "Called all_flags_state before client initialization; using last known values from data store. This message is logged once." }
           end
-        elsif @overrides_configured
-          # No data from LaunchDarkly is available. The store read below returns only the entries
-          # that the override store holds. The result decides the state.
-          overrides_only = true
         else
+          # No data from LaunchDarkly is available. When the override store holds flags, the state
+          # contains only those, read from the override store itself: a store that is not
+          # initialized can still hold LaunchDarkly data, which the state must not include.
+          # Without override flags the state is invalid, as it is without an override source.
+          override_features = @data_system.override_items(Impl::DataStore::FEATURES)
+          if override_features.empty?
             @config.logger.warn { "Called all_flags_state before client initialization. Data store not available; returning empty state" }
             return FeatureFlagsState.new(false)
+          end
         end
       end
 
@@ -663,20 +662,17 @@ module LaunchDarkly
         return FeatureFlagsState.new(false)
       end
 
-      begin
-        features = @data_system.store.all(Impl::DataStore::FEATURES)
-      rescue => exn
-        Impl::Util.log_exception(@config.logger, "Unable to read flags for all_flags_state", exn)
-        return FeatureFlagsState.new(false)
-      end
-
-      if overrides_only
-        if features.empty?
-          @config.logger.warn { "Called all_flags_state before client initialization. Data store not available; returning empty state" }
-          return FeatureFlagsState.new(false)
-        end
+      if override_features
         if @all_flags_overrides_only_warned.make_true
           @config.logger.warn { "Called all_flags_state before client initialization; returning only flags from the override store. This message is logged once." }
+        end
+        features = override_features
+      else
+        begin
+          features = @data_system.store.all(Impl::DataStore::FEATURES)
+        rescue => exn
+          Impl::Util.log_exception(@config.logger, "Unable to read flags for all_flags_state", exn)
+          return FeatureFlagsState.new(false)
         end
       end
 
@@ -794,38 +790,34 @@ module LaunchDarkly
         return detail, nil, context.error
       end
 
-      no_launchdarkly_data = false
+      override_feature = nil
       if @data_system.data_availability != Impl::DataSystem::DataAvailability::REFRESHED
         if @data_system.data_availability == Impl::DataSystem::DataAvailability::CACHED
           if @cached_data_evaluation_warned.make_true
             @config.logger.warn { "[LDClient] Client has not finished initializing; using last known values from feature store. This message is logged once." }
           end
-        elsif @overrides_configured
-          # No data from LaunchDarkly is available. The store read below still finds an entry that
-          # the override store holds, and the SDK serves it. A miss returns the not-ready default.
-          no_launchdarkly_data = true
         else
-          @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
-          detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
-          record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
-          return detail, nil, "client not initialized"
+          # No data from LaunchDarkly is available. A flag that the override store holds is served,
+          # read from the override store itself. Every other flag takes the not-ready path, as
+          # without an override source: a store that is not initialized can still hold
+          # LaunchDarkly data, which the SDK must not serve.
+          override_feature = override_flag(key)
+          if override_feature.nil?
+            @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
+            detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
+            record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
+            return detail, nil, "client not initialized"
+          end
         end
       end
 
       begin
-        feature = @data_system.store.get(Impl::DataStore::FEATURES, key)
+        feature = override_feature || @data_system.store.get(Impl::DataStore::FEATURES, key)
       rescue
         # Ignored
       end
 
       if feature.nil?
-        if no_launchdarkly_data
-          @config.logger.error { "[LDClient] Client has not finished initializing; feature store unavailable, returning default value" }
-          detail = Evaluator.error_result(EvaluationReason::ERROR_CLIENT_NOT_READY, default)
-          record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
-          return detail, nil, "client not initialized"
-        end
-
         @config.logger.info { "[LDClient] Unknown feature flag \"#{key}\". Returning default value" }
         detail = Evaluator.error_result(EvaluationReason::ERROR_FLAG_NOT_FOUND, default)
         record_unknown_flag_eval(key, context, default, detail.reason, with_reasons)
@@ -851,6 +843,13 @@ module LaunchDarkly
         record_flag_eval_error(feature, context, default, detail.reason, with_reasons)
         [detail, feature, exn.to_s]
       end
+    end
+
+    # Returns the override store's entry for the flag key, or nil.
+    private def override_flag(key)
+      return nil unless key.respond_to?(:to_sym)
+
+      @data_system.override_items(Impl::DataStore::FEATURES)[key.to_sym]
     end
 
     private def record_flag_eval(flag, context, detail, default, with_reasons)

@@ -112,13 +112,16 @@ module LaunchDarkly
             expect(overlay.all(DataStore::SEGMENTS)).to eq({})
           end
 
-          it "returns the override entries alone when the base fails and the layer has entries" do
+          it "raises the base error when the base fails and the layer has entries" do
+            # The layer's entries alone would look complete to a caller such as all_flags_state.
             failing = double("base")
             allow(failing).to receive(:all).and_raise(RuntimeError, "store down")
+            allow(failing).to receive(:get).and_return(nil)
             overlay = Overlay.new(failing, layer)
             layer.set_all({ c: override_c }, {})
 
-            expect(overlay.all(DataStore::FEATURES).keys).to eq [:c]
+            expect { overlay.all(DataStore::FEATURES) }.to raise_error(RuntimeError, "store down")
+            expect(overlay.get(DataStore::FEATURES, "c")).not_to be_nil
           end
 
           it "raises the base error when the base fails and the layer is empty" do
