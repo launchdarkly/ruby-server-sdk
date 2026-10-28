@@ -122,6 +122,20 @@ module LaunchDarkly
         end
       end
 
+      it "keeps the marking when evaluating an overridden flag raises" do
+        source = TestOverrideSource.new([override_flag])
+        with_client(data_system(overrides: source, flags: { flag: ld_flag, normal: ld_normal })) do |client|
+          allow(client.instance_variable_get(:@evaluator)).to receive(:evaluate).and_raise("evaluation failed")
+
+          detail = client.variation_detail("flag", context, "default")
+          expect(detail.value).to eq "default"
+          expect(detail.reason).to eq EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(true)
+
+          normal = client.variation_detail("normal", context, "default")
+          expect(normal.reason).to eq EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION)
+        end
+      end
+
       it "keeps the marking when a migration stage is not a valid stage" do
         source = TestOverrideSource.new([override_flag.merge(variations: ["not-a-stage"])])
         with_client(data_system(overrides: source, flags: { flag: ld_flag })) do |client|
@@ -263,6 +277,22 @@ module LaunchDarkly
           expect(state.values_map).to eq({})
           expect(logger.output).to include("Unable to read flags for all_flags_state")
           expect(logger.output).to include("store failed")
+        end
+      end
+
+      it "reports a flag whose evaluation raises with an error reason that keeps the marking" do
+        source = TestOverrideSource.new([override_flag])
+        with_client(data_system(overrides: source, flags: { flag: ld_flag, normal: ld_normal })) do |client|
+          allow(client.instance_variable_get(:@evaluator)).to receive(:evaluate).and_raise("evaluation failed")
+
+          state = client.all_flags_state(context, with_reasons: true)
+
+          expect(state.valid?).to be true
+          expect(state.values_map).to eq({ "flag" => nil, "normal" => nil })
+          json = state.as_json
+          expect(json["$flagsState"]["flag"][:reason]).to eq(
+            EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION).with_override_affected(true))
+          expect(json["$flagsState"]["normal"][:reason]).to eq EvaluationReason.error(EvaluationReason::ERROR_EXCEPTION)
         end
       end
 
