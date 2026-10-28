@@ -125,6 +125,28 @@ module LaunchDarkly
       end
     end
 
+    describe "a custom store that returns plain hashes" do
+      it "records an unmarked error event and keeps tracking when evaluating a plain hash flag raises" do
+        # The FeatureStore interface documents its entities as hashes. The evaluator raises on one, and
+        # a hash never came from the override store, so the failure is unmarked and the state keeps
+        # the flag's tracking, as before overrides.
+        flag_hash = flag("plain", "value")
+        store = InMemoryFeatureStore.new
+        store.define_singleton_method(:initialized?) { true }
+        store.define_singleton_method(:get) { |kind, key| kind == Impl::DataStore::FEATURES && key == "plain" ? flag_hash : nil }
+        store.define_singleton_method(:all) { |kind| kind == Impl::DataStore::FEATURES ? { plain: flag_hash } : {} }
+        source = TestOverrideSource.new([flag("other", "override")])
+        with_recording_client(DataSystem.custom.data_store(store, :read_only).overrides(source).build) do |client, events|
+          expect(client.variation("plain", context, "default")).to eq "default"
+          expect(events.records_for("plain")[0].override_affected).to be false
+
+          meta = client.all_flags_state(context).as_json["$flagsState"]
+          expect(meta["plain"][:trackEvents]).to be true
+          expect(meta["plain"][:debugEventsUntilDate]).to eq debug_until
+        end
+      end
+    end
+
     describe "all_flags_state" do
       it "turns off event tracking for override-affected flags and keeps it for others" do
         source = TestOverrideSource.new([flag("direct", "override")], [segment("seg", context.key)])
