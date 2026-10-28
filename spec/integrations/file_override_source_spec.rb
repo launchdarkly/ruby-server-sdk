@@ -122,6 +122,22 @@ module LaunchDarkly
           expect(logger.output).to include("File paths list the same file more than once")
         end
 
+        it "treats a path repeated in different case as a repeat on Windows, where file names ignore case" do
+          allow(Gem).to receive(:win_platform?).and_return(true)
+          source = build(paths: ["a.json", "A.json"])
+
+          expect(source.paths).to eq [File.absolute_path("a.json")]
+          expect(logger.output).to include("File paths list the same file more than once")
+        end
+
+        it "keeps paths that differ only in case elsewhere, where they name different files" do
+          allow(Gem).to receive(:win_platform?).and_return(false)
+          source = build(paths: ["a.json", "A.json"])
+
+          expect(source.paths).to eq [File.absolute_path("a.json"), File.absolute_path("A.json")]
+          expect(logger.output).not_to include("File paths list the same file more than once")
+        end
+
         it "rejects a configuration with no file paths" do
           expect { build({}) }.to raise_error(ArgumentError, /no file paths/)
           expect { build(paths: []) }.to raise_error(ArgumentError, /no file paths/)
