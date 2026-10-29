@@ -56,7 +56,12 @@ class ClientEntity
         opts[:payload_filter_key] = data_system_config[:payloadFilter]
       end
 
+      # Flag overrides are an option of the FDv2 data system configuration.
+      data_system.overrides(build_override_source(config[:overrides])) if config[:overrides]
+
       opts[:data_system_config] = data_system.build
+    elsif config[:overrides]
+      raise ArgumentError, "flag overrides require the data system to be configured"
     elsif config[:streaming]
       streaming = config[:streaming]
       opts[:stream_uri] = streaming[:baseUri] unless streaming[:baseUri].nil?
@@ -363,6 +368,23 @@ class ClientEntity
     builder.base_uri(fdv1_fallback_config[:baseUri]) if fdv1_fallback_config[:baseUri]
     builder.poll_interval(fdv1_fallback_config[:pollIntervalMs] / 1_000.0) if fdv1_fallback_config[:pollIntervalMs]
     builder
+  end
+
+  #
+  # Builds the file-based override source from the `overrides` block of the contract test
+  # configuration.
+  #
+  # @param overrides_config [Hash] the overrides configuration
+  # @return [Object] a builder for LaunchDarkly::DataSystem::ConfigBuilder#overrides
+  #
+  private def build_override_source(overrides_config)
+    options = { paths: overrides_config[:filePaths] }
+    if overrides_config[:duplicateKeysHandling]
+      options[:duplicate_keys_handling] = overrides_config[:duplicateKeysHandling].to_sym
+    end
+    options[:change_detection] = overrides_config[:changeDetection].to_sym if overrides_config[:changeDetection]
+    set_optional_time_prop(overrides_config, :pollIntervalMs, options, :poll_interval)
+    LaunchDarkly::Integrations::FileData.override_source(options)
   end
 
   #
