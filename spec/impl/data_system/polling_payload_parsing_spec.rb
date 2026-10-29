@@ -145,6 +145,19 @@ module LaunchDarkly
           end
         end
 
+        it "handles put and delete objects whose kind is not a string" do
+          %w[put-object delete-object].each do |event_name|
+            object_field = event_name == "put-object" ? ',"object":{}' : ""
+            ["", '"kind":null,', '"kind":5,', '"kind":["flag"],'].each do |kind_field|
+              data = '{' + kind_field + '"key":"sampleflag","version":461' + object_field + '}'
+              payload_str = '{"events":[ {"event":"server-intent","data":{"payloads":[ {"id":"5A46PZ79FQ9D08YYKT79DECDNV","target":461,"intentCode":"xfer-full","reason":"payload-missing"}]}},{"event": "' + event_name + '","data": ' + data + '},{"event":"payload-transferred","data":{"state":"(p:5A46PZ79FQ9D08YYKT79DECDNV:461)","id":"5A46PZ79FQ9D08YYKT79DECDNV","version":461}}]}' # rubocop:disable Layout/LineLength
+              result = LaunchDarkly::Impl::DataSystem.polling_payload_to_changeset(JSON.parse(payload_str, symbolize_names: true))
+              expect(result.success?).to eq(false)
+              expect(result.error).to eq("Invalid payload: '#{event_name}' kind must be a string")
+            end
+          end
+        end
+
         it "handles invalid payload transferred" do
           payload_str = '{"events":[ {"event":"server-intent","data":{"payloads":[ {"id":"5A46PZ79FQ9D08YYKT79DECDNV","target":461,"intentCode":"xfer-full","reason":"payload-missing"}]}},{"event":"payload-transferred","data":{}}]}' # rubocop:disable Layout/LineLength
           result = LaunchDarkly::Impl::DataSystem.polling_payload_to_changeset(JSON.parse(payload_str, symbolize_names: true))

@@ -294,6 +294,21 @@ change_set_builder, envid)
             end
           end
 
+          it "rejects put and delete objects whose kind is not a string" do
+            [
+              LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT,
+              LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT,
+            ].each do |event_name|
+              object_field = event_name == LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT ? ',"object":{}' : ""
+              ["", '"kind":null,', '"kind":5,', '"kind":["flag"],'].each do |kind_field|
+                data = '{' + kind_field + '"key":"flagkey","version":100' + object_field + '}'
+                expect {
+                  synchronizer.send(:process_message, MockSSEEvent.new(event_name, data), change_set_builder, envid)
+                }.to raise_error(ArgumentError, "#{event_name} kind must be a string")
+              end
+            end
+          end
+
           it "swallows goodbye events" do
             server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
               payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(

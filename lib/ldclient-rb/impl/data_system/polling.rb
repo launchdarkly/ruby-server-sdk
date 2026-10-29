@@ -500,6 +500,9 @@ module LaunchDarkly
             unless event[:data].is_a?(Hash)
               return LaunchDarkly::Result.fail("Invalid payload: 'put-object' data must be an object")
             end
+            unless event[:data][:kind].is_a?(String)
+              return LaunchDarkly::Result.fail("Invalid payload: 'put-object' kind must be a string")
+            end
 
             next if LaunchDarkly::Impl::DataSystem::ProtocolV2.unsupported_kind?(event[:data])
 
@@ -514,6 +517,9 @@ module LaunchDarkly
           when LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT
             unless event[:data].is_a?(Hash)
               return LaunchDarkly::Result.fail("Invalid payload: 'delete-object' data must be an object")
+            end
+            unless event[:data][:kind].is_a?(String)
+              return LaunchDarkly::Result.fail("Invalid payload: 'delete-object' kind must be a string")
             end
 
             next if LaunchDarkly::Impl::DataSystem::ProtocolV2.unsupported_kind?(event[:data])

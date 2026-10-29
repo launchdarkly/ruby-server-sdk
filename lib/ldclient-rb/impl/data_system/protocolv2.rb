@@ -20,12 +20,11 @@ module LaunchDarkly
         # does not support. Such objects are ignored so that payloads carrying
         # newer kinds can still be applied.
         #
-        # @param data [Hash] The hash representation of the event data
+        # @param data [Hash] The hash representation of the event data, with a String kind
         # @return [Boolean]
         #
         def self.unsupported_kind?(data)
-          kind = data[:kind]
-          !kind.nil? && !SUPPORTED_KINDS.include?(kind)
+          !SUPPORTED_KINDS.include?(data[:kind])
         end
 
         #

@@ -248,6 +248,7 @@ module LaunchDarkly
           when LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT
             data = JSON.parse(message.data, symbolize_names: true)
             raise ArgumentError, "put-object data must be an object" unless data.is_a?(Hash)
+            raise ArgumentError, "put-object kind must be a string" unless data[:kind].is_a?(String)
 
             unless LaunchDarkly::Impl::DataSystem::ProtocolV2.unsupported_kind?(data)
               put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.from_h(data)
@@ -258,6 +259,7 @@ module LaunchDarkly
           when LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT
             data = JSON.parse(message.data, symbolize_names: true)
             raise ArgumentError, "delete-object data must be an object" unless data.is_a?(Hash)
+            raise ArgumentError, "delete-object kind must be a string" unless data[:kind].is_a?(String)
 
             unless LaunchDarkly::Impl::DataSystem::ProtocolV2.unsupported_kind?(data)
               delete_object = LaunchDarkly::Impl::DataSystem::ProtocolV2::DeleteObject.from_h(data)
