@@ -285,21 +285,40 @@ module LaunchDarkly
         end
       end
 
-      it "returns an invalid state and logs the failure when the store cannot list its flags, even with overrides" do
-        # A daemon-mode client reads its store directly. A state of the overrides alone would look
-        # complete to a consumer that bootstraps from it.
+      it "returns an invalid state of the overridden flags and logs the failure when the store cannot list its flags" do
+        # A daemon-mode client reads its store directly. Overrides only add to the state: without
+        # them it is invalid and empty, so with them it holds the overridden flags and stays invalid.
         store = InMemoryFeatureStore.new
         store.define_singleton_method(:all) { |_kind| raise "store failed" }
         source = TestOverrideSource.new([override_flag])
         logger = CapturingLogger.new
         with_client(DataSystem.custom.data_store(store, :read_only).overrides(source).build, logger: logger) do |client|
           expect(client.initialized?).to be true
-          state = client.all_flags_state(context)
+          state = client.all_flags_state(context, with_reasons: true)
 
           expect(state.valid?).to be false
-          expect(state.values_map).to eq({})
+          expect(state.values_map).to eq({ "flag" => "override-value" })
+          json = state.as_json
+          expect(json["$valid"]).to be false
+          expect(json["flag"]).to eq "override-value"
+          expect(json["$flagsState"]["flag"][:reason]).to eq EvaluationReason.off.with_override_affected(true)
           expect(logger.output).to include("Unable to read flags for all_flags_state")
           expect(logger.output).to include("store failed")
+        end
+      end
+
+      it "returns an invalid, empty state and logs the failure when the store cannot list its flags and no flags are overridden" do
+        store = InMemoryFeatureStore.new
+        store.define_singleton_method(:all) { |_kind| raise "store failed" }
+        [nil, TestOverrideSource.new([])].each do |source|
+          logger = CapturingLogger.new
+          with_client(DataSystem.custom.data_store(store, :read_only).overrides(source).build, logger: logger) do |client|
+            state = client.all_flags_state(context)
+
+            expect(state.valid?).to be false
+            expect(state.values_map).to eq({})
+            expect(logger.output).to include("Unable to read flags for all_flags_state")
+          end
         end
       end
 

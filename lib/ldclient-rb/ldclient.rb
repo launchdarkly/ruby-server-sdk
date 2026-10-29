@@ -662,6 +662,7 @@ module LaunchDarkly
         return FeatureFlagsState.new(false)
       end
 
+      valid = true
       if override_features
         if @all_flags_overrides_only_warned.make_true
           @config.logger.warn { "Called all_flags_state before client initialization; returning only flags from the override store. This message is logged once." }
@@ -672,11 +673,17 @@ module LaunchDarkly
           features = @data_system.store.all(Impl::DataStore::FEATURES)
         rescue => exn
           Impl::Util.log_exception(@config.logger, "Unable to read flags for all_flags_state", exn)
-          return FeatureFlagsState.new(false)
+          # Overrides only add to the state. Without them the state is invalid and empty here, so
+          # with them it holds the override flags and stays invalid. A client-side SDK bootstrapped
+          # from the state uses its flags whatever $valid says (js-client-sdk 3.x and the 4.x browser
+          # SDK only log a warning), so the overridden values still reach it.
+          features = @data_system.override_items(Impl::DataStore::FEATURES)
+          return FeatureFlagsState.new(false) if features.empty?
+          valid = false
         end
       end
 
-      state = FeatureFlagsState.new(true)
+      state = FeatureFlagsState.new(valid)
       client_only = options[:client_side_only] || false
       with_reasons = options[:with_reasons] || false
       details_only_if_tracked = options[:details_only_for_tracked_flags] || false
