@@ -215,6 +215,100 @@ module LaunchDarkly
             expect(update.change_set.changes[0].version).to eq(101)
           end
 
+          it "ignores put and delete objects of unknown kinds" do
+            server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
+              payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(
+                id: "id",
+                target: 300,
+                code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+                reason: "cant-catchup"
+              )
+            )
+            known_put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.new(
+              version: 100,
+              kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+              key: "flagkey",
+              object: { key: "flagkey" }
+            )
+            unknown_put = LaunchDarkly::Impl::DataSystem::ProtocolV2::PutObject.new(
+              version: 100,
+              kind: "some-future-kind",
+              key: "otherkey",
+              object: { foo: 1 }
+            )
+            unknown_delete = LaunchDarkly::Impl::DataSystem::ProtocolV2::DeleteObject.new(
+              version: 101,
+              kind: "some-future-kind",
+              key: "otherkey"
+            )
+            known_delete = LaunchDarkly::Impl::DataSystem::ProtocolV2::DeleteObject.new(
+              version: 101,
+              kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
+              key: "segmentkey"
+            )
+            selector = LaunchDarkly::Interfaces::DataSystem::Selector.new(state: "p:SOMETHING:300", version: 300)
+
+            expect(logger).not_to receive(:warn)
+            expect(logger).not_to receive(:error)
+
+            # Process a payload that mixes known and unknown object kinds
+            synchronizer.send(:process_message, MockSSEEvent.new(LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT, JSON.generate(server_intent.to_h)),
+change_set_builder, envid)
+            [known_put, unknown_put].each do |put|
+              result = synchronizer.send(:process_message, MockSSEEvent.new(LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT, JSON.generate(put.to_h)),
+change_set_builder, envid)
+              expect(result).to be_nil
+            end
+            [unknown_delete, known_delete].each do |delete_object|
+              result = synchronizer.send(:process_message, MockSSEEvent.new(LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT, JSON.generate(delete_object.to_h)),
+change_set_builder, envid)
+              expect(result).to be_nil
+            end
+            update = synchronizer.send(:process_message, MockSSEEvent.new(LaunchDarkly::Interfaces::DataSystem::EventName::PAYLOAD_TRANSFERRED, JSON.generate(selector.to_h)),
+change_set_builder, envid)
+
+            # The payload completes as valid with only the known objects
+            expect(update).not_to be_nil
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+            expect(update.error).to be_nil
+            expect(update.change_set).not_to be_nil
+            expect(update.change_set.changes.length).to eq(2)
+            expect(update.change_set.changes[0].action).to eq(LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT)
+            expect(update.change_set.changes[0].kind).to eq(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG)
+            expect(update.change_set.changes[0].key).to eq(:flagkey)
+            expect(update.change_set.changes[1].action).to eq(LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE)
+            expect(update.change_set.changes[1].kind).to eq(LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT)
+            expect(update.change_set.changes[1].key).to eq(:segmentkey)
+          end
+
+          it "rejects put and delete objects whose data is not an object" do
+            [
+              LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT,
+              LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT,
+            ].each do |event_name|
+              ['"x"', "[]", "null", "5"].each do |data|
+                expect {
+                  synchronizer.send(:process_message, MockSSEEvent.new(event_name, data), change_set_builder, envid)
+                }.to raise_error(ArgumentError, "#{event_name} data must be an object")
+              end
+            end
+          end
+
+          it "rejects put and delete objects whose kind is not a string" do
+            [
+              LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT,
+              LaunchDarkly::Interfaces::DataSystem::EventName::DELETE_OBJECT,
+            ].each do |event_name|
+              object_field = event_name == LaunchDarkly::Interfaces::DataSystem::EventName::PUT_OBJECT ? ',"object":{}' : ""
+              ["", '"kind":null,', '"kind":5,', '"kind":["flag"],'].each do |kind_field|
+                data = '{' + kind_field + '"key":"flagkey","version":100' + object_field + '}'
+                expect {
+                  synchronizer.send(:process_message, MockSSEEvent.new(event_name, data), change_set_builder, envid)
+                }.to raise_error(ArgumentError, "#{event_name} kind must be a string")
+              end
+            end
+          end
+
           it "swallows goodbye events" do
             server_intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
               payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(
