@@ -109,6 +109,19 @@ module LaunchDarkly
       end
 
       #
+      # Returns the override store's entries of the given kind, without LaunchDarkly data. The
+      # result is empty when no override source is configured or the store holds none. The
+      # returned hash must not be modified. Flag overrides are currently experimental and subject
+      # to change.
+      #
+      # @param kind [LaunchDarkly::Impl::DataStore::DataKind]
+      # @return [Hash{Symbol => Object}]
+      #
+      def override_items(kind)
+        raise NotImplementedError, "#{self.class} must implement #override_items"
+      end
+
+      #
       # Sets the diagnostic accumulator for streaming initialization metrics.
       # This should be called before start() to ensure metrics are collected.
       #

@@ -101,6 +101,11 @@ module LaunchDarkly
           @store_wrapper
         end
 
+        # (see DataSystem#override_items)
+        def override_items(_kind)
+          {}
+        end
+
         # (see DataSystem#set_diagnostic_accumulator)
         def set_diagnostic_accumulator(diagnostic_accumulator)
           @diagnostic_accumulator = diagnostic_accumulator

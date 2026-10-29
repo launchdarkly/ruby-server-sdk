@@ -4,7 +4,10 @@ require "spec_helper"
 require "ldclient-rb/impl/data_store/store"
 require "ldclient-rb/impl/broadcaster"
 require "ldclient-rb/impl/data_store"
+require "ldclient-rb/impl/overrides"
 require "ldclient-rb/interfaces/data_system"
+require "model_builders"
+require "override_test_components"
 
 module LaunchDarkly
   module Impl
@@ -285,6 +288,127 @@ module LaunchDarkly
 
             expect(received_changesets).not_to be_empty
             expect(received_changesets.first.changes.first.key).to eq(flag_key)
+          end
+        end
+
+        describe "flag change notifications" do
+          # Collects the flag keys the asynchronous broadcaster delivers.
+          class CollectingListener
+            def initialize
+              @keys = Queue.new
+            end
+
+            def update(flag_change)
+              @keys << flag_change.key
+            end
+
+            # Every key that arrives within the settle time after the first one, sorted.
+            def collect(timeout = 2, settle = 0.3)
+              keys = []
+              first = TestQueues.pop_within(@keys, timeout)
+              return keys if first.nil?
+
+              keys << first
+              loop do
+                key = TestQueues.pop_within(@keys, settle)
+                break if key.nil?
+
+                keys << key
+              end
+              keys.sort
+            end
+          end
+
+          let(:listener) { CollectingListener.new }
+          let(:layer) { LaunchDarkly::Impl::Overrides::Layer.new }
+
+          def flag_hash(key, version, prerequisite: nil, segment: nil)
+            data = { key: key, version: version, on: true, fallthrough: { variation: 0 }, offVariation: 0, variations: ["v"] }
+            data[:prerequisites] = [{ key: prerequisite, variation: 0 }] if prerequisite
+            data[:rules] = [{ id: "r", variation: 0, clauses: [Clauses.match_segment(segment)] }] if segment
+            data
+          end
+
+          def segment_hash(key, version)
+            { key: key, version: version, included: ["user"] }
+          end
+
+          def put(kind, item)
+            LaunchDarkly::Interfaces::DataSystem::Change.new(
+              action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT, kind: kind, key: item[:key].to_sym,
+              version: item[:version], object: item
+            )
+          end
+
+          def apply(intent, *changes)
+            subject.apply(LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+              intent_code: intent, changes: changes, selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+            ), false)
+          end
+
+          def full(*changes)
+            apply(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL, *changes)
+          end
+
+          def delta(*changes)
+            apply(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES, *changes)
+          end
+
+          FLAG = LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG
+          SEGMENT = LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT
+
+          before { flag_change_broadcaster.add_listener(listener) }
+
+          it "notifies the flags that depend on a changed item when changes are keyed by symbol" do
+            full(put(FLAG, flag_hash("prereq", 1)), put(FLAG, flag_hash("dependent", 1, prerequisite: "prereq")))
+            listener.collect
+
+            delta(put(FLAG, flag_hash("prereq", 2)))
+            expect(listener.collect).to eq %w[dependent prereq]
+          end
+
+          context "with the override layer as external dependencies" do
+            before { subject.set_external_dependencies(layer) }
+
+            it "notifies an override flag whose prerequisite changed in a delta" do
+              layer.set_all({ override: Flags.from_hash(flag_hash("override", 1, prerequisite: "prereq")) }, {})
+              full(put(FLAG, flag_hash("prereq", 1)))
+              listener.collect
+
+              delta(put(FLAG, flag_hash("prereq", 2)))
+              expect(listener.collect).to eq %w[override prereq]
+            end
+
+            it "notifies override flags that depend on items changed by a full data set" do
+              layer.set_all({ override: Flags.from_hash(flag_hash("override", 1, segment: "seg")) }, {})
+              full(put(SEGMENT, segment_hash("seg", 1)), put(FLAG, flag_hash("unrelated", 1)))
+              listener.collect
+
+              full(put(SEGMENT, segment_hash("seg", 2)), put(FLAG, flag_hash("unrelated", 1)))
+              # The segment is not a flag, so only the dependent override flag is notified.
+              expect(listener.collect).to eq %w[override]
+            end
+
+            it "follows a dependency chain that crosses between the store and the layer" do
+              # LaunchDarkly flag -> override flag -> LaunchDarkly segment: a segment change must reach
+              # the LaunchDarkly flag at the top of the chain.
+              layer.set_all({ override: Flags.from_hash(flag_hash("override", 1, segment: "seg")) }, {})
+              full(put(SEGMENT, segment_hash("seg", 1)), put(FLAG, flag_hash("ld", 1, prerequisite: "override")))
+              listener.collect
+
+              delta(put(SEGMENT, segment_hash("seg", 2)))
+              expect(listener.collect).to eq %w[ld override]
+            end
+
+            it "follows the layer's current graph after a replacement" do
+              layer.set_all({ override: Flags.from_hash(flag_hash("override", 1, prerequisite: "prereq")) }, {})
+              full(put(FLAG, flag_hash("prereq", 1)), put(FLAG, flag_hash("top", 1, prerequisite: "prereq")))
+              listener.collect
+
+              layer.set_all({}, {})
+              delta(put(FLAG, flag_hash("prereq", 2)))
+              expect(listener.collect).to eq %w[prereq top]
+            end
           end
         end
 
