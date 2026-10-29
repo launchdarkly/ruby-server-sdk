@@ -5,6 +5,10 @@ module LaunchDarkly
   module Impl
     EventSummary = Struct.new(:start_date, :end_date, :counters)
 
+    # The `versions` member is a hash of hashes: flag version, then variation index, then the
+    # override-affected marker (a boolean), to an EventSummaryFlagVariationCounter. The marker
+    # takes part in the key, so override-affected and other evaluations of the same flag,
+    # variation, and version accumulate into separate counters.
     EventSummaryFlagInfo = Struct.new(:default, :versions, :context_kinds)
 
     EventSummaryFlagVariationCounter = Struct.new(:value, :count)
@@ -39,9 +43,16 @@ module LaunchDarkly
 
         counters_for_flag.context_kinds.merge(event.context.kinds)
 
-        variation_counter = counters_for_flag_version[event.variation]
+        counters_for_variation = counters_for_flag_version[event.variation]
+        if counters_for_variation.nil?
+          counters_for_variation = Hash.new
+          counters_for_flag_version[event.variation] = counters_for_variation
+        end
+
+        override_affected = event.override_affected
+        variation_counter = counters_for_variation[override_affected]
         if variation_counter.nil?
-          counters_for_flag_version[event.variation] = EventSummaryFlagVariationCounter.new(event.value, 1)
+          counters_for_variation[override_affected] = EventSummaryFlagVariationCounter.new(event.value, 1)
         else
           variation_counter.count = variation_counter.count + 1
         end

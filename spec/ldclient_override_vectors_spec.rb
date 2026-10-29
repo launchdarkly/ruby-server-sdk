@@ -49,7 +49,12 @@ module LaunchDarkly
       end
 
       config = Config.new(data_system_config: builder.build, send_events: false, logger: $null_log)
-      LDClient.new("sdk-key", config, wait)
+      client = LDClient.new("sdk-key", config, wait)
+      # The summary marker is the marking the client hands to the event processor for this
+      # evaluation. Event handling keys on that scalar, not on the reason.
+      events = RecordingEventProcessor.new
+      client.instance_variable_set(:@event_processor, events)
+      [client, events]
     end
 
     # Compares the actual reason against only the fields present in the expected reason. An expected
@@ -68,7 +73,7 @@ module LaunchDarkly
 
     vector_file[:vectors].each do |vector|
       it "#{vector[:group]}: #{vector[:description]}" do
-        client = build_client(vector)
+        client, events = build_client(vector)
         begin
           expect(client.initialized?).to eq(vector[:launchDarklyData][:initialized])
 
@@ -84,6 +89,12 @@ module LaunchDarkly
             expect(detail.variation_index).to eq(expected[:variationIndex])
           end
           expect_reason(expected[:reason], detail.reason)
+
+          unless expected[:summaryOverrideAffected].nil?
+            records = events.records_for(evaluate[:flagKey])
+            expect(records.length).to eq(1), "expected exactly one evaluation record for the flag"
+            expect(records[0].override_affected).to eq(expected[:summaryOverrideAffected]), "summaryOverrideAffected"
+          end
         ensure
           client.close
         end
