@@ -2,6 +2,13 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.19.2](https://github.com/launchdarkly/ruby-server-sdk/compare/8.19.1...8.19.2) (2026-10-29)
+
+
+### Bug Fixes
+
+* Ignore FDv2 objects with unrecognized kinds ([#468](https://github.com/launchdarkly/ruby-server-sdk/issues/468)) ([168e199](https://github.com/launchdarkly/ruby-server-sdk/commit/168e19960372952bec35564957d94c5e3260e4f6))
+
 ## [8.19.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.19.0...8.19.1) (2026-10-23)
 
 
