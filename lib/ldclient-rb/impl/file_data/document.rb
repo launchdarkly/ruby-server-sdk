@@ -2,6 +2,7 @@
 
 require "ldclient-rb/impl/model/serialization"
 
+require "json"
 require "yaml"
 
 module LaunchDarkly
@@ -62,20 +63,35 @@ module LaunchDarkly
         end
 
         #
-        # Parses the content of a data file. The content may be JSON or YAML. JSON is a subset of
-        # YAML, and the Ruby YAML parser handles it, so one parser serves both formats.
+        # Parses the content of a data file in the given format. {FileData.format_of} chooses the
+        # format of a file from its name.
         #
-        # An empty document is a document with no entries. A document that is not a mapping, or
-        # whose "flags", "flagValues", or "segments" member is not a mapping, is an error.
+        # Whether content with no entries is valid depends on the format, like the rest of the
+        # content. Content that is empty or only white space is not a JSON document, so it fails to
+        # parse. In YAML it is a document with no entries, and so is a YAML document that is only a
+        # null. A document that is not a mapping, or whose "flags", "flagValues", or "segments"
+        # member is not a mapping, is an error.
         #
         # @param content [String]
+        # @param format [Symbol] `:json` or `:yaml`
         # @return [Document]
         # @raise [ArgumentError] if the content is not a valid document
-        # @raise [Psych::SyntaxError] if the content cannot be parsed
+        # @raise [JSON::ParserError, Psych::SyntaxError] if the content cannot be parsed
         #
-        def self.parse(content)
-          raw = YAML.safe_load(content)
-          raw = {} if raw.nil?
+        def self.parse(content, format:)
+          case format
+          when :json
+            # A file that is being rewritten in place can be empty for a moment. Failing to parse
+            # keeps its last good data until it is complete.
+            raise ArgumentError, "the file has no content, which is not a JSON document" if FileData.blank?(content)
+
+            raw = JSON.parse(content)
+          when :yaml
+            raw = YAML.safe_load(content)
+            raw = {} if raw.nil?
+          else
+            raise ArgumentError, "unknown file format #{format.inspect}"
+          end
           raise ArgumentError, "file content must be an object" unless raw.is_a?(Hash)
 
           data = FileData.symbolize_keys(raw)
@@ -107,15 +123,44 @@ module LaunchDarkly
         end
       end
 
+      # The endings of the names of the files that are read as YAML, compared without regard to
+      # case. Every other file is read as JSON.
+      YAML_FILE_NAME_ENDINGS = [".yaml", ".yml"].freeze
+
+      # The bytes that count as white space when deciding whether content is empty.
+      WHITE_SPACE_BYTES = [0x20, 0x09, 0x0a, 0x0d, 0x0b, 0x0c].freeze
+      private_constant :WHITE_SPACE_BYTES
+
       #
-      # Reads the raw content of one file.
+      # Returns the format of a data file, which its name decides: a name that ends in ".yaml" or
+      # ".yml", in any case, is YAML, and any other name is JSON.
+      #
+      # @param path [String]
+      # @return [Symbol] `:json` or `:yaml`
+      #
+      def self.format_of(path)
+        path.downcase.end_with?(*YAML_FILE_NAME_ENDINGS) ? :yaml : :json
+      end
+
+      #
+      # Returns true if the content is empty or only white space.
+      #
+      # @param content [String]
+      # @return [Boolean]
+      #
+      def self.blank?(content)
+        content.each_byte.all? { |byte| WHITE_SPACE_BYTES.include?(byte) }
+      end
+
+      #
+      # Reads the raw content of one file as UTF-8, without a byte order mark.
       #
       # @param path [String]
       # @return [String]
       # @raise [ReadError] if the file cannot be read
       #
       def self.read_file(path)
-        File.read(path)
+        File.read(path, mode: "r:BOM|UTF-8")
       rescue Errno::ENOENT => e
         raise ReadError.new(path, "unable to read file: #{e.message}", missing: true)
       rescue SystemCallError, IOError => e
@@ -131,7 +176,7 @@ module LaunchDarkly
       # @raise [ReadError] if the content cannot be parsed
       #
       def self.parse_file(path, content)
-        Document.parse(content)
+        Document.parse(content, format: format_of(path))
       rescue StandardError => e
         raise ReadError.new(path, "error parsing file: #{e.message}")
       end

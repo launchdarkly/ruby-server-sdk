@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "capturing_logger"
+require "in_place_writes"
 require "tmpdir"
 require "ldclient-rb/impl/file_data"
 
@@ -20,8 +21,15 @@ module LaunchDarkly
           File.join(@dir, name)
         end
 
+        # Applications rewrite data files in place, which is not atomic. The tests do too, deliberately
+        # slowly: a file that exists is truncated, and written 30 ms later, so a load can find it
+        # empty, as it would with an application's writes, instead of only by chance.
         def write(name, content)
-          File.write(path(name), content)
+          if File.exist?(path(name))
+            InPlaceWrites.rewrite(path(name), content, 0.03)
+          else
+            File.write(path(name), content)
+          end
           path(name)
         end
 
@@ -197,11 +205,11 @@ module LaunchDarkly
             expect(reloader.reload_now).to be false
             write("a.json", values_doc({ flag1: "fixed" }))
 
-            # The retry recovers. The write is ordinary, not atomic, so the retry may read the
-            # file while it is still empty: an empty document is valid and is applied as the
-            # recovery, and the fixed content is then loaded on demand.
+            # The retry recovers with the fixed content. The write is in place, so a retry can
+            # find the file empty while it is being written. It reads the file again later
+            # instead of applying it.
             expect(wait_for { recorder.applied.length >= 1 }).to be true
-            expect(reloader.reload_now).to be true if recorder.flag_values != { flag1: "fixed" }
+            expect(recorder.applied.map { |merged| merged.flags.keys }).to all(eq([:flag1]))
             expect(recorder.flag_values).to eq({ flag1: "fixed" })
           end
         end
@@ -450,6 +458,467 @@ module LaunchDarkly
 
             expect(wait_for { logger.output.include?("Unexpected error") }).to be true
             expect(logger.output).to match(/ERROR -- : \[LDClient\] Prefix: Unexpected error in file data reloader/)
+          end
+        end
+
+        describe "a file that is found empty" do
+          # The retry comes long enough after the change signal for a test to finish writing the
+          # file before it, even on a slow machine.
+          let(:retry_delay) { 1.5 }
+
+          # Shorter than the retry delay, so a load that happens within it after a change signal
+          # is not the retry.
+          let(:before_the_retry) { 1.0 }
+
+          let(:logger) { CapturingLogger.new }
+
+          let(:read_again_log) { "reading it again before applying it" }
+
+          def yaml_doc(values)
+            "flagValues:\n" + values.map { |key, value| "  #{key}: #{value}\n" }.join
+          end
+
+          def read_again_logged?
+            logger.output.include?(read_again_log)
+          end
+
+          def with_empty_file_reloader(paths, **options, &block)
+            with_reloader(paths, logger: logger, debounce_delay: 0.01, retry_delay: retry_delay, **options, &block)
+          end
+
+          it "is read again before it is applied" do
+            # A writer that rewrites the file in place truncates it and then writes the new content.
+            # In YAML an empty file is valid, so applying it would briefly remove every entry.
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+              expect(logger.output).to include("DEBUG -- : [LDClient] File #{y} is empty, possibly while it is being rewritten")
+
+              # The retry reads the rewritten file.
+              File.write(y, yaml_doc(flag2: true))
+              expect(wait_for(retry_delay + 2) { recorder.applied.length == 2 }).to be true
+              expect(recorder.flag_values).to eq({ flag2: true })
+              expect(recorder.errors).to be_empty
+              expect(logger.output).not_to include("ERROR")
+            end
+          end
+
+          it "counts a file with only white space as empty" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, " \n\r\n  \n")
+              reloader.trigger
+
+              expect(wait_for { read_again_logged? }).to be true
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "is applied by the retry when a YAML file stays empty" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+              expect(wait_for(before_the_retry) { recorder.applied.length > 1 }).to be false
+
+              # The file is still empty when the retry reads it, so it is a document with no entries.
+              expect(wait_for(retry_delay + 2) { recorder.applied.length == 2 }).to be true
+              expect(recorder.applied[-1].empty?).to be true
+              expect(recorder.errors).to be_empty
+            end
+          end
+
+          it "is not put off again once its empty state is applied" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for(retry_delay + 2) { recorder.applied.length == 2 }).to be true
+
+              # The applied data has no content from the file, so a new truncation is applied at once.
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for(before_the_retry) { recorder.applied.length == 3 }).to be true
+              expect(recorder.applied[-1].empty?).to be true
+              expect(logger.output.scan(read_again_log).length).to eq(1)
+            end
+          end
+
+          it "is not reported by the load that finds an emptied JSON file, and the retry reports it" do
+            a = write("a.json", values_doc({ flag1: "a" }))
+
+            with_empty_file_reloader([a]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+              expect(recorder.errors).to be_empty
+
+              # The retry finds the file still empty, which is not a JSON document. The data stays.
+              expect(wait_for(retry_delay + 2) { recorder.errors.length == 1 }).to be true
+              expect(recorder.errors[0]).to be_a(ReadError)
+              expect(recorder.errors[0].message).to include("the file has no content, which is not a JSON document")
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "is not applied by a further change signal within the retry delay" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+
+              # The file has not been written since, so the delay goes on from the first load that
+              # found it empty, and a stream of change signals cannot hold it back longer.
+              reloader.trigger
+              expect(wait_for { logger.output.scan(read_again_log).length == 2 }).to be true
+              expect(recorder.applied.length).to eq(1)
+              expect(wait_for(retry_delay + 2) { recorder.applied.length == 2 }).to be true
+              expect(recorder.applied[-1].empty?).to be true
+            end
+          end
+
+          it "is put off again when a second rewrite truncates it before a load reads its content" do
+            # Two quick in-place rewrites: the write of the first and the truncation of the second
+            # come before the next load, which finds the file empty again. It is a new rewrite, so
+            # the delay starts again.
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+
+              File.write(y, yaml_doc(flag2: true))
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { logger.output.scan(read_again_log).length == 2 }).to be true
+
+              File.write(y, yaml_doc(flag3: true))
+              reloader.trigger
+              expect(wait_for(before_the_retry) { recorder.applied.length == 2 }).to be true
+              expect(recorder.flag_values).to eq({ flag3: true })
+            end
+          end
+
+          it "is put off again when the retry finds a second truncation" do
+            # A retry, or the next poll, can find the file empty again after a second rewrite started.
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+
+              # No change signal from here on: only the retries read the file.
+              File.write(y, yaml_doc(flag2: true))
+              File.write(y, "")
+              expect(wait_for(retry_delay + 2) { logger.output.scan(read_again_log).length == 2 }).to be true
+              expect(recorder.applied.length).to eq(1)
+
+              File.write(y, yaml_doc(flag3: true))
+              expect(wait_for(retry_delay + 2) { recorder.applied.length == 2 }).to be true
+              expect(recorder.flag_values).to eq({ flag3: true })
+            end
+          end
+
+          it "is put off again when a change to another file starts a load within the delay" do
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.yaml", yaml_doc(flag2: true))
+
+            with_empty_file_reloader([a, b]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+
+              # The load for the change to b finds a still empty, within the delay.
+              File.write(b, yaml_doc(flag2: false))
+              reloader.trigger
+              expect(wait_for { logger.output.scan(read_again_log).length == 2 }).to be true
+              expect(recorder.applied.length).to eq(1)
+
+              File.write(a, yaml_doc(flag1: false))
+              reloader.trigger
+              expect(wait_for(before_the_retry) { recorder.applied.length == 2 }).to be true
+              expect(recorder.flag_values).to eq({ flag1: false, flag2: false })
+            end
+          end
+
+          it "starts the delay afresh for a rewrite after a load has read its content" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_reloader([y], logger: logger, debounce_delay: 0.01, retry_delay: 0.3) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+              File.write(y, yaml_doc(flag2: true))
+              reloader.trigger
+              expect(wait_for { recorder.applied.length == 2 }).to be true
+
+              # Longer than five retry delays after a load first found the file empty. That emptying
+              # is over, so a new one is put off too.
+              sleep 1.6
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { logger.output.scan(read_again_log).length == 2 || recorder.applied.length == 3 }).to be true
+              expect(logger.output.scan(read_again_log).length).to eq(2)
+            end
+          end
+
+          it "starts the delay afresh for a file that is created empty after it was missing" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_reloader([y], logger: logger, debounce_delay: 0.01, retry_delay: 0.3) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+
+              # Without skipping missing paths, the loads fail while the file is missing, and the data
+              # with the file's content stays.
+              File.delete(y)
+              expect(wait_for { recorder.errors.length == 1 }).to be true
+              sleep 1.6
+              File.write(y, "")
+              expect(wait_for { logger.output.scan(read_again_log).length == 2 || recorder.applied.length == 2 }).to be true
+              expect(logger.output.scan(read_again_log).length).to eq(2)
+            end
+          end
+
+          it "keeps parsing a JSON file that stays empty without putting it off again" do
+            a = write("a.json", values_doc({ flag1: "a" }))
+
+            with_reloader([a], logger: logger, debounce_delay: 0.01, retry_delay: 0.3) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              reloader.trigger
+              expect(wait_for { recorder.errors.length == 1 }).to be true
+
+              # The retries go on parsing the file, which fails each time, and the data stays.
+              expect(wait_for { logger.output.scan("the file has no content").length >= 4 }).to be true
+              expect(logger.output.scan(read_again_log).length).to eq(1)
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "is put off when the data that was kept as unchanged has content from it" do
+            # The same content moves from one file to another, so the reload is skipped as unchanged,
+            # but the data in effect now comes from the second file.
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = path("b.yaml")
+
+            with_empty_file_reloader([a, b], skip_missing_paths: true, skip_unchanged: true) do |reloader, recorder|
+              expect(reloader.reload_now).to be true
+              File.write(b, yaml_doc(flag1: true))
+              File.delete(a)
+              expect(reloader.reload_now).to be true
+              expect(recorder.applied.length).to eq(1)
+
+              File.write(b, "")
+              expect(reloader.reload_now).to be false
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "is put off together with another file that is emptied at the same time" do
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.yaml", yaml_doc(flag2: true))
+
+            with_empty_file_reloader([a, b]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              File.write(b, "")
+              reloader.trigger
+
+              # One load puts both off, so both are applied by the first retry, not one retry delay
+              # after the other.
+              expect(wait_for { logger.output.scan(read_again_log).length == 2 }).to be true
+              expect(logger.output).to include("File #{a} is empty").and include("File #{b} is empty")
+              expect(wait_for(retry_delay + 0.8) { recorder.applied.length == 2 }).to be true
+              expect(recorder.applied[-1].empty?).to be true
+              expect(logger.output.scan(read_again_log).length).to eq(2)
+            end
+          end
+
+          it "does not keep a load from failing on another file that cannot be parsed" do
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.json", values_doc({ flag2: "b" }))
+
+            with_empty_file_reloader([a, b]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              File.write(b, '{"flagValues"')
+              reloader.trigger
+
+              # The load that puts a off reports b's failure, before the retry.
+              expect(wait_for(before_the_retry) { recorder.errors.length == 1 }).to be true
+              expect(recorder.errors[0].path).to eq(b)
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "is applied after five retry delays when every load finds it empty again after a rewrite" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            # A shorter retry delay keeps the test short. The file is truncated again every 50 ms,
+            # which changes its modification time, so each load finds a new rewrite.
+            with_reloader([y], logger: logger, debounce_delay: 0.01, retry_delay: 0.5) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for { read_again_logged? }).to be true
+              first_found_empty = Time.now
+
+              until recorder.applied.length == 2 || Time.now - first_found_empty > 6
+                sleep 0.05
+                File.write(y, "")
+                reloader.trigger
+              end
+
+              expect(recorder.applied.length).to eq(2)
+              expect(recorder.applied[-1].empty?).to be true
+              expect(Time.now - first_found_empty).to be >= 2.3
+              expect(logger.output.scan(read_again_log).length).to be > 5
+            end
+          end
+
+          it "does not delay the other files' changes when it is an empty placeholder from the start" do
+            # An empty YAML file next to the data, such as a placeholder for later entries, has never
+            # had content, so it is never read again.
+            a = write("a.json", values_doc({ flag1: "a" }))
+            placeholder = write("placeholder.yaml", "")
+
+            with_empty_file_reloader([a, placeholder]) do |reloader, recorder|
+              reloader.reload_now
+              expect(recorder.flag_values).to eq({ flag1: "a" })
+
+              File.write(a, values_doc({ flag1: "b" }))
+              reloader.trigger
+              expect(wait_for(before_the_retry) { recorder.applied.length == 2 }).to be true
+              expect(recorder.flag_values).to eq({ flag1: "b" })
+              expect(read_again_logged?).to be false
+            end
+          end
+
+          it "is applied at once when it was missing at its last read" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y], skip_missing_paths: true) do |reloader, recorder|
+              reloader.reload_now
+              File.delete(y)
+              reloader.trigger
+              expect(wait_for { recorder.applied.length == 2 }).to be true
+              expect(recorder.applied[-1].empty?).to be true
+
+              # A missing file has no content, so the empty file that replaces it is not read again.
+              File.write(y, "")
+              reloader.trigger
+              expect(wait_for(before_the_retry) { recorder.applied.length == 3 }).to be true
+              expect(recorder.applied[-1].empty?).to be true
+              expect(read_again_logged?).to be false
+            end
+          end
+
+          it "is read again by a retry left over from an earlier failure instead of applied empty" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "flagValues: [")
+              reloader.trigger
+              expect(wait_for { recorder.errors.length == 1 }).to be true
+
+              # No change signal from here on: only the retries read the file.
+              File.write(y, "")
+              expect(wait_for(retry_delay + 2) { read_again_logged? }).to be true
+              File.write(y, yaml_doc(flag2: true))
+              expect(wait_for(retry_delay + 2) { recorder.applied.length == 2 }).to be true
+              expect(recorder.flag_values).to eq({ flag2: true })
+            end
+          end
+
+          it "makes reload_now return false and arms the retry" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              expect(reloader.reload_now).to be true
+              File.write(y, "")
+
+              expect(reloader.reload_now).to be false
+              expect(read_again_logged?).to be true
+              expect(recorder.errors).to be_empty
+
+              # The retry applies the file, which is still empty.
+              expect(wait_for(retry_delay + 2) { recorder.applied.length == 2 }).to be true
+              expect(recorder.applied[-1].empty?).to be true
+            end
+          end
+
+          it "neither logs nor arms a retry when the reloader is stopped while the files are read" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              allow(FileData).to receive(:read_file).and_wrap_original do |_original, _path|
+                reloader.stop
+                ""
+              end
+
+              expect(reloader.reload_now).to be true
+              expect(read_again_logged?).to be false
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "is applied at once when there are no automatic retries" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_reloader([y], logger: logger, retry_delay: 0) do |reloader, recorder|
+              reloader.reload_now
+
+              # Without a retry nothing would read the file again, so the load applies it as it is.
+              File.write(y, "")
+              expect(reloader.reload_now).to be true
+              expect(recorder.applied[-1].empty?).to be true
+              expect(read_again_logged?).to be false
+            end
+          end
+
+          it "is a document with no entries at the initial load when it is YAML" do
+            y = write("a.yaml", "")
+
+            with_empty_file_reloader([y]) do |reloader, recorder|
+              expect(reloader.reload_now).to be true
+              expect(recorder.applied[0].empty?).to be true
+            end
+          end
+
+          it "fails to parse at the initial load when it is JSON" do
+            a = write("a.json", "")
+
+            with_empty_file_reloader([a]) do |reloader, recorder|
+              expect(reloader.reload_now).to be false
+              expect(recorder.applied).to be_empty
+              expect(recorder.errors[0].message).to include("the file has no content, which is not a JSON document")
+            end
           end
         end
       end

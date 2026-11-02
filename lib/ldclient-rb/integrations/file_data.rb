@@ -177,6 +177,10 @@ module LaunchDarkly
       # entries are combined in the configured order, and the duplicate keys handling decides what
       # happens when the same key appears in more than one file.
       #
+      # A file whose name ends in `.yaml` or `.yml`, in any case, is read as YAML, and any other file is
+      # read as JSON. The file data source, by contrast, reads every file with the YAML parser, which
+      # also accepts most JSON.
+      #
       # A reload replaces the entire set of overrides, so removing an entry from a file removes the
       # override. A configured file that does not exist contributes no overrides. It can be created
       # later, and deleting a file removes its overrides. A file that exists but cannot be read or
@@ -184,6 +188,16 @@ module LaunchDarkly
       # logged, and the source retries after a short delay and recovers on its own once the file is
       # readable. Whenever the set of overrides in effect changes, including at startup, the source
       # logs the overrides in effect and what each file supplied, at Info level.
+      #
+      # A file can be rewritten in place. To remove a file's overrides, delete it or write a document
+      # with no entries, such as `{}`. A JSON file with no content is not a valid document: it fails to
+      # load, and the overrides in effect stay. A file whose content is in effect and that is found
+      # empty may be in the middle of a rewrite, so the source waits about a second, and up to about
+      # five seconds while the file keeps being rewritten, before it reads the file as it is; an
+      # emptied YAML file removes its overrides about a second later. YAML that is cut off can still
+      # parse, with fewer entries or with a value cut short, so for a YAML file, replacing its entire
+      # contents in one operation, such as renaming a fully written temporary file over it, avoids
+      # briefly applying only a part of it.
       #
       # An evaluation that an override affects, directly or through a prerequisite or segment, is
       # marked: its reason reports {EvaluationReason#override_affected}, it produces no individual
