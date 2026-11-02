@@ -10,9 +10,32 @@ module LaunchDarkly
         let(:logger) { double.as_null_object }
         let(:status_sink) { double(update_status: nil) }
 
+        describe "required store methods" do
+          [true, false].each do |enabled|
+            it "reports monitoring_enabled? #{enabled} from the store" do
+              inner = double("store", monitoring_enabled?: enabled)
+              expect(described_class.new(inner, status_sink, logger).monitoring_enabled?).to be enabled
+            end
+          end
+
+          [true, false].each do |available|
+            it "gets available? #{available} from the store" do
+              inner = double("store", monitoring_enabled?: true, available?: available)
+              expect(described_class.new(inner, status_sink, logger).available?).to be available
+            end
+          end
+
+          it "stops the store" do
+            inner = double("store", monitoring_enabled?: false)
+            expect(inner).to receive(:stop).once
+            described_class.new(inner, status_sink, logger).stop
+          end
+        end
+
         describe "#disable_cache" do
           it "forwards to the underlying store when supported" do
-            inner = double("store", disable_cache: nil, init: nil, get: nil, all: nil, delete: nil, upsert: nil, initialized?: false, stop: nil)
+            inner = double("store", disable_cache: nil, init: nil, get: nil, all: nil, delete: nil, upsert: nil, initialized?: false,
+                                    stop: nil, monitoring_enabled?: false, available?: true)
             expect(inner).to receive(:disable_cache).once
 
             wrapper = described_class.new(inner, status_sink, logger)
@@ -27,6 +50,8 @@ module LaunchDarkly
               def delete(_, _, _); end
               def upsert(_, _); end
               def initialized?; false; end
+              def monitoring_enabled?; false; end
+              def available?; true; end
               def stop; end
             end.new
 

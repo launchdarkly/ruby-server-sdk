@@ -18,5 +18,9 @@ module LaunchDarkly
 
       expect(store.monitoring_enabled?).to be false
     end
+
+    it "is always available" do
+      expect(subject.new.available?).to be true
+    end
   end
 end

@@ -63,7 +63,6 @@ module LaunchDarkly
         #
         private def store_supports_monitoring?
           return false if @store.nil?
-          return false unless @store.respond_to?(:monitoring_enabled?)
 
           @store.monitoring_enabled?
         end

@@ -15,7 +15,7 @@ module LaunchDarkly
         # @type [LaunchDarkly::Interfaces::FeatureStore]
         @store = store
 
-        @monitoring_enabled = does_store_support_monitoring?
+        @monitoring_enabled = @store.monitoring_enabled?
 
         # @type [LaunchDarkly::Impl::DataStore::UpdateSink]
         @store_update_sink = store_update_sink
@@ -66,6 +66,10 @@ module LaunchDarkly
 
       def monitoring_enabled?
         @monitoring_enabled
+      end
+
+      def available?
+        @store.available?
       end
 
       private def wrapper()
@@ -119,28 +123,6 @@ module LaunchDarkly
         rescue => e
           @logger.error("Unexpected error from data store status function: #{e}")
         end
-      end
-
-      # This methods determines whether the wrapped store can support enabling monitoring.
-      #
-      # The wrapped store must provide a monitoring_enabled method, which must
-      # be true. But this alone is not sufficient.
-      #
-      # Because this class wraps all interactions with a provided store, it can
-      # technically "monitor" any store. However, monitoring also requires that
-      # we notify listeners when the store is available again.
-      #
-      # We determine this by checking the store's `available?` method, so this
-      # is also a requirement for monitoring support.
-      #
-      # These extra checks won't be necessary once `available` becomes a part
-      # of the core interface requirements and this class no longer wraps every
-      # feature store.
-      private def does_store_support_monitoring?
-        return false unless @store.respond_to? :monitoring_enabled?
-        return false unless @store.respond_to? :available?
-
-        @store.monitoring_enabled?
       end
     end
   end
