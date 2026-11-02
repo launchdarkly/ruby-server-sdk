@@ -217,7 +217,7 @@ module LaunchDarkly
             base_key = items_key(kind)
             key = new_item[:key]
             try_again = true
-            final_item = new_item
+            updated = true
             while try_again
               try_again = false
               with_connection do |redis|
@@ -233,7 +233,7 @@ module LaunchDarkly
                       try_again = true
                     end
                   else
-                    final_item = old_item
+                    updated = false
                     action = new_item[:deleted] ? "delete" : "update"
                     # rubocop:disable Layout/LineLength
                     @logger.warn { "RedisFeatureStore: attempted to #{action} #{key} version: #{old_item[:version]} in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:version]}" }
@@ -242,7 +242,7 @@ module LaunchDarkly
                 end
               end
             end
-            final_item
+            updated
           end
 
           def initialized_internal?

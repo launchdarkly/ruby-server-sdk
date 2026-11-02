@@ -107,10 +107,9 @@ module LaunchDarkly
         end
 
         def upsert(kind, item)
-          monitor_store_update { @data_store.upsert(kind, item) }
+          updated = monitor_store_update { @data_store.upsert(kind, item) }
+          return unless updated
 
-          # TODO(sc-197908): We only want to do this if the store successfully
-          # updates the record.
           @dependency_tracker.update_dependencies_from(kind, item[:key], item)
           if @flag_change_broadcaster.has_listeners?
             affected_items = Set.new
@@ -120,7 +119,8 @@ module LaunchDarkly
         end
 
         def delete(kind, key, version)
-          monitor_store_update { @data_store.delete(kind, key, version) }
+          deleted = monitor_store_update { @data_store.delete(kind, key, version) }
+          return unless deleted
 
           @dependency_tracker.update_dependencies_from(kind, key, nil)
           if @flag_change_broadcaster.has_listeners?

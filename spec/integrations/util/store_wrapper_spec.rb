@@ -101,10 +101,10 @@ module LaunchDarkly
           itemv1 = { key: key, version: 1 }
           itemv2 = { key: key, version: 2 }
 
-          wrapper.upsert(THINGS, itemv1)
+          expect(wrapper.upsert(THINGS, itemv1)).to be true
           expect(core.data[THINGS][key]).to eq itemv1
 
-          wrapper.upsert(THINGS, itemv2)
+          expect(wrapper.upsert(THINGS, itemv2)).to be true
           expect(core.data[THINGS][key]).to eq itemv2
 
           # if we have a cache, verify that the new item is now cached by writing a different value
@@ -128,12 +128,33 @@ module LaunchDarkly
           core.force_set(THINGS, itemv1)
           expect(wrapper.get(THINGS, key)).to eq itemv1
 
-          wrapper.delete(THINGS, key, 2)
+          expect(wrapper.delete(THINGS, key, 2)).to be true
           expect(core.data[THINGS][key]).to eq itemv2
 
           core.force_set(THINGS, itemv3)  # make a change that bypasses the cache
 
           expect(wrapper.get(THINGS, key)).to eq(cached ? nil : itemv3)
+        end
+
+        it "returns false when upsert has a version that is not newer" do
+          core = MockCore.new
+          wrapper = subject.new(core, opts)
+          itemv2 = { key: "flag", version: 2 }
+          core.force_set(THINGS, itemv2)
+
+          expect(wrapper.upsert(THINGS, { key: "flag", version: 2 })).to be false
+          expect(wrapper.upsert(THINGS, { key: "flag", version: 1 })).to be false
+          expect(core.data[THINGS]["flag"]).to eq itemv2
+        end
+
+        it "returns false when delete has a version that is not newer" do
+          core = MockCore.new
+          wrapper = subject.new(core, opts)
+          itemv2 = { key: "flag", version: 2 }
+          core.force_set(THINGS, itemv2)
+
+          expect(wrapper.delete(THINGS, "flag", 2)).to be false
+          expect(core.data[THINGS]["flag"]).to eq itemv2
         end
       end
 
@@ -186,6 +207,21 @@ module LaunchDarkly
           itemv3 = { key: key, version: 3 }
           core.force_set(THINGS, itemv3)  # bypasses cache so we can verify that itemv2 is in the cache
           expect(wrapper.get(THINGS, key)).to eq itemv2
+        end
+
+        it "upsert caches the item from the store if unsuccessful" do
+          core = MockCore.new
+          wrapper = subject.new(core, cached_opts)
+          key = "flag"
+          itemv1 = { key: key, version: 1 }
+          itemv3 = { key: key, version: 3 }
+
+          wrapper.upsert(THINGS, itemv1)
+          core.force_set(THINGS, itemv3)  # another process writes a newer version
+
+          expect(wrapper.upsert(THINGS, { key: key, version: 2 })).to be false
+          core.force_remove(THINGS, key)  # bypasses cache so we can verify that itemv3 is in the cache
+          expect(wrapper.get(THINGS, key)).to eq itemv3
         end
 
         it "initialized? can cache false result" do
@@ -344,9 +380,9 @@ module LaunchDarkly
         def upsert_internal(kind, item)
           @data[kind] = {} unless @data.has_key?(kind)
           old_item = @data[kind][item[:key]]
-          return old_item if !old_item.nil? && old_item[:version] >= item[:version]
+          return false if !old_item.nil? && old_item[:version] >= item[:version]
           @data[kind][item[:key]] = item
-          item
+          true
         end
 
         def initialized_internal?

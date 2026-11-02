@@ -68,9 +68,12 @@ module LaunchDarkly
       # should only succeed if the new item's `:version` is greater than the old one;
       # otherwise, the method should do nothing.
       #
+      # The SDK uses the return value to decide whether to send flag change events.
+      #
       # @param kind [Object]  the kind of entity to add or update
       # @param item [Hash]  the entity to add or update
-      # @return [void]
+      # @return [Boolean]  true if the store applied the update; false if the store already
+      #   had an item with the same or a higher version
       #
       def upsert(kind, item)
       end
@@ -80,10 +83,13 @@ module LaunchDarkly
       # `version` parameter is greater than the existing entity's `:version`; otherwise, the
       # method should do nothing.
       #
+      # The SDK uses the return value to decide whether to send flag change events.
+      #
       # @param kind [Object]  the kind of entity to delete
       # @param key [String]  the unique key of the entity
       # @param version [Integer]  the entity must have a lower version than this to be deleted
-      # @return [void]
+      # @return [Boolean]  true if the store applied the deletion; false if the store already
+      #   had an item with the same or a higher version
       #
       def delete(kind, key, version)
       end
