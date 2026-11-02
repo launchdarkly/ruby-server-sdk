@@ -11,12 +11,12 @@ jobs:
   build-ruby-gem:
     uses: ./.github/workflows/build-gem.yml
     with:
-      version: "3.2"
+      version: "3.4"
 
   build-jruby-gem:
     uses: ./.github/workflows/build-gem.yml
     with:
-      version: "jruby-9.4"
+      version: "jruby-10.0"
 
   publish:
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          version: "3.2"
+          version: "3.4"
           install-dependencies: false
 
       - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1
