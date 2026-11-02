@@ -82,6 +82,7 @@ module LaunchDarkly
         reference = Reference.create(attribute)
         @private_attributes.add(reference) if reference.error.nil?
       end
+      @private_attributes.freeze
       @error = error
       @contexts = contexts
       @is_multi = !contexts.nil?
@@ -91,12 +92,9 @@ module LaunchDarkly
     protected attr_reader :name, :anonymous, :attributes
 
     #
-    # @return [Array<Reference>] Returns the private attributes associated with this LDContext
+    # @return [Set<Reference>] Returns the private attributes associated with this LDContext. The set is frozen.
     #
-    def private_attributes
-      # TODO(sc-227265): Return a set instead of an array.
-      @private_attributes.to_a
-    end
+    attr_reader :private_attributes
 
     #
     # @return [Boolean] Is this LDContext a multi-kind context?
@@ -353,8 +351,7 @@ module LaunchDarkly
       return false unless self.anonymous == other.anonymous
       return false unless self.attributes == other.attributes
 
-      # TODO(sc-227265): Calling .to_set is unnecessary once private_attributes are sets.
-      return false unless self.private_attributes.to_set == other.private_attributes.to_set
+      return false unless self.private_attributes == other.private_attributes
 
       true
     end
@@ -413,7 +410,7 @@ module LaunchDarkly
 
       hash[:name] = name unless name.nil?
       hash[:anonymous] = anonymous if anonymous
-      hash[:_meta] = {privateAttributes: private_attributes} unless private_attributes.empty?
+      hash[:_meta] = {privateAttributes: private_attributes.to_a} unless private_attributes.empty?
 
       hash
     end

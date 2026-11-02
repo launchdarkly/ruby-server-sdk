@@ -394,6 +394,19 @@ module LaunchDarkly
       end
     end
 
+    describe "private attributes" do
+      it "returns a frozen set of references" do
+        context = subject.create({ key: 'context-key', kind: 'user', _meta: { privateAttributes: ['name', 'address/city', 'name'] } })
+        expect(context.private_attributes).to be_a(Set)
+        expect(context.private_attributes).to be_frozen
+        expect(context.private_attributes).to eq(Set[LaunchDarkly::Reference.create('name'), LaunchDarkly::Reference.create('address/city')])
+      end
+
+      it "returns an empty set when none are given" do
+        expect(subject.create({ key: 'context-key', kind: 'user' }).private_attributes).to eq(Set.new)
+      end
+    end
+
     describe "equality comparisons" do
       it "wrong types are not equal" do
         context = subject.create({ key: 'context-key', kind: 'user' })
