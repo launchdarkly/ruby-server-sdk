@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ["3.2", "3.4", "jruby-9.4"]
+        version: ["3.4", "4.0", "jruby-10.0"]
     with:
       version: ${{ matrix.version }}
 
@@ -27,7 +27,7 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          version: "3.2"
+          version: "3.4"
 
       - uses: ./.github/actions/build-docs
 
@@ -46,7 +46,7 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          version: "3.2"
+          version: "3.4"
 
       - name: Run tests
         run: bundle exec rspec spec
