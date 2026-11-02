@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   spec.files         = Dir["lib/**/*.rb", "README.md", "LICENSE.txt"]
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
-  spec.required_ruby_version = ">= 3.1.0"
+  spec.required_ruby_version = ">= 3.4.0"
 
   spec.add_development_dependency "aws-sdk-dynamodb", "~> 1.57"
   spec.add_development_dependency "bigdecimal", "~> 3.1.1" # Neccessary for aws-sdk-dynamodb https://github.com/aws/aws-sdk-ruby/issues/3271
