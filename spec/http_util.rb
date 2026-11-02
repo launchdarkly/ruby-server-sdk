@@ -7,8 +7,7 @@ require "zlib"
 class StubHTTPServer
   attr_reader :requests, :port
 
-  def initialize(enable_compression: false)
-    @enable_compression = enable_compression
+  def initialize
     base_opts = {
       BindAddress: '127.0.0.1',
       Port: 0,  # Let OS assign an available port
@@ -70,7 +69,7 @@ class StubHTTPServer
     request = r[0]
     body = r[1]
 
-    return [request, body.to_s] unless @enable_compression
+    return [request, body.to_s] unless request.header['content-encoding'] == ['gzip']
 
     gz = Zlib::GzipReader.new(StringIO.new(body.to_s))
 
@@ -84,8 +83,8 @@ class NullLogger
   end
 end
 
-def with_server(enable_compression: false)
-  server = StubHTTPServer.new(enable_compression: enable_compression)
+def with_server
+  server = StubHTTPServer.new
   begin
     server.start
     yield server

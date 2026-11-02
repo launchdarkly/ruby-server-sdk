@@ -135,5 +135,13 @@ module LaunchDarkly
         expect(subject.new(omit_anonymous_contexts: true).omit_anonymous_contexts).to eq true
       end
     end
+    describe ".compress_events" do
+      it "defaults to true" do
+        expect(subject.new.compress_events).to eq true
+      end
+      it "can be set to false" do
+        expect(subject.new(compress_events: false).compress_events).to eq false
+      end
+    end
   end
 end
