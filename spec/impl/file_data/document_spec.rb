@@ -262,6 +262,8 @@ module LaunchDarkly
       describe "format_of" do
         it "chooses YAML for a name that ends in .yaml or .yml, in any case, and JSON otherwise" do
           expect(FileData.format_of("/a/flags.yaml")).to eq(:yaml)
+          expect(FileData.format_of("/a/.yaml")).to eq(:yaml)
+          expect(FileData.format_of("/a/.yml")).to eq(:yaml)
           expect(FileData.format_of("/a/flags.YML")).to eq(:yaml)
           expect(FileData.format_of("/a/flags.json")).to eq(:json)
           expect(FileData.format_of("/a.yaml/flags")).to eq(:json)
