@@ -178,11 +178,8 @@ module LaunchDarkly
       # happens when the same key appears in more than one file.
       #
       # A file whose name ends in `.yaml` or `.yml`, in any case, is read as YAML, and any other file is
-      # read as JSON. The file data source, by contrast, reads every file with the YAML parser, which
-      # also accepts most JSON. Files must be UTF-8, with or without a byte order mark; a file in
-      # another encoding, such as UTF-16, fails to load. Whether a JSON file may contain comments, or
-      # the same key more than once in one object, depends on the version of the `json` gem that the
-      # application uses: version 3 rejects both.
+      # read as JSON. Files must be UTF-8. Whether a JSON file may contain comments or repeated keys
+      # depends on the application's version of the `json` gem.
       #
       # A reload replaces the entire set of overrides, so removing an entry from a file removes the
       # override. A configured file that does not exist contributes no overrides. It can be created
@@ -192,17 +189,12 @@ module LaunchDarkly
       # readable. Whenever the set of overrides in effect changes, including at startup, the source
       # logs the overrides in effect and what each file supplied, at Info level.
       #
-      # A file can be rewritten in place. To remove a file's overrides, delete it or write a document
-      # with no entries, such as `{}`. A file whose content is in effect and that is found with no
-      # content (empty, or YAML with only a comment or `---`) may be in the middle of a rewrite, so the
-      # source holds it back: it waits about a second, and at most about five seconds while that file
-      # keeps being rewritten, before it reads the file as it is. Changes to the other files wait too,
-      # because a reload applies all of the files or none. After the wait, a JSON file with no content
-      # is not a valid document: it fails to load, and the overrides in effect stay. A YAML file with no
-      # content is a document with no entries, so its overrides are removed. YAML that is cut off can
-      # still parse, with fewer entries or with a value cut short, so for a YAML file, replacing its
-      # entire contents in one operation, such as renaming a fully written temporary file over it,
-      # avoids briefly applying only a part of it.
+      # Files can be rewritten in place: if the source finds a file empty while it is being rewritten,
+      # it keeps the overrides in effect until the new content is written. To remove a file's
+      # overrides, delete the file or write a document with no entries, such as `{}`. An empty JSON
+      # file is not a valid document. For a YAML file, replacing its contents in one operation, such
+      # as by renaming a fully written temporary file over it, avoids briefly applying a partly
+      # written file.
       #
       # An evaluation that an override affects, directly or through a prerequisite or segment, is
       # marked: its reason reports {EvaluationReason#override_affected}, it produces no individual
