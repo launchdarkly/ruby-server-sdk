@@ -44,16 +44,13 @@ module LaunchDarkly
           end
 
           @inited = Concurrent::AtomicBoolean.new(false)
-          @has_available_method = @core.respond_to? :available?
         end
 
         def monitoring_enabled?
-          @has_available_method
+          true
         end
 
         def available?
-          return false unless @has_available_method
-
           @core.available?
         end
 
@@ -252,6 +249,18 @@ module LaunchDarkly
         # @return [Boolean]  true if the store is in an initialized state
         #
         def initialized_internal?
+        end
+
+        #
+        # Tests whether the data store operates normally. This is the same as
+        # {LaunchDarkly::Interfaces::FeatureStore#available?}.
+        #
+        # The wrapper reports status monitoring as enabled for all cores. When an operation
+        # fails, the SDK calls this method at intervals until it returns true.
+        #
+        # @return [Boolean] true if the underlying data store is reachable
+        #
+        def available?
         end
 
         #

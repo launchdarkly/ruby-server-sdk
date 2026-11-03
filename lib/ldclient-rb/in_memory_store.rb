@@ -20,6 +20,10 @@ module LaunchDarkly
       false
     end
 
+    def available?
+      true
+    end
+
     def get(kind, key)
       @lock.with_read_lock do
         coll = @items[kind]

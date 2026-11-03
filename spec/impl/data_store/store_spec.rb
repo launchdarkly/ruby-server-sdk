@@ -60,6 +60,14 @@ module LaunchDarkly
             @disable_cache_called_count += 1
           end
 
+          def monitoring_enabled?
+            true
+          end
+
+          def available?
+            true
+          end
+
           def init(all_data)
             @init_called_count += 1
             if @should_fail
@@ -130,6 +138,8 @@ module LaunchDarkly
           def upsert(_kind, _item); end
           def delete(_kind, _key, _version); end
           def initialized?; @init_called_count > 0; end
+          def monitoring_enabled?; true; end
+          def available?; true; end
           def stop; end
         end
 
@@ -698,6 +708,25 @@ module LaunchDarkly
 
               expect(persistent_store.upsert_calls).to be_empty
             end
+          end
+        end
+
+        describe "#close" do
+          it "stops the persistent store" do
+            persistent = StubPersistentStore.new
+            subject.with_persistence(persistent, true, nil)
+            expect(persistent).to receive(:stop).once
+
+            expect(subject.close).to be_nil
+          end
+
+          it "returns the error when the persistent store fails to stop" do
+            persistent = StubPersistentStore.new
+            subject.with_persistence(persistent, true, nil)
+            error = RuntimeError.new("stop failed")
+            allow(persistent).to receive(:stop).and_raise(error)
+
+            expect(subject.close).to be error
           end
         end
 

@@ -78,6 +78,14 @@ module LaunchDarkly
       @received_data = all_data
     end
 
+    def monitoring_enabled?
+      false
+    end
+
+    def available?
+      true
+    end
+
     def stop
     end
   end

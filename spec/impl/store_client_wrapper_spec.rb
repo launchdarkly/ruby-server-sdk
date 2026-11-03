@@ -25,26 +25,6 @@ module LaunchDarkly
           end
         end
 
-        it "will not notify sink if wrapped store cannot come back online" do
-          store = double
-          sink = double
-
-          allow(store).to receive(:stop)
-          allow(store).to receive(:monitoring_enabled?).and_return(true)
-          allow(store).to receive(:init).and_raise(StandardError.new('init error'))
-
-          ensure_stop(FeatureStoreClientWrapper.new(store, sink, $null_log)) do |wrapper|
-            begin
-              wrapper.init({})
-              raise "init should have raised exception"
-            rescue StandardError
-              # Ignored
-            end
-
-            expect(sink).not_to receive(:update_status)
-          end
-        end
-
         it "sink will be notified when store is back online" do
           event = Concurrent::Event.new
           statuses = []
@@ -140,6 +120,17 @@ module LaunchDarkly
           # The poller is the only caller of available?, so it never ran.
           sleep 1
           expect(checks.value).to eq 0
+        end
+      end
+
+      describe "required store methods" do
+        [true, false].each do |available|
+          it "gets available? #{available} from the store" do
+            store = double(monitoring_enabled?: true, available?: available, stop: nil)
+            ensure_stop(FeatureStoreClientWrapper.new(store, double, $null_log)) do |wrapper|
+              expect(wrapper.available?).to be available
+            end
+          end
         end
       end
     end

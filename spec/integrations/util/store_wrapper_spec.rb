@@ -7,7 +7,7 @@ module LaunchDarkly
 
       THINGS = { namespace: "things" }
 
-      it "monitoring enabled if available is defined" do
+      it "reports monitoring enabled and gets availability from the core" do
         [true, false].each do |expected|
           core = double
           allow(core).to receive(:available?).and_return(expected)
@@ -18,12 +18,10 @@ module LaunchDarkly
         end
       end
 
-      it "available is false if core doesn't support monitoring" do
+      it "stops the core" do
         core = double
-        wrapper = subject.new(core, {})
-
-        expect(wrapper.monitoring_enabled?).to be false
-        expect(wrapper.available?).to be false
+        expect(core).to receive(:stop).once
+        subject.new(core, {}).stop
       end
 
       shared_examples "tests" do |cached|
@@ -354,6 +352,13 @@ module LaunchDarkly
         def initialized_internal?
           @inited_query_count = @inited_query_count + 1
           @inited
+        end
+
+        def available?
+          true
+        end
+
+        def stop
         end
       end
     end
