@@ -611,7 +611,7 @@ module LaunchDarkly
         #
         # Retrieves an item by kind and key.
         #
-        # @param kind [LaunchDarkly::Impl::DataStore::DataKind] The data kind (e.g., LaunchDarkly::Impl::DataStore::FEATURES, LaunchDarkly::Impl::DataStore::SEGMENTS)
+        # @param kind [LaunchDarkly::Interfaces::DataStore::DataKind] The data kind (e.g., LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Interfaces::DataStore::SEGMENTS)
         # @param key [String] The item key
         # @return [Hash, nil] The item, or nil if not found or deleted
         #
@@ -622,7 +622,7 @@ module LaunchDarkly
         #
         # Retrieves all items of a given kind.
         #
-        # @param kind [LaunchDarkly::Impl::DataStore::DataKind] The data kind (e.g., LaunchDarkly::Impl::DataStore::FEATURES, LaunchDarkly::Impl::DataStore::SEGMENTS)
+        # @param kind [LaunchDarkly::Interfaces::DataStore::DataKind] The data kind (e.g., LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Interfaces::DataStore::SEGMENTS)
         # @return [Hash] Hash of keys to items (excluding deleted items)
         #
         def all(kind)

@@ -1,9 +1,48 @@
 require "spec_helper"
 
 module LaunchDarkly
-  module Impl
+  module Interfaces
     module DataStore
       describe DataKind do
+        describe "serialize and deserialize" do
+          it "round-trips a feature flag" do
+            json = '{"key":"flag","version":3,"on":true}'
+            flag = FEATURES.deserialize(json)
+            expect(flag).to be_a(LaunchDarkly::Impl::Model::FeatureFlag)
+            expect(flag[:version]).to eq 3
+            expect(JSON.parse(FEATURES.serialize(flag))).to eq JSON.parse(json)
+          end
+
+          it "round-trips a segment" do
+            json = '{"key":"segment","version":2,"included":["a"]}'
+            segment = SEGMENTS.deserialize(json)
+            expect(segment).to be_a(LaunchDarkly::Impl::Model::Segment)
+            expect(segment[:version]).to eq 2
+            expect(JSON.parse(SEGMENTS.serialize(segment))).to eq JSON.parse(json)
+          end
+
+          it "round-trips a deleted item placeholder" do
+            json = '{"key":"flag","version":4,"deleted":true}'
+            item = FEATURES.deserialize(json)
+            expect(item[:deleted]).to be true
+            expect(item[:version]).to eq 4
+            expect(JSON.parse(FEATURES.serialize(item))).to eq JSON.parse(json)
+          end
+
+          it "deserializes nil to nil" do
+            expect(FEATURES.deserialize(nil)).to be_nil
+          end
+        end
+
+        describe "Impl aliases" do
+          it "are the public constants" do
+            expect(LaunchDarkly::Impl::DataStore::FEATURES).to be(FEATURES)
+            expect(LaunchDarkly::Impl::DataStore::SEGMENTS).to be(SEGMENTS)
+            expect(LaunchDarkly::Impl::DataStore::ALL_KINDS).to be(ALL_KINDS)
+            expect(LaunchDarkly::Impl::DataStore::DataKind).to be(DataKind)
+          end
+        end
+
         describe "eql?" do
           it "constant instances are equal to themselves" do
             expect(FEATURES.eql?(FEATURES)).to be true
@@ -56,6 +95,20 @@ module LaunchDarkly
             expect(DataKind.new(namespace: "features", priority: 1).hash).not_to eq DataKind.new(namespace: "features", priority: 2).hash
             expect(DataKind.new(namespace: "segments", priority: 1).hash).not_to eq DataKind.new(namespace: "segments", priority: 2).hash
           end
+        end
+      end
+
+      describe SerializedItemDescriptor do
+        it "keeps its values" do
+          descriptor = SerializedItemDescriptor.new(version: 5, deleted: false, serialized_item: "{}")
+          expect(descriptor.version).to eq 5
+          expect(descriptor.deleted).to be false
+          expect(descriptor.serialized_item).to eq "{}"
+        end
+
+        it "compares by value" do
+          expect(SerializedItemDescriptor.new(version: 1, deleted: true, serialized_item: nil))
+            .to eq SerializedItemDescriptor.new(version: 1, deleted: true, serialized_item: nil)
         end
       end
     end
