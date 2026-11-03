@@ -527,6 +527,51 @@ module LaunchDarkly
         end
       end
 
+      describe "files that are not UTF-8" do
+        # Windows PowerShell 5.1 writes a file with `>` in UTF-16 with a byte order mark.
+        def utf16(text)
+          "\xFF\xFE".b + text.encode("UTF-16LE").b
+        end
+
+        it "keeps the overrides in effect when a file is rewritten as UTF-16, and applies the fix" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_source([a]) do |_source, sink|
+            File.binwrite(a, utf16(values_doc({ flag1: "b" })))
+            expect(wait_for { logger.output.include?("encoded in UTF-16 or UTF-32") }).to be true
+            expect(sink.snapshots.length).to eq 1
+
+            File.write(a, values_doc({ flag1: "c" }))
+            expect(wait_for { sink.flag_values == { "flag1" => "c" } }).to be true
+            expect(logger.output.scan("ERROR").length).to eq 1
+          end
+        end
+
+        it "starts with a UTF-16 file without its overrides, and applies the file once it is fixed" do
+          a = path("a.json")
+          File.binwrite(a, utf16(values_doc({ flag1: "a" })))
+
+          with_source([a]) do |_source, sink|
+            expect(sink.snapshots).to be_empty
+            expect(logger.output).to include("encoded in UTF-16 or UTF-32")
+
+            File.write(a, values_doc({ flag1: "b" }))
+            expect(wait_for { sink.snapshots.length == 1 }).to be true
+            expect(sink.flag_values).to eq({ "flag1" => "b" })
+          end
+        end
+
+        it "keeps the overrides in effect when a file is rewritten with content that is not UTF-8" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_source([a]) do |_source, sink|
+            File.binwrite(a, "{\"flagValues\": {\"flag1\": \"caf\xE9\"}}".b)
+            expect(wait_for { logger.output.include?("the file is not valid UTF-8") }).to be true
+            expect(sink.snapshots.length).to eq 1
+          end
+        end
+      end
+
       describe "in-place rewrites with the default timing" do
         it "never supplies a snapshot without the override while a YAML file is rewritten about once a second" do
           # Polling once a second, a poll, or the retry, can find the second rewrite's truncation
@@ -631,6 +676,20 @@ module LaunchDarkly
 
               expect(served).to eq ["override-a", "override-b"]
             end
+          end
+        end
+
+        it "serves a UTF-16 override file once it is fixed, after starting without it" do
+          a = path("a.json")
+          File.binwrite(a, "\xFF\xFE".b + { flagValues: { flag: "override-a" } }.to_json.encode("UTF-16LE").b)
+          source = make_source([a])
+          builder = Object.new
+          builder.define_singleton_method(:build) { |_sdk_key, _config| source }
+
+          with_client(builder) do |client|
+            expect(client.variation("flag", context, "default")).to eq "ld-value"
+            File.write(a, { flagValues: { flag: "override-b" } }.to_json)
+            expect(wait_for { client.variation("flag", context, "default") == "override-b" }).to be true
           end
         end
 

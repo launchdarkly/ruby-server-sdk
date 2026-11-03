@@ -66,6 +66,18 @@ module LaunchDarkly
             expect(Document.parse("{}", format: :json)).not_to be(Document::NONE)
           end
 
+          it "treats YAML with only white space, including a tab, vertical tab or form feed, as no entries" do
+            expect(Document.parse("\t\n", format: :yaml)).to be(Document::NONE)
+            expect(Document.parse(" \v\f\t\r\n", format: :yaml)).to be(Document::NONE)
+          end
+
+          it "rejects content that is not valid UTF-8, in both formats" do
+            latin1 = (+"{\"flagValues\": {\"flag1\": \"caf\xE9\"}}").force_encoding(Encoding::UTF_8)
+            [:json, :yaml].each do |format|
+              expect { Document.parse(latin1, format: format) }.to raise_error(ArgumentError, "the file is not valid UTF-8")
+            end
+          end
+
           it "rejects empty JSON content, which is not a JSON document" do
             ["", " \n\r\n\t"].each do |content|
               expect { Document.parse(content, format: :json) }
@@ -178,6 +190,29 @@ module LaunchDarkly
             File.binwrite(path, "\xEF\xBB\xBF{\"flagValues\": {\"flag1\": \"caf\xC3\xA9\"}}")
 
             expect(Document.read(path).flag_values).to eq({ flag1: "caf\u00e9" })
+          end
+
+          it "reports a file encoded in UTF-16 or UTF-32 as a read error" do
+            path = File.join(@dir, "flags.json")
+            content = '{"flagValues": {"flag1": true}}'
+            ["\xFF\xFE".b + content.encode("UTF-16LE").b, "\xFE\xFF".b + content.encode("UTF-16BE").b,
+             "\xFF\xFE\x00\x00".b + content.encode("UTF-32LE").b].each do |bytes|
+              File.binwrite(path, bytes)
+
+              expect { Document.read(path) }.to raise_error(ReadError, /encoded in UTF-16 or UTF-32; data files must be UTF-8/)
+            end
+          end
+
+          it "reads a file as UTF-8 whatever the default external encoding" do
+            path = File.join(@dir, "flags.yaml")
+            File.binwrite(path, "flagValues:\n  flag1: caf\xC3\xA9\n")
+            previous = Encoding.default_external
+            begin
+              Encoding.default_external = Encoding::US_ASCII
+              expect(Document.read(path).flag_values).to eq({ flag1: "caf\u00e9" })
+            ensure
+              Encoding.default_external = previous
+            end
           end
 
           it "reads a file that holds only a byte order mark as empty" do

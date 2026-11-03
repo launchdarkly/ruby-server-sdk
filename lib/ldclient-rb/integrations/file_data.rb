@@ -179,7 +179,10 @@ module LaunchDarkly
       #
       # A file whose name ends in `.yaml` or `.yml`, in any case, is read as YAML, and any other file is
       # read as JSON. The file data source, by contrast, reads every file with the YAML parser, which
-      # also accepts most JSON.
+      # also accepts most JSON. Files must be UTF-8, with or without a byte order mark; a file in
+      # another encoding, such as UTF-16, fails to load. Whether a JSON file may contain comments, or
+      # the same key more than once in one object, depends on the version of the `json` gem that the
+      # application uses: version 3 rejects both.
       #
       # A reload replaces the entire set of overrides, so removing an entry from a file removes the
       # override. A configured file that does not exist contributes no overrides. It can be created

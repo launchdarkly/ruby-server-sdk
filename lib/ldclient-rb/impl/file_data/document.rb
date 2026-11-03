@@ -74,15 +74,17 @@ module LaunchDarkly
         # content. Content that is empty or only white space is not a JSON document, so it fails to
         # parse. In YAML it is a document with no entries, {NONE}, and so is a YAML document that is
         # only a null, such as one with only a comment. A document that is not a mapping, or whose
-        # "flags", "flagValues", or "segments" member is not a mapping, is an error.
+        # "flags", "flagValues", or "segments" member is not a mapping, is an error, and so is
+        # content that is not valid UTF-8, in either format.
         #
-        # @param content [String]
+        # @param content [String] UTF-8 content
         # @param format [Symbol] `:json` or `:yaml`
         # @return [Document]
         # @raise [ArgumentError] if the content is not a valid document
         # @raise [JSON::ParserError, Psych::SyntaxError] if the content cannot be parsed
         #
         def self.parse(content, format:)
+          FileData.check_encoding(content)
           case format
           when :json
             # A file that is being rewritten in place can be empty for a moment. Failing to parse
@@ -91,6 +93,9 @@ module LaunchDarkly
 
             raw = JSON.parse(content)
           when :yaml
+            # The YAML parser rejects some white space, such as a tab, that is still no content.
+            return NONE if FileData.blank?(content)
+
             raw = YAML.safe_load(content)
             return NONE if raw.nil?
           else
@@ -147,6 +152,21 @@ module LaunchDarkly
       end
 
       #
+      # Raises an error if the content is not valid UTF-8.
+      #
+      # @param content [String]
+      # @raise [ArgumentError] if the content is not valid UTF-8
+      #
+      def self.check_encoding(content)
+        return if content.valid_encoding?
+
+        if content.b.start_with?(*UTF16_AND_UTF32_BOMS)
+          raise ArgumentError, "the file is encoded in UTF-16 or UTF-32; data files must be UTF-8"
+        end
+        raise ArgumentError, "the file is not valid UTF-8"
+      end
+
+      #
       # Returns true if the content is empty or only white space.
       #
       # @param content [String]
@@ -156,15 +176,25 @@ module LaunchDarkly
         content.each_byte.all? { |byte| WHITE_SPACE_BYTES.include?(byte) }
       end
 
+      # The byte order marks of UTF-8 and of the encodings that files must not use.
+      UTF8_BOM = "\xEF\xBB\xBF".b.freeze
+      UTF16_AND_UTF32_BOMS = ["\xFF\xFE".b, "\xFE\xFF".b, "\x00\x00\xFE\xFF".b].freeze
+      private_constant :UTF8_BOM, :UTF16_AND_UTF32_BOMS
+
       #
-      # Reads the raw content of one file as UTF-8, without a byte order mark.
+      # Reads the raw content of one file, as UTF-8 and without a UTF-8 byte order mark, whatever
+      # the process's default encoding. The bytes are not checked here: {Document.parse} rejects
+      # content that is not valid UTF-8, so that such a file fails to load like any other content
+      # that cannot be parsed.
       #
       # @param path [String]
       # @return [String]
       # @raise [ReadError] if the file cannot be read
       #
       def self.read_file(path)
-        File.read(path, mode: "r:BOM|UTF-8")
+        content = File.binread(path)
+        content = content.byteslice(UTF8_BOM.bytesize..) if content.start_with?(UTF8_BOM)
+        content.force_encoding(Encoding::UTF_8)
       rescue Errno::ENOENT => e
         raise ReadError.new(path, "unable to read file: #{e.message}", missing: true)
       rescue SystemCallError, IOError => e

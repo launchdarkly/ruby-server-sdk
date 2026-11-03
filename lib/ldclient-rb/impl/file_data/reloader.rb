@@ -61,7 +61,7 @@ module LaunchDarkly
         DEFAULT_RETRY_DELAY = 1.0
 
         # A file is held back for at most this many retry delays from the first load that held it
-        # back, until data is applied.
+        # back. The bound starts over at a load that holds nothing back.
         MAX_HOLD_RETRY_DELAYS = 5
 
         # A file whose content is in effect and that loads have found with no content: since when it
@@ -142,8 +142,8 @@ module LaunchDarkly
           @empty_files = {}
           @read_again_pending = false
           @holding_this_load = false
-          # The delay of the last retry that a load asked for. Only tests read it. Guarded by @mutex.
-          @last_requested_retry_delay = nil
+          # The delay of the last retry that was armed. Only tests read it. Guarded by @mutex.
+          @last_armed_retry_delay = nil
         end
 
         #
@@ -162,13 +162,13 @@ module LaunchDarkly
         end
 
         #
-        # The delay in seconds of the last retry that a load asked for, armed or not. Only tests
-        # use it.
+        # The delay in seconds of the last retry that was armed, from the time it was armed. Only
+        # tests use it.
         #
         # @return [Numeric, nil]
         #
-        def last_requested_retry_delay
-          @mutex.synchronize { @last_requested_retry_delay }
+        def last_armed_retry_delay
+          @mutex.synchronize { @last_armed_retry_delay }
         end
 
         #
@@ -211,7 +211,6 @@ module LaunchDarkly
           return unless @retry_delay > 0
 
           @mutex.synchronize do
-            @last_requested_retry_delay = delay
             @requested_retry_delay = [@requested_retry_delay, delay].compact.min
             @cond.signal
           end
@@ -222,18 +221,29 @@ module LaunchDarkly
             action = next_action
             break if action == :stop
 
-            @logger.info { "#{@log_prefix} Reloading flag data after detecting a change" } if action == :reload
-            retry_in = reload(retrying: action == :retry)
-            @mutex.synchronize do
-              # A pending retry is superseded by this reload. The reload either succeeded, or it
-              # failed or held back a file and arms a fresh retry here.
-              @last_requested_retry_delay = retry_in unless retry_in.nil?
-              @retry_deadline = retry_in.nil? || @retry_delay <= 0 ? nil : monotonic_now + retry_in
+            # An unexpected error must not end the worker: no reload would happen after it.
+            begin
+              @logger.info { "#{@log_prefix} Reloading flag data after detecting a change" } if action == :reload
+              retry_in = reload(retrying: action == :retry)
+              @mutex.synchronize do
+                # A pending retry is superseded by this reload. The reload either succeeded, or it
+                # failed or held back a file and arms a fresh retry here.
+                if retry_in.nil? || @retry_delay <= 0
+                  @retry_deadline = nil
+                else
+                  @retry_deadline = monotonic_now + retry_in
+                  @last_armed_retry_delay = retry_in
+                end
+              end
+            rescue => e
+              log_unexpected_error(e)
             end
           end
-        rescue => e
-          @logger.error { "#{@log_prefix} Unexpected error in file data reloader: #{e.inspect}" }
-          @logger.debug { "#{@log_prefix} Exception trace: #{e.backtrace}" }
+        end
+
+        private def log_unexpected_error(error)
+          @logger.error { "#{@log_prefix} Unexpected error in file data reloader: #{error.inspect}" }
+          @logger.debug { "#{@log_prefix} Exception trace: #{error.backtrace}" }
         end
 
         #
@@ -258,6 +268,7 @@ module LaunchDarkly
                 deadline = now + @requested_retry_delay
                 @requested_retry_delay = nil
                 @retry_deadline = [@retry_deadline, deadline].compact.min
+                @last_armed_retry_delay = @retry_deadline - now
               end
               if !@debounce_deadline.nil? && now >= @debounce_deadline
                 @debounce_deadline = nil
@@ -298,7 +309,14 @@ module LaunchDarkly
             # The files that the load got to and did not hold back, including one whose read or
             # parse failed.
             reached = []
-            retry_in = load_files(reached)
+            retry_in =
+              begin
+                load_files(reached)
+              rescue => e
+                # A failure that the load does not expect is retried like any other.
+                log_unexpected_error(e)
+                stopped? ? nil : @retry_delay
+              end
             unless @holding_this_load
               # A load that holds nothing back, whether it applies, is skipped or fails, starts the
               # bound over for every file that it got to: such a file is no longer held back, so its

@@ -841,6 +841,69 @@ module LaunchDarkly
             end
           end
 
+          it "keeps reloading after an error that a load does not expect" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+            failures = 1
+            allow(FileData).to receive(:read_file).and_wrap_original do |original, path|
+              raise "unexpected" if (failures -= 1) >= 0
+
+              original.call(path)
+            end
+
+            with_reloader([y], logger: logger, debounce_delay: 0.01, retry_delay: 0.2) do |reloader, recorder|
+              reloader.trigger
+              expect(wait_for { logger.output.include?("Unexpected error in file data reloader") }).to be true
+
+              # The retry loads the file, and so does a later change signal.
+              expect(wait_for { recorder.applied.length == 1 }).to be true
+              File.write(y, yaml_doc(flag2: true))
+              reloader.trigger
+              expect(wait_for { recorder.applied.length == 2 }).to be true
+              expect(recorder.flag_values).to eq({ flag2: true })
+            end
+          end
+
+          it "keeps the worker running after an error outside a load" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_reloader([y], logger: logger, debounce_delay: 0.01, retry_delay: 0.2) do |reloader, recorder|
+              failures = 1
+              allow(reloader).to receive(:reload).and_wrap_original do |original, **options|
+                raise "unexpected" if (failures -= 1) >= 0
+
+                original.call(**options)
+              end
+              reloader.trigger
+              expect(wait_for { logger.output.include?("Unexpected error in file data reloader") }).to be true
+
+              reloader.trigger
+              expect(wait_for { recorder.applied.length == 1 }).to be true
+            end
+          end
+
+          it "replaces an earlier retry with the retry of a later hold" do
+            # A failure arms the retry for the retry delay. A load soon after holds a file back and
+            # arms its own retry for the end of that file's delay, which replaces the earlier one,
+            # so the file is not read again before its delay is over.
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.json", values_doc({ flag2: "b" }))
+
+            with_reloader([a, b], logger: logger, debounce_delay: 0.01, retry_delay: 1.0) do |reloader, recorder|
+              reloader.reload_now
+              File.write(b, '{"flagValues"')
+              reloader.trigger
+              expect(wait_for { recorder.errors.length == 1 }).to be true
+
+              sleep 0.3
+              File.write(a, "")
+              File.write(b, values_doc({ flag2: "b" }))
+              reloader.trigger
+              expect(wait_for { hold_count == 1 }).to be true
+              expect(wait_for(3) { recorder.applied.length == 2 }).to be true
+              expect(hold_count).to eq(1)
+            end
+          end
+
           it "arms the retry of a hold for the rest of the delay, plus a tenth of it" do
             y = write("a.yaml", yaml_doc(flag1: true))
 
@@ -894,6 +957,16 @@ module LaunchDarkly
           # move once per clock tick of the kernel.
           def next_tick
             sleep 0.02
+          end
+
+          # Waits for the worker to arm the retry that a load asked for, and expects its delay. A
+          # retry that reload_now asks for is armed by the worker.
+          def expect_armed_retry_delay(reloader, seconds)
+            armed = wait_for do
+              delay = reloader.last_armed_retry_delay
+              !delay.nil? && (delay - seconds).abs < 0.001
+            end
+            expect(armed).to be(true), "expected a retry armed for #{seconds}s, got #{reloader.last_armed_retry_delay.inspect}"
           end
 
           # Gives the file a new modification time, as a write while it is empty does.
@@ -1090,8 +1163,9 @@ module LaunchDarkly
           end
 
           it "holds back a JSON file that stayed empty for long when it is rewritten" do
-            # The failing loads ended the run of holding loads, so the rewrite is held back although
-            # the file was first found empty more than five retry delays ago.
+            # The failing loads held nothing back, so they started the file's bound over, and the
+            # rewrite is held back although the file was first found empty more than five retry
+            # delays ago.
             a = write("a.json", values_doc({ flag1: "a" }))
 
             with_clocked_reloader([a]) do |reloader, recorder|
@@ -1359,16 +1433,17 @@ module LaunchDarkly
               File.write(a, "")
               expect(reloader.reload_now).to be false
 
+              # One file is truncated again every 0.9 retry delays, the files in turn, with a load at
+              # each truncation and one 0.2 retry delays later, which stands for the retry that the
+              # hold arms a little after the other file's delay is over.
               applied = false
               (1..14).each do |i|
-                clock.advance(0.9 * hour)
+                clock.advance(i == 1 ? 0.9 * hour : 0.7 * hour)
                 mark_written(i.odd? ? b : a)
                 File.write(b, "") if i == 1
                 reloader.reload_now
-                # The retry that the hold arms, a little after the other file's delay is over.
                 clock.advance(0.2 * hour)
                 reloader.reload_now
-                clock.advance(-0.2 * hour)
                 applied = recorder.applied.length > 1
                 break if applied
               end
@@ -1425,7 +1500,7 @@ module LaunchDarkly
               clock.advance(0.95 * hour)
               slow = b
               expect(reloader.reload_now).to be false
-              expect(reloader.last_requested_retry_delay).to be_within(0.001).of(0.1 * hour)
+              expect_armed_retry_delay(reloader, 0.1 * hour)
             end
           end
 
@@ -1605,6 +1680,76 @@ module LaunchDarkly
             end
           end
 
+          it "holds back YAML with only a tab and then applies it as no entries" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_clocked_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "\t\n")
+              expect(reloader.reload_now).to be false
+
+              clock.advance(hour)
+              expect(reloader.reload_now).to be true
+              expect(recorder.applied[-1].empty?).to be true
+              expect(recorder.errors).to be_empty
+            end
+          end
+
+          it "starts the delay over when a YAML file with no document changes size but not modification time" do
+            # Partial reads of a file being written can find only a comment, of different lengths, on
+            # a file system with coarse modification times.
+            y = write("a.yaml", yaml_doc(flag1: true))
+            pinned = Time.at(1_000_000)
+
+            with_clocked_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "# one\n")
+              File.utime(pinned, pinned, y)
+              expect(reloader.reload_now).to be false
+
+              clock.advance(0.6 * hour)
+              File.write(y, "# three\n")
+              File.utime(pinned, pinned, y)
+              expect(reloader.reload_now).to be false
+
+              clock.advance(0.6 * hour)
+              expect(reloader.reload_now).to be false
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "does not start the bound of a file that it does not hold back" do
+            # a.json stays empty past its delay while b.yaml holds every load back. Those loads do not
+            # hold a.json back, so they give it no bound, and its later rewrite gets a full delay.
+            b = write("b.yaml", yaml_doc(flag2: true))
+            a = write("a.json", values_doc({ flag1: "a" }))
+
+            with_clocked_reloader([b, a]) do |reloader, _recorder|
+              reloader.reload_now
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+              clock.advance(hour)
+              expect(reloader.reload_now).to be false
+
+              clock.advance(0.5 * hour)
+              File.write(b, "")
+              expect(reloader.reload_now).to be false
+              9.times do
+                clock.advance(0.5 * hour)
+                mark_written(b)
+                expect(reloader.reload_now).to be false
+              end
+
+              # b.yaml's bound is over, and a.json is truncated again.
+              clock.advance(0.5 * hour)
+              mark_written(b)
+              mark_written(a)
+              holds = hold_count
+              expect(reloader.reload_now).to be false
+              expect(hold_count).to eq(holds + 1)
+            end
+          end
+
           it "asks for the retry when the delay is over, plus a tenth of it" do
             y = write("a.yaml", yaml_doc(flag1: true))
 
@@ -1612,12 +1757,12 @@ module LaunchDarkly
               reloader.reload_now
               File.write(y, "")
               expect(reloader.reload_now).to be false
-              expect(reloader.last_requested_retry_delay).to be_within(0.001).of(1.1 * hour)
+              expect_armed_retry_delay(reloader, 1.1 * hour)
 
               # A later load asks for the rest of the delay, not a whole one.
               clock.advance(0.5 * hour)
               expect(reloader.reload_now).to be false
-              expect(reloader.last_requested_retry_delay).to be_within(0.001).of(0.6 * hour)
+              expect_armed_retry_delay(reloader, 0.6 * hour)
             end
           end
 
@@ -1638,7 +1783,7 @@ module LaunchDarkly
               expect(reloader.reload_now).to be false
 
               # The file's delay would be over in an hour, but its bound is over in 0.2 hours.
-              expect(reloader.last_requested_retry_delay).to be_within(0.001).of(0.3 * hour)
+              expect_armed_retry_delay(reloader, 0.3 * hour)
             end
           end
 
@@ -1654,7 +1799,7 @@ module LaunchDarkly
               File.write(b, "")
               expect(reloader.reload_now).to be false
 
-              expect(reloader.last_requested_retry_delay).to be_within(0.001).of(0.85 * hour)
+              expect_armed_retry_delay(reloader, 0.85 * hour)
             end
           end
 
@@ -1667,8 +1812,7 @@ module LaunchDarkly
               reloader.trigger
 
               expect(wait_for { hold_count == 1 }).to be true
-              expect(wait_for { !reloader.last_requested_retry_delay.nil? }).to be true
-              expect(reloader.last_requested_retry_delay).to be_within(0.001).of(1.1 * hour)
+              expect_armed_retry_delay(reloader, 1.1 * hour)
             end
           end
 
@@ -1680,7 +1824,7 @@ module LaunchDarkly
               File.write(a, '{"flagValues"')
               expect(reloader.reload_now).to be false
               expect(recorder.errors.length).to eq(1)
-              expect(reloader.last_requested_retry_delay).to eq(hour)
+              expect_armed_retry_delay(reloader, hour)
             end
           end
 
