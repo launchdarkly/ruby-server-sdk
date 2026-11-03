@@ -33,8 +33,11 @@ module LaunchDarkly
       # is held back for at most five retry delays from the first load that held it back. The bound
       # goes on across reads that find the file with content, and starts over only at a load that
       # holds nothing back, whether that load applies, is skipped as unchanged, or fails, for each
-      # file that load read. So a file that keeps being rewritten, or files rewritten in turn, cannot
-      # hold the data back without end. The retry that a hold arms comes when the first held file's
+      # file that load got to, including one whose read or parse failed. A file after one that
+      # failed keeps its bound. So a file that keeps being rewritten, or files rewritten in turn,
+      # cannot hold the data back without end. A read that finds a file with content, even content
+      # that fails to parse, or finds it missing, ends its empty state, so its next emptying starts
+      # a new delay. The retry that a hold arms comes when the first held file's
       # delay or bound is over, plus a tenth of the retry delay. A file that contributed no content
       # to the data currently applied, such as a placeholder that has been empty from the start, a
       # file that was missing, or a file whose emptying has been applied, is parsed at once. So is every file when there are no
@@ -292,14 +295,15 @@ module LaunchDarkly
             end
             @read_again_pending = false
             @holding_this_load = false
-            # The files that the load read and did not hold back, with whether each had content.
-            had_content = {}
-            retry_in = load_files(had_content)
+            # The files that the load got to and did not hold back, including one whose read or
+            # parse failed.
+            reached = []
+            retry_in = load_files(reached)
             unless @holding_this_load
               # A load that holds nothing back, whether it applies, is skipped or fails, starts the
-              # bound over for every file that it read: such a file is no longer held back, so its
-              # next rewrite is a new one. A file that the load did not get to keeps its bound.
-              had_content.each_key do |path|
+              # bound over for every file that it got to: such a file is no longer held back, so its
+              # next rewrite is a new one. A file after one that failed keeps its bound.
+              reached.each do |path|
                 empty = @empty_files[path]
                 empty.first_held = nil unless empty.nil?
               end
@@ -309,9 +313,10 @@ module LaunchDarkly
         end
 
         # The body of {#reload}, while holding @reload_mutex.
-        private def load_files(had_content)
+        private def load_files(reached)
           documents = []
           files = []
+          had_content = {}
           held = []
           digest = Digest::SHA256.new
           @paths.each do |path|
@@ -320,9 +325,11 @@ module LaunchDarkly
               # disagree with the content that was applied.
               content = FileData.read_file(path)
             rescue ReadError => e
-              # A missing file is not empty, so its delay starts again when it is found empty. Its
-              # bound goes on.
-              @empty_files[path].since = nil if e.missing && @empty_files.key?(path)
+              if e.missing
+                not_empty(path, reached)
+              else
+                reached << path
+              end
               if e.missing && @skip_missing_paths
                 @logger.debug { "#{@log_prefix} File #{path} does not exist; it contributes no data" }
                 had_content[path] = false
@@ -341,14 +348,14 @@ module LaunchDarkly
               begin
                 document = FileData.parse_file(path, content)
               rescue ReadError => e
+                # Content that fails to parse is content: the file's empty state is over.
+                not_empty(path, reached)
                 return record_failure(e)
               end
               has_content = !document.equal?(Document::NONE)
             end
             if has_content
-              # Its delay starts again when it is found empty. Its bound goes on, so that files
-              # rewritten in turn stay bounded.
-              @empty_files[path].since = nil if @empty_files.key?(path)
+              not_empty(path, reached)
             elsif hold_back?(path, @clock.call)
               # The clock is read after this file's own read, so a slow read of another file does
               # not shorten its delay.
@@ -357,6 +364,8 @@ module LaunchDarkly
               @holding_this_load = true
               held << path
               next
+            else
+              reached << path
             end
             had_content[path] = has_content
 
@@ -420,6 +429,16 @@ module LaunchDarkly
           @last_good_digest = hexdigest
           remember_applied(had_content)
           nil
+        end
+
+        # Records that a load found the file with content, even content that fails to parse, or
+        # missing: its empty state is over, so its next emptying starts a new delay even where a
+        # coarse modification time makes it look the same. Its bound goes on, so that files
+        # rewritten in turn stay bounded.
+        private def not_empty(path, reached)
+          reached << path
+          empty = @empty_files[path]
+          empty.since = nil unless empty.nil?
         end
 
         # Records what each file contributed to the data now in effect. The holds of the files start

@@ -1429,6 +1429,182 @@ module LaunchDarkly
             end
           end
 
+          [
+            ["YAML", "a.yaml", "flagValues:\n  flag1: true\n", "flagValues: [\n", "flagValues:\n  flag2: true\n"],
+            ["JSON", "a.json", '{"flagValues": {"flag1": true}}', '{"flagValues": ', '{"flagValues": {"flag2": true}}'],
+          ].each do |format, name, good, broken, fixed|
+            it "holds back the in-place save that fixes a #{format} file saved with an error" do
+              # An operator saves the file in place with a mistake, and saves the fix in place long
+              # after. The loads in between fail on the file, and the fix's own gap is held back.
+              y = write(name, good)
+
+              with_clocked_reloader([y]) do |reloader, recorder|
+                reloader.reload_now
+                File.write(y, "")
+                expect(reloader.reload_now).to be false
+                File.write(y, broken)
+                expect(reloader.reload_now).to be false
+                expect(recorder.errors.length).to eq(1)
+                6.times do
+                  clock.advance(hour)
+                  reloader.reload_now
+                end
+                errors = logger.output.scan("ERROR").length
+
+                File.write(y, "")
+                expect(reloader.reload_now).to be false
+                expect(hold_count).to eq(2)
+                expect(logger.output.scan("ERROR").length).to eq(errors)
+                File.write(y, fixed)
+                expect(reloader.reload_now).to be true
+                expect(recorder.flag_values).to eq({ flag2: true })
+              end
+            end
+          end
+
+          it "holds back the fix of a file saved with an error even when its emptying looks like the first" do
+            # The broken content ended the first empty state, so the later truncation starts a new
+            # delay although, on a file system with coarse modification times, it looks the same.
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_clocked_reloader([y]) do |reloader, _recorder|
+              reloader.reload_now
+              File.write(y, "")
+              first_empty_write_time = File.mtime(y)
+              expect(reloader.reload_now).to be false
+              File.write(y, "flagValues: [\n")
+              expect(reloader.reload_now).to be false
+
+              clock.advance(2 * hour)
+              File.write(y, "")
+              File.utime(first_empty_write_time, first_empty_write_time, y)
+              expect(reloader.reload_now).to be false
+              expect(hold_count).to eq(2)
+            end
+          end
+
+          it "starts the bound over for a file whose read fails at a load that holds nothing back" do
+            y = write("a.yaml", yaml_doc(flag1: true))
+
+            with_clocked_reloader([y]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(y, "")
+              expect(reloader.reload_now).to be false
+
+              allow(FileData).to receive(:read_file).and_raise(ReadError.new(y, "unable to read file: denied"))
+              expect(reloader.reload_now).to be false
+              expect(recorder.errors.length).to eq(1)
+              allow(FileData).to receive(:read_file).and_call_original
+
+              clock.advance(6 * hour)
+              mark_written(y)
+              expect(reloader.reload_now).to be false
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "starts the bound over for a file found missing at a load that holds nothing back" do
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.json", values_doc({ flag3: "c" }))
+
+            with_clocked_reloader([a, b], skip_missing_paths: true) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+
+              File.delete(a)
+              File.write(b, '{"flagValues"')
+              expect(reloader.reload_now).to be false
+
+              # b.json is fixed while a.yaml is created empty again, in the middle of a rewrite.
+              clock.advance(6 * hour)
+              File.write(a, "")
+              File.write(b, values_doc({ flag3: "c" }))
+              expect(reloader.reload_now).to be false
+              expect(hold_count).to eq(2)
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "keeps the bound of a file that a failing load did not get to" do
+            # c.json comes first and fails now and then, so those loads never read a.yaml, which keeps
+            # being written while empty. They do not give a.yaml a fresh bound.
+            c = write("c.json", values_doc({ flag3: "c" }))
+            a = write("a.yaml", yaml_doc(flag1: true))
+
+            with_clocked_reloader([c, a]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+              (1..9).each do |i|
+                clock.advance(0.5 * hour)
+                mark_written(a)
+                File.write(c, i.odd? ? '{"flagValues"' : values_doc({ flag3: "c" }))
+                reloader.reload_now
+              end
+
+              clock.advance(0.5 * hour)
+              mark_written(a)
+              File.write(c, values_doc({ flag3: "c" }))
+              expect(reloader.reload_now).to be true
+              expect(recorder.flag_values).to eq({ flag3: "c" })
+            end
+          end
+
+          it "does not start bounds over at a load that holds a file back and then fails" do
+            # a.yaml and b.yaml are rewritten in turn, so that every load holds one of them back, and
+            # c.json fails at every other load. Those loads hold a file back, so they start no bound
+            # over.
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.yaml", yaml_doc(flag2: true))
+            c = write("c.json", values_doc({ flag3: "c" }))
+
+            with_clocked_reloader([a, b, c]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+              applied = false
+              (1..12).each do |i|
+                clock.advance(0.5 * hour)
+                rewritten, emptied = i.odd? ? [a, b] : [b, a]
+                File.write(rewritten, yaml_doc(rewritten == a ? { flag1: true } : { flag2: true }))
+                File.write(emptied, "")
+                File.write(c, i.odd? ? '{"flagValues"' : values_doc({ flag3: "c" }))
+                reloader.reload_now
+                applied = recorder.applied.length > 1
+                break if applied
+              end
+              expect(applied).to be true
+            end
+          end
+
+          it "starts a new delay for a file that is created empty again after it was missing" do
+            # While b.json fails, a.yaml is emptied, deleted, and created empty again with the state it
+            # had when it was first found empty, as within one tick of a coarse clock. Being missing
+            # ended its empty state, so it is held back with a new delay.
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.json", values_doc({ flag3: "c" }))
+
+            with_clocked_reloader([a, b], skip_missing_paths: true) do |reloader, recorder|
+              reloader.reload_now
+              File.write(b, '{"flagValues"')
+              File.write(a, "")
+              first_empty_write_time = File.mtime(a)
+              reloader.reload_now
+              clock.advance(0.5 * hour)
+              File.delete(a)
+              reloader.reload_now
+              clock.advance(40.0 / 60 * hour)
+              File.write(a, "")
+              File.utime(first_empty_write_time, first_empty_write_time, a)
+              reloader.reload_now
+
+              File.write(b, values_doc({ flag3: "c" }))
+              expect(reloader.reload_now).to be false
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
           it "asks for the retry when the delay is over, plus a tenth of it" do
             y = write("a.yaml", yaml_doc(flag1: true))
 
