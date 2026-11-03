@@ -34,7 +34,7 @@ module LaunchDarkly
     # @option opts [Float] :poll_interval (30) See {#poll_interval}.
     # @option opts [Boolean] :stream (true) See {#stream?}.
     # @option opts [Boolean] all_attributes_private (false) See {#all_attributes_private}.
-    # @option opts [Array] :private_attributes See {#private_attributes}.
+    # @option opts [Enumerable<String>] :private_attributes See {#private_attributes}.
     # @option opts [Boolean] :send_events (true) See {#send_events}.
     # @option opts [Integer] :context_keys_capacity (1000) See {#context_keys_capacity}.
     # @option opts [Float] :context_keys_flush_interval (300) See {#context_keys_flush_interval}.
@@ -69,7 +69,7 @@ module LaunchDarkly
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > Config.default_poll_interval ? opts[:poll_interval] : Config.default_poll_interval
       @all_attributes_private = opts[:all_attributes_private] || false
-      @private_attributes = opts[:private_attributes] || []
+      @private_attributes = Set.new(opts[:private_attributes] || []).freeze
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
       @compress_events = opts.has_key?(:compress_events) ? opts[:compress_events] : Config.default_compress_events
       @context_keys_capacity = opts[:context_keys_capacity] || Config.default_context_keys_capacity
@@ -255,7 +255,7 @@ module LaunchDarkly
     attr_reader :all_attributes_private
 
     #
-    # A list of context attribute names that should always be considered private. This means that the
+    # A set of context attribute names that should always be considered private. This means that the
     # attribute values will not be sent to LaunchDarkly in analytics events and will not appear on
     # the LaunchDarkly dashboard.
     #
@@ -268,7 +268,7 @@ module LaunchDarkly
     #
     # @see https://docs.launchdarkly.com/sdk/features/user-context-config#using-private-attributes
     #
-    # @return [Array<String>]
+    # @return [Set<String>]
     # @see #all_attributes_private
     #
     attr_reader :private_attributes
@@ -281,11 +281,11 @@ module LaunchDarkly
     attr_reader :send_events
 
     #
-    # Should the event payload sent to LaunchDarkly use gzip compression. By default this is false to prevent backward
-    # breaking compatibility issues with older versions of the relay proxy.
+    # Should the event payload sent to LaunchDarkly use gzip compression. The default is true.
     #
-    # Customers not using the relay proxy are strongly encouraged to enable this feature to reduce egress bandwidth
-    # cost.
+    # Relay Proxy versions before 8.9 cannot accept compressed events. If you send events through the Relay Proxy,
+    # set this to false. Older Relay Proxy versions cannot decode compressed payloads. Newer versions decode and
+    # compress the payloads again, which adds CPU overhead.
     #
     # @return [Boolean]
     #
@@ -622,10 +622,10 @@ module LaunchDarkly
 
     #
     # The default value for {#compress_events}.
-    # @return [Boolean] false
+    # @return [Boolean] true
     #
     def self.default_compress_events
-      false
+      true
     end
 
     #

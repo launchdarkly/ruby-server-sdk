@@ -42,8 +42,7 @@ module LaunchDarkly
       end
 
       def with_sender_and_server(config_options = {})
-        enable_compression = config_options[:compress_events] || false
-        with_server(enable_compression: enable_compression) do |server|
+        with_server do |server|
           config_options[:events_uri] = server.base_uri.to_s
           yield make_sender(config_options), server
         end
@@ -98,6 +97,19 @@ module LaunchDarkly
           })
           expect(req.header['x-launchdarkly-payload-id']).not_to eq []
           expect(req.header['content-length'][0].to_i).to be > fake_data.length
+        end
+      end
+
+      it "sends analytics event data with compression by default" do
+        with_sender_and_server do |es, server|
+          server.setup_ok_response("/bulk", "")
+
+          result = es.send_event_data(fake_data, "", false)
+
+          expect(result.success).to be true
+          req, body = server.await_request_with_body
+          expect(body).to eq fake_data
+          expect(req.header['content-encoding']).to eq [ "gzip" ]
         end
       end
 

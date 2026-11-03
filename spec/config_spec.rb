@@ -135,5 +135,24 @@ module LaunchDarkly
         expect(subject.new(omit_anonymous_contexts: true).omit_anonymous_contexts).to eq true
       end
     end
+    describe ".compress_events" do
+      it "defaults to true" do
+        expect(subject.new.compress_events).to eq true
+      end
+      it "can be set to false" do
+        expect(subject.new(compress_events: false).compress_events).to eq false
+      end
+    end
+    describe ".private_attributes" do
+      it "defaults to an empty set" do
+        expect(subject.new.private_attributes).to eq Set.new
+      end
+      it "converts an array to a set" do
+        expect(subject.new(private_attributes: ["name", "email", "name"]).private_attributes).to eq Set["name", "email"]
+      end
+      it "is frozen" do
+        expect(subject.new(private_attributes: ["name"]).private_attributes).to be_frozen
+      end
+    end
   end
 end
