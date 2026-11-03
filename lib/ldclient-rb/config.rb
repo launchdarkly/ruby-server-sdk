@@ -69,7 +69,7 @@ module LaunchDarkly
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
       @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > Config.default_poll_interval ? opts[:poll_interval] : Config.default_poll_interval
       @all_attributes_private = opts[:all_attributes_private] || false
-      @private_attributes = Set.new(opts[:private_attributes] || [])
+      @private_attributes = Set.new(opts[:private_attributes] || []).freeze
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
       @compress_events = opts.has_key?(:compress_events) ? opts[:compress_events] : Config.default_compress_events
       @context_keys_capacity = opts[:context_keys_capacity] || Config.default_context_keys_capacity

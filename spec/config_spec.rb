@@ -142,6 +142,9 @@ module LaunchDarkly
       it "converts an array to a set" do
         expect(subject.new(private_attributes: ["name", "email", "name"]).private_attributes).to eq Set["name", "email"]
       end
+      it "is frozen" do
+        expect(subject.new(private_attributes: ["name"]).private_attributes).to be_frozen
+      end
     end
   end
 end
