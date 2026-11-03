@@ -281,11 +281,11 @@ module LaunchDarkly
     attr_reader :send_events
 
     #
-    # Should the event payload sent to LaunchDarkly use gzip compression. By default this is false to prevent backward
-    # breaking compatibility issues with older versions of the relay proxy.
+    # Should the event payload sent to LaunchDarkly use gzip compression. The default is true.
     #
-    # Customers not using the relay proxy are strongly encouraged to enable this feature to reduce egress bandwidth
-    # cost.
+    # Relay Proxy versions before 8.9 cannot accept compressed events. If you send events through the Relay Proxy,
+    # set this to false. Older Relay Proxy versions cannot decode compressed payloads. Newer versions decode and
+    # compress the payloads again, which adds CPU overhead.
     #
     # @return [Boolean]
     #
@@ -622,10 +622,10 @@ module LaunchDarkly
 
     #
     # The default value for {#compress_events}.
-    # @return [Boolean] false
+    # @return [Boolean] true
     #
     def self.default_compress_events
-      false
+      true
     end
 
     #
