@@ -125,10 +125,14 @@ module LaunchDarkly
     # validation fails, {#error} will return a non-nil error and any SDK method
     # that takes this Reference as a parameter will consider it invalid.
     #
-    # @param value [String, Symbol]
+    # If the value is a Reference, this method returns the same Reference.
+    #
+    # @param value [String, Symbol, Reference]
     # @return [Reference]
     #
     def self.create(value)
+      return value if value.is_a?(Reference)
+
       unless value.is_a?(String) || value.is_a?(Symbol)
         return new(value, [], ERR_EMPTY)
       end

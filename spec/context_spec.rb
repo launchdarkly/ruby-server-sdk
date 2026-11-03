@@ -77,6 +77,19 @@ module LaunchDarkly
           expect(subject.create(context).valid?).to be false
         end
 
+        it "accepts privateAttributes as a set" do
+          context = subject.create({ key: "user-key", kind: "user", _meta: { privateAttributes: Set["email"] } })
+          expect(context.valid?).to be true
+          expect(context.private_attributes).to eq(Set[LaunchDarkly::Reference.create("email")])
+        end
+
+        it "accepts privateAttributes from another context" do
+          original = subject.create({ key: "user-key", kind: "user", _meta: { privateAttributes: ["email", "/address/city"] } })
+          context = subject.create({ key: "user-key", kind: "user", _meta: { privateAttributes: original.private_attributes } })
+          expect(context.valid?).to be true
+          expect(context.private_attributes).to eq(original.private_attributes)
+        end
+
         it "creates the correct fully qualified key" do
           expect(subject.create({ key: "user-key", kind: "user" }).fully_qualified_key).to eq("user-key")
           expect(subject.create({ key: "org-key", kind: "org" }).fully_qualified_key).to eq("org:org-key")
@@ -391,6 +404,19 @@ module LaunchDarkly
             expect(org_context.get_value_for_reference(ref)).to matcher
           end
         end
+      end
+    end
+
+    describe "private attributes" do
+      it "returns a frozen set of references" do
+        context = subject.create({ key: 'context-key', kind: 'user', _meta: { privateAttributes: ['name', 'address/city', 'name'] } })
+        expect(context.private_attributes).to be_a(Set)
+        expect(context.private_attributes).to be_frozen
+        expect(context.private_attributes).to eq(Set[LaunchDarkly::Reference.create('name'), LaunchDarkly::Reference.create('address/city')])
+      end
+
+      it "returns an empty set when none are given" do
+        expect(subject.create({ key: 'context-key', kind: 'user' }).private_attributes).to eq(Set.new)
       end
     end
 

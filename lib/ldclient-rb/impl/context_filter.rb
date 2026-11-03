@@ -5,7 +5,7 @@ module LaunchDarkly
     class ContextFilter
       #
       # @param all_attributes_private [Boolean]
-      # @param private_attributes [Array<String>]
+      # @param private_attributes [Enumerable<String>]
       # @param logger [Logger, nil]
       #
       def initialize(all_attributes_private, private_attributes, logger = nil)
@@ -13,7 +13,7 @@ module LaunchDarkly
         @logger = logger
         @non_symbol_name_logged = Concurrent::AtomicBoolean.new(false)
 
-        @private_attributes = []
+        @private_attributes = Set.new
         private_attributes.each do |attribute|
           reference = LaunchDarkly::Reference.create(attribute)
           @private_attributes << reference if reference.error.nil?
@@ -75,7 +75,7 @@ module LaunchDarkly
         filtered[:anonymous] = true if anonymous
 
         redacted = []
-        private_attributes = @private_attributes + context.private_attributes
+        private_attributes = @private_attributes | context.private_attributes
 
         name = context.get_value(:name)
         if !name.nil? && !check_whole_attribute_private(Reference.create_literal(:name), private_attributes, redacted, anonymous && redact_anonymous)
@@ -103,7 +103,7 @@ module LaunchDarkly
       # Check if an entire attribute should be redacted.
       #
       # @param attribute [Reference]
-      # @param private_attributes [Array<Reference>]
+      # @param private_attributes [Set<Reference>]
       # @param redacted [Array<Symbol>]
       # @param redact_all [Boolean]
       # @return [Boolean]
@@ -130,7 +130,7 @@ module LaunchDarkly
       # @param parent_path [Array<String>, nil]
       # @param name [String]
       # @param value [any]
-      # @param private_attributes [Array<Reference>]
+      # @param private_attributes [Set<Reference>]
       # @param redacted [Array<Symbol>]
       # @param visited [Array<Hash>]
       # @return [any]
