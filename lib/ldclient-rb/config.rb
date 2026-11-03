@@ -432,8 +432,17 @@ module LaunchDarkly
 
     #
     # The factory used to construct sockets for HTTP operations. The factory must
-    # provide the method `open(uri, timeout)`. The `open` method must return a
+    # provide the method `open(host, port)`. The `open` method must return a
     # connected stream that implements the `IO` class, such as a `TCPSocket`.
+    #
+    # The SDK passes the host name and port number to connect to. When a proxy is
+    # configured, these are the proxy's host and port. For an `https` URI, the SDK
+    # performs TLS over the returned stream, so the stream must not already be
+    # encrypted. The SDK applies its connect timeout to the call to `open`.
+    #
+    # Data sources created with the builders in {LaunchDarkly::DataSystem} do not
+    # use this factory. To use a factory with one of those data sources, pass it to
+    # the builder's `socket_factory` method.
     #
     # Defaults to nil.
     # @return [#open]
