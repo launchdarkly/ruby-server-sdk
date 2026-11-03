@@ -1347,6 +1347,88 @@ module LaunchDarkly
             end
           end
 
+          it "applies files emptied in staggered turns after the bound" do
+            # Two files stay empty and are truncated again in turn, so that whenever one of them has
+            # stayed empty for the whole delay, the other is still within its delay and holds the
+            # load back. A file that settles so does not get a fresh bound while the other is held.
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.yaml", yaml_doc(flag2: true))
+
+            with_clocked_reloader([a, b]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+
+              applied = false
+              (1..14).each do |i|
+                clock.advance(0.9 * hour)
+                mark_written(i.odd? ? b : a)
+                File.write(b, "") if i == 1
+                reloader.reload_now
+                # The retry that the hold arms, a little after the other file's delay is over.
+                clock.advance(0.2 * hour)
+                reloader.reload_now
+                clock.advance(-0.2 * hour)
+                applied = recorder.applied.length > 1
+                break if applied
+              end
+              expect(applied).to be true
+            end
+          end
+
+          it "starts the bound of a file held back during a failure over once a load reads it again" do
+            # While b.json fails to load, a.yaml is rewritten once and its gap is held back. Later
+            # b.json is fixed while a.yaml is in the middle of another rewrite, which is held back
+            # with a bound of its own.
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.json", values_doc({ flag3: "c" }))
+
+            with_clocked_reloader([a, b]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(b, '{"flagValues"')
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+              File.write(a, yaml_doc(flag2: true))
+              expect(reloader.reload_now).to be false
+              clock.advance(6 * hour)
+              expect(reloader.reload_now).to be false
+
+              # The load that held a.yaml back first failed on b.json, so that hold was not logged.
+              File.write(b, values_doc({ flag3: "c" }))
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+              expect(hold_count).to eq(1)
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "asks for the retry from the end of the load's reads" do
+            # The read of the file after the held one takes longer than what is left of the held
+            # file's delay, so the retry is due right away, after the margin.
+            a = write("a.yaml", yaml_doc(flag1: true))
+            b = write("b.yaml", yaml_doc(flag2: true))
+            slow = nil
+            allow(FileData).to receive(:read_file).and_wrap_original do |original, path|
+              content = original.call(path)
+              if path == slow
+                slow = nil
+                clock.advance(0.1 * hour)
+              end
+              content
+            end
+
+            with_clocked_reloader([a, b]) do |reloader, _recorder|
+              reloader.reload_now
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+
+              clock.advance(0.95 * hour)
+              slow = b
+              expect(reloader.reload_now).to be false
+              expect(reloader.last_requested_retry_delay).to be_within(0.001).of(0.1 * hour)
+            end
+          end
+
           it "asks for the retry when the delay is over, plus a tenth of it" do
             y = write("a.yaml", yaml_doc(flag1: true))
 

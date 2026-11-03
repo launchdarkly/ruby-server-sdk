@@ -30,14 +30,14 @@ module LaunchDarkly
       # counted from the load that read it. A change of its state (its modification time and size,
       # read through any symbolic link) means it was written since a load last found it so, for
       # example rewritten and truncated again between two loads, so the delay starts over. Each file
-      # is held back for at most five retry delays from the first load that held it back, counted
-      # across reads that find it with content and across failed loads, and started over once data
-      # is applied, so that a file that keeps being rewritten, or files rewritten in turn, cannot
+      # is held back for at most five retry delays from the first load that held it back. The bound
+      # goes on across reads that find the file with content, and starts over only at a load that
+      # holds nothing back, whether that load applies, is skipped as unchanged, or fails, for each
+      # file that load read. So a file that keeps being rewritten, or files rewritten in turn, cannot
       # hold the data back without end. The retry that a hold arms comes when the first held file's
       # delay or bound is over, plus a tenth of the retry delay. A file that contributed no content
-      # to the data currently applied, such
-      # as a placeholder that has been empty from the start, a file that was missing, or a file
-      # whose emptying has been applied, is parsed at once. So is every file when there are no
+      # to the data currently applied, such as a placeholder that has been empty from the start, a
+      # file that was missing, or a file whose emptying has been applied, is parsed at once. So is every file when there are no
       # automatic retries, because nothing would read it again. After the delay, an empty JSON file
       # fails to parse and the data stays; an empty YAML file is a document with no entries.
       #
@@ -133,11 +133,12 @@ module LaunchDarkly
           @last_error_message = nil
           # Whether each configured path contributed content to the data currently applied; the
           # EmptyFile of each path whose content is in effect and that loads have found with no
-          # content since; and whether the last load held a file back. Only touched while holding
-          # @reload_mutex.
+          # content since; whether the last load held a file back; and whether the load in progress
+          # holds one back. Only touched while holding @reload_mutex.
           @applied_had_content = {}
           @empty_files = {}
           @read_again_pending = false
+          @holding_this_load = false
           # The delay of the last retry that a load asked for. Only tests read it. Guarded by @mutex.
           @last_requested_retry_delay = nil
         end
@@ -290,15 +291,27 @@ module LaunchDarkly
               end
             end
             @read_again_pending = false
-            load_files
+            @holding_this_load = false
+            # The files that the load read and did not hold back, with whether each had content.
+            had_content = {}
+            retry_in = load_files(had_content)
+            unless @holding_this_load
+              # A load that holds nothing back, whether it applies, is skipped or fails, starts the
+              # bound over for every file that it read: such a file is no longer held back, so its
+              # next rewrite is a new one. A file that the load did not get to keeps its bound.
+              had_content.each_key do |path|
+                empty = @empty_files[path]
+                empty.first_held = nil unless empty.nil?
+              end
+            end
+            retry_in
           end
         end
 
         # The body of {#reload}, while holding @reload_mutex.
-        private def load_files
+        private def load_files(had_content)
           documents = []
           files = []
-          had_content = {}
           held = []
           digest = Digest::SHA256.new
           @paths.each do |path|
@@ -341,6 +354,7 @@ module LaunchDarkly
               # not shorten its delay.
               # The other files are still read, so that files emptied together start their delays
               # in the same load.
+              @holding_this_load = true
               held << path
               next
             end
@@ -431,12 +445,9 @@ module LaunchDarkly
             empty.since = now
             empty.state = state
           end
-          if now - empty.since >= @retry_delay
-            # It stayed empty for the whole delay. The entry stays, so later loads keep parsing it
-            # until it has content.
-            empty.first_held = nil
-            return false
-          end
+          # After the delay the file is parsed. The entry stays, so later loads keep parsing it until
+          # it has content. Its bound starts over only at a load that holds nothing back.
+          return false if now - empty.since >= @retry_delay
           return false if !empty.first_held.nil? && now - empty.first_held >= MAX_HOLD_RETRY_DELAYS * @retry_delay
 
           empty.first_held ||= now
