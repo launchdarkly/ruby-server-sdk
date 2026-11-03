@@ -33,9 +33,9 @@ module LaunchDarkly
       # is held back for at most five retry delays from the first load that held it back. The bound
       # goes on across reads that find the file with content, and starts over only at a load that
       # holds nothing back, whether that load applies, is skipped as unchanged, or fails, for each
-      # file that load got to, including one whose read or parse failed. A file after one that
-      # failed keeps its bound. So a file that keeps being rewritten, or files rewritten in turn,
-      # cannot hold the data back without end. A read that finds a file with content, even content
+      # file it read. A load reads every file, even after one fails to read or parse, and fails with
+      # the first failure after them. So a file that keeps being rewritten, or files rewritten in
+      # turn, cannot hold the data back without end. A read that finds a file with content, even content
       # that fails to parse, or finds it missing, ends its empty state, so its next emptying starts
       # a new delay. The retry that a hold arms comes when the first held file's
       # delay or bound is over, plus a tenth of the retry delay. A file that contributed no content
@@ -306,8 +306,8 @@ module LaunchDarkly
             end
             @read_again_pending = false
             @holding_this_load = false
-            # The files that the load got to and did not hold back, including one whose read or
-            # parse failed.
+            # The files that the load read and did not hold back, including those whose read or parse
+            # failed. A load reads every file unless an error it does not expect stops it.
             reached = []
             retry_in =
               begin
@@ -319,8 +319,8 @@ module LaunchDarkly
               end
             unless @holding_this_load
               # A load that holds nothing back, whether it applies, is skipped or fails, starts the
-              # bound over for every file that it got to: such a file is no longer held back, so its
-              # next rewrite is a new one. A file after one that failed keeps its bound.
+              # bound over for every file that it read: such a file is no longer held back, so its
+              # next rewrite is a new one.
               reached.each do |path|
                 empty = @empty_files[path]
                 empty.first_held = nil unless empty.nil?
@@ -336,6 +336,9 @@ module LaunchDarkly
           files = []
           had_content = {}
           held = []
+          # The first read or parse failure. The other files are still read, so that each of them is
+          # classified, and the load fails with it after them.
+          failure = nil
           digest = Digest::SHA256.new
           @paths.each do |path|
             begin
@@ -351,10 +354,12 @@ module LaunchDarkly
               if e.missing && @skip_missing_paths
                 @logger.debug { "#{@log_prefix} File #{path} does not exist; it contributes no data" }
                 had_content[path] = false
+                append_to_digest(digest, path, nil)
                 files << FileSummary.new(path, false, 0, 0)
                 next
               end
-              return record_failure(e)
+              failure ||= e
+              next
             end
             # A file with no content, or YAML that the parser reads as nothing, such as only a
             # comment, has no entries. A read can see that much of a file that is being written.
@@ -368,7 +373,8 @@ module LaunchDarkly
               rescue ReadError => e
                 # Content that fails to parse is content: the file's empty state is over.
                 not_empty(path, reached)
-                return record_failure(e)
+                failure ||= e
+                next
               end
               has_content = !document.equal?(Document::NONE)
             end
@@ -387,17 +393,19 @@ module LaunchDarkly
             end
             had_content[path] = has_content
 
-            digest << content << "\0"
+            append_to_digest(digest, path, content)
             if document.nil?
               begin
                 document = FileData.parse_file(path, content)
               rescue ReadError => e
-                return record_failure(e)
+                failure ||= e
+                next
               end
             end
             documents << document
             files << FileSummary.new(path, true, 0, 0)
           end
+          return record_failure(failure) unless failure.nil?
           return hold_back(held, @clock.call) unless held.empty?
 
           begin
@@ -429,8 +437,6 @@ module LaunchDarkly
           recovering = !@last_error_message.nil?
           hexdigest = digest.hexdigest
           if @skip_unchanged && !recovering && hexdigest == @last_good_digest
-            # The digest covers only the content of the files that are present, so the same
-            # content can now come from another file.
             remember_applied(had_content)
             return nil
           end
@@ -447,6 +453,18 @@ module LaunchDarkly
           @last_good_digest = hexdigest
           remember_applied(had_content)
           nil
+        end
+
+        # Adds a file to the skip-unchanged digest: its path, whether it is present, and its content.
+        # The same content in another file can parse differently, since the format comes from the
+        # name, and does not come from the same file.
+        private def append_to_digest(digest, path, content)
+          digest << path.b << "\0"
+          if content.nil?
+            digest << "-\0"
+          else
+            digest << "+" << content.bytesize.to_s << "\0" << content.b
+          end
         end
 
         # Records that a load found the file with content, even content that fails to parse, or

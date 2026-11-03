@@ -667,9 +667,10 @@ module LaunchDarkly
             end
           end
 
-          it "is held back when the data that was kept as unchanged has content from it" do
-            # The same content moves from one file to another, so the reload is skipped as unchanged,
-            # but the data in effect now comes from the second file.
+          it "is held back after the same content moved to it from another file" do
+            # The same content moves from one file to another. The data in effect now comes from the
+            # second file, so the move is applied rather than skipped as unchanged, and emptying the
+            # second file is held back.
             a = write("a.yaml", yaml_doc(flag1: true))
             b = path("b.yaml")
 
@@ -678,11 +679,28 @@ module LaunchDarkly
               File.write(b, yaml_doc(flag1: true))
               File.delete(a)
               expect(reloader.reload_now).to be true
-              expect(recorder.applied.length).to eq(1)
+              expect(recorder.applied.length).to eq(2)
+              expect(recorder.applied[-1].files.map(&:present)).to eq([false, true])
 
               File.write(b, "")
               expect(reloader.reload_now).to be false
-              expect(recorder.applied.length).to eq(1)
+              expect(recorder.applied.length).to eq(2)
+            end
+          end
+
+          it "applies the same bytes moved to a file of another format" do
+            # 1e3 is a number in JSON and a string in YAML, so the move is not skipped as unchanged.
+            a = write("a.json", '{"flagValues": {"f": 1e3}}')
+            b = path("b.yaml")
+
+            with_reloader([a, b], skip_missing_paths: true, skip_unchanged: true) do |reloader, recorder|
+              reloader.reload_now
+              expect(recorder.flag_values).to eq({ f: 1000.0 })
+
+              File.delete(a)
+              File.write(b, '{"flagValues": {"f": 1e3}}')
+              expect(reloader.reload_now).to be true
+              expect(recorder.flag_values).to eq({ f: "1e3" })
             end
           end
 
@@ -1601,9 +1619,9 @@ module LaunchDarkly
             end
           end
 
-          it "keeps the bound of a file that a failing load did not get to" do
-            # c.json comes first and fails now and then, so those loads never read a.yaml, which keeps
-            # being written while empty. They do not give a.yaml a fresh bound.
+          it "applies a file kept written while empty after its bound while an earlier file fails" do
+            # c.json comes first and fails now and then, while a.yaml keeps being written while empty.
+            # Those loads hold a.yaml back, so they do not give it a fresh bound.
             c = write("c.json", values_doc({ flag3: "c" }))
             a = write("a.yaml", yaml_doc(flag1: true))
 
@@ -1623,6 +1641,46 @@ module LaunchDarkly
               File.write(c, values_doc({ flag3: "c" }))
               expect(reloader.reload_now).to be true
               expect(recorder.flag_values).to eq({ flag3: "c" })
+            end
+          end
+
+          it "starts the bound of a file after a failing file over once a load reads it again" do
+            # c.json comes first and is saved with an error while a.yaml is being rewritten. The loads
+            # that fail on c.json still read a.yaml, with content, so its bound starts over, and its
+            # next rewrite, when c.json is fixed, is held back.
+            c = write("c.json", values_doc({ flag3: "c" }))
+            a = write("a.yaml", yaml_doc(flag1: true))
+
+            with_clocked_reloader([c, a]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+              File.write(c, '{"flagValues"')
+              File.write(a, yaml_doc(flag1: false))
+              expect(reloader.reload_now).to be false
+              6.times do
+                clock.advance(hour)
+                reloader.reload_now
+              end
+
+              File.write(c, values_doc({ flag3: "c" }))
+              File.write(a, "")
+              expect(reloader.reload_now).to be false
+              expect(recorder.applied.length).to eq(1)
+            end
+          end
+
+          it "fails a load with the first failure when several files fail" do
+            a = write("a.json", values_doc({ flag1: "a" }))
+            b = write("b.json", values_doc({ flag2: "b" }))
+
+            with_clocked_reloader([a, b]) do |reloader, recorder|
+              reloader.reload_now
+              File.write(a, '{"flagValues"')
+              File.write(b, "[1")
+              expect(reloader.reload_now).to be false
+              expect(recorder.errors.length).to eq(1)
+              expect(recorder.errors[0].path).to eq(a)
             end
           end
 
