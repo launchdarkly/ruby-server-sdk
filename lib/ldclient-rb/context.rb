@@ -44,7 +44,7 @@ module LaunchDarkly
     private_constant :ERR_KIND_MULTI_DUPLICATES
     ERR_CUSTOM_NON_HASH = 'context custom must be a hash'
     private_constant :ERR_CUSTOM_NON_HASH
-    ERR_PRIVATE_NON_ARRAY = 'context private attributes must be an array'
+    ERR_PRIVATE_NON_ARRAY = 'context private attributes must be an array or a set'
 
     # @return [String, nil] Returns the key for this context
     attr_reader :key
@@ -66,7 +66,7 @@ module LaunchDarkly
     # @param name [String, nil]
     # @param anonymous [Boolean, nil]
     # @param attributes [Hash, nil]
-    # @param private_attributes [Array<String>, nil]
+    # @param private_attributes [Array<String>, Set<String>, nil]
     # @param error [String, nil]
     # @param contexts [Array<LDContext>, nil]
     #
@@ -567,7 +567,7 @@ module LaunchDarkly
 
       meta = data.fetch(:_meta, {})
       private_attributes = meta[:privateAttributes]
-      if private_attributes && !private_attributes.is_a?(Array)
+      if private_attributes && !private_attributes.is_a?(Array) && !private_attributes.is_a?(Set)
         return create_invalid_context(ERR_PRIVATE_NON_ARRAY)
       end
 
