@@ -2,6 +2,7 @@
 
 require "ldclient-rb/impl/file_data/document"
 require "ldclient-rb/impl/file_data/merge"
+require "ldclient-rb/impl/file_data/poller"
 
 require "digest"
 
@@ -11,24 +12,32 @@ module LaunchDarkly
       #
       # Owns the reload cycle for a set of data files. It serializes reloads, debounces change
       # signals, retains the last good result on failure (by not calling `apply`), retries after
-      # failures, puts off a file that was emptied before applying it, and skips no-op
+      # failures, holds back a file that was emptied before applying it, and skips no-op
       # applications.
       #
       # Applications and editors rewrite files in place: they truncate the file, then write the new
-      # content. A load in between finds the file empty. Whether an empty file is valid depends on
-      # its format (see {Document.parse}), so a parser cannot tell an emptied file from one in the
-      # middle of a rewrite. So a load that finds a file empty, or only white space, while the data
-      # currently applied has content from that file, puts the file off: it reads the other files,
-      # so that files emptied together are put off together, then keeps the current data and arms
-      # the retry, without reporting a failure. A file that cannot be read or parsed still fails the
-      # load. The file is put off for one retry delay from the time a load first found it empty,
-      # and a write to the file while it is empty, which is a new rewrite, starts the delay again.
-      # After the delay, or five retry delays after a load first found it empty however often it
-      # was rewritten, a load parses the empty file. The rule applies to every load, including a
-      # retry left over from an earlier failure. A file that contributed no content to the data
-      # currently applied, such as a placeholder that has been empty from the start, a file that was
-      # missing, or a file whose emptying has been applied, is parsed at once. So is every file when
-      # there are no automatic retries, because nothing would read it again.
+      # content. A load in between finds the file empty, or, for YAML, can find only a comment or
+      # "---", which the YAML parser reads as nothing. Whether a file with no entries is valid
+      # depends on its format (see {Document.parse}), so a parser cannot tell an emptied file from
+      # one in the middle of a rewrite. So a load that finds a file with no content (empty, white
+      # space, or YAML that is only a null), while the data currently applied has content from that
+      # file, holds the file back: it reads the other files, so that files emptied together are
+      # held back together, then keeps the current data and arms the retry, without reporting a
+      # failure. A file that cannot be read or parsed still fails the load. A YAML document such as
+      # `{}` is content, and is applied at once.
+      #
+      # A file is held back until it has stayed so, without being written, for the retry delay. A
+      # change of its state (its modification time and size, read through any symbolic link) means
+      # it was written since a load last found it so, for example rewritten and truncated again
+      # between two loads, so the delay starts over. Loads in a row that hold files back stop doing
+      # so after five retry delays, so that a file that keeps being rewritten, or files rewritten in
+      # turn, cannot hold the data back without end. The retry that a hold arms comes when the first
+      # held file's delay is over, or when the run of holding loads reaches its limit, plus a tenth
+      # of the retry delay. A file that contributed no content to the data currently applied, such
+      # as a placeholder that has been empty from the start, a file that was missing, or a file
+      # whose emptying has been applied, is parsed at once. So is every file when there are no
+      # automatic retries, because nothing would read it again. After the delay, an empty JSON file
+      # fails to parse and the data stays; an empty YAML file is a document with no entries.
       #
       # The worker thread starts on the first {#reload_now} or {#trigger} call rather than in the
       # constructor. A reloader can be constructed by a component whose lifecycle never uses it,
@@ -46,15 +55,14 @@ module LaunchDarkly
         # file is cheap, so this can be short. In seconds.
         DEFAULT_RETRY_DELAY = 1.0
 
-        # The longest a file that is found empty again and again is put off, in retry delays,
-        # counted from the first load that found it empty.
-        EMPTY_FILE_DEFERRAL_LIMIT = 5
+        # Loads in a row stop holding files back once they have held some back for this many retry
+        # delays.
+        MAX_HOLD_RETRY_DELAYS = 5
 
-        # A file that loads have found empty while the applied data has content from it: when a
-        # load first found it empty, when the current delay started, and the file's modification
-        # time when a load last found it empty, or nil if it could not be read.
-        EmptyEpisode = Struct.new(:first_seen, :since, :modified)
-        private_constant :EmptyEpisode
+        # A file whose content is in effect and that loads have found with no content: since when it
+        # has been so without being written, and its {Poller::FileState} then.
+        EmptyFile = Struct.new(:since, :state)
+        private_constant :EmptyFile
 
         #
         # @param paths [Array<String>] the files to load, already resolved to absolute paths. The
@@ -77,11 +85,14 @@ module LaunchDarkly
         # @param debounce_delay [Numeric] seconds to wait after a {#trigger} call for further calls
         #   to settle before reloading. If zero or negative, each trigger reloads at once.
         # @param retry_delay [Numeric] seconds to wait after a failed reload before retrying
-        #   automatically. A file that had content and is found empty is put off for the same delay.
-        #   If zero or negative, there is no automatic retry, and an empty file is parsed as it is.
+        #   automatically. A file whose content is in effect and that is found empty is held back
+        #   for the same delay. If zero or negative, there is no automatic retry, and an empty file
+        #   is parsed as it is.
         # @param skip_unchanged [Boolean] if true, `apply` is not invoked when the files' raw
         #   contents are byte-identical to the last successfully applied contents.
         # @param log_prefix [String] the prefix of every log line this reloader writes
+        # @param clock [#call, nil] returns the seconds of a monotonic clock, for the time a file has
+        #   been held back; nil for the system's. Scheduling always uses the system's clock.
         #
         def initialize(paths:, logger:, apply:, on_error: nil,
                        duplicate_keys_handling: DuplicateKeysHandling::FAIL,
@@ -89,7 +100,8 @@ module LaunchDarkly
                        debounce_delay: DEFAULT_DEBOUNCE_DELAY,
                        retry_delay: DEFAULT_RETRY_DELAY,
                        skip_unchanged: false,
-                       log_prefix: "[LDClient]")
+                       log_prefix: "[LDClient]",
+                       clock: nil)
           @paths = paths
           @logger = logger
           @log_prefix = log_prefix
@@ -100,6 +112,7 @@ module LaunchDarkly
           @debounce_delay = debounce_delay
           @retry_delay = retry_delay
           @skip_unchanged = skip_unchanged
+          @clock = clock || method(:monotonic_now)
 
           # Guards the scheduling state below and wakes the worker.
           @mutex = Mutex.new
@@ -107,7 +120,7 @@ module LaunchDarkly
           @worker = nil
           @stopped = false
           @trigger_pending = false
-          @retry_requested = false
+          @requested_retry_delay = nil
           @debounce_deadline = nil
           @retry_deadline = nil
 
@@ -115,25 +128,29 @@ module LaunchDarkly
           @reload_mutex = Mutex.new
           @last_good_digest = nil
           @last_error_message = nil
-          # Whether each configured path contributed content to the data currently applied, and the
-          # EmptyEpisode of each path that loads have found empty since. Only touched while holding
-          # @reload_mutex.
+          # Whether each configured path contributed content to the data currently applied; the
+          # EmptyFile of each path whose content is in effect and that loads have found with no
+          # content since; when the current run of loads that hold files back began, or nil; and
+          # whether the load in progress held files back. Only touched while holding @reload_mutex.
           @applied_had_content = {}
-          @empty_episodes = {}
+          @empty_files = {}
+          @holding_since = nil
+          @held_back = false
         end
 
         #
         # Synchronously loads the files and applies the result, or reports the failure. Use it for
         # the initial load. A failure here schedules the same automatic retry as a failed
-        # triggered reload, and so does a load that puts off a file it finds empty.
+        # triggered reload, and a load that holds back a file it finds empty arms the retry for when
+        # the file may be read as it is.
         #
-        # @return [Boolean] true if the load succeeded, false if it failed or put off an empty file
+        # @return [Boolean] true if the load succeeded, false if it failed or held back an empty file
         #
         def reload_now
           ensure_started
-          ok = reload(retrying: false)
-          request_retry unless ok
-          ok
+          retry_in = reload(retrying: false)
+          request_retry(retry_in) unless retry_in.nil?
+          retry_in.nil?
         end
 
         #
@@ -172,11 +189,11 @@ module LaunchDarkly
           end
         end
 
-        private def request_retry
+        private def request_retry(delay)
           return unless @retry_delay > 0
 
           @mutex.synchronize do
-            @retry_requested = true
+            @requested_retry_delay = [@requested_retry_delay, delay].compact.min
             @cond.signal
           end
         end
@@ -191,11 +208,11 @@ module LaunchDarkly
             else
               @logger.debug { "#{@log_prefix} Retrying flag data load after earlier failure" }
             end
-            ok = reload(retrying: action == :retry)
+            retry_in = reload(retrying: action == :retry)
             @mutex.synchronize do
               # A pending retry is superseded by this reload. The reload either succeeded, or it
-              # failed and arms a fresh retry here.
-              @retry_deadline = ok || @retry_delay <= 0 ? nil : monotonic_now + @retry_delay
+              # failed or held back a file and arms a fresh retry here.
+              @retry_deadline = retry_in.nil? || @retry_delay <= 0 ? nil : monotonic_now + retry_in
             end
           end
         rescue => e
@@ -219,11 +236,12 @@ module LaunchDarkly
 
                 @debounce_deadline = now + @debounce_delay
               end
-              if @retry_requested
-                # A synchronous reload_now failed. Arm the retry without reloading again at once.
-                # An already armed retry keeps its earlier deadline.
-                @retry_requested = false
-                @retry_deadline ||= now + @retry_delay
+              unless @requested_retry_delay.nil?
+                # A synchronous reload_now failed or held back a file. Arm the retry without
+                # reloading again at once. An already armed retry that comes sooner is kept.
+                deadline = now + @requested_retry_delay
+                @requested_retry_delay = nil
+                @retry_deadline = [@retry_deadline, deadline].compact.min
               end
               if !@debounce_deadline.nil? && now >= @debounce_deadline
                 @debounce_deadline = nil
@@ -242,159 +260,183 @@ module LaunchDarkly
         end
 
         #
-        # Performs one full load of all configured files and returns whether it succeeded. That
-        # decides whether a retry is armed, so a skipped no-op application counts as success. The
-        # whole set is re-read on every reload: entries are combined across files in order, so a
-        # change to one file can alter which file wins for a key.
+        # Performs one full load of all configured files. Returns nil if it succeeded, or the
+        # seconds after which to retry if it failed or held back a file. A skipped no-op application
+        # counts as success. The whole set is re-read on every reload: entries are combined across
+        # files in order, so a change to one file can alter which file wins for a key.
         #
         private def reload(retrying: false)
           @reload_mutex.synchronize do
             # A trigger already queued when stop was called can still reach here.
-            return true if stopped?
+            return nil if stopped?
 
-            documents = []
-            files = []
-            had_content = {}
-            put_off = []
-            digest = Digest::SHA256.new
-            @paths.each do |path|
-              begin
-                # One read feeds both the digest and the parse, so the skip-unchanged digest can
-                # never disagree with the content that was applied.
-                content = FileData.read_file(path)
-              rescue ReadError => e
-                @empty_episodes.delete(path) if e.missing
-                if e.missing && @skip_missing_paths
-                  @logger.debug { "#{@log_prefix} File #{path} does not exist; it contributes no data" }
-                  had_content[path] = false
-                  files << FileSummary.new(path, false, 0, 0)
-                  next
-                end
-                return record_failure(e)
-              end
-              if FileData.blank?(content)
-                # The other files are still read, so that files emptied together start their
-                # delays in the same load.
-                if put_off_empty_file?(path)
-                  put_off << path
-                  next
-                end
-
-                had_content[path] = false
-              else
-                @empty_episodes.delete(path)
-                had_content[path] = true
-              end
-
-              digest << content << "\0"
-              begin
-                documents << FileData.parse_file(path, content)
-              rescue ReadError => e
-                return record_failure(e)
-              end
-              files << FileSummary.new(path, true, 0, 0)
-            end
-            return put_off_empty_files(put_off) unless put_off.empty?
-
+            @held_back = false
             begin
-              merged = FileData.merge(documents,
-                duplicate_keys_handling: @duplicate_keys_handling,
-                logger: @logger)
-            rescue => e
-              return record_failure(e)
+              load_files
+            ensure
+              # A run of loads that hold files back ends with any load that does not.
+              @holding_since = nil unless @held_back
             end
-
-            # Documents are the present files in order. Copy their counts onto the file summaries.
-            document_index = 0
-            files.each do |file|
-              next unless file.present
-
-              summary = merged.documents[document_index]
-              file.flags = summary.flags
-              file.segments = summary.segments
-              document_index += 1
-            end
-            merged.files = files
-
-            # stop may have been called while the files were being read. Deliver nothing then.
-            return true if stopped?
-
-            # A success right after a failure must apply even when the content is unchanged since
-            # the last success. The consumer heard about the failure through on_error and may
-            # have moved to an interrupted state. Only apply tells it that things are good again.
-            recovering = !@last_error_message.nil?
-            hexdigest = digest.hexdigest
-            if @skip_unchanged && !recovering && hexdigest == @last_good_digest
-              @applied_had_content = had_content
-              return true
-            end
-
-            # Nothing is remembered until the consumer has accepted the result. A result that
-            # apply rejects must not become the baseline that skip-unchanged compares against,
-            # and must not count as a recovery.
-            begin
-              @apply.call(merged)
-            rescue => e
-              return record_failure(e)
-            end
-            @last_error_message = nil
-            @last_good_digest = hexdigest
-            @applied_had_content = had_content
-            true
           end
         end
 
+        # The body of {#reload}, while holding @reload_mutex.
+        private def load_files
+          documents = []
+          files = []
+          had_content = {}
+          held = []
+          now = @clock.call
+          digest = Digest::SHA256.new
+          @paths.each do |path|
+            begin
+              # One read feeds both the digest and the parse, so the skip-unchanged digest can never
+              # disagree with the content that was applied.
+              content = FileData.read_file(path)
+            rescue ReadError => e
+              @empty_files.delete(path) if e.missing
+              if e.missing && @skip_missing_paths
+                @logger.debug { "#{@log_prefix} File #{path} does not exist; it contributes no data" }
+                had_content[path] = false
+                files << FileSummary.new(path, false, 0, 0)
+                next
+              end
+              return record_failure(e)
+            end
+            # A file with no content, or YAML that the parser reads as nothing, such as only a
+            # comment, has no entries. A read can see that much of a file that is being written.
+            # Content with no JSON document is only parsed when the file is not held back, and then
+            # fails to parse.
+            document = nil
+            has_content = !FileData.blank?(content)
+            if has_content
+              begin
+                document = FileData.parse_file(path, content)
+              rescue ReadError => e
+                return record_failure(e)
+              end
+              has_content = !document.equal?(Document::NONE)
+            end
+            if has_content
+              @empty_files.delete(path)
+            elsif hold_back?(path, now)
+              # The other files are still read, so that files emptied together start their delays
+              # in the same load.
+              held << path
+              next
+            end
+            had_content[path] = has_content
+
+            digest << content << "\0"
+            if document.nil?
+              begin
+                document = FileData.parse_file(path, content)
+              rescue ReadError => e
+                return record_failure(e)
+              end
+            end
+            documents << document
+            files << FileSummary.new(path, true, 0, 0)
+          end
+          return hold_back(held, now) unless held.empty?
+
+          begin
+            merged = FileData.merge(documents,
+              duplicate_keys_handling: @duplicate_keys_handling,
+              logger: @logger)
+          rescue => e
+            return record_failure(e)
+          end
+
+          # Documents are the present files in order. Copy their counts onto the file summaries.
+          document_index = 0
+          files.each do |file|
+            next unless file.present
+
+            summary = merged.documents[document_index]
+            file.flags = summary.flags
+            file.segments = summary.segments
+            document_index += 1
+          end
+          merged.files = files
+
+          # stop may have been called while the files were being read. Deliver nothing then.
+          return nil if stopped?
+
+          # A success right after a failure must apply even when the content is unchanged since the
+          # last success. The consumer heard about the failure through on_error and may have moved
+          # to an interrupted state. Only apply tells it that things are good again.
+          recovering = !@last_error_message.nil?
+          hexdigest = digest.hexdigest
+          if @skip_unchanged && !recovering && hexdigest == @last_good_digest
+            # The digest covers only the content of the files that are present, so the same
+            # content can now come from another file.
+            @applied_had_content = had_content
+            return nil
+          end
+
+          # Nothing is remembered until the consumer has accepted the result. A result that apply
+          # rejects must not become the baseline that skip-unchanged compares against, and must not
+          # count as a recovery.
+          begin
+            @apply.call(merged)
+          rescue => e
+            return record_failure(e)
+          end
+          @last_error_message = nil
+          @last_good_digest = hexdigest
+          @applied_had_content = had_content
+          nil
+        end
+
         #
-        # Decides whether a load that found the file empty puts it off, because the file may be in
-        # the middle of an in-place rewrite, and records the empty episode. Modification times are
-        # only compared with each other, never with the clock.
+        # Decides whether a load that found a file with no content holds it back, because it may be
+        # in the middle of an in-place rewrite, and records since when it has been so.
         #
-        private def put_off_empty_file?(path)
+        private def hold_back?(path, now)
           return false if @retry_delay <= 0 || !@applied_had_content[path]
 
-          now = monotonic_now
-          modified = begin
-            File.mtime(path)
-          rescue SystemCallError, IOError
-            nil
+          state = Poller.observe(path)
+          empty = @empty_files[path]
+          if empty.nil?
+            empty = EmptyFile.new(now, state)
+            @empty_files[path] = empty
+          elsif empty.state != state
+            # The file was written since a load last found it with no content: a new rewrite.
+            empty.since = now
+            empty.state = state
           end
-          episode = @empty_episodes[path]
-          if episode.nil?
-            episode = EmptyEpisode.new(now, now, modified)
-            @empty_episodes[path] = episode
-          elsif modified != episode.modified
-            # The file was written since a load last found it empty: a new rewrite.
-            episode.since = now
-            episode.modified = modified
-          end
-          # After the delay the file is parsed. The episode stays, so later loads keep parsing it
-          # until it has content or is missing. The delay is checked with a tenth of slack, so that
-          # the retry that putting the file off arms, one retry delay later, parses it even if it
-          # comes slightly early.
-          now - episode.since < @retry_delay * 0.9 && now - episode.first_seen < EMPTY_FILE_DEFERRAL_LIMIT * @retry_delay
+          # After the delay the file is parsed. The entry stays, so later loads keep parsing it
+          # until it has content or is missing.
+          now - empty.since < @retry_delay && now - (@holding_since || now) < MAX_HOLD_RETRY_DELAYS * @retry_delay
         end
 
         #
-        # Puts off a load that found files empty. The current data stays, no failure is reported,
-        # and the false result arms the retry.
+        # Holds back a load that found files with no content. The current data stays and no failure
+        # is reported. Returns when to retry: when the first of the files has stayed so for the retry
+        # delay, or when the run of holding loads reaches its limit, plus a tenth of the retry delay,
+        # so that a retry that comes a little early still finds the delay over.
         #
-        private def put_off_empty_files(paths)
-          # stop may have been called while the files were being read. Report success so that no
-          # retry is armed.
-          return true if stopped?
+        private def hold_back(paths, now)
+          # stop may have been called while the files were being read. Arm no retry.
+          return nil if stopped?
 
+          @held_back = true
+          @holding_since ||= now
+          retry_at = @holding_since + MAX_HOLD_RETRY_DELAYS * @retry_delay
           paths.each do |path|
             @logger.debug do
               "#{@log_prefix} File #{path} is empty, possibly while it is being rewritten; reading it again before applying it"
             end
+            retry_at = [retry_at, @empty_files[path].since + @retry_delay].min
           end
-          false
+          [retry_at - now, 0].max + @retry_delay / 10.0
         end
 
         private def record_failure(error)
           # stop may have been called while the files were being read. Deliver nothing then, and
-          # report success so that no retry is armed.
-          return true if stopped?
+          # arm no retry.
+          return nil if stopped?
 
           # With automatic retries, a persistent failure would repeat the same log entry and the
           # same callback on every attempt. Repeats of an identical failure are logged at debug
@@ -402,13 +444,13 @@ module LaunchDarkly
           message = error.message
           if message == @last_error_message
             @logger.debug { "#{@log_prefix} Unable to load flags: #{message}" }
-            return false
+            return @retry_delay
           end
 
           @last_error_message = message
           @logger.error { "#{@log_prefix} Unable to load flags: #{message}" }
           @on_error&.call(error)
-          false
+          @retry_delay
         end
 
         private def stopped?

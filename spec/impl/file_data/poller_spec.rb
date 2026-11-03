@@ -40,6 +40,18 @@ module LaunchDarkly
           end
         end
 
+        it "observes the state of the file that a symbolic link leads to" do
+          skip "symbolic links need extra privileges on Windows" if Gem.win_platform?
+          File.write(path("target.json"), "{}")
+          File.symlink(path("target.json"), path("link.json"))
+          File.utime(Time.at(1_000_000), Time.at(1_000_000), path("target.json"))
+
+          state = Poller.observe(path("link.json"))
+
+          expect(state).to eq(Poller::FileState.new(true, Time.at(1_000_000), 2))
+          expect(Poller.observe(path("missing.json")).exists).to be false
+        end
+
         it "invokes the callback when a file's modification time changes" do
           File.write(path("a.json"), "{}")
           with_poller([path("a.json")]) do |_poller, calls|

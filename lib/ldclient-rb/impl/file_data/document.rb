@@ -62,15 +62,19 @@ module LaunchDarkly
           @segments = segments
         end
 
+        # The document of YAML content that is only a null, such as an empty file, a comment, or
+        # "---": a document with no entries.
+        NONE = new(flags: {}.freeze, flag_values: {}.freeze, segments: {}.freeze).freeze
+
         #
         # Parses the content of a data file in the given format. {FileData.format_of} chooses the
         # format of a file from its name.
         #
         # Whether content with no entries is valid depends on the format, like the rest of the
         # content. Content that is empty or only white space is not a JSON document, so it fails to
-        # parse. In YAML it is a document with no entries, and so is a YAML document that is only a
-        # null. A document that is not a mapping, or whose "flags", "flagValues", or "segments"
-        # member is not a mapping, is an error.
+        # parse. In YAML it is a document with no entries, {NONE}, and so is a YAML document that is
+        # only a null, such as one with only a comment. A document that is not a mapping, or whose
+        # "flags", "flagValues", or "segments" member is not a mapping, is an error.
         #
         # @param content [String]
         # @param format [Symbol] `:json` or `:yaml`
@@ -88,7 +92,7 @@ module LaunchDarkly
             raw = JSON.parse(content)
           when :yaml
             raw = YAML.safe_load(content)
-            raw = {} if raw.nil?
+            return NONE if raw.nil?
           else
             raise ArgumentError, "unknown file format #{format.inspect}"
           end

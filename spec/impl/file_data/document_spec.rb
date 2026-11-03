@@ -53,6 +53,19 @@ module LaunchDarkly
             end
           end
 
+          it "returns NONE for YAML that is only a null, and a document for {} or a member that is null" do
+            ["", "# a comment\n", "---\n", "~\n"].each do |content|
+              expect(Document.parse(content, format: :yaml)).to be(Document::NONE)
+            end
+            ["{}\n", "flagValues:\n"].each do |content|
+              document = Document.parse(content, format: :yaml)
+
+              expect(document).not_to be(Document::NONE)
+              expect(document.flag_values).to eq({})
+            end
+            expect(Document.parse("{}", format: :json)).not_to be(Document::NONE)
+          end
+
           it "rejects empty JSON content, which is not a JSON document" do
             ["", " \n\r\n\t"].each do |content|
               expect { Document.parse(content, format: :json) }

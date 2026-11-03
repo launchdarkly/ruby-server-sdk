@@ -59,14 +59,20 @@ module LaunchDarkly
         # @return [Array<FileState>]
         #
         def self.observe_all(paths)
-          paths.map do |path|
-            begin
-              stat = File.stat(path)
-              FileState.new(true, stat.mtime, stat.size)
-            rescue SystemCallError
-              ABSENT
-            end
-          end
+          paths.map { |path| observe(path) }
+        end
+
+        #
+        # Examines one file. The state is that of the file a symbolic link leads to.
+        #
+        # @param path [String]
+        # @return [FileState]
+        #
+        def self.observe(path)
+          stat = File.stat(path)
+          FileState.new(true, stat.mtime, stat.size)
+        rescue SystemCallError
+          ABSENT
         end
 
         private def examine

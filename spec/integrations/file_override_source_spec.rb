@@ -483,6 +483,22 @@ module LaunchDarkly
                 expect(sink.snapshots.map { |flags, _segments| flags.map(&:key) }).to all(eq(["flag1"]))
               end
             end
+
+            it "never supplies a snapshot without the override while a YAML file that starts with a comment is rewritten" do
+              # A load during the pause finds only the comment, which the YAML parser reads as nothing.
+              comment = "# overrides for the incident\n"
+              a = write("a.yaml", comment + yaml_values_doc({ flag1: "a" }))
+
+              with_source([a], change_detection: mode) do |_source, sink|
+                sleep 0.3 if mode == :watching
+                ["b", "c"].each do |value|
+                  InPlaceWrites.rewrite(a, comment + yaml_values_doc({ flag1: value }), pause, first: comment)
+                  expect(wait_for { sink.flag_values == { "flag1" => value } }).to be true
+                end
+
+                expect(sink.snapshots.map { |flags, _segments| flags.map(&:key) }).to all(eq(["flag1"]))
+              end
+            end
           end
         end
 
