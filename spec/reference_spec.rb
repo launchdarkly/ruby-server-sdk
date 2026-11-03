@@ -90,6 +90,11 @@ module LaunchDarkly
       end
     end
 
+    it "returns the same reference when given a reference" do
+      reference = Reference.create("/a/b")
+      expect(Reference.create(reference)).to be(reference)
+    end
+
     describe "creating literal references" do
       it "can create valid references" do
         [

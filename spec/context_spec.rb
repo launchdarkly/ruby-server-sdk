@@ -84,6 +84,13 @@ module LaunchDarkly
           expect(context.private_attributes).to eq(Set[LaunchDarkly::Reference.create("email")])
         end
 
+        it "accepts privateAttributes from another context" do
+          original = subject.create({ key: "user-key", kind: "user", _meta: { privateAttributes: ["email", "/address/city"] } })
+          context = subject.create({ key: "user-key", kind: "user", _meta: { privateAttributes: original.private_attributes } })
+          expect(context.valid?).to be true
+          expect(context.private_attributes).to eq(original.private_attributes)
+        end
+
         it "creates the correct fully qualified key" do
           expect(subject.create({ key: "user-key", kind: "user" }).fully_qualified_key).to eq("user-key")
           expect(subject.create({ key: "org-key", kind: "org" }).fully_qualified_key).to eq("org:org-key")
