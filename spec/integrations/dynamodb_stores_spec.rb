@@ -197,29 +197,29 @@ module LaunchDarkly
 
         it "reads every page in all" do
           ensure_stop(tester.create_feature_store) do |store|
-            store.init({ LaunchDarkly::Impl::DataStore::FEATURES => flags })
+            store.init({ LaunchDarkly::Interfaces::DataStore::FEATURES => flags })
           end
 
           store, queries = create_paging_store(2)
           ensure_stop(store) do
-            expect(store.all(LaunchDarkly::Impl::DataStore::FEATURES).keys).to match_array(flags.keys)
+            expect(store.all(LaunchDarkly::Interfaces::DataStore::FEATURES).keys).to match_array(flags.keys)
           end
           expect(queries.count { |q| q[:exclusive_start_key] }).to be >= 2
         end
 
         it "reads every page of existing keys in init and deletes the keys that are not in the new data" do
           ensure_stop(tester.create_feature_store) do |store|
-            store.init({ LaunchDarkly::Impl::DataStore::FEATURES => flags })
+            store.init({ LaunchDarkly::Interfaces::DataStore::FEATURES => flags })
           end
 
           store, queries = create_paging_store(2)
           ensure_stop(store) do
-            store.init({ LaunchDarkly::Impl::DataStore::FEATURES => { flag1: flags[:flag1] } })
+            store.init({ LaunchDarkly::Interfaces::DataStore::FEATURES => { flag1: flags[:flag1] } })
           end
           expect(queries.count { |q| q[:exclusive_start_key] }).to be >= 2
 
           ensure_stop(tester.create_feature_store) do |reader|
-            expect(reader.all(LaunchDarkly::Impl::DataStore::FEATURES).keys).to eq([:flag1])
+            expect(reader.all(LaunchDarkly::Interfaces::DataStore::FEATURES).keys).to eq([:flag1])
           end
         end
       end

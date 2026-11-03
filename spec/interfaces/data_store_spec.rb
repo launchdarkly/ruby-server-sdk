@@ -34,15 +34,6 @@ module LaunchDarkly
           end
         end
 
-        describe "Impl aliases" do
-          it "are the public constants" do
-            expect(LaunchDarkly::Impl::DataStore::FEATURES).to be(FEATURES)
-            expect(LaunchDarkly::Impl::DataStore::SEGMENTS).to be(SEGMENTS)
-            expect(LaunchDarkly::Impl::DataStore::ALL_KINDS).to be(ALL_KINDS)
-            expect(LaunchDarkly::Impl::DataStore::DataKind).to be(DataKind)
-          end
-        end
-
         describe "eql?" do
           it "constant instances are equal to themselves" do
             expect(FEATURES.eql?(FEATURES)).to be true

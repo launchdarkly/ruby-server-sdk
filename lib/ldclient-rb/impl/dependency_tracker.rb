@@ -42,7 +42,7 @@ module LaunchDarkly
       def self.segment_keys_from_clauses(clauses)
         clauses.flat_map do |clause|
           if clause.op == :segmentMatch
-            clause.values.map { |value| {kind: DataStore::SEGMENTS, key: value }}
+            clause.values.map { |value| {kind: LaunchDarkly::Interfaces::DataStore::SEGMENTS, key: value }}
           else
             []
           end
@@ -66,13 +66,13 @@ module LaunchDarkly
                       from_item
                     end
 
-        if from_kind == DataStore::FEATURES && from_item.is_a?(LaunchDarkly::Impl::Model::FeatureFlag)
+        if from_kind == LaunchDarkly::Interfaces::DataStore::FEATURES && from_item.is_a?(LaunchDarkly::Impl::Model::FeatureFlag)
           prereq_keys = from_item.prerequisites.map { |prereq| {kind: from_kind, key: prereq.key} }
           segment_keys = from_item.rules.flat_map { |rule| DependencyTracker.segment_keys_from_clauses(rule.clauses) }
 
           results = Set.new(prereq_keys)
           results.merge(segment_keys)
-        elsif from_kind == DataStore::SEGMENTS && from_item.is_a?(LaunchDarkly::Impl::Model::Segment)
+        elsif from_kind == LaunchDarkly::Interfaces::DataStore::SEGMENTS && from_item.is_a?(LaunchDarkly::Impl::Model::Segment)
           kind_and_keys  = from_item.rules.flat_map do |rule|
             DependencyTracker.segment_keys_from_clauses(rule.clauses)
           end

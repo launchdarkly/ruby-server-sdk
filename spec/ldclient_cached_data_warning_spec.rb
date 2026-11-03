@@ -21,7 +21,7 @@ module LaunchDarkly
 
     def initialized_store
       store = InMemoryFeatureStore.new
-      store.init({ Impl::DataStore::FEATURES => {}, Impl::DataStore::SEGMENTS => {} })
+      store.init({ LaunchDarkly::Interfaces::DataStore::FEATURES => {}, LaunchDarkly::Interfaces::DataStore::SEGMENTS => {} })
       store
     end
 

@@ -3,7 +3,7 @@
 require "spec_helper"
 require "ldclient-rb/impl/data_store/store"
 require "ldclient-rb/impl/broadcaster"
-require "ldclient-rb/impl/data_store"
+require "ldclient-rb/impl/data_store/status"
 require "ldclient-rb/interfaces/data_system"
 
 module LaunchDarkly
@@ -45,8 +45,8 @@ module LaunchDarkly
 
           def initialize(should_fail: false)
             @data = {
-              LaunchDarkly::Impl::DataStore::FEATURES => {},
-              LaunchDarkly::Impl::DataStore::SEGMENTS => {},
+              LaunchDarkly::Interfaces::DataStore::FEATURES => {},
+              LaunchDarkly::Interfaces::DataStore::SEGMENTS => {},
             }
             @initialized = false
             @init_called_count = 0
@@ -67,8 +67,8 @@ module LaunchDarkly
               @init_errors << error
               raise error
             end
-            @data[LaunchDarkly::Impl::DataStore::FEATURES] = (all_data[LaunchDarkly::Impl::DataStore::FEATURES] || {}).dup
-            @data[LaunchDarkly::Impl::DataStore::SEGMENTS] = (all_data[LaunchDarkly::Impl::DataStore::SEGMENTS] || {}).dup
+            @data[LaunchDarkly::Interfaces::DataStore::FEATURES] = (all_data[LaunchDarkly::Interfaces::DataStore::FEATURES] || {}).dup
+            @data[LaunchDarkly::Interfaces::DataStore::SEGMENTS] = (all_data[LaunchDarkly::Interfaces::DataStore::SEGMENTS] || {}).dup
             @initialized = true
           end
 
@@ -161,7 +161,7 @@ module LaunchDarkly
 
             expect(subject.initialized?).to be true
             # InMemoryFeatureStoreV2's get method handles both string and symbol keys
-            result = subject.get_active_store.get(FEATURES, flag_key)
+            result = subject.get_active_store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, flag_key)
             expect(result).not_to be_nil
             expect(result.key).to eq(flag_key.to_s)  # key field is string
           end
@@ -202,7 +202,7 @@ module LaunchDarkly
 
             subject.apply(delta_change_set, false)
 
-            result = subject.get_active_store.get(FEATURES, flag_key)
+            result = subject.get_active_store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, flag_key)
             expect(result.version).to eq(2)
             expect(result.on).to be false
           end
@@ -235,7 +235,7 @@ module LaunchDarkly
             )
 
             subject.apply(init_change_set, false)
-            expect(subject.get_active_store.get(FEATURES, flag_key)).not_to be_nil
+            expect(subject.get_active_store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, flag_key)).not_to be_nil
 
             # Delete the flag
             delete_change = LaunchDarkly::Interfaces::DataSystem::Change.new(
@@ -253,7 +253,7 @@ module LaunchDarkly
             )
 
             subject.apply(delete_change_set, false)
-            expect(subject.get_active_store.get(FEATURES, flag_key)).to be_nil
+            expect(subject.get_active_store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, flag_key)).to be_nil
           end
 
           it "broadcasts changeset to listeners" do
@@ -428,7 +428,7 @@ module LaunchDarkly
               expect(persistent_store.init_called_count).to eq(1)
 
               # Verify data in persistent store
-              stored_flag = persistent_store.get(FEATURES, flag_key)
+              stored_flag = persistent_store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, flag_key)
               expect(stored_flag).not_to be_nil
               expect(stored_flag[:key]).to eq(flag_key.to_s)  # key field is string
             end
@@ -459,7 +459,7 @@ module LaunchDarkly
               error = subject.commit
               expect(error).to be_nil
 
-              stored_flag = persistent_store.get(FEATURES, flag_key)
+              stored_flag = persistent_store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, flag_key)
               expect(stored_flag[:key]).to eq(flag_key.to_s)  # key field is string
               expect(stored_flag[:version]).to eq(1)
             end
@@ -548,7 +548,7 @@ module LaunchDarkly
               subject.apply(change_set, true)
 
               expect(persistent_store.init_called_count).to be >= 1
-              stored_flag = persistent_store.get(FEATURES, flag_key)
+              stored_flag = persistent_store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, flag_key)
               expect(stored_flag).not_to be_nil
             end
 
@@ -631,7 +631,7 @@ module LaunchDarkly
 
               expect(persistent_store.upsert_calls).not_to be_empty
               # Verify deleted flag was written
-              stored_flag = persistent_store.get(FEATURES, flag_key)
+              stored_flag = persistent_store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, flag_key)
               expect(stored_flag).to be_nil  # get returns nil for deleted items
             end
           end

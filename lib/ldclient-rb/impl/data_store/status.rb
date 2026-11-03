@@ -4,8 +4,6 @@ require "ldclient-rb/interfaces"
 module LaunchDarkly
   module Impl
     module DataStore
-      DataKind = LaunchDarkly::Interfaces::DataStore::DataKind
-
       class StatusProvider
         include LaunchDarkly::Interfaces::DataStore::StatusProvider
 

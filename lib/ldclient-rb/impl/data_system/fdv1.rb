@@ -5,7 +5,7 @@ require 'ldclient-rb/impl/data_source/null_processor'
 require 'ldclient-rb/impl/data_source/polling'
 require 'ldclient-rb/impl/data_source/requestor'
 require 'ldclient-rb/impl/data_source/stream'
-require 'ldclient-rb/impl/data_store'
+require 'ldclient-rb/impl/data_store/status'
 require 'ldclient-rb/impl/data_system'
 require 'ldclient-rb/impl/store_client_wrapper'
 

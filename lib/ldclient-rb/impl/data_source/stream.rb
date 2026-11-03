@@ -17,8 +17,8 @@ module LaunchDarkly
       READ_TIMEOUT_SECONDS = 300  # 5 minutes; the stream should send a ping every 3 minutes
 
       KEY_PATHS = {
-        Impl::DataStore::FEATURES => "/flags/",
-        Impl::DataStore::SEGMENTS => "/segments/",
+        LaunchDarkly::Interfaces::DataStore::FEATURES => "/flags/",
+        LaunchDarkly::Interfaces::DataStore::SEGMENTS => "/segments/",
       }
 
       class StreamProcessor
@@ -182,7 +182,7 @@ module LaunchDarkly
               @ready.set
             elsif method == PATCH
               data = JSON.parse(message.data, symbolize_names: true)
-              for kind in [Impl::DataStore::FEATURES, Impl::DataStore::SEGMENTS]
+              for kind in [LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Interfaces::DataStore::SEGMENTS]
                 key = key_for_path(kind, data[:path])
                 if key
                   item = Impl::Model.deserialize(kind, data[:data], @config.logger)
@@ -192,7 +192,7 @@ module LaunchDarkly
               end
             elsif method == DELETE
               data = JSON.parse(message.data, symbolize_names: true)
-              for kind in [Impl::DataStore::FEATURES, Impl::DataStore::SEGMENTS]
+              for kind in [LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Interfaces::DataStore::SEGMENTS]
                 key = key_for_path(kind, data[:path])
                 if key
                   update_sink_or_data_store.delete(kind, key, data[:version])
