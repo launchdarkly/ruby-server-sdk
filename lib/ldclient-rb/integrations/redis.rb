@@ -1,4 +1,5 @@
 require "ldclient-rb/impl/integrations/redis_impl"
+require "ldclient-rb/integrations/util/persistent_data_store_wrapper"
 
 module LaunchDarkly
   module Integrations
@@ -63,7 +64,8 @@ module LaunchDarkly
       # @return [LaunchDarkly::Interfaces::FeatureStore]  a feature store object
       #
       def self.new_feature_store(opts = {})
-        LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStore.new(opts)
+        core = LaunchDarkly::Impl::Integrations::Redis::RedisFeatureStoreCore.new(opts)
+        LaunchDarkly::Integrations::Util::PersistentDataStoreWrapper.new(core, opts)
       end
 
       #

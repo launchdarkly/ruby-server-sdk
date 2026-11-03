@@ -67,7 +67,7 @@ module LaunchDarkly
 
         #
         # Passthrough for the FDv2 store coordinator. If the wrapped store supports
-        # disabling its cache (e.g. {LaunchDarkly::Integrations::Util::CachingStoreWrapper}),
+        # disabling its cache (e.g. {LaunchDarkly::Integrations::Util::PersistentDataStoreWrapper}),
         # forward the call; otherwise no-op.
         #
         # @return [void]

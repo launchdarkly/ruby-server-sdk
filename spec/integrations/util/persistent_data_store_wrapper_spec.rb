@@ -2,10 +2,10 @@ require "spec_helper"
 
 module LaunchDarkly
   module Integrations
-    describe Util::CachingStoreWrapper do
-      subject { Util::CachingStoreWrapper }
+    describe Util::PersistentDataStoreWrapper do
+      subject { Util::PersistentDataStoreWrapper }
 
-      THINGS = { namespace: "things" }
+      THINGS = Interfaces::DataStore::DataKind.new(namespace: "things", priority: 0)
 
       it "reports monitoring enabled and gets availability from the core" do
         [true, false].each do |expected|
@@ -26,6 +26,19 @@ module LaunchDarkly
 
       shared_examples "tests" do |cached|
         opts = cached ? { expiration: 30 } : { expiration: 0 }
+
+        it "gives the core serialized items" do
+          core = MockCore.new
+          wrapper = subject.new(core, opts)
+
+          wrapper.upsert(THINGS, { key: "flag", version: 3 })
+          wrapper.delete(THINGS, "other", 4)
+
+          expect(core.data[THINGS]["flag"]).to eq Interfaces::DataStore::SerializedItemDescriptor.new(
+            version: 3, deleted: false, serialized_item: '{"key":"flag","version":3}')
+          expect(core.data[THINGS]["other"]).to eq Interfaces::DataStore::SerializedItemDescriptor.new(
+            version: 4, deleted: true, serialized_item: '{"key":"other","version":4,"deleted":true}')
+        end
 
         it "gets item" do
           core = MockCore.new
@@ -55,6 +68,16 @@ module LaunchDarkly
           expect(wrapper.get(THINGS, key)).to eq(cached ? nil : itemv2)  # if cached, we will not see the new underlying value yet
         end
 
+        it "treats an item with no serialized data as deleted" do
+          core = MockCore.new
+          wrapper = subject.new(core, opts)
+          core.force_set_descriptor(THINGS, "flag",
+            Interfaces::DataStore::SerializedItemDescriptor.new(version: 5, deleted: true, serialized_item: nil))
+
+          expect(wrapper.get(THINGS, "flag")).to be_nil
+          expect(wrapper.all(THINGS)).to eq({})
+        end
+
         it "gets missing item" do
           core = MockCore.new
           wrapper = subject.new(core, opts)
@@ -75,12 +98,10 @@ module LaunchDarkly
 
           core.force_set(THINGS, item1)
           core.force_set(THINGS, item2)
-          expect(wrapper.all(THINGS)).to eq({ item1[:key] => item1, item2[:key] => item2 })
+          expect(wrapper.all(THINGS)).to eq({ flag1: item1, flag2: item2 })
 
           core.force_remove(THINGS, item2[:key])
-          expect(wrapper.all(THINGS)).to eq(cached ?
-            { item1[:key] => item1, item2[:key] => item2 } :
-            { item1[:key] => item1 })
+          expect(wrapper.all(THINGS)).to eq(cached ? { flag1: item1, flag2: item2 } : { flag1: item1 })
         end
 
         it "gets all items filtering out deleted items" do
@@ -91,7 +112,7 @@ module LaunchDarkly
 
           core.force_set(THINGS, item1)
           core.force_set(THINGS, item2)
-          expect(wrapper.all(THINGS)).to eq({ item1[:key] => item1 })
+          expect(wrapper.all(THINGS)).to eq({ flag1: item1 })
         end
 
         it "upserts item successfully" do
@@ -102,10 +123,10 @@ module LaunchDarkly
           itemv2 = { key: key, version: 2 }
 
           expect(wrapper.upsert(THINGS, itemv1)).to be true
-          expect(core.data[THINGS][key]).to eq itemv1
+          expect(core.stored(THINGS, key)).to eq itemv1
 
           expect(wrapper.upsert(THINGS, itemv2)).to be true
-          expect(core.data[THINGS][key]).to eq itemv2
+          expect(core.stored(THINGS, key)).to eq itemv2
 
           # if we have a cache, verify that the new item is now cached by writing a different value
           # to the underlying data - Get should still return the cached item
@@ -129,7 +150,7 @@ module LaunchDarkly
           expect(wrapper.get(THINGS, key)).to eq itemv1
 
           expect(wrapper.delete(THINGS, key, 2)).to be true
-          expect(core.data[THINGS][key]).to eq itemv2
+          expect(core.stored(THINGS, key)).to eq itemv2
 
           core.force_set(THINGS, itemv3)  # make a change that bypasses the cache
 
@@ -144,7 +165,7 @@ module LaunchDarkly
 
           expect(wrapper.upsert(THINGS, { key: "flag", version: 2 })).to be false
           expect(wrapper.upsert(THINGS, { key: "flag", version: 1 })).to be false
-          expect(core.data[THINGS]["flag"]).to eq itemv2
+          expect(core.stored(THINGS, "flag")).to eq itemv2
         end
 
         it "returns false when delete has a version that is not newer" do
@@ -154,7 +175,33 @@ module LaunchDarkly
           core.force_set(THINGS, itemv2)
 
           expect(wrapper.delete(THINGS, "flag", 2)).to be false
-          expect(core.data[THINGS]["flag"]).to eq itemv2
+          expect(core.stored(THINGS, "flag")).to eq itemv2
+        end
+
+        it "returns false when the core does not return true from upsert" do
+          core = MockCore.new
+          core.upsert_result = nil
+          wrapper = subject.new(core, opts)
+
+          expect(wrapper.upsert(THINGS, { key: "flag", version: 1 })).to be false
+        end
+
+        it "raises an error from init and does not report initialized" do
+          core = MockCore.new
+          core.error = RuntimeError.new("sorry")
+          wrapper = subject.new(core, opts)
+
+          expect { wrapper.init({ THINGS => {} }) }.to raise_error("sorry")
+          core.error = nil
+          expect(wrapper.initialized?).to be false
+        end
+
+        it "raises an error from upsert" do
+          core = MockCore.new
+          core.error = RuntimeError.new("sorry")
+          wrapper = subject.new(core, opts)
+
+          expect { wrapper.upsert(THINGS, { key: "flag", version: 1 }) }.to raise_error("sorry")
         end
       end
 
@@ -169,7 +216,7 @@ module LaunchDarkly
           item1 = { key: "flag1", version: 1 }
           item2 = { key: "flag2", version: 1 }
 
-          wrapper.init({ THINGS => { item1[:key] => item1, item2[:key] => item2 } })
+          wrapper.init({ THINGS => { flag1: item1, flag2: item2 } })
           core.force_remove(THINGS, item1[:key])
 
           expect(wrapper.get(THINGS, item1[:key])).to eq item1
@@ -181,10 +228,37 @@ module LaunchDarkly
           item1 = { key: "flag1", version: 1 }
           item2 = { key: "flag2", version: 1 }
 
-          wrapper.init({ THINGS => { item1[:key] => item1, item2[:key] => item2 } })
+          wrapper.init({ THINGS => { flag1: item1, flag2: item2 } })
           core.force_remove(THINGS, item1[:key])
 
-          expect(wrapper.all(THINGS)).to eq({ item1[:key] => item1, item2[:key] => item2 })
+          expect(wrapper.all(THINGS)).to eq({ flag1: item1, flag2: item2 })
+        end
+
+        it "init clears the cache if the core fails" do
+          core = MockCore.new
+          wrapper = subject.new(core, cached_opts)
+          item = { key: "flag", version: 1 }
+          wrapper.init({ THINGS => { flag: item } })
+
+          core.error = RuntimeError.new("sorry")
+          expect { wrapper.init({ THINGS => {} }) }.to raise_error("sorry")
+          core.error = nil
+
+          core.force_remove(THINGS, "flag")
+          expect(wrapper.get(THINGS, "flag")).to be_nil
+        end
+
+        it "upsert does not change the cache if the core fails" do
+          core = MockCore.new
+          wrapper = subject.new(core, cached_opts)
+          itemv1 = { key: "flag", version: 1 }
+          wrapper.upsert(THINGS, itemv1)
+
+          core.error = RuntimeError.new("sorry")
+          expect { wrapper.upsert(THINGS, { key: "flag", version: 2 }) }.to raise_error("sorry")
+          core.error = nil
+
+          expect(wrapper.get(THINGS, "flag")).to eq itemv1
         end
 
         it "upsert doesn't update cache if unsuccessful" do
@@ -199,10 +273,10 @@ module LaunchDarkly
           itemv2 = { key: key, version: 2 }
 
           wrapper.upsert(THINGS, itemv2)
-          expect(core.data[THINGS][key]).to eq itemv2
+          expect(core.stored(THINGS, key)).to eq itemv2
 
           wrapper.upsert(THINGS, itemv1)
-          expect(core.data[THINGS][key]).to eq itemv2  # value in store remains the same
+          expect(core.stored(THINGS, key)).to eq itemv2  # value in store remains the same
 
           itemv3 = { key: key, version: 3 }
           core.force_set(THINGS, itemv3)  # bypasses cache so we can verify that itemv2 is in the cache
@@ -222,6 +296,32 @@ module LaunchDarkly
           expect(wrapper.upsert(THINGS, { key: key, version: 2 })).to be false
           core.force_remove(THINGS, key)  # bypasses cache so we can verify that itemv3 is in the cache
           expect(wrapper.get(THINGS, key)).to eq itemv3
+        end
+
+        it "upsert keeps the cached item if the store read fails after an unsuccessful write" do
+          core = MockCore.new
+          wrapper = subject.new(core, cached_opts)
+          itemv2 = { key: "flag", version: 2 }
+          wrapper.upsert(THINGS, itemv2)
+
+          core.get_error = RuntimeError.new("sorry")
+          expect(wrapper.upsert(THINGS, { key: "flag", version: 1 })).to be false
+          core.get_error = nil
+
+          core.force_set(THINGS, { key: "flag", version: 3 })
+          expect(wrapper.get(THINGS, "flag")).to eq itemv2
+        end
+
+        it "upsert drops the cached list of all items" do
+          core = MockCore.new
+          wrapper = subject.new(core, cached_opts)
+          item1 = { key: "flag1", version: 1 }
+          item2 = { key: "flag2", version: 1 }
+          wrapper.init({ THINGS => { flag1: item1 } })
+          expect(wrapper.all(THINGS)).to eq({ flag1: item1 })
+
+          wrapper.upsert(THINGS, item2)
+          expect(wrapper.all(THINGS)).to eq({ flag1: item1, flag2: item2 })
         end
 
         it "initialized? can cache false result" do
@@ -343,49 +443,88 @@ module LaunchDarkly
         end
       end
 
+      describe Interfaces::PersistentDataStore do
+        it "does not hide a method that a store inherits from a superclass" do
+          base = Class.new do
+            def stop
+              :stopped
+            end
+          end
+          store = Class.new(base) { include Interfaces::PersistentDataStore }.new
+
+          expect(store.stop).to eq :stopped
+        end
+
+        it "does not supply a method that a store does not implement" do
+          store = Class.new { include Interfaces::PersistentDataStore }.new
+
+          expect { store.stop }.to raise_error(NoMethodError)
+        end
+      end
+
+      #
+      # A store core that keeps serialized items in memory. Like Redis, it does not keep the version
+      # apart from the serialized item.
+      #
       class MockCore
+        include Interfaces::PersistentDataStore
+
         def initialize
           @data = {}
           @inited = false
           @inited_query_count = 0
+          @upsert_result = :default
         end
 
         attr_reader :data
         attr_reader :inited_query_count
-        attr_accessor :inited
+        attr_accessor :inited, :error, :get_error, :upsert_result
 
         def force_set(kind, item)
+          force_set_descriptor(kind, item[:key], Interfaces::DataStore::SerializedItemDescriptor.new(
+            version: 0, deleted: false, serialized_item: kind.serialize(item)))
+        end
+
+        def force_set_descriptor(kind, key, descriptor)
           @data[kind] = {} unless @data.has_key?(kind)
-          @data[kind][item[:key]] = item
+          @data[kind][key] = descriptor
         end
 
         def force_remove(kind, key)
           @data[kind].delete(key) if @data.has_key?(kind)
         end
 
-        def init_internal(all_data)
-          @data = all_data
+        def stored(kind, key)
+          kind.deserialize(@data[kind][key].serialized_item)
+        end
+
+        def init(all_data)
+          raise @error unless @error.nil?
+          @data = all_data.to_h { |kind, items| [kind, items.transform_keys(&:to_s)] }
           @inited = true
         end
 
-        def get_internal(kind, key)
+        def get(kind, key)
+          raise @get_error unless @get_error.nil?
           items = @data[kind]
-          items.nil? ? nil : items[key]
+          items.nil? ? nil : items[key.to_s]
         end
 
-        def get_all_internal(kind)
-          @data[kind]
+        def get_all(kind)
+          @data[kind] || {}
         end
 
-        def upsert_internal(kind, item)
+        def upsert(kind, key, item)
+          raise @error unless @error.nil?
+          return @upsert_result unless @upsert_result == :default
           @data[kind] = {} unless @data.has_key?(kind)
-          old_item = @data[kind][item[:key]]
-          return false if !old_item.nil? && old_item[:version] >= item[:version]
-          @data[kind][item[:key]] = item
+          old = @data[kind][key.to_s]
+          return false if !old.nil? && kind.deserialize(old.serialized_item)[:version] >= item.version
+          @data[kind][key.to_s] = item
           true
         end
 
-        def initialized_internal?
+        def initialized?
           @inited_query_count = @inited_query_count + 1
           @inited
         end
