@@ -192,14 +192,14 @@ module LaunchDarkly
       # A file can be rewritten in place. To remove a file's overrides, delete it or write a document
       # with no entries, such as `{}`. A file whose content is in effect and that is found with no
       # content (empty, or YAML with only a comment or `---`) may be in the middle of a rewrite, so the
-      # source holds it back: it waits about a second, and at most about five seconds while files keep
-      # being rewritten, before it reads the file as it is. Changes to the other files wait too, because
-      # a reload applies all of the files or none. After the wait, a JSON file with no content is not a
-      # valid document: it fails to load, and the overrides in effect stay. A YAML file with no content
-      # is a document with no entries, so its overrides are removed. YAML that is cut off can still
-      # parse, with fewer entries or with a value cut short, so for a YAML file, replacing its entire
-      # contents in one operation, such as renaming a fully written temporary file over it, avoids
-      # briefly applying only a part of it.
+      # source holds it back: it waits about a second, and at most about five seconds while that file
+      # keeps being rewritten, before it reads the file as it is. Changes to the other files wait too,
+      # because a reload applies all of the files or none. After the wait, a JSON file with no content
+      # is not a valid document: it fails to load, and the overrides in effect stay. A YAML file with no
+      # content is a document with no entries, so its overrides are removed. YAML that is cut off can
+      # still parse, with fewer entries or with a value cut short, so for a YAML file, replacing its
+      # entire contents in one operation, such as renaming a fully written temporary file over it,
+      # avoids briefly applying only a part of it.
       #
       # An evaluation that an override affects, directly or through a prerequisite or segment, is
       # marked: its reason reports {EvaluationReason#override_affected}, it produces no individual
