@@ -15,6 +15,14 @@ class ClientEntity
 
     opts[:logger] = log
 
+    # A per-component baseUri set below takes precedence over these.
+    service_endpoints = config[:serviceEndpoints]
+    if service_endpoints
+      opts[:stream_uri] = service_endpoints[:streaming] if service_endpoints[:streaming]
+      opts[:base_uri] = service_endpoints[:polling] if service_endpoints[:polling]
+      opts[:events_uri] = service_endpoints[:events] if service_endpoints[:events]
+    end
+
     data_system_config = config[:dataSystem]
     if data_system_config
       data_system = LaunchDarkly::DataSystem.custom
@@ -68,7 +76,8 @@ class ClientEntity
       opts[:base_uri] = polling[:baseUri] unless polling[:baseUri].nil?
       opts[:payload_filter_key] = polling[:filter] unless polling[:filter].nil?
       set_optional_time_prop(polling, :pollIntervalMs, opts, :poll_interval)
-    else
+    elsif config.dig(:serviceEndpoints, :streaming).nil?
+      # With no data source block and no streaming endpoint, read only from the persistent store.
       opts[:use_ldd] = true
     end
 
@@ -109,6 +118,13 @@ class ClientEntity
         :id => config[:tags][:applicationId],
         :version => config[:tags][:applicationVersion],
       }
+    end
+
+    if config[:wrapper]
+      # The harness sends an empty string for an unset name or version.
+      wrapper = config[:wrapper]
+      opts[:wrapper_name] = wrapper[:name] unless wrapper[:name].to_s.empty?
+      opts[:wrapper_version] = wrapper[:version] unless wrapper[:version].to_s.empty?
     end
 
     if config[:hooks]
