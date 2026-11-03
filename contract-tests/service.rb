@@ -57,6 +57,9 @@ get '/' do
       'fdv1-fallback',
       'retry-conformance-fdv1-streaming',
       'retry-conformance-fdv1-polling',
+      'wrapper',
+      'service-endpoints',
+      'tls:verify-peer',
     ],
   }.to_json
 end
