@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "capturing_logger"
+require "in_place_writes"
 require "model_builders"
 require "override_test_components"
 require "tmpdir"
@@ -50,9 +51,20 @@ module LaunchDarkly
         File.join(@dir, name)
       end
 
+      # Applications rewrite override files in place, which is not atomic. The tests do too,
+      # deliberately slowly: a file that exists is truncated, and written 30 ms later, so a load can
+      # find it empty, as it would with an application's writes, instead of only by chance.
       def write(name, content)
-        File.write(path(name), content)
+        if File.exist?(path(name))
+          InPlaceWrites.rewrite(path(name), content, 0.03)
+        else
+          File.write(path(name), content)
+        end
         path(name)
+      end
+
+      def yaml_values_doc(values)
+        "flagValues:\n" + values.map { |key, value| "  #{key}: #{value}\n" }.join
       end
 
       def values_doc(values)
@@ -426,6 +438,161 @@ module LaunchDarkly
         end
       end
 
+      describe "in-place rewrites" do
+        # A writer that rewrites a file in place truncates it, and writes the new content after this
+        # pause. A load in between finds the file empty.
+        let(:pause) { 0.3 }
+
+        before do
+          # The retry comes long enough after a load that finds the file empty for the rewrite to
+          # finish before it, even on a slow machine.
+          stub_const("LaunchDarkly::Impl::FileData::Reloader::DEFAULT_RETRY_DELAY", 1.5)
+        end
+
+        [:polling, :watching].each do |mode|
+          context "with #{mode} change detection" do
+            before do
+              skip "the listen gem is not installed" if mode == :watching && !Impl::FileData::Watcher.available?
+            end
+
+            it "never supplies a snapshot without the override while a JSON file is rewritten" do
+              a = write("a.json", values_doc({ flag1: "a" }))
+
+              with_source([a], change_detection: mode) do |_source, sink|
+                sleep 0.3 if mode == :watching
+                ["b", "c"].each do |value|
+                  InPlaceWrites.rewrite(a, values_doc({ flag1: value }), pause)
+                  expect(wait_for { sink.flag_values == { "flag1" => value } }).to be true
+                end
+
+                expect(sink.snapshots.map { |flags, _segments| flags.map(&:key) }).to all(eq(["flag1"]))
+                expect(logger.output).not_to include("ERROR")
+              end
+            end
+
+            it "never supplies a snapshot without the override while a YAML file is rewritten" do
+              a = write("a.yaml", yaml_values_doc({ flag1: "a" }))
+
+              with_source([a], change_detection: mode) do |_source, sink|
+                sleep 0.3 if mode == :watching
+                ["b", "c"].each do |value|
+                  InPlaceWrites.rewrite(a, yaml_values_doc({ flag1: value }), pause)
+                  expect(wait_for { sink.flag_values == { "flag1" => value } }).to be true
+                end
+
+                expect(sink.snapshots.map { |flags, _segments| flags.map(&:key) }).to all(eq(["flag1"]))
+              end
+            end
+
+            it "never supplies a snapshot without the override while a YAML file that starts with a comment is rewritten" do
+              # A load during the pause finds only the comment, which the YAML parser reads as nothing.
+              comment = "# overrides for the incident\n"
+              a = write("a.yaml", comment + yaml_values_doc({ flag1: "a" }))
+
+              with_source([a], change_detection: mode) do |_source, sink|
+                sleep 0.3 if mode == :watching
+                ["b", "c"].each do |value|
+                  InPlaceWrites.rewrite(a, comment + yaml_values_doc({ flag1: value }), pause, first: comment)
+                  expect(wait_for { sink.flag_values == { "flag1" => value } }).to be true
+                end
+
+                expect(sink.snapshots.map { |flags, _segments| flags.map(&:key) }).to all(eq(["flag1"]))
+              end
+            end
+          end
+        end
+
+        it "keeps the overrides in effect when a JSON file stays empty" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_source([a]) do |_source, sink|
+            File.write(a, "")
+
+            expect(wait_for { logger.output.include?("the file has no content, which is not a JSON document") }).to be true
+            expect(sink.snapshots.length).to eq 1
+            expect(sink.flag_values).to eq({ "flag1" => "a" })
+          end
+        end
+
+        it "removes the overrides of a YAML file that stays empty after the retry delay" do
+          a = write("a.yaml", yaml_values_doc({ flag1: "a" }))
+
+          with_source([a]) do |_source, sink|
+            File.write(a, "")
+
+            expect(wait_for { sink.snapshots.length == 2 }).to be true
+            expect(sink.snapshots[-1]).to eq [[], []]
+            expect(logger.output).to include("reading it again before applying it")
+          end
+        end
+      end
+
+      describe "files that are not UTF-8" do
+        # Windows PowerShell 5.1 writes a file with `>` in UTF-16 with a byte order mark.
+        def utf16(text)
+          "\xFF\xFE".b + text.encode("UTF-16LE").b
+        end
+
+        it "keeps the overrides in effect when a file is rewritten as UTF-16, and applies the fix" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_source([a]) do |_source, sink|
+            File.binwrite(a, utf16(values_doc({ flag1: "b" })))
+            expect(wait_for { logger.output.include?("encoded in UTF-16 or UTF-32") }).to be true
+            expect(sink.snapshots.length).to eq 1
+
+            File.write(a, values_doc({ flag1: "c" }))
+            expect(wait_for { sink.flag_values == { "flag1" => "c" } }).to be true
+            expect(logger.output.scan("ERROR").length).to eq 1
+          end
+        end
+
+        it "starts with a UTF-16 file without its overrides, and applies the file once it is fixed" do
+          a = path("a.json")
+          File.binwrite(a, utf16(values_doc({ flag1: "a" })))
+
+          with_source([a]) do |_source, sink|
+            expect(sink.snapshots).to be_empty
+            expect(logger.output).to include("encoded in UTF-16 or UTF-32")
+
+            File.write(a, values_doc({ flag1: "b" }))
+            expect(wait_for { sink.snapshots.length == 1 }).to be true
+            expect(sink.flag_values).to eq({ "flag1" => "b" })
+          end
+        end
+
+        it "keeps the overrides in effect when a file is rewritten with content that is not UTF-8" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_source([a]) do |_source, sink|
+            File.binwrite(a, "{\"flagValues\": {\"flag1\": \"caf\xE9\"}}".b)
+            expect(wait_for { logger.output.include?("the file is not valid UTF-8") }).to be true
+            expect(sink.snapshots.length).to eq 1
+          end
+        end
+      end
+
+      describe "in-place rewrites with the default timing" do
+        it "never supplies a snapshot without the override while a YAML file is rewritten about once a second" do
+          # Polling once a second, a poll, or the retry, can find the second rewrite's truncation
+          # before any load has read the first rewrite's content.
+          a = write("a.yaml", yaml_values_doc({ flag1: "v0" }))
+          source = build(paths: [a])
+          sink = RecordingSink.new
+          source.start(sink)
+          begin
+            (1..5).each do |i|
+              InPlaceWrites.rewrite(a, yaml_values_doc({ flag1: "v#{i}" }), 0.3)
+              sleep 0.7
+            end
+            expect(wait_for { sink.flag_values == { "flag1" => "v5" } }).to be true
+            expect(sink.snapshots.map { |flags, _segments| flags.map(&:key) }).to all(eq(["flag1"]))
+          ensure
+            source.stop
+          end
+        end
+      end
+
       describe "with a client" do
         let(:context) { LDContext.create({ key: "user-key", kind: "user" }) }
         let(:ld_flag) { { key: "flag", version: 100, on: false, offVariation: 0, variations: ["ld-value"] } }
@@ -475,6 +642,54 @@ module LaunchDarkly
             state = client.all_flags_state(context, client_side_only: true)
             expect(state.valid?).to be true
             expect(state.values_map).to eq({ "full-flag" => true })
+          end
+        end
+
+        [
+          ["JSON", "a.json", ->(value) { { flagValues: { flag: value } }.to_json }],
+          ["YAML", "a.yaml", ->(value) { "flagValues:\n  flag: #{value}\n" }],
+        ].each do |format, name, doc|
+          it "serves the override throughout an in-place rewrite of a #{format} file" do
+            stub_const("LaunchDarkly::Impl::FileData::Reloader::DEFAULT_RETRY_DELAY", 1.5)
+            a = write(name, doc.call("override-a"))
+            change_detection = Impl::FileData::Watcher.available? ? :watching : :polling
+            source = make_source([a], change_detection: change_detection)
+            builder = Object.new
+            builder.define_singleton_method(:build) { |_sdk_key, _config| source }
+
+            with_client(builder) do |client|
+              sleep 0.3 if change_detection == :watching
+              served = []
+              sampling = true
+              sampler = Thread.new do
+                while sampling
+                  value = client.variation("flag", context, "default")
+                  served << value if served.last != value
+                  sleep 0.002
+                end
+              end
+
+              InPlaceWrites.rewrite(a, doc.call("override-b"), 0.3)
+              expect(wait_for { served.last == "override-b" }).to be true
+              sampling = false
+              sampler.join
+
+              expect(served).to eq ["override-a", "override-b"]
+            end
+          end
+        end
+
+        it "serves a UTF-16 override file once it is fixed, after starting without it" do
+          a = path("a.json")
+          File.binwrite(a, "\xFF\xFE".b + { flagValues: { flag: "override-a" } }.to_json.encode("UTF-16LE").b)
+          source = make_source([a])
+          builder = Object.new
+          builder.define_singleton_method(:build) { |_sdk_key, _config| source }
+
+          with_client(builder) do |client|
+            expect(client.variation("flag", context, "default")).to eq "ld-value"
+            File.write(a, { flagValues: { flag: "override-b" } }.to_json)
+            expect(wait_for { client.variation("flag", context, "default") == "override-b" }).to be true
           end
         end
 

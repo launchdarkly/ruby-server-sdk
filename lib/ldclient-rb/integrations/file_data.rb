@@ -177,6 +177,10 @@ module LaunchDarkly
       # entries are combined in the configured order, and the duplicate keys handling decides what
       # happens when the same key appears in more than one file.
       #
+      # A file whose name ends in `.yaml` or `.yml`, in any case, is read as YAML, and any other file is
+      # read as JSON. Files must be UTF-8. Whether a JSON file may contain comments or repeated keys
+      # depends on the application's version of the `json` gem.
+      #
       # A reload replaces the entire set of overrides, so removing an entry from a file removes the
       # override. A configured file that does not exist contributes no overrides. It can be created
       # later, and deleting a file removes its overrides. A file that exists but cannot be read or
@@ -184,6 +188,13 @@ module LaunchDarkly
       # logged, and the source retries after a short delay and recovers on its own once the file is
       # readable. Whenever the set of overrides in effect changes, including at startup, the source
       # logs the overrides in effect and what each file supplied, at Info level.
+      #
+      # Files can be rewritten in place: if the source finds a file empty while it is being rewritten,
+      # it keeps the overrides in effect until the new content is written. To remove a file's
+      # overrides, delete the file or write a document with no entries, such as `{}`. An empty JSON
+      # file is not a valid document. For a YAML file, replacing its contents in one operation, such
+      # as by renaming a fully written temporary file over it, avoids briefly applying a partly
+      # written file.
       #
       # An evaluation that an override affects, directly or through a prerequisite or segment, is
       # marked: its reason reports {EvaluationReason#override_affected}, it produces no individual
