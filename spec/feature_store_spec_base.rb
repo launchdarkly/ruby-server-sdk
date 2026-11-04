@@ -137,7 +137,7 @@ shared_examples "any_feature_store" do |store_tester|
 
   it "can add new item" do
     with_inited_store([]) do |store|
-      store.upsert($things_kind, $thing1)
+      expect(store.upsert($things_kind, $thing1)).to be true
       expect(store.get($things_kind, $key1)).to eq $thing1
     end
   end
@@ -145,7 +145,7 @@ shared_examples "any_feature_store" do |store_tester|
   it "can update item with newer version" do
     with_inited_store([ $thing1 ]) do |store|
       $thing1_mod = new_version_plus($thing1, 1, { name: $thing1[:name] + ' updated' })
-      store.upsert($things_kind, $thing1_mod)
+      expect(store.upsert($things_kind, $thing1_mod)).to be true
       expect(store.get($things_kind, $key1)).to eq $thing1_mod
     end
   end
@@ -153,7 +153,7 @@ shared_examples "any_feature_store" do |store_tester|
   it "cannot update item with same version" do
     with_inited_store([ $thing1 ]) do |store|
       $thing1_mod = $thing1.clone.merge({ name: $thing1[:name] + ' updated' })
-      store.upsert($things_kind, $thing1_mod)
+      expect(store.upsert($things_kind, $thing1_mod)).to be false
       expect(store.get($things_kind, $key1)).to eq $thing1
     end
   end
@@ -161,28 +161,28 @@ shared_examples "any_feature_store" do |store_tester|
   it "cannot update feature with older version" do
     with_inited_store([ $thing1 ]) do |store|
       $thing1_mod = new_version_plus($thing1, -1, { name: $thing1[:name] + ' updated' })
-      store.upsert($things_kind, $thing1_mod)
+      expect(store.upsert($things_kind, $thing1_mod)).to be false
       expect(store.get($things_kind, $key1)).to eq $thing1
     end
   end
 
   it "can delete item with newer version" do
     with_inited_store([ $thing1 ]) do |store|
-      store.delete($things_kind, $key1, $thing1[:version] + 1)
+      expect(store.delete($things_kind, $key1, $thing1[:version] + 1)).to be true
       expect(store.get($things_kind, $key1)).to be_nil
     end
   end
 
   it "cannot delete item with same version" do
     with_inited_store([ $thing1 ]) do |store|
-      store.delete($things_kind, $key1, $thing1[:version])
+      expect(store.delete($things_kind, $key1, $thing1[:version])).to be false
       expect(store.get($things_kind, $key1)).to eq $thing1
     end
   end
 
   it "cannot delete item with older version" do
     with_inited_store([ $thing1 ]) do |store|
-      store.delete($things_kind, $key1, $thing1[:version] - 1)
+      expect(store.delete($things_kind, $key1, $thing1[:version] - 1)).to be false
       expect(store.get($things_kind, $key1)).to eq $thing1
     end
   end
