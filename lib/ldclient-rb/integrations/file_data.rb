@@ -219,6 +219,11 @@ module LaunchDarkly
       #   default) examines the files on an interval and works on every file system, including network
       #   mounts and directories whose contents are swapped through symbolic links. `:watching` uses file
       #   system change notifications through the `listen` gem, which the host application must provide.
+      #   Watching follows edits to the configured files and to the targets of configured symbolic links,
+      #   including the update of a mounted Kubernetes ConfigMap. It does not follow a deployment that
+      #   points a link further along the path, or a configured directory, at another location, such as a
+      #   `current` link to a release directory, or that replaces a configured directory. Use polling for
+      #   such deployments.
       # @option options [Numeric] :poll_interval  Seconds between examinations of the files in polling
       #   mode. The default is 1. An interval below 1 is raised to 1 with a warning.
       # @return [FileOverrideSourceBuilder] a builder for {LaunchDarkly::DataSystem::ConfigBuilder#overrides}
