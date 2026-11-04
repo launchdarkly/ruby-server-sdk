@@ -20,6 +20,10 @@ module LaunchDarkly
       false
     end
 
+    def available?
+      true
+    end
+
     def get(kind, key)
       @lock.with_read_lock do
         coll = @items[kind]
@@ -43,10 +47,10 @@ module LaunchDarkly
           @items[kind] = coll
         end
         old = coll[key.to_sym]
+        return false unless old.nil? || old[:version] < version
 
-        if old.nil? || old[:version] < version
-          coll[key.to_sym] = { deleted: true, version: version }
-        end
+        coll[key.to_sym] = { deleted: true, version: version }
+        true
       end
     end
 
@@ -65,10 +69,10 @@ module LaunchDarkly
           @items[kind] = coll
         end
         old = coll[item[:key].to_sym]
+        return false unless old.nil? || old[:version] < item[:version]
 
-        if old.nil? || old[:version] < item[:version]
-          coll[item[:key].to_sym] = item
-        end
+        coll[item[:key].to_sym] = item
+        true
       end
     end
 

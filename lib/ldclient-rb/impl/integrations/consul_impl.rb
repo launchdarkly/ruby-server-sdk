@@ -92,11 +92,8 @@ module LaunchDarkly
                 mod_index = 0
               else
                 old_item = Model.deserialize(kind, old_value[0]["Value"])
-                # Check whether the item is stale. If so, don't do the update (and return the existing item to
-                # FeatureStoreWrapper so it can be cached)
-                if old_item[:version] >= new_item[:version]
-                  return old_item
-                end
+                # Check whether the item is stale. If so, don't do the update.
+                return false if old_item[:version] >= new_item[:version]
                 mod_index = old_value[0]["ModifyIndex"]
               end
 
@@ -104,7 +101,7 @@ module LaunchDarkly
               # the key's ModifyIndex is still equal to the previous value. If the previous ModifyIndex was zero,
               # it means the key did not previously exist and the write will only succeed if it still doesn't exist.
               success = Diplomat::Kv.put(key, json, cas: mod_index)
-              return new_item if success
+              return true if success
 
               # If we failed, retry the whole shebang
               @logger.debug { "Concurrent modification detected, retrying" }

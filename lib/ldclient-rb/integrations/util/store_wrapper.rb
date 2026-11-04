@@ -44,16 +44,13 @@ module LaunchDarkly
           end
 
           @inited = Concurrent::AtomicBoolean.new(false)
-          @has_available_method = @core.respond_to? :available?
         end
 
         def monitoring_enabled?
-          @has_available_method
+          true
         end
 
         def available?
-          return false unless @has_available_method
-
           @core.available?
         end
 
@@ -101,13 +98,16 @@ module LaunchDarkly
         end
 
         def upsert(kind, item)
-          new_state = @core.upsert_internal(kind, item)
+          updated = @core.upsert_internal(kind, item)
 
           cache = @cache
           unless cache.nil?
+            new_state = updated ? item : @core.get_internal(kind, item[:key])
             cache[item_cache_key(kind, item[:key])] = [new_state]
             cache.delete(all_cache_key(kind))
           end
+
+          updated
         end
 
         def delete(kind, key, version)
@@ -228,17 +228,15 @@ module LaunchDarkly
 
         #
         # Attempts to add or update an entity. This is the same as {LaunchDarkly::Interfaces::FeatureStore#upsert}
-        # except that 1. the wrapper will take care of updating the cache if caching is enabled, and 2.
-        # the method is expected to return the final state of the entity (i.e. either the `item`
-        # parameter if the update succeeded, or the previously existing entity in the store if the
-        # update failed; this is used for the caching logic).
+        # except that the wrapper updates the cache if caching is enabled.
         #
         # Note that FeatureStoreCore does not have a `delete` method. This is because {CachingStoreWrapper}
         # implements `delete` by simply calling `upsert` with an item whose `:deleted` property is true.
         #
         # @param kind [Object]  the kind of entity to add or update
         # @param item [Hash]  the entity to add or update
-        # @return [Hash]  the entity as it now exists in the store after the update
+        # @return [Boolean]  true if the store applied the update; false if the store already had an
+        #   item with the same or a higher version
         #
         def upsert_internal(kind, item)
         end
@@ -252,6 +250,18 @@ module LaunchDarkly
         # @return [Boolean]  true if the store is in an initialized state
         #
         def initialized_internal?
+        end
+
+        #
+        # Tests whether the data store operates normally. This is the same as
+        # {LaunchDarkly::Interfaces::FeatureStore#available?}.
+        #
+        # The wrapper reports status monitoring as enabled for all cores. When an operation
+        # fails, the SDK calls this method at intervals until it returns true.
+        #
+        # @return [Boolean] true if the underlying data store is reachable
+        #
+        def available?
         end
 
         #

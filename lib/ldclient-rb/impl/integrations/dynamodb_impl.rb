@@ -140,11 +140,10 @@ module LaunchDarkly
                   ":version" => new_item[:version],
                 },
               })
-              new_item
+              true
             rescue Aws::DynamoDB::Errors::ConditionalCheckFailedException
               # The item was not updated because there's a newer item in the database.
-              # We must now read the item that's in the database and return it, so CachingStoreWrapper can cache it.
-              get_internal(kind, new_item[:key])
+              false
             end
           end
 

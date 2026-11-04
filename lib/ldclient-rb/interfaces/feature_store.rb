@@ -68,9 +68,12 @@ module LaunchDarkly
       # should only succeed if the new item's `:version` is greater than the old one;
       # otherwise, the method should do nothing.
       #
+      # The SDK uses the return value to decide whether to send flag change events.
+      #
       # @param kind [Object]  the kind of entity to add or update
       # @param item [Hash]  the entity to add or update
-      # @return [void]
+      # @return [Boolean]  true if the store applied the update; false if the store already
+      #   had an item with the same or a higher version
       #
       def upsert(kind, item)
       end
@@ -80,10 +83,13 @@ module LaunchDarkly
       # `version` parameter is greater than the existing entity's `:version`; otherwise, the
       # method should do nothing.
       #
+      # The SDK uses the return value to decide whether to send flag change events.
+      #
       # @param kind [Object]  the kind of entity to delete
       # @param key [String]  the unique key of the entity
       # @param version [Integer]  the entity must have a lower version than this to be deleted
-      # @return [void]
+      # @return [Boolean]  true if the store applied the deletion; false if the store already
+      #   had an item with the same or a higher version
       #
       def delete(kind, key, version)
       end
@@ -112,54 +118,47 @@ module LaunchDarkly
       end
 
       #
-      # WARN: This isn't a required method on a FeatureStore yet. The SDK will
-      # currently check if the provided store responds to this method, and if
-      # it does, will take appropriate action based on the documented behavior
-      # below. This will become required in a future major version release of
-      # the SDK.
+      # Returns true if this store supports status monitoring.
       #
-      # Returns true if this data store implementation supports status
-      # monitoring.
+      # This is normally true only for persistent data stores. A custom
+      # {FeatureStore} implementation can also return true.
       #
-      # This is normally only true for persistent data stores but it could also
-      # be true for any custom {FeatureStore} implementation.
+      # If this method returns true, the store must publish a status update
+      # when it enters an invalid state. An invalid state is a state where an
+      # operation has failed, or where the store knows that operations cannot
+      # succeed. The store must then publish another status update when it
+      # returns to a valid state. The SDK uses {#available?} to detect this
+      # return.
       #
-      # Returning true means that the store guarantees that if it ever enters
-      # an invalid state (that is, an operation has failed or it knows that
-      # operations cannot succeed at the moment), it will publish a status
-      # update, and will then publish another status update once it has
-      # returned to a valid state.
+      # In-memory stores must return false.
       #
-      # Custom implementations must implement `def available?` which
-      # synchronously checks if the store is available. Without this method,
-      # the SDK cannot ensure status updates will occur once the store has gone
-      # offline.
+      # The SDK returns the same value from
+      # {LaunchDarkly::Interfaces::DataStore::StatusProvider#monitoring_enabled?}.
       #
-      # The same value will be returned from
-      # {StatusProvider::monitoring_enabled?}.
+      # @return [Boolean] true if the store supports status monitoring
       #
-      # def monitoring_enabled? end
+      def monitoring_enabled?
+      end
 
       #
-      # WARN: This isn't a required method on a FeatureStore. The SDK will
-      # check if the provided store responds to this method, and if it does,
-      # will take appropriate action based on the documented behavior below.
-      # Usage of this method will be dropped in a future version of the SDK.
+      # Tests whether the data store operates normally.
       #
-      # Tests whether the data store seems to be functioning normally.
+      # This must not be a detailed test of different kinds of operations. Do
+      # the smallest possible operation that shows that the store works. For
+      # example, make sure that the database is reachable.
       #
-      # This should not be a detailed test of different kinds of operations,
-      # but just the smallest possible operation to determine whether (for
-      # instance) we can reach the database.
+      # When one of the other methods of the store raises an exception, the SDK
+      # assumes that the store can be unavailable. If {#monitoring_enabled?}
+      # returns true, the SDK then calls this method at intervals until it
+      # returns true.
       #
-      # Whenever one of the store's other methods throws an exception, the SDK
-      # will assume that it may have become unavailable (e.g. the database
-      # connection was lost). The SDK will then call {#available?} at intervals
-      # until it returns true.
+      # Stores that cannot become unavailable, such as in-memory stores, must
+      # return true.
       #
       # @return [Boolean] true if the underlying data store is reachable
       #
-      # def available? end
+      def available?
+      end
     end
   end
 end

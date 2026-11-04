@@ -161,9 +161,8 @@ module LaunchDarkly
           flag_change_broadcaster.add_listener(listener)
 
           sink.upsert(LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 2 }))
-          # TODO(sc-197908): Once the store starts returning a success status on upsert, the flag change notification
-          # can start ignoring duplicate requests like this.
-          # sink.upsert(LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 2 }))
+          # A duplicate update does not change the store, so it sends no event.
+          sink.upsert(LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'flag1', version: 2 }))
 
           expect(listener.statuses.count).to eq(1)
           expect(listener.statuses[0].key).to eq('flag1')
@@ -176,9 +175,8 @@ module LaunchDarkly
           flag_change_broadcaster.add_listener(listener)
 
           sink.delete(LaunchDarkly::Interfaces::DataStore::FEATURES, "flag1", 2)
-          # TODO(sc-197908): Once the store starts returning a success status on delete, the flag change notification
-          # can start ignoring duplicate requests like this.
-          # sink.delete(LaunchDarkly::Interfaces::DataStore::FEATURES, :flag1, 2)
+          # A duplicate update does not change the store, so it sends no event.
+          sink.delete(LaunchDarkly::Interfaces::DataStore::FEATURES, "flag1", 2)
 
           expect(listener.statuses.count).to eq(1)
           expect(listener.statuses[0].key).to eq("flag1")
@@ -191,9 +189,8 @@ module LaunchDarkly
           flag_change_broadcaster.add_listener(listener)
 
           sink.upsert(LaunchDarkly::Interfaces::DataStore::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment2', version: 2 }))
-          # TODO(sc-197908): Once the store starts returning a success status on upsert, the flag change notification
-          # can start ignoring duplicate requests like this.
-          # sink.upsert(LaunchDarkly::Impl::Model::Segment.new({ key: 'segment2', version: 2 }))
+          # A duplicate update does not change the store, so it sends no event.
+          sink.upsert(LaunchDarkly::Interfaces::DataStore::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment2', version: 2 }))
 
           expect(listener.statuses.count).to eq(1)
           expect(listener.statuses[0].key).to eq('flag3')
@@ -324,9 +321,8 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           flag_change_broadcaster.add_listener(listener)
 
           sink.upsert(LaunchDarkly::Interfaces::DataStore::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment1', version: 2 }))
-          # TODO(sc-197908): Once the store starts returning a success status on upsert, the flag change notification
-          # can start ignoring duplicate requests like this.
-          # sink.upsert(LaunchDarkly::Interfaces::DataStore::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment1', version: 2 }))
+          # A duplicate update does not change the store, so it sends no event.
+          sink.upsert(LaunchDarkly::Interfaces::DataStore::SEGMENTS, LaunchDarkly::Impl::Model::Segment.new({ key: 'segment1', version: 2 }))
 
           expect(listener.statuses.count).to eq(3)
           expect(listener.statuses[0].key).to eq('flag6')
@@ -341,9 +337,8 @@ prerequisites: [{key: 'flag3', variation: 0}, {key: 'flag4', variation: 0}, {key
           flag_change_broadcaster.add_listener(listener)
 
           sink.delete(LaunchDarkly::Interfaces::DataStore::SEGMENTS, 'segment2', 2)
-          # TODO(sc-197908): Once the store starts returning a success status on upsert, the flag change notification
-          # can start ignoring duplicate requests like this.
-          # sink.delete(LaunchDarkly::Interfaces::DataStore::SEGMENTS, 'segment2', 2)
+          # A duplicate update does not change the store, so it sends no event.
+          sink.delete(LaunchDarkly::Interfaces::DataStore::SEGMENTS, 'segment2', 2)
 
           expect(listener.statuses.count).to eq(3)
           expect(listener.statuses[0].key).to eq('flag6')

@@ -26,7 +26,7 @@ module LaunchDarkly
           @store = store
           @store_update_sink = store_update_sink
           @logger = logger
-          @monitoring_enabled = store_supports_monitoring?
+          @monitoring_enabled = @store.monitoring_enabled?
 
           # Thread synchronization
           @mutex = Mutex.new
@@ -103,6 +103,11 @@ module LaunchDarkly
           @monitoring_enabled
         end
 
+        # (see LaunchDarkly::Interfaces::FeatureStore#available?)
+        def available?
+          @store.available?
+        end
+
         #
         # Wraps store operations with exception handling and availability tracking.
         #
@@ -170,28 +175,6 @@ module LaunchDarkly
           rescue => e
             @logger.error { "[LDClient] Unexpected error from data store status function: #{e.message}" }
           end
-        end
-
-        #
-        # Determines whether the wrapped store can support enabling monitoring.
-        #
-        # The wrapped store must provide a monitoring_enabled? method, which must
-        # be true. But this alone is not sufficient.
-        #
-        # Because this class wraps all interactions with a provided store, it can
-        # technically "monitor" any store. However, monitoring also requires that
-        # we notify listeners when the store is available again.
-        #
-        # We determine this by checking the store's available? method, so this
-        # is also a requirement for monitoring support.
-        #
-        # @return [Boolean]
-        #
-        private def store_supports_monitoring?
-          return false unless @store.respond_to?(:monitoring_enabled?)
-          return false unless @store.respond_to?(:available?)
-
-          @store.monitoring_enabled?
         end
       end
     end

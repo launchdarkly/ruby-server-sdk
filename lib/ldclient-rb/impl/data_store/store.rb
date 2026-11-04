@@ -97,7 +97,7 @@ module LaunchDarkly
             return nil if @persistent_store.nil?
 
             begin
-              @persistent_store.stop if @persistent_store.respond_to?(:stop)
+              @persistent_store.stop
             rescue => e
               return e
             end
