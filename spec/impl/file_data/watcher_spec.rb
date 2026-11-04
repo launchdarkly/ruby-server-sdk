@@ -187,6 +187,22 @@ module LaunchDarkly
           end
         end
 
+        it "follows a relative symbolic link in a directory that is reached through another link" do
+          # A deployment layout: current is a link to a release directory, and the data file in the
+          # release is a relative link to a directory next to the releases.
+          Dir.mkdir(path("releases"))
+          Dir.mkdir(path("releases/2026"))
+          Dir.mkdir(path("releases/shared"))
+          File.write(path("releases/shared/flags.json"), "{}")
+          make_symlink("../shared/flags.json", path("releases/2026/flags.json"))
+          make_symlink("releases/2026", path("current"))
+          with_watcher([path("current/flags.json")]) do |_watcher, calls|
+            sleep 0.3
+            File.write(path("releases/shared/flags.json"), '{"flagValues": {}}')
+            expect(wait_for { calls.value >= 1 }).to be true
+          end
+        end
+
         it "watches the target of a symbolic link once the target's directory appears" do
           Dir.mkdir(path("config"))
           make_symlink(path("data/flags.json"), path("config/flags.json"))

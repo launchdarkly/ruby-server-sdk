@@ -341,14 +341,19 @@ module LaunchDarkly
         # target's directory does not exist, or the links loop. The target file itself need not
         # exist, so that a link created ahead of its target is followed once the target appears.
         #
+        # A relative link is relative to the real directory that holds it, so it is expanded
+        # against that directory's real path. Expanding it against the path as written would
+        # take a ".." to the wrong place when a directory in that path is itself a link.
+        #
         private def link_target(path)
           return nil unless File.symlink?(path)
 
           target = path
           MAX_LINKS.times do
-            return File.join(File.realpath(File.dirname(target)), File.basename(target)) unless File.symlink?(target)
+            real_directory = File.realpath(File.dirname(target))
+            return File.join(real_directory, File.basename(target)) unless File.symlink?(target)
 
-            target = File.expand_path(File.readlink(target), File.dirname(target))
+            target = File.expand_path(File.readlink(target), real_directory)
           end
           nil
         rescue SystemCallError, NotImplementedError
