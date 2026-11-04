@@ -64,6 +64,32 @@ module LaunchDarkly
           end
         end
 
+        describe "==" do
+          it "same constructions are equal" do
+            expect(DataKind.new(namespace: "features", priority: 1)).to eq FEATURES
+            expect(DataKind.new(namespace: "segments", priority: 0)).to eq SEGMENTS
+          end
+
+          it "a kind that went through Marshal is equal" do
+            expect(Marshal.load(Marshal.dump(FEATURES))).to eq FEATURES
+          end
+
+          it "distinct kinds are not equal" do
+            expect(DataKind.new(namespace: "features", priority: 2)).not_to eq FEATURES
+            expect(FEATURES).not_to eq SEGMENTS
+            expect(FEATURES).not_to eq "features"
+          end
+
+          it "ALL_KINDS includes an equal kind" do
+            expect(ALL_KINDS).to include(DataKind.new(namespace: "segments", priority: 0))
+          end
+
+          it "an equal kind deserializes to the model class" do
+            kind = DataKind.new(namespace: "features", priority: 1)
+            expect(kind.deserialize('{"key":"flag","version":1}')).to be_a(LaunchDarkly::Impl::Model::FeatureFlag)
+          end
+        end
+
         describe "hash" do
           it "constant instances are equal to themselves" do
             expect(FEATURES.hash).to eq FEATURES.hash

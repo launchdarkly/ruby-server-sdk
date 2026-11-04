@@ -89,9 +89,10 @@ module LaunchDarkly
           FEATURE_PREREQ_FN
         end
 
-        def eql?(other)
+        def ==(other)
           other.is_a?(DataKind) && namespace == other.namespace && priority == other.priority
         end
+        alias_method :eql?, :==
 
         def hash
           [namespace, priority].hash
