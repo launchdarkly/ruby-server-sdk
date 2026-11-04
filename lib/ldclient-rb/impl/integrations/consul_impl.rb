@@ -5,9 +5,11 @@ module LaunchDarkly
     module Integrations
       module Consul
         #
-        # Internal implementation of the Consul feature store, intended to be used with CachingStoreWrapper.
+        # The Consul implementation of {LaunchDarkly::Interfaces::PersistentDataStore}.
         #
         class ConsulFeatureStoreCore
+          include LaunchDarkly::Interfaces::PersistentDataStore
+
           begin
             require "diplomat"
             require "ostruct"
@@ -28,7 +30,7 @@ module LaunchDarkly
             @logger.info("ConsulFeatureStore: using Consul host at #{Diplomat.configuration.url}")
           end
 
-          def init_internal(all_data)
+          def init(all_data)
             # Start by reading the existing keys; we will later delete any of these that weren't in all_data.
             unused_old_keys = Set.new
             keys = Diplomat::Kv.get(@prefix, { keys: true, recurse: true }, :return)
@@ -39,10 +41,9 @@ module LaunchDarkly
 
             # Insert or update every provided item
             all_data.each do |kind, items|
-              items.values.each do |item|
-                value = Model.serialize(kind, item)
-                key = item_key(kind, item[:key])
-                ops.push({ 'KV' => { 'Verb' => 'set', 'Key' => key, 'Value' => value } })
+              items.each do |item_name, item|
+                key = item_key(kind, item_name)
+                ops.push({ 'KV' => { 'Verb' => 'set', 'Key' => key, 'Value' => item.serialized_item } })
                 unused_old_keys.delete(key)
                 num_items = num_items + 1
               end
@@ -53,7 +54,7 @@ module LaunchDarkly
               ops.push({ 'KV' => { 'Verb' => 'delete', 'Key' => key } })
             end
 
-            # Now set the special key that we check in initialized_internal?
+            # Now set the special key that we check in initialized?
             ops.push({ 'KV' => { 'Verb' => 'set', 'Key' => inited_key, 'Value' => '' } })
 
             ConsulUtil.batch_operations(ops)
@@ -61,12 +62,12 @@ module LaunchDarkly
             @logger.info { "Initialized database with #{num_items} items" }
           end
 
-          def get_internal(kind, key)
+          def get(kind, key)
             value = Diplomat::Kv.get(item_key(kind, key), {}, :return)  # :return means "don't throw an error if not found"
-            (value.nil? || value == "") ? nil : Model.deserialize(kind, value)
+            (value.nil? || value == "") ? nil : to_descriptor(value)
           end
 
-          def get_all_internal(kind)
+          def get_all(kind)
             items_out = {}
             prefix = kind_key(kind)
             Diplomat::Kv.get_all(prefix, {}, :return).each do |result|
@@ -76,14 +77,13 @@ module LaunchDarkly
               next unless db_key.start_with?(prefix)
               # Use the key that the item is stored under, not the key inside the item. A deleted
               # item (a "tombstone") is not guaranteed to carry a key of its own.
-              items_out[db_key[prefix.length..].to_sym] = Model.deserialize(kind, value)
+              items_out[db_key[prefix.length..].to_sym] = to_descriptor(value)
             end
             items_out
           end
 
-          def upsert_internal(kind, new_item)
-            key = item_key(kind, new_item[:key])
-            json = Model.serialize(kind, new_item)
+          def upsert(kind, item_name, item)
+            key = item_key(kind, item_name)
 
             # We will potentially keep retrying indefinitely until someone's write succeeds
             while true
@@ -91,16 +91,16 @@ module LaunchDarkly
               if old_value.nil? || old_value == ""
                 mod_index = 0
               else
-                old_item = Model.deserialize(kind, old_value[0]["Value"])
+                old_item = kind.deserialize(old_value[0]["Value"])
                 # Check whether the item is stale. If so, don't do the update.
-                return false if old_item[:version] >= new_item[:version]
+                return false if old_item[:version] >= item.version
                 mod_index = old_value[0]["ModifyIndex"]
               end
 
               # Otherwise, try to write. We will do a compare-and-set operation, so the write will only succeed if
               # the key's ModifyIndex is still equal to the previous value. If the previous ModifyIndex was zero,
               # it means the key did not previously exist and the write will only succeed if it still doesn't exist.
-              success = Diplomat::Kv.put(key, json, cas: mod_index)
+              success = Diplomat::Kv.put(key, item.serialized_item, cas: mod_index)
               return true if success
 
               # If we failed, retry the whole shebang
@@ -108,7 +108,7 @@ module LaunchDarkly
             end
           end
 
-          def initialized_internal?
+          def initialized?
             # Unfortunately we need to use exceptions here, instead of the :return parameter, because with
             # :return there's no way to distinguish between a missing value and an empty string.
             begin
@@ -120,8 +120,8 @@ module LaunchDarkly
           end
 
           def available?
-            # Most implementations use the initialized_internal? method as a
-            # proxy for this check. However, since `initialized_internal?`
+            # Most implementations use the initialized? method as a
+            # proxy for this check. However, since `initialized?`
             # catches a KeyNotFound exception, and that exception can be raised
             # when the server goes away, we have to modify our behavior
             # slightly.
@@ -142,7 +142,12 @@ module LaunchDarkly
           end
 
           def kind_key(kind)
-            @prefix + kind[:namespace] + '/'
+            @prefix + kind.namespace + '/'
+          end
+
+          # Consul does not keep the version apart from the serialized item.
+          def to_descriptor(serialized)
+            LaunchDarkly::Interfaces::DataStore::SerializedItemDescriptor.new(version: 0, deleted: false, serialized_item: serialized)
           end
 
           def inited_key

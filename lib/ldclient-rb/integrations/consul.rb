@@ -1,5 +1,5 @@
 require "ldclient-rb/impl/integrations/consul_impl"
-require "ldclient-rb/integrations/util/store_wrapper"
+require "ldclient-rb/integrations/util/persistent_data_store_wrapper"
 
 module LaunchDarkly
   module Integrations
@@ -42,7 +42,7 @@ module LaunchDarkly
       #
       def self.new_feature_store(opts = {})
         core = LaunchDarkly::Impl::Integrations::Consul::ConsulFeatureStoreCore.new(opts)
-        LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
+        LaunchDarkly::Integrations::Util::PersistentDataStoreWrapper.new(core, opts)
       end
     end
   end

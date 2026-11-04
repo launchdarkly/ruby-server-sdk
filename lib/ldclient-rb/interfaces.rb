@@ -1,5 +1,6 @@
 require "observer"
 require "ldclient-rb/interfaces/feature_store"
+require "ldclient-rb/interfaces/persistent_data_store"
 require "ldclient-rb/interfaces/flag_tracker"
 require "ldclient-rb/interfaces/data_store"
 require "ldclient-rb/interfaces/data_source"

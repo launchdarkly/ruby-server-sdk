@@ -38,7 +38,7 @@ require "spec_helper"
 
 # Rather than testing with feature flag or segment data, we'll use this fake data kind
 # to make it clear that feature stores need to be able to handle arbitrary data.
-$things_kind = { namespace: "things" }
+$things_kind = LaunchDarkly::Interfaces::DataStore::DataKind.new(namespace: "things", priority: 2)
 
 $key1 = "$thing1"
 $thing1 = {
@@ -206,7 +206,7 @@ shared_examples "persistent_feature_store" do |store_tester_class|
 
   # We'll loop through permutations of the following parameters. Note: in the future, the caching logic will
   # be separated out and implemented at a higher level of the SDK, so we won't have to test it for individual
-  # persistent store implementations. Currently caching *is* implemented in a shared class (CachingStoreWrapper),
+  # persistent store implementations. Currently caching *is* implemented in a shared class (PersistentDataStoreWrapper),
   # but the individual store implementations are wrapping themselves in that class, so they can't be tested
   # separately from it.
 

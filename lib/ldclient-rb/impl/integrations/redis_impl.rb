@@ -6,99 +6,6 @@ module LaunchDarkly
   module Impl
     module Integrations
       module Redis
-        #
-        # An implementation of the LaunchDarkly client's feature store that uses a Redis
-        # instance.  This object holds feature flags and related data received from the
-        # streaming API.  Feature data can also be further cached in memory to reduce overhead
-        # of calls to Redis.
-        #
-        # To use this class, you must first have the `redis` and `connection-pool` gems
-        # installed.  Then, create an instance and store it in the `feature_store` property
-        # of your client configuration.
-        #
-        class RedisFeatureStore
-          include LaunchDarkly::Interfaces::FeatureStore
-
-          # Note that this class is now just a facade around CachingStoreWrapper, which is in turn delegating
-          # to RedisFeatureStoreCore where the actual database logic is. This class was retained for historical
-          # reasons, so that existing code can still call RedisFeatureStore.new. In the future, we will migrate
-          # away from exposing these concrete classes and use factory methods instead.
-
-          #
-          # Constructor for a RedisFeatureStore instance.
-          #
-          # @param opts [Hash] the configuration options
-          # @option opts [String] :redis_url  URL of the Redis instance (shortcut for omitting redis_opts)
-          # @option opts [Hash] :redis_opts  options to pass to the Redis constructor (if you want to specify more than just redis_url)
-          # @option opts [String] :prefix  namespace prefix to add to all hash keys used by LaunchDarkly
-          # @option opts [Logger] :logger  a `Logger` instance; defaults to `Config.default_logger`
-          # @option opts [Integer] :max_connections  size of the Redis connection pool
-          # @option opts [Integer] :expiration  expiration time for the in-memory cache, in seconds; 0 for no local caching
-          # @option opts [Integer] :capacity  maximum number of feature flags (or related objects) to cache locally
-          # @option opts [Object] :pool  custom connection pool, if desired
-          # @option opts [Boolean] :pool_shutdown_on_close whether calling `close` should shutdown the custom connection pool.
-          #
-          def initialize(opts = {})
-            core = RedisFeatureStoreCore.new(opts)
-            @wrapper = LaunchDarkly::Integrations::Util::CachingStoreWrapper.new(core, opts)
-          end
-
-          def monitoring_enabled?
-            true
-          end
-
-          def available?
-            @wrapper.available?
-          end
-
-          #
-          # Default value for the `redis_url` constructor parameter; points to an instance of Redis
-          # running at `localhost` with its default port.
-          #
-          def self.default_redis_url
-            LaunchDarkly::Integrations::Redis::default_redis_url
-          end
-
-          #
-          # Default value for the `prefix` constructor parameter.
-          #
-          def self.default_prefix
-            LaunchDarkly::Integrations::Redis::default_prefix
-          end
-
-          def get(kind, key)
-            @wrapper.get(kind, key)
-          end
-
-          def all(kind)
-            @wrapper.all(kind)
-          end
-
-          def delete(kind, key, version)
-            @wrapper.delete(kind, key, version)
-          end
-
-          def init(all_data)
-            @wrapper.init(all_data)
-          end
-
-          def upsert(kind, item)
-            @wrapper.upsert(kind, item)
-          end
-
-          def initialized?
-            @wrapper.initialized?
-          end
-
-          def stop
-            @wrapper.stop
-          end
-
-          def disable_cache
-            @wrapper.disable_cache
-          end
-        end
-
         class RedisStoreImplBase
           begin
             require "redis"
@@ -158,9 +65,11 @@ module LaunchDarkly
         end
 
         #
-        # Internal implementation of the Redis feature store, intended to be used with CachingStoreWrapper.
+        # The Redis implementation of {LaunchDarkly::Interfaces::PersistentDataStore}.
         #
         class RedisFeatureStoreCore < RedisStoreImplBase
+          include LaunchDarkly::Interfaces::PersistentDataStore
+
           def initialize(opts)
             super(opts)
 
@@ -168,8 +77,8 @@ module LaunchDarkly
           end
 
           def available?
-            # We don't care what the status is, only that we can connect
-            initialized_internal?
+            # The result of the query does not matter. A successful query shows that Redis operates.
+            initialized?
             true
           rescue
             false
@@ -179,7 +88,7 @@ module LaunchDarkly
             "RedisFeatureStore"
           end
 
-          def init_internal(all_data)
+          def init(all_data)
             count = 0
             with_connection do |redis|
               redis.multi do |multi|
@@ -187,7 +96,7 @@ module LaunchDarkly
                   multi.del(items_key(kind))
                   count = count + items.count
                   items.each do |key, item|
-                    multi.hset(items_key(kind), key, Model.serialize(kind,item))
+                    multi.hset(items_key(kind), key, item.serialized_item)
                   end
                 end
                 multi.set(inited_key, inited_key)
@@ -196,37 +105,36 @@ module LaunchDarkly
             @logger.info { "RedisFeatureStore: initialized with #{count} items" }
           end
 
-          def get_internal(kind, key)
+          def get(kind, key)
             with_connection do |redis|
-              get_redis(redis, kind, key)
+              to_descriptor(redis.hget(items_key(kind), key))
             end
           end
 
-          def get_all_internal(kind)
-            fs = {}
+          def get_all(kind)
+            items = {}
             with_connection do |redis|
-              hashfs = redis.hgetall(items_key(kind))
-              hashfs.each do |k, json_item|
-                fs[k.to_sym] = Model.deserialize(kind, json_item)
+              redis.hgetall(items_key(kind)).each do |key, serialized|
+                items[key.to_sym] = to_descriptor(serialized)
               end
             end
-            fs
+            items
           end
 
-          def upsert_internal(kind, new_item)
+          def upsert(kind, key, item)
             base_key = items_key(kind)
-            key = new_item[:key]
             try_again = true
             updated = true
             while try_again
               try_again = false
               with_connection do |redis|
                 redis.watch(base_key) do
-                  old_item = get_redis(redis, kind, key)
+                  old_serialized = redis.hget(base_key, key)
                   before_update_transaction(base_key, key)
-                  if old_item.nil? || old_item[:version] < new_item[:version]
+                  old_version = old_serialized.nil? ? nil : kind.deserialize(old_serialized)[:version]
+                  if old_version.nil? || old_version < item.version
                     result = redis.multi do |multi|
-                      multi.hset(base_key, key, Model.serialize(kind, new_item))
+                      multi.hset(base_key, key, item.serialized_item)
                     end
                     if result.nil?
                       @logger.debug { "RedisFeatureStore: concurrent modification detected, retrying" }
@@ -234,9 +142,9 @@ module LaunchDarkly
                     end
                   else
                     updated = false
-                    action = new_item[:deleted] ? "delete" : "update"
+                    action = item.deleted ? "delete" : "update"
                     # rubocop:disable Layout/LineLength
-                    @logger.warn { "RedisFeatureStore: attempted to #{action} #{key} version: #{old_item[:version]} in '#{kind[:namespace]}' with a version that is the same or older: #{new_item[:version]}" }
+                    @logger.warn { "RedisFeatureStore: attempted to #{action} #{key} version: #{old_version} in '#{kind.namespace}' with a version that is the same or older: #{item.version}" }
                   end
                   redis.unwatch
                 end
@@ -245,7 +153,7 @@ module LaunchDarkly
             updated
           end
 
-          def initialized_internal?
+          def initialized?
             with_connection { |redis| redis.exists?(inited_key) }
           end
 
@@ -256,19 +164,17 @@ module LaunchDarkly
           end
 
           def items_key(kind)
-            @prefix + ":" + kind[:namespace]
-          end
-
-          def cache_key(kind, key)
-            kind[:namespace] + ":" + key.to_s
+            @prefix + ":" + kind.namespace
           end
 
           def inited_key
             @prefix + ":$inited"
           end
 
-          def get_redis(redis, kind, key)
-            Model.deserialize(kind, redis.hget(items_key(kind), key))
+          # Redis does not keep the version apart from the serialized item.
+          def to_descriptor(serialized)
+            return nil if serialized.nil?
+            LaunchDarkly::Interfaces::DataStore::SerializedItemDescriptor.new(version: 0, deleted: false, serialized_item: serialized)
           end
         end
 
