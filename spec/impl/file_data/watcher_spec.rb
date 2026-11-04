@@ -57,6 +57,12 @@ module LaunchDarkly
           count
         end
 
+        def make_symlink(target, link)
+          File.symlink(target, link)
+        rescue NotImplementedError, Errno::EPERM, Errno::EACCES
+          skip "symbolic links cannot be created on this platform"
+        end
+
         it "reports that the listen gem is available" do
           expect(Watcher.available?).to be true
         end
@@ -105,6 +111,79 @@ module LaunchDarkly
             sleep 0.3
             File.write(path("sub/b.json"), '{"flagValues": {}}')
             expect(wait_for { calls.value >= 1 }).to be true
+          end
+        end
+
+        it "invokes the callback when the target of a symbolic link in another directory is modified" do
+          Dir.mkdir(path("data"))
+          Dir.mkdir(path("config"))
+          File.write(path("data/flags.json"), "{}")
+          make_symlink(path("data/flags.json"), path("config/flags.json"))
+          with_watcher([path("config/flags.json")]) do |_watcher, calls|
+            sleep 0.3
+            File.write(path("data/flags.json"), '{"flagValues": {}}')
+            expect(wait_for { calls.value >= 1 }).to be true
+          end
+        end
+
+        it "invokes the callback when the target of a symbolic link in the same directory is modified" do
+          File.write(path("real.json"), "{}")
+          make_symlink(path("real.json"), path("a.json"))
+          with_watcher([path("a.json")]) do |_watcher, calls|
+            sleep 0.3
+            File.write(path("real.json"), '{"flagValues": {}}')
+            expect(wait_for { calls.value >= 1 }).to be true
+          end
+        end
+
+        it "follows a symbolic link that is replaced to point at a file in another directory" do
+          Dir.mkdir(path("one"))
+          Dir.mkdir(path("two"))
+          Dir.mkdir(path("config"))
+          File.write(path("one/flags.json"), "{}")
+          File.write(path("two/flags.json"), "{}")
+          make_symlink(path("one/flags.json"), path("config/flags.json"))
+          with_watcher([path("config/flags.json")]) do |_watcher, calls|
+            sleep 0.3
+            # Replaced by rename, as deployment tools replace a link.
+            make_symlink(path("two/flags.json"), path("config/flags.json.tmp"))
+            File.rename(path("config/flags.json.tmp"), path("config/flags.json"))
+            expect(wait_for { calls.value >= 1 }).to be true
+
+            before = settled(calls)
+            File.write(path("two/flags.json"), '{"flagValues": {}}')
+            expect(wait_for { calls.value > before }).to be true
+
+            before = settled(calls)
+            File.write(path("one/flags.json"), '{"flagValues": {}}')
+            sleep 0.5
+            expect(calls.value).to eq(before)
+          end
+        end
+
+        it "follows a symbolic link through a directory link that is replaced, as in a ConfigMap volume" do
+          skip "rb-inotify is not available on this platform" unless Watcher.inotify_available?
+
+          # The layout that Kubernetes uses for a mounted ConfigMap: the file is a link through the
+          # ..data link to a timestamped directory, and an update writes a new directory, replaces
+          # ..data, and deletes the old directory.
+          Dir.mkdir(path("config"))
+          Dir.mkdir(path("config/..2026_a"))
+          File.write(path("config/..2026_a/flags.json"), "{}")
+          make_symlink("..2026_a", path("config/..data"))
+          make_symlink("..data/flags.json", path("config/flags.json"))
+          with_watcher([path("config/flags.json")]) do |_watcher, calls|
+            sleep 0.3
+            Dir.mkdir(path("config/..2026_b"))
+            File.write(path("config/..2026_b/flags.json"), '{"flagValues": {}}')
+            make_symlink("..2026_b", path("config/..data_tmp"))
+            File.rename(path("config/..data_tmp"), path("config/..data"))
+            FileUtils.rm_rf(path("config/..2026_a"))
+            expect(wait_for { calls.value >= 1 }).to be true
+
+            before = settled(calls)
+            File.write(path("config/..2026_b/flags.json"), '{"flagValues": {"a": true}}')
+            expect(wait_for { calls.value > before }).to be true
           end
         end
 

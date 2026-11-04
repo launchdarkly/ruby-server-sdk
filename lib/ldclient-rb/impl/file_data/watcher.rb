@@ -24,6 +24,12 @@ module LaunchDarkly
       # it exists, while the other directories stay watched. When a retry sets up a watch, the
       # callback runs once, so that a change made while there was no watch is not missed.
       #
+      # A configured file can be a symbolic link to a file in another directory. The watcher also
+      # watches the directory of the link's target for the target's name, so that an edit to the
+      # target is reported. The links are resolved again after every reported change, after a retry
+      # sets up watches, and when a directory that holds a target is deleted, as happens when a
+      # Kubernetes ConfigMap volume is updated. So a link that comes to point elsewhere is followed.
+      #
       # @private
       #
       class Watcher
@@ -39,9 +45,17 @@ module LaunchDarkly
         private_constant :INOTIFY_DIRECTORY_LOST
 
         # The watch on one real directory: the configured directories that resolve to it, the
-        # names of the configured files in it, and a callable that removes the watch.
-        WatchedDirectory = Struct.new(:directories, :names, :close)
+        # names of the configured files in it, the names of the files in it that configured
+        # symbolic links point to, and a callable that removes the watch. A directory is watched
+        # once, whatever the reasons, because a second watch on it would replace the first one's
+        # callback.
+        WatchedDirectory = Struct.new(:directories, :names, :targets, :close)
         private_constant :WatchedDirectory
+
+        # The most symbolic links followed from one configured file, as in the operating system's
+        # own limit, so that a loop of links ends.
+        MAX_LINKS = 40
+        private_constant :MAX_LINKS
 
         #
         # Returns true if a change notification mechanism can be loaded.
@@ -104,6 +118,7 @@ module LaunchDarkly
           @inotify = nil
 
           try_start
+          refresh_links
           schedule_retry unless @lock.synchronize { @missing.empty? }
         end
 
@@ -144,6 +159,7 @@ module LaunchDarkly
           return if @stopped.value
 
           added = try_start
+          refresh_links if added
           # The task ends when nothing is missing. A directory lost meanwhile is back in @missing
           # before its loss report calls schedule_retry, so either the task is kept here or that
           # call starts a new one.
@@ -161,9 +177,11 @@ module LaunchDarkly
 
         #
         # Handles the loss of a watched directory. The notification mechanism reports it on its
-        # own thread. The watch ends with the directory, so it is removed and set up again through
-        # the same retry as at start, once the directory exists. The other directories keep their
-        # watches.
+        # own thread. The watch ends with the directory, so it is removed, and a configured
+        # directory is set up again through the same retry as at start, once it exists. The other
+        # directories keep their watches. When the directory held the target of a configured link,
+        # the links are resolved again and the callback runs, since the file that the link names
+        # has changed.
         #
         private def directory_lost(real_directory)
           entry = @lock.synchronize do
@@ -175,9 +193,17 @@ module LaunchDarkly
             @missing.merge(e.directories)
             e
           end
-          @logger.warn { "[LDClient] Directory #{real_directory} no longer exists; its data files are watched again when it exists" }
+          if entry.directories.empty?
+            @logger.debug { "[LDClient] Directory #{real_directory} of a linked data file no longer exists; resolving the links again" }
+          else
+            @logger.warn { "[LDClient] Directory #{real_directory} no longer exists; its data files are watched again when it exists" }
+          end
           entry.close.call
-          schedule_retry
+          schedule_retry unless entry.directories.empty?
+          return if entry.targets.empty?
+
+          refresh_links
+          @on_change.call unless @stopped.value
         end
 
         #
@@ -223,7 +249,7 @@ module LaunchDarkly
 
             entry = @watched[real_directory]
             if entry.nil?
-              entry = WatchedDirectory.new(Set.new, Set.new, add_watch(real_directory))
+              entry = WatchedDirectory.new(Set.new, Set.new, Set.new, add_watch(real_directory))
               @watched[real_directory] = entry
             end
             entry.directories << directory
@@ -231,6 +257,81 @@ module LaunchDarkly
             @missing.delete(directory)
           end
           true
+        end
+
+        #
+        # Resolves each configured file that is a symbolic link and records the target's name in
+        # the entry of the target's real directory, watching that directory if no entry has it yet.
+        # A target in a directory that does not exist is not watched. The targets of links that
+        # changed are dropped, and a watch that served only such targets is removed.
+        #
+        private def refresh_links
+          desired = {}
+          @paths.each do |p|
+            target = link_target(p)
+            (desired[File.dirname(target)] ||= Set.new) << File.basename(target) unless target.nil?
+          end
+          closers = []
+          problems = []
+          @lock.synchronize do
+            return if @stopped.value
+
+            @watched.each { |real_directory, entry| entry.targets = desired[real_directory] || Set.new }
+            @watched.delete_if do |_real_directory, entry|
+              next false unless entry.directories.empty? && entry.targets.empty?
+
+              closers << entry.close
+              true
+            end
+            desired.each do |real_directory, names|
+              next if @watched.key?(real_directory)
+
+              begin
+                @watched[real_directory] = WatchedDirectory.new(Set.new, Set.new, names, add_watch(real_directory))
+              rescue => e
+                problems << e.message
+              end
+            end
+          end
+          log_setup_failure(problems.join("; ")) unless problems.empty?
+          close_later(closers) unless closers.empty?
+        end
+
+        #
+        # Returns the path of the file that a configured symbolic link finally points to, with its
+        # directory resolved to a real path, or nil if the configured file is not a link, the
+        # target's directory does not exist, or the links loop. The target file itself need not
+        # exist, so that a link created ahead of its target is followed once the target appears.
+        #
+        private def link_target(path)
+          return nil unless File.symlink?(path)
+
+          target = path
+          MAX_LINKS.times do
+            return File.join(File.realpath(File.dirname(target)), File.basename(target)) unless File.symlink?(target)
+
+            target = File.expand_path(File.readlink(target), File.dirname(target))
+          end
+          nil
+        rescue SystemCallError, NotImplementedError
+          nil
+        end
+
+        #
+        # Removes watches on a thread of its own. A watch can be removed from within one of its own
+        # callbacks, and stopping a `listen` listener waits for the thread that runs its callbacks.
+        #
+        private def close_later(closers)
+          thread = Thread.new do
+            closers.each do |close|
+              begin
+                close.call
+              rescue => e
+                Util.log_exception(@logger, "Unexpected error removing a file data watch", e)
+              end
+            end
+          end
+          thread.name = "LD/FileDataWatcherClose"
         end
 
         #
@@ -262,7 +363,7 @@ module LaunchDarkly
           return if @stopped.value
 
           if (event.flags & INOTIFY_DIRECTORY_LOST).empty?
-            @on_change.call if watched_name?(real_directory, event.name)
+            changed if watched_name?(real_directory, event.name)
           else
             directory_lost(real_directory)
           end
@@ -276,22 +377,34 @@ module LaunchDarkly
           listener = Listen.to(real_directory) do |modified, added, removed|
             next if @stopped.value
 
-            changed = (modified + added + removed).any? do |p|
+            matched = (modified + added + removed).any? do |p|
               File.dirname(p) == real_directory && watched_name?(real_directory, File.basename(p))
             end
-            @on_change.call if changed && !@stopped.value
+            changed if matched
           end
           listener.start
           -> { listener.stop }
         end
 
         #
-        # Returns true if the name is one of the configured files in the watched real directory.
+        # Reports a change to a watched file. The change can be to a configured link itself, so the
+        # links are resolved again first.
+        #
+        private def changed
+          return if @stopped.value
+
+          refresh_links
+          @on_change.call unless @stopped.value
+        end
+
+        #
+        # Returns true if the name is one of the configured files in the watched real directory, or
+        # the target of a configured link.
         #
         private def watched_name?(real_directory, name)
           @lock.synchronize do
             entry = @watched[real_directory]
-            !entry.nil? && entry.names.include?(name)
+            !entry.nil? && (entry.names.include?(name) || entry.targets.include?(name))
           end
         end
 
