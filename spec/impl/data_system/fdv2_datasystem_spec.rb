@@ -553,7 +553,7 @@ module LaunchDarkly
 
             # Verify FDv1 is serving data
             store = fdv2.store
-            flag = store.get(LaunchDarkly::Impl::DataStore::FEATURES, :fdv1flag)
+            flag = store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, :fdv1flag)
             expect(flag).not_to be_nil
 
             fdv2.stop

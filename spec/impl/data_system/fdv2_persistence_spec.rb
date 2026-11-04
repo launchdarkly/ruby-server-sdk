@@ -5,7 +5,7 @@ require "ldclient-rb/impl/data_system/fdv2"
 require "ldclient-rb/integrations/test_data_v2"
 require "ldclient-rb/data_system"
 require "ldclient-rb/impl/data_system"
-require "ldclient-rb/impl/data_store"
+require "ldclient-rb/impl/data_store/status"
 
 module LaunchDarkly
   module Impl
@@ -31,8 +31,8 @@ module LaunchDarkly
 
           def initialize(initial_data = nil)
             @data = {
-              LaunchDarkly::Impl::DataStore::FEATURES => {},
-              LaunchDarkly::Impl::DataStore::SEGMENTS => {},
+              LaunchDarkly::Interfaces::DataStore::FEATURES => {},
+              LaunchDarkly::Interfaces::DataStore::SEGMENTS => {},
             }
             @initialized = false
             @available = true
@@ -46,8 +46,8 @@ module LaunchDarkly
           def init(all_data)
             @init_called_count += 1
             if all_data
-              @data[LaunchDarkly::Impl::DataStore::FEATURES] = (all_data[LaunchDarkly::Impl::DataStore::FEATURES] || {}).dup
-              @data[LaunchDarkly::Impl::DataStore::SEGMENTS] = (all_data[LaunchDarkly::Impl::DataStore::SEGMENTS] || {}).dup
+              @data[LaunchDarkly::Interfaces::DataStore::FEATURES] = (all_data[LaunchDarkly::Interfaces::DataStore::FEATURES] || {}).dup
+              @data[LaunchDarkly::Interfaces::DataStore::SEGMENTS] = (all_data[LaunchDarkly::Interfaces::DataStore::SEGMENTS] || {}).dup
             end
             @initialized = true
           end
@@ -109,8 +109,8 @@ module LaunchDarkly
 
           def get_data_snapshot
             {
-              LaunchDarkly::Impl::DataStore::FEATURES => @data[LaunchDarkly::Impl::DataStore::FEATURES].dup,
-              LaunchDarkly::Impl::DataStore::SEGMENTS => @data[LaunchDarkly::Impl::DataStore::SEGMENTS].dup,
+              LaunchDarkly::Interfaces::DataStore::FEATURES => @data[LaunchDarkly::Interfaces::DataStore::FEATURES].dup,
+              LaunchDarkly::Interfaces::DataStore::SEGMENTS => @data[LaunchDarkly::Interfaces::DataStore::SEGMENTS].dup,
             }
           end
         end
@@ -135,8 +135,8 @@ module LaunchDarkly
 
           # Verify data from synchronizer is in the persistent store
           snapshot = persistent_store.get_data_snapshot
-          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES]).to have_key(:flagkey)
-          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES][:flagkey][:on]).to be true
+          expect(snapshot[LaunchDarkly::Interfaces::DataStore::FEATURES]).to have_key(:flagkey)
+          expect(snapshot[LaunchDarkly::Interfaces::DataStore::FEATURES][:flagkey][:on]).to be true
 
           # Reset tracking to isolate recovery behavior
           persistent_store.reset_operation_tracking
@@ -166,8 +166,8 @@ module LaunchDarkly
 
           # Verify both flags are now in the persistent store
           snapshot = persistent_store.get_data_snapshot
-          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES]).to have_key(:flagkey)
-          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES]).to have_key(:newflag)
+          expect(snapshot[LaunchDarkly::Interfaces::DataStore::FEATURES]).to have_key(:flagkey)
+          expect(snapshot[LaunchDarkly::Interfaces::DataStore::FEATURES]).to have_key(:newflag)
 
           fdv2.stop
         end
@@ -254,7 +254,7 @@ module LaunchDarkly
 
           # Verify the flag is in the persistent store
           snapshot = persistent_store.get_data_snapshot
-          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES]).to have_key(:flagkey)
+          expect(snapshot[LaunchDarkly::Interfaces::DataStore::FEATURES]).to have_key(:flagkey)
 
           fdv2.stop
         end
@@ -262,7 +262,7 @@ module LaunchDarkly
         it "works in READ_ONLY mode with persistent store" do
           # Pre-populate persistent store
           initial_data = {
-            LaunchDarkly::Impl::DataStore::FEATURES => {
+            LaunchDarkly::Interfaces::DataStore::FEATURES => {
               :existingflag => {
                 key: "existingflag",
                 version: 1,
@@ -271,7 +271,7 @@ module LaunchDarkly
                 fallthrough: { variation: 0 },
               },
             },
-            LaunchDarkly::Impl::DataStore::SEGMENTS => {},
+            LaunchDarkly::Interfaces::DataStore::SEGMENTS => {},
           }
 
           persistent_store = StubFeatureStore.new(initial_data)
@@ -426,8 +426,8 @@ module LaunchDarkly
           # The synchronizer flag should be in the persistent store
           # (synchronizer does a full data set transfer, replacing initializer data)
           snapshot = persistent_store.get_data_snapshot
-          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES]).not_to have_key(:"init-flag")
-          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES]).to have_key(:"sync-flag")
+          expect(snapshot[LaunchDarkly::Interfaces::DataStore::FEATURES]).not_to have_key(:"init-flag")
+          expect(snapshot[LaunchDarkly::Interfaces::DataStore::FEATURES]).to have_key(:"sync-flag")
 
           fdv2.stop
         end

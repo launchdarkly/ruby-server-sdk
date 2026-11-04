@@ -2,7 +2,7 @@
 
 require "concurrent"
 require "set"
-require "ldclient-rb/impl/data_store"
+require "ldclient-rb/impl/data_store/status"
 require "ldclient-rb/impl/data_store/in_memory_feature_store"
 require "ldclient-rb/impl/dependency_tracker"
 require "ldclient-rb/interfaces/data_system"
@@ -148,7 +148,7 @@ module LaunchDarkly
             begin
               # Get all data from memory store and write to persistent store
               all_data = {}
-              [FEATURES, SEGMENTS].each do |kind|
+              [LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Interfaces::DataStore::SEGMENTS].each do |kind|
                 all_data[kind] = @memory_store.all(kind)
               end
               @persistent_store.init(all_data)
@@ -204,7 +204,7 @@ module LaunchDarkly
           old_data = nil
           if @flag_change_broadcaster.has_listeners?
             old_data = {}
-            [FEATURES, SEGMENTS].each do |kind|
+            [LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Interfaces::DataStore::SEGMENTS].each do |kind|
               old_data[kind] = @memory_store.all(kind)
             end
           end
@@ -313,12 +313,12 @@ module LaunchDarkly
         #
         private def changes_to_store_data(changes)
           all_data = {
-            FEATURES => {},
-            SEGMENTS => {},
+            LaunchDarkly::Interfaces::DataStore::FEATURES => {},
+            LaunchDarkly::Interfaces::DataStore::SEGMENTS => {},
           }
 
           changes.each do |change|
-            kind = change.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG ? FEATURES : SEGMENTS
+            kind = change.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG ? LaunchDarkly::Interfaces::DataStore::FEATURES : LaunchDarkly::Interfaces::DataStore::SEGMENTS
             if change.action == LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT && !change.object.nil?
               all_data[kind][change.key] = change.object
             elsif change.action == LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE
@@ -352,7 +352,7 @@ module LaunchDarkly
         #
         private def send_change_events(affected_items)
           affected_items.each do |item|
-            if item[:kind] == FEATURES
+            if item[:kind] == LaunchDarkly::Interfaces::DataStore::FEATURES
               @flag_change_broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new(item[:key].to_s))
             end
           end
@@ -368,7 +368,7 @@ module LaunchDarkly
         private def compute_changed_items_for_full_data_set(old_data, new_data)
           affected_items = Set.new
 
-          [FEATURES, SEGMENTS].each do |kind|
+          [LaunchDarkly::Interfaces::DataStore::FEATURES, LaunchDarkly::Interfaces::DataStore::SEGMENTS].each do |kind|
             old_items = old_data[kind] || {}
             new_items = new_data[kind] || {}
 

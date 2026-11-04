@@ -1,5 +1,6 @@
 require "ldclient-rb/impl/model/clause"
 require "ldclient-rb/impl/model/preprocessed_data"
+require "ldclient-rb/context"
 require "set"
 
 # See serialization.rb for implementation notes on the data model classes.

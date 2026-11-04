@@ -36,10 +36,10 @@ module LaunchDarkly
       flag = Impl::Model::FeatureFlag.new({ key: 'flagkey', version: 1 })
       segment = Impl::Model::Segment.new({ key: 'segkey', version: 1 })
       all_data = {
-        Impl::DataStore::FEATURES => {
+        LaunchDarkly::Interfaces::DataStore::FEATURES => {
           flagkey: flag,
         },
-        Impl::DataStore::SEGMENTS => {
+        LaunchDarkly::Interfaces::DataStore::SEGMENTS => {
           segkey: segment,
         },
       }
@@ -50,8 +50,8 @@ module LaunchDarkly
         with_processor(store) do |processor|
           ready = processor.start
           ready.wait
-          expect(store.get(Impl::DataStore::FEATURES, "flagkey")).to eq(flag)
-          expect(store.get(Impl::DataStore::SEGMENTS, "segkey")).to eq(segment)
+          expect(store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, "flagkey")).to eq(flag)
+          expect(store.get(LaunchDarkly::Interfaces::DataStore::SEGMENTS, "segkey")).to eq(segment)
         end
       end
 
@@ -75,8 +75,8 @@ module LaunchDarkly
         with_processor(store) do |processor|
           ready = processor.start
           ready.wait
-          expect(store.get(Impl::DataStore::FEATURES, "flagkey")).to eq(flag)
-          expect(store.get(Impl::DataStore::SEGMENTS, "segkey")).to eq(segment)
+          expect(store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, "flagkey")).to eq(flag)
+          expect(store.get(LaunchDarkly::Interfaces::DataStore::SEGMENTS, "segkey")).to eq(segment)
 
           expect(listener.statuses.count).to eq(1)
           expect(listener.statuses[0].state).to eq(Interfaces::DataSource::Status::VALID)
@@ -106,8 +106,8 @@ module LaunchDarkly
     describe 'environment ID' do
       flag = Impl::Model::FeatureFlag.new({ key: 'flagkey', version: 1 })
       all_data = {
-        Impl::DataStore::FEATURES => { flagkey: flag },
-        Impl::DataStore::SEGMENTS => {},
+        LaunchDarkly::Interfaces::DataStore::FEATURES => { flagkey: flag },
+        LaunchDarkly::Interfaces::DataStore::SEGMENTS => {},
       }
 
       it 'is recorded from the response headers' do
@@ -236,7 +236,7 @@ module LaunchDarkly
 
     describe 'retry delay' do
       let(:logger) { double("logger").as_null_object }
-      let(:all_data) { { Impl::DataStore::FEATURES => {}, Impl::DataStore::SEGMENTS => {} } }
+      let(:all_data) { { LaunchDarkly::Interfaces::DataStore::FEATURES => {}, LaunchDarkly::Interfaces::DataStore::SEGMENTS => {} } }
 
       def make_processor
         config = Config.new(feature_store: InMemoryFeatureStore.new, logger: logger)
@@ -339,8 +339,8 @@ module LaunchDarkly
       it 'closes requestor HTTP connections on stop' do
         requestor_with_stop = double("RequestorWithStop")
         allow(requestor_with_stop).to receive(:request_all_data).and_return({
-          Impl::DataStore::FEATURES => {},
-          Impl::DataStore::SEGMENTS => {},
+          LaunchDarkly::Interfaces::DataStore::FEATURES => {},
+          LaunchDarkly::Interfaces::DataStore::SEGMENTS => {},
         })
         allow(requestor_with_stop).to receive(:stop)
 

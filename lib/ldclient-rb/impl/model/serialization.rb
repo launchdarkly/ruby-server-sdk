@@ -1,3 +1,5 @@
+require "json"
+
 require "ldclient-rb/impl/model/feature_flag"
 require "ldclient-rb/impl/model/preprocessed_data"
 require "ldclient-rb/impl/model/segment"
@@ -34,7 +36,7 @@ module LaunchDarkly
       # SDK code outside of Impl::Model should use this method instead of calling the model class
       # constructors directly, so as not to rely on implementation details.
       #
-      # @param kind [Hash] normally either Impl::DataStore::FEATURES or Impl::DataStore::SEGMENTS
+      # @param kind [Hash] normally either LaunchDarkly::Interfaces::DataStore::FEATURES or LaunchDarkly::Interfaces::DataStore::SEGMENTS
       # @param input [object] a JSON string or a parsed hash (or a data model object, in which case
       #  we'll just return the original object)
       # @param logger [Logger|nil] logs errors if there are any data validation problems
@@ -44,9 +46,9 @@ module LaunchDarkly
         return input unless input.is_a?(String) || input.is_a?(Hash)
         data = input.is_a?(Hash) ? input : JSON.parse(input, symbolize_names: true)
         case kind
-        when Impl::DataStore::FEATURES
+        when LaunchDarkly::Interfaces::DataStore::FEATURES
           FeatureFlag.new(data, logger)
-        when Impl::DataStore::SEGMENTS
+        when LaunchDarkly::Interfaces::DataStore::SEGMENTS
           Segment.new(data, logger)
         else
           data
@@ -63,8 +65,8 @@ module LaunchDarkly
       # Translates a { flags: ..., segments: ... } object received from LaunchDarkly to the data store format.
       def self.make_all_store_data(received_data, logger = nil)
         {
-          Impl::DataStore::FEATURES => (received_data[:flags] || {}).transform_values { |data| FeatureFlag.new(data, logger) },
-          Impl::DataStore::SEGMENTS => (received_data[:segments] || {}).transform_values { |data| Segment.new(data, logger) },
+          LaunchDarkly::Interfaces::DataStore::FEATURES => (received_data[:flags] || {}).transform_values { |data| FeatureFlag.new(data, logger) },
+          LaunchDarkly::Interfaces::DataStore::SEGMENTS => (received_data[:segments] || {}).transform_values { |data| Segment.new(data, logger) },
         }
       end
     end

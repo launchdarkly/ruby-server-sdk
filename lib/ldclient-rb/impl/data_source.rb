@@ -89,7 +89,7 @@ module LaunchDarkly
           monitor_store_update do
             if @flag_change_broadcaster.has_listeners?
               old_data = {}
-              Impl::DataStore::ALL_KINDS.each do |kind|
+              LaunchDarkly::Interfaces::DataStore::ALL_KINDS.each do |kind|
                 old_data[kind] = @data_store.all(kind)
               end
             end
@@ -193,7 +193,7 @@ module LaunchDarkly
         private def compute_changed_items_for_full_data_set(old_data, new_data)
           affected_items = Set.new
 
-          Impl::DataStore::ALL_KINDS.each do |kind|
+          LaunchDarkly::Interfaces::DataStore::ALL_KINDS.each do |kind|
             old_items = old_data[kind] || {}
             new_items = new_data[kind] || {}
 
@@ -217,7 +217,7 @@ module LaunchDarkly
         #
         private def send_change_events(affected_items)
           affected_items.each do |item|
-            if item[:kind] == Impl::DataStore::FEATURES
+            if item[:kind] == LaunchDarkly::Interfaces::DataStore::FEATURES
               @flag_change_broadcaster.broadcast(LaunchDarkly::Interfaces::FlagChange.new(item[:key].to_s))
             end
           end

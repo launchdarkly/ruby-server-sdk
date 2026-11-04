@@ -1,5 +1,5 @@
 require "concurrent/atomics"
-require "ldclient-rb/impl/data_store"
+require "ldclient-rb/impl/data_store/status"
 
 module LaunchDarkly
   #
