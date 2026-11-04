@@ -101,6 +101,33 @@ module LaunchDarkly
           expect(result.segments[:seg1].key).to eq("seg1")
         end
 
+        it "replaces a different key member with the key the entry appears under" do
+          doc = document(
+            flags: { flag1: { key: "other-flag", on: false, variations: [1] } },
+            segments: { seg1: { key: "other-segment" } }
+          )
+
+          result = FileData.merge([doc])
+
+          expect(result.flags.keys).to eq([:flag1])
+          expect(result.flags[:flag1].key).to eq("flag1")
+          expect(result.segments.keys).to eq([:seg1])
+          expect(result.segments[:seg1].key).to eq("seg1")
+        end
+
+        it "treats entries with the same key member under different keys as different items" do
+          doc = document(flags: {
+            flag1: { key: "shared", on: false, variations: [1] },
+            flag2: { key: "shared", on: false, variations: [2] },
+          })
+
+          result = FileData.merge([doc])
+
+          expect(result.flags.keys).to contain_exactly(:flag1, :flag2)
+          expect(result.flags[:flag1].key).to eq("flag1")
+          expect(result.flags[:flag2].key).to eq("flag2")
+        end
+
         it "does not modify the document's own hashes" do
           data = { on: false, variations: [1] }
           FileData.merge([document(flags: { flag1: data })])

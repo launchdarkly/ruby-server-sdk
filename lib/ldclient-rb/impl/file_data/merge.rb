@@ -74,8 +74,10 @@ module LaunchDarkly
       # the SDK's data model classes, which validate them. The documents are processed in order,
       # and the configured duplicate keys handling applies when the same key appears more than once.
       #
-      # Items are keyed by the key under which they appear in the document. An entry that has no
-      # "key" member receives that key. A missing "version" defaults to 1.
+      # The key under which an entry appears in the document is the item's key for every purpose:
+      # the item is stored under it, duplicates are detected by it, and the item's own "key" member
+      # is set to it, so that evaluations report the flag by that key. A missing "version" defaults
+      # to 1.
       #
       # @param documents [Array<Document>]
       # @param duplicate_keys_handling [Symbol] one of the {DuplicateKeysHandling} values
@@ -116,13 +118,14 @@ module LaunchDarkly
       end
 
       #
-      # Validates one full flag or segment entry and fills in its key and version.
+      # Validates one full flag or segment entry, sets its key to the key it appears under, and fills
+      # in its version.
       #
       private_class_method def self.prepare_entry(category, key, data)
         raise MergeError, "#{category} \"#{key}\" is not an object" unless data.is_a?(Hash)
 
         data = data.dup
-        data[:key] = key.to_s if data[:key].nil?
+        data[:key] = key.to_s
         data[:version] = 1 if data[:version].nil?
         data
       end
