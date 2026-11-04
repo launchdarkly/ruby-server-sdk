@@ -107,7 +107,7 @@ module LaunchDarkly
       #
       # @example
       #   overrides = LaunchDarkly::Integrations::FileData.override_source(paths: ["/etc/launchdarkly/overrides.json"])
-      #   config = LaunchDarkly::Config.new(data_system: LaunchDarkly::DataSystem.default.overrides(overrides))
+      #   config = LaunchDarkly::Config.new(data_system_config: LaunchDarkly::DataSystem.default.overrides(overrides).build)
       #
       # @param source [#build(String, Config), nil] a builder that responds to build(sdk_key, config)
       #   and returns a {LaunchDarkly::Interfaces::Overrides::OverrideSource}, or nil to remove one

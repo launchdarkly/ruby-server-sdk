@@ -388,14 +388,21 @@ module LaunchDarkly
         # dependency graph and the external one. Every item reached through either graph is
         # expanded through both, so a dependency chain may cross between them any number of
         # times. Keys are compared as strings, so a change keyed by symbol reaches the same
-        # dependents as one keyed by string.
+        # dependents as one keyed by string. Without an external graph, the store's own tracker
+        # expands the item in one traversal, as it did before external graphs existed.
         #
         # @param items_out [Set<Hash>] Set of {kind:, key:} hashes
         # @param initial_modified_item [Hash] {kind:, key:} hash
         # @return [void]
         #
         private def add_affected_items(items_out, initial_modified_item)
-          pending = [{ kind: initial_modified_item[:kind], key: initial_modified_item[:key].to_s }]
+          start = { kind: initial_modified_item[:kind], key: initial_modified_item[:key].to_s }
+          if @external_dependencies.nil?
+            @dependency_tracker.add_affected_items(items_out, start)
+            return
+          end
+
+          pending = [start]
           until pending.empty?
             current = pending.pop
             # Each graph gets its own working set: a tracker does not expand an item that is

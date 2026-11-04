@@ -144,6 +144,41 @@ module LaunchDarkly
           expect(Thread.list.map(&:name)).not_to include("FDv2-main")
         end
 
+        # A source that includes the interface module and implements only build and the given
+        # methods, so the module's defaults stand in for the rest.
+        def source_implementing(*methods)
+          source_class = Class.new do
+            include LaunchDarkly::Interfaces::Overrides::OverrideSource
+
+            def build(_sdk_key, _config)
+              self
+            end
+          end
+          source_class.define_method(:start) { |_sink| } if methods.include?(:start)
+          source_class.define_method(:stop) {} if methods.include?(:stop)
+          source_class.new
+        end
+
+        it "starts without overrides when the source does not implement start" do
+          logger = CapturingLogger.new
+          logged = LaunchDarkly::Config.new(logger: logger)
+          fdv2 = FDv2.new(sdk_key, logged, config_with(overrides: source_implementing(:stop), synchronizers: [HangingSynchronizer.new]))
+          begin
+            expect { fdv2.start }.not_to raise_error
+            expect(logger.output).to include("Unable to start the override source; the client runs without overrides")
+          ensure
+            fdv2.stop
+          end
+        end
+
+        it "stops the rest of the system when the source does not implement stop" do
+          fdv2 = FDv2.new(sdk_key, config, config_with(overrides: source_implementing(:start), synchronizers: [HangingSynchronizer.new]))
+          fdv2.start
+
+          expect { fdv2.stop }.not_to raise_error
+          expect(Thread.list.map(&:name)).not_to include("FDv2-main")
+        end
+
         it "ignores a snapshot that the source supplies while it stops" do
           source = TestOverrideSource.new([override_flag])
           late = override_flag.merge(key: "late")

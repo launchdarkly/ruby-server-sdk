@@ -272,7 +272,9 @@ module LaunchDarkly
           @override_sink = LaunchDarkly::Impl::Overrides::Sink.new(@override_layer, @store, @flag_change_broadcaster, @logger)
           begin
             @override_source.start(@override_sink)
-          rescue => e
+          rescue StandardError, ScriptError => e
+            # ScriptError covers the NotImplementedError that the interface's default start raises
+            # for a source that does not implement it.
             LaunchDarkly::Impl::Util.log_exception(@logger, "Unable to start the override source; the client runs without overrides", e)
             stop_override_source("Error stopping override source after it failed to start")
             # The source may have supplied a snapshot before it failed. Clearing the layer removes
@@ -283,16 +285,16 @@ module LaunchDarkly
         end
 
         #
-        # Stops the override source and forgets it. A custom source can raise from stop; that is
-        # logged and not raised, so the rest of the system still stops, or still starts after a
-        # failed start.
+        # Stops the override source and forgets it. A custom source can raise from stop, including
+        # the NotImplementedError of the interface's default stop; that is logged and not raised,
+        # so the rest of the system still stops, or still starts after a failed start.
         #
         def stop_override_source(failure_message)
           source = @override_source
           @override_source = nil
           begin
             source.stop
-          rescue => e
+          rescue StandardError, ScriptError => e
             @logger.error { "[LDClient] #{failure_message}: #{e.message}" }
           end
         end

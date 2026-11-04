@@ -148,6 +148,9 @@ module LaunchDarkly
           KINDS.each do |kind|
             view[kind].each do |key, item|
               tracker.update_dependencies_from(kind, key.to_s, item)
+            rescue StandardError
+              # An item whose dependency fields cannot be read contributes no edges, as in the
+              # layer's own graph, and the remaining items are still tracked.
             end
           end
           tracker
@@ -181,7 +184,9 @@ module LaunchDarkly
 
         #
         # Converts the definitions passed to the sink into a hash keyed by symbol. A hash entry is
-        # deserialized into the data model. A model object is used as is.
+        # deserialized into the data model. A model object is used as is. A deleted entry is
+        # rejected before the layer is replaced: an override defines a flag or segment, and a
+        # deleted one would shadow the LaunchDarkly item with one that cannot be evaluated.
         #
         private def index_items(kind, items)
           result = {}
@@ -189,6 +194,7 @@ module LaunchDarkly
             model = Model.deserialize(kind, item, @logger)
             key = model.respond_to?(:key) ? model.key : nil
             raise ArgumentError, "an override #{kind.namespace} entry has no key" if key.nil? || key.to_s.empty?
+            raise ArgumentError, "the override #{kind.namespace} entry #{key} is deleted" if model.respond_to?(:deleted) && model.deleted
 
             result[key.to_sym] = model
           end

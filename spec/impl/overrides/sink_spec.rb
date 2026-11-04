@@ -77,6 +77,29 @@ module LaunchDarkly
           expect { sink.set_overrides([], [{ key: "", version: 1 }]) }.to raise_error(ArgumentError, /has no key/)
         end
 
+        it "rejects a deleted entry before the layer is replaced" do
+          sink.set_overrides([flag("a", "x")], [])
+          listener = listen
+
+          expect { sink.set_overrides([{ key: "f", version: 2, deleted: true }], []) }.to raise_error(ArgumentError, /is deleted/)
+          expect { sink.set_overrides([], [{ key: "s", version: 2, deleted: true }]) }.to raise_error(ArgumentError, /is deleted/)
+          expect(layer.get(DataStore::FEATURES, "a").variations).to eq ["x"]
+          expect(layer.get(DataStore::FEATURES, "f")).to be_nil
+          expect(listener.statuses).to be_empty
+        end
+
+        it "notifies every changed entry when an entry's dependency fields cannot be read" do
+          listener = listen
+          unreadable = {
+            key: "unreadable", version: 1, on: true, offVariation: 0, fallthrough: { variation: 0 }, variations: [true],
+            rules: [{ id: "r", variation: 0, clauses: [{ attribute: "", op: "segmentMatch", values: "not-an-array" }] }]
+          }
+
+          expect { sink.set_overrides([unreadable, flag("a", "x")], []) }.not_to raise_error
+          expect(changed_keys(listener)).to eq %w[a unreadable]
+          expect(layer.get(DataStore::FEATURES, "a").variations).to eq ["x"]
+        end
+
         it "keeps the layer and ignores later snapshots after close" do
           sink.set_overrides([flag("a", "x")], [])
           listener = listen
