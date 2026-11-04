@@ -187,6 +187,48 @@ module LaunchDarkly
           end
         end
 
+        it "watches the target of a symbolic link once the target's directory appears" do
+          Dir.mkdir(path("config"))
+          make_symlink(path("data/flags.json"), path("config/flags.json"))
+          logger = CapturingLogger.new
+          with_watcher([path("config/flags.json")], logger: logger) do |_watcher, calls|
+            sleep 0.3
+            expect(logger.output).to include("cannot resolve the target of #{path('config/flags.json')}")
+
+            Dir.mkdir(path("data"))
+            File.write(path("data/flags.json"), "{}")
+            # The retry that watches the target's directory runs the callback once.
+            expect(wait_for { calls.value >= 1 }).to be true
+
+            before = settled(calls)
+            File.write(path("data/flags.json"), '{"flagValues": {}}')
+            expect(wait_for { calls.value > before }).to be true
+          end
+        end
+
+        it "watches the target of a symbolic link again after the target's directory is deleted and recreated" do
+          skip "rb-inotify is not available on this platform" unless Watcher.inotify_available?
+
+          Dir.mkdir(path("data"))
+          Dir.mkdir(path("config"))
+          File.write(path("data/flags.json"), "{}")
+          make_symlink(path("data/flags.json"), path("config/flags.json"))
+          with_watcher([path("config/flags.json")]) do |_watcher, calls|
+            sleep 0.3
+            FileUtils.rm_rf(path("data"))
+            expect(wait_for { calls.value >= 1 }).to be true
+
+            before = settled(calls)
+            Dir.mkdir(path("data"))
+            File.write(path("data/flags.json"), "{}")
+            expect(wait_for { calls.value > before }).to be true
+
+            before = settled(calls)
+            File.write(path("data/flags.json"), '{"flagValues": {}}')
+            expect(wait_for { calls.value > before }).to be true
+          end
+        end
+
         it "logs when a directory does not exist and starts watching once it appears" do
           logger = CapturingLogger.new
           missing_dir = path("not-yet")

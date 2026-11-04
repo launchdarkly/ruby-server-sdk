@@ -29,6 +29,9 @@ module LaunchDarkly
       # target is reported. The links are resolved again after every reported change, after a retry
       # sets up watches, and when a directory that holds a target is deleted, as happens when a
       # Kubernetes ConfigMap volume is updated. So a link that comes to point elsewhere is followed.
+      # A link that cannot be resolved, for example because its target's directory does not exist
+      # yet or was deleted, is resolved again once per second until its target is watched, and the
+      # callback then runs once.
       #
       # @private
       #
@@ -116,6 +119,11 @@ module LaunchDarkly
           @missing = Set.new(@directories)
           @watched = {}
           @inotify = nil
+          # True while a configured link's target is not watched, because the link cannot be
+          # resolved or its target's directory cannot be watched. The retry runs while it is true.
+          # The lock guards it.
+          @links_unresolved = false
+          @last_link_message = nil
 
           try_start
           refresh_links
@@ -159,12 +167,13 @@ module LaunchDarkly
           return if @stopped.value
 
           added = try_start
-          refresh_links if added
-          # The task ends when nothing is missing. A directory lost meanwhile is back in @missing
-          # before its loss report calls schedule_retry, so either the task is kept here or that
-          # call starts a new one.
+          linked = (added || @lock.synchronize { @links_unresolved }) ? refresh_links : false
+          # The task ends when nothing is missing and every link's target is watched. A directory
+          # lost meanwhile is back in @missing before its loss report calls schedule_retry, and a
+          # link that cannot be resolved sets @links_unresolved before refresh_links calls it, so
+          # either the task is kept here or that call starts a new one.
           retry_task = @lock.synchronize do
-            next nil unless @missing.empty?
+            next nil unless @missing.empty? && !@links_unresolved
 
             task = @retry_task
             @retry_task = nil
@@ -172,7 +181,7 @@ module LaunchDarkly
           end
           # This runs on the retry task's own thread, which RepeatingTask#stop allows.
           retry_task&.stop
-          @on_change.call if added && !@stopped.value
+          @on_change.call if (added || linked) && !@stopped.value
         end
 
         #
@@ -262,19 +271,26 @@ module LaunchDarkly
         #
         # Resolves each configured file that is a symbolic link and records the target's name in
         # the entry of the target's real directory, watching that directory if no entry has it yet.
-        # A target in a directory that does not exist is not watched. The targets of links that
-        # changed are dropped, and a watch that served only such targets is removed.
+        # The targets of links that changed are dropped, and a watch that served only such targets
+        # is removed. A link that cannot be resolved, for example because its target's directory
+        # does not exist yet, or whose target's directory cannot be watched, keeps the retry
+        # running, which resolves the links again. Returns true if it added a watch.
         #
         private def refresh_links
           desired = {}
+          problems = []
           @paths.each do |p|
             target = link_target(p)
-            (desired[File.dirname(target)] ||= Set.new) << File.basename(target) unless target.nil?
+            if target
+              (desired[File.dirname(target)] ||= Set.new) << File.basename(target)
+            elsif File.symlink?(p)
+              problems << "cannot resolve the target of #{p}"
+            end
           end
           closers = []
-          problems = []
+          added = false
           @lock.synchronize do
-            return if @stopped.value
+            return false if @stopped.value
 
             @watched.each { |real_directory, entry| entry.targets = desired[real_directory] || Set.new }
             @watched.delete_if do |_real_directory, entry|
@@ -288,13 +304,35 @@ module LaunchDarkly
 
               begin
                 @watched[real_directory] = WatchedDirectory.new(Set.new, Set.new, names, add_watch(real_directory))
+                added = true
               rescue => e
                 problems << e.message
               end
             end
+            @links_unresolved = !problems.empty?
           end
-          log_setup_failure(problems.join("; ")) unless problems.empty?
+          log_link_problems(problems)
           close_later(closers) unless closers.empty?
+          schedule_retry unless problems.empty?
+          added
+        end
+
+        #
+        # Logs why a configured link's target is not watched. An unchanged situation repeats at
+        # debug level, apart from the setup failures that try_start logs.
+        #
+        private def log_link_problems(problems)
+          if problems.empty?
+            @last_link_message = nil
+            return
+          end
+          message = problems.join("; ")
+          if message == @last_link_message
+            @logger.debug { "[LDClient] Unable to watch the target of a linked data file: #{message}" }
+          else
+            @last_link_message = message
+            @logger.warn { "[LDClient] Unable to watch the target of a linked data file: #{message}" }
+          end
         end
 
         #
