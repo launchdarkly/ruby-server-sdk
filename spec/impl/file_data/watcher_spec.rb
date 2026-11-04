@@ -203,6 +203,24 @@ module LaunchDarkly
           end
         end
 
+        it "invokes the callback when a link resolves to a target in a directory that is already watched" do
+          Dir.mkdir(path("config"))
+          Dir.mkdir(path("other"))
+          File.write(path("other/other.json"), "{}")
+          # The link leads through data, which does not exist yet, to a directory that the watcher
+          # already watches because another configured file is in it.
+          make_symlink(path("data/flags.json"), path("config/flags.json"))
+          with_watcher([path("config/flags.json"), path("other/other.json")]) do |_watcher, calls|
+            sleep 0.3
+            File.write(path("other/flags.json"), "{}")
+            before = settled(calls)
+
+            make_symlink(path("other"), path("data"))
+            # The retry that resolves the link runs the callback once.
+            expect(wait_for { calls.value > before }).to be true
+          end
+        end
+
         it "watches the target of a symbolic link once the target's directory appears" do
           Dir.mkdir(path("config"))
           make_symlink(path("data/flags.json"), path("config/flags.json"))
