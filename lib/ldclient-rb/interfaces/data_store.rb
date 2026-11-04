@@ -1,3 +1,5 @@
+require "ldclient-rb/impl/model/serialization"
+
 module LaunchDarkly
   module Interfaces
     module DataStore

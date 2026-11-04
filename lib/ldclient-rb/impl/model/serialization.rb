@@ -1,3 +1,5 @@
+require "json"
+
 require "ldclient-rb/impl/model/feature_flag"
 require "ldclient-rb/impl/model/preprocessed_data"
 require "ldclient-rb/impl/model/segment"

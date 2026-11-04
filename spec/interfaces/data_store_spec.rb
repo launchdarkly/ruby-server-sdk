@@ -1,4 +1,5 @@
 require "spec_helper"
+require "open3"
 
 module LaunchDarkly
   module Interfaces
@@ -31,6 +32,27 @@ module LaunchDarkly
 
           it "deserializes nil to nil" do
             expect(FEATURES.deserialize(nil)).to be_nil
+          end
+
+          it "works when the application requires only this file" do
+            script = <<~RUBY
+              require "ldclient-rb/interfaces/data_store"
+              kinds = LaunchDarkly::Interfaces::DataStore
+              flag = { key: "f", version: 1, on: true, variations: [true, false], offVariation: 1,
+                fallthrough: { variation: 0 }, targets: [{ values: ["a"], variation: 0 }],
+                contextTargets: [{ contextKind: "org", values: ["b"], variation: 1 }],
+                prerequisites: [{ key: "p", variation: 0 }],
+                rules: [{ id: "r", clauses: [{ attribute: "name", op: "in", values: ["x"] }], variation: 0 }] }
+              segment = { key: "s", version: 1, included: ["a"],
+                includedContexts: [{ contextKind: "org", values: ["b"] }],
+                rules: [{ id: "r", clauses: [{ contextKind: "user", attribute: "name", op: "in", values: ["x"] }] }] }
+              puts kinds::FEATURES.deserialize(kinds::FEATURES.serialize(flag)).class
+              puts kinds::SEGMENTS.deserialize(kinds::SEGMENTS.serialize(segment)).class
+            RUBY
+            lib = File.expand_path("../../lib", __dir__)
+            out, status = Open3.capture2e(RbConfig.ruby, "-I", lib, "-e", script)
+            expect(status.success?).to be(true), out
+            expect(out.split("\n")).to eq ["LaunchDarkly::Impl::Model::FeatureFlag", "LaunchDarkly::Impl::Model::Segment"]
           end
         end
 
