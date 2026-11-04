@@ -36,14 +36,15 @@ module LaunchDarkly
       # holds nothing back, whether that load applies, is skipped as unchanged, or fails, for each
       # file it read. A load reads every file, even after one fails to read or parse, and fails with
       # the first failure after them. So a file that keeps being rewritten, or files rewritten in
-      # turn, cannot hold the data back without end. A read that finds a file with content, even content
-      # that fails to parse, or finds it missing, ends its empty state, so its next emptying starts
-      # a new delay. The retry that a hold arms comes when the first held file's
-      # delay or bound is over, plus a tenth of the retry delay. A file that contributed no content
-      # to the data currently applied, such as a placeholder that has been empty from the start, a
-      # file that was missing, or a file whose emptying has been applied, is parsed at once. So is every file when there are no
-      # automatic retries, because nothing would read it again. After the delay, an empty JSON file
-      # fails to parse and the data stays; an empty YAML file is a document with no entries.
+      # turn, cannot hold the data back without end. A read that finds a file with content, even
+      # content that fails to parse, or finds it missing, ends its empty state, so its next emptying
+      # starts a new delay. The retry that a hold arms comes when the first held file's delay or
+      # bound is over, plus a tenth of the retry delay. A file that contributed no content to the
+      # data currently applied, such as a placeholder that has been empty from the start, a file
+      # that was missing, or a file whose emptying has been applied, is parsed at once. So is every
+      # file when there are no automatic retries, because nothing would read it again. After the
+      # delay, an empty JSON file fails to parse and the data stays; an empty YAML file is a
+      # document with no entries.
       #
       # The worker thread starts on the first {#reload_now} or {#trigger} call rather than in the
       # constructor. A reloader can be constructed by a component whose lifecycle never uses it,
