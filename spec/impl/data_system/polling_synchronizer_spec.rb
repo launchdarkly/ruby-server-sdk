@@ -263,7 +263,7 @@ module LaunchDarkly
 
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(408)
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(408)
             )
 
             synchronizer = PollingDataSource.new(
@@ -308,7 +308,7 @@ module LaunchDarkly
           it "unrecoverable error shuts down" do
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(401)
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(401)
             )
 
             synchronizer = PollingDataSource.new(
@@ -415,7 +415,7 @@ module LaunchDarkly
             headers_error = { LD_ENVID_HEADER => 'test-env-408' }
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(408),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(408),
               headers_error
             )
 
@@ -453,7 +453,7 @@ module LaunchDarkly
             headers_error = { LD_ENVID_HEADER => 'test-env-401' }
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(401),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(401),
               headers_error
             )
 
@@ -489,7 +489,7 @@ module LaunchDarkly
             }
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(503),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(503),
               headers_error
             )
 
@@ -605,7 +605,7 @@ module LaunchDarkly
             # 408 is a recoverable error
             error_result = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(408),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(408),
               headers_with_fallback
             )
 

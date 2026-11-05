@@ -5,7 +5,6 @@ require "ldclient-rb/interfaces/data_system"
 require "ldclient-rb/impl/data_system"
 require "ldclient-rb/impl/data_system/protocolv2"
 require "ldclient-rb/data_system/polling_data_source_builder"
-require "ldclient-rb/impl/data_source/requestor"
 require "ldclient-rb/impl/util"
 require "concurrent"
 require "json"
@@ -15,6 +14,18 @@ require "http"
 module LaunchDarkly
   module Impl
     module DataSystem
+      #
+      # A polling request received an HTTP status that is not a success.
+      #
+      class UnexpectedResponseError < StandardError
+        attr_reader :status
+
+        def initialize(status)
+          @status = status
+          super("HTTP error #{status}")
+        end
+      end
+
       FDV2_POLLING_ENDPOINT = "/sdk/poll"
       FDV1_POLLING_ENDPOINT = "/sdk/latest-all"
 
@@ -131,7 +142,7 @@ module LaunchDarkly
             envid = LaunchDarkly::Impl::DataSystem.lookup_header(result.headers, LD_ENVID_HEADER)
 
             if !result.success?
-              if result.exception.is_a?(LaunchDarkly::Impl::DataSource::UnexpectedResponseError)
+              if result.exception.is_a?(UnexpectedResponseError)
                 error_info = LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
                   LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE,
                   result.exception.status,
@@ -235,7 +246,7 @@ module LaunchDarkly
           fallback = LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(result.headers)
 
           unless result.success?
-            if result.exception.is_a?(LaunchDarkly::Impl::DataSource::UnexpectedResponseError)
+            if result.exception.is_a?(UnexpectedResponseError)
               status_code = result.exception.status
               http_error_message_result = Impl::Util.http_error_message(
                 status_code, "polling request", "will retry"
@@ -326,7 +337,7 @@ module LaunchDarkly
             if status >= 400
               return LaunchDarkly::Result.fail(
                 "HTTP error #{status}",
-                LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(status),
+                UnexpectedResponseError.new(status),
                 response_headers
               )
             end
@@ -407,7 +418,7 @@ module LaunchDarkly
             if status >= 400
               return LaunchDarkly::Result.fail(
                 "HTTP error #{status}",
-                LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(status),
+                UnexpectedResponseError.new(status),
                 response_headers
               )
             end

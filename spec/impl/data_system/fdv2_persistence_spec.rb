@@ -5,7 +5,6 @@ require "ldclient-rb/impl/data_system/fdv2"
 require "ldclient-rb/integrations/test_data_v2"
 require "ldclient-rb/data_system"
 require "ldclient-rb/impl/data_system"
-require "ldclient-rb/impl/data_store/status"
 
 module LaunchDarkly
   module Impl

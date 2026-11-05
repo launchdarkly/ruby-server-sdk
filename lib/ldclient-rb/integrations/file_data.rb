@@ -1,4 +1,3 @@
-require 'ldclient-rb/impl/integrations/file_data_source'
 require 'ldclient-rb/impl/integrations/file_data_source_v2'
 
 module LaunchDarkly
@@ -10,12 +9,13 @@ module LaunchDarkly
     # Reading flags from a file is only intended for pre-production environments. Production
     # environments should always be configured to receive flag updates from LaunchDarkly.
     #
-    # To use this component, call {FileData#data_source}, and store its return value in the
-    # {Config#data_source} property of your LaunchDarkly client configuration. In the options
-    # to `data_source`, set `paths` to the file path(s) of your data file(s):
+    # To use this component, call {FileData.data_source_v2}, and use its return value as an
+    # initializer or synchronizer in the data system configuration. In the options to
+    # `data_source_v2`, set `paths` to the file path(s) of your data file(s):
     #
-    #     file_source = LaunchDarkly::Integrations::FileData.data_source(paths: [ myFilePath ])
-    #     config = LaunchDarkly::Config.new(data_source: file_source)
+    #     file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: [ myFilePath ])
+    #     data_system = LaunchDarkly::DataSystem.custom.synchronizers([file_source]).build
+    #     config = LaunchDarkly::Config.new(data_system_config: data_system)
     #
     # This will cause the client not to connect to LaunchDarkly to get feature flags. The
     # client may still make network connections to send analytics events, unless you have disabled
@@ -82,29 +82,6 @@ module LaunchDarkly
     # duplicate key-- it will not load flags from any of the files.
     #
     module FileData
-      #
-      # Returns a factory for the file data source component.
-      #
-      # @param options [Hash] the configuration options
-      # @option options [Array] :paths  The paths of the source files for loading flag data. These
-      #   may be absolute paths or relative to the current working directory.
-      # @option options [Boolean] :auto_update  True if the data source should watch for changes to
-      #   the source file(s) and reload flags whenever there is a change. Auto-updating will only
-      #   work if all of the files you specified have valid directory paths at startup time.
-      #   Note that the default implementation of this feature is based on polling the filesystem,
-      #   which may not perform well. If you install the 'listen' gem (not included by default, to
-      #   avoid adding unwanted dependencies to the SDK), its native file watching mechanism will be
-      #   used instead.
-      # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
-      #   file modifications - used only if auto_update is true, and if the native file-watching
-      #   mechanism from 'listen' is not being used. The default value is 1 second.
-      # @return an object that can be stored in {Config#data_source}
-      #
-      def self.data_source(options={})
-        lambda { |sdk_key, config|
-          Impl::Integrations::FileDataSourceImpl.new(config.feature_store, config.data_source_update_sink, config.logger, options) }
-      end
-
       #
       # Returns a builder for the FDv2-compatible file data source.
       #

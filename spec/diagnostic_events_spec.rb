@@ -25,19 +25,14 @@ module LaunchDarkly
           {
             allAttributesPrivate: false,
             connectTimeoutMillis: Config.default_connect_timeout * 1000,
-            customBaseURI: false,
             customEventsURI: false,
-            customStreamURI: false,
             diagnosticRecordingIntervalMillis: Config.default_diagnostic_recording_interval * 1000,
             eventsCapacity: Config.default_capacity,
             eventsFlushIntervalMillis: Config.default_flush_interval * 1000,
-            pollingIntervalMillis: Config.default_poll_interval * 1000,
             socketTimeoutMillis: Config.default_read_timeout * 1000,
-            streamingDisabled: false,
             userKeysCapacity: Config.default_context_keys_capacity,
             userKeysFlushIntervalMillis: Config.default_context_keys_flush_interval * 1000,
             usingProxy: false,
-            usingRelayDaemon: false,
           }
         end
 
@@ -57,18 +52,13 @@ module LaunchDarkly
           changes_and_expected = [
             [ { all_attributes_private: true }, { allAttributesPrivate: true } ],
             [ { connect_timeout: 46 }, { connectTimeoutMillis: 46000 } ],
-            [ { base_uri: 'http://custom' }, { customBaseURI: true } ],
             [ { events_uri: 'http://custom' }, { customEventsURI: true } ],
-            [ { stream_uri: 'http://custom' }, { customStreamURI: true } ],
             [ { diagnostic_recording_interval: 9999 }, { diagnosticRecordingIntervalMillis: 9999000 } ],
             [ { capacity: 4000 }, { eventsCapacity: 4000 } ],
             [ { flush_interval: 46 }, { eventsFlushIntervalMillis: 46000 } ],
-            [ { poll_interval: 999 }, { pollingIntervalMillis: 999000 } ],
             [ { read_timeout: 46 }, { socketTimeoutMillis: 46000 } ],
-            [ { stream: false }, { streamingDisabled: true } ],
             [ { context_keys_capacity: 999 }, { userKeysCapacity: 999 } ],
             [ { context_keys_flush_interval: 999 }, { userKeysFlushIntervalMillis: 999000 } ],
-            [ { use_ldd: true }, { usingRelayDaemon: true } ],
           ]
           changes_and_expected.each do |config_values, expected_values|
             config = Config.new(config_values)

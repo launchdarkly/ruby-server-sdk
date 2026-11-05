@@ -1,9 +1,7 @@
+require "ldclient-rb/data_system"
 require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/broadcaster"
 require "ldclient-rb/impl/context"
-require "ldclient-rb/impl/data_source"
-require "ldclient-rb/impl/data_store/status"
-require "ldclient-rb/impl/data_system/fdv1"
 require "ldclient-rb/impl/data_system/fdv2"
 require "ldclient-rb/impl/diagnostic_events"
 require "ldclient-rb/impl/evaluation_with_hook_result"
@@ -18,7 +16,6 @@ require "digest/sha1"
 require "forwardable"
 require "logger"
 require "securerandom"
-require "benchmark"
 require "json"
 require "openssl"
 
@@ -58,15 +55,13 @@ module LaunchDarkly
     # @return [LDClient] The LaunchDarkly client instance
     #
     def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
-      # Note that sdk_key is normally a required parameter, and a nil value would cause the SDK to
-      # fail in most configurations. However, there are some configurations where it would be OK to
-      # not provide a SDK key.
-      #   * Offline mode
-      #   * Using LDD mode with events disabled
-      #   * Using a custom data source (like FileData) with events disabled
+      @data_system_config = config.data_system_config || DataSystem.default.build
+
+      # The SDK key is required unless the client never connects to LaunchDarkly. That is the case in
+      # offline mode, and when events are disabled and no data source connects to LaunchDarkly (for
+      # example, daemon mode, or only FileData or TestDataV2 sources).
       if !config.offline? && sdk_key.nil?
-        # If the data source is nil we create a default data source which requires the SDK key.
-        if config.send_events || (!config.use_ldd? && config.data_source.nil?)
+        if config.send_events || LDClient.connects_to_launchdarkly?(@data_system_config)
           raise ArgumentError, "sdk_key must not be nil"
         end
       end
@@ -148,16 +143,37 @@ module LaunchDarkly
     end
 
     #
-    # Return true if this configuration needs background threads. Offline mode has none. LDD mode with events
-    # disabled reads flags from the persistent store and sends nothing, so a fork does not break it.
+    # Return true if any data source in the data system configuration connects to LaunchDarkly.
+    #
+    # @api private
+    # @param data_system_config [DataSystemConfig]
+    # @return [Boolean]
+    #
+    def self.connects_to_launchdarkly?(data_system_config)
+      sources = (data_system_config.initializers || []) + (data_system_config.synchronizers || []) +
+        [data_system_config.fdv1_fallback_synchronizer].compact
+      sources.any? do |source|
+        source.is_a?(DataSystem::PollingDataSourceBuilder) ||
+          source.is_a?(DataSystem::StreamingDataSourceBuilder) ||
+          source.is_a?(DataSystem::FDv1PollingDataSourceBuilder)
+      end
+    end
+
+    #
+    # Return true if this configuration needs background threads. Offline mode has none. A data system with
+    # no data sources only reads the data store, so with events disabled a fork does not break it.
     #
     # @return [Boolean]
     #
     private def fork_breaks_client?
       return false if @config.offline?
-      return false if @config.use_ldd? && !@config.send_events
+      return false if !data_sources_configured? && !@config.send_events
 
       true
+    end
+
+    private def data_sources_configured?
+      !(@data_system_config.initializers || []).empty? || !(@data_system_config.synchronizers || []).empty?
     end
 
     private def start_up(wait_for_sec)
@@ -166,16 +182,7 @@ module LaunchDarkly
 
       @hooks = Concurrent::Array.new(@config.hooks + plugin_hooks)
 
-      # Initialize the data system - use FDv2 if configured, otherwise FDv1
-      data_system_config = @config.data_system_config
-      if data_system_config.nil?
-        # Use FDv1 for backwards compatibility
-        # Note: FDv1 will update @config.feature_store to use its wrapped store
-        @data_system = Impl::DataSystem::FDv1.new(@sdk_key, @config)
-      else
-        # Use FDv2 with the provided configuration
-        @data_system = Impl::DataSystem::FDv2.new(@sdk_key, @config, data_system_config)
-      end
+      @data_system = Impl::DataSystem::FDv2.new(@sdk_key, @config, @data_system_config)
 
       # Components not managed by data system
       @big_segment_store_manager = Impl::BigSegmentStoreManager.new(@config.big_segments, @config.logger)
@@ -317,7 +324,7 @@ module LaunchDarkly
     # @return [Boolean] true if the client has been initialized
     #
     def initialized?
-      return true if @config.offline? || @config.use_ldd?
+      return true if @config.offline?
 
       Impl::DataSystem::DataAvailability.at_least?(@data_system.data_availability, Impl::DataSystem::DataAvailability::CACHED)
     end

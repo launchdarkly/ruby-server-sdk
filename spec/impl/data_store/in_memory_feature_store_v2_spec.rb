@@ -1,6 +1,5 @@
 require "spec_helper"
 require "ldclient-rb/impl/data_store/in_memory_feature_store"
-require "ldclient-rb/impl/data_store/status"
 
 module LaunchDarkly
   module Impl

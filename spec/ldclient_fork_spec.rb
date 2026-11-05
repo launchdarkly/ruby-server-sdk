@@ -15,13 +15,22 @@ module LaunchDarkly
       allow(Process).to receive(:pid).and_return(real_pid + 1)
     end
 
+    # A data source runs on its own thread, so a fork breaks the client.
+    def client_config
+      test_config(logger: logger, data_system_config: test_data_system(Integrations::TestDataV2.data_source))
+    end
+
+    def daemon_config(send_events:)
+      Config.new(data_system_config: DataSystem.daemon(MockFeatureStore.new).build, send_events: send_events, logger: logger)
+    end
+
     def fork_warnings(logger)
       logger.output.lines.grep(warning_pattern)
     end
 
     context "when the pid has not changed" do
       it "does not warn" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           client.variation("flag", context, false)
           client.identify(context)
           client.track("event", context)
@@ -34,7 +43,7 @@ module LaunchDarkly
 
     context "when the pid has changed" do
       it "warns on variation" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           client.variation("flag", context, false)
           expect(fork_warnings(logger).length).to eq(1)
@@ -42,7 +51,7 @@ module LaunchDarkly
       end
 
       it "warns on variation_detail" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           client.variation_detail("flag", context, false)
           expect(fork_warnings(logger).length).to eq(1)
@@ -50,7 +59,7 @@ module LaunchDarkly
       end
 
       it "warns on all_flags_state" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           client.all_flags_state(context)
           expect(fork_warnings(logger).length).to eq(1)
@@ -58,7 +67,7 @@ module LaunchDarkly
       end
 
       it "warns on migration_variation" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           client.migration_variation("flag", context, LaunchDarkly::Migrations::STAGE_OFF)
           expect(fork_warnings(logger).length).to eq(1)
@@ -66,7 +75,7 @@ module LaunchDarkly
       end
 
       it "warns on identify" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           client.identify(context)
           expect(fork_warnings(logger).length).to eq(1)
@@ -74,7 +83,7 @@ module LaunchDarkly
       end
 
       it "warns on track" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           client.track("event", context)
           expect(fork_warnings(logger).length).to eq(1)
@@ -82,7 +91,7 @@ module LaunchDarkly
       end
 
       it "warns on flush" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           client.flush
           expect(fork_warnings(logger).length).to eq(1)
@@ -90,14 +99,14 @@ module LaunchDarkly
       end
 
       it "warns on close" do
-        client = LDClient.new(sdk_key, test_config(logger: logger))
+        client = LDClient.new(sdk_key, client_config)
         pretend_forked
         client.close
         expect(fork_warnings(logger).length).to eq(1)
       end
 
       it "warns only once per process across many calls" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           5.times { client.variation("flag", context, false) }
           client.identify(context)
@@ -109,7 +118,7 @@ module LaunchDarkly
       end
 
       it "warns only once when many threads evaluate at the same time" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           threads = Array.new(16) do
             Thread.new { 50.times { client.variation("flag", context, false) } }
@@ -120,7 +129,7 @@ module LaunchDarkly
       end
 
       it "names postfork and says flag updates and analytics events do not work" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           client.variation("flag", context, false)
         end
@@ -129,8 +138,8 @@ module LaunchDarkly
         expect(warning).to include("flag updates and analytics events will not work")
       end
 
-      it "warns in LDD mode when events are enabled" do
-        config = Config.new(use_ldd: true, send_events: true, logger: logger)
+      it "warns in daemon mode when events are enabled" do
+        config = daemon_config(send_events: true)
         with_client(config) do |client|
           pretend_forked
           client.variation("flag", context, false)
@@ -138,8 +147,8 @@ module LaunchDarkly
         expect(fork_warnings(logger).length).to eq(1)
       end
 
-      it "does not warn in LDD mode when events are disabled" do
-        config = Config.new(use_ldd: true, send_events: false, logger: logger)
+      it "does not warn in daemon mode when events are disabled" do
+        config = daemon_config(send_events: false)
         with_client(config) do |client|
           pretend_forked
           client.variation("flag", context, false)
@@ -162,7 +171,7 @@ module LaunchDarkly
       end
 
       it "stops warning after postfork" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           pretend_forked
           client.variation("flag", context, false)
           expect(fork_warnings(logger).length).to eq(1)
@@ -175,7 +184,7 @@ module LaunchDarkly
       end
 
       it "warns again in a second forked process even if the first one already warned" do
-        with_client(test_config(logger: logger)) do |client|
+        with_client(client_config) do |client|
           real_pid = Process.pid
           allow(Process).to receive(:pid).and_return(real_pid + 1)
           client.variation("flag", context, false)
@@ -197,7 +206,7 @@ module LaunchDarkly
       it "warns in the child and stops after postfork" do
         skip "fork is not supported on this platform" unless fork_supported?
 
-        client = LDClient.new(sdk_key, test_config(logger: logger))
+        client = LDClient.new(sdk_key, client_config)
         begin
           reader, writer = IO.pipe
           pid = fork do

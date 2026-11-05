@@ -1,5 +1,4 @@
 require "logger"
-require "ldclient-rb/impl/cache_store"
 require "ldclient-rb/impl/data_system/http_config_options"
 require "ldclient-rb/impl/data_system/polling"
 require "ldclient-rb/impl/data_system/streaming"
@@ -19,26 +18,17 @@ module LaunchDarkly
     #
     # @param opts [Hash] the configuration options
     # @option opts [Logger] :logger See {#logger}.
-    # @option opts [String] :base_uri ("https://sdk.launchdarkly.com") See {#base_uri}.
-    # @option opts [String] :stream_uri ("https://stream.launchdarkly.com") See {#stream_uri}.
     # @option opts [String] :events_uri ("https://events.launchdarkly.com") See {#events_uri}.
     # @option opts [Integer] :capacity (10000) See {#capacity}.
     # @option opts [Float] :flush_interval (30) See {#flush_interval}.
     # @option opts [Float] :read_timeout (10) See {#read_timeout}.
-    # @option opts [Float] :initial_reconnect_delay (1) See {#initial_reconnect_delay}.
     # @option opts [Float] :connect_timeout (2) See {#connect_timeout}.
-    # @option opts [Object] :cache_store See {#cache_store}.
-    # @option opts [Object] :feature_store See {#feature_store}.
-    # @option opts [Boolean] :use_ldd (false) See {#use_ldd?}.
     # @option opts [Boolean] :offline (false) See {#offline?}.
-    # @option opts [Float] :poll_interval (30) See {#poll_interval}.
-    # @option opts [Boolean] :stream (true) See {#stream?}.
     # @option opts [Boolean] all_attributes_private (false) See {#all_attributes_private}.
     # @option opts [Enumerable<String>] :private_attributes See {#private_attributes}.
     # @option opts [Boolean] :send_events (true) See {#send_events}.
     # @option opts [Integer] :context_keys_capacity (1000) See {#context_keys_capacity}.
     # @option opts [Float] :context_keys_flush_interval (300) See {#context_keys_flush_interval}.
-    # @option opts [Object] :data_source See {#data_source}.
     # @option opts [Boolean] :diagnostic_opt_out (false) See {#diagnostic_opt_out?}.
     # @option opts [Float] :diagnostic_recording_interval (900) See {#diagnostic_recording_interval}.
     # @option opts [String] :wrapper_name See {#wrapper_name}.
@@ -46,35 +36,25 @@ module LaunchDarkly
     # @option opts [#open] :socket_factory See {#socket_factory}.
     # @option opts [BigSegmentsConfig] :big_segments See {#big_segments}.
     # @option opts [Hash] :application See {#application}
-    # @option opts [String] :payload_filter_key See {#payload_filter_key}
     # @option opts [Boolean] :omit_anonymous_contexts See {#omit_anonymous_contexts}
     # @option opts [DataSystemConfig] :data_system_config See {#data_system_config}
     # @option hooks [Array<Interfaces::Hooks::Hook]
     # @option plugins [Array<Interfaces::Plugins::Plugin]
     #
     def initialize(opts = {})
-      @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
-      @stream_uri = (opts[:stream_uri] || Config.default_stream_uri).chomp("/")
       @events_uri = (opts[:events_uri] || Config.default_events_uri).chomp("/")
       @capacity = opts[:capacity] || Config.default_capacity
       @logger = opts[:logger] || Config.default_logger
-      @cache_store = opts[:cache_store] || Config.default_cache_store
       @flush_interval = opts[:flush_interval] || Config.default_flush_interval
       @connect_timeout = opts[:connect_timeout] || Config.default_connect_timeout
       @read_timeout = opts[:read_timeout] || Config.default_read_timeout
-      @initial_reconnect_delay = opts[:initial_reconnect_delay] || Config.default_initial_reconnect_delay
-      @feature_store = opts[:feature_store] || Config.default_feature_store
-      @stream = opts.has_key?(:stream) ? opts[:stream] : Config.default_stream
-      @use_ldd = opts.has_key?(:use_ldd) ? opts[:use_ldd] : Config.default_use_ldd
       @offline = opts.has_key?(:offline) ? opts[:offline] : Config.default_offline
-      @poll_interval = opts.has_key?(:poll_interval) && opts[:poll_interval] > Config.default_poll_interval ? opts[:poll_interval] : Config.default_poll_interval
       @all_attributes_private = opts[:all_attributes_private] || false
       @private_attributes = Set.new(opts[:private_attributes] || []).freeze
       @send_events = opts.has_key?(:send_events) ? opts[:send_events] : Config.default_send_events
       @compress_events = opts.has_key?(:compress_events) ? opts[:compress_events] : Config.default_compress_events
       @context_keys_capacity = opts[:context_keys_capacity] || Config.default_context_keys_capacity
       @context_keys_flush_interval = opts[:context_keys_flush_interval] || Config.default_context_keys_flush_interval
-      @data_source = opts[:data_source]
       @diagnostic_opt_out = opts.has_key?(:diagnostic_opt_out) && opts[:diagnostic_opt_out]
       @diagnostic_recording_interval = opts.has_key?(:diagnostic_recording_interval) && opts[:diagnostic_recording_interval] > Config.minimum_diagnostic_recording_interval ?
         opts[:diagnostic_recording_interval] : Config.default_diagnostic_recording_interval
@@ -83,28 +63,12 @@ module LaunchDarkly
       @socket_factory = opts[:socket_factory]
       @big_segments = opts[:big_segments] || BigSegmentsConfig.new(store: nil)
       @application = LaunchDarkly::Impl::Util.validate_application_info(opts[:application] || {}, @logger)
-      @payload_filter_key = LaunchDarkly::Impl::Util.validate_payload_filter_key(opts[:payload_filter_key] , @logger)
       @hooks = (opts[:hooks] || []).keep_if { |hook| hook.is_a? Interfaces::Hooks::Hook }
       @plugins = (opts[:plugins] || []).keep_if { |plugin| plugin.is_a? Interfaces::Plugins::Plugin }
       @omit_anonymous_contexts = opts.has_key?(:omit_anonymous_contexts) && opts[:omit_anonymous_contexts]
       @data_system_config = opts[:data_system_config]
-      @data_source_update_sink = nil
       @instance_id = nil
     end
-
-    #
-    # Returns the component that allows a data source to push data into the SDK.
-    #
-    # This property should only be set by the SDK. Long term access of this
-    # property is not supported; it is temporarily being exposed to maintain
-    # backwards compatibility while the SDK structure is updated.
-    #
-    # Custom data source implementations should integrate with this sink if
-    # they want to provide support for data source status listeners.
-    #
-    # @api private
-    #
-    attr_accessor :data_source_update_sink
 
 
     #
@@ -119,50 +83,11 @@ module LaunchDarkly
     attr_accessor :instance_id
 
     #
-    # The base URL for the LaunchDarkly server. This is configurable mainly for testing
-    # purposes; most users should use the default value.
-    # @return [String]
-    #
-    attr_reader :base_uri
-
-    #
-    # The base URL for the LaunchDarkly streaming server. This is configurable mainly for testing
-    # purposes; most users should use the default value.
-    # @return [String]
-    #
-    attr_reader :stream_uri
-
-    #
     # The base URL for the LaunchDarkly events server. This is configurable mainly for testing
     # purposes; most users should use the default value.
     # @return [String]
     #
     attr_reader :events_uri
-
-    #
-    # Whether streaming mode should be enabled. Streaming mode asynchronously updates
-    # feature flags in real-time using server-sent events. Streaming is enabled by default, and
-    # should only be disabled on the advice of LaunchDarkly support.
-    # @return [Boolean]
-    #
-    def stream?
-      @stream
-    end
-
-    #
-    # Whether to use the LaunchDarkly relay proxy in daemon mode. In this mode, the client does not
-    # use polling or streaming to get feature flag updates from the server, but instead reads them
-    # from the {#feature_store feature store}, which is assumed to be a database that is populated by
-    # a LaunchDarkly relay proxy. For more information, see ["The relay proxy"](https://docs.launchdarkly.com/home/relay-proxy)
-    # and ["Using a persistent data stores"](https://docs.launchdarkly.com/sdk/concepts/data-stores).
-    #
-    # All other properties related to streaming or polling are ignored if this option is set to true.
-    #
-    # @return [Boolean]
-    #
-    def use_ldd?
-      @use_ldd
-    end
 
     #
     # Whether the client should be initialized in offline mode. In offline mode, default values are
@@ -179,13 +104,6 @@ module LaunchDarkly
     # @return [Float]
     #
     attr_reader :flush_interval
-
-    #
-    # The number of seconds to wait before polling for feature flag updates. This option has no
-    # effect unless streaming is disabled.
-    # @return [Float]
-    #
-    attr_reader :poll_interval
 
     #
     # The configured logger for the LaunchDarkly client. The client library uses the log to
@@ -206,15 +124,6 @@ module LaunchDarkly
     attr_reader :capacity
 
     #
-    # A store for HTTP caching (used only in polling mode). This must support the semantics used by
-    # the [`faraday-http-cache`](https://github.com/plataformatec/faraday-http-cache) gem, although
-    # the SDK no longer uses Faraday. Defaults to the Rails cache in a Rails environment, or a
-    # thread-safe in-memory store otherwise.
-    # @return [Object]
-    #
-    attr_reader :cache_store
-
-    #
     # The read timeout for network connections in seconds. This does not apply to the streaming
     # connection, which uses a longer timeout since the server does not send data constantly.
     # @return [Float]
@@ -222,28 +131,10 @@ module LaunchDarkly
     attr_reader :read_timeout
 
     #
-    # The initial delay before reconnecting after an error in the SSE client.
-    # This only applies to the streaming connection.
-    # @return [Float]
-    #
-    attr_reader :initial_reconnect_delay
-
-    #
     # The connect timeout for network connections in seconds.
     # @return [Float]
     #
     attr_reader :connect_timeout
-
-    #
-    # A store for feature flags and related data. The client uses it to store all data received
-    # from LaunchDarkly, and uses the last stored data when evaluating flags. Defaults to
-    # {InMemoryFeatureStore}; for other implementations, see {LaunchDarkly::Integrations}.
-    #
-    # For more information, see ["Persistent data stores"](https://docs.launchdarkly.com/sdk/concepts/data-stores).
-    #
-    # @return [LaunchDarkly::Interfaces::FeatureStore]
-    #
-    attr_reader :feature_store
 
     #
     # True if all context attributes (other than the key) should be considered private. This means
@@ -307,21 +198,6 @@ module LaunchDarkly
     attr_reader :context_keys_flush_interval
 
     #
-    # An object that is responsible for receiving feature flag data from LaunchDarkly. By default,
-    # the client uses its standard polling or streaming implementation; this is customizable for
-    # testing purposes.
-    #
-    # This may be set to either an object that conforms to {LaunchDarkly::Interfaces::DataSource},
-    # or a lambda (or Proc) that takes two parameters-- SDK key and {Config}-- and returns such an
-    # object.
-    #
-    # @return [LaunchDarkly::Interfaces::DataSource|lambda]
-    # @see LaunchDarkly::Integrations::FileData
-    # @see LaunchDarkly::Integrations::TestData
-    #
-    attr_reader :data_source
-
-    #
     # Configuration options related to Big Segments.
     #
     # Big Segments are a specific type of segments. For more information, read the LaunchDarkly
@@ -348,24 +224,6 @@ module LaunchDarkly
     # @return [Hash]
     #
     attr_reader :application
-
-    #
-    # LaunchDarkly Server SDKs historically downloaded all flag configuration and segments for a particular environment
-    # during initialization.
-    #
-    # For some customers, this is an unacceptably large amount of data, and has contributed to performance issues within
-    # their products.
-    #
-    # Filtered environments aim to solve this problem. By allowing customers to specify subsets of an environment's
-    # flags using a filter key, SDKs will initialize faster and use less memory.
-    #
-    # This payload filter key only applies to the default streaming and polling data sources. It will not affect TestData or FileData
-    # data sources, nor will it be applied to any data source provided through the {#data_source} config property.
-    #
-    # Payload filtering is not supported with the FDv2 data system, so this key has no effect on requests made by FDv2
-    # data sources.
-    #
-    attr_reader :payload_filter_key
 
     #
     # Set to true to opt out of sending diagnostics data.
@@ -469,13 +327,12 @@ module LaunchDarkly
 
     #
     # Configuration for the data system, which controls how the SDK gets
-    # flag and segment data. When set, it overrides {#feature_store},
-    # {#data_source}, {#stream?}, and {#use_ldd?}.
+    # flag and segment data. If this is nil, the client uses
+    # {LaunchDarkly::DataSystem.default}.
     #
     # @return [DataSystemConfig, nil]
     #
     attr_reader :data_system_config
-
 
     #
     # The default LaunchDarkly client configuration. This configuration sets
@@ -495,35 +352,11 @@ module LaunchDarkly
     end
 
     #
-    # The default value for {#base_uri}.
-    # @return [String] "https://sdk.launchdarkly.com"
-    #
-    def self.default_base_uri
-      DataSystem::PollingDataSourceBuilder::DEFAULT_BASE_URI
-    end
-
-    #
-    # The default value for {#stream_uri}.
-    # @return [String] "https://stream.launchdarkly.com"
-    #
-    def self.default_stream_uri
-      DataSystem::StreamingDataSourceBuilder::DEFAULT_BASE_URI
-    end
-
-    #
     # The default value for {#events_uri}.
     # @return [String] "https://events.launchdarkly.com"
     #
     def self.default_events_uri
       "https://events.launchdarkly.com"
-    end
-
-    #
-    # The default value for {#cache_store}.
-    # @return [Object] the Rails cache if in Rails, or a simple in-memory implementation otherwise
-    #
-    def self.default_cache_store
-      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : Impl::ThreadSafeMemoryStore.new
     end
 
     #
@@ -540,14 +373,6 @@ module LaunchDarkly
     #
     def self.default_read_timeout
       Impl::DataSystem::HttpConfigOptions::DEFAULT_READ_TIMEOUT
-    end
-
-    #
-    # The default value for {#initial_reconnect_delay}.
-    # @return [Float] 1
-    #
-    def self.default_initial_reconnect_delay
-      DataSystem::StreamingDataSourceBuilder::DEFAULT_INITIAL_RECONNECT_DELAY
     end
 
     #
@@ -573,43 +398,11 @@ module LaunchDarkly
     end
 
     #
-    # The default value for {#stream?}.
-    # @return [Boolean] true
-    #
-    def self.default_stream
-      true
-    end
-
-    #
-    # The default value for {#use_ldd?}.
-    # @return [Boolean] false
-    #
-    def self.default_use_ldd
-      false
-    end
-
-    #
-    # The default value for {#feature_store}.
-    # @return [LaunchDarkly::Interfaces::FeatureStore] an {InMemoryFeatureStore}
-    #
-    def self.default_feature_store
-      InMemoryFeatureStore.new
-    end
-
-    #
     # The default value for {#offline?}.
     # @return [Boolean] false
     #
     def self.default_offline
       false
-    end
-
-    #
-    # The default value for {#poll_interval}.
-    # @return [Float] 30
-    #
-    def self.default_poll_interval
-      DataSystem::PollingDataSourceBuilder::DEFAULT_POLL_INTERVAL
     end
 
     #

@@ -647,7 +647,7 @@ module LaunchDarkly
             error_fetch = LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
               result: LaunchDarkly::Result.fail(
                 "boom",
-                LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(500)
+                LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(500)
               ),
               fallback_to_fdv1: true
             )
@@ -672,29 +672,6 @@ module LaunchDarkly
             expect(fdv2.data_source_status_provider.status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
 
             fdv2.stop
-          end
-        end
-
-        describe "payload filter key" do
-          let(:data_system_config) do
-            LaunchDarkly::DataSystem::ConfigBuilder.new
-              .initializers([])
-              .synchronizers([])
-              .build
-          end
-
-          it "warns when a payload filter key is configured" do
-            logger = double.as_null_object
-            expect(logger).to receive(:warn)
-
-            FDv2.new(sdk_key, LaunchDarkly::Config.new(logger: logger, payload_filter_key: "microservice-1"), data_system_config)
-          end
-
-          it "does not warn when no payload filter key is configured" do
-            logger = double.as_null_object
-            expect(logger).not_to receive(:warn)
-
-            FDv2.new(sdk_key, LaunchDarkly::Config.new(logger: logger), data_system_config)
           end
         end
 
