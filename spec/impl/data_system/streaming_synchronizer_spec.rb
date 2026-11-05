@@ -17,7 +17,6 @@ module LaunchDarkly
             "Config",
             logger: logger,
             stream_uri: "https://stream.example.com",
-            payload_filter_key: nil,
             socket_factory: nil,
             initial_reconnect_delay: 1,
             instance_id: nil
