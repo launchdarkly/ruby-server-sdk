@@ -50,7 +50,7 @@ module LaunchDarkly
         }.to raise_error(ArgumentError)
       end
 
-      it "is enforced if the FDv1 fallback connects to LaunchDarkly even if send_events is false" do
+      it "is enforced if the FDv1 fallback needs the SDK key even if send_events is false" do
         data_system = DataSystem.custom.fdv1_compatible_synchronizer(DataSystem.fdv1_fallback_ds_builder).build
         expect {
           subject.new(nil, Config.new({ data_system_config: data_system, send_events: false }))

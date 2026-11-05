@@ -57,11 +57,11 @@ module LaunchDarkly
     def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
       @data_system_config = config.data_system_config || DataSystem.default.build
 
-      # The SDK key is required unless the client never connects to LaunchDarkly. That is the case in
-      # offline mode, and when events are disabled and no data source connects to LaunchDarkly (for
-      # example, daemon mode, or only FileData or TestDataV2 sources).
+      # The SDK key is required unless the client never sends it. That is the case in offline mode, and
+      # when events are disabled and no data source needs the SDK key (for example, daemon mode, or only
+      # FileData or TestDataV2 sources).
       if !config.offline? && sdk_key.nil?
-        if config.send_events || LDClient.connects_to_launchdarkly?(@data_system_config)
+        if config.send_events || LDClient.data_sources_need_sdk_key?(@data_system_config)
           raise ArgumentError, "sdk_key must not be nil"
         end
       end
@@ -143,13 +143,14 @@ module LaunchDarkly
     end
 
     #
-    # Return true if any data source in the data system configuration connects to LaunchDarkly.
+    # Return true if any data source in the data system configuration sends the SDK key. The polling,
+    # streaming and FDv1 fallback sources send it, whatever their base URI.
     #
     # @api private
     # @param data_system_config [DataSystemConfig]
     # @return [Boolean]
     #
-    def self.connects_to_launchdarkly?(data_system_config)
+    def self.data_sources_need_sdk_key?(data_system_config)
       sources = (data_system_config.initializers || []) + (data_system_config.synchronizers || []) +
         [data_system_config.fdv1_fallback_synchronizer].compact
       sources.any? do |source|
