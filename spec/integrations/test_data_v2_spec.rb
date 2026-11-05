@@ -2,6 +2,7 @@ require "ldclient-rb/integrations/test_data_v2"
 require "ldclient-rb/impl/integrations/test_data/test_data_source_v2"
 require "spec_helper"
 require "json"
+require "set"
 
 module LaunchDarkly
   module Integrations
@@ -147,6 +148,11 @@ module LaunchDarkly
           'malformed JSON' => '{not json',
           'a JSON value that is not an object' => '[1]',
           'a malformed prerequisite' => { key: 'myflag', version: 1, prerequisites: ['oops'] },
+          'a value that is not a JSON value' => { key: 'myflag', variations: [Time.at(0)] },
+          'a NaN value' => { key: 'myflag', variations: [Float::NAN] },
+          'an infinite value' => { key: 'myflag', variations: [Float::INFINITY] },
+          'the same key as a string and a symbol' => { key: 'myflag', 'key' => 'other' },
+          'a hash key that is not a string or symbol' => { key: 'myflag', variations: [{ 1 => 'a' }] },
         }.each do |name, flag|
           it "with #{name}" do
             td = TestDataV2.data_source
@@ -170,6 +176,34 @@ module LaunchDarkly
             expect(td.make_init_data[:segments]).to eq({})
           end
         end
+      end
+
+      it 'rejects a preconfigured flag that is nested too deeply' do
+        deep = 'a'
+        150.times { deep = [deep] }
+        td = TestDataV2.data_source
+        expect { td.use_preconfigured_flag({ key: 'myflag', variations: [deep] }) }.to raise_error(ArgumentError)
+      end
+
+      it 'rejects a preconfigured flag that contains itself' do
+        flag = { key: 'myflag', variations: [] }
+        flag[:variations] << flag
+        td = TestDataV2.data_source
+        expect { td.use_preconfigured_flag(flag) }.to raise_error(ArgumentError)
+      end
+
+      it 'stores Set values of a preconfigured segment as arrays' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_segment({ key: 'myseg', included: Set['u1', 'u2'] })
+        expect(td.make_init_data[:segments][:myseg][:included]).to eq(%w[u1 u2])
+      end
+
+      it 'stores symbol values of a preconfigured flag as strings' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_flag({ key: 'myflag', variations: [:a], rules: [{ id: 'r', variation: 0, clauses: [{ attribute: 'key', op: :in, values: ['u'] }] }] })
+        flag = td.make_init_data[:flags][:myflag]
+        expect(flag[:variations]).to eq(['a'])
+        expect(flag[:rules][0][:clauses][0][:op]).to eq('in')
       end
 
       it 'converts string keys at every level of a preconfigured segment to symbols' do
@@ -199,13 +233,19 @@ module LaunchDarkly
           td = TestDataV2.data_source
           td.add_instance(instance)
           first = Thread.new { yield td, 1 }
-          sleep 0.05 until first.status == 'sleep'
-          second = Thread.new { yield td, 2 }
+          second = nil
+          begin
+            deadline = Time.now + 5
+            sleep 0.01 until first.status == 'sleep' || !first.alive? || Time.now > deadline
+            expect(first.status).to eq('sleep')
+            second = Thread.new { yield td, 2 }
 
-          # The second change waits for the first change to finish its delivery.
-          expect(second.join(0.2)).to be_nil
-          release << true
-          [first, second].each { |t| t.join(5) }
+            # The second change waits for the first change to finish its delivery.
+            expect(second.join(0.2)).to be_nil
+          ensure
+            release << true
+            [first, second].compact.each { |t| t.join(5) }
+          end
 
           expect([delivered.pop(timeout: 1), delivered.pop(timeout: 1)]).to eq([1, 2])
         end

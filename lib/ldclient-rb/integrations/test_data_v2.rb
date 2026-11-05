@@ -4,6 +4,7 @@ require 'ldclient-rb/impl/model/serialization'
 require 'ldclient-rb/integrations/test_data_v2/flag_builder_v2'
 require 'concurrent/atomics'
 require 'json'
+require 'set'
 
 module LaunchDarkly
   module Integrations
@@ -270,6 +271,10 @@ module LaunchDarkly
         self
       end
 
+      # The maximum depth of nested hashes and arrays in a preconfigured item.
+      MAX_PRECONFIGURED_DEPTH = 100
+      private_constant :MAX_PRECONFIGURED_DEPTH
+
       #
       # Converts a preconfigured flag or segment to a new hash with symbol keys at every level, and checks
       # that it is a valid data model object.
@@ -281,18 +286,24 @@ module LaunchDarkly
       # @raise [ArgumentError] if the item is not valid
       #
       private def normalize_preconfigured_item(kind, item, description)
-        data =
+        raw =
           if item.is_a?(String)
-            JSON.parse(item, symbolize_names: true)
+            begin
+              JSON.parse(item)
+            rescue JSON::ParserError => e
+              raise ArgumentError, "a preconfigured #{description} is not valid JSON: #{e.message}"
+            end
           elsif item.is_a?(Hash)
-            JSON.parse(JSON.generate(item), symbolize_names: true)
+            item
           elsif item.respond_to?(:as_json)
-            JSON.parse(JSON.generate(item.as_json), symbolize_names: true)
+            item.as_json
           else
             raise ArgumentError, "a preconfigured #{description} must be a Hash, a JSON string, or a model object"
           end
 
-        raise ArgumentError, "a preconfigured #{description} must be a JSON object" unless data.is_a?(Hash)
+        raise ArgumentError, "a preconfigured #{description} must be a JSON object" unless raw.is_a?(Hash)
+
+        data = normalize_json_value(raw, description, "", 0)
 
         key = data[:key]
         unless key.is_a?(String) && !key.empty?
@@ -305,14 +316,56 @@ module LaunchDarkly
         end
 
         begin
-          LaunchDarkly::Impl::Model.deserialize(kind, JSON.parse(JSON.generate(data), symbolize_names: true))
+          LaunchDarkly::Impl::Model.deserialize(kind, data)
         rescue => e
           raise ArgumentError, "preconfigured #{description} '#{key}' is not valid: #{e.message}"
         end
 
         data
-      rescue JSON::ParserError => e
-        raise ArgumentError, "a preconfigured #{description} is not valid JSON: #{e.message}"
+      end
+
+      #
+      # Returns a copy of a JSON-compatible value with symbol hash keys at every level. A Set becomes an
+      # array and a symbol value becomes a string, as they would in JSON.
+      #
+      # @param value [Object] the value to convert
+      # @param description [String] the name of the item kind, for error messages
+      # @param path [String] the location of the value in the item, for error messages
+      # @param depth [Integer] the nesting depth of the value
+      # @return [Object] the converted value
+      # @raise [ArgumentError] if the value is not a JSON-compatible value
+      #
+      private def normalize_json_value(value, description, path, depth)
+        if depth > MAX_PRECONFIGURED_DEPTH
+          raise ArgumentError, "a preconfigured #{description} is nested more than #{MAX_PRECONFIGURED_DEPTH} levels deep"
+        end
+
+        case value
+        when Hash
+          value.each_with_object({}) do |(k, v), out|
+            unless k.is_a?(String) || k.is_a?(Symbol)
+              raise ArgumentError, "a preconfigured #{description} has the key #{k.inspect} at '#{path}', which is not a string or symbol"
+            end
+            sym = k.to_sym
+            if out.key?(sym)
+              raise ArgumentError, "a preconfigured #{description} has the key '#{k}' more than once at '#{path}'"
+            end
+            out[sym] = normalize_json_value(v, description, "#{path}/#{k}", depth + 1)
+          end
+        when Array, Set
+          value.each_with_index.map { |v, i| normalize_json_value(v, description, "#{path}/#{i}", depth + 1) }
+        when String
+          value.dup
+        when Symbol
+          value.to_s
+        when Integer, true, false, nil
+          value
+        when Float
+          raise ArgumentError, "a preconfigured #{description} has a value at '#{path}' that is not a finite number" unless value.finite?
+          value
+        else
+          raise ArgumentError, "a preconfigured #{description} has a #{value.class} at '#{path}', which is not a JSON value"
+        end
       end
 
       #
