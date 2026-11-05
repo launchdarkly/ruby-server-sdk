@@ -1,6 +1,8 @@
 require "ldclient-rb/integrations/test_data_v2"
 require "ldclient-rb/impl/integrations/test_data/test_data_source_v2"
 require "spec_helper"
+require "json"
+require "set"
 
 module LaunchDarkly
   module Integrations
@@ -94,6 +96,178 @@ module LaunchDarkly
         source = LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(td)
         expect(source).to receive(:upsert_flag).with(hash_including(key: 'myflag', version: 7))
         td.use_preconfigured_flag({ key: 'myflag', version: 7, variations: ['a'] })
+      end
+
+      it 'keeps a provided version that is greater than the version of the flag it replaces' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_flag({ key: 'myflag', version: 5, variations: ['a'] })
+        td.use_preconfigured_flag({ key: 'myflag', version: 100, variations: ['b'] })
+        expect(td.make_init_data[:flags][:myflag][:version]).to eq(100)
+      end
+
+      it 'gives a new preconfigured flag with version 0 version 1' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_flag({ key: 'myflag', version: 0, variations: ['a'] })
+        expect(td.make_init_data[:flags][:myflag][:version]).to eq(1)
+      end
+
+      it 'converts string keys at every level of a preconfigured flag to symbols' do
+        td = TestDataV2.data_source
+        flag_json = '{"key":"myflag","version":3,"on":true,"fallthrough":{"variation":0},"variations":["a"],' \
+          '"rules":[{"id":"r","variation":0,"clauses":[{"attribute":"key","op":"in","values":["u"]}]}]}'
+        td.use_preconfigured_flag(JSON.parse(flag_json))
+        flag = td.make_init_data[:flags][:myflag]
+        expect(flag[:fallthrough]).to eq({ variation: 0 })
+        expect(flag[:rules][0][:clauses][0][:attribute]).to eq('key')
+      end
+
+      it 'accepts a preconfigured flag as a JSON string' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_flag('{"key":"myflag","version":3,"variations":["a"]}')
+        expect(td.make_init_data[:flags][:myflag][:version]).to eq(3)
+      end
+
+      it 'stores a copy of a preconfigured flag' do
+        td = TestDataV2.data_source
+        flag = { key: 'myflag', version: 1, fallthrough: { variation: 0 }, variations: ['a'] }
+        td.use_preconfigured_flag(flag)
+        flag[:fallthrough][:variation] = 1
+        flag[:variations] << 'b'
+        stored = td.make_init_data[:flags][:myflag]
+        expect(stored[:fallthrough]).to eq({ variation: 0 })
+        expect(stored[:variations]).to eq(['a'])
+      end
+
+      it 'does not change a stored flag when its rule builder changes later' do
+        td = TestDataV2.data_source
+        builder = td.flag('myflag')
+        rule = builder.if_match('name', 'alice')
+        rule.then_return(true)
+        td.update(builder)
+        rule.and_match('country', 'us')
+        clauses = td.make_init_data[:flags][:myflag][:rules][0][:clauses]
+        expect(clauses.map { |clause| clause[:attribute] }).to eq(['name'])
+      end
+
+      describe 'rejects an invalid preconfigured flag' do
+        {
+          'nil' => nil,
+          'a value that is not a hash' => 42,
+          'a hash without a key' => { version: 1 },
+          'an empty key' => { key: '' },
+          'a version that is not an integer' => { key: 'myflag', version: '100' },
+          'malformed JSON' => '{not json',
+          'a JSON value that is not an object' => '[1]',
+          'a malformed prerequisite' => { key: 'myflag', version: 1, prerequisites: ['oops'] },
+          'a value that is not a JSON value' => { key: 'myflag', variations: [Time.at(0)] },
+          'a NaN value' => { key: 'myflag', variations: [Float::NAN] },
+          'an infinite value' => { key: 'myflag', variations: [Float::INFINITY] },
+          'the same key as a string and a symbol' => { key: 'myflag', 'key' => 'other' },
+          'a hash key that is not a string or symbol' => { key: 'myflag', variations: [{ 1 => 'a' }] },
+        }.each do |name, flag|
+          it "with #{name}" do
+            td = TestDataV2.data_source
+            td.use_preconfigured_flag({ key: 'other', version: 1, variations: ['a'] })
+            expect { td.use_preconfigured_flag(flag) }.to raise_error(ArgumentError)
+            expect(td.make_init_data[:flags].keys).to eq([:other])
+          end
+        end
+      end
+
+      describe 'rejects an invalid preconfigured segment' do
+        {
+          'nil' => nil,
+          'a hash without a key' => { version: 1 },
+          'malformed JSON' => '{not json',
+          'a malformed rule' => { key: 'myseg', rules: ['oops'] },
+        }.each do |name, segment|
+          it "with #{name}" do
+            td = TestDataV2.data_source
+            expect { td.use_preconfigured_segment(segment) }.to raise_error(ArgumentError)
+            expect(td.make_init_data[:segments]).to eq({})
+          end
+        end
+      end
+
+      it 'rejects a preconfigured flag that is nested too deeply' do
+        deep = 'a'
+        150.times { deep = [deep] }
+        td = TestDataV2.data_source
+        expect { td.use_preconfigured_flag({ key: 'myflag', variations: [deep] }) }.to raise_error(ArgumentError)
+      end
+
+      it 'rejects a preconfigured flag that contains itself' do
+        flag = { key: 'myflag', variations: [] }
+        flag[:variations] << flag
+        td = TestDataV2.data_source
+        expect { td.use_preconfigured_flag(flag) }.to raise_error(ArgumentError)
+      end
+
+      it 'stores Set values of a preconfigured segment as arrays' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_segment({ key: 'myseg', included: Set['u1', 'u2'] })
+        expect(td.make_init_data[:segments][:myseg][:included]).to eq(%w[u1 u2])
+      end
+
+      it 'stores symbol values of a preconfigured flag as strings' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_flag({ key: 'myflag', variations: [:a], rules: [{ id: 'r', variation: 0, clauses: [{ attribute: 'key', op: :in, values: ['u'] }] }] })
+        flag = td.make_init_data[:flags][:myflag]
+        expect(flag[:variations]).to eq(['a'])
+        expect(flag[:rules][0][:clauses][0][:op]).to eq('in')
+      end
+
+      it 'converts string keys at every level of a preconfigured segment to symbols' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_segment(JSON.parse('{"key":"myseg","rules":[{"id":"r","clauses":[{"attribute":"key","op":"in","values":["u"]}]}]}'))
+        expect(td.make_init_data[:segments][:myseg][:rules][0][:clauses][0][:op]).to eq('in')
+      end
+
+      describe 'change delivery order' do
+        # A data source instance that blocks inside the first delivery until the spec releases it.
+        let(:delivered) { Queue.new }
+        let(:release) { Queue.new }
+        let(:instance) do
+          delivered_versions = delivered
+          release_first = release
+          calls = 0
+          inst = Object.new
+          inst.define_singleton_method(:upsert_flag) do |flag|
+            calls += 1
+            release_first.pop if calls == 1
+            delivered_versions << flag[:version]
+          end
+          inst
+        end
+
+        def expect_delivery_in_order
+          td = TestDataV2.data_source
+          td.add_instance(instance)
+          first = Thread.new { yield td, 1 }
+          second = nil
+          begin
+            deadline = Time.now + 5
+            sleep 0.01 until first.status == 'sleep' || !first.alive? || Time.now > deadline
+            expect(first.status).to eq('sleep')
+            second = Thread.new { yield td, 2 }
+
+            # The second change waits for the first change to finish its delivery.
+            expect(second.join(0.2)).to be_nil
+          ensure
+            release << true
+            [first, second].compact.each { |t| t.join(5) }
+          end
+
+          expect([delivered.pop(timeout: 1), delivered.pop(timeout: 1)]).to eq([1, 2])
+        end
+
+        it 'delivers flag updates in the order that they are made' do
+          expect_delivery_in_order { |td, _| td.update(td.flag('myflag').variation_for_all(true)) }
+        end
+
+        it 'delivers preconfigured flags in the order that they are made' do
+          expect_delivery_in_order { |td, n| td.use_preconfigured_flag({ key: 'myflag', version: n, variations: ['a'] }) }
+        end
       end
 
       describe 'FlagBuilderV2 event and migration settings' do
