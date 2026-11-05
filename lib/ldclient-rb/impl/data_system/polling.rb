@@ -309,17 +309,9 @@ module LaunchDarkly
         # @return [Result]
         #
         def fetch(selector)
-          query_params = []
-          query_params << ["filter", @config.payload_filter_key] unless @config.payload_filter_key.nil?
-
-          if selector && selector.defined?
-            query_params << ["basis", selector.state]
-          end
-
           uri = @poll_uri
-          if query_params.any?
-            filter_query = URI.encode_www_form(query_params)
-            uri = "#{uri}?#{filter_query}"
+          if selector && selector.defined?
+            uri = "#{uri}?#{URI.encode_www_form(basis: selector.state)}"
           end
 
           headers = {}
@@ -384,7 +376,7 @@ module LaunchDarkly
         #
         # @param sdk_key [String]
         # @param http_config [HttpConfigOptions] HTTP connection settings
-        # @param config [LaunchDarkly::Config] Used for global header settings and payload_filter_key
+        # @param config [LaunchDarkly::Config] Used for global header settings
         #
         def initialize(sdk_key, http_config, config)
           @etag = nil
@@ -401,14 +393,7 @@ module LaunchDarkly
         # @return [Result]
         #
         def fetch(selector)
-          query_params = []
-          query_params << ["filter", @config.payload_filter_key] unless @config.payload_filter_key.nil?
-
           uri = @poll_uri
-          if query_params.any?
-            filter_query = URI.encode_www_form(query_params)
-            uri = "#{uri}?#{filter_query}"
-          end
 
           headers = {}
           Impl::Util.default_http_headers(@sdk_key, @config).each { |k, v| headers[k] = v }

@@ -52,10 +52,6 @@ class ClientEntity
         data_system.fdv1_compatible_synchronizer(build_fdv1_fallback_builder(fdv1_fallback_config))
       end
 
-      if data_system_config[:payloadFilter]
-        opts[:payload_filter_key] = data_system_config[:payloadFilter]
-      end
-
       opts[:data_system_config] = data_system.build
     elsif config[:streaming]
       streaming = config[:streaming]

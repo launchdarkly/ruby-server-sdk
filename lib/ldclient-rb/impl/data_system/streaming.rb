@@ -182,7 +182,6 @@ module LaunchDarkly
             client.query_params do
               selector = ss.selector
               {
-                "filter" => @config.payload_filter_key,
                 "basis" => (selector.state if selector&.defined?),
               }.compact
             end
