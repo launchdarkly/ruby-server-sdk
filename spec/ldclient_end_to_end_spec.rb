@@ -4,11 +4,7 @@ require "spec_helper"
 
 
 ALWAYS_TRUE_FLAG = { key: 'flagkey', version: 1, on: false, offVariation: 1, variations: [ false, true ] }
-DATA_WITH_ALWAYS_TRUE_FLAG = {
-  flags: { ALWAYS_TRUE_FLAG[:key ].to_sym => ALWAYS_TRUE_FLAG },
-  segments: {},
-}
-PUT_EVENT_WITH_ALWAYS_TRUE_FLAG = "event: put\ndata:{\"data\":#{DATA_WITH_ALWAYS_TRUE_FLAG.to_json}}\n\n'"
+FLAGS_WITH_ALWAYS_TRUE_FLAG = { ALWAYS_TRUE_FLAG[:key].to_sym => ALWAYS_TRUE_FLAG }
 
 module LaunchDarkly
   # Note that we can't do end-to-end tests in streaming mode until we have a test server that can do streaming
@@ -17,51 +13,50 @@ module LaunchDarkly
   describe "LDClient end-to-end", flaky: true do
     it "starts in polling mode" do
       with_server do |poll_server|
-        poll_server.setup_ok_response("/sdk/latest-all", DATA_WITH_ALWAYS_TRUE_FLAG.to_json, "application/json")
+        poll_server.setup_ok_response("/sdk/poll", fdv2_poll_payload(flags: FLAGS_WITH_ALWAYS_TRUE_FLAG), "application/json")
 
-        with_client(test_config(stream: false, data_source: nil, base_uri: poll_server.base_uri.to_s)) do |client|
+        with_client(test_config(data_system_config: polling_data_system_builder(poll_server.base_uri.to_s).build)) do |client|
           expect(client.initialized?).to be true
           expect(client.variation(ALWAYS_TRUE_FLAG[:key], basic_context, false)).to be true
         end
       end
     end
 
-    it "waits the full start time and stays uninitialized in polling mode with 401 error" do
+    it "stops without waiting the full start time and turns off in polling mode with 401 error" do
       with_server do |poll_server|
-        poll_server.setup_status_response("/sdk/latest-all", 401)
+        poll_server.setup_status_response("/sdk/poll", 401)
 
-        config = test_config(stream: false, data_source: nil, base_uri: poll_server.base_uri.to_s)
+        config = test_config(data_system_config: polling_data_system_builder(poll_server.base_uri.to_s).build)
         started_at = Time.now
-        ensure_close(LDClient.new(sdk_key, config, 1)) do |client|
-          expect(Time.now - started_at).to be >= 1
+        ensure_close(LDClient.new(sdk_key, config, 5)) do |client|
+          expect(Time.now - started_at).to be < 5
           expect(client.initialized?).to be false
           status = client.data_source_status_provider.status
-          expect(status.state).to eq(Interfaces::DataSource::Status::INITIALIZING)
+          expect(status.state).to eq(Interfaces::DataSource::Status::OFF)
           expect(status.last_error.status_code).to eq(401)
+          expect(poll_server.requests.count).to eq(1)
           expect(client.variation(ALWAYS_TRUE_FLAG[:key], basic_context, false)).to be false
         end
       end
     end
 
-    it "waits the full start time, stays uninitialized, and keeps retrying in streaming mode with 401 error" do
-      # A short retry delay, so that the retries happen within the start wait.
-      allow(Impl::RetryState).to receive(:for_streaming).and_return(
-        Impl::RetryState.new(normal_initial_delay: 0.05, normal_ceiling_delay: 0.05, extended_initial_delay: 0.05,
-          extended_ceiling_delay: 0.05, reset_policy: Impl::RetryState::AfterConsecutiveSuccesses.new(2)))
-
+    it "stops without waiting the full start time and turns off in streaming mode with 401 error" do
       with_server do |stream_server|
-        stream_server.setup_status_response("/all", 401)
+        stream_server.setup_status_response("/sdk/stream", 401)
 
+        data_system = DataSystem.custom
+          .synchronizers([DataSystem.streaming_ds_builder.base_uri(stream_server.base_uri.to_s)])
+          .build
         # The SSE worker thread can log after the example ends, so the logger cannot be a test double.
-        config = test_config(stream: true, data_source: nil, stream_uri: stream_server.base_uri.to_s, logger: $null_log)
+        config = test_config(data_system_config: data_system, logger: $null_log)
         started_at = Time.now
-        ensure_close(LDClient.new(sdk_key, config, 1)) do |client|
-          expect(Time.now - started_at).to be >= 1
+        ensure_close(LDClient.new(sdk_key, config, 5)) do |client|
+          expect(Time.now - started_at).to be < 5
           expect(client.initialized?).to be false
           status = client.data_source_status_provider.status
-          expect(status.state).to eq(Interfaces::DataSource::Status::INITIALIZING)
+          expect(status.state).to eq(Interfaces::DataSource::Status::OFF)
           expect(status.last_error.status_code).to eq(401)
-          expect(stream_server.requests.count).to be >= 3
+          expect(stream_server.requests.count).to eq(1)
         end
       end
     end
@@ -118,21 +113,22 @@ module LaunchDarkly
       with_server do |poll_server|
         with_server do |events_server|
           events_server.setup_ok_response("/bulk", "")
-          poll_server.setup_ok_response("/sdk/latest-all", '{"flags":{},"segments":{}}', "application/json")
+          poll_server.setup_ok_response("/sdk/poll", fdv2_poll_payload, "application/json")
 
+          socket_factory = SocketFactoryFromHash.new({
+            "fake-polling-server" => poll_server.port,
+            "fake-events-server" => events_server.port,
+          })
+          polling = DataSystem.polling_ds_builder.base_uri("http://fake-polling-server").socket_factory(socket_factory)
           config = test_config(
-            stream: false,
-            data_source: nil,
+            data_system_config: DataSystem.custom.synchronizers([polling]).build,
             send_events: true,
-            base_uri: "http://fake-polling-server",
             events_uri: "http://fake-events-server",
             diagnostic_opt_out: true,
-            socket_factory: SocketFactoryFromHash.new({
-              "fake-polling-server" => poll_server.port,
-              "fake-events-server" => events_server.port,
-            })
+            socket_factory: socket_factory
           )
           with_client(config) do |client|
+            expect(client.initialized?).to be true
             client.identify(basic_context)
             client.flush
 

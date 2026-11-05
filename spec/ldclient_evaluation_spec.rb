@@ -21,29 +21,29 @@ module LaunchDarkly
       end
 
       it "returns the value for an existing feature" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
-        with_client(test_config(data_source: td)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td))) do |client|
           expect(client.variation("flagkey", basic_context, "default")).to eq "value"
         end
       end
 
       it "returns the default value if a feature evaluates to nil" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.use_preconfigured_flag({  # TestData normally won't construct a flag with offVariation: nil
           key: "flagkey",
           on: false,
           offVariation: nil,
         })
 
-        with_client(test_config(data_source: td)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td))) do |client|
           expect(client.variation("flagkey", basic_context, "default")).to eq "default"
         end
       end
 
       it "can evaluate a flag that references a segment" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         segment = SegmentBuilder.new("segmentkey").included(basic_context.key).build
         td.use_preconfigured_segment(segment)
         td.use_preconfigured_flag(
@@ -51,13 +51,13 @@ module LaunchDarkly
             RuleBuilder.new.variation(0).clause(Clauses.match_segment(segment))
           ).build)
 
-        with_client(test_config(data_source: td)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td))) do |client|
           expect(client.variation("flagkey", basic_context, false)).to be true
         end
       end
 
       it "can evaluate a flag that references a big segment" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         segment = SegmentBuilder.new("segmentkey").unbounded(true).generation(1).build
         td.use_preconfigured_segment(segment)
         td.use_preconfigured_flag(
@@ -69,7 +69,7 @@ module LaunchDarkly
         segstore.setup_segment_for_context(basic_context.key, segment, true)
         big_seg_config = BigSegmentsConfig.new(store: segstore)
 
-        with_client(test_config(data_source: td, big_segments: big_seg_config)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td), big_segments: big_seg_config)) do |client|
           expect(client.variation("flagkey", basic_context, false)).to be true
         end
       end
@@ -93,10 +93,10 @@ module LaunchDarkly
       end
 
       it "returns a value for an existing feature" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
 
-        with_client(test_config(data_source: td)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td))) do |client|
           result = client.variation_detail("flagkey", basic_context, "default")
           expected = EvaluationDetail.new("value", 0, EvaluationReason::off)
           expect(result).to eq expected
@@ -104,14 +104,14 @@ module LaunchDarkly
       end
 
       it "returns the default value if a feature evaluates to nil" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.use_preconfigured_flag({  # TestData normally won't construct a flag with offVariation: nil
           key: "flagkey",
           on: false,
           offVariation: nil,
         })
 
-        with_client(test_config(data_source: td)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td))) do |client|
           result = client.variation_detail("flagkey", basic_context, "default")
           expected = EvaluationDetail.new("default", nil, EvaluationReason::off)
           expect(result).to eq expected
@@ -120,7 +120,7 @@ module LaunchDarkly
       end
 
       it "includes big segment status in reason when evaluating a flag that references a big segment" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         segment = SegmentBuilder.new("segmentkey").unbounded(true).generation(1).build
         td.use_preconfigured_segment(segment)
         td.use_preconfigured_flag(
@@ -133,7 +133,7 @@ module LaunchDarkly
         segstore.setup_metadata(Time.now)
         big_seg_config = BigSegmentsConfig.new(store: segstore)
 
-        with_client(test_config(data_source: td, big_segments: big_seg_config)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td), big_segments: big_seg_config)) do |client|
           result = client.variation_detail("flagkey", basic_context, false)
           expect(result.value).to be true
           expect(result.reason.big_segments_status).to eq(BigSegmentsStatus::HEALTHY)
@@ -145,7 +145,7 @@ module LaunchDarkly
       let(:flag1) { { key: "key1", version: 100, offVariation: 0, variations: [ 'value1' ], trackEvents: false } }
       let(:flag2) { { key: "key2", version: 200, offVariation: 1, variations: %w[x value2], trackEvents: true, debugEventsUntilDate: 1000 } }
       let(:test_data) {
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.use_preconfigured_flag(flag1)
         td.use_preconfigured_flag(flag2)
         td
@@ -153,7 +153,7 @@ module LaunchDarkly
 
       it "returns flags state" do
 
-        with_client(test_config(data_source: test_data)) do |client|
+        with_client(test_config(data_system_config: test_data_system(test_data))) do |client|
           state = client.all_flags_state({ key: 'userkey', kind: 'user' })
           expect(state.valid?).to be true
 
@@ -182,7 +182,7 @@ module LaunchDarkly
       end
 
       it "correctly includes only top level prerequisite keys" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.use_preconfigured_flag({
           key: "top-level-has-prereqs-1",
           on: true,
@@ -207,7 +207,7 @@ module LaunchDarkly
         td.use_preconfigured_flag({ key: "prereq2", on: true, version: 200, fallthrough: { variation: 0 }, variations: [ 'value' ] })
         td.use_preconfigured_flag({ key: "prereq3", on: true, version: 200, fallthrough: { variation: 0 }, variations: [ 'value' ] })
 
-        with_client(test_config(data_source: td)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td))) do |client|
           state = client.all_flags_state({ key: 'userkey', kind: 'user' })
           expect(state.valid?).to be true
 
@@ -239,13 +239,13 @@ module LaunchDarkly
       end
 
       it "can be filtered for only client-side flags" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.use_preconfigured_flag({ key: "server-side-1", offVariation: 0, variations: [ 'a' ], clientSide: false })
         td.use_preconfigured_flag({ key: "server-side-2", offVariation: 0, variations: [ 'b' ], clientSide: false })
         td.use_preconfigured_flag({ key: "client-side-1", offVariation: 0, variations: [ 'value1' ], clientSide: true })
         td.use_preconfigured_flag({ key: "client-side-2", offVariation: 0, variations: [ 'value2' ], clientSide: true })
 
-        with_client(test_config(data_source: td)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td))) do |client|
           state = client.all_flags_state({ key: 'userkey', kind: 'user' }, client_side_only: true)
           expect(state.valid?).to be true
 
@@ -256,12 +256,12 @@ module LaunchDarkly
 
       it "can omit details for untracked flags" do
         future_time = (Time.now.to_f * 1000).to_i + 100000
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.use_preconfigured_flag({ key: "key1", version: 100, offVariation: 0, variations: [ 'value1' ], trackEvents: false })
         td.use_preconfigured_flag({ key: "key2", version: 200, offVariation: 1, variations: %w[x value2], trackEvents: true })
         td.use_preconfigured_flag({ key: "key3", version: 300, offVariation: 1, variations: %w[x value3], debugEventsUntilDate: future_time })
 
-        with_client(test_config(data_source: td)) do |client|
+        with_client(test_config(data_system_config: test_data_system(td))) do |client|
           state = client.all_flags_state({ key: 'userkey', kind: 'user' }, { details_only_for_tracked_flags: true })
           expect(state.valid?).to be true
 
@@ -294,7 +294,7 @@ module LaunchDarkly
       end
 
       it "returns empty state for nil context" do
-        with_client(test_config(data_source: test_data)) do |client|
+        with_client(test_config(data_system_config: test_data_system(test_data))) do |client|
           state = client.all_flags_state(nil)
           expect(state.valid?).to be false
           expect(state.values_map).to eq({})
@@ -302,7 +302,7 @@ module LaunchDarkly
       end
 
       it "returns empty state for nil context key" do
-        with_client(test_config(data_source: test_data)) do |client|
+        with_client(test_config(data_system_config: test_data_system(test_data))) do |client|
           state = client.all_flags_state({})
           expect(state.valid?).to be false
           expect(state.values_map).to eq({})
@@ -310,7 +310,7 @@ module LaunchDarkly
       end
 
       it "returns empty state if offline" do
-        with_client(test_config(data_source: test_data, offline: true)) do |offline_client|
+        with_client(test_config(data_system_config: test_data_system(test_data), offline: true)) do |offline_client|
           state = offline_client.all_flags_state({ key: 'userkey' })
           expect(state.valid?).to be false
           expect(state.values_map).to eq({})
@@ -318,15 +318,7 @@ module LaunchDarkly
       end
 
       it "returns empty state if store is not initialize" do
-        wait = double
-        expect(wait).to receive(:wait).at_least(:once)
-
-        source = double
-        expect(source).to receive(:start).at_least(:once).and_return(wait)
-        expect(source).to receive(:stop).at_least(:once).and_return(wait)
-        expect(source).to receive(:initialized?).at_least(:once).and_return(false)
-        store = LaunchDarkly::InMemoryFeatureStore.new
-        with_client(test_config(store: store, data_source: source)) do |offline_client|
+        with_client(test_config(data_system_config: silent_data_system_builder.build), 0) do |offline_client|
           state = offline_client.all_flags_state({ key: 'userkey' })
           expect(state.valid?).to be false
           expect(state.values_map).to eq({})
