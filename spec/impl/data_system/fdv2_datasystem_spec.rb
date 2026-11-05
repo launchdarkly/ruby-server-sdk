@@ -1,4 +1,5 @@
 require "spec_helper"
+require "mock_components"
 require "ldclient-rb/impl/data_system/fdv2"
 require "ldclient-rb/integrations/test_data_v2"
 require "ldclient-rb/data_system"
@@ -122,6 +123,74 @@ module LaunchDarkly
             expect(DataAvailability.at_least?(fdv2.target_availability, DataAvailability::REFRESHED)).to be true
 
             fdv2.stop
+          end
+
+          def initialized_store
+            store = LaunchDarkly::MockFeatureStore.new
+            store.init({})
+            store
+          end
+
+          it "reports cached availability when the store is initialized but no data source has sent data" do
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .synchronizers([LaunchDarkly::SilentSynchronizerBuilder.new])
+              .data_store(initialized_store, LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_WRITE)
+              .build
+
+            ensure_stop(FDv2.new(sdk_key, config, data_system_config)) do |fdv2|
+              fdv2.start
+
+              expect(fdv2.data_availability).to eq(DataAvailability::CACHED)
+              expect(fdv2.target_availability).to eq(DataAvailability::REFRESHED)
+            end
+          end
+
+          it "reports cached availability in daemon mode" do
+            data_system_config = LaunchDarkly::DataSystem.daemon(initialized_store).build
+
+            ensure_stop(FDv2.new(sdk_key, config, data_system_config)) do |fdv2|
+              expect(fdv2.start.wait(1)).to be true
+
+              expect(fdv2.data_availability).to eq(DataAvailability::CACHED)
+              expect(fdv2.target_availability).to eq(DataAvailability::CACHED)
+            end
+          end
+
+          it "reports cached availability in daemon mode even when the store is not initialized" do
+            data_system_config = LaunchDarkly::DataSystem.daemon(LaunchDarkly::MockFeatureStore.new).build
+
+            ensure_stop(FDv2.new(sdk_key, config, data_system_config)) do |fdv2|
+              fdv2.start
+
+              expect(fdv2.data_availability).to eq(DataAvailability::CACHED)
+              expect(fdv2.target_availability).to eq(DataAvailability::CACHED)
+            end
+          end
+
+          it "reports defaults availability when data sources are configured but the store is not initialized" do
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .synchronizers([LaunchDarkly::SilentSynchronizerBuilder.new])
+              .build
+
+            ensure_stop(FDv2.new(sdk_key, config, data_system_config)) do |fdv2|
+              fdv2.start
+
+              expect(fdv2.data_availability).to eq(DataAvailability::DEFAULTS)
+              expect(fdv2.target_availability).to eq(DataAvailability::REFRESHED)
+            end
+          end
+
+          it "reports defaults availability with an uninitialized persistent store" do
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .synchronizers([LaunchDarkly::SilentSynchronizerBuilder.new])
+              .data_store(LaunchDarkly::MockFeatureStore.new, LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_WRITE)
+              .build
+
+            ensure_stop(FDv2.new(sdk_key, config, data_system_config)) do |fdv2|
+              fdv2.start
+
+              expect(fdv2.data_availability).to eq(DataAvailability::DEFAULTS)
+            end
           end
         end
 

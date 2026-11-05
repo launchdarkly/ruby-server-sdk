@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "http_util"
+require "json"
 require "ldclient-rb/impl/data_system/streaming"
 require "ldclient-rb/interfaces"
 
@@ -57,21 +59,23 @@ module LaunchDarkly
           end
 
           it "does not trigger fallback when header value is not 'true'" do
-            error = SSE::Errors::HTTPStatusError.new(
-              503,
-              "Not a fallback",
-              {
-                "x-launchdarkly-fd-fallback" => "false",
-              }
-            )
+            with_server do |server|
+              server.setup_status_response(FDV2_STREAMING_ENDPOINT, 503, { "X-LD-FD-Fallback" => "false" })
+              synchronizer = LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new
+                .base_uri(server.base_uri.to_s)
+                .build(sdk_key, LaunchDarkly::Config.new(logger: $null_log))
+              updates = Queue.new
+              thread = Thread.new { synchronizer.sync(Struct.new(:selector).new(nil)) { |update| updates << update } }
+              begin
+                update = updates.pop(timeout: 5)
+              ensure
+                synchronizer.stop
+                thread.join(5)
+              end
 
-            # Simulate the header extraction logic from on_error callback (lines 128-135)
-            fallback = false
-            if error.respond_to?(:headers) && error.headers
-              fallback = true if error.headers["x-launchdarkly-fd-fallback"] == 'true'
+              expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+              expect(update.fallback_to_fdv1).to be_falsy
             end
-
-            expect(fallback).to be false
           end
 
           it "handles errors without headers gracefully" do
@@ -86,47 +90,62 @@ module LaunchDarkly
         end
 
         describe "on_connect callback" do
-          it "extracts environment ID from connection headers" do
-            # Simulate HTTP::Headers object from SSE client
-            headers = double("HTTP::Headers")
-            allow(headers).to receive(:[]).with("x-launchdarkly-env-id").and_return("env-from-connect")
-            allow(headers).to receive(:[]).with("x-launchdarkly-fd-fallback").and_return(nil)
+          let(:config) { LaunchDarkly::Config.new(logger: $null_log) }
+          let(:selector_store) { Struct.new(:selector).new(nil) }
+          let(:transfer_none_event) do
+            intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
+              payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(
+                id: "id",
+                target: 1,
+                code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_NONE,
+                reason: "up-to-date"
+              )
+            )
+            "event: server-intent\ndata: #{JSON.generate(intent.to_h)}\n\n"
+          end
 
-            # Verify the logic that would be in on_connect
-            envid = nil
-            if headers
-              envid_from_headers = headers["x-launchdarkly-env-id"]
-              envid = envid_from_headers if envid_from_headers
+          # Serves one server-intent event with the given response headers. Returns the first update.
+          def first_update_with_headers(headers)
+            with_server do |server|
+              server.setup_ok_response(FDV2_STREAMING_ENDPOINT, transfer_none_event, "text/event-stream", headers)
+              synchronizer = LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new
+                .base_uri(server.base_uri.to_s)
+                .build(sdk_key, config)
+              updates = Queue.new
+              thread = Thread.new { synchronizer.sync(selector_store) { |update| updates << update } }
+              begin
+                updates.pop(timeout: 5)
+              ensure
+                synchronizer.stop
+                thread.join(5)
+              end
             end
+          end
 
-            expect(envid).to eq("env-from-connect")
+          it "extracts environment ID from connection headers" do
+            update = first_update_with_headers({ "X-LD-EnvID" => "env-from-connect" })
+
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+            expect(update.environment_id).to eq("env-from-connect")
+          end
+
+          it "has no environment ID when the header is missing" do
+            update = first_update_with_headers({})
+
+            expect(update.environment_id).to be_nil
           end
 
           it "detects fallback header on connection" do
-            headers = double("HTTP::Headers")
-            allow(headers).to receive(:[]).with("x-launchdarkly-env-id").and_return("env-123")
-            allow(headers).to receive(:[]).with("x-launchdarkly-fd-fallback").and_return("true")
+            update = first_update_with_headers({ "X-LD-EnvID" => "env-123", "X-LD-FD-Fallback" => "true" })
 
-            # Verify the logic that would trigger fallback on connect
-            should_fallback = false
-            if headers && headers["x-launchdarkly-fd-fallback"] == 'true'
-              should_fallback = true
-            end
-
-            expect(should_fallback).to be true
+            expect(update.fallback_to_fdv1).to be true
+            expect(update.environment_id).to eq("env-123")
           end
 
           it "does not trigger fallback when header is missing on connection" do
-            headers = double("HTTP::Headers")
-            allow(headers).to receive(:[]).with("x-launchdarkly-env-id").and_return("env-456")
-            allow(headers).to receive(:[]).with("x-launchdarkly-fd-fallback").and_return(nil)
+            update = first_update_with_headers({ "X-LD-EnvID" => "env-456" })
 
-            should_fallback = false
-            if headers && headers["x-launchdarkly-fd-fallback"] == 'true'
-              should_fallback = true
-            end
-
-            expect(should_fallback).to be false
+            expect(update.fallback_to_fdv1).to be false
           end
         end
       end
