@@ -1,7 +1,9 @@
 require 'ldclient-rb/impl/integrations/test_data/test_data_source_v2'
 require 'ldclient-rb/impl/model/feature_flag'
+require 'ldclient-rb/impl/model/serialization'
 require 'ldclient-rb/integrations/test_data_v2/flag_builder_v2'
 require 'concurrent/atomics'
+require 'json'
 
 module LaunchDarkly
   module Integrations
@@ -56,6 +58,9 @@ module LaunchDarkly
         @current_flags = Hash.new
         @current_segments = Hash.new
         @lock = Concurrent::ReadWriteLock.new
+        # Serializes each change with its delivery, so that every instance receives changes in the order
+        # that they are made.
+        @update_lock = Mutex.new
         @instances = Array.new
         @version = 0
       end
@@ -108,24 +113,26 @@ module LaunchDarkly
       # @return [TestDataV2] the TestDataV2 instance
       #
       def update(flag_builder)
-        instances_copy = []
-        new_flag = nil
-        @lock.with_write_lock do
-          flag_key = flag_builder._key.to_sym
-          old_flag = @current_flags[flag_key]
-          old_version = old_flag ? old_flag[:version] : 0
+        @update_lock.synchronize do
+          instances_copy = []
+          new_flag = nil
+          @lock.with_write_lock do
+            flag_key = flag_builder._key.to_sym
+            old_flag = @current_flags[flag_key]
+            old_version = old_flag ? old_flag[:version] : 0
 
-          new_flag = flag_builder.build(old_version + 1)
+            new_flag = flag_builder.build(old_version + 1)
 
-          @current_flags[flag_key] = new_flag
-          @flag_builders[flag_builder._key] = flag_builder.clone
+            @current_flags[flag_key] = new_flag
+            @flag_builders[flag_builder._key] = flag_builder.clone
 
-          # Create a copy of instances while holding the lock to avoid race conditions
-          instances_copy = @instances.dup
-        end
+            # Create a copy of instances while holding the lock to avoid race conditions
+            instances_copy = @instances.dup
+          end
 
-        instances_copy.each do |instance|
-          instance.upsert_flag(new_flag)
+          instances_copy.each do |instance|
+            instance.upsert_flag(new_flag)
+          end
         end
 
         self
@@ -181,33 +188,37 @@ module LaunchDarkly
       # You cannot make incremental changes with {#flag}/{#update} to a flag that you add in this way.
       # You can only replace it with an entirely new flag configuration.
       #
-      # A new flag keeps its own version, or gets version 1 if it has none. A flag that replaces an existing
-      # flag gets a version one more than the version of the existing flag.
+      # The flag keeps its own version if that version is greater than the version of any flag that it
+      # replaces. Otherwise, it gets a version one more than the version of the flag that it replaces, or
+      # version 1 if it is a new flag.
       #
-      # @param flag [Hash, LaunchDarkly::Impl::Model::FeatureFlag] the flag configuration as a hash or
-      #   a FeatureFlag model object.
+      # The method stores a copy of the flag, so later changes to the object that you pass in have no effect.
+      #
+      # @param flag [Hash, String, LaunchDarkly::Impl::Model::FeatureFlag] the flag configuration as a hash
+      #   with symbol or string keys, a JSON string, or a FeatureFlag model object.
       # @return [TestDataV2] the TestDataV2 instance
+      # @raise [ArgumentError] if the flag is not a valid flag configuration
       #
       def use_preconfigured_flag(flag)
-        instances_copy = []
-        updated_flag = nil
+        flag_data = normalize_preconfigured_item(LaunchDarkly::Interfaces::DataStore::FEATURES, flag, "flag")
 
-        @lock.with_write_lock do
-          flag_hash = (flag.is_a?(Hash) ? flag : flag.as_json).transform_keys(&:to_sym)
-          flag_key = flag_hash[:key].to_sym
+        @update_lock.synchronize do
+          instances_copy = []
+          @lock.with_write_lock do
+            flag_key = flag_data[:key].to_sym
+            old_flag = @current_flags[flag_key]
+            next_version = (old_flag.nil? ? 0 : old_flag[:version]) + 1
+            flag_data[:version] = [flag_data[:version] || 0, next_version].max
 
-          updated_flag = flag_hash.dup
-          old_flag = @current_flags[flag_key]
-          updated_flag[:version] = old_flag.nil? ? (updated_flag[:version] || 1) : old_flag[:version] + 1
+            @current_flags[flag_key] = flag_data
+            @flag_builders.delete(flag_data[:key])
 
-          @current_flags[flag_key] = updated_flag
-          @flag_builders.delete(flag_hash[:key])
+            instances_copy = @instances.dup
+          end
 
-          instances_copy = @instances.dup
-        end
-
-        instances_copy.each do |instance|
-          instance.upsert_flag(updated_flag)
+          instances_copy.each do |instance|
+            instance.upsert_flag(flag_data)
+          end
         end
 
         self
@@ -226,41 +237,82 @@ module LaunchDarkly
       # since application tests that need to produce a desired evaluation state could do so more easily
       # by just setting flag values.
       #
-      # @param segment [Hash, LaunchDarkly::Impl::Model::Segment] the segment configuration as a hash or
-      #   a Segment model object.
+      # The segment gets a version one more than the version of the segment that it replaces, or version 1
+      # if it is a new segment. The method stores a copy of the segment, so later changes to the object that
+      # you pass in have no effect.
+      #
+      # @param segment [Hash, String, LaunchDarkly::Impl::Model::Segment] the segment configuration as a hash
+      #   with symbol or string keys, a JSON string, or a Segment model object.
       # @return [TestDataV2] the TestDataV2 instance
+      # @raise [ArgumentError] if the segment is not a valid segment configuration
       #
       def use_preconfigured_segment(segment)
-        instances_copy = []
-        segment_key = nil
-        updated_segment = nil
+        segment_data = normalize_preconfigured_item(LaunchDarkly::Interfaces::DataStore::SEGMENTS, segment, "segment")
 
-        @lock.with_write_lock do
-          # Convert to hash and normalize keys to symbols
-          segment_hash = if segment.is_a?(Hash)
-            segment.transform_keys(&:to_sym)
-          else
-            segment.as_json
+        @update_lock.synchronize do
+          instances_copy = []
+          @lock.with_write_lock do
+            segment_key = segment_data[:key].to_sym
+            old_segment = @current_segments[segment_key]
+            segment_data[:version] = (old_segment ? old_segment[:version] : 0) + 1
+
+            @current_segments[segment_key] = segment_data
+
+            # Create a copy of instances while holding the lock to avoid race conditions
+            instances_copy = @instances.dup
           end
-          segment_key = segment_hash[:key].to_sym
 
-          old_segment = @current_segments[segment_key]
-          old_version = old_segment ? old_segment[:version] : 0
-
-          updated_segment = segment_hash.dup
-          updated_segment[:version] = old_version + 1
-
-          @current_segments[segment_key] = updated_segment
-
-          # Create a copy of instances while holding the lock to avoid race conditions
-          instances_copy = @instances.dup
-        end
-
-        instances_copy.each do |instance|
-          instance.upsert_segment(updated_segment)
+          instances_copy.each do |instance|
+            instance.upsert_segment(segment_data)
+          end
         end
 
         self
+      end
+
+      #
+      # Converts a preconfigured flag or segment to a new hash with symbol keys at every level, and checks
+      # that it is a valid data model object.
+      #
+      # @param kind [LaunchDarkly::Interfaces::DataStore::DataKind] the kind of the item
+      # @param item [Hash, String, Object] the item as a hash, a JSON string, or a model object
+      # @param description [String] the name of the kind, for error messages
+      # @return [Hash] the normalized item
+      # @raise [ArgumentError] if the item is not valid
+      #
+      private def normalize_preconfigured_item(kind, item, description)
+        data =
+          if item.is_a?(String)
+            JSON.parse(item, symbolize_names: true)
+          elsif item.is_a?(Hash)
+            JSON.parse(JSON.generate(item), symbolize_names: true)
+          elsif item.respond_to?(:as_json)
+            JSON.parse(JSON.generate(item.as_json), symbolize_names: true)
+          else
+            raise ArgumentError, "a preconfigured #{description} must be a Hash, a JSON string, or a model object"
+          end
+
+        raise ArgumentError, "a preconfigured #{description} must be a JSON object" unless data.is_a?(Hash)
+
+        key = data[:key]
+        unless key.is_a?(String) && !key.empty?
+          raise ArgumentError, "a preconfigured #{description} must have a non-empty string key"
+        end
+
+        version = data[:version]
+        unless version.nil? || version.is_a?(Integer)
+          raise ArgumentError, "the version of preconfigured #{description} '#{key}' must be an integer"
+        end
+
+        begin
+          LaunchDarkly::Impl::Model.deserialize(kind, JSON.parse(JSON.generate(data), symbolize_names: true))
+        rescue => e
+          raise ArgumentError, "preconfigured #{description} '#{key}' is not valid: #{e.message}"
+        end
+
+        data
+      rescue JSON::ParserError => e
+        raise ArgumentError, "a preconfigured #{description} is not valid JSON: #{e.message}"
       end
 
       #
