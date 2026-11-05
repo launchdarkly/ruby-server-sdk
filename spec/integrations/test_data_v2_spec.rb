@@ -51,6 +51,88 @@ module LaunchDarkly
         expect(init_data[:segments][:mysegment][:included]).to eq(['user2'])
       end
 
+      it 'stores preconfigured flags with their own version' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_flag({ key: 'myflag', version: 100, on: true, variations: ['a'] })
+        flag = td.make_init_data[:flags][:myflag]
+        expect(flag[:key]).to eq('myflag')
+        expect(flag[:version]).to eq(100)
+        expect(flag[:variations]).to eq(['a'])
+      end
+
+      it 'gives a preconfigured flag with no version version 1' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_flag({ 'key' => 'myflag', 'variations' => ['a'] })
+        expect(td.make_init_data[:flags][:myflag][:version]).to eq(1)
+      end
+
+      it 'increments the version when a preconfigured flag replaces a flag' do
+        td = TestDataV2.data_source
+        td.use_preconfigured_flag({ key: 'myflag', version: 100, variations: ['a'] })
+        td.use_preconfigured_flag({ key: 'myflag', version: 5, variations: ['b'] })
+        flag = td.make_init_data[:flags][:myflag]
+        expect(flag[:version]).to eq(101)
+        expect(flag[:variations]).to eq(['b'])
+      end
+
+      it 'accepts a FeatureFlag model as a preconfigured flag' do
+        td = TestDataV2.data_source
+        model = LaunchDarkly::Impl::Model::FeatureFlag.new({ key: 'myflag', version: 3, variations: ['a'] })
+        td.use_preconfigured_flag(model)
+        expect(td.make_init_data[:flags][:myflag][:version]).to eq(3)
+      end
+
+      it 'starts a new flag builder after a preconfigured flag replaces a built flag' do
+        td = TestDataV2.data_source
+        td.update(td.flag('myflag').variations('x', 'y'))
+        td.use_preconfigured_flag({ key: 'myflag', variations: ['a'] })
+        expect(td.flag('myflag').build(1)[:variations]).to eq([true, false])
+      end
+
+      it 'sends a preconfigured flag to a running data source' do
+        td = TestDataV2.data_source
+        source = LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(td)
+        expect(source).to receive(:upsert_flag).with(hash_including(key: 'myflag', version: 7))
+        td.use_preconfigured_flag({ key: 'myflag', version: 7, variations: ['a'] })
+      end
+
+      describe 'FlagBuilderV2 event and migration settings' do
+        it 'omits the settings by default' do
+          flag = TestDataV2.data_source.flag('myflag').build(1)
+          expect(flag).not_to include(:migration, :samplingRatio, :excludeFromSummaries)
+        end
+
+        it 'includes migration settings' do
+          settings = TestDataV2::FlagBuilderV2::FlagMigrationSettingsBuilder.new.check_ratio(10).build
+          flag = TestDataV2.data_source.flag('myflag').migration_settings(settings).build(1)
+          expect(flag[:migration]).to eq({ checkRatio: 10 })
+        end
+
+        it 'builds no migration settings for the default check ratio' do
+          expect(TestDataV2::FlagBuilderV2::FlagMigrationSettingsBuilder.new.check_ratio(1).build).to be_nil
+        end
+
+        it 'includes a sampling ratio other than 1' do
+          td = TestDataV2.data_source
+          expect(td.flag('myflag').sampling_ratio(10).build(1)[:samplingRatio]).to eq(10)
+          expect(td.flag('myflag').sampling_ratio(1).build(1)).not_to include(:samplingRatio)
+        end
+
+        it 'includes exclude from summaries when set' do
+          td = TestDataV2.data_source
+          expect(td.flag('myflag').exclude_from_summaries(true).build(1)[:excludeFromSummaries]).to be true
+          expect(td.flag('myflag').exclude_from_summaries(false).build(1)).not_to include(:excludeFromSummaries)
+        end
+
+        it 'copies the settings when the builder is copied' do
+          td = TestDataV2.data_source
+          td.update(td.flag('myflag').sampling_ratio(10).exclude_from_summaries(true))
+          flag = td.flag('myflag').build(1)
+          expect(flag[:samplingRatio]).to eq(10)
+          expect(flag[:excludeFromSummaries]).to be true
+        end
+      end
+
       describe 'TestDataSourceV2' do
         it 'includes both flags and segments in fetch' do
           td = TestDataV2.data_source

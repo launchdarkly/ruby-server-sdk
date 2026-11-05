@@ -167,6 +167,53 @@ module LaunchDarkly
       end
 
       #
+      # Copies a full feature flag data model object into the test data.
+      #
+      # It immediately propagates the change to any `LDClient` instance(s) that you have already
+      # configured to use this `TestDataV2`. If no `LDClient` has been started yet, it simply adds
+      # this flag to the test data which will be provided to any LDClient that you subsequently
+      # configure.
+      #
+      # Use this method if you need to use advanced flag configuration properties that are not supported by
+      # the simplified {FlagBuilderV2} API. Otherwise use the regular {#flag}/{#update} mechanism to avoid
+      # dependencies on details of the data model.
+      #
+      # You cannot make incremental changes with {#flag}/{#update} to a flag that you add in this way.
+      # You can only replace it with an entirely new flag configuration.
+      #
+      # A new flag keeps its own version, or gets version 1 if it has none. A flag that replaces an existing
+      # flag gets a version one more than the version of the existing flag.
+      #
+      # @param flag [Hash, LaunchDarkly::Impl::Model::FeatureFlag] the flag configuration as a hash or
+      #   a FeatureFlag model object.
+      # @return [TestDataV2] the TestDataV2 instance
+      #
+      def use_preconfigured_flag(flag)
+        instances_copy = []
+        updated_flag = nil
+
+        @lock.with_write_lock do
+          flag_hash = (flag.is_a?(Hash) ? flag : flag.as_json).transform_keys(&:to_sym)
+          flag_key = flag_hash[:key].to_sym
+
+          updated_flag = flag_hash.dup
+          old_flag = @current_flags[flag_key]
+          updated_flag[:version] = old_flag.nil? ? (updated_flag[:version] || 1) : old_flag[:version] + 1
+
+          @current_flags[flag_key] = updated_flag
+          @flag_builders.delete(flag_hash[:key])
+
+          instances_copy = @instances.dup
+        end
+
+        instances_copy.each do |instance|
+          instance.upsert_flag(updated_flag)
+        end
+
+        self
+      end
+
+      #
       # Copies a full segment data model object into the test data.
       #
       # It immediately propagates the change to any `LDClient` instance(s) that you have already
