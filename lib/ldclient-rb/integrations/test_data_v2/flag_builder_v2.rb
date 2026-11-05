@@ -650,7 +650,7 @@ module LaunchDarkly
           {
             id: 'rule' + id,
             variation: @_variation,
-            clauses: @_clauses,
+            clauses: @_clauses.map { |clause| clause.merge(values: clause[:values].dup) },
           }
         end
       end

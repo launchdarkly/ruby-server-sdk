@@ -138,6 +138,17 @@ module LaunchDarkly
         expect(stored[:variations]).to eq(['a'])
       end
 
+      it 'does not change a stored flag when its rule builder changes later' do
+        td = TestDataV2.data_source
+        builder = td.flag('myflag')
+        rule = builder.if_match('name', 'alice')
+        rule.then_return(true)
+        td.update(builder)
+        rule.and_match('country', 'us')
+        clauses = td.make_init_data[:flags][:myflag][:rules][0][:clauses]
+        expect(clauses.map { |clause| clause[:attribute] }).to eq(['name'])
+      end
+
       describe 'rejects an invalid preconfigured flag' do
         {
           'nil' => nil,
