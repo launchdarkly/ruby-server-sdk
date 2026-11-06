@@ -7,26 +7,19 @@ module LaunchDarkly
     let(:logger) { CapturingLogger.new }
     let(:context) { basic_context }
 
-    # A data source that starts but never reports initialized. With a store that already holds
-    # data, the client evaluates with cached data.
-    def uninitialized_source
-      wait = double
-      allow(wait).to receive(:wait)
-      source = double
-      allow(source).to receive(:start).and_return(wait)
-      allow(source).to receive(:stop)
-      allow(source).to receive(:initialized?).and_return(false)
-      source
-    end
-
+    # The synchronizer sends no data. The persistent store already holds data, so the client
+    # evaluates with cached data.
     def initialized_store
-      store = InMemoryFeatureStore.new
+      store = MockFeatureStore.new
       store.init({ LaunchDarkly::Interfaces::DataStore::FEATURES => {}, LaunchDarkly::Interfaces::DataStore::SEGMENTS => {} })
       store
     end
 
     def cached_data_config
-      test_config(logger: logger, feature_store: initialized_store, data_source: uninitialized_source)
+      data_system = silent_data_system_builder
+        .data_store(initialized_store, LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_WRITE)
+        .build
+      test_config(logger: logger, data_system_config: data_system)
     end
 
     def evaluation_warnings(logger)
@@ -38,7 +31,7 @@ module LaunchDarkly
     end
 
     it "logs the evaluation warning once per client" do
-      with_client(cached_data_config) do |client|
+      with_client(cached_data_config, 0) do |client|
         client.variation("flag", context, false)
         client.variation("flag", context, false)
         client.variation_detail("flag", context, false)
@@ -49,7 +42,7 @@ module LaunchDarkly
     # all_flags_state checks LDClient#initialized?, which is true when the store holds data. The
     # stub makes the client report not initialized so the cached-data branch runs.
     it "logs the all_flags_state warning once per client" do
-      with_client(cached_data_config) do |client|
+      with_client(cached_data_config, 0) do |client|
         allow(client).to receive(:initialized?).and_return(false)
         client.all_flags_state(context)
         client.all_flags_state(context)
@@ -58,7 +51,7 @@ module LaunchDarkly
     end
 
     it "logs the evaluation and all_flags_state warnings independently" do
-      with_client(cached_data_config) do |client|
+      with_client(cached_data_config, 0) do |client|
         allow(client).to receive(:initialized?).and_return(false)
         client.variation("flag", context, false)
         client.all_flags_state(context)
@@ -70,10 +63,10 @@ module LaunchDarkly
     end
 
     it "logs the warning again for a new client" do
-      with_client(cached_data_config) do |client|
+      with_client(cached_data_config, 0) do |client|
         client.variation("flag", context, false)
       end
-      with_client(cached_data_config) do |client|
+      with_client(cached_data_config, 0) do |client|
         client.variation("flag", context, false)
       end
       expect(evaluation_warnings(logger).length).to eq(2)

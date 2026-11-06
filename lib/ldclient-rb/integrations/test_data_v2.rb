@@ -1,7 +1,10 @@
 require 'ldclient-rb/impl/integrations/test_data/test_data_source_v2'
 require 'ldclient-rb/impl/model/feature_flag'
+require 'ldclient-rb/impl/model/serialization'
 require 'ldclient-rb/integrations/test_data_v2/flag_builder_v2'
 require 'concurrent/atomics'
+require 'json'
+require 'set'
 
 module LaunchDarkly
   module Integrations
@@ -56,6 +59,9 @@ module LaunchDarkly
         @current_flags = Hash.new
         @current_segments = Hash.new
         @lock = Concurrent::ReadWriteLock.new
+        # Serializes each change with its delivery, so that every instance receives changes in the order
+        # that they are made.
+        @update_lock = Mutex.new
         @instances = Array.new
         @version = 0
       end
@@ -108,24 +114,26 @@ module LaunchDarkly
       # @return [TestDataV2] the TestDataV2 instance
       #
       def update(flag_builder)
-        instances_copy = []
-        new_flag = nil
-        @lock.with_write_lock do
-          flag_key = flag_builder._key.to_sym
-          old_flag = @current_flags[flag_key]
-          old_version = old_flag ? old_flag[:version] : 0
+        @update_lock.synchronize do
+          instances_copy = []
+          new_flag = nil
+          @lock.with_write_lock do
+            flag_key = flag_builder._key.to_sym
+            old_flag = @current_flags[flag_key]
+            old_version = old_flag ? old_flag[:version] : 0
 
-          new_flag = flag_builder.build(old_version + 1)
+            new_flag = flag_builder.build(old_version + 1)
 
-          @current_flags[flag_key] = new_flag
-          @flag_builders[flag_builder._key] = flag_builder.clone
+            @current_flags[flag_key] = new_flag
+            @flag_builders[flag_builder._key] = flag_builder.clone
 
-          # Create a copy of instances while holding the lock to avoid race conditions
-          instances_copy = @instances.dup
-        end
+            # Create a copy of instances while holding the lock to avoid race conditions
+            instances_copy = @instances.dup
+          end
 
-        instances_copy.each do |instance|
-          instance.upsert_flag(new_flag)
+          instances_copy.each do |instance|
+            instance.upsert_flag(new_flag)
+          end
         end
 
         self
@@ -159,11 +167,70 @@ module LaunchDarkly
       end
 
       # @api private
+      #
+      # Adds an instance and takes the current data in one step. The instance then receives each
+      # change that the returned data does not hold, and no change that it holds.
+      #
       # @param instance [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] the TestDataSourceV2 instance to add
-      def add_instance(instance)
+      # @return [Array(Hash, Integer)] the data, in the form of {#make_init_data}, and the next version
+      def subscribe(instance)
         @lock.with_write_lock do
           @instances.push(instance)
+          version = @version
+          @version += 1
+          [{ flags: @current_flags.dup, segments: @current_segments.dup }, version]
         end
+      end
+
+      #
+      # Copies a full feature flag data model object into the test data.
+      #
+      # It immediately propagates the change to any `LDClient` instance(s) that you have already
+      # configured to use this `TestDataV2`. If no `LDClient` has been started yet, it simply adds
+      # this flag to the test data which will be provided to any LDClient that you subsequently
+      # configure.
+      #
+      # Use this method if you need to use advanced flag configuration properties that are not supported by
+      # the simplified {FlagBuilderV2} API. Otherwise use the regular {#flag}/{#update} mechanism to avoid
+      # dependencies on details of the data model.
+      #
+      # You cannot make incremental changes with {#flag}/{#update} to a flag that you add in this way.
+      # You can only replace it with an entirely new flag configuration.
+      #
+      # The flag keeps its own version if that version is greater than the version of any flag that it
+      # replaces. Otherwise, it gets a version one more than the version of the flag that it replaces, or
+      # version 1 if it is a new flag.
+      #
+      # The method stores a copy of the flag, so later changes to the object that you pass in have no effect.
+      #
+      # @param flag [Hash, String, LaunchDarkly::Impl::Model::FeatureFlag] the flag configuration as a hash
+      #   with symbol or string keys, a JSON string, or a FeatureFlag model object.
+      # @return [TestDataV2] the TestDataV2 instance
+      # @raise [ArgumentError] if the flag is not a valid flag configuration
+      #
+      def use_preconfigured_flag(flag)
+        flag_data = normalize_preconfigured_item(LaunchDarkly::Interfaces::DataStore::FEATURES, flag, "flag")
+
+        @update_lock.synchronize do
+          instances_copy = []
+          @lock.with_write_lock do
+            flag_key = flag_data[:key].to_sym
+            old_flag = @current_flags[flag_key]
+            next_version = (old_flag.nil? ? 0 : old_flag[:version]) + 1
+            flag_data[:version] = [flag_data[:version] || 0, next_version].max
+
+            @current_flags[flag_key] = flag_data
+            @flag_builders.delete(flag_data[:key])
+
+            instances_copy = @instances.dup
+          end
+
+          instances_copy.each do |instance|
+            instance.upsert_flag(flag_data)
+          end
+        end
+
+        self
       end
 
       #
@@ -179,41 +246,134 @@ module LaunchDarkly
       # since application tests that need to produce a desired evaluation state could do so more easily
       # by just setting flag values.
       #
-      # @param segment [Hash, LaunchDarkly::Impl::Model::Segment] the segment configuration as a hash or
-      #   a Segment model object.
+      # The segment gets a version one more than the version of the segment that it replaces, or version 1
+      # if it is a new segment. The method stores a copy of the segment, so later changes to the object that
+      # you pass in have no effect.
+      #
+      # @param segment [Hash, String, LaunchDarkly::Impl::Model::Segment] the segment configuration as a hash
+      #   with symbol or string keys, a JSON string, or a Segment model object.
       # @return [TestDataV2] the TestDataV2 instance
+      # @raise [ArgumentError] if the segment is not a valid segment configuration
       #
       def use_preconfigured_segment(segment)
-        instances_copy = []
-        segment_key = nil
-        updated_segment = nil
+        segment_data = normalize_preconfigured_item(LaunchDarkly::Interfaces::DataStore::SEGMENTS, segment, "segment")
 
-        @lock.with_write_lock do
-          # Convert to hash and normalize keys to symbols
-          segment_hash = if segment.is_a?(Hash)
-            segment.transform_keys(&:to_sym)
-          else
-            segment.as_json
+        @update_lock.synchronize do
+          instances_copy = []
+          @lock.with_write_lock do
+            segment_key = segment_data[:key].to_sym
+            old_segment = @current_segments[segment_key]
+            segment_data[:version] = (old_segment ? old_segment[:version] : 0) + 1
+
+            @current_segments[segment_key] = segment_data
+
+            # Create a copy of instances while holding the lock to avoid race conditions
+            instances_copy = @instances.dup
           end
-          segment_key = segment_hash[:key].to_sym
 
-          old_segment = @current_segments[segment_key]
-          old_version = old_segment ? old_segment[:version] : 0
-
-          updated_segment = segment_hash.dup
-          updated_segment[:version] = old_version + 1
-
-          @current_segments[segment_key] = updated_segment
-
-          # Create a copy of instances while holding the lock to avoid race conditions
-          instances_copy = @instances.dup
-        end
-
-        instances_copy.each do |instance|
-          instance.upsert_segment(updated_segment)
+          instances_copy.each do |instance|
+            instance.upsert_segment(segment_data)
+          end
         end
 
         self
+      end
+
+      # The maximum depth of nested hashes and arrays in a preconfigured item.
+      MAX_PRECONFIGURED_DEPTH = 100
+      private_constant :MAX_PRECONFIGURED_DEPTH
+
+      #
+      # Converts a preconfigured flag or segment to a new hash with symbol keys at every level, and checks
+      # that it is a valid data model object.
+      #
+      # @param kind [LaunchDarkly::Interfaces::DataStore::DataKind] the kind of the item
+      # @param item [Hash, String, Object] the item as a hash, a JSON string, or a model object
+      # @param description [String] the name of the kind, for error messages
+      # @return [Hash] the normalized item
+      # @raise [ArgumentError] if the item is not valid
+      #
+      private def normalize_preconfigured_item(kind, item, description)
+        raw =
+          if item.is_a?(String)
+            begin
+              JSON.parse(item)
+            rescue JSON::ParserError => e
+              raise ArgumentError, "a preconfigured #{description} is not valid JSON: #{e.message}"
+            end
+          elsif item.is_a?(Hash)
+            item
+          elsif item.respond_to?(:as_json)
+            item.as_json
+          else
+            raise ArgumentError, "a preconfigured #{description} must be a Hash, a JSON string, or a model object"
+          end
+
+        raise ArgumentError, "a preconfigured #{description} must be a JSON object" unless raw.is_a?(Hash)
+
+        data = normalize_json_value(raw, description, "", 0)
+
+        key = data[:key]
+        unless key.is_a?(String) && !key.empty?
+          raise ArgumentError, "a preconfigured #{description} must have a non-empty string key"
+        end
+
+        version = data[:version]
+        unless version.nil? || version.is_a?(Integer)
+          raise ArgumentError, "the version of preconfigured #{description} '#{key}' must be an integer"
+        end
+
+        begin
+          LaunchDarkly::Impl::Model.deserialize(kind, data)
+        rescue => e
+          raise ArgumentError, "preconfigured #{description} '#{key}' is not valid: #{e.message}"
+        end
+
+        data
+      end
+
+      #
+      # Returns a copy of a JSON-compatible value with symbol hash keys at every level. A Set becomes an
+      # array and a symbol value becomes a string, as they would in JSON.
+      #
+      # @param value [Object] the value to convert
+      # @param description [String] the name of the item kind, for error messages
+      # @param path [String] the location of the value in the item, for error messages
+      # @param depth [Integer] the nesting depth of the value
+      # @return [Object] the converted value
+      # @raise [ArgumentError] if the value is not a JSON-compatible value
+      #
+      private def normalize_json_value(value, description, path, depth)
+        if depth > MAX_PRECONFIGURED_DEPTH
+          raise ArgumentError, "a preconfigured #{description} is nested more than #{MAX_PRECONFIGURED_DEPTH} levels deep"
+        end
+
+        case value
+        when Hash
+          value.each_with_object({}) do |(k, v), out|
+            unless k.is_a?(String) || k.is_a?(Symbol)
+              raise ArgumentError, "a preconfigured #{description} has the key #{k.inspect} at '#{path}', which is not a string or symbol"
+            end
+            sym = k.to_sym
+            if out.key?(sym)
+              raise ArgumentError, "a preconfigured #{description} has the key '#{k}' more than once at '#{path}'"
+            end
+            out[sym] = normalize_json_value(v, description, "#{path}/#{k}", depth + 1)
+          end
+        when Array, Set
+          value.each_with_index.map { |v, i| normalize_json_value(v, description, "#{path}/#{i}", depth + 1) }
+        when String
+          value.dup
+        when Symbol
+          value.to_s
+        when Integer, true, false, nil
+          value
+        when Float
+          raise ArgumentError, "a preconfigured #{description} has a value at '#{path}' that is not a finite number" unless value.finite?
+          value
+        else
+          raise ArgumentError, "a preconfigured #{description} has a #{value.class} at '#{path}', which is not a JSON value"
+        end
       end
 
       #

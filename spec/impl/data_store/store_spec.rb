@@ -325,6 +325,13 @@ module LaunchDarkly
             put(LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, data)
           end
 
+          def flag_delete(key, version)
+            LaunchDarkly::Interfaces::DataSystem::Change.new(
+              action: LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE,
+              kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG, key: key.to_sym, version: version
+            )
+          end
+
           def segment_put(key, version)
             put(LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT, { key: key, version: version, included: ["user"] })
           end
@@ -379,6 +386,25 @@ module LaunchDarkly
                 flag_put("d", 1, segment: "seg"), flag_put("e", 1))
             end
             expect(changed).to eq %w[a b c d]
+          end
+
+          it "notifies the flags that a full data set adds or removes" do
+            full(flag_put("a", 1), flag_put("b", 1))
+
+            expect(changed_flags { full(flag_put("a", 1), flag_put("c", 1)) }).to eq %w[b c]
+          end
+
+          it "notifies each flag that depends on a flag deleted in a delta" do
+            full(flag_put("a", 1, prerequisite: "b"), flag_put("b", 1, prerequisite: "c"), flag_put("c", 1), flag_put("e", 1))
+
+            expect(changed_flags { delta(flag_delete("c", 2)) }).to eq %w[a b c]
+          end
+
+          it "stops following a dependency that a delta removed" do
+            full(flag_put("a", 1, prerequisite: "b"), flag_put("b", 1))
+            delta(flag_put("a", 2))
+
+            expect(changed_flags { delta(flag_put("b", 2)) }).to eq %w[b]
           end
         end
 

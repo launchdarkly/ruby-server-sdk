@@ -102,12 +102,12 @@ module LaunchDarkly
 
     context "passing data" do
       it "hook receives EvaluationDetail" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
         detail = nil
         config_hook = MockHook.new(->(_, _) { }, ->(_, _, d) { detail = d })
-        with_client(test_config(data_source: td, hooks: [config_hook])) do |client|
+        with_client(test_config(data_system_config: test_data_system(td), hooks: [config_hook])) do |client|
           client.variation("flagkey", basic_context, "default")
 
           expect(detail.value).to eq "value"
@@ -131,12 +131,10 @@ module LaunchDarkly
         config_hook = MockHook.new(->(_, _) { }, ->(series_context, _, _) { environment_id = series_context.environment_id })
 
         with_server do |poll_server|
-          poll_server.setup_ok_response("/sdk/latest-all", { flags: {}, segments: {} }.to_json, "application/json", { "X-LD-EnvID" => "env-abc" })
+          poll_server.setup_ok_response("/sdk/poll", fdv2_poll_payload, "application/json", { "X-LD-EnvID" => "env-abc" })
 
           config = test_config(
-            stream: false,
-            data_source: nil,
-            base_uri: poll_server.base_uri.to_s,
+            data_system_config: polling_data_system_builder(poll_server.base_uri.to_s).build,
             hooks: [config_hook]
           )
           with_client(config) do |client|
@@ -183,12 +181,12 @@ module LaunchDarkly
 
     context "migration variation" do
       it "EvaluationDetail contains stage value" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.update(td.flag("flagkey").variations("off").variation_for_all(0))
 
         detail = nil
         config_hook = MockHook.new(->(_, _) { }, ->(_, _, d) { detail = d })
-        with_client(test_config(data_source: td, hooks: [config_hook])) do |client|
+        with_client(test_config(data_system_config: test_data_system(td), hooks: [config_hook])) do |client|
           client.migration_variation("flagkey", basic_context, LaunchDarkly::Migrations::STAGE_LIVE)
 
           expect(detail.value).to eq LaunchDarkly::Migrations::STAGE_OFF.to_s
@@ -198,12 +196,12 @@ module LaunchDarkly
       end
 
       it "EvaluationDetail gets default if flag doesn't evaluate to stage" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.update(td.flag("flagkey").variations("nonstage").variation_for_all(0))
 
         detail = nil
         config_hook = MockHook.new(->(_, _) { }, ->(_, _, d) { detail = d })
-        with_client(test_config(data_source: td, hooks: [config_hook])) do |client|
+        with_client(test_config(data_system_config: test_data_system(td), hooks: [config_hook])) do |client|
           client.migration_variation("flagkey", basic_context, LaunchDarkly::Migrations::STAGE_LIVE)
 
           expect(detail.value).to eq LaunchDarkly::Migrations::STAGE_LIVE.to_s
@@ -213,12 +211,12 @@ module LaunchDarkly
       end
 
       it "EvaluationDetail default gets converted to off if invalid" do
-        td = Integrations::TestData.data_source
+        td = Integrations::TestDataV2.data_source
         td.update(td.flag("flagkey").variations("nonstage").variation_for_all(0))
 
         detail = nil
         config_hook = MockHook.new(->(_, _) { }, ->(_, _, d) { detail = d })
-        with_client(test_config(data_source: td, hooks: [config_hook])) do |client|
+        with_client(test_config(data_system_config: test_data_system(td), hooks: [config_hook])) do |client|
           client.migration_variation("flagkey", basic_context, :invalid)
 
           expect(detail.value).to eq LaunchDarkly::Migrations::STAGE_OFF.to_s
