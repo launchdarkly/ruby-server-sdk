@@ -28,9 +28,6 @@ module LaunchDarkly
             @closed = false
             @update_queue = Queue.new
             @lock = Mutex.new
-
-            # Always register for change notifications
-            @test_data.add_instance(self)
           end
 
           #
@@ -53,68 +50,25 @@ module LaunchDarkly
           # @return [LaunchDarkly::Interfaces::DataSystem::FetchResult]
           #
           def fetch(selector_store)
-            result =
-              begin
-                @lock.synchronize do
-                  if @closed
-                    next LaunchDarkly::Result.fail('TestDataV2 source has been closed')
-                  end
-
-                  # Get all current flags and segments from test data
-                  init_data = @test_data.make_init_data
-                  version = @test_data.get_version
-
-                  # Build a full transfer changeset
-                  builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
-                  builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
-
-                  # Add all flags to the changeset
-                  init_data[:flags].each do |key, flag_data|
-                    builder.add_put(
-                      LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
-                      key,
-                      flag_data[:version] || 1,
-                      flag_data
-                    )
-                  end
-
-                  # Add all segments to the changeset
-                  init_data[:segments].each do |key, segment_data|
-                    builder.add_put(
-                      LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
-                      key,
-                      segment_data[:version] || 1,
-                      segment_data
-                    )
-                  end
-
-                  # Create selector for this version
-                  selector = LaunchDarkly::Interfaces::DataSystem::Selector.new_selector(version.to_s, version)
-                  change_set = builder.finish(selector)
-
-                  basis = LaunchDarkly::Interfaces::DataSystem::Basis.new(change_set: change_set, persist: false, environment_id: nil)
-
-                  LaunchDarkly::Result.success(basis)
-                end
-              rescue => e
-                LaunchDarkly::Result.fail("Error fetching test data: #{e.message}", e)
-              end
-
-            LaunchDarkly::Interfaces::DataSystem::FetchResult.new(result: result, fallback_to_fdv1: false)
+            fetch_result do
+              init_data = @test_data.make_init_data
+              [init_data, @test_data.get_version]
+            end
           end
 
           #
           # Implementation of the Synchronizer.sync method.
           #
-          # Yields updates as test data changes occur.
+          # Yields the current test data, and then an update for each later change.
           #
           # @param selector_store [LaunchDarkly::Interfaces::DataSystem::SelectorStore] Provides the Selector (unused for test data)
           # @yield [LaunchDarkly::Interfaces::DataSystem::Update] Yields Update objects as synchronization progresses
           # @return [void]
           #
           def sync(selector_store)
-            # First yield initial data
-            initial_fetch = fetch(selector_store)
+            # Subscribe and take the initial data in one step. Then the queue holds only the changes
+            # that the initial data does not hold.
+            initial_fetch = fetch_result { @test_data.subscribe(self) }
             unless initial_fetch.success?
               yield LaunchDarkly::Interfaces::DataSystem::Update.new(
                 state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
@@ -287,9 +241,61 @@ module LaunchDarkly
               end
             end
           end
+
+          #
+          # Builds a full transfer result from the data and the version that the block returns.
+          # The block runs while this instance holds its lock.
+          #
+          private def fetch_result
+            result =
+              begin
+                @lock.synchronize do
+                  if @closed
+                    next LaunchDarkly::Result.fail('TestDataV2 source has been closed')
+                  end
+
+                  init_data, version = yield
+
+                  # Build a full transfer changeset
+                  builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
+                  builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
+
+                  # Add all flags to the changeset
+                  init_data[:flags].each do |key, flag_data|
+                    builder.add_put(
+                      LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+                      key,
+                      flag_data[:version] || 1,
+                      flag_data
+                    )
+                  end
+
+                  # Add all segments to the changeset
+                  init_data[:segments].each do |key, segment_data|
+                    builder.add_put(
+                      LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
+                      key,
+                      segment_data[:version] || 1,
+                      segment_data
+                    )
+                  end
+
+                  # Create selector for this version
+                  selector = LaunchDarkly::Interfaces::DataSystem::Selector.new_selector(version.to_s, version)
+                  change_set = builder.finish(selector)
+
+                  basis = LaunchDarkly::Interfaces::DataSystem::Basis.new(change_set: change_set, persist: false, environment_id: nil)
+
+                  LaunchDarkly::Result.success(basis)
+                end
+              rescue => e
+                LaunchDarkly::Result.fail("Error fetching test data: #{e.message}", e)
+              end
+
+            LaunchDarkly::Interfaces::DataSystem::FetchResult.new(result: result, fallback_to_fdv1: false)
+          end
         end
       end
     end
   end
 end
-
