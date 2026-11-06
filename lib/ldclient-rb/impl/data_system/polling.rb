@@ -20,6 +20,42 @@ module LaunchDarkly
 
       LD_ENVID_HEADER = "X-LD-EnvID"
       LD_FD_FALLBACK_HEADER = "X-LD-FD-Fallback"
+      LD_FD_FALLBACK_TTL_HEADER = "X-LD-FD-Fallback-TTL"
+
+      # Used whenever the service supplies no usable FDv1 fallback TTL.
+      DEFAULT_FDV1_FALLBACK_TTL = 60 * 60
+
+      #
+      # Returns how long, in seconds, to stay on FDv1 after a fallback
+      # directive before attempting to recover to FDv2. A service-supplied TTL
+      # in (0, 1 hour] is used as-is. Anything else (missing, malformed, zero,
+      # negative, or too large) uses the 1 hour default, minus a uniformly
+      # random jitter of up to half of it, so that SDKs which fell back
+      # together do not all retry at once.
+      #
+      # @param ttl [Integer, String, nil] The TTL from the
+      #   X-LD-FD-Fallback-TTL header or goodbye.protocolFallbackTTL
+      # @return [Integer]
+      #
+      def self.fdv1_fallback_ttl(ttl)
+        ttl = Integer(ttl, 10) if ttl.is_a?(String) && ttl.match?(/\A\d+\z/)
+        return ttl if ttl.is_a?(Integer) && ttl > 0 && ttl <= DEFAULT_FDV1_FALLBACK_TTL
+
+        DEFAULT_FDV1_FALLBACK_TTL - Random.rand(0..DEFAULT_FDV1_FALLBACK_TTL / 2)
+      end
+
+      #
+      # Returns the FDv1 fallback TTL carried on the response headers. See
+      # {.fdv1_fallback_ttl}.
+      #
+      # @param headers [#[], Hash, nil]
+      # @return [Integer]
+      #
+      def self.fdv1_fallback_ttl_from_headers(headers)
+        value = lookup_header(headers, LD_FD_FALLBACK_TTL_HEADER)
+        value = value.first if value.is_a?(Array)
+        fdv1_fallback_ttl(value)
+      end
 
       #
       # Reports whether the response headers signal that the SDK should fall
@@ -128,6 +164,7 @@ module LaunchDarkly
           until @stop.set?
             result = @requester.fetch(ss.selector)
             fallback = LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(result.headers)
+            fallback_ttl = (LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl_from_headers(result.headers) if fallback)
             envid = LaunchDarkly::Impl::DataSystem.lookup_header(result.headers, LD_ENVID_HEADER)
 
             if !result.success?
@@ -149,7 +186,8 @@ module LaunchDarkly
                       state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
                       error: error_info,
                       environment_id: envid,
-                      fallback_to_fdv1: true
+                      fallback_to_fdv1: true,
+                      fdv1_fallback_ttl: fallback_ttl
                     )
                     break
                   end
@@ -168,7 +206,8 @@ module LaunchDarkly
                   state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
                   error: error_info,
                   environment_id: envid,
-                  fallback_to_fdv1: fallback
+                  fallback_to_fdv1: fallback,
+                  fdv1_fallback_ttl: fallback_ttl
                 )
                 break
               end
@@ -186,7 +225,8 @@ module LaunchDarkly
                   state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
                   error: error_info,
                   environment_id: envid,
-                  fallback_to_fdv1: true
+                  fallback_to_fdv1: true,
+                  fdv1_fallback_ttl: fallback_ttl
                 )
                 break
               end
@@ -202,7 +242,8 @@ module LaunchDarkly
                 state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
                 change_set: result.value,
                 environment_id: envid,
-                fallback_to_fdv1: fallback
+                fallback_to_fdv1: fallback,
+                fdv1_fallback_ttl: fallback_ttl
               )
             end
 
@@ -231,8 +272,10 @@ module LaunchDarkly
           # Default to false so the rescue clause has a defined value even when an
           # exception is raised before the header read below has had a chance to run.
           fallback = false
+          fallback_ttl = nil
           result = @requester.fetch(ss.selector)
           fallback = LaunchDarkly::Impl::DataSystem.fdv1_fallback_requested?(result.headers)
+          fallback_ttl = LaunchDarkly::Impl::DataSystem.fdv1_fallback_ttl_from_headers(result.headers) if fallback
 
           unless result.success?
             if result.exception.is_a?(LaunchDarkly::Impl::DataSource::UnexpectedResponseError)
@@ -243,13 +286,15 @@ module LaunchDarkly
               @logger.warn { "[LDClient] #{http_error_message_result}" } if Impl::Util.http_error_recoverable?(status_code)
               return LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
                 result: LaunchDarkly::Result.fail(http_error_message_result, result.exception),
-                fallback_to_fdv1: fallback
+                fallback_to_fdv1: fallback,
+                fdv1_fallback_ttl: fallback_ttl
               )
             end
 
             return LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
               result: LaunchDarkly::Result.fail(result.error || 'Failed to request payload', result.exception),
-              fallback_to_fdv1: fallback
+              fallback_to_fdv1: fallback,
+              fdv1_fallback_ttl: fallback_ttl
             )
           end
 
@@ -265,7 +310,8 @@ module LaunchDarkly
 
           LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
             result: LaunchDarkly::Result.success(basis),
-            fallback_to_fdv1: fallback
+            fallback_to_fdv1: fallback,
+            fdv1_fallback_ttl: fallback_ttl
           )
         rescue => e
           # An exception can fire after we have already read the response
@@ -277,7 +323,8 @@ module LaunchDarkly
           @logger.debug { "[LDClient] Exception trace: #{e.backtrace}" }
           LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
             result: LaunchDarkly::Result.fail(msg, e),
-            fallback_to_fdv1: fallback
+            fallback_to_fdv1: fallback,
+            fdv1_fallback_ttl: fallback_ttl
           )
         end
       end

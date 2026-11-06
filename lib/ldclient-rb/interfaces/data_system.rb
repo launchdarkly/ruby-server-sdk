@@ -527,19 +527,25 @@ module LaunchDarkly
         # @return [String, nil] The environment ID
         attr_reader :environment_id
 
+        # @return [Integer, nil] How long, in seconds, to stay on FDv1 before attempting to
+        #   recover to FDv2, when {#fallback_to_fdv1} is set. If nil, a default is used.
+        attr_reader :fdv1_fallback_ttl
+
         #
         # @param state [Symbol] The data source state ({LaunchDarkly::Interfaces::DataSource::Status})
         # @param change_set [ChangeSet, nil] The change set
         # @param error [LaunchDarkly::Interfaces::DataSource::ErrorInfo, nil] Error information
         # @param fallback_to_fdv1 [Boolean] Whether to fall back to FDv1
         # @param environment_id [String, nil] The environment ID
+        # @param fdv1_fallback_ttl [Integer, nil] How long, in seconds, to stay on FDv1
         #
-        def initialize(state:, change_set: nil, error: nil, fallback_to_fdv1: false, environment_id: nil)
+        def initialize(state:, change_set: nil, error: nil, fallback_to_fdv1: false, environment_id: nil, fdv1_fallback_ttl: nil)
           @state = state
           @change_set = change_set
           @error = error
           @fallback_to_fdv1 = fallback_to_fdv1
           @environment_id = environment_id
+          @fdv1_fallback_ttl = fdv1_fallback_ttl
         end
       end
 
@@ -560,13 +566,19 @@ module LaunchDarkly
         # @return [Boolean] Whether the server has instructed the SDK to fall back to the FDv1 protocol.
         attr_reader :fallback_to_fdv1
 
+        # @return [Integer, nil] How long, in seconds, to stay on FDv1 before attempting to
+        #   recover to FDv2, when {#fallback_to_fdv1} is set. If nil, a default is used.
+        attr_reader :fdv1_fallback_ttl
+
         #
         # @param result [LaunchDarkly::Result] A Result containing either a Basis or an error.
         # @param fallback_to_fdv1 [Boolean] Whether to fall back to FDv1.
+        # @param fdv1_fallback_ttl [Integer, nil] How long, in seconds, to stay on FDv1.
         #
-        def initialize(result:, fallback_to_fdv1: false)
+        def initialize(result:, fallback_to_fdv1: false, fdv1_fallback_ttl: nil)
           @result = result
           @fallback_to_fdv1 = fallback_to_fdv1
+          @fdv1_fallback_ttl = fdv1_fallback_ttl
         end
 
         # @return [Boolean] true when the underlying Result was successful.

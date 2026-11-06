@@ -519,7 +519,7 @@ module LaunchDarkly
         end
 
         describe "stays on FDv1 after fallback" do
-          it "does not retry FDv2 after falling back to FDv1" do
+          it "does not retry FDv2 before the fallback TTL elapses" do
             mock_primary = double("primary_synchronizer")
             allow(mock_primary).to receive(:name).and_return("mock-primary")
             allow(mock_primary).to receive(:stop)
@@ -548,7 +548,7 @@ module LaunchDarkly
             # Give it time to settle
             sleep 1.0
 
-            # Primary should only be called once (not retried after fallback)
+            # Primary should only be called once (the default TTL is at least 30 minutes)
             expect(mock_primary).to have_received(:sync).once
 
             # Verify FDv1 is serving data
@@ -672,6 +672,121 @@ module LaunchDarkly
             expect(fdv2.data_source_status_provider.status.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
 
             fdv2.stop
+          end
+        end
+
+        describe "FDv1 fallback TTL" do
+          # Synchronizer that requests FDv1 fallback with a 1 second TTL on its
+          # first sync, and reports valid data afterwards.
+          class FallbackOnceSynchronizer
+            def initialize(events)
+              @events = events
+              @syncs = 0
+              @recovered = Concurrent::Event.new
+            end
+
+            attr_reader :recovered
+
+            def name
+              "fallback-once"
+            end
+
+            def sync(_selector_store)
+              @syncs += 1
+              @stopped = Concurrent::Event.new
+              @events << :fdv2_sync
+              if @syncs == 1
+                yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                  state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
+                  fallback_to_fdv1: true,
+                  fdv1_fallback_ttl: 1
+                )
+                return
+              end
+
+              yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                state: LaunchDarkly::Interfaces::DataSource::Status::VALID
+              )
+              @recovered.set
+              @stopped.wait
+            end
+
+            def stop
+              @stopped&.set
+            end
+          end
+
+          class RecordingFDv1Synchronizer
+            def initialize(events)
+              @events = events
+              @stopped = Concurrent::Event.new
+            end
+
+            def name
+              "recording-fdv1"
+            end
+
+            def sync(_selector_store)
+              @events << :fdv1_sync
+              yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+                state: LaunchDarkly::Interfaces::DataSource::Status::VALID
+              )
+              @stopped.wait
+            end
+
+            def stop
+              @events << :fdv1_stop
+              @stopped.set
+            end
+          end
+
+          it "recovers to FDv2 after the TTL when no FDv1 fallback synchronizer is configured" do
+            events = Queue.new
+
+            primary = FallbackOnceSynchronizer.new(events)
+
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers(nil)
+              .synchronizers([MockBuilder.new(primary)])
+              .build
+
+            valid_status = Concurrent::Event.new
+            listener = Object.new
+            listener.define_singleton_method(:update) do |status|
+              valid_status.set if status.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
+            end
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+            fdv2.data_source_status_provider.add_listener(listener)
+
+            ready_event = fdv2.start
+            expect(ready_event.wait(2)).to be true
+            expect(primary.recovered.wait(3)).to be true
+            expect(valid_status.wait(2)).to be true
+
+            fdv2.stop
+          end
+
+          it "stops the FDv1 fallback synchronizer before recovering to FDv2" do
+            events = Queue.new
+
+            primary = FallbackOnceSynchronizer.new(events)
+
+            fdv1 = RecordingFDv1Synchronizer.new(events)
+
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers(nil)
+              .synchronizers([MockBuilder.new(primary)])
+              .fdv1_compatible_synchronizer(MockBuilder.new(fdv1))
+              .build
+
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+
+            fdv2.start
+            expect(primary.recovered.wait(3)).to be true
+            fdv2.stop
+
+            expect(Array.new(4) { events.pop }).to eq([:fdv2_sync, :fdv1_sync, :fdv1_stop, :fdv2_sync])
           end
         end
 

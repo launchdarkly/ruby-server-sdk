@@ -518,6 +518,33 @@ module LaunchDarkly
             expect(off.environment_id).to eq('test-env-503')
           end
 
+          it "captures the fallback TTL header" do
+            headers_error = {
+              LD_FD_FALLBACK_HEADER => 'true',
+              LD_FD_FALLBACK_TTL_HEADER => '120',
+            }
+            failure = LaunchDarkly::Result.fail(
+              "error for test",
+              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(503),
+              headers_error
+            )
+
+            synchronizer = PollingDataSource.new(
+              0.01,
+              ListBasedRequester.new([failure]),
+              logger
+            )
+
+            updates = []
+            synchronizer.sync(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector)) do |update|
+              updates << update
+            end
+
+            expect(updates.length).to eq(1)
+            expect(updates[0].fallback_to_fdv1).to eq(true)
+            expect(updates[0].fdv1_fallback_ttl).to eq(120)
+          end
+
           it "captures envid from generic error with headers" do
             builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
             builder.start(LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL)
