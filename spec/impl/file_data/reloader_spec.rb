@@ -37,6 +37,14 @@ module LaunchDarkly
           { flagValues: values }.to_json
         end
 
+        # Gives the file a modification time that none of its earlier states had, as a write does on
+        # a file system with fine time stamps. Ruby reports file times in whole seconds on Windows
+        # before 3.4, so a test that needs a rewrite to look new sets the time itself.
+        def mark_written(path)
+          @marks = (@marks || 0) + 1
+          File.utime(Time.at(@marks), Time.at(@marks), path)
+        end
+
         def wait_for(timeout = 3)
           deadline = Time.now + timeout
           until yield
@@ -595,9 +603,9 @@ module LaunchDarkly
               reloader.trigger
               expect(wait_for { read_again_logged? }).to be true
 
-              sleep 0.02
               File.write(y, yaml_doc(flag2: true))
               File.write(y, "")
+              mark_written(y)
               reloader.trigger
               expect(wait_for { logger.output.scan(read_again_log).length == 2 }).to be true
 
@@ -619,9 +627,9 @@ module LaunchDarkly
               expect(wait_for { read_again_logged? }).to be true
 
               # No change signal from here on: only the retries read the file.
-              sleep 0.02
               File.write(y, yaml_doc(flag2: true))
               File.write(y, "")
+              mark_written(y)
               expect(wait_for(retry_delay + 2) { logger.output.scan(read_again_log).length == 2 }).to be true
               expect(recorder.applied.length).to eq(1)
 
@@ -958,12 +966,6 @@ module LaunchDarkly
             logger.output.scan("reading it again before applying it").length
           end
 
-          # Lets the next write get a later modification time on a file system whose timestamps only
-          # move once per clock tick of the kernel.
-          def next_tick
-            sleep 0.02
-          end
-
           # Waits for the worker to arm the retry that a load asked for, and expects its delay. A
           # retry that reload_now asks for is armed by the worker.
           def expect_armed_retry_delay(reloader, seconds)
@@ -972,12 +974,6 @@ module LaunchDarkly
               !delay.nil? && (delay - seconds).abs < 0.001
             end
             expect(armed).to be(true), "expected a retry armed for #{seconds}s, got #{reloader.last_armed_retry_delay.inspect}"
-          end
-
-          # Gives the file a new modification time, as a write while it is empty does.
-          def mark_written(path)
-            @marks = (@marks || 0) + 1
-            File.utime(Time.at(@marks), Time.at(@marks), path)
           end
 
           def with_clocked_reloader(paths, **options, &block)
@@ -1012,9 +1008,9 @@ module LaunchDarkly
 
               # Rewritten and truncated again between two loads.
               clock.advance(0.6 * hour)
-              next_tick
               File.write(y, yaml_doc(flag2: true))
               File.write(y, "")
+              mark_written(y)
               expect(reloader.reload_now).to be false
 
               clock.advance(0.6 * hour)
@@ -1038,9 +1034,9 @@ module LaunchDarkly
               expect(reloader.reload_now).to be false
 
               clock.advance(0.6 * hour)
-              next_tick
               File.write(target, yaml_doc(flag2: true))
               File.write(target, "")
+              mark_written(target)
               expect(reloader.reload_now).to be false
 
               # The target was written, so its delay started again.
@@ -1058,18 +1054,18 @@ module LaunchDarkly
               File.write(y, "")
               expect(reloader.reload_now).to be false
 
-              # Truncating the file again changes its modification time, so every load finds a new
+              # Each truncation gives the file a new modification time, so every load finds a new
               # rewrite.
               9.times do
                 clock.advance(0.5 * hour)
-                next_tick
                 File.write(y, "")
+                mark_written(y)
                 expect(reloader.reload_now).to be false
               end
 
               clock.advance(0.5 * hour)
-              next_tick
               File.write(y, "")
+              mark_written(y)
               expect(reloader.reload_now).to be true
               expect(recorder.applied[-1].empty?).to be true
             end
@@ -1087,10 +1083,10 @@ module LaunchDarkly
               # Each load finds one of the files in the middle of a rewrite and the other one whole.
               9.times do |i|
                 clock.advance(0.5 * hour)
-                next_tick
                 emptied, rewritten = i.even? ? [b, a] : [a, b]
                 File.write(rewritten, yaml_doc(rewritten == a ? { flag1: true } : { flag2: true }))
                 File.write(emptied, "")
+                mark_written(emptied)
                 expect(reloader.reload_now).to be false
               end
               expect(recorder.applied.length).to eq(1)
@@ -1183,8 +1179,8 @@ module LaunchDarkly
               expect(reloader.reload_now).to be false
               expect(recorder.errors.length).to eq(1)
 
-              next_tick
               File.write(a, "")
+              mark_written(a)
               expect(reloader.reload_now).to be false
               expect(hold_count).to eq(2)
               File.write(a, values_doc({ flag1: "b" }))

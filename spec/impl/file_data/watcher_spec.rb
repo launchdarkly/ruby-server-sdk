@@ -63,6 +63,16 @@ module LaunchDarkly
           skip "symbolic links cannot be created on this platform"
         end
 
+        # Ruby reports file times in whole seconds on Windows before 3.4. A backend that compares
+        # the lstat of a link notices a replacement only when the new link's time differs, so on such
+        # a platform a test that replaces a link waits for the next second first.
+        def wait_for_next_file_time(link)
+          mtime = File.lstat(link).mtime
+          return unless mtime.nsec.zero?
+
+          sleep 0.05 while Time.now.to_i <= mtime.to_i
+        end
+
         it "reports that the listen gem is available" do
           expect(Watcher.available?).to be true
         end
@@ -146,6 +156,7 @@ module LaunchDarkly
           with_watcher([path("config/flags.json")]) do |_watcher, calls|
             sleep 0.3
             # Replaced by rename, as deployment tools replace a link.
+            wait_for_next_file_time(path("config/flags.json"))
             make_symlink(path("two/flags.json"), path("config/flags.json.tmp"))
             File.rename(path("config/flags.json.tmp"), path("config/flags.json"))
             expect(wait_for { calls.value >= 1 }).to be true
