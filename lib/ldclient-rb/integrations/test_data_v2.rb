@@ -167,10 +167,18 @@ module LaunchDarkly
       end
 
       # @api private
+      #
+      # Adds an instance and takes the current data in one step. The instance then receives each
+      # change that the returned data does not hold, and no change that it holds.
+      #
       # @param instance [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] the TestDataSourceV2 instance to add
-      def add_instance(instance)
+      # @return [Array(Hash, Integer)] the data, in the form of {#make_init_data}, and the next version
+      def subscribe(instance)
         @lock.with_write_lock do
           @instances.push(instance)
+          version = @version
+          @version += 1
+          [{ flags: @current_flags.dup, segments: @current_segments.dup }, version]
         end
       end
 

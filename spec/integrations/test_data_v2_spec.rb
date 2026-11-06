@@ -94,6 +94,7 @@ module LaunchDarkly
       it 'sends a preconfigured flag to a running data source' do
         td = TestDataV2.data_source
         source = LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(td)
+        td.subscribe(source)
         expect(source).to receive(:upsert_flag).with(hash_including(key: 'myflag', version: 7))
         td.use_preconfigured_flag({ key: 'myflag', version: 7, variations: ['a'] })
       end
@@ -242,7 +243,7 @@ module LaunchDarkly
 
         def expect_delivery_in_order
           td = TestDataV2.data_source
-          td.add_instance(instance)
+          td.subscribe(instance)
           first = Thread.new { yield td, 1 }
           second = nil
           begin
@@ -308,6 +309,36 @@ module LaunchDarkly
       end
 
       describe 'TestDataSourceV2' do
+        it 'does not deliver a change from before sync starts after the initial data' do
+          td = TestDataV2.data_source
+          source = LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(td)
+          td.update(td.flag('myflag').variation_for_all(true))
+          td.update(td.flag('myflag').variation_for_all(false))
+
+          updates = Queue.new
+          sync_thread = Thread.new { source.sync(nil) { |update| updates << update } }
+          begin
+            initial = updates.pop(timeout: 1)
+            td.update(td.flag('myflag').variation_for_all(true))
+            following = updates.pop(timeout: 1)
+
+            expect(initial.change_set.changes.map(&:version)).to eq([2])
+            expect(following.change_set.changes.map(&:version)).to eq([3])
+          ensure
+            source.stop
+            sync_thread.join(1)
+          end
+        end
+
+        it 'does not receive changes after it is used as an initializer' do
+          td = TestDataV2.data_source
+          source = LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(td)
+          source.fetch(nil)
+
+          expect(source).not_to receive(:upsert_flag)
+          td.update(td.flag('myflag').variation_for_all(true))
+        end
+
         it 'includes both flags and segments in fetch' do
           td = TestDataV2.data_source
           td.update(td.flag('myflag').variation_for_all(true))
