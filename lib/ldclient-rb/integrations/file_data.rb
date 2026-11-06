@@ -133,14 +133,14 @@ module LaunchDarkly
       #   data_system_config = LaunchDarkly::DataSystemConfig.new(
       #     initializers: [file_source]
       #   )
-      #   config = LaunchDarkly::Config.new(data_system: data_system_config)
+      #   config = LaunchDarkly::Config.new(data_system_config: data_system_config)
       #
       # @example Using as a synchronizer
       #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
       #   data_system_config = LaunchDarkly::DataSystemConfig.new(
       #     synchronizers: [file_source]
       #   )
-      #   config = LaunchDarkly::Config.new(data_system: data_system_config)
+      #   config = LaunchDarkly::Config.new(data_system_config: data_system_config)
       #
       # @example Using as both initializer and synchronizer
       #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
@@ -148,7 +148,7 @@ module LaunchDarkly
       #     initializers: [file_source],
       #     synchronizers: [file_source]
       #   )
-      #   config = LaunchDarkly::Config.new(data_system: data_system_config)
+      #   config = LaunchDarkly::Config.new(data_system_config: data_system_config)
       #
       def self.data_source_v2(options = {})
         paths = options[:paths] || []
@@ -206,7 +206,7 @@ module LaunchDarkly
       #
       # @example
       #   overrides = LaunchDarkly::Integrations::FileData.override_source(paths: ["/etc/launchdarkly/overrides.json"])
-      #   config = LaunchDarkly::Config.new(data_system: LaunchDarkly::DataSystem.default.overrides(overrides))
+      #   config = LaunchDarkly::Config.new(data_system_config: LaunchDarkly::DataSystem.default.overrides(overrides).build)
       #   client = LaunchDarkly::LDClient.new(sdk_key, config)
       #
       # @param options [Hash] the configuration options
