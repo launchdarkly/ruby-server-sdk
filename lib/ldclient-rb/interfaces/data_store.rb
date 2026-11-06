@@ -198,21 +198,6 @@ module LaunchDarkly
         end
       end
 
-      #
-      # Interface that a data store implementation can use to report information back to the SDK.
-      #
-      module UpdateSink
-        #
-        # Reports a change in the data store's operational status.
-        #
-        # This is what makes the status monitoring mechanisms in {StatusProvider} work.
-        #
-        # @param status [Status] the updated status properties
-        #
-        def update_status(status)
-        end
-      end
-
       class Status
         def initialize(available, stale)
           @available = available

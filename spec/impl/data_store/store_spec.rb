@@ -3,7 +3,6 @@
 require "spec_helper"
 require "ldclient-rb/impl/data_store/store"
 require "ldclient-rb/impl/broadcaster"
-require "ldclient-rb/impl/data_store/status"
 require "ldclient-rb/interfaces/data_system"
 
 module LaunchDarkly
