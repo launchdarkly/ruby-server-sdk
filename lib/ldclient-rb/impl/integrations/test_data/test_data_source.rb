@@ -9,19 +9,19 @@ module LaunchDarkly
     module Integrations
       module TestData
         #
-        # Internal implementation of both Initializer and Synchronizer protocols for TestDataV2.
+        # Internal implementation of both Initializer and Synchronizer protocols for TestData.
         #
-        # This component bridges the test data management in TestDataV2 with the FDv2 protocol
+        # This component bridges the test data management in TestData with the FDv2 protocol
         # interfaces. Each instance implements both Initializer and Synchronizer protocols
         # and receives change notifications for dynamic updates.
         #
-        class TestDataSourceV2
+        class TestDataSource
           include LaunchDarkly::Interfaces::DataSystem::Initializer
           include LaunchDarkly::Interfaces::DataSystem::Synchronizer
 
           # @api private
           #
-          # @param test_data [LaunchDarkly::Integrations::TestDataV2] the test data instance
+          # @param test_data [LaunchDarkly::Integrations::TestData] the test data instance
           #
           def initialize(test_data)
             @test_data = test_data
@@ -36,7 +36,7 @@ module LaunchDarkly
           # @return [String]
           #
           def name
-            'TestDataV2'
+            'TestData'
           end
 
           #
@@ -131,7 +131,7 @@ module LaunchDarkly
           end
 
           #
-          # Called by TestDataV2 when a flag is updated.
+          # Called by TestData when a flag is updated.
           #
           # This method converts the flag update into an FDv2 changeset and
           # queues it for delivery through the sync() generator.
@@ -187,7 +187,7 @@ module LaunchDarkly
           end
 
           #
-          # Called by TestDataV2 when a segment is updated.
+          # Called by TestData when a segment is updated.
           #
           # This method converts the segment update into an FDv2 changeset and
           # queues it for delivery through the sync() generator.
@@ -251,7 +251,7 @@ module LaunchDarkly
               begin
                 @lock.synchronize do
                   if @closed
-                    next LaunchDarkly::Result.fail('TestDataV2 source has been closed')
+                    next LaunchDarkly::Result.fail('TestData source has been closed')
                   end
 
                   init_data, version = yield

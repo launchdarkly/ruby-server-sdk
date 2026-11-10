@@ -52,10 +52,10 @@ class ClientEntity
         data_system.fdv1_compatible_synchronizer(build_fdv1_fallback_builder(fdv1_fallback_config))
       end
 
-      opts[:data_system_config] = data_system.build
+      opts[:data_system] = data_system.build
     else
       # Without a data system configuration, the client does not connect to LaunchDarkly for data.
-      opts[:data_system_config] = LaunchDarkly::DataSystem.custom.build
+      opts[:data_system] = LaunchDarkly::DataSystem.custom.build
     end
 
     if config[:events]

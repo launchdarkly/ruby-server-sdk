@@ -8,9 +8,9 @@ module LaunchDarkly
   module Impl
     module DataStore
       #
-      # StatusProviderV2 is the FDv2-specific implementation of {LaunchDarkly::Interfaces::DataStore::StatusProvider}.
+      # StatusProvider is the FDv2-specific implementation of {LaunchDarkly::Interfaces::DataStore::StatusProvider}.
       #
-      class StatusProviderV2
+      class StatusProvider
         include LaunchDarkly::Interfaces::DataStore::StatusProvider
 
         extend Forwardable

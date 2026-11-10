@@ -42,7 +42,7 @@ module LaunchDarkly
       #
       # @example Configuring the feature store
       #     store = LaunchDarkly::Integrations::Redis::new_feature_store(redis_url: "redis://my-server")
-      #     config = LaunchDarkly::Config.new(data_system_config: LaunchDarkly::DataSystem.persistent_store(store).build)
+      #     config = LaunchDarkly::Config.new(data_system: LaunchDarkly::DataSystem.persistent_store(store).build)
       #     client = LaunchDarkly::LDClient.new(my_sdk_key, config)
       #
       # @param opts [Hash] the configuration options

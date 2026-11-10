@@ -4,7 +4,7 @@ require 'set'
 
 module LaunchDarkly
   module Integrations
-    class TestDataV2
+    class TestData
       # Constants for boolean flag variation indices
       TRUE_VARIATION_INDEX = 0
       FALSE_VARIATION_INDEX = 1
@@ -15,18 +15,18 @@ module LaunchDarkly
       end
 
       #
-      # A builder for feature flag configurations to be used with {TestDataV2}.
+      # A builder for feature flag configurations to be used with {TestData}.
       #
-      # @see TestDataV2#flag
-      # @see TestDataV2#update
+      # @see TestData#flag
+      # @see TestData#update
       #
-      class FlagBuilderV2
-        # @api private
-        attr_reader :_key
+      class FlagBuilder
+        # @return [String] the flag key
+        attr_reader :key
 
         # @api private
         def initialize(key)
-          @_key = key
+          @key = key
           @_on = true
           @_variations = []
           @_off_variation = nil
@@ -39,7 +39,7 @@ module LaunchDarkly
         end
 
         # Creates a deep copy of the flag builder when the object is duplicated or cloned.
-        # Subsequent updates to the original `FlagBuilderV2` object will not update the
+        # Subsequent updates to the original `FlagBuilder` object will not update the
         # copy and vice versa.
         #
         # This method is automatically invoked by Ruby's `dup` and `clone` methods.
@@ -59,11 +59,11 @@ module LaunchDarkly
         #
         # The effect of this depends on the rest of the flag configuration, just as it does on the
         # real LaunchDarkly dashboard. In the default configuration that you get from calling
-        # {TestDataV2#flag} with a new flag key, the flag will return `false`
+        # {TestData#flag} with a new flag key, the flag will return `false`
         # whenever targeting is off, and `true` when targeting is on.
         #
         # @param on [Boolean] true if targeting should be on
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def on(on)
           @_on = on
@@ -80,11 +80,11 @@ module LaunchDarkly
         #
         # @param variation [Boolean, Integer] true or false or the desired fallthrough variation index:
         #                  0 for the first, 1 for the second, etc.
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def fallthrough_variation(variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
-            boolean_flag.fallthrough_variation(TestDataV2.variation_for_boolean(variation))
+            boolean_flag.fallthrough_variation(TestData.variation_for_boolean(variation))
           else
             @_fallthrough_variation = variation
             self
@@ -100,11 +100,11 @@ module LaunchDarkly
         #
         # @param variation [Boolean, Integer] true or false or the desired off variation index:
         #                  0 for the first, 1 for the second, etc.
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def off_variation(variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
-            boolean_flag.off_variation(TestDataV2.variation_for_boolean(variation))
+            boolean_flag.off_variation(TestData.variation_for_boolean(variation))
           else
             @_off_variation = variation
             self
@@ -115,7 +115,7 @@ module LaunchDarkly
         # Sets the migration settings for this flag.
         #
         # @param settings [Hash, nil] the settings from {FlagMigrationSettingsBuilder#build}
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def migration_settings(settings)
           @_migration_settings = settings
@@ -129,7 +129,7 @@ module LaunchDarkly
         # General usage does not require this method.
         #
         # @param ratio [Integer]
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def sampling_ratio(ratio)
           @_sampling_ratio = ratio
@@ -143,7 +143,7 @@ module LaunchDarkly
         # General usage does not require this method.
         #
         # @param exclude [Boolean]
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def exclude_from_summaries(exclude)
           @_exclude_from_summaries = exclude
@@ -153,13 +153,13 @@ module LaunchDarkly
         #
         # A shortcut for setting the flag to use the standard boolean configuration.
         #
-        # This is the default for all new flags created with {TestDataV2#flag}.
+        # This is the default for all new flags created with {TestData#flag}.
         #
         # The flag will have two variations, `true` and `false` (in that order);
         # it will return `false` whenever targeting is off, and `true` when targeting is on
         # if no other settings specify otherwise.
         #
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def boolean_flag
           return self if boolean_flag?
@@ -181,7 +181,7 @@ module LaunchDarkly
         #   td.flag('new-flag').variations('red', 'green', 'blue')
         #
         # @param variations [Array<Object>] the desired variations
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def variations(*variations)
           @_variations = variations
@@ -199,11 +199,11 @@ module LaunchDarkly
         #
         # @param variation [Boolean, Integer] true or false or the desired variation index to return:
         #                  0 for the first, 1 for the second, etc.
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def variation_for_all(variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
-            return boolean_flag.variation_for_all(TestDataV2.variation_for_boolean(variation))
+            return boolean_flag.variation_for_all(TestData.variation_for_boolean(variation))
           end
 
           clear_rules.clear_targets.on(true).fallthrough_variation(variation)
@@ -218,7 +218,7 @@ module LaunchDarkly
         # are removed.
         #
         # @param value [Object] the desired value to be returned for all contexts
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def value_for_all(value)
           variations(value).variation_for_all(0).off_variation(0)
@@ -239,7 +239,7 @@ module LaunchDarkly
         # @param user_key [String] a user key
         # @param variation [Boolean, Integer] true or false or the desired variation index to return:
         #                  0 for the first, 1 for the second, etc.
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def variation_for_user(user_key, variation)
           variation_for_key(LaunchDarkly::LDContext::KIND_DEFAULT, user_key, variation)
@@ -258,11 +258,11 @@ module LaunchDarkly
         # @param context_key [String] the context key
         # @param variation [Boolean, Integer] true or false or the desired variation index to return:
         #                  0 for the first, 1 for the second, etc.
-        # @return [FlagBuilderV2] the flag builder
+        # @return [FlagBuilder] the flag builder
         #
         def variation_for_key(context_kind, context_key, variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
-            return boolean_flag.variation_for_key(context_kind, context_key, TestDataV2.variation_for_boolean(variation))
+            return boolean_flag.variation_for_key(context_kind, context_key, TestData.variation_for_boolean(variation))
           end
 
           targets = @_targets[context_kind]
@@ -295,7 +295,7 @@ module LaunchDarkly
         #
         # @param attribute [String] the user attribute to match against
         # @param values [Array<Object>] values to compare to
-        # @return [FlagRuleBuilderV2] the flag rule builder
+        # @return [FlagRuleBuilder] the flag rule builder
         #
         def if_match(attribute, *values)
           if_match_context(LaunchDarkly::LDContext::KIND_DEFAULT, attribute, *values)
@@ -314,10 +314,10 @@ module LaunchDarkly
         # @param context_kind [String] the context kind
         # @param attribute [String] the context attribute to match against
         # @param values [Array<Object>] values to compare to
-        # @return [FlagRuleBuilderV2] the flag rule builder
+        # @return [FlagRuleBuilder] the flag rule builder
         #
         def if_match_context(context_kind, attribute, *values)
-          flag_rule_builder = FlagRuleBuilderV2.new(self)
+          flag_rule_builder = FlagRuleBuilder.new(self)
           flag_rule_builder.and_match_context(context_kind, attribute, *values)
         end
 
@@ -334,7 +334,7 @@ module LaunchDarkly
         #
         # @param attribute [String] the user attribute to match against
         # @param values [Array<Object>] values to compare to
-        # @return [FlagRuleBuilderV2] the flag rule builder
+        # @return [FlagRuleBuilder] the flag rule builder
         #
         def if_not_match(attribute, *values)
           if_not_match_context(LaunchDarkly::LDContext::KIND_DEFAULT, attribute, *values)
@@ -353,10 +353,10 @@ module LaunchDarkly
         # @param context_kind [String] the context kind
         # @param attribute [String] the context attribute to match against
         # @param values [Array<Object>] values to compare to
-        # @return [FlagRuleBuilderV2] the flag rule builder
+        # @return [FlagRuleBuilder] the flag rule builder
         #
         def if_not_match_context(context_kind, attribute, *values)
-          flag_rule_builder = FlagRuleBuilderV2.new(self)
+          flag_rule_builder = FlagRuleBuilder.new(self)
           flag_rule_builder.and_not_match_context(context_kind, attribute, *values)
         end
 
@@ -364,7 +364,7 @@ module LaunchDarkly
         # Removes any existing rules from the flag.
         # This undoes the effect of methods like {#if_match}.
         #
-        # @return [FlagBuilderV2] the same flag builder
+        # @return [FlagBuilder] the same flag builder
         #
         def clear_rules
           @_rules = []
@@ -375,7 +375,7 @@ module LaunchDarkly
         # Removes any existing targets from the flag.
         # This undoes the effect of methods like {#variation_for_user}.
         #
-        # @return [FlagBuilderV2] the same flag builder
+        # @return [FlagBuilder] the same flag builder
         #
         def clear_targets
           @_targets = {}
@@ -383,7 +383,7 @@ module LaunchDarkly
         end
 
         # Note that build is private by convention, because we don't want developers to
-        # consider it part of the public API, but it is still called from TestDataV2.
+        # consider it part of the public API, but it is still called from TestData.
         #
         # Creates a dictionary representation of the flag
         #
@@ -393,7 +393,7 @@ module LaunchDarkly
         #
         def build(version)
           base_flag_object = {
-            key: @_key,
+            key: @key,
             version: version,
             on: @_on,
             variations: @_variations,
@@ -458,7 +458,7 @@ module LaunchDarkly
         end
 
         #
-        # A builder for the migration settings of a flag, for use with {FlagBuilderV2#migration_settings}.
+        # A builder for the migration settings of a flag, for use with {FlagBuilder#migration_settings}.
         #
         # A migration flag has settings that a standard feature flag does not have. These settings control
         # things such as the rate at which the SDK checks reads for consistency between origins.
@@ -492,22 +492,22 @@ module LaunchDarkly
       end
 
       #
-      # A builder for feature flag rules to be used with {FlagBuilderV2}.
+      # A builder for feature flag rules to be used with {FlagBuilder}.
       #
       # In the LaunchDarkly model, a flag can have any number of rules, and a rule can have any number of
       # clauses. A clause is an individual test such as "name is 'X'". A rule matches a context if all of the
       # rule's clauses match the context.
       #
       # To start defining a rule, use one of the flag builder's matching methods such as
-      # {FlagBuilderV2#if_match}. This defines the first clause for the rule.
+      # {FlagBuilder#if_match}. This defines the first clause for the rule.
       # Optionally, you may add more clauses with the rule builder's methods such as
       # {#and_match} or {#and_not_match}.
       # Finally, call {#then_return} to finish defining the rule.
       #
-      class FlagRuleBuilderV2
+      class FlagRuleBuilder
         # @api private
         #
-        # @param flag_builder [FlagBuilderV2] the flag builder instance
+        # @param flag_builder [FlagBuilder] the flag builder instance
         #
         def initialize(flag_builder)
           @_flag_builder = flag_builder
@@ -535,7 +535,7 @@ module LaunchDarkly
         #
         # @param attribute [String] the user attribute to match against
         # @param values [Array<Object>] values to compare to
-        # @return [FlagRuleBuilderV2] the flag rule builder
+        # @return [FlagRuleBuilder] the flag rule builder
         #
         def and_match(attribute, *values)
           and_match_context(LaunchDarkly::LDContext::KIND_DEFAULT, attribute, *values)
@@ -555,7 +555,7 @@ module LaunchDarkly
         # @param context_kind [String] the context kind
         # @param attribute [String] the context attribute to match against
         # @param values [Array<Object>] values to compare to
-        # @return [FlagRuleBuilderV2] the flag rule builder
+        # @return [FlagRuleBuilder] the flag rule builder
         #
         def and_match_context(context_kind, attribute, *values)
           @_clauses << {
@@ -582,7 +582,7 @@ module LaunchDarkly
         #
         # @param attribute [String] the user attribute to match against
         # @param values [Array<Object>] values to compare to
-        # @return [FlagRuleBuilderV2] the flag rule builder
+        # @return [FlagRuleBuilder] the flag rule builder
         #
         def and_not_match(attribute, *values)
           and_not_match_context(LaunchDarkly::LDContext::KIND_DEFAULT, attribute, *values)
@@ -602,7 +602,7 @@ module LaunchDarkly
         # @param context_kind [String] the context kind
         # @param attribute [String] the context attribute to match against
         # @param values [Array<Object>] values to compare to
-        # @return [FlagRuleBuilderV2] the flag rule builder
+        # @return [FlagRuleBuilder] the flag rule builder
         #
         def and_not_match_context(context_kind, attribute, *values)
           @_clauses << {
@@ -624,12 +624,12 @@ module LaunchDarkly
         #
         # @param variation [Boolean, Integer] true or false or the desired variation index:
         #                  0 for the first, 1 for the second, etc.
-        # @return [FlagBuilderV2] the flag builder with this rule added
+        # @return [FlagBuilder] the flag builder with this rule added
         #
         def then_return(variation)
           if LaunchDarkly::Impl::Util.bool?(variation)
             @_flag_builder.boolean_flag
-            return then_return(TestDataV2.variation_for_boolean(variation))
+            return then_return(TestData.variation_for_boolean(variation))
           end
 
           @_variation = variation
@@ -638,7 +638,7 @@ module LaunchDarkly
         end
 
         # Note that build is private by convention, because we don't want developers to
-        # consider it part of the public API, but it is still called from FlagBuilderV2.
+        # consider it part of the public API, but it is still called from FlagBuilder.
         #
         # Creates a dictionary representation of the rule
         #

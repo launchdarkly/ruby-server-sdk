@@ -19,7 +19,7 @@ module LaunchDarkly
       data_system = silent_data_system_builder
         .data_store(initialized_store, LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_WRITE)
         .build
-      test_config(logger: logger, data_system_config: data_system)
+      test_config(logger: logger, data_system: data_system)
     end
 
     def evaluation_warnings(logger)

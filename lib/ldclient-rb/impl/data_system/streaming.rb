@@ -42,7 +42,7 @@ module LaunchDarkly
           @initial_reconnect_delay = initial_reconnect_delay
           @config = config
           @logger = config.logger
-          @name = "StreamingDataSourceV2"
+          @name = "StreamingDataSource"
           @sse = nil
           @stopped = Concurrent::Event.new
           @diagnostic_accumulator = nil
@@ -68,7 +68,7 @@ module LaunchDarkly
         # @yieldparam update [LaunchDarkly::Interfaces::DataSystem::Update]
         #
         def sync(ss)
-          @logger.info { "[LDClient] Starting StreamingDataSourceV2 synchronizer" }
+          @logger.info { "[LDClient] Starting StreamingDataSource synchronizer" }
           log_connection_started
 
           change_set_builder = LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.new
@@ -175,7 +175,7 @@ module LaunchDarkly
         # Stops the streaming synchronizer.
         #
         def stop
-          @logger.info { "[LDClient] Stopping StreamingDataSourceV2 synchronizer" }
+          @logger.info { "[LDClient] Stopping StreamingDataSource synchronizer" }
           @sse&.close
           @stopped.set
         end

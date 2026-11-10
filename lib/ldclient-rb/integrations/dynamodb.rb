@@ -23,7 +23,7 @@ module LaunchDarkly
       #
       # @example Configuring the feature store
       #     store = LaunchDarkly::Integrations::DynamoDB::new_feature_store("my-table-name")
-      #     config = LaunchDarkly::Config.new(data_system_config: LaunchDarkly::DataSystem.persistent_store(store).build)
+      #     config = LaunchDarkly::Config.new(data_system: LaunchDarkly::DataSystem.persistent_store(store).build)
       #     client = LaunchDarkly::LDClient.new(my_sdk_key, config)
       #
       # Note that the specified table must already exist in DynamoDB. It must have a partition key called

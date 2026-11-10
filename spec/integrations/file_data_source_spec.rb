@@ -2,22 +2,22 @@
 
 require "spec_helper"
 require "tempfile"
-require "ldclient-rb/impl/integrations/file_data_source_v2"
+require "ldclient-rb/impl/integrations/file_data_source"
 require "ldclient-rb/integrations/file_data"
 require "ldclient-rb/interfaces/data_system"
 require "mock_components"
 
 # The "does not allow Ruby objects in YAML" example uses this class and flag.
-$created_bad_class_v2 = false
-class BadClassWeShouldNotInstantiateV2 < Hash
+$created_bad_class = false
+class BadClassWeShouldNotInstantiate < Hash
   def []=(key, value)
-    $created_bad_class_v2 = true
+    $created_bad_class = true
   end
 end
 
 module LaunchDarkly
   module Integrations
-    RSpec.describe "FileDataSourceV2" do
+    RSpec.describe "FileDataSource" do
       let(:logger) { $null_log }
 
       let(:all_properties_json) { <<-EOF
@@ -131,7 +131,7 @@ EOF
         it "creates valid initializer" do
           file = make_temp_file(all_properties_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           begin
             result = source.fetch(no_selector_store)
@@ -161,7 +161,7 @@ EOF
         end
 
         it "handles missing file" do
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: ['no-such-file.json'])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: ['no-such-file.json'])
 
           begin
             result = source.fetch(no_selector_store)
@@ -176,7 +176,7 @@ EOF
         it "handles invalid JSON" do
           file = make_temp_file('{"flagValues":{')
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           begin
             result = source.fetch(no_selector_store)
@@ -192,7 +192,7 @@ EOF
           file1 = make_temp_file(flag_only_json)
           file2 = make_temp_file(flag_only_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file1.path, file2.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file1.path, file2.path])
 
           begin
             result = source.fetch(no_selector_store)
@@ -208,7 +208,7 @@ EOF
           file1 = make_temp_file(flag_only_json)
           file2 = make_temp_file(segment_only_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file1.path, file2.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file1.path, file2.path])
 
           begin
             result = source.fetch(no_selector_store)
@@ -229,7 +229,7 @@ EOF
         it "loads YAML" do
           file = make_temp_file(all_properties_yaml)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           begin
             result = source.fetch(no_selector_store)
@@ -244,7 +244,7 @@ EOF
         it "handles flag values" do
           file = make_temp_file(flag_values_only_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           begin
             result = source.fetch(no_selector_store)
@@ -271,7 +271,7 @@ EOF
         it "creates valid synchronizer" do
           file = make_temp_file(all_properties_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(
+          source = Impl::Integrations::FileDataSource.new(
             logger,
             paths: [file.path],
             poll_interval: 0.1
@@ -307,7 +307,7 @@ EOF
         it "detects file changes" do
           file = make_temp_file(flag_only_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(
+          source = Impl::Integrations::FileDataSource.new(
             logger,
             paths: [file.path],
             poll_interval: 0.1
@@ -354,7 +354,7 @@ EOF
         it "reports error on invalid file update" do
           file = make_temp_file(flag_only_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(
+          source = Impl::Integrations::FileDataSource.new(
             logger,
             paths: [file.path],
             poll_interval: 0.1
@@ -396,7 +396,7 @@ EOF
         it "can be stopped" do
           file = make_temp_file(all_properties_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           updates = []
 
@@ -426,7 +426,7 @@ EOF
         it "returns error" do
           file = make_temp_file(all_properties_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           # First fetch should work
           result = source.fetch(no_selector_store)
@@ -446,10 +446,10 @@ EOF
         it "returns correct name" do
           file = make_temp_file(all_properties_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           begin
-            expect(source.name).to eq("FileDataV2")
+            expect(source.name).to eq("FileData")
           ensure
             source.stop
           end
@@ -461,7 +461,7 @@ EOF
           file = make_temp_file(flag_only_json)
 
           # Pass a single string instead of a list
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: file.path)
+          source = Impl::Integrations::FileDataSource.new(logger, paths: file.path)
 
           begin
             result = source.fetch(no_selector_store)
@@ -474,11 +474,11 @@ EOF
         end
       end
 
-      describe "public API (data_source_v2)" do
+      describe "public API (data_source)" do
         it "creates builder that works as initializer" do
           file = make_temp_file(all_properties_json)
 
-          builder = FileData.data_source_v2(paths: [file.path])
+          builder = FileData.data_source(paths: [file.path])
           config = LaunchDarkly::Config.new(logger: logger)
 
           source = builder.build('sdk-key', config)
@@ -496,7 +496,7 @@ EOF
         it "creates builder that works as synchronizer" do
           file = make_temp_file(all_properties_json)
 
-          builder = FileData.data_source_v2(paths: [file.path], poll_interval: 0.1)
+          builder = FileData.data_source(paths: [file.path], poll_interval: 0.1)
           config = LaunchDarkly::Config.new(logger: logger)
 
           source = builder.build('sdk-key', config)
@@ -527,25 +527,25 @@ EOF
 
       describe "security" do
         let(:unsafe_yaml) { <<-EOF
---- !ruby/hash:BadClassWeShouldNotInstantiateV2
+--- !ruby/hash:BadClassWeShouldNotInstantiate
 foo: bar
 EOF
         }
 
         it "does not allow Ruby objects in YAML" do
           # The file holds a hash of a custom Ruby class. An unsafe YAML load creates the object and calls its
-          # []= method, which sets $created_bad_class_v2. A safe load refuses the file.
-          $created_bad_class_v2 = false
+          # []= method, which sets $created_bad_class. A safe load refuses the file.
+          $created_bad_class = false
           file = make_temp_file(unsafe_yaml)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           begin
             result = source.fetch(no_selector_store)
 
             expect(result.success?).to eq(false)
             expect(result.error).to include("Unable to load flag data")
-            expect($created_bad_class_v2).to eq(false)
+            expect($created_bad_class).to eq(false)
           ensure
             source.stop
           end
@@ -565,7 +565,7 @@ EOF
           ]
 
           malicious_paths.each do |malicious_path|
-            source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [malicious_path])
+            source = Impl::Integrations::FileDataSource.new(logger, paths: [malicious_path])
 
             begin
               result = source.fetch(no_selector_store)
@@ -581,7 +581,7 @@ EOF
 
       describe "reload without the listen gem" do
         around do |example|
-          klass = Impl::Integrations::FileDataSourceV2
+          klass = Impl::Integrations::FileDataSource
           saved = klass.class_variable_get(:@@have_listen)
           klass.class_variable_set(:@@have_listen, false)
           begin
@@ -592,10 +592,10 @@ EOF
         end
 
         it "detects file changes with the polling watcher" do
-          expect(Impl::Integrations::FileDataSourcePollerV2).to receive(:new).and_call_original
+          expect(Impl::Integrations::FileDataSourcePoller).to receive(:new).and_call_original
           file = make_temp_file(flag_only_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path], poll_interval: 0.1)
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path], poll_interval: 0.1)
           updates = Queue.new
 
           begin
@@ -636,7 +636,7 @@ EOF
         end
 
         it "reports OFF for a missing file" do
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: ['no-such-file.json'])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: ['no-such-file.json'])
 
           begin
             update = first_sync_update(source)
@@ -652,7 +652,7 @@ EOF
 
         it "reports OFF for a malformed file" do
           file = make_temp_file('{"flagValues":{')
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           begin
             update = first_sync_update(source)
@@ -671,7 +671,7 @@ EOF
         it "produces a full flag" do
           file = make_temp_file(flag_values_only_json)
 
-          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          source = Impl::Integrations::FileDataSource.new(logger, paths: [file.path])
 
           begin
             result = source.fetch(no_selector_store)
@@ -699,10 +699,10 @@ EOF
         it "evaluates flags from a synchronizer" do
           file = make_temp_file(all_properties_json)
           data_system = LaunchDarkly::DataSystem.custom
-            .synchronizers([FileData.data_source_v2(paths: [file.path])])
+            .synchronizers([FileData.data_source(paths: [file.path])])
             .build
 
-          with_client(test_config(data_system_config: data_system)) do |client|
+          with_client(test_config(data_system: data_system)) do |client|
             expect(client.initialized?).to eq(true)
             expect(client.variation("flag1", user, "default")).to eq("on")
             expect(client.variation("flag2", user, "default")).to eq("value2")
@@ -712,10 +712,10 @@ EOF
         it "evaluates flags from an initializer" do
           file = make_temp_file(all_properties_json)
           data_system = LaunchDarkly::DataSystem.custom
-            .initializers([FileData.data_source_v2(paths: [file.path])])
+            .initializers([FileData.data_source(paths: [file.path])])
             .build
 
-          with_client(test_config(data_system_config: data_system)) do |client|
+          with_client(test_config(data_system: data_system)) do |client|
             expect(client.initialized?).to eq(true)
             expect(client.variation("flag1", user, "default")).to eq("on")
             expect(client.variation("flag2", user, "default")).to eq("value2")

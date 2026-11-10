@@ -17,11 +17,11 @@ module LaunchDarkly
 
     # A data source runs on its own thread, so a fork breaks the client.
     def client_config
-      test_config(logger: logger, data_system_config: test_data_system(Integrations::TestDataV2.data_source))
+      test_config(logger: logger, data_system: test_data_system(Integrations::TestData.data_source))
     end
 
     def daemon_config(send_events:)
-      Config.new(data_system_config: DataSystem.daemon(MockFeatureStore.new).build, send_events: send_events, logger: logger)
+      Config.new(data_system: DataSystem.daemon(MockFeatureStore.new).build, send_events: send_events, logger: logger)
     end
 
     def fork_warnings(logger)

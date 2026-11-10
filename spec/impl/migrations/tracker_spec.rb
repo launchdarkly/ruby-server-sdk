@@ -1,12 +1,12 @@
 require 'ldclient-rb/interfaces'
 require "ldclient-rb"
-require "ldclient-rb/integrations/test_data_v2"
+require "ldclient-rb/integrations/test_data"
 
 module LaunchDarkly
   module Impl
     module Migrations
       describe OpTracker do
-        let(:flag_data) { LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2.new("feature").build(1) }
+        let(:flag_data) { LaunchDarkly::Integrations::TestData::FlagBuilder.new("feature").build(1) }
         let(:flag) { LaunchDarkly::Impl::Model::FeatureFlag.new(flag_data) }
         let(:context) { LaunchDarkly::LDContext.with_key("user-key") }
         let(:detail) { LaunchDarkly::EvaluationDetail.new(true, 0, LaunchDarkly::EvaluationReason.fallthrough) }
@@ -76,10 +76,10 @@ module LaunchDarkly
           end
 
           it "with explicit sampling ratio of 1" do
-            settings = LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2::FlagMigrationSettingsBuilder.new
+            settings = LaunchDarkly::Integrations::TestData::FlagBuilder::FlagMigrationSettingsBuilder.new
             settings.check_ratio(1)
 
-            builder = LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2.new("feature")
+            builder = LaunchDarkly::Integrations::TestData::FlagBuilder.new("feature")
             builder.migration_settings(settings.build)
             flag = LaunchDarkly::Impl::Model::FeatureFlag.new(builder.build(1))
             context = LaunchDarkly::LDContext.with_key("user-key")
@@ -100,10 +100,10 @@ module LaunchDarkly
           end
 
           it "unless disabled with sampling ratio of 0" do
-            settings = LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2::FlagMigrationSettingsBuilder.new
+            settings = LaunchDarkly::Integrations::TestData::FlagBuilder::FlagMigrationSettingsBuilder.new
             settings.check_ratio(0)
 
-            builder = LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2.new("feature")
+            builder = LaunchDarkly::Integrations::TestData::FlagBuilder.new("feature")
             builder.migration_settings(settings.build)
             flag = LaunchDarkly::Impl::Model::FeatureFlag.new(builder.build(1))
             context = LaunchDarkly::LDContext.with_key("user-key")
@@ -123,10 +123,10 @@ module LaunchDarkly
           end
 
           it "when supplied a non-trivial sampling ratio" do
-            settings = LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2::FlagMigrationSettingsBuilder.new
+            settings = LaunchDarkly::Integrations::TestData::FlagBuilder::FlagMigrationSettingsBuilder.new
             settings.check_ratio(10)
 
-            builder = LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2.new("feature")
+            builder = LaunchDarkly::Integrations::TestData::FlagBuilder.new("feature")
             builder.migration_settings(settings.build)
             flag = LaunchDarkly::Impl::Model::FeatureFlag.new(builder.build(1))
             context = LaunchDarkly::LDContext.with_key("user-key")

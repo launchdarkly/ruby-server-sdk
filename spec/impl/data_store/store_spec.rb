@@ -14,7 +14,7 @@ module LaunchDarkly
         let(:change_set_broadcaster) { LaunchDarkly::Impl::Broadcaster.new(Concurrent::SingleThreadExecutor.new, logger) }
         subject { Store.new(flag_change_broadcaster, change_set_broadcaster, logger) }
 
-        let(:flag_key) { :test_flag }  # Use symbol like TestDataV2 does
+        let(:flag_key) { :test_flag }  # Use symbol like TestData does
         let(:flag_data) do
           {
             key: flag_key.to_s,  # key field in the object should be string
@@ -25,7 +25,7 @@ module LaunchDarkly
           }
         end
 
-        let(:segment_key) { :test_segment }  # Use symbol like TestDataV2 does
+        let(:segment_key) { :test_segment }  # Use symbol like TestData does
         let(:segment_data) do
           {
             key: segment_key.to_s,  # key field in the object should be string
@@ -169,7 +169,7 @@ module LaunchDarkly
             subject.apply(change_set, false)
 
             expect(subject.initialized?).to be true
-            # InMemoryFeatureStoreV2's get method handles both string and symbol keys
+            # InMemoryFeatureStore's get method handles both string and symbol keys
             result = subject.get_active_store.get(LaunchDarkly::Interfaces::DataStore::FEATURES, flag_key)
             expect(result).not_to be_nil
             expect(result.key).to eq(flag_key.to_s)  # key field is string
