@@ -26,7 +26,7 @@ module LaunchDarkly
 
         # @api private
         def initialize(key)
-          @_key = key
+          @_key = key.to_s
           @_on = true
           @_variations = []
           @_off_variation = nil
