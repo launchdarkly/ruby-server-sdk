@@ -592,7 +592,10 @@ EOF
         end
 
         it "detects file changes with the polling watcher" do
-          expect(Impl::Integrations::FileDataSourcePollerV2).to receive(:new).and_call_original
+          poller_started = Queue.new
+          expect(Impl::Integrations::FileDataSourcePollerV2).to receive(:new).and_wrap_original do |original, *args|
+            original.call(*args).tap { poller_started << true }
+          end
           file = make_temp_file(flag_only_json)
 
           source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path], poll_interval: 0.1)
@@ -606,6 +609,9 @@ EOF
             initial = updates.pop(timeout: 5)
             expect(initial).not_to be_nil, "Did not receive initial update"
             expect(initial.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            # The poller reads the first modification times when it starts. Change the file after that.
+            expect(poller_started.pop(timeout: 5)).to be true
 
             # The poller compares modification times. Set a new time so that the change is visible.
             IO.write(file, segment_only_json)
