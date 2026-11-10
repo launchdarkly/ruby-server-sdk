@@ -12,16 +12,7 @@ module LaunchDarkly
       RSpec.describe StreamingDataSource do
         let(:logger) { double("Logger", info: nil, warn: nil, error: nil, debug: nil) }
         let(:sdk_key) { "test-sdk-key" }
-        let(:config) do
-          double(
-            "Config",
-            logger: logger,
-            stream_uri: "https://stream.example.com",
-            socket_factory: nil,
-            initial_reconnect_delay: 1,
-            instance_id: nil
-          )
-        end
+        let(:config) { LaunchDarkly::Config.new(logger: logger, stream_uri: "https://stream.example.com") }
 
         # Mock SSE event
         class MockSSEEvent

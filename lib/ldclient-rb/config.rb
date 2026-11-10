@@ -18,6 +18,8 @@ module LaunchDarkly
     #
     # @param opts [Hash] the configuration options
     # @option opts [Logger] :logger See {#logger}.
+    # @option opts [String] :base_uri ("https://sdk.launchdarkly.com") See {#base_uri}.
+    # @option opts [String] :stream_uri ("https://stream.launchdarkly.com") See {#stream_uri}.
     # @option opts [String] :events_uri ("https://events.launchdarkly.com") See {#events_uri}.
     # @option opts [Integer] :capacity (10000) See {#capacity}.
     # @option opts [Float] :flush_interval (30) See {#flush_interval}.
@@ -42,6 +44,8 @@ module LaunchDarkly
     # @option plugins [Array<Interfaces::Plugins::Plugin]
     #
     def initialize(opts = {})
+      @base_uri = (opts[:base_uri] || Config.default_base_uri).chomp("/")
+      @stream_uri = (opts[:stream_uri] || Config.default_stream_uri).chomp("/")
       @events_uri = (opts[:events_uri] || Config.default_events_uri).chomp("/")
       @capacity = opts[:capacity] || Config.default_capacity
       @logger = opts[:logger] || Config.default_logger
@@ -81,6 +85,22 @@ module LaunchDarkly
     # @api private
     #
     attr_accessor :instance_id
+
+    #
+    # The base URL for the LaunchDarkly polling service. The polling data sources use it unless
+    # their builder sets a base URI. Set it to the URL of a Relay Proxy instance to get flag data
+    # from the Relay Proxy.
+    # @return [String]
+    #
+    attr_reader :base_uri
+
+    #
+    # The base URL for the LaunchDarkly streaming service. The streaming data source uses it unless
+    # its builder sets a base URI. Set it to the URL of a Relay Proxy instance to get flag data
+    # from the Relay Proxy.
+    # @return [String]
+    #
+    attr_reader :stream_uri
 
     #
     # The base URL for the LaunchDarkly events server. This is configurable mainly for testing
@@ -349,6 +369,22 @@ module LaunchDarkly
     #
     def self.default_capacity
       10000
+    end
+
+    #
+    # The default value for {#base_uri}.
+    # @return [String] "https://sdk.launchdarkly.com"
+    #
+    def self.default_base_uri
+      DataSystem::PollingDataSourceBuilder::DEFAULT_BASE_URI
+    end
+
+    #
+    # The default value for {#stream_uri}.
+    # @return [String] "https://stream.launchdarkly.com"
+    #
+    def self.default_stream_uri
+      DataSystem::StreamingDataSourceBuilder::DEFAULT_BASE_URI
     end
 
     #

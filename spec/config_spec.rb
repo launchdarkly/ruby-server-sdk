@@ -13,6 +13,22 @@ module LaunchDarkly
         expect(subject.new(capacity: 50).capacity).to eq 50
       end
     end
+    describe ".base_uri" do
+      it "defaults to the LaunchDarkly polling service" do
+        expect(subject.new.base_uri).to eq "https://sdk.launchdarkly.com"
+      end
+      it "can be set and removes a trailing slash" do
+        expect(subject.new(base_uri: "https://relay.example.com/").base_uri).to eq "https://relay.example.com"
+      end
+    end
+    describe ".stream_uri" do
+      it "defaults to the LaunchDarkly streaming service" do
+        expect(subject.new.stream_uri).to eq "https://stream.launchdarkly.com"
+      end
+      it "can be set and removes a trailing slash" do
+        expect(subject.new(stream_uri: "https://relay.example.com/").stream_uri).to eq "https://relay.example.com"
+      end
+    end
     describe "@events_uri" do
       it "can be read" do
         expect(subject.new.events_uri).to eq subject.default_events_uri
