@@ -380,17 +380,17 @@ module LaunchDarkly
       # Returns a builder for creating a data source that can be used with the FDv2 data system
       # as either an initializer or synchronizer.
       #
-      # @return [TestDataV2Builder] a builder for a test data source
+      # @return [TestDataBuilder] a builder for a test data source
       #
       def test_data_ds_builder
-        TestDataV2Builder.new(self)
+        TestDataBuilder.new(self)
       end
     end
 
     #
     # Builder for TestData data sources (works for both initializers and synchronizers).
     #
-    class TestDataV2Builder
+    class TestDataBuilder
       def initialize(test_data)
         @test_data = test_data
       end

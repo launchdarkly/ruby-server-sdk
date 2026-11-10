@@ -96,7 +96,7 @@ module LaunchDarkly
       # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
       #   file modifications - used only if the native file-watching mechanism from 'listen' is not
       #   being used. The default value is 1 second.
-      # @return [FileDataSourceV2Builder] a builder that can be used as an FDv2 initializer or synchronizer
+      # @return [FileDataSourceBuilder] a builder that can be used as an FDv2 initializer or synchronizer
       #
       # @example Using as an initializer
       #   file_source = LaunchDarkly::Integrations::FileData.data_source(paths: ['flags.json'])
@@ -124,14 +124,14 @@ module LaunchDarkly
         paths = options[:paths] || []
         poll_interval = options[:poll_interval] || 1
 
-        FileDataSourceV2Builder.new(paths, poll_interval)
+        FileDataSourceBuilder.new(paths, poll_interval)
       end
     end
 
     #
     # Builder for FileDataSource.
     #
-    class FileDataSourceV2Builder
+    class FileDataSourceBuilder
       def initialize(paths, poll_interval)
         @paths = paths
         @poll_interval = poll_interval
