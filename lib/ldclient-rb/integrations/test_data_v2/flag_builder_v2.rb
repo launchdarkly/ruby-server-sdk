@@ -221,7 +221,7 @@ module LaunchDarkly
         # @return [FlagBuilderV2] the flag builder
         #
         def value_for_all(value)
-          variations(value).variation_for_all(0)
+          variations(value).variation_for_all(0).off_variation(0)
         end
 
         #

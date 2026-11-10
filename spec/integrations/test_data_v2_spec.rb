@@ -308,6 +308,17 @@ module LaunchDarkly
         end
       end
 
+      it 'returns the value_for_all value whether targeting is on or off' do
+        td = TestDataV2.data_source
+        flag = td.flag('myflag').value_for_all('x').build(1)
+        expect(flag[:variations]).to eq(['x'])
+        expect(flag[:fallthrough]).to eq({ variation: 0 })
+        expect(flag[:offVariation]).to eq(0)
+
+        off_flag = td.flag('myflag').value_for_all('x').on(false).build(1)
+        expect(off_flag[:offVariation]).to eq(0)
+      end
+
       describe 'TestDataSourceV2' do
         it 'does not deliver a change from before sync starts after the initial data' do
           td = TestDataV2.data_source
