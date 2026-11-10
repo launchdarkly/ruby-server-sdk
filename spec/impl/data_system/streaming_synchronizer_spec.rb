@@ -481,6 +481,59 @@ change_set_builder, envid)
             expect(update.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::NETWORK_ERROR)
             expect(update.environment_id).to eq("env-abc")
           end
+
+          it "reports invalid JSON as invalid data" do
+            expect(logger).to receive(:error)
+
+            update = synchronizer.send(:handle_error, JSON::ParserError.new("bad"), "env-abc", false)
+
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+            expect(update.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA)
+            expect(update.environment_id).to eq("env-abc")
+          end
+
+          it "reports one invalid data status for an invalid stream event" do
+            transfer_none = "event: server-intent\ndata: " + JSON.generate(
+              LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
+                payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(
+                  id: "id", target: 1, code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_NONE, reason: "up-to-date"
+                )
+              ).to_h
+            ) + "\n\n"
+            request_count = 0
+            with_server do |server|
+              server.setup_response(FDV2_STREAMING_ENDPOINT) do |_req, res|
+                request_count += 1
+                res.status = 200
+                res.content_type = "text/event-stream"
+                res.body = request_count == 1 ? "event: server-intent\ndata: {not json\n\n" : transfer_none
+              end
+
+              stream = LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new
+                .base_uri(server.base_uri.to_s)
+                .initial_reconnect_delay(0.01)
+                .build(sdk_key, LaunchDarkly::Config.new(logger: $null_log))
+              updates = Queue.new
+              thread = Thread.new { stream.sync(Struct.new(:selector).new(nil)) { |update| updates << update } }
+              begin
+                received = []
+                while (update = updates.pop(timeout: 5))
+                  received << update
+                  break if update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
+                end
+              ensure
+                stream.stop
+                thread.join(5)
+              end
+
+              expected_states = [
+                LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
+                LaunchDarkly::Interfaces::DataSource::Status::VALID,
+              ]
+              expect(received.map(&:state)).to eq(expected_states)
+              expect(received.first.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA)
+            end
+          end
         end
 
         describe 'SSE client options' do

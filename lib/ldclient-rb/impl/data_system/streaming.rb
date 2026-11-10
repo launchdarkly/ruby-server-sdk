@@ -133,35 +133,10 @@ module LaunchDarkly
                   fdv1_fallback_pending = false
                   stop
                 end
-              rescue JSON::ParserError => e
-                @logger.info { "[LDClient] Error parsing stream event; will restart stream: #{e}" }
-                yield LaunchDarkly::Interfaces::DataSystem::Update.new(
-                  state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-                  error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-                    LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA,
-                    0,
-                    e.to_s,
-                    Time.now
-                  ),
-                  environment_id: envid
-                )
-
-                # Re-raise the exception so the SSE implementation can catch it and restart the stream.
-                raise
               rescue => e
                 @logger.info { "[LDClient] Error while handling stream event; will restart stream: #{e}" }
-                yield LaunchDarkly::Interfaces::DataSystem::Update.new(
-                  state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
-                  error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-                    LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN,
-                    0,
-                    e.to_s,
-                    Time.now
-                  ),
-                  environment_id: envid
-                )
 
-                # Re-raise the exception so the SSE implementation can catch it and restart the stream.
+                # The SSE client gives the exception to on_error, which reports it, and then restarts the stream.
                 raise
               end
             end
@@ -344,6 +319,20 @@ module LaunchDarkly
             end
 
             @logger.warn { "[LDClient] #{error_info.message}" }
+
+          when JSON::ParserError
+            @logger.error { "[LDClient] Invalid data on stream connection: #{error}, will retry" }
+
+            update = LaunchDarkly::Interfaces::DataSystem::Update.new(
+              state: LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED,
+              error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
+                LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA,
+                0,
+                error.to_s,
+                Time.now
+              ),
+              environment_id: envid
+            )
 
           when SSE::Errors::HTTPContentTypeError, SSE::Errors::HTTPProxyError, SSE::Errors::ReadTimeoutError,
                SSE::Errors::StreamClosedByServerError
