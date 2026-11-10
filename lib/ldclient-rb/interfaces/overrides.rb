@@ -25,7 +25,8 @@ module LaunchDarkly
         #
         # Each definition is either a data model object, as produced by
         # `LaunchDarkly::Impl::Model.deserialize`, or a hash in the flag or segment data model.
-        # The SDK itself marks the entries as overrides.
+        # The SDK itself marks the entries as overrides. A snapshot that contains a flag or segment
+        # marked as deleted is rejected with `ArgumentError`, and the store keeps its contents.
         #
         # This method is safe to call from any thread. Calls are serialized by the SDK, and the
         # new contents are visible to evaluations when the call returns.

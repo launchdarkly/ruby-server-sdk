@@ -287,6 +287,70 @@ module LaunchDarkly
         end
       end
 
+      describe "an entry marked as deleted" do
+        def deleted_message(category, key, file)
+          %(#{category} "#{key}" in #{file} is marked as deleted; remove the entry to remove its override)
+        end
+
+        it "fails the initial load, leaving the sink untouched, and logs the file and the flag" do
+          a = write("a.json", { flagValues: { flag1: "a" }, flags: { flag2: { on: false, variations: ["x"], deleted: true } } }.to_json)
+
+          with_source([a]) do |_source, sink|
+            expect(sink.snapshots).to be_empty
+            expect(logger.output).to include(
+              "ERROR -- : [LDClient] FileOverrideSource: Unable to load flags: #{deleted_message('flag', 'flag2', a)}"
+            )
+          end
+        end
+
+        it "keeps the overrides in effect when a flag is marked as deleted, and applies the fix" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+
+          with_source([a]) do |_source, sink|
+            write("a.json", { flagValues: { flag1: "b" }, flags: { flag2: { deleted: true } } }.to_json)
+            expect(wait_for { logger.output.include?(deleted_message("flag", "flag2", a)) }).to be true
+            expect(sink.snapshots.length).to eq 1
+            expect(sink.flag_values).to eq({ "flag1" => "a" })
+
+            write("a.json", values_doc({ flag1: "c" }))
+            expect(wait_for { sink.snapshots.length == 2 }).to be true
+            expect(sink.flag_values).to eq({ "flag1" => "c" })
+          end
+        end
+
+        it "keeps every file's overrides in effect while a segment in one file is marked as deleted" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+          b = write("b.yaml", "segments:\n  seg1:\n    included: [user]\n")
+
+          with_source([a, b]) do |_source, sink|
+            write("b.yaml", "segments:\n  seg1:\n    deleted: true\n")
+            expect(wait_for { logger.output.include?(deleted_message("segment", "seg1", b)) }).to be true
+
+            # A change to the other file is not applied either while the reload fails.
+            write("a.json", values_doc({ flag1: "b" }))
+            sleep 0.5
+            expect(sink.snapshots.length).to eq 1
+            expect(sink.segment_keys).to eq ["seg1"]
+
+            write("b.yaml", "segments: {}\n")
+            expect(wait_for { sink.snapshots.length == 2 }).to be true
+            expect(sink.flag_values).to eq({ "flag1" => "b" })
+            expect(sink.segment_keys).to eq []
+          end
+        end
+
+        it "loads entries whose deleted property is false" do
+          a = write("a.json", { flags: { flag1: { on: false, offVariation: 0, variations: ["x"], deleted: false } },
+                                segments: { seg1: { included: ["user"], deleted: false } } }.to_json)
+
+          with_source([a]) do |_source, sink|
+            expect(sink.flag_values).to eq({ "flag1" => "x" })
+            expect(sink.segment_keys).to eq ["seg1"]
+            expect(logger.output).not_to include("ERROR")
+          end
+        end
+      end
+
       describe "logging" do
         it "logs the overrides in effect and what each file supplied" do
           a = write("a.json", { flagValues: { flag1: "a", flag2: "b" }, segments: { seg1: { key: "seg1" } } }.to_json)
@@ -690,6 +754,23 @@ module LaunchDarkly
             expect(client.variation("flag", context, "default")).to eq "ld-value"
             File.write(a, { flagValues: { flag: "override-b" } }.to_json)
             expect(wait_for { client.variation("flag", context, "default") == "override-b" }).to be true
+          end
+        end
+
+        it "keeps serving an override when its file marks the flag as deleted, and names the file in the log" do
+          a = write("a.json", values_doc({ flag: "override-value" }))
+          source = make_source([a])
+          builder = Object.new
+          builder.define_singleton_method(:build) { |_sdk_key, _config| source }
+
+          with_client(builder) do |client|
+            expect(client.variation("flag", context, "default")).to eq "override-value"
+            write("a.json", { flags: { flag: { deleted: true } } }.to_json)
+
+            expect(wait_for { logger.output.include?(%(flag "flag" in #{a} is marked as deleted)) }).to be true
+            expect(client.variation("flag", context, "default")).to eq "override-value"
+            # The source fails the load before it supplies the snapshot, so the client does not reject it.
+            expect(logger.output).not_to include("Rejected an override snapshot")
           end
         end
 

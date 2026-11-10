@@ -271,6 +271,23 @@ EOF
         end
       end
 
+      it "loads entries marked as deleted into the data store" do
+        # Unlike the file override source, the data source does not reject such entries. With no
+        # update sink, it writes to the data store directly, which holds them as deleted items.
+        file = make_temp_file('{"flags": {"flag1": {"key": "flag1", "deleted": true}, ' \
+          '"flag2": {"key": "flag2", "on": false, "variations": ["x"]}}}')
+        config = LaunchDarkly::Config.new(logger: $null_log)
+        ds = FileData.data_source({ paths: [ file.path ] }).call('', config)
+        begin
+          ds.start
+          expect(ds.initialized?).to eq(true)
+          expect(config.feature_store.get(LaunchDarkly::Impl::DataStore::FEATURES, "flag1")).to be_nil
+          expect(config.feature_store.get(LaunchDarkly::Impl::DataStore::FEATURES, "flag2")).not_to be_nil
+        ensure
+          ds.stop
+        end
+      end
+
       it "does not reload modified file if auto-update is off" do
         file = make_temp_file(flag_only_json)
 
