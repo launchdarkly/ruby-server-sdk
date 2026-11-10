@@ -618,11 +618,15 @@ change_set_builder, envid)
             end
           end
 
-          it "raises the parse error to the SSE client so that it restarts the stream" do
+          it "raises the parse error to the SSE client and reports it from on_error" do
             with_handlers(build_synchronizer("http://stream.example.com")) do |handlers, updates|
               event = MockSSEEvent.new(LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT, "{not json")
 
-              expect { handlers[:on_event].call(event) }.to raise_error(JSON::ParserError)
+              error = nil
+              expect { handlers[:on_event].call(event) }.to raise_error(JSON::ParserError) { |e| error = e }
+              expect(updates).to be_empty
+
+              handlers[:on_error].call(error)
               expect(updates.pop(timeout: 1).error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA)
             end
           end
