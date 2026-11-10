@@ -483,6 +483,141 @@ change_set_builder, envid)
           end
         end
 
+        describe '#sync' do
+          let(:config) { LaunchDarkly::Config.new(logger: $null_log) }
+          let(:selector_store) { Struct.new(:selector).new(nil) }
+          let(:transfer_none_event) do
+            intent = LaunchDarkly::Interfaces::DataSystem::ServerIntent.new(
+              payload: LaunchDarkly::Interfaces::DataSystem::Payload.new(
+                id: "id",
+                target: 1,
+                code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_NONE,
+                reason: "up-to-date"
+              )
+            )
+            "event: server-intent\ndata: #{JSON.generate(intent.to_h)}\n\n"
+          end
+
+          def build_synchronizer(base_uri)
+            LaunchDarkly::DataSystem::StreamingDataSourceBuilder.new
+              .base_uri(base_uri.to_s)
+              .initial_reconnect_delay(0.01)
+              .build(sdk_key, config)
+          end
+
+          # Runs sync in a thread. Yields a queue that receives each update, and the sync thread.
+          def with_sync(synchronizer)
+            updates = Queue.new
+            thread = Thread.new { synchronizer.sync(selector_store) { |update| updates << update } }
+            begin
+              yield updates, thread
+            ensure
+              synchronizer.stop
+              thread.join(5)
+            end
+          end
+
+          # Replaces the SSE client with a double. Yields the handlers that sync registers on it.
+          def with_handlers(synchronizer)
+            handlers = {}
+            registered = Queue.new
+            connection = double("connection")
+            %i[on_connect on_event on_error query_params].each do |name|
+              allow(connection).to receive(name) { |&block| handlers[name] = block }
+            end
+            allow(SSE::Client).to receive(:new) do |_uri, **_opts, &block|
+              block.call(connection)
+              registered << true
+              double("SSE::Client", close: nil)
+            end
+
+            with_sync(synchronizer) do |updates, thread|
+              expect(registered.pop(timeout: 5)).to be true
+              yield handlers, updates, thread
+            end
+          end
+
+          it "reports invalid data as INTERRUPTED and restarts the stream" do
+            request_count = 0
+            with_server do |server|
+              server.setup_response(FDV2_STREAMING_ENDPOINT) do |_req, res|
+                request_count += 1
+                res.status = 200
+                res.content_type = "text/event-stream"
+                res.body = request_count == 1 ? "event: server-intent\ndata: {not json\n\n" : transfer_none_event
+              end
+
+              with_sync(build_synchronizer(server.base_uri)) do |updates|
+                first = updates.pop(timeout: 5)
+                expect(first.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+                expect(first.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA)
+
+                valid = nil
+                while (update = updates.pop(timeout: 5))
+                  if update.state == LaunchDarkly::Interfaces::DataSource::Status::VALID
+                    valid = update
+                    break
+                  end
+                end
+                expect(valid).not_to be_nil
+                expect(request_count).to be >= 2
+              end
+            end
+          end
+
+          it "raises the parse error to the SSE client so that it restarts the stream" do
+            with_handlers(build_synchronizer("http://stream.example.com")) do |handlers, updates|
+              event = MockSSEEvent.new(LaunchDarkly::Interfaces::DataSystem::EventName::SERVER_INTENT, "{not json")
+
+              expect { handlers[:on_event].call(event) }.to raise_error(JSON::ParserError)
+              expect(updates.pop(timeout: 1).error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA)
+            end
+          end
+
+          [401, 403].each do |status|
+            it "reports OFF and stops after unrecoverable error #{status}" do
+              with_server do |server|
+                server.setup_status_response(FDV2_STREAMING_ENDPOINT, status)
+
+                with_sync(build_synchronizer(server.base_uri)) do |updates, thread|
+                  update = updates.pop(timeout: 5)
+                  expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+                  expect(update.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::ERROR_RESPONSE)
+                  expect(update.error.status_code).to eq(status)
+
+                  expect(thread.join(5)).not_to be_nil
+                  expect(updates).to be_empty
+                  expect(server.requests.length).to eq(1)
+                end
+              end
+            end
+          end
+
+          it "reports INTERRUPTED and keeps the stream open after recoverable error 503" do
+            with_handlers(build_synchronizer("http://stream.example.com")) do |handlers, updates, thread|
+              handlers[:on_error].call(SSE::Errors::HTTPStatusError.new(503, ""))
+
+              update = updates.pop(timeout: 1)
+              expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
+              expect(update.error.status_code).to eq(503)
+              expect(thread.join(0.1)).to be_nil
+            end
+          end
+
+          it "yields nothing after it is stopped" do
+            synchronizer = build_synchronizer("http://stream.example.com")
+            with_handlers(synchronizer) do |handlers, updates, thread|
+              synchronizer.stop
+              expect(thread.join(5)).not_to be_nil
+
+              handlers[:on_error].call(SSE::Errors::HTTPStatusError.new(503, ""))
+              handlers[:on_error].call(SSE::Errors::StreamClosedByServerError.new)
+
+              expect(updates).to be_empty
+            end
+          end
+        end
+
         describe 'SSE client options' do
           let(:config) { LaunchDarkly::Config.new(logger: $null_log) }
 

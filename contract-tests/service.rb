@@ -32,8 +32,6 @@ get '/' do
       'all-flags-with-reasons',
       'all-flags-client-side-only',
       'all-flags-details-only-for-tracked-flags',
-      'filtering',
-      'filtering-strict',
       'secure-mode-hash',
       'tags',
       'migrations',
@@ -55,8 +53,6 @@ get '/' do
       'flag-change-listeners',
       'flag-value-change-listeners',
       'fdv1-fallback',
-      'retry-conformance-fdv1-streaming',
-      'retry-conformance-fdv1-polling',
     ],
   }.to_json
 end

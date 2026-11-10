@@ -104,7 +104,8 @@ module LaunchDarkly
       #
       # This controls how frequently the SDK polls LaunchDarkly for updates.
       # Lower values mean more frequent updates but higher network traffic.
-      # The default is {DEFAULT_POLL_INTERVAL} seconds.
+      # The default and minimum is {DEFAULT_POLL_INTERVAL} seconds. A smaller value is replaced
+      # with the minimum.
       #
       # @param secs [Float] Polling interval in seconds
       # @return [PollingDataSourceBuilder] self for chaining
@@ -112,6 +113,14 @@ module LaunchDarkly
       def poll_interval(secs)
         @poll_interval = secs
         self
+      end
+
+      private def effective_poll_interval(logger)
+        return DEFAULT_POLL_INTERVAL if @poll_interval.nil?
+        return @poll_interval if @poll_interval >= DEFAULT_POLL_INTERVAL
+
+        logger.warn { "[LDClient] Poll interval #{@poll_interval} is less than the minimum; using #{DEFAULT_POLL_INTERVAL} seconds" }
+        DEFAULT_POLL_INTERVAL
       end
 
       #
@@ -146,7 +155,7 @@ module LaunchDarkly
       def build(sdk_key, config)
         http_opts = build_http_config
         requester = @requester || LaunchDarkly::Impl::DataSystem::HTTPPollingRequester.new(sdk_key, http_opts, config)
-        LaunchDarkly::Impl::DataSystem::PollingDataSource.new(@poll_interval || DEFAULT_POLL_INTERVAL, requester, config.logger)
+        LaunchDarkly::Impl::DataSystem::PollingDataSource.new(effective_poll_interval(config.logger), requester, config.logger)
       end
     end
 
@@ -181,7 +190,8 @@ module LaunchDarkly
       # Sets the polling interval in seconds.
       #
       # This controls how frequently the SDK polls LaunchDarkly for updates.
-      # The default is {DEFAULT_POLL_INTERVAL} seconds.
+      # The default and minimum is {DEFAULT_POLL_INTERVAL} seconds. A smaller value is replaced
+      # with the minimum.
       #
       # @param secs [Float] Polling interval in seconds
       # @return [FDv1PollingDataSourceBuilder] self for chaining
@@ -189,6 +199,14 @@ module LaunchDarkly
       def poll_interval(secs)
         @poll_interval = secs
         self
+      end
+
+      private def effective_poll_interval(logger)
+        return DEFAULT_POLL_INTERVAL if @poll_interval.nil?
+        return @poll_interval if @poll_interval >= DEFAULT_POLL_INTERVAL
+
+        logger.warn { "[LDClient] Poll interval #{@poll_interval} is less than the minimum; using #{DEFAULT_POLL_INTERVAL} seconds" }
+        DEFAULT_POLL_INTERVAL
       end
 
       #
@@ -222,7 +240,7 @@ module LaunchDarkly
       def build(sdk_key, config)
         http_opts = build_http_config
         requester = @requester || LaunchDarkly::Impl::DataSystem::HTTPFDv1PollingRequester.new(sdk_key, http_opts, config)
-        LaunchDarkly::Impl::DataSystem::PollingDataSource.new(@poll_interval || DEFAULT_POLL_INTERVAL, requester, config.logger)
+        LaunchDarkly::Impl::DataSystem::PollingDataSource.new(effective_poll_interval(config.logger), requester, config.logger)
       end
     end
   end

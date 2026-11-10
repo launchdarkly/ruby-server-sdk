@@ -2,7 +2,6 @@
 
 require "concurrent"
 require "set"
-require "ldclient-rb/impl/data_store/status"
 require "ldclient-rb/impl/data_store/in_memory_feature_store"
 require "ldclient-rb/impl/dependency_tracker"
 require "ldclient-rb/interfaces/data_system"

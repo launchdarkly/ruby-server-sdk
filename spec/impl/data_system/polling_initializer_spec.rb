@@ -113,7 +113,7 @@ module LaunchDarkly
             mock_requester = MockPollingRequester.new(
               LaunchDarkly::Result.fail(
                 "failure message",
-                LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(408)
+                LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(408)
               )
             )
             ds = PollingDataSource.new(1.0, mock_requester, logger)
@@ -128,7 +128,7 @@ module LaunchDarkly
             mock_requester = MockPollingRequester.new(
               LaunchDarkly::Result.fail(
                 "failure message",
-                LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(401)
+                LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(401)
               )
             )
             ds = PollingDataSource.new(1.0, mock_requester, logger)
@@ -207,7 +207,7 @@ module LaunchDarkly
             headers_with_fallback = { LD_FD_FALLBACK_HEADER => 'true' }
             error_result = LaunchDarkly::Result.fail(
               "failure message",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(500),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(500),
               headers_with_fallback
             )
             mock_requester = MockPollingRequester.new(error_result)
@@ -244,7 +244,7 @@ module LaunchDarkly
             headers_with_fallback = { 'x-ld-fd-fallback' => 'true' }
             error_result = LaunchDarkly::Result.fail(
               "failure message",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(500),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(500),
               headers_with_fallback
             )
             mock_requester = MockPollingRequester.new(error_result)
@@ -260,7 +260,7 @@ module LaunchDarkly
             mock_requester = MockPollingRequester.new(
               LaunchDarkly::Result.fail(
                 "failure message",
-                LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(500)
+                LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(500)
               )
             )
             ds = PollingDataSource.new(1.0, mock_requester, logger)

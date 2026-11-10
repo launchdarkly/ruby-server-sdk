@@ -30,7 +30,11 @@ module LaunchDarkly
           @monitoring_enabled = store_supports_monitoring?
         end
 
-        # (see LaunchDarkly::Interfaces::DataStore::UpdateSink#update_status)
+        #
+        # Records a new data store status, and notifies the listeners if it changes.
+        #
+        # @param status [LaunchDarkly::Interfaces::DataStore::Status] the new status
+        #
         def update_status(status)
           modified = false
 
