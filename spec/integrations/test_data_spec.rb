@@ -178,6 +178,16 @@ module LaunchDarkly
           expect(f[:fallthrough][:variation]).to be(0)
         end
 
+        it 'returns the value_for_all value whether targeting is on or off' do
+          f = TestData::FlagBuilder.new('flag').value_for_all('x').build(1)
+          expect(f[:variations]).to eq(['x'])
+          expect(f[:fallthrough]).to eq({ variation: 0 })
+          expect(f[:offVariation]).to eq(0)
+
+          off_flag = TestData::FlagBuilder.new('flag').value_for_all('x').on(false).build(1)
+          expect(off_flag[:offVariation]).to eq(0)
+        end
+
         it 'clears existing rules when setting variation for all users' do
           f = TestData::FlagBuilder.new('flag')
                           .if_match('name', 'ben')
