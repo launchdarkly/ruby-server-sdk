@@ -2,15 +2,47 @@ require "spec_helper"
 
 require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/evaluator"
-require "ldclient-rb/impl/data_source/null_processor"
+require "ldclient-rb/data_system"
+require "ldclient-rb/integrations/test_data_v2"
 require "ldclient-rb/interfaces"
 
 def sdk_key
   "sdk-key"
 end
 
-def null_data
-  LaunchDarkly::Impl::DataSource::NullUpdateProcessor.new
+def null_data_system
+  LaunchDarkly::DataSystem.custom.build
+end
+
+def test_data_system(test_data)
+  test_data_system_builder(test_data).build
+end
+
+def test_data_system_builder(test_data)
+  LaunchDarkly::DataSystem.custom.synchronizers([test_data.test_data_ds_builder])
+end
+
+# A data system that polls the FDv2 endpoint of a test server.
+def polling_data_system_builder(base_uri)
+  LaunchDarkly::DataSystem.custom.synchronizers([LaunchDarkly::DataSystem.polling_ds_builder.base_uri(base_uri)])
+end
+
+# An FDv2 polling response body that transfers the given flags and segments in full.
+def fdv2_poll_payload(flags: {}, segments: {})
+  objects = flags.values.map { |f| { kind: "flag", item: f } } + segments.values.map { |s| { kind: "segment", item: s } }
+  events = [
+    { event: "server-intent", data: { payloads: [{ id: "test-payload", target: 1, intentCode: "xfer-full", reason: "payload-missing" }] } },
+  ]
+  objects.each do |o|
+    events << { event: "put-object", data: { kind: o[:kind], key: o[:item][:key], version: o[:item][:version], object: o[:item] } }
+  end
+  events << { event: "payload-transferred", data: { state: "(p:test-payload:1)", version: 1 } }
+  { events: events }.to_json
+end
+
+# A data system that never receives data. The client stays uninitialized.
+def silent_data_system_builder
+  LaunchDarkly::DataSystem.custom.synchronizers([LaunchDarkly::SilentSynchronizerBuilder.new])
 end
 
 def null_logger
@@ -19,7 +51,7 @@ end
 
 def base_config
   {
-    data_source: null_data,
+    data_system_config: null_data_system,
     send_events: false,
     logger: null_logger,
   }
@@ -29,8 +61,8 @@ def test_config(add_props = {})
   LaunchDarkly::Config.new(base_config.merge(add_props))
 end
 
-def with_client(config)
-  ensure_close(LaunchDarkly::LDClient.new(sdk_key, config)) do |client|
+def with_client(config, wait_for_sec = 5)
+  ensure_close(LaunchDarkly::LDClient.new(sdk_key, config, wait_for_sec)) do |client|
     yield client
   end
 end
@@ -71,11 +103,72 @@ module LaunchDarkly
     end
   end
 
-  class CapturingFeatureStore
-    attr_reader :received_data
+  # A synchronizer that sends no data. Its sync method returns when the data system stops it.
+  class SilentSynchronizer
+    def initialize
+      @stopped = Concurrent::Event.new
+    end
+
+    def name
+      "silent"
+    end
+
+    def sync(_selector_store)
+      @stopped.wait
+    end
+
+    def stop
+      @stopped.set
+    end
+  end
+
+  class SilentSynchronizerBuilder
+    def build(_sdk_key, _config)
+      SilentSynchronizer.new
+    end
+  end
+
+  # A persistent store that keeps its data in a hash.
+  class MockFeatureStore
+    include Interfaces::FeatureStore
+
+    def initialize
+      @data = {}
+      @initialized = false
+    end
 
     def init(all_data)
-      @received_data = all_data
+      @data = all_data.transform_values(&:dup)
+      @initialized = true
+    end
+
+    def get(kind, key)
+      item = (@data[kind] || {})[key.to_sym]
+      item.nil? || item[:deleted] ? nil : item
+    end
+
+    def all(kind)
+      (@data[kind] || {}).reject { |_, item| item[:deleted] }
+    end
+
+    def upsert(kind, item)
+      items = (@data[kind] ||= {})
+      old = items[item[:key].to_sym]
+      return false if !old.nil? && old[:version] >= item[:version]
+
+      items[item[:key].to_sym] = item
+      true
+    end
+
+    def delete(kind, key, version)
+      upsert(kind, { key: key, version: version, deleted: true })
+    end
+
+    def initialized?
+      @initialized
+    end
+
+    def stop
     end
 
     def monitoring_enabled?
@@ -85,8 +178,14 @@ module LaunchDarkly
     def available?
       true
     end
+  end
 
-    def stop
+  class CapturingFeatureStore < MockFeatureStore
+    attr_reader :received_data
+
+    def init(all_data)
+      @received_data = all_data
+      super
     end
   end
 

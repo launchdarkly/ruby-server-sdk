@@ -98,42 +98,6 @@ module LaunchDarkly
       end
 
       #
-      # @param value [String, nil]
-      # @param logger [Logger]
-      # @return [String, nil]
-      #
-      def self.validate_payload_filter_key(value, logger)
-        return nil if value.nil?
-        return value if value.is_a?(String) && /^[a-zA-Z0-9][._\-a-zA-Z0-9]*$/.match?(value)
-
-        logger.warn {
-          "Invalid payload filter configured, full environment will be fetched. Ensure the filter key is not empty and was copied correctly from LaunchDarkly settings."
-        }
-        nil
-      end
-
-      #
-      # Append the payload filter key query parameter to the provided URI.
-      #
-      # @param uri [String]
-      # @param config [Config]
-      # @return [String]
-      #
-      def self.add_payload_filter_key(uri, config)
-        return uri if config.payload_filter_key.nil?
-
-        begin
-          parsed = URI.parse(uri)
-          new_query_params = URI.decode_www_form(String(parsed.query)) << ["filter", config.payload_filter_key]
-          parsed.query = URI.encode_www_form(new_query_params)
-          parsed.to_s
-        rescue URI::InvalidURIError
-          config.logger.warn { "[LDClient] URI could not be parsed. No filtering will be applied." }
-          uri
-        end
-      end
-
-      #
       # Creates a new persistent HTTP client with the given configuration.
       #
       # @param http_config [LaunchDarkly::Impl::DataSystem::HttpConfigOptions] HTTP connection settings

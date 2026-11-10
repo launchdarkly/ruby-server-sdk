@@ -5,6 +5,15 @@ require "tempfile"
 require "ldclient-rb/impl/integrations/file_data_source_v2"
 require "ldclient-rb/integrations/file_data"
 require "ldclient-rb/interfaces/data_system"
+require "mock_components"
+
+# The "does not allow Ruby objects in YAML" example uses this class and flag.
+$created_bad_class_v2 = false
+class BadClassWeShouldNotInstantiateV2 < Hash
+  def []=(key, value)
+    $created_bad_class_v2 = true
+  end
+end
 
 module LaunchDarkly
   module Integrations
@@ -512,6 +521,210 @@ EOF
           ensure
             source.stop
             sync_thread&.join(2)
+          end
+        end
+      end
+
+      describe "security" do
+        let(:unsafe_yaml) { <<-EOF
+--- !ruby/hash:BadClassWeShouldNotInstantiateV2
+foo: bar
+EOF
+        }
+
+        it "does not allow Ruby objects in YAML" do
+          # The file holds a hash of a custom Ruby class. An unsafe YAML load creates the object and calls its
+          # []= method, which sets $created_bad_class_v2. A safe load refuses the file.
+          $created_bad_class_v2 = false
+          file = make_temp_file(unsafe_yaml)
+
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+
+          begin
+            result = source.fetch(no_selector_store)
+
+            expect(result.success?).to eq(false)
+            expect(result.error).to include("Unable to load flag data")
+            expect($created_bad_class_v2).to eq(false)
+          ensure
+            source.stop
+          end
+        end
+
+        it "does not execute commands via malicious filenames" do
+          # The source must treat each path as a literal file name. If a shell runs a command, the marker file exists.
+          marker_file = File.join(@tmp_dir, "command_injection_marker")
+
+          malicious_paths = [
+            "|touch #{marker_file}",
+            ";touch #{marker_file}",
+            "$(touch #{marker_file})",
+            "`touch #{marker_file}`",
+            "& touch #{marker_file}",
+            "\ntouch #{marker_file}\n",
+          ]
+
+          malicious_paths.each do |malicious_path|
+            source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [malicious_path])
+
+            begin
+              result = source.fetch(no_selector_store)
+
+              expect(result.success?).to eq(false)
+              expect(File.exist?(marker_file)).to eq(false), "Command injection detected with path: #{malicious_path}"
+            ensure
+              source.stop
+            end
+          end
+        end
+      end
+
+      describe "reload without the listen gem" do
+        around do |example|
+          klass = Impl::Integrations::FileDataSourceV2
+          saved = klass.class_variable_get(:@@have_listen)
+          klass.class_variable_set(:@@have_listen, false)
+          begin
+            example.run
+          ensure
+            klass.class_variable_set(:@@have_listen, saved)
+          end
+        end
+
+        it "detects file changes with the polling watcher" do
+          poller_started = Queue.new
+          expect(Impl::Integrations::FileDataSourcePollerV2).to receive(:new).and_wrap_original do |original, *args|
+            original.call(*args).tap { poller_started << true }
+          end
+          file = make_temp_file(flag_only_json)
+
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path], poll_interval: 0.1)
+          updates = Queue.new
+
+          begin
+            sync_thread = Thread.new do
+              source.sync(no_selector_store) { |update| updates << update }
+            end
+
+            initial = updates.pop(timeout: 5)
+            expect(initial).not_to be_nil, "Did not receive initial update"
+            expect(initial.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            # The poller reads the first modification times when it starts. Change the file after that.
+            expect(poller_started.pop(timeout: 5)).to be true
+
+            # The poller compares modification times. Set a new time so that the change is visible.
+            IO.write(file, segment_only_json)
+            File.utime(Time.now + 5, Time.now + 5, file.path)
+
+            changed = updates.pop(timeout: 5)
+            expect(changed).not_to be_nil, "Did not receive update after file change"
+            expect(changed.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+            kinds = changed.change_set.changes.map(&:kind)
+            expect(kinds).to eq([LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT])
+          ensure
+            source.stop
+            sync_thread&.join(2)
+          end
+        end
+      end
+
+      describe "initial failure in sync" do
+        def first_sync_update(source)
+          updates = Queue.new
+          sync_thread = Thread.new do
+            source.sync(no_selector_store) { |update| updates << update }
+          end
+          update = updates.pop(timeout: 5)
+          expect(sync_thread.join(2)).not_to be_nil, "sync did not return after the initial failure"
+          expect(updates.empty?).to eq(true)
+          update
+        end
+
+        it "reports OFF for a missing file" do
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: ['no-such-file.json'])
+
+          begin
+            update = first_sync_update(source)
+
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+            expect(update.change_set).to be_nil
+            expect(update.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA)
+            expect(update.error.message).to include("no-such-file.json")
+          ensure
+            source.stop
+          end
+        end
+
+        it "reports OFF for a malformed file" do
+          file = make_temp_file('{"flagValues":{')
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+
+          begin
+            update = first_sync_update(source)
+
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+            expect(update.change_set).to be_nil
+            expect(update.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::INVALID_DATA)
+            expect(update.error.message).to include("Unable to load flag data")
+          ensure
+            source.stop
+          end
+        end
+      end
+
+      describe "flagValues" do
+        it "produces a full flag" do
+          file = make_temp_file(flag_values_only_json)
+
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+
+          begin
+            result = source.fetch(no_selector_store)
+
+            expect(result.success?).to eq(true)
+            change = result.value.change_set.changes[0]
+            expect(change.version).to eq(1)
+            expect(change.object).to eq({
+              key: "flag2",
+              on: true,
+              version: 1,
+              fallthrough: { variation: 0 },
+              variations: ["value2"],
+            })
+            expect(change.object).not_to have_key(:offVariation)
+          ensure
+            source.stop
+          end
+        end
+      end
+
+      describe "through LDClient" do
+        let(:user) { LaunchDarkly::LDContext.create({ key: "user", kind: "user" }) }
+
+        it "evaluates flags from a synchronizer" do
+          file = make_temp_file(all_properties_json)
+          data_system = LaunchDarkly::DataSystem.custom
+            .synchronizers([FileData.data_source_v2(paths: [file.path])])
+            .build
+
+          with_client(test_config(data_system_config: data_system)) do |client|
+            expect(client.initialized?).to eq(true)
+            expect(client.variation("flag1", user, "default")).to eq("on")
+            expect(client.variation("flag2", user, "default")).to eq("value2")
+          end
+        end
+
+        it "evaluates flags from an initializer" do
+          file = make_temp_file(all_properties_json)
+          data_system = LaunchDarkly::DataSystem.custom
+            .initializers([FileData.data_source_v2(paths: [file.path])])
+            .build
+
+          with_client(test_config(data_system_config: data_system)) do |client|
+            expect(client.initialized?).to eq(true)
+            expect(client.variation("flag1", user, "default")).to eq("on")
+            expect(client.variation("flag2", user, "default")).to eq("value2")
           end
         end
       end

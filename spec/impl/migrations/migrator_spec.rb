@@ -14,7 +14,7 @@ module LaunchDarkly
         subject { Migrator }
         let(:default_config) { LaunchDarkly::Config.new({ diagnostic_opt_out: true, logger: $null_log }) }
         let(:data_source) {
-          td = LaunchDarkly::Integrations::TestData.data_source
+          td = LaunchDarkly::Integrations::TestDataV2.data_source
 
           [
             LaunchDarkly::Migrations::STAGE_OFF,
@@ -49,7 +49,7 @@ module LaunchDarkly
               LaunchDarkly::Migrations::OP_WRITE,
             ].each do |op|
               it "for #{op}" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   builder = default_builder(client)
 
                   payload_old = nil
@@ -100,7 +100,7 @@ module LaunchDarkly
               {label: "write complete", stage: LaunchDarkly::Migrations::STAGE_COMPLETE, op: LaunchDarkly::Migrations::OP_WRITE, expected: ["new"]},
             ].each do |test_param|
               it "for #{test_param[:label]}" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   with_processor_and_sender(default_config, 0) do |ep, sender|
                     override_client_event_processor(client, ep)
 
@@ -152,7 +152,7 @@ module LaunchDarkly
               {label: "write complete", stage: LaunchDarkly::Migrations::STAGE_COMPLETE, op: LaunchDarkly::Migrations::OP_WRITE, expected: [:new]},
             ].each do |test_param|
               it "for #{test_param[:label]}" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   with_processor_and_sender(default_config, 0) do |ep, sender|
                     override_client_event_processor(client, ep)
 
@@ -200,7 +200,7 @@ module LaunchDarkly
               { stage: LaunchDarkly::Migrations::STAGE_COMPLETE, old: false, new: true },
             ].each do |params|
               it "for #{params[:stage]} stage" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   builder = default_builder(client)
 
                   called_old = false
@@ -237,7 +237,7 @@ module LaunchDarkly
               { stage: LaunchDarkly::Migrations::STAGE_COMPLETE, origin: "new" },
             ].each do |params|
               it "for #{params[:stage]} stage" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   builder = default_builder(client)
 
                   builder.read(->(_) { raise "old error" }, ->(_) { raise "new error" })
@@ -255,7 +255,7 @@ module LaunchDarkly
 
           describe "support execution order" do
             it "parallel" do
-              with_client(test_config(data_source: data_source)) do |client|
+              with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                 builder = default_builder(client)
 
                 builder.read(
@@ -280,7 +280,7 @@ module LaunchDarkly
             end
 
             it "serial" do
-              with_client(test_config(data_source: data_source)) do |client|
+              with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                 builder = default_builder(client)
                 builder.read_execution_order(LaunchDarkly::Migrations::MigratorBuilder::EXECUTION_SERIAL)
 
@@ -306,7 +306,7 @@ module LaunchDarkly
             end
 
             it "random" do
-              with_client(test_config(data_source: data_source)) do |client|
+              with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                 builder = default_builder(client)
                 builder.read_execution_order(LaunchDarkly::Migrations::MigratorBuilder::EXECUTION_RANDOM)
 
@@ -343,7 +343,7 @@ module LaunchDarkly
               {label: "live when different", stage: LaunchDarkly::Migrations::STAGE_LIVE, old_return: "same", new_return: "different", expected: false},
             ].each do |test_param|
               it "for #{test_param[:label]}" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   with_processor_and_sender(default_config, 0) do |ep, sender|
                     override_client_event_processor(client, ep)
 
@@ -382,7 +382,7 @@ module LaunchDarkly
               {label: "live when different", stage: LaunchDarkly::Migrations::STAGE_LIVE},
             ].each do |test_param|
               it "for #{test_param[:label]} unless there is an error" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   with_processor_and_sender(default_config, 0) do |ep, sender|
                     override_client_event_processor(client, ep)
 
@@ -419,7 +419,7 @@ module LaunchDarkly
               {label: "live", stage: LaunchDarkly::Migrations::STAGE_LIVE},
             ].each do |test_param|
               it "for #{test_param[:label]} when an exception occurs" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   with_processor_and_sender(default_config, 0) do |ep, sender|
                     override_client_event_processor(client, ep)
 
@@ -464,7 +464,7 @@ module LaunchDarkly
               {label: "complete", stage: LaunchDarkly::Migrations::STAGE_COMPLETE, expected: ["new"]},
             ].each do |test_param|
               it "for #{test_param[:label]}" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   with_processor_and_sender(default_config, 0) do |ep, sender|
                     override_client_event_processor(client, ep)
 
@@ -508,7 +508,7 @@ module LaunchDarkly
               { stage: LaunchDarkly::Migrations::STAGE_COMPLETE, old: false, new: true },
             ].each do |params|
               it "for #{params[:stage]}" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   builder = default_builder(client)
 
                   called_old = false
@@ -545,7 +545,7 @@ module LaunchDarkly
               { stage: LaunchDarkly::Migrations::STAGE_COMPLETE, origin: "new" },
             ].each do |params|
               it "for #{params[:stage]} stage" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   builder = default_builder(client)
 
                   builder.write(->(_) { raise "old error" }, ->(_) { raise "new error" })
@@ -576,7 +576,7 @@ module LaunchDarkly
               # LaunchDarkly::Migrations::STAGE_COMPLETE doesn't run both so we can ignore it.
             ].each do |params|
               it "for #{params[:stage]} stage" do
-                with_client(test_config(data_source: data_source)) do |client|
+                with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                   builder = default_builder(client)
 
                   called_old = false
@@ -614,7 +614,7 @@ module LaunchDarkly
                 {label: "write complete", stage: LaunchDarkly::Migrations::STAGE_COMPLETE, expected: "new"},
               ].each do |test_param|
                 it test_param[:label] do
-                  with_client(test_config(data_source: data_source)) do |client|
+                  with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                     with_processor_and_sender(default_config, 0) do |ep, sender|
                       override_client_event_processor(client, ep)
 
@@ -655,7 +655,7 @@ module LaunchDarkly
                 {label: "ramp down", stage: LaunchDarkly::Migrations::STAGE_RAMPDOWN, old_fail: true, new_fail: false, expected: "old"},
               ].each do |test_param|
                 it "for #{test_param[:label]}" do
-                  with_client(test_config(data_source: data_source)) do |client|
+                  with_client(test_config(data_system_config: test_data_system(data_source))) do |client|
                     with_processor_and_sender(default_config, 0) do |ep, sender|
                       override_client_event_processor(client, ep)
 

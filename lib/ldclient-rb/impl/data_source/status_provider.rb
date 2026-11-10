@@ -67,7 +67,12 @@ module LaunchDarkly
           end
         end
 
-        # (see LaunchDarkly::Interfaces::DataSource::UpdateSink#update_status)
+        #
+        # Records a new data source state and error, and notifies the listeners if the status changes.
+        #
+        # @param new_state [Symbol] the new state, one of the {LaunchDarkly::Interfaces::DataSource::Status} values
+        # @param new_error [LaunchDarkly::Interfaces::DataSource::ErrorInfo, nil] the most recent error, if any
+        #
         def update_status(new_state, new_error)
           return if new_state.nil?
 

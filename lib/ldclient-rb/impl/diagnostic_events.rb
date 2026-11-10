@@ -63,23 +63,20 @@ module LaunchDarkly
         event
       end
 
+      # TODO(SDK-3430): Decide the FDv2 data system fields before the 9.0 release. The removed FDv1 fields
+      # were customBaseURI, customStreamURI, pollingIntervalMillis, streamingDisabled and usingRelayDaemon.
       def self.make_config_data(config)
         ret = {
           allAttributesPrivate: config.all_attributes_private,
           connectTimeoutMillis: self.seconds_to_millis(config.connect_timeout),
-          customBaseURI: config.base_uri != Config.default_base_uri,
           customEventsURI: config.events_uri != Config.default_events_uri,
-          customStreamURI: config.stream_uri != Config.default_stream_uri,
           diagnosticRecordingIntervalMillis: self.seconds_to_millis(config.diagnostic_recording_interval),
           eventsCapacity: config.capacity,
           eventsFlushIntervalMillis: self.seconds_to_millis(config.flush_interval),
-          pollingIntervalMillis: self.seconds_to_millis(config.poll_interval),
           socketTimeoutMillis: self.seconds_to_millis(config.read_timeout),
-          streamingDisabled: !config.stream?,
           userKeysCapacity: config.context_keys_capacity,
           userKeysFlushIntervalMillis: self.seconds_to_millis(config.context_keys_flush_interval),
           usingProxy: ENV.has_key?('http_proxy') || ENV.has_key?('https_proxy') || ENV.has_key?('HTTP_PROXY') || ENV.has_key?('HTTPS_PROXY'),
-          usingRelayDaemon: config.use_ldd?,
         }
         ret
       end

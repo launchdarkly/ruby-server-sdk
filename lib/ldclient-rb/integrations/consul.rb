@@ -23,8 +23,8 @@ module LaunchDarkly
       #
       # Creates a Consul-backed persistent feature store.
       #
-      # To use this method, you must first install the gem `diplomat`. Then, put the object returned by
-      # this method into the `feature_store` property of your client configuration ({LaunchDarkly::Config}).
+      # To use this method, you must first install the gem `diplomat`. Then, give the object returned by
+      # this method to {LaunchDarkly::DataSystem.persistent_store} or {LaunchDarkly::DataSystem.daemon}.
       #
       # @param opts [Hash] the configuration options
       # @option opts [Hash] :consul_config  an instance of `Diplomat::Configuration` to replace the default

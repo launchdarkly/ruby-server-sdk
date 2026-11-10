@@ -18,7 +18,8 @@ module LaunchDarkly
     # `:namespace`, which is a short string unique to that kind. This string can be used as a
     # collection name or a key prefix.
     #
-    # The default implementation is {LaunchDarkly::InMemoryFeatureStore}. Several implementations
+    # A persistent store implements this interface. Give it to {LaunchDarkly::DataSystem.persistent_store}
+    # or {LaunchDarkly::DataSystem.daemon}. Several implementations
     # that use databases can be found in {LaunchDarkly::Integrations}. If you want to write a new
     # implementation, see {LaunchDarkly::Integrations::Util} for tools that can make this task
     # simpler.

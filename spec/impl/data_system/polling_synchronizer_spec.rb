@@ -263,7 +263,7 @@ module LaunchDarkly
 
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(408)
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(408)
             )
 
             synchronizer = PollingDataSource.new(
@@ -308,7 +308,7 @@ module LaunchDarkly
           it "unrecoverable error shuts down" do
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(401)
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(401)
             )
 
             synchronizer = PollingDataSource.new(
@@ -415,7 +415,7 @@ module LaunchDarkly
             headers_error = { LD_ENVID_HEADER => 'test-env-408' }
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(408),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(408),
               headers_error
             )
 
@@ -453,7 +453,7 @@ module LaunchDarkly
             headers_error = { LD_ENVID_HEADER => 'test-env-401' }
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(401),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(401),
               headers_error
             )
 
@@ -489,7 +489,7 @@ module LaunchDarkly
             }
             failure = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(503),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(503),
               headers_error
             )
 
@@ -605,7 +605,7 @@ module LaunchDarkly
             # 408 is a recoverable error
             error_result = LaunchDarkly::Result.fail(
               "error for test",
-              LaunchDarkly::Impl::DataSource::UnexpectedResponseError.new(408),
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(408),
               headers_with_fallback
             )
 
@@ -713,6 +713,51 @@ module LaunchDarkly
 
             expect(basis_result).to be_success
             expect(requester.stop_called).to eq(true)
+          end
+        end
+
+        describe "#stop" do
+          # The poll interval is long. Only stop can end the wait within the test.
+          def expect_stop_ends_wait(result)
+            requester = RequesterWithCleanup.new([result])
+            synchronizer = PollingDataSource.new(1000, requester, logger)
+            updates = Queue.new
+
+            thread = Thread.new do
+              synchronizer.sync(MockSelectorStore.new(LaunchDarkly::Interfaces::DataSystem::Selector.no_selector)) do |update|
+                updates << update
+              end
+            end
+
+            begin
+              first = updates.pop(timeout: 1)
+              expect(first).not_to be_nil
+
+              synchronizer.stop
+              expect(thread.join(1)).not_to be_nil
+              expect(updates).to be_empty
+              expect(requester.stop_called).to eq(true)
+              first
+            ensure
+              thread.kill
+            end
+          end
+
+          it "ends the poll interval wait after a success promptly" do
+            result = LaunchDarkly::Result.success(LaunchDarkly::Interfaces::DataSystem::ChangeSetBuilder.no_changes, {})
+
+            update = expect_stop_ends_wait(result)
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+          end
+
+          it "ends the poll interval wait after a recoverable error promptly" do
+            result = LaunchDarkly::Result.fail(
+              "error for test",
+              LaunchDarkly::Impl::DataSystem::UnexpectedResponseError.new(503)
+            )
+
+            update = expect_stop_ends_wait(result)
+            expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED)
           end
         end
       end

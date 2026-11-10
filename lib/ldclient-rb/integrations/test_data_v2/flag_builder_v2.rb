@@ -33,6 +33,9 @@ module LaunchDarkly
           @_fallthrough_variation = nil
           @_targets = {}
           @_rules = []
+          @_migration_settings = nil
+          @_sampling_ratio = nil
+          @_exclude_from_summaries = false
         end
 
         # Creates a deep copy of the flag builder when the object is duplicated or cloned.
@@ -106,6 +109,45 @@ module LaunchDarkly
             @_off_variation = variation
             self
           end
+        end
+
+        #
+        # Sets the migration settings for this flag.
+        #
+        # @param settings [Hash, nil] the settings from {FlagMigrationSettingsBuilder#build}
+        # @return [FlagBuilderV2] the flag builder
+        #
+        def migration_settings(settings)
+          @_migration_settings = settings
+          self
+        end
+
+        #
+        # Sets the sampling ratio for this flag. The ratio controls the emission rate of feature, debug and
+        # migration op events.
+        #
+        # General usage does not require this method.
+        #
+        # @param ratio [Integer]
+        # @return [FlagBuilderV2] the flag builder
+        #
+        def sampling_ratio(ratio)
+          @_sampling_ratio = ratio
+          self
+        end
+
+        #
+        # Sets whether to exclude this flag from summary events. Use this to limit the size of summary events
+        # when flag payloads are large.
+        #
+        # General usage does not require this method.
+        #
+        # @param exclude [Boolean]
+        # @return [FlagBuilderV2] the flag builder
+        #
+        def exclude_from_summaries(exclude)
+          @_exclude_from_summaries = exclude
+          self
         end
 
         #
@@ -361,6 +403,9 @@ module LaunchDarkly
 
           base_flag_object[:offVariation] = @_off_variation unless @_off_variation.nil?
           base_flag_object[:fallthrough] = { variation: @_fallthrough_variation } unless @_fallthrough_variation.nil?
+          base_flag_object[:migration] = @_migration_settings unless @_migration_settings.nil?
+          base_flag_object[:samplingRatio] = @_sampling_ratio unless @_sampling_ratio.nil? || @_sampling_ratio == 1
+          base_flag_object[:excludeFromSummaries] = true if @_exclude_from_summaries
 
           targets = []
           context_targets = []
@@ -410,6 +455,39 @@ module LaunchDarkly
 
         private def deep_copy_rules
           @_rules.map(&:clone)
+        end
+
+        #
+        # A builder for the migration settings of a flag, for use with {FlagBuilderV2#migration_settings}.
+        #
+        # A migration flag has settings that a standard feature flag does not have. These settings control
+        # things such as the rate at which the SDK checks reads for consistency between origins.
+        #
+        class FlagMigrationSettingsBuilder
+          def initialize
+            @check_ratio = nil
+          end
+
+          #
+          # @param ratio [Integer]
+          # @return [FlagMigrationSettingsBuilder]
+          #
+          def check_ratio(ratio)
+            return unless ratio.is_a? Integer
+            @check_ratio = ratio
+            self
+          end
+
+          #
+          # @return [Hash, nil] the settings, or nil if they are the defaults
+          #
+          def build
+            return nil if @check_ratio.nil? || @check_ratio == 1
+
+            {
+              "checkRatio": @check_ratio,
+            }
+          end
         end
       end
 
@@ -572,7 +650,7 @@ module LaunchDarkly
           {
             id: 'rule' + id,
             variation: @_variation,
-            clauses: @_clauses,
+            clauses: @_clauses.map { |clause| clause.merge(values: clause[:values].dup) },
           }
         end
       end

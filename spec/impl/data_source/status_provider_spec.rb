@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "ldclient-rb/impl/data_source/status_provider"
+require "ldclient-rb/impl/broadcaster"
 
 require "timecop"
 
@@ -104,6 +105,48 @@ module LaunchDarkly
           expect(status.state).to eq valid
           expect(status.state_since).to eq since
           expect(seconds).to eq 20.0
+        end
+
+        describe "listeners" do
+          let(:broadcaster) { LaunchDarkly::Impl::Broadcaster.new(SynchronousExecutor.new, $null_log) }
+          let(:provider) { StatusProviderV2.new(broadcaster) }
+
+          it "are called only when the status changes" do
+            listener = ListenerSpy.new
+            provider.add_listener(listener)
+
+            provider.update_status(valid, nil)
+            provider.update_status(valid, nil)
+            expect(listener.statuses.map(&:state)).to eq([valid])
+
+            provider.update_status(interrupted, nil)
+            provider.update_status(interrupted, nil)
+            expect(listener.statuses.map(&:state)).to eq([valid, interrupted])
+          end
+
+          it "are called when the state is the same but there is a new error" do
+            listener = ListenerSpy.new
+            provider.add_listener(listener)
+            error = make_error
+
+            provider.update_status(valid, nil)
+            provider.update_status(valid, error)
+
+            expect(listener.statuses.map(&:state)).to eq([valid, valid])
+            expect(listener.statuses.last.last_error).to eq(error)
+          end
+
+          it "each get a single change" do
+            listener1 = ListenerSpy.new
+            listener2 = ListenerSpy.new
+            provider.add_listener(listener1)
+            provider.add_listener(listener2)
+
+            provider.update_status(valid, nil)
+
+            expect(listener1.statuses.map(&:state)).to eq([valid])
+            expect(listener2.statuses.map(&:state)).to eq([valid])
+          end
         end
 
         it "is unaffected by wall-clock steps" do

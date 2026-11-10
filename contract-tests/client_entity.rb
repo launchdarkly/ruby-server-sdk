@@ -53,25 +53,9 @@ class ClientEntity
       end
 
       opts[:data_system_config] = data_system.build
-    elsif config[:streaming]
-      streaming = config[:streaming]
-      opts[:stream_uri] = streaming[:baseUri] unless streaming[:baseUri].nil?
-      opts[:payload_filter_key] = streaming[:filter] unless streaming[:filter].nil?
-      set_optional_time_prop(streaming, :initialRetryDelayMs, opts, :initial_reconnect_delay)
-    elsif config[:polling]
-      polling = config[:polling]
-      opts[:stream] = false
-      opts[:base_uri] = polling[:baseUri] unless polling[:baseUri].nil?
-      opts[:payload_filter_key] = polling[:filter] unless polling[:filter].nil?
-      set_optional_time_prop(polling, :pollIntervalMs, opts, :poll_interval)
     else
-      opts[:use_ldd] = true
-    end
-
-    # Configure persistent data store for legacy (non-dataSystem) configurations
-    if !data_system_config && config[:persistentDataStore]
-      store, _store_mode = build_persistent_store(config[:persistentDataStore])
-      opts[:feature_store] = store
+      # Without a data system configuration, the client does not connect to LaunchDarkly for data.
+      opts[:data_system_config] = LaunchDarkly::DataSystem.custom.build
     end
 
     if config[:events]

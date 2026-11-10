@@ -18,12 +18,12 @@ module LaunchDarkly
       # [SDK reference guide](https://docs.launchdarkly.com/sdk/features/storing-data#ruby).
       #
       # To use this method, you must first install one of the AWS SDK gems: either `aws-sdk-dynamodb`, or
-      # the full `aws-sdk`. Then, put the object returned by this method into the `feature_store` property
-      # of your client configuration ({LaunchDarkly::Config}).
+      # the full `aws-sdk`. Then, give the object returned by this method to
+      # {LaunchDarkly::DataSystem.persistent_store} or {LaunchDarkly::DataSystem.daemon}.
       #
       # @example Configuring the feature store
       #     store = LaunchDarkly::Integrations::DynamoDB::new_feature_store("my-table-name")
-      #     config = LaunchDarkly::Config.new(feature_store: store)
+      #     config = LaunchDarkly::Config.new(data_system_config: LaunchDarkly::DataSystem.persistent_store(store).build)
       #     client = LaunchDarkly::LDClient.new(my_sdk_key, config)
       #
       # Note that the specified table must already exist in DynamoDB. It must have a partition key called
