@@ -232,6 +232,32 @@ module LaunchDarkly
           end
         end
 
+        it "does not invoke the callback on every retry while the directory of a link's target cannot be watched" do
+          Dir.mkdir(path("config"))
+          Dir.mkdir(path("data"))
+          File.write(path("data/flags.json"), "{}")
+          make_symlink(path("data/flags.json"), path("config/flags.json"))
+          data_directory = File.realpath(path("data"))
+          failing = Concurrent::AtomicBoolean.new(true)
+          allow_any_instance_of(Watcher).to receive(:add_watch).and_wrap_original do |original, real_directory|
+            raise "cannot watch #{real_directory}" if failing.true? && real_directory == data_directory
+
+            original.call(real_directory)
+          end
+          with_watcher([path("config/flags.json")]) do |_watcher, calls|
+            # The retry runs once a second. While the watch keeps failing, nothing has changed.
+            sleep 2.5
+            expect(calls.value).to eq 0
+
+            failing.make_false
+            # The retry that watches the target's directory runs the callback once.
+            expect(wait_for { calls.value >= 1 }).to be true
+            before = settled(calls)
+            File.write(path("data/flags.json"), '{"flagValues": {}}')
+            expect(wait_for { calls.value > before }).to be true
+          end
+        end
+
         it "watches the target of a symbolic link once the target's directory appears" do
           Dir.mkdir(path("config"))
           make_symlink(path("data/flags.json"), path("config/flags.json"))

@@ -299,9 +299,12 @@ module LaunchDarkly
           @lock.synchronize do
             return false if @stopped.value
 
+            # A new target in a directory that is already watched is a change. A directory that is
+            # not watched yet counts once its watch is added below, so a watch that keeps failing
+            # does not report a change on every retry.
             desired.each do |real_directory, names|
-              previous = @watched[real_directory]&.targets || Set.new
-              added = true unless (names - previous).empty?
+              entry = @watched[real_directory]
+              added = true if entry && !(names - entry.targets).empty?
             end
             @watched.each { |real_directory, entry| entry.targets = desired[real_directory] || Set.new }
             @watched.delete_if do |_real_directory, entry|
