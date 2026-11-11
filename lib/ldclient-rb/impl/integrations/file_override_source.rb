@@ -71,6 +71,7 @@ module LaunchDarkly
               duplicate_keys_handling: @duplicate_keys_handling,
               skip_missing_paths: true,
               skip_unchanged: true,
+              check_document: method(:reject_deleted_entries),
               apply: lambda do |merged|
                 sink.set_overrides(merged.flags.values, merged.segments.values)
                 log_overrides_in_effect(merged)
@@ -106,6 +107,28 @@ module LaunchDarkly
           end
           change_detector&.stop
           reloader&.stop
+        end
+
+        #
+        # Fails the load of a file that contains a flag or segment entry marked as deleted, in the
+        # same way as a file that cannot be parsed. An override is removed by removing its entry or
+        # deleting its file, so a deleted entry is a mistake in the file. The sink rejects such a
+        # snapshot too. Checking here lets the logged failure name the file and the key.
+        #
+        # @param path [String]
+        # @param document [LaunchDarkly::Impl::FileData::Document]
+        # @raise [LaunchDarkly::Impl::FileData::MergeError] if an entry is marked as deleted
+        #
+        private def reject_deleted_entries(path, document)
+          { "flag" => document.flags, "segment" => document.segments }.each do |name, entries|
+            entries.each do |key, data|
+              # The data model treats any value of "deleted" other than false or null as deleted.
+              next unless data.is_a?(Hash) && data[:deleted]
+
+              raise FileData::MergeError,
+                "#{name} \"#{key}\" in #{path} is marked as deleted; remove the entry to remove its override"
+            end
+          end
         end
 
         #

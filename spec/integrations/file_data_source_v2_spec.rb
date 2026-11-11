@@ -256,6 +256,26 @@ EOF
             source.stop
           end
         end
+
+        it "loads entries marked as deleted" do
+          # Unlike the file override source, the data source does not reject such entries.
+          file = make_temp_file('{"flags": {"flag1": {"key": "flag1", "version": 2, "deleted": true}},' \
+            ' "segments": {"seg1": {"key": "seg1", "deleted": true}}}')
+
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+
+          begin
+            result = source.fetch(no_selector_store)
+
+            expect(result.success?).to eq(true)
+            changes = result.value.change_set.changes
+            kinds = LaunchDarkly::Interfaces::DataSystem::ObjectKind
+            expect(changes.map { |c| [c.kind, c.key, c.object[:deleted]] })
+              .to eq([[kinds::FLAG, :flag1, true], [kinds::SEGMENT, :seg1, true]])
+          ensure
+            source.stop
+          end
+        end
       end
 
       describe "synchronizer (sync)" do

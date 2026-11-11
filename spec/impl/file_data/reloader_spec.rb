@@ -206,6 +206,41 @@ module LaunchDarkly
           end
         end
 
+        it "keeps the last good result when the document check rejects a file, and still checks the other files" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+          b = write("b.json", values_doc({ flag2: "b" }))
+          logger = CapturingLogger.new
+          checked = []
+          check = lambda do |path, document|
+            checked << path
+            raise MergeError, "#{path} has a bad entry" if document.flag_values.key?(:bad)
+          end
+
+          with_reloader([a, b], logger: logger, retry_delay: 0, check_document: check) do |reloader, recorder|
+            expect(reloader.reload_now).to be true
+            write("a.json", values_doc({ flag1: "changed", bad: true }))
+
+            expect(reloader.reload_now).to be false
+            expect(recorder.applied.length).to eq(1)
+            expect(recorder.flag_values).to eq({ flag1: "a", flag2: "b" })
+            expect(recorder.errors.map(&:message)).to eq(["#{a} has a bad entry"])
+            expect(checked).to eq([a, b, a, b])
+            expect(logger.output).to include("ERROR -- : [LDClient] Unable to load flags: #{a} has a bad entry")
+          end
+        end
+
+        it "combines entries marked as deleted when no document check is given" do
+          # The override source rejects such entries through its document check. Without one, the
+          # reloader combines them as before.
+          a = write("a.json", { flags: { flag1: { on: false, deleted: true } }, segments: { seg1: { deleted: true } } }.to_json)
+
+          with_reloader([a]) do |reloader, recorder|
+            expect(reloader.reload_now).to be true
+            expect(recorder.applied[0].flags[:flag1].deleted).to be true
+            expect(recorder.applied[0].segments[:seg1].deleted).to be true
+          end
+        end
+
         it "retries a failed reload after the retry delay and recovers when the file is fixed" do
           a = write("a.json", '{"flagValues"')
 

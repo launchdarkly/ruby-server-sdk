@@ -83,8 +83,8 @@ module LaunchDarkly
         # @param on_error [#call, nil] invoked with the error when a reload fails, once per distinct
         #   failure. With automatic retries, repeats of an identical failure do not re-invoke it. A
         #   success re-arms it. The error is a {ReadError} when a file could not be read or parsed,
-        #   a {MergeError} when the documents could not be combined, or the exception that `apply`
-        #   raised. The reloader logs failures itself.
+        #   a {MergeError} when the documents could not be combined or `check_document` rejected
+        #   one, or the exception that `apply` raised. The reloader logs failures itself.
         # @param duplicate_keys_handling [Symbol] one of the {DuplicateKeysHandling} values
         # @param skip_missing_paths [Boolean] when true, a configured file that does not exist
         #   contributes no data, and the reload succeeds with the data of the files that exist.
@@ -98,6 +98,10 @@ module LaunchDarkly
         # @param skip_unchanged [Boolean] if true, `apply` is not invoked when the files' raw
         #   contents are byte-identical to the last successfully applied contents.
         # @param log_prefix [String] the prefix of every log line this reloader writes
+        # @param check_document [#call, nil] invoked with the path and the {Document} of each file
+        #   that a load parsed, before the documents are combined. A {MergeError} that it raises
+        #   fails the load in the same way as a file that cannot be parsed. When nil, every document
+        #   is combined.
         # @param clock [#call, nil] returns the seconds of a monotonic clock, for the time a file has
         #   been held back; nil for the system's. Scheduling always uses the system's clock.
         #
@@ -108,12 +112,14 @@ module LaunchDarkly
                        retry_delay: DEFAULT_RETRY_DELAY,
                        skip_unchanged: false,
                        log_prefix: "[LDClient]",
+                       check_document: nil,
                        clock: nil)
           @paths = paths
           @logger = logger
           @log_prefix = log_prefix
           @apply = apply
           @on_error = on_error
+          @check_document = check_document
           @duplicate_keys_handling = duplicate_keys_handling
           @skip_missing_paths = skip_missing_paths
           @debounce_delay = debounce_delay
@@ -402,6 +408,12 @@ module LaunchDarkly
                 failure ||= e
                 next
               end
+            end
+            begin
+              @check_document&.call(path, document)
+            rescue MergeError => e
+              failure ||= e
+              next
             end
             documents << document
             files << FileSummary.new(path, true, 0, 0)

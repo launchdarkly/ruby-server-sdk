@@ -22,7 +22,9 @@ module LaunchDarkly
         include LaunchDarkly::Interfaces::Overrides::OverrideSink
 
         KINDS = [DataStore::FEATURES, DataStore::SEGMENTS].freeze
-        private_constant :KINDS
+        # The name of each kind in messages, as users know it.
+        KIND_NAMES = { DataStore::FEATURES => "flag", DataStore::SEGMENTS => "segment" }.freeze
+        private_constant :KINDS, :KIND_NAMES
 
         #
         # @param layer [Layer] the layer to write to
@@ -184,21 +186,33 @@ module LaunchDarkly
 
         #
         # Converts the definitions passed to the sink into a hash keyed by symbol. A hash entry is
-        # deserialized into the data model. A model object is used as is. A deleted entry is
-        # rejected before the layer is replaced: an override defines a flag or segment, and a
-        # deleted one would shadow the LaunchDarkly item with one that cannot be evaluated.
+        # deserialized into the data model. A model object is used as is. A snapshot with a deleted
+        # entry is rejected before the layer is replaced: an override defines a flag or segment, and
+        # a deleted one would shadow the LaunchDarkly item with one that cannot be evaluated.
         #
         private def index_items(kind, items)
+          name = KIND_NAMES[kind]
           result = {}
           (items || []).each do |item|
             model = Model.deserialize(kind, item, @logger)
             key = model.respond_to?(:key) ? model.key : nil
-            raise ArgumentError, "an override #{kind.namespace} entry has no key" if key.nil? || key.to_s.empty?
-            raise ArgumentError, "the override #{kind.namespace} entry #{key} is deleted" if model.respond_to?(:deleted) && model.deleted
+            raise ArgumentError, "an override #{name} has no key" if key.nil? || key.to_s.empty?
+            reject_deleted(name, key) if model.respond_to?(:deleted) && model.deleted
 
             result[key.to_sym] = model
           end
           result
+        end
+
+        #
+        # Rejects a snapshot that contains a deleted item. The rejection is logged as well as
+        # raised: a source that supplies a snapshot after it has started may not log the error it
+        # receives.
+        #
+        private def reject_deleted(name, key)
+          message = "override #{name} \"#{key}\" is marked as deleted; leave the #{name} out of the snapshot to remove its override"
+          @logger.error { "[LDClient] Rejected an override snapshot, keeping the overrides in effect: #{message}" }
+          raise ArgumentError, message
         end
 
         #

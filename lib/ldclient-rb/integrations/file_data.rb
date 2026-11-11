@@ -186,8 +186,10 @@ module LaunchDarkly
       # later, and deleting a file removes its overrides. A file that exists but cannot be read or
       # parsed fails that whole reload. The previously loaded overrides stay in effect, the failure is
       # logged, and the source retries after a short delay and recovers on its own once the file is
-      # readable. Whenever the set of overrides in effect changes, including at startup, the source
-      # logs the overrides in effect and what each file supplied, at Info level.
+      # readable. A file that contains an entry marked as deleted fails to load, and the overrides in
+      # effect stay; to remove an override, remove its entry or delete the file. Whenever the set of
+      # overrides in effect changes, including at startup, the source logs the overrides in effect
+      # and what each file supplied, at Info level.
       #
       # Files can be rewritten in place: if the source finds a file empty while it is being rewritten,
       # it keeps the overrides in effect until the new content is written. To remove a file's

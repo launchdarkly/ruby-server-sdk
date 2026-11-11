@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "capturing_logger"
 require "model_builders"
 require "ldclient-rb/impl/overrides"
 require "ldclient-rb/impl/broadcaster"
@@ -15,7 +16,8 @@ module LaunchDarkly
         let(:broadcaster) { Broadcaster.new(SynchronousExecutor.new, $null_log) }
         let(:base) { DataStore::InMemoryFeatureStoreV2.new($null_log) }
         let(:layer) { Layer.new }
-        subject(:sink) { Sink.new(layer, base, broadcaster, $null_log) }
+        let(:logger) { CapturingLogger.new }
+        subject(:sink) { Sink.new(layer, base, broadcaster, logger) }
 
         def flag(key, value, version: 1, prereqs: [], segment: nil)
           data = {
@@ -77,15 +79,45 @@ module LaunchDarkly
           expect { sink.set_overrides([], [{ key: "", version: 1 }]) }.to raise_error(ArgumentError, /has no key/)
         end
 
-        it "rejects a deleted entry before the layer is replaced" do
-          sink.set_overrides([flag("a", "x")], [])
+        it "rejects the whole snapshot when a flag is deleted, keeps the layer, and logs the flag" do
+          sink.set_overrides([flag("a", "x")], [segment("s")])
           listener = listen
 
-          expect { sink.set_overrides([{ key: "f", version: 2, deleted: true }], []) }.to raise_error(ArgumentError, /is deleted/)
-          expect { sink.set_overrides([], [{ key: "s", version: 2, deleted: true }]) }.to raise_error(ArgumentError, /is deleted/)
+          # The snapshot's other entries are not applied either.
+          expect { sink.set_overrides([flag("a", "y"), { key: "f", version: 2, deleted: true }], []) }
+            .to raise_error(ArgumentError, 'override flag "f" is marked as deleted; leave the flag out of the snapshot to remove its override')
           expect(layer.get(DataStore::FEATURES, "a").variations).to eq ["x"]
+          expect(layer.get(DataStore::SEGMENTS, "s")).not_to be_nil
           expect(layer.get(DataStore::FEATURES, "f")).to be_nil
           expect(listener.statuses).to be_empty
+          expect(logger.output).to include(
+            'ERROR -- : [LDClient] Rejected an override snapshot, keeping the overrides in effect: override flag "f" is marked as deleted'
+          )
+        end
+
+        it "rejects the whole snapshot when a segment is deleted, keeps the layer, and logs the segment" do
+          sink.set_overrides([flag("a", "x")], [segment("s")])
+          listener = listen
+
+          expect { sink.set_overrides([flag("b", "y")], [segment("t"), Segments.from_hash({ key: "gone", version: 2, deleted: true })]) }
+            .to raise_error(ArgumentError, /\Aoverride segment "gone" is marked as deleted/)
+          expect(layer.get(DataStore::FEATURES, "a").variations).to eq ["x"]
+          expect(layer.get(DataStore::FEATURES, "b")).to be_nil
+          expect(layer.get(DataStore::SEGMENTS, "s")).not_to be_nil
+          expect(layer.get(DataStore::SEGMENTS, "t")).to be_nil
+          expect(listener.statuses).to be_empty
+          expect(logger.output).to include(
+            'ERROR -- : [LDClient] Rejected an override snapshot, keeping the overrides in effect: override segment "gone" is marked as deleted'
+          )
+        end
+
+        it "accepts entries whose deleted property is false" do
+          sink.set_overrides([{ key: "f", version: 1, deleted: false, on: false, offVariation: 0, variations: ["x"] }],
+            [{ key: "s", version: 1, deleted: false, included: ["user"] }])
+
+          expect(layer.get(DataStore::FEATURES, "f").variations).to eq ["x"]
+          expect(layer.get(DataStore::SEGMENTS, "s")).not_to be_nil
+          expect(logger.output).not_to include("ERROR")
         end
 
         it "notifies every changed entry when an entry's dependency fields cannot be read" do
