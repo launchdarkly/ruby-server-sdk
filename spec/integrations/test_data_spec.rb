@@ -91,6 +91,25 @@ module LaunchDarkly
         expect(td.flag('myflag').build(1)[:variations]).to eq([true, false])
       end
 
+      it 'starts a new flag builder after a preconfigured flag replaces a flag built with a symbol key' do
+        td = TestData.data_source
+        td.update(td.flag(:myflag).variations('x', 'y'))
+        td.use_preconfigured_flag({ key: 'myflag', variations: ['a'] })
+        expect(td.flag(:myflag).build(1)[:variations]).to eq([true, false])
+      end
+
+      it 'gives a symbol key and a string key the same flag builder' do
+        td = TestData.data_source
+        td.update(td.flag(:myflag).variations('x', 'y'))
+        expect(td.flag('myflag').build(1)[:variations]).to eq(['x', 'y'])
+      end
+
+      it 'stores a flag built with a symbol key with a string key' do
+        td = TestData.data_source
+        td.update(td.flag(:myflag).variation_for_all(true))
+        expect(td.make_init_data[:flags][:myflag][:key]).to eq('myflag')
+      end
+
       it 'sends a preconfigured flag to a running data source' do
         td = TestData.data_source
         source = LaunchDarkly::Impl::Integrations::TestData::TestDataSource.new(td)

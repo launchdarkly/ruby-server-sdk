@@ -83,6 +83,7 @@ module LaunchDarkly
       # @return [FlagBuilder] a flag configuration builder
       #
       def flag(key)
+        key = key.to_s
         existing_builder = @lock.with_read_lock do
           if @flag_builders.key?(key) && !@flag_builders[key].nil?
             @flag_builders[key]
