@@ -61,12 +61,16 @@ module LaunchDarkly
       # @return [LaunchDarkly::Impl::DataSystem::StreamingDataSource]
       #
       def build(sdk_key, config)
-        http_opts = build_http_config
+        http_opts = build_http_config(config)
         LaunchDarkly::Impl::DataSystem::StreamingDataSource.new(
           sdk_key, http_opts,
           @initial_reconnect_delay || DEFAULT_INITIAL_RECONNECT_DELAY,
           config
         )
+      end
+
+      private def config_base_uri(config)
+        config.stream_uri
       end
     end
   end

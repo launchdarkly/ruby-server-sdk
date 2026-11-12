@@ -11,15 +11,22 @@ module LaunchDarkly
     # {FDv1PollingDataSourceBuilder}, and {StreamingDataSourceBuilder} to provide
     # a consistent set of HTTP connection settings.
     #
-    # Each builder that includes this module must define a +DEFAULT_BASE_URI+ constant
-    # which is used as the fallback when {#base_uri} has not been called.
+    # A setting that the builder does not set comes from the SDK configuration. The
+    # base URI comes from {LaunchDarkly::Config#base_uri} for the polling builders and
+    # from {LaunchDarkly::Config#stream_uri} for the streaming builder. The socket factory
+    # and the timeouts come from {LaunchDarkly::Config#socket_factory},
+    # {LaunchDarkly::Config#read_timeout} and {LaunchDarkly::Config#connect_timeout}.
+    #
+    # Each builder that includes this module must define a private +config_base_uri+
+    # method that returns the base URI from the SDK configuration.
     #
     module DataSourceBuilderCommon
       #
       # Sets the base URI for HTTP requests.
       #
       # Use this to point the SDK at a Relay Proxy instance or any other URI
-      # that implements the corresponding LaunchDarkly API.
+      # that implements the corresponding LaunchDarkly API. This value overrides
+      # the base URI in the SDK configuration.
       #
       # @param uri [String] The base URI (e.g. "https://relay.example.com")
       # @return [self] the builder, for chaining
@@ -31,6 +38,7 @@ module LaunchDarkly
 
       #
       # Sets a custom socket factory for HTTP connections.
+      # This value overrides {LaunchDarkly::Config#socket_factory}.
       #
       # @param factory [#open] A socket factory that responds to +open+
       # @return [self] the builder, for chaining
@@ -42,6 +50,7 @@ module LaunchDarkly
 
       #
       # Sets the read timeout for HTTP connections.
+      # This value overrides {LaunchDarkly::Config#read_timeout}.
       #
       # @param timeout [Float] Timeout in seconds
       # @return [self] the builder, for chaining
@@ -53,6 +62,7 @@ module LaunchDarkly
 
       #
       # Sets the connect timeout for HTTP connections.
+      # This value overrides {LaunchDarkly::Config#connect_timeout}.
       #
       # @param timeout [Float] Timeout in seconds
       # @return [self] the builder, for chaining
@@ -63,18 +73,18 @@ module LaunchDarkly
       end
 
       #
-      # Builds an HttpConfigOptions instance from the current builder settings.
-      # Uses +self.class::DEFAULT_BASE_URI+ if {#base_uri} was not explicitly set.
-      # Read/connect timeouts default to HttpConfigOptions defaults if not set.
+      # Builds an HttpConfigOptions instance from the builder settings. A setting
+      # that the builder does not set comes from the SDK configuration.
       #
+      # @param config [LaunchDarkly::Config] the SDK configuration
       # @return [LaunchDarkly::Impl::DataSystem::HttpConfigOptions]
       #
-      private def build_http_config
+      private def build_http_config(config)
         LaunchDarkly::Impl::DataSystem::HttpConfigOptions.new(
-          base_uri: (@base_uri || self.class::DEFAULT_BASE_URI).chomp("/"),
-          socket_factory: @socket_factory,
-          read_timeout: @read_timeout,
-          connect_timeout: @connect_timeout
+          base_uri: (@base_uri || config_base_uri(config)).chomp("/"),
+          socket_factory: @socket_factory || config.socket_factory,
+          read_timeout: @read_timeout || config.read_timeout,
+          connect_timeout: @connect_timeout || config.connect_timeout
         )
       end
     end

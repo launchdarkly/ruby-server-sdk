@@ -153,9 +153,13 @@ module LaunchDarkly
       # @return [LaunchDarkly::Impl::DataSystem::PollingDataSource]
       #
       def build(sdk_key, config)
-        http_opts = build_http_config
+        http_opts = build_http_config(config)
         requester = @requester || LaunchDarkly::Impl::DataSystem::HTTPPollingRequester.new(sdk_key, http_opts, config)
         LaunchDarkly::Impl::DataSystem::PollingDataSource.new(effective_poll_interval(config.logger), requester, config.logger)
+      end
+
+      private def config_base_uri(config)
+        config.base_uri
       end
     end
 
@@ -238,9 +242,13 @@ module LaunchDarkly
       # @return [LaunchDarkly::Impl::DataSystem::PollingDataSource]
       #
       def build(sdk_key, config)
-        http_opts = build_http_config
+        http_opts = build_http_config(config)
         requester = @requester || LaunchDarkly::Impl::DataSystem::HTTPFDv1PollingRequester.new(sdk_key, http_opts, config)
         LaunchDarkly::Impl::DataSystem::PollingDataSource.new(effective_poll_interval(config.logger), requester, config.logger)
+      end
+
+      private def config_base_uri(config)
+        config.base_uri
       end
     end
   end

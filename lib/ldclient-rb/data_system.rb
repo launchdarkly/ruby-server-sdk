@@ -35,6 +35,18 @@ module LaunchDarkly
   #     data_system: LaunchDarkly::DataSystem.polling
   #   )
   #
+  # == Relay Proxy
+  #
+  # Every data source uses the URIs from the SDK configuration, unless its builder
+  # sets a base URI. To get data from a Relay Proxy instance, set the URIs in the
+  # SDK configuration:
+  #
+  #   config = LaunchDarkly::Config.new(
+  #     base_uri: "https://relay.example.com",
+  #     stream_uri: "https://relay.example.com",
+  #     events_uri: "https://relay.example.com"
+  #   )
+  #
   # == Custom Configurations
   #
   # For advanced use cases, you can build custom configurations using the
