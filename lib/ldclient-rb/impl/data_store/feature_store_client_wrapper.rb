@@ -12,14 +12,14 @@ module LaunchDarkly
       # Provides additional behavior that the client requires before or after feature store operations.
       # Currently this just means sorting the data set for init() and dealing with data store status listeners.
       #
-      class FeatureStoreClientWrapperV2
+      class FeatureStoreClientWrapper
         include LaunchDarkly::Interfaces::FeatureStore
 
         #
         # Initialize the wrapper.
         #
         # @param store [LaunchDarkly::Interfaces::FeatureStore] The underlying feature store
-        # @param store_update_sink [LaunchDarkly::Impl::DataStore::StatusProviderV2] The status provider for updates
+        # @param store_update_sink [LaunchDarkly::Impl::DataStore::StatusProvider] The status provider for updates
         # @param logger [Logger] The logger instance
         #
         def initialize(store, store_update_sink, logger)
@@ -144,7 +144,7 @@ module LaunchDarkly
               poller_to_stop = @poller
               @poller = nil
             elsif @poller.nil?
-              task = LaunchDarkly::Impl::RepeatingTask.new(0.5, 0, method(:check_availability), @logger, "LDClient/DataStoreWrapperV2#check-availability")
+              task = LaunchDarkly::Impl::RepeatingTask.new(0.5, 0, method(:check_availability), @logger, "LDClient/DataStoreWrapper#check-availability")
               @poller = task
               @poller.start
             end

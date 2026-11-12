@@ -35,7 +35,7 @@ module LaunchDarkly
           @persistent_store_writable = false
 
           # Source of truth for flag evaluations once initialized
-          @memory_store = InMemoryFeatureStoreV2.new(logger)
+          @memory_store = InMemoryFeatureStore.new(logger)
 
           # Used to track dependencies between items in the store. Items are keyed by string,
           # the form in which the data model names prerequisites and segments.
@@ -63,7 +63,7 @@ module LaunchDarkly
         #
         # @param persistent_store [LaunchDarkly::Interfaces::FeatureStore] The persistent store implementation
         # @param writable [Boolean] Whether the persistent store should be written to
-        # @param status_provider [LaunchDarkly::Impl::DataStore::StatusProviderV2, nil] Optional status provider for the persistent store
+        # @param status_provider [LaunchDarkly::Impl::DataStore::StatusProvider, nil] Optional status provider for the persistent store
         # @return [Store] self for method chaining
         #
         def with_persistence(persistent_store, writable, status_provider = nil)
@@ -182,7 +182,7 @@ module LaunchDarkly
         #
         # Get the data store status provider for the persistent store, if configured.
         #
-        # @return [LaunchDarkly::Impl::DataStore::StatusProviderV2, nil] The data store status provider for the persistent store, if configured
+        # @return [LaunchDarkly::Impl::DataStore::StatusProvider, nil] The data store status provider for the persistent store, if configured
         #
         def get_data_store_status_provider
           @lock.synchronize do

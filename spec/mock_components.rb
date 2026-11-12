@@ -3,7 +3,7 @@ require "spec_helper"
 require "ldclient-rb/impl/big_segments"
 require "ldclient-rb/impl/evaluator"
 require "ldclient-rb/data_system"
-require "ldclient-rb/integrations/test_data_v2"
+require "ldclient-rb/integrations/test_data"
 require "ldclient-rb/interfaces"
 
 def sdk_key
@@ -51,7 +51,7 @@ end
 
 def base_config
   {
-    data_system_config: null_data_system,
+    data_system: null_data_system,
     send_events: false,
     logger: null_logger,
   }

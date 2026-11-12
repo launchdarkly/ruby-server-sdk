@@ -1,4 +1,4 @@
-require 'ldclient-rb/impl/integrations/file_data_source_v2'
+require 'ldclient-rb/impl/integrations/file_data_source'
 
 module LaunchDarkly
   module Integrations
@@ -9,13 +9,13 @@ module LaunchDarkly
     # Reading flags from a file is only intended for pre-production environments. Production
     # environments should always be configured to receive flag updates from LaunchDarkly.
     #
-    # To use this component, call {FileData.data_source_v2}, and use its return value as an
+    # To use this component, call {FileData.data_source}, and use its return value as an
     # initializer or synchronizer in the data system configuration. In the options to
-    # `data_source_v2`, set `paths` to the file path(s) of your data file(s):
+    # `data_source`, set `paths` to the file path(s) of your data file(s):
     #
-    #     file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: [ myFilePath ])
+    #     file_source = LaunchDarkly::Integrations::FileData.data_source(paths: [ myFilePath ])
     #     data_system = LaunchDarkly::DataSystem.custom.synchronizers([file_source]).build
-    #     config = LaunchDarkly::Config.new(data_system_config: data_system)
+    #     config = LaunchDarkly::Config.new(data_system: data_system)
     #
     # This will cause the client not to connect to LaunchDarkly to get feature flags. The
     # client may still make network connections to send analytics events, unless you have disabled
@@ -96,49 +96,49 @@ module LaunchDarkly
       # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
       #   file modifications - used only if the native file-watching mechanism from 'listen' is not
       #   being used. The default value is 1 second.
-      # @return [FileDataSourceV2Builder] a builder that can be used as an FDv2 initializer or synchronizer
+      # @return [FileDataSourceBuilder] a builder that can be used as an FDv2 initializer or synchronizer
       #
       # @example Using as an initializer
-      #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
+      #   file_source = LaunchDarkly::Integrations::FileData.data_source(paths: ['flags.json'])
       #   data_system_config = LaunchDarkly::DataSystemConfig.new(
       #     initializers: [file_source]
       #   )
       #   config = LaunchDarkly::Config.new(data_system: data_system_config)
       #
       # @example Using as a synchronizer
-      #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
+      #   file_source = LaunchDarkly::Integrations::FileData.data_source(paths: ['flags.json'])
       #   data_system_config = LaunchDarkly::DataSystemConfig.new(
       #     synchronizers: [file_source]
       #   )
       #   config = LaunchDarkly::Config.new(data_system: data_system_config)
       #
       # @example Using as both initializer and synchronizer
-      #   file_source = LaunchDarkly::Integrations::FileData.data_source_v2(paths: ['flags.json'])
+      #   file_source = LaunchDarkly::Integrations::FileData.data_source(paths: ['flags.json'])
       #   data_system_config = LaunchDarkly::DataSystemConfig.new(
       #     initializers: [file_source],
       #     synchronizers: [file_source]
       #   )
       #   config = LaunchDarkly::Config.new(data_system: data_system_config)
       #
-      def self.data_source_v2(options = {})
+      def self.data_source(options = {})
         paths = options[:paths] || []
         poll_interval = options[:poll_interval] || 1
 
-        FileDataSourceV2Builder.new(paths, poll_interval)
+        FileDataSourceBuilder.new(paths, poll_interval)
       end
     end
 
     #
-    # Builder for FileDataSourceV2.
+    # Builder for FileDataSource.
     #
-    class FileDataSourceV2Builder
+    class FileDataSourceBuilder
       def initialize(paths, poll_interval)
         @paths = paths
         @poll_interval = poll_interval
       end
 
       def build(_sdk_key, config)
-        Impl::Integrations::FileDataSourceV2.new(
+        Impl::Integrations::FileDataSource.new(
           config.logger,
           paths: @paths,
           poll_interval: @poll_interval

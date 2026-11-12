@@ -29,11 +29,11 @@ module LaunchDarkly
       end
 
       it "known flag" do
-        td = Integrations::TestDataV2.data_source
+        td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
         context = basic_context
-        with_client(test_config(data_system_config: test_data_system(td))) do |client|
+        with_client(test_config(data_system: test_data_system(td))) do |client|
           expect(event_processor(client)).to receive(:record_eval_event).with(
             context, 'flagkey', 1, 0, 'value', nil, 'default', false, nil, nil, nil, false
           )
@@ -42,12 +42,12 @@ module LaunchDarkly
       end
 
       it "does not send event, and logs error, if context is nil" do
-        td = Integrations::TestDataV2.data_source
+        td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
         logger = double.as_null_object
 
-        with_client(test_config(data_system_config: test_data_system(td), logger: logger)) do |client|
+        with_client(test_config(data_system: test_data_system(td), logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_eval_event)
           expect(logger).to receive(:error)
           client.variation("flagkey", nil, "default")
@@ -55,13 +55,13 @@ module LaunchDarkly
       end
 
       it "does not send event, and logs error, if context key is nil" do
-        td = Integrations::TestDataV2.data_source
+        td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").variation_for_all(0))
 
         logger = double.as_null_object
         keyless_user = { key: nil }
 
-        with_client(test_config(data_system_config: test_data_system(td), logger: logger)) do |client|
+        with_client(test_config(data_system: test_data_system(td), logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_eval_event)
           expect(logger).to receive(:error)
           client.variation("flagkey", keyless_user, "default")
@@ -69,7 +69,7 @@ module LaunchDarkly
       end
 
       it "sets trackEvents and reason if trackEvents is set for matched rule" do
-        td = Integrations::TestDataV2.data_source
+        td = Integrations::TestData.data_source
         td.use_preconfigured_flag(
           FlagBuilder.new("flagkey").version(100).on(true).variations("value")
             .rule(RuleBuilder.new.variation(0).id("id").track_events(true)
@@ -78,7 +78,7 @@ module LaunchDarkly
         )
 
         context = basic_context
-        with_client(test_config(data_system_config: test_data_system(td))) do |client|
+        with_client(test_config(data_system: test_data_system(td))) do |client|
           expect(event_processor(client)).to receive(:record_eval_event).with(
             context, 'flagkey', 100, 0, 'value', LaunchDarkly::EvaluationReason::rule_match(0, 'id'),
             'default', true, nil, nil, nil, false
@@ -88,14 +88,14 @@ module LaunchDarkly
       end
 
       it "sets trackEvents and reason if trackEventsFallthrough is set and we fell through" do
-        td = Integrations::TestDataV2.data_source
+        td = Integrations::TestData.data_source
         td.use_preconfigured_flag(
           FlagBuilder.new("flagkey").version(100).on(true).variations("value").fallthrough_variation(0)
             .track_events_fallthrough(true).build
         )
 
         context = basic_context
-        with_client(test_config(data_system_config: test_data_system(td))) do |client|
+        with_client(test_config(data_system: test_data_system(td))) do |client|
           expect(event_processor(client)).to receive(:record_eval_event).with(
             context, 'flagkey', 100, 0, 'value', LaunchDarkly::EvaluationReason::fallthrough,
             'default', true, nil, nil, nil, false
@@ -119,11 +119,11 @@ module LaunchDarkly
       end
 
       it "known flag" do
-        td = Integrations::TestDataV2.data_source
+        td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
 
         context = basic_context
-        with_client(test_config(data_system_config: test_data_system(td))) do |client|
+        with_client(test_config(data_system: test_data_system(td))) do |client|
           expect(event_processor(client)).to receive(:record_eval_event).with(
             context, 'flagkey', 1, 0, 'value', LaunchDarkly::EvaluationReason::off,
             'default', false, nil, nil, nil, false
@@ -133,12 +133,12 @@ module LaunchDarkly
       end
 
       it "does not send event, and logs error, if context is nil" do
-        td = Integrations::TestDataV2.data_source
+        td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
 
         logger = double.as_null_object
 
-        with_client(test_config(data_system_config: test_data_system(td), logger: logger)) do |client|
+        with_client(test_config(data_system: test_data_system(td), logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_eval_event)
           expect(logger).to receive(:error)
           client.variation_detail("flagkey", nil, "default")
@@ -146,12 +146,12 @@ module LaunchDarkly
       end
 
       it "does not send event, and logs warning, if context key is nil" do
-        td = Integrations::TestDataV2.data_source
+        td = Integrations::TestData.data_source
         td.update(td.flag("flagkey").variations("value").on(false).off_variation(0))
 
         logger = double.as_null_object
 
-        with_client(test_config(data_system_config: test_data_system(td), logger: logger)) do |client|
+        with_client(test_config(data_system: test_data_system(td), logger: logger)) do |client|
           expect(event_processor(client)).not_to receive(:record_eval_event)
           expect(logger).to receive(:error)
           client.variation_detail("flagkey", { key: nil }, "default")

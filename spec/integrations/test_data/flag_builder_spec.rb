@@ -1,9 +1,9 @@
-require "ldclient-rb/integrations/test_data_v2"
+require "ldclient-rb/integrations/test_data"
 require "spec_helper"
 
 module LaunchDarkly
   module Integrations
-    describe 'TestDataV2' do
+    describe 'TestData' do
       def boolean_flag_hash(key, version, overrides = {})
         {
           key: key,
@@ -18,12 +18,12 @@ module LaunchDarkly
       end
 
       it 'flag defaults to a boolean flag' do
-        td = TestDataV2.data_source
+        td = TestData.data_source
         expect(td.flag('flag').build(1)).to eql(boolean_flag_hash('flag', 1))
       end
 
       it 'flag returns a copy of the stored builder' do
-        td = TestDataV2.data_source
+        td = TestData.data_source
         td.update(td.flag('flag').variation_for_all(true))
         expect(td.flag('flag').build(1)[:fallthrough]).to eql({ variation: 0 })
 
@@ -33,13 +33,13 @@ module LaunchDarkly
       end
 
       it 'update gives a new flag version 1' do
-        td = TestDataV2.data_source
+        td = TestData.data_source
         td.update(td.flag('flag'))
         expect(td.make_init_data[:flags][:flag]).to eql(boolean_flag_hash('flag', 1))
       end
 
       it 'update increments the version of an existing flag' do
-        td = TestDataV2.data_source
+        td = TestData.data_source
         td.update(td.flag('flag'))
         td.update(td.flag('flag').variation_for_all(false))
         expect(td.make_init_data[:flags][:flag]).to eql(boolean_flag_hash('flag', 2, fallthrough: { variation: 1 }))
@@ -51,7 +51,7 @@ module LaunchDarkly
       end
 
       it 'update does not store later changes to the builder' do
-        td = TestDataV2.data_source
+        td = TestData.data_source
         builder = td.flag('flag')
         td.update(builder)
         builder.variation_for_all(false)
@@ -60,9 +60,13 @@ module LaunchDarkly
         expect(td.flag('flag').build(1)).to eql(boolean_flag_hash('flag', 1))
       end
 
-      describe 'FlagBuilderV2' do
+      describe 'FlagBuilder' do
+        it 'returns its flag key' do
+          expect(TestData.data_source.flag('flag').key).to eq('flag')
+        end
+
         it 'defaults to targeting on with the key and version' do
-          f = TestDataV2::FlagBuilderV2.new('flag').build(1)
+          f = TestData::FlagBuilder.new('flag').build(1)
           expect(f).to eql({
             key: 'flag',
             version: 1,
@@ -74,68 +78,68 @@ module LaunchDarkly
         end
 
         it 'can set targeting off' do
-          f = TestDataV2::FlagBuilderV2.new('flag').on(false).build(1)
+          f = TestData::FlagBuilder.new('flag').on(false).build(1)
           expect(f[:on]).to eq(false)
         end
 
         it 'can set targeting on' do
-          f = TestDataV2::FlagBuilderV2.new('flag').on(false).on(true).build(1)
+          f = TestData::FlagBuilder.new('flag').on(false).on(true).build(1)
           expect(f[:on]).to eq(true)
         end
 
         it 'can set the fallthrough variation by index' do
-          f = TestDataV2::FlagBuilderV2.new('flag').fallthrough_variation(2).build(1)
+          f = TestData::FlagBuilder.new('flag').fallthrough_variation(2).build(1)
           expect(f[:fallthrough]).to eql({ variation: 2 })
           expect(f[:variations]).to eql([])
           expect(f.keys).to_not include(:offVariation)
         end
 
         it 'can set the off variation by index' do
-          f = TestDataV2::FlagBuilderV2.new('flag').off_variation(2).build(1)
+          f = TestData::FlagBuilder.new('flag').off_variation(2).build(1)
           expect(f[:offVariation]).to eq(2)
           expect(f[:variations]).to eql([])
           expect(f.keys).to_not include(:fallthrough)
         end
 
         it 'can set a list of variations' do
-          f = TestDataV2::FlagBuilderV2.new('flag').variations('red', 'green', 'blue').build(1)
+          f = TestData::FlagBuilder.new('flag').variations('red', 'green', 'blue').build(1)
           expect(f[:variations]).to eql(%w[red green blue])
         end
 
         it 'has the boolean_flag shortcut method' do
-          f = TestDataV2::FlagBuilderV2.new('flag').boolean_flag.build(1)
+          f = TestData::FlagBuilder.new('flag').boolean_flag.build(1)
           expect(f).to eql(boolean_flag_hash('flag', 1))
         end
 
         it 'boolean_flag keeps the settings of a flag that is already boolean' do
-          f = TestDataV2::FlagBuilderV2.new('flag').boolean_flag.off_variation(0).fallthrough_variation(1)
+          f = TestData::FlagBuilder.new('flag').boolean_flag.off_variation(0).fallthrough_variation(1)
                                        .boolean_flag.build(1)
           expect(f).to eql(boolean_flag_hash('flag', 1, offVariation: 0, fallthrough: { variation: 1 }))
         end
 
         it 'off_variation with a boolean changes the flag to a boolean flag' do
-          f = TestDataV2::FlagBuilderV2.new('flag').variations('a', 'b', 'c').off_variation(true).build(1)
+          f = TestData::FlagBuilder.new('flag').variations('a', 'b', 'c').off_variation(true).build(1)
           expect(f).to eql(boolean_flag_hash('flag', 1, offVariation: 0))
 
-          f2 = TestDataV2::FlagBuilderV2.new('flag').off_variation(false).build(1)
+          f2 = TestData::FlagBuilder.new('flag').off_variation(false).build(1)
           expect(f2).to eql(boolean_flag_hash('flag', 1))
         end
 
         it 'fallthrough_variation with a boolean changes the flag to a boolean flag' do
-          f = TestDataV2::FlagBuilderV2.new('flag').variations('a', 'b', 'c').fallthrough_variation(false).build(1)
+          f = TestData::FlagBuilder.new('flag').variations('a', 'b', 'c').fallthrough_variation(false).build(1)
           expect(f).to eql(boolean_flag_hash('flag', 1, fallthrough: { variation: 1 }))
 
-          f2 = TestDataV2::FlagBuilderV2.new('flag').fallthrough_variation(true).build(1)
+          f2 = TestData::FlagBuilder.new('flag').fallthrough_variation(true).build(1)
           expect(f2).to eql(boolean_flag_hash('flag', 1))
         end
 
         it 'can set the variation for all contexts with a boolean' do
-          f = TestDataV2::FlagBuilderV2.new('flag').on(false).variation_for_all(false).build(1)
+          f = TestData::FlagBuilder.new('flag').on(false).variation_for_all(false).build(1)
           expect(f).to eql(boolean_flag_hash('flag', 1, fallthrough: { variation: 1 }))
         end
 
         it 'can set the variation for all contexts with an index' do
-          f = TestDataV2::FlagBuilderV2.new('flag').variations('a', 'b', 'c').off_variation(0).on(false)
+          f = TestData::FlagBuilder.new('flag').variations('a', 'b', 'c').off_variation(0).on(false)
                                        .variation_for_all(2).build(1)
           expect(f).to eql({
             key: 'flag',
@@ -150,7 +154,7 @@ module LaunchDarkly
         end
 
         it 'clears existing rules and targets when setting the variation for all contexts' do
-          f = TestDataV2::FlagBuilderV2.new('flag')
+          f = TestData::FlagBuilder.new('flag')
                                        .if_match('name', 'ben')
                                        .then_return(false)
                                        .variation_for_user('ben', false)
@@ -161,7 +165,7 @@ module LaunchDarkly
         end
 
         it 'can set a single value for all contexts' do
-          f = TestDataV2::FlagBuilderV2.new('flag')
+          f = TestData::FlagBuilder.new('flag')
                                        .boolean_flag
                                        .if_match('name', 'ben')
                                        .then_return(false)
@@ -176,14 +180,14 @@ module LaunchDarkly
         end
 
         it 'can set a variation for a user key with a boolean' do
-          f = TestDataV2::FlagBuilderV2.new('flag').variation_for_user('ben', false).build(1)
+          f = TestData::FlagBuilder.new('flag').variation_for_user('ben', false).build(1)
           expect(f[:variations]).to eql([true, false])
           expect(f[:targets]).to eql([{ variation: 1, values: ['ben'] }])
           expect(f[:contextTargets]).to eql([{ contextKind: 'user', variation: 1, values: [] }])
         end
 
         it 'can set a variation for a user key with an index' do
-          f = TestDataV2::FlagBuilderV2.new('flag').variations('a', 'b', 'c')
+          f = TestData::FlagBuilder.new('flag').variations('a', 'b', 'c')
                                        .variation_for_user('ben', 2)
                                        .variation_for_user('amy', 2)
                                        .build(1)
@@ -193,13 +197,13 @@ module LaunchDarkly
         end
 
         it 'can set a variation for a key of another context kind' do
-          f = TestDataV2::FlagBuilderV2.new('flag').variation_for_key('org', 'acme', true).build(1)
+          f = TestData::FlagBuilder.new('flag').variation_for_key('org', 'acme', true).build(1)
           expect(f.keys).to_not include(:targets)
           expect(f[:contextTargets]).to eql([{ contextKind: 'org', variation: 0, values: ['acme'] }])
         end
 
         it 'moves a key to the new variation when its variation changes' do
-          f = TestDataV2::FlagBuilderV2.new('flag')
+          f = TestData::FlagBuilder.new('flag')
                                        .variation_for_user('ben', false)
                                        .variation_for_user('ben', true)
                                        .build(1)
@@ -210,7 +214,7 @@ module LaunchDarkly
         end
 
         it 'can clear targets' do
-          f = TestDataV2::FlagBuilderV2.new('flag')
+          f = TestData::FlagBuilder.new('flag')
                                        .variation_for_user('ben', false)
                                        .variation_for_key('org', 'acme', true)
                                        .clear_targets
@@ -219,7 +223,7 @@ module LaunchDarkly
         end
 
         it 'clone gives an independent copy of the targets' do
-          f = TestDataV2::FlagBuilderV2.new('flag').variation_for_user('ben', false)
+          f = TestData::FlagBuilder.new('flag').variation_for_user('ben', false)
           f2 = f.clone.variation_for_user('ben', true).variation_for_user('amy', false)
 
           expect(f.build(1)[:targets]).to eql([{ variation: 1, values: ['ben'] }])
@@ -230,7 +234,7 @@ module LaunchDarkly
         end
 
         it 'dup gives an independent copy of the settings' do
-          fb = TestDataV2::FlagBuilderV2.new('flag').variation_for_all(true)
+          fb = TestData::FlagBuilder.new('flag').variation_for_all(true)
           expect(fb.dup.build(1)).to eql(fb.build(1))
 
           fcopy = fb.dup.variation_for_all(false).build(1)
@@ -240,13 +244,13 @@ module LaunchDarkly
         end
 
         it 'clone gives an independent copy of the variations' do
-          fb = TestDataV2::FlagBuilderV2.new('flag').variations('a', 'b')
+          fb = TestData::FlagBuilder.new('flag').variations('a', 'b')
           fb.clone.build(1)[:variations] << 'c'
           expect(fb.build(1)[:variations]).to eql(%w[a b])
         end
 
         it 'clone gives an independent copy of the rules' do
-          fb = TestDataV2::FlagBuilderV2.new('flag').if_match('name', 'ben').then_return(true)
+          fb = TestData::FlagBuilder.new('flag').if_match('name', 'ben').then_return(true)
           fcopy = fb.clone.if_match('name', 'amy').then_return(false)
 
           expect(fb.build(1)[:rules].length).to eq(1)
@@ -262,28 +266,28 @@ module LaunchDarkly
           end
 
           it 'can build a rule with if_match' do
-            f = TestDataV2::FlagBuilderV2.new('flag').if_match('name', 'ben', 'amy').then_return(true).build(1)
+            f = TestData::FlagBuilder.new('flag').if_match('name', 'ben', 'amy').then_return(true).build(1)
             expect(f[:rules]).to eql([
                                        { id: 'rule0', variation: 0, clauses: [clause('name', %w[ben amy], false)] },
                                      ])
           end
 
           it 'can build a rule with if_not_match' do
-            f = TestDataV2::FlagBuilderV2.new('flag').if_not_match('name', 'ben').then_return(false).build(1)
+            f = TestData::FlagBuilder.new('flag').if_not_match('name', 'ben').then_return(false).build(1)
             expect(f[:rules]).to eql([
                                        { id: 'rule0', variation: 1, clauses: [clause('name', ['ben'], true)] },
                                      ])
           end
 
           it 'can build a rule with if_match_context' do
-            f = TestDataV2::FlagBuilderV2.new('flag').if_match_context('org', 'name', 'acme').then_return(true).build(1)
+            f = TestData::FlagBuilder.new('flag').if_match_context('org', 'name', 'acme').then_return(true).build(1)
             expect(f[:rules]).to eql([
                                        { id: 'rule0', variation: 0, clauses: [clause('name', ['acme'], false, 'org')] },
                                      ])
           end
 
           it 'can build a rule with if_not_match_context' do
-            f = TestDataV2::FlagBuilderV2.new('flag').if_not_match_context('org', 'name', 'acme').then_return(true)
+            f = TestData::FlagBuilder.new('flag').if_not_match_context('org', 'name', 'acme').then_return(true)
                                          .build(1)
             expect(f[:rules]).to eql([
                                        { id: 'rule0', variation: 0, clauses: [clause('name', ['acme'], true, 'org')] },
@@ -291,7 +295,7 @@ module LaunchDarkly
           end
 
           it 'can add clauses with and_match and and_not_match' do
-            f = TestDataV2::FlagBuilderV2.new('flag')
+            f = TestData::FlagBuilder.new('flag')
                                          .if_match('name', 'ben')
                                          .and_match('country', 'us')
                                          .and_not_match('state', 'ca')
@@ -311,7 +315,7 @@ module LaunchDarkly
           end
 
           it 'can add clauses with and_match_context and and_not_match_context' do
-            f = TestDataV2::FlagBuilderV2.new('flag')
+            f = TestData::FlagBuilder.new('flag')
                                          .if_match('name', 'ben')
                                          .and_match_context('org', 'name', 'acme')
                                          .and_not_match_context('org', 'country', 'fr')
@@ -331,7 +335,7 @@ module LaunchDarkly
           end
 
           it 'then_return with a boolean changes the flag to a boolean flag' do
-            f = TestDataV2::FlagBuilderV2.new('flag').variations('a', 'b', 'c').if_match('name', 'ben')
+            f = TestData::FlagBuilder.new('flag').variations('a', 'b', 'c').if_match('name', 'ben')
                                          .then_return(false).build(1)
             expect(f).to eql(boolean_flag_hash('flag', 1, rules: [
                                                  { id: 'rule0', variation: 1, clauses: [clause('name', ['ben'], false)] },
@@ -339,7 +343,7 @@ module LaunchDarkly
           end
 
           it 'then_return with an index keeps the variations' do
-            f = TestDataV2::FlagBuilderV2.new('flag').variations('a', 'b', 'c').if_match('name', 'ben')
+            f = TestData::FlagBuilder.new('flag').variations('a', 'b', 'c').if_match('name', 'ben')
                                          .then_return(2).build(1)
             expect(f[:variations]).to eql(%w[a b c])
             expect(f[:rules]).to eql([
@@ -348,7 +352,7 @@ module LaunchDarkly
           end
 
           it 'numbers the rule ids in order' do
-            f = TestDataV2::FlagBuilderV2.new('flag')
+            f = TestData::FlagBuilder.new('flag')
                                          .if_match('name', 'ben').then_return(true)
                                          .if_not_match('name', 'amy').then_return(false)
                                          .build(1)
@@ -359,7 +363,7 @@ module LaunchDarkly
           end
 
           it 'can clear rules' do
-            f = TestDataV2::FlagBuilderV2.new('flag')
+            f = TestData::FlagBuilder.new('flag')
                                          .if_match('name', 'ben').then_return(true)
                                          .if_match('name', 'amy').then_return(false)
                                          .clear_rules

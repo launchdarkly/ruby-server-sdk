@@ -10,7 +10,7 @@ module LaunchDarkly
     end
 
     def file_data_system
-      DataSystem.custom.synchronizers([Integrations::FileData.data_source_v2(paths: [])]).build
+      DataSystem.custom.synchronizers([Integrations::FileData.data_source(paths: [])]).build
     end
 
     context "constructor requirement of non-nil sdk key" do
@@ -19,11 +19,11 @@ module LaunchDarkly
       end
 
       it "is not enforced in daemon mode if send_events is false" do
-        ensure_close(subject.new(nil, Config.new({ data_system_config: daemon_data_system, send_events: false }))) {}
+        ensure_close(subject.new(nil, Config.new({ data_system: daemon_data_system, send_events: false }))) {}
       end
 
       it "is not enforced if using file data and send_events is false" do
-        ensure_close(subject.new(nil, Config.new({ data_system_config: file_data_system, send_events: false }))) {}
+        ensure_close(subject.new(nil, Config.new({ data_system: file_data_system, send_events: false }))) {}
       end
 
       it "is enforced in streaming mode even if send_events is false" do
@@ -34,26 +34,26 @@ module LaunchDarkly
 
       it "is enforced in polling mode even if send_events is false" do
         expect {
-          subject.new(nil, Config.new({ data_system_config: DataSystem.polling.build, send_events: false }))
+          subject.new(nil, Config.new({ data_system: DataSystem.polling.build, send_events: false }))
         }.to raise_error(ArgumentError)
       end
 
       it "is enforced in daemon mode if send_events is true" do
         expect {
-          subject.new(nil, Config.new({ data_system_config: daemon_data_system }))
+          subject.new(nil, Config.new({ data_system: daemon_data_system }))
         }.to raise_error(ArgumentError)
       end
 
       it "is enforced if using file data and send_events is true" do
         expect {
-          subject.new(nil, Config.new({ data_system_config: file_data_system }))
+          subject.new(nil, Config.new({ data_system: file_data_system }))
         }.to raise_error(ArgumentError)
       end
 
       it "is enforced if the FDv1 fallback needs the SDK key even if send_events is false" do
         data_system = DataSystem.custom.fdv1_compatible_synchronizer(DataSystem.fdv1_fallback_ds_builder).build
         expect {
-          subject.new(nil, Config.new({ data_system_config: data_system, send_events: false }))
+          subject.new(nil, Config.new({ data_system: data_system, send_events: false }))
         }.to raise_error(ArgumentError)
       end
     end
@@ -70,7 +70,7 @@ module LaunchDarkly
       end
 
       it "when in daemon mode" do
-        client = subject.new("sdk-key", Config.new(data_system_config: daemon_data_system))
+        client = subject.new("sdk-key", Config.new(data_system: daemon_data_system))
         client.close()
       end
     end
@@ -103,14 +103,14 @@ module LaunchDarkly
 
       it "passes data set to feature store in correct order on init" do
         store = CapturingFeatureStore.new
-        td = Integrations::TestDataV2.data_source
+        td = Integrations::TestData.data_source
         dependency_ordering_test_data[LaunchDarkly::Interfaces::DataStore::FEATURES].each { |_, flag| td.use_preconfigured_flag(flag) }
         dependency_ordering_test_data[LaunchDarkly::Interfaces::DataStore::SEGMENTS].each { |_, segment| td.use_preconfigured_segment(segment) }
 
         data_system = test_data_system_builder(td)
           .data_store(store, LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_WRITE)
           .build
-        with_client(test_config(data_system_config: data_system)) do |_|
+        with_client(test_config(data_system: data_system)) do |_|
           data = store.received_data
           expect(data).not_to be_nil
           expect(data.count).to eq(2)

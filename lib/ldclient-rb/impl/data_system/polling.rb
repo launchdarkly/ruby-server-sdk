@@ -107,7 +107,7 @@ module LaunchDarkly
           @logger = logger
           @interrupt_event = Concurrent::Event.new
           @stop = Concurrent::Event.new
-          @name = "PollingDataSourceV2"
+          @name = "PollingDataSource"
         end
 
         #
@@ -134,7 +134,7 @@ module LaunchDarkly
         # @yieldparam update [LaunchDarkly::Interfaces::DataSystem::Update]
         #
         def sync(ss)
-          @logger.info { "[LDClient] Starting PollingDataSourceV2 synchronizer" }
+          @logger.info { "[LDClient] Starting PollingDataSource synchronizer" }
 
           until @stop.set?
             result = @requester.fetch(ss.selector)
@@ -229,7 +229,7 @@ module LaunchDarkly
         # Stops the synchronizer.
         #
         def stop
-          @logger.info { "[LDClient] Stopping PollingDataSourceV2 synchronizer" }
+          @logger.info { "[LDClient] Stopping PollingDataSource synchronizer" }
           @interrupt_event.set
           @stop.set
         end

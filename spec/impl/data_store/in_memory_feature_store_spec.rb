@@ -4,9 +4,9 @@ require "ldclient-rb/impl/data_store/in_memory_feature_store"
 module LaunchDarkly
   module Impl
     module DataStore
-      describe InMemoryFeatureStoreV2 do
+      describe InMemoryFeatureStore do
         let(:logger) { double.as_null_object }
-        subject { InMemoryFeatureStoreV2.new(logger) }
+        subject { InMemoryFeatureStore.new(logger) }
 
         let(:flag_key) { "test-flag" }
         let(:flag) do
