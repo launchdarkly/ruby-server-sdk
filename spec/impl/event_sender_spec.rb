@@ -105,8 +105,8 @@ module LaunchDarkly
         with_server do |server|
           server.setup_ok_response("/bulk", "")
 
-          config = Config.new(events_uri: "http://fake-event-server/bulk",
-            socket_factory: SocketFactoryFromHash.new({"fake-event-server" => server.port}),
+          config = Config.new(events_uri: "http://fake-event-server:#{server.port}/bulk",
+            socket_factory: SocketFactoryFromHash.new({"fake-event-server" => "127.0.0.1"}),
             logger: $null_log)
           es = subject.new(sdk_key, config, 0.1)
 

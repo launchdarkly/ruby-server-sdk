@@ -124,12 +124,12 @@ module LaunchDarkly
             stream: false,
             data_source: nil,
             send_events: true,
-            base_uri: "http://fake-polling-server",
-            events_uri: "http://fake-events-server",
+            base_uri: "http://fake-polling-server:#{poll_server.port}",
+            events_uri: "http://fake-events-server:#{events_server.port}",
             diagnostic_opt_out: true,
             socket_factory: SocketFactoryFromHash.new({
-              "fake-polling-server" => poll_server.port,
-              "fake-events-server" => events_server.port,
+              "fake-polling-server" => "127.0.0.1",
+              "fake-events-server" => "127.0.0.1",
             })
           )
           with_client(config) do |client|
