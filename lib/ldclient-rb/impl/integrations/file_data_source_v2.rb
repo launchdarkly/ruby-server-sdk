@@ -116,9 +116,13 @@ module LaunchDarkly
         # @return [void]
         #
         def sync(selector_store)
-          # First yield initial data
+          @lock.synchronize do
+            @listener = start_listener unless @closed
+          end
+
           initial_fetch = fetch(selector_store)
           unless initial_fetch.success?
+            stop_listener
             yield LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
               error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
@@ -135,11 +139,6 @@ module LaunchDarkly
             state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
             change_set: initial_fetch.value.change_set
           )
-
-          # Start watching for file changes
-          @lock.synchronize do
-            @listener = start_listener unless @closed
-          end
 
           until @closed
             begin
@@ -173,15 +172,20 @@ module LaunchDarkly
           @lock.synchronize do
             return if @closed
             @closed = true
-
-            listener = @listener
-            @listener = nil
-
-            listener&.stop
           end
+          stop_listener
 
           # Signal shutdown to sync generator
           @update_queue.push(nil)
+        end
+
+        private def stop_listener
+          listener = @lock.synchronize do
+            l = @listener
+            @listener = nil
+            l
+          end
+          listener&.stop
         end
 
         #

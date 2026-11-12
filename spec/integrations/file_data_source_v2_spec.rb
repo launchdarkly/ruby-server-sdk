@@ -362,6 +362,49 @@ EOF
           end
         end
 
+        it "detects a file change made during the initial fetch" do
+          file = make_temp_file(flag_only_json)
+
+          source = Impl::Integrations::FileDataSourceV2.new(
+            logger,
+            paths: [file.path],
+            poll_interval: 0.1
+          )
+
+          first_load = true
+          allow(source).to receive(:load_all_to_changeset).and_wrap_original do |original|
+            result = original.call
+            if first_load
+              first_load = false
+              sleep 1
+              IO.write(file, segment_only_json)
+            end
+            result
+          end
+
+          updates = []
+          update_received = Concurrent::Event.new
+
+          begin
+            sync_thread = Thread.new do
+              source.sync(no_selector_store) do |update|
+                updates << update
+                update_received.set if updates.length >= 2
+                break if updates.length >= 2
+              end
+            end
+
+            expect(update_received.wait(5)).to eq(true), "Did not receive an update for the change made during the initial fetch"
+            expect(updates[1].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            segment_changes = updates[1].change_set.changes.select { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT }
+            expect(segment_changes.length).to eq(1)
+          ensure
+            source.stop
+            sync_thread&.join(2)
+          end
+        end
+
         it "reports error on invalid file update" do
           file = make_temp_file(flag_only_json)
 

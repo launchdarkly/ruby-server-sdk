@@ -328,6 +328,37 @@ EOF
         test_auto_reload({ auto_update: true, force_polling: true, poll_interval: 0.1 })
       end
 
+      def test_reload_of_change_during_first_load(options)
+        file = make_temp_file(flag_only_json)
+        options[:paths] = [ file.path ]
+
+        with_data_source(options) do |ds|
+          first_load = true
+          allow(ds).to receive(:load_all_locked).and_wrap_original do |original|
+            original.call
+            if first_load
+              first_load = false
+              sleep(1)
+              IO.write(file, all_properties_json)
+            end
+          end
+
+          ds.start
+
+          max_time = 10
+          ok = wait_for_condition(max_time) { @store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys == all_segment_keys }
+          expect(ok).to eq(true), "Waited #{max_time}s after modifying file during the first load and it did not reload"
+        end
+      end
+
+      it "reloads a file modified during the first load if auto-update is on" do
+        test_reload_of_change_during_first_load({ auto_update: true })
+      end
+
+      it "reloads a file modified during the first load in polling mode" do
+        test_reload_of_change_during_first_load({ auto_update: true, force_polling: true, poll_interval: 0.1 })
+      end
+
       it "evaluates simplified flag with client as expected" do
         file = make_temp_file(all_properties_json)
         factory = FileData.data_source({ paths: file.path })
