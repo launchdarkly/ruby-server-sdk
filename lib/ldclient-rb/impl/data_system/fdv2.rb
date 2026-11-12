@@ -81,19 +81,19 @@ module LaunchDarkly
           @store = LaunchDarkly::Impl::DataStore::Store.new(@flag_change_broadcaster, @change_set_broadcaster, @logger)
 
           # Status providers
-          @data_source_status_provider = LaunchDarkly::Impl::DataSource::StatusProviderV2.new(
+          @data_source_status_provider = LaunchDarkly::Impl::DataSource::StatusProvider.new(
             @data_source_broadcaster
           )
-          @data_store_status_provider = LaunchDarkly::Impl::DataStore::StatusProviderV2.new(nil, @data_store_broadcaster)
+          @data_store_status_provider = LaunchDarkly::Impl::DataStore::StatusProvider.new(nil, @data_store_broadcaster)
 
           # Configure persistent store if provided
           if @data_system_config.data_store
-            @data_store_status_provider = LaunchDarkly::Impl::DataStore::StatusProviderV2.new(
+            @data_store_status_provider = LaunchDarkly::Impl::DataStore::StatusProvider.new(
               @data_system_config.data_store,
               @data_store_broadcaster
             )
             writable = @data_system_config.data_store_mode == :read_write
-            wrapper = LaunchDarkly::Impl::DataStore::FeatureStoreClientWrapperV2.new(
+            wrapper = LaunchDarkly::Impl::DataStore::FeatureStoreClientWrapper.new(
               @data_system_config.data_store,
               @data_store_status_provider,
               @logger

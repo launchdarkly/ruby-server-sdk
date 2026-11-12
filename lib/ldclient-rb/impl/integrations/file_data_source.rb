@@ -25,7 +25,7 @@ module LaunchDarkly
       # The files use the same format as the v1 file data source, supporting flags, flagValues,
       # and segments in JSON or YAML format.
       #
-      class FileDataSourceV2
+      class FileDataSource
         include LaunchDarkly::Interfaces::DataSystem::Initializer
         include LaunchDarkly::Interfaces::DataSystem::Synchronizer
 
@@ -64,7 +64,7 @@ module LaunchDarkly
         # @return [String]
         #
         def name
-          'FileDataV2'
+          'FileData'
         end
 
         #
@@ -82,7 +82,7 @@ module LaunchDarkly
             begin
               @lock.synchronize do
                 if @closed
-                  next LaunchDarkly::Result.fail('FileDataV2 source has been closed')
+                  next LaunchDarkly::Result.fail('FileData source has been closed')
                 end
 
                 load_result = load_all_to_changeset
@@ -377,7 +377,7 @@ module LaunchDarkly
           if @@have_listen
             start_listener_with_listen_gem(resolved_paths)
           else
-            FileDataSourcePollerV2.new(resolved_paths, @poll_interval, method(:on_file_change), @logger)
+            FileDataSourcePoller.new(resolved_paths, @poll_interval, method(:on_file_change), @logger)
           end
         end
 
@@ -403,9 +403,9 @@ module LaunchDarkly
       end
 
       #
-      # Used internally by FileDataSourceV2 to track data file changes if the 'listen' gem is not available.
+      # Used internally by FileDataSource to track data file changes if the 'listen' gem is not available.
       #
-      class FileDataSourcePollerV2
+      class FileDataSourcePoller
         #
         # Initialize the file data poller.
         #
@@ -450,11 +450,11 @@ module LaunchDarkly
                 last_times = new_times
                 @on_change.call if changed
               rescue => e
-                Impl::Util.log_exception(@logger, "Unexpected exception in FileDataSourcePollerV2", e)
+                Impl::Util.log_exception(@logger, "Unexpected exception in FileDataSourcePoller", e)
               end
             end
           end
-          @thread.name = "LD/FileDataSourceV2"
+          @thread.name = "LD/FileDataSource"
         end
 
         def stop

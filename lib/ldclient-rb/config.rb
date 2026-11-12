@@ -37,7 +37,7 @@ module LaunchDarkly
     # @option opts [BigSegmentsConfig] :big_segments See {#big_segments}.
     # @option opts [Hash] :application See {#application}
     # @option opts [Boolean] :omit_anonymous_contexts See {#omit_anonymous_contexts}
-    # @option opts [DataSystemConfig] :data_system_config See {#data_system_config}
+    # @option opts [DataSystemConfig] :data_system See {#data_system}
     # @option hooks [Array<Interfaces::Hooks::Hook]
     # @option plugins [Array<Interfaces::Plugins::Plugin]
     #
@@ -66,7 +66,7 @@ module LaunchDarkly
       @hooks = (opts[:hooks] || []).keep_if { |hook| hook.is_a? Interfaces::Hooks::Hook }
       @plugins = (opts[:plugins] || []).keep_if { |plugin| plugin.is_a? Interfaces::Plugins::Plugin }
       @omit_anonymous_contexts = opts.has_key?(:omit_anonymous_contexts) && opts[:omit_anonymous_contexts]
-      @data_system_config = opts[:data_system_config]
+      @data_system = opts[:data_system]
       @instance_id = nil
     end
 
@@ -332,7 +332,7 @@ module LaunchDarkly
     #
     # @return [DataSystemConfig, nil]
     #
-    attr_reader :data_system_config
+    attr_reader :data_system
 
     #
     # The default LaunchDarkly client configuration. This configuration sets

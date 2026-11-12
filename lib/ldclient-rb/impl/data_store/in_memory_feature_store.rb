@@ -8,9 +8,9 @@ module LaunchDarkly
   module Impl
     module DataStore
       #
-      # InMemoryFeatureStoreV2 is a read-only in-memory store implementation for FDv2.
+      # InMemoryFeatureStore is a read-only in-memory store implementation for FDv2.
       #
-      class InMemoryFeatureStoreV2
+      class InMemoryFeatureStore
         include LaunchDarkly::Interfaces::DataSystem::ReadOnlyStore
         def initialize(logger)
           @logger = logger

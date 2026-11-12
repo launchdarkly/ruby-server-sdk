@@ -15,7 +15,7 @@ module LaunchDarkly
       with_server do |poll_server|
         poll_server.setup_ok_response("/sdk/poll", fdv2_poll_payload(flags: FLAGS_WITH_ALWAYS_TRUE_FLAG), "application/json")
 
-        with_client(test_config(data_system_config: polling_data_system_builder(poll_server.base_uri.to_s).build)) do |client|
+        with_client(test_config(data_system: polling_data_system_builder(poll_server.base_uri.to_s).build)) do |client|
           expect(client.initialized?).to be true
           expect(client.variation(ALWAYS_TRUE_FLAG[:key], basic_context, false)).to be true
         end
@@ -26,7 +26,7 @@ module LaunchDarkly
       with_server do |poll_server|
         poll_server.setup_status_response("/sdk/poll", 401)
 
-        config = test_config(data_system_config: polling_data_system_builder(poll_server.base_uri.to_s).build)
+        config = test_config(data_system: polling_data_system_builder(poll_server.base_uri.to_s).build)
         started_at = Time.now
         ensure_close(LDClient.new(sdk_key, config, 5)) do |client|
           expect(Time.now - started_at).to be < 5
@@ -48,7 +48,7 @@ module LaunchDarkly
           .synchronizers([DataSystem.streaming_ds_builder.base_uri(stream_server.base_uri.to_s)])
           .build
         # The SSE worker thread can log after the example ends, so the logger cannot be a test double.
-        config = test_config(data_system_config: data_system, logger: $null_log)
+        config = test_config(data_system: data_system, logger: $null_log)
         started_at = Time.now
         ensure_close(LDClient.new(sdk_key, config, 5)) do |client|
           expect(Time.now - started_at).to be < 5
@@ -121,7 +121,7 @@ module LaunchDarkly
           })
           polling = DataSystem.polling_ds_builder.base_uri("http://fake-polling-server").socket_factory(socket_factory)
           config = test_config(
-            data_system_config: DataSystem.custom.synchronizers([polling]).build,
+            data_system: DataSystem.custom.synchronizers([polling]).build,
             send_events: true,
             events_uri: "http://fake-events-server",
             diagnostic_opt_out: true,

@@ -1,7 +1,7 @@
 require "spec_helper"
 require "mock_components"
 require "ldclient-rb/impl/data_system/fdv2"
-require "ldclient-rb/integrations/test_data_v2"
+require "ldclient-rb/integrations/test_data"
 require "ldclient-rb/data_system"
 require "ldclient-rb/impl/data_system"
 
@@ -25,10 +25,10 @@ module LaunchDarkly
 
         describe "two-phase initialization" do
           it "initializes from initializer then syncs from synchronizer" do
-            td_initializer = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_initializer = LaunchDarkly::Integrations::TestData.data_source
             td_initializer.update(td_initializer.flag("flagkey").on(true))
 
-            td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
             # Set this to true, and then to false to ensure the version number exceeded
             # the initializer version number. Otherwise, they start as the same version
             # and the latest value is ignored.
@@ -76,7 +76,7 @@ module LaunchDarkly
 
         describe "stopping FDv2" do
           it "prevents flag updates after stop" do
-            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td = LaunchDarkly::Integrations::TestData.data_source
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
               .synchronizers([td.test_data_ds_builder])
@@ -108,7 +108,7 @@ module LaunchDarkly
 
         describe "data availability" do
           it "reports refreshed availability when data is loaded" do
-            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td = LaunchDarkly::Integrations::TestData.data_source
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
               .synchronizers([td.test_data_ds_builder])
@@ -240,7 +240,7 @@ module LaunchDarkly
           end
 
           it "is not available before initialization" do
-            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td = LaunchDarkly::Integrations::TestData.data_source
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
               .initializers(nil)
               .synchronizers([td.test_data_ds_builder])
@@ -291,7 +291,7 @@ module LaunchDarkly
             # Return empty - sync yields nothing (synchronizer fails)
             allow(mock_primary).to receive(:sync)
 
-            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td = LaunchDarkly::Integrations::TestData.data_source
             td.update(td.flag("flagkey").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -345,7 +345,7 @@ module LaunchDarkly
             # Return empty - sync yields nothing (synchronizer fails)
             allow(mock_secondary).to receive(:sync)
 
-            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td = LaunchDarkly::Integrations::TestData.data_source
             td.update(td.flag("flagkey").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -391,7 +391,7 @@ module LaunchDarkly
             allow(mock_primary).to receive(:sync).and_yield(update)
 
             # Create FDv1 fallback data source with actual data
-            td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_fdv1 = LaunchDarkly::Integrations::TestData.data_source
             td_fdv1.update(td_fdv1.flag("fdv1flag").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -440,7 +440,7 @@ module LaunchDarkly
             allow(mock_primary).to receive(:sync).and_yield(update)
 
             # Create FDv1 fallback data source
-            td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_fdv1 = LaunchDarkly::Integrations::TestData.data_source
             td_fdv1.update(td_fdv1.flag("fdv1fallbackflag").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -485,7 +485,7 @@ module LaunchDarkly
         describe "FDv1 fallback with initializer" do
           it "falls back to FDv1 and replaces initialized data" do
             # Initialize with some data
-            td_initializer = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_initializer = LaunchDarkly::Integrations::TestData.data_source
             td_initializer.update(td_initializer.flag("initialflag").on(true))
 
             # Create mock primary that signals fallback
@@ -500,7 +500,7 @@ module LaunchDarkly
             allow(mock_primary).to receive(:sync).and_yield(update)
 
             # Create FDv1 fallback with different data
-            td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_fdv1 = LaunchDarkly::Integrations::TestData.data_source
             td_fdv1.update(td_fdv1.flag("fdv1replacementflag").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -558,7 +558,7 @@ module LaunchDarkly
             allow(mock_secondary).to receive(:sync).and_yield(valid_update)
 
             # Create FDv1 fallback (should not be used)
-            td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_fdv1 = LaunchDarkly::Integrations::TestData.data_source
             td_fdv1.update(td_fdv1.flag("fdv1-should-not-appear").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -600,7 +600,7 @@ module LaunchDarkly
             allow(mock_primary).to receive(:sync).and_yield(update)
 
             # Create FDv1 fallback
-            td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_fdv1 = LaunchDarkly::Integrations::TestData.data_source
             td_fdv1.update(td_fdv1.flag("fdv1flag").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -660,7 +660,7 @@ module LaunchDarkly
           it "switches to the FDv1 fallback synchronizer when an initializer requests fallback" do
             # Initializer returns a successful payload AND fallback_to_fdv1 -- the SDK should
             # apply the payload, then run only the FDv1 fallback synchronizer.
-            td_initializer = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_initializer = LaunchDarkly::Integrations::TestData.data_source
             td_initializer.update(td_initializer.flag("initialflag").on(true))
             initializer_fetch = td_initializer.test_data_ds_builder.build(sdk_key, config).fetch(nil)
             fallback_fetch = LaunchDarkly::Interfaces::DataSystem::FetchResult.new(
@@ -675,7 +675,7 @@ module LaunchDarkly
             allow(mock_primary).to receive(:stop)
             allow(mock_primary).to receive(:sync)
 
-            td_fdv1 = LaunchDarkly::Integrations::TestDataV2.data_source
+            td_fdv1 = LaunchDarkly::Integrations::TestData.data_source
             td_fdv1.update(td_fdv1.flag("fdv1flag").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -746,7 +746,7 @@ module LaunchDarkly
 
         describe "data source status" do
           it "publishes the valid status before releasing ready waiters" do
-            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td = LaunchDarkly::Integrations::TestData.data_source
             td.update(td.flag("flagkey").on(true))
 
             data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -763,7 +763,7 @@ module LaunchDarkly
           end
 
           it "publishes the valid status when an initializer supplies the basis" do
-            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td = LaunchDarkly::Integrations::TestData.data_source
             td.update(td.flag("flagkey").on(true))
 
             # With no synchronizers, the initializer is the only thing that can

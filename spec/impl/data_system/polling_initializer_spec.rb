@@ -95,7 +95,7 @@ module LaunchDarkly
             mock_requester = MockPollingRequester.new(LaunchDarkly::Result.fail("failure message"))
             ds = PollingDataSource.new(1.0, mock_requester, logger)
 
-            expect(ds.name).to eq("PollingDataSourceV2")
+            expect(ds.name).to eq("PollingDataSource")
           end
 
           it "error is returned on failure" do

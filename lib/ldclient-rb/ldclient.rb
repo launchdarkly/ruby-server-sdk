@@ -55,11 +55,11 @@ module LaunchDarkly
     # @return [LDClient] The LaunchDarkly client instance
     #
     def initialize(sdk_key, config = Config.default, wait_for_sec = 5)
-      @data_system_config = config.data_system_config || DataSystem.default.build
+      @data_system_config = config.data_system || DataSystem.default.build
 
       # The SDK key is required unless the client never sends it. That is the case in offline mode, and
       # when events are disabled and no data source needs the SDK key (for example, daemon mode, or only
-      # FileData or TestDataV2 sources).
+      # FileData or TestData sources).
       if !config.offline? && sdk_key.nil?
         if config.send_events || LDClient.data_sources_need_sdk_key?(@data_system_config)
           raise ArgumentError, "sdk_key must not be nil"

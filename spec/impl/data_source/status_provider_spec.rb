@@ -10,7 +10,7 @@ require "spec_helper"
 module LaunchDarkly
   module Impl
     module DataSource
-      describe StatusProviderV2 do
+      describe StatusProvider do
         let(:broadcaster) { double("broadcaster", broadcast: nil) }
         let(:valid) { LaunchDarkly::Interfaces::DataSource::Status::VALID }
         let(:interrupted) { LaunchDarkly::Interfaces::DataSource::Status::INTERRUPTED }
@@ -23,7 +23,7 @@ module LaunchDarkly
         end
 
         it "keeps the public state_since as a wall-clock time" do
-          provider = StatusProviderV2.new(broadcaster)
+          provider = StatusProvider.new(broadcaster)
           provider.update_status(valid, nil)
 
           expect(provider.status.state_since).to be_a(Time)
@@ -31,7 +31,7 @@ module LaunchDarkly
 
         it "measures time in state on the monotonic clock and resets it on state change" do
           now = 1_000.0
-          provider = StatusProviderV2.new(broadcaster, clock: -> { now })
+          provider = StatusProvider.new(broadcaster, clock: -> { now })
 
           now = 1_030.0
           _, seconds = provider.status_and_seconds_in_state
@@ -49,7 +49,7 @@ module LaunchDarkly
 
         it "does not reset the duration when the state is unchanged" do
           now = 1_000.0
-          provider = StatusProviderV2.new(broadcaster, clock: -> { now })
+          provider = StatusProvider.new(broadcaster, clock: -> { now })
           provider.update_status(valid, nil)
           since = provider.status.state_since
 
@@ -65,7 +65,7 @@ module LaunchDarkly
 
         it "keeps both stamps when INTERRUPTED during INITIALIZING is coerced to INITIALIZING" do
           now = 1_000.0
-          provider = StatusProviderV2.new(broadcaster, clock: -> { now })
+          provider = StatusProvider.new(broadcaster, clock: -> { now })
           since = provider.status.state_since
 
           now = 1_030.0
@@ -79,7 +79,7 @@ module LaunchDarkly
 
         it "keeps both stamps when a return to INITIALIZING is coerced to the current state" do
           now = 1_000.0
-          provider = StatusProviderV2.new(broadcaster, clock: -> { now })
+          provider = StatusProvider.new(broadcaster, clock: -> { now })
           provider.update_status(valid, nil)
           since = provider.status.state_since
 
@@ -94,7 +94,7 @@ module LaunchDarkly
 
         it "ignores a nil state" do
           now = 1_000.0
-          provider = StatusProviderV2.new(broadcaster, clock: -> { now })
+          provider = StatusProvider.new(broadcaster, clock: -> { now })
           provider.update_status(valid, nil)
           since = provider.status.state_since
 
@@ -109,7 +109,7 @@ module LaunchDarkly
 
         describe "listeners" do
           let(:broadcaster) { LaunchDarkly::Impl::Broadcaster.new(SynchronousExecutor.new, $null_log) }
-          let(:provider) { StatusProviderV2.new(broadcaster) }
+          let(:provider) { StatusProvider.new(broadcaster) }
 
           it "are called only when the status changes" do
             listener = ListenerSpy.new
@@ -150,7 +150,7 @@ module LaunchDarkly
         end
 
         it "is unaffected by wall-clock steps" do
-          provider = StatusProviderV2.new(broadcaster)
+          provider = StatusProvider.new(broadcaster)
           provider.update_status(valid, nil)
 
           Timecop.freeze(Time.now + 3600) do

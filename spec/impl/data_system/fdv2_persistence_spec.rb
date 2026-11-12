@@ -2,7 +2,7 @@
 
 require "spec_helper"
 require "ldclient-rb/impl/data_system/fdv2"
-require "ldclient-rb/integrations/test_data_v2"
+require "ldclient-rb/integrations/test_data"
 require "ldclient-rb/data_system"
 require "ldclient-rb/impl/data_system"
 
@@ -118,7 +118,7 @@ module LaunchDarkly
           persistent_store = StubFeatureStore.new
 
           # Create and populate synchronizer BEFORE building config
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -174,7 +174,7 @@ module LaunchDarkly
         it "does not flush when store comes back online without stale data" do
           persistent_store = StubFeatureStore.new
 
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -204,7 +204,7 @@ module LaunchDarkly
         it "does not flush when store is unavailable" do
           persistent_store = StubFeatureStore.new
 
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -234,7 +234,7 @@ module LaunchDarkly
         it "works in READ_WRITE mode with persistent store" do
           persistent_store = StubFeatureStore.new
 
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -277,7 +277,7 @@ module LaunchDarkly
           persistent_store.reset_operation_tracking
 
           # Create synchronizer with new data
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("newflag").on(true))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -301,7 +301,7 @@ module LaunchDarkly
         it "writes delta updates to persistent store in READ_WRITE mode" do
           persistent_store = StubFeatureStore.new
 
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -347,7 +347,7 @@ module LaunchDarkly
         it "does not write delta updates to persistent store in READ_ONLY mode" do
           persistent_store = StubFeatureStore.new
 
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -391,11 +391,11 @@ module LaunchDarkly
           persistent_store = StubFeatureStore.new
 
           # Create initializer with one flag
-          td_initializer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_initializer = LaunchDarkly::Integrations::TestData.data_source
           td_initializer.update(td_initializer.flag("init-flag").on(true))
 
           # Create synchronizer with another flag
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("sync-flag").on(false))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -434,7 +434,7 @@ module LaunchDarkly
         it "handles data store status provider correctly" do
           persistent_store = StubFeatureStore.new
 
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
@@ -461,7 +461,7 @@ module LaunchDarkly
         end
 
         it "has data store status provider even without persistent store" do
-          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer = LaunchDarkly::Integrations::TestData.data_source
           td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
 
           data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new

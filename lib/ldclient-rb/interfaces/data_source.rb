@@ -90,7 +90,7 @@ module LaunchDarkly
         # This could be because the SDK client was explicitly shut down. In the FDv2 data system, it can also
         # mean the data source stopped after an error it does not retry.
         #
-        # Unless the SDK is configured with {LaunchDarkly::Config#data_system_config}, no other state follows
+        # Unless the SDK is configured with {LaunchDarkly::Config#data_system}, no other state follows
         # this one.
         #
         OFF = :off

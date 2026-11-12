@@ -1,7 +1,7 @@
-require 'ldclient-rb/impl/integrations/test_data/test_data_source_v2'
+require 'ldclient-rb/impl/integrations/test_data/test_data_source'
 require 'ldclient-rb/impl/model/feature_flag'
 require 'ldclient-rb/impl/model/serialization'
-require 'ldclient-rb/integrations/test_data_v2/flag_builder_v2'
+require 'ldclient-rb/integrations/test_data/flag_builder'
 require 'concurrent/atomics'
 require 'json'
 require 'set'
@@ -16,12 +16,12 @@ module LaunchDarkly
     # provides only the data that the application has put into it using the {#update} method.
     #
     # @example
-    #     require 'ldclient-rb/integrations/test_data_v2'
+    #     require 'ldclient-rb/integrations/test_data'
     #
-    #     td = LaunchDarkly::Integrations::TestDataV2.data_source
+    #     td = LaunchDarkly::Integrations::TestData.data_source
     #     td.update(td.flag('flag-key-1').variation_for_all(true))
     #
-    #     # Configure the data system with TestDataV2 as both initializer and synchronizer
+    #     # Configure the data system with TestData as both initializer and synchronizer
     #     # Note: This example assumes FDv2 data system configuration is available
     #     # data_config = LaunchDarkly::Impl::DataSystem::Config.custom
     #     # data_config.initializers([td.method(:build_initializer)])
@@ -29,7 +29,7 @@ module LaunchDarkly
     #
     #     # config = LaunchDarkly::Config.new(
     #     #   sdk_key,
-    #     #   data_system_config: data_config.build
+    #     #   data_system: data_config.build
     #     # )
     #
     #     # flags can be updated at any time:
@@ -38,17 +38,17 @@ module LaunchDarkly
     #         .fallthrough_variation(false))
     #
     # The above example uses a simple boolean flag, but more complex configurations are possible using
-    # the methods of the {FlagBuilderV2} that is returned by {#flag}. {FlagBuilderV2}
+    # the methods of the {FlagBuilder} that is returned by {#flag}. {FlagBuilder}
     # supports many of the ways a flag can be configured on the LaunchDarkly dashboard, but does not
     # currently support 1. rule operators other than "in" and "not in", or 2. percentage rollouts.
     #
-    # If the same `TestDataV2` instance is used to configure multiple `LDClient` instances,
+    # If the same `TestData` instance is used to configure multiple `LDClient` instances,
     # any changes made to the data will propagate to all of the `LDClient` instances.
     #
-    class TestDataV2
+    class TestData
       # Creates a new instance of the test data source.
       #
-      # @return [TestDataV2] a new configurable test data source
+      # @return [TestData] a new configurable test data source
       def self.data_source
         self.new
       end
@@ -67,20 +67,20 @@ module LaunchDarkly
       end
 
       #
-      # Creates or copies a {FlagBuilderV2} for building a test flag configuration.
+      # Creates or copies a {FlagBuilder} for building a test flag configuration.
       #
-      # If this flag key has already been defined in this `TestDataV2` instance, then the builder
+      # If this flag key has already been defined in this `TestData` instance, then the builder
       # starts with the same configuration that was last provided for this flag.
       #
       # Otherwise, it starts with a new default configuration in which the flag has `true` and
       # `false` variations, is `true` for all contexts when targeting is turned on and
       # `false` otherwise, and currently has targeting turned on. You can change any of those
-      # properties, and provide more complex behavior, using the {FlagBuilderV2} methods.
+      # properties, and provide more complex behavior, using the {FlagBuilder} methods.
       #
       # Once you have set the desired configuration, pass the builder to {#update}.
       #
       # @param key [String] the flag key
-      # @return [FlagBuilderV2] a flag configuration builder
+      # @return [FlagBuilder] a flag configuration builder
       #
       def flag(key)
         key = key.to_s
@@ -93,7 +93,7 @@ module LaunchDarkly
         end
 
         if existing_builder.nil?
-          LaunchDarkly::Integrations::TestDataV2::FlagBuilderV2.new(key).boolean_flag
+          LaunchDarkly::Integrations::TestData::FlagBuilder.new(key).boolean_flag
         else
           existing_builder.clone
         end
@@ -104,29 +104,29 @@ module LaunchDarkly
       #
       # This has the same effect as if a flag were added or modified on the LaunchDarkly dashboard.
       # It immediately propagates the flag change to any `LDClient` instance(s) that you have
-      # already configured to use this `TestDataV2`. If no `LDClient` has been started yet,
+      # already configured to use this `TestData`. If no `LDClient` has been started yet,
       # it simply adds this flag to the test data which will be provided to any `LDClient` that
       # you subsequently configure.
       #
-      # Any subsequent changes to this {FlagBuilderV2} instance do not affect the test data,
+      # Any subsequent changes to this {FlagBuilder} instance do not affect the test data,
       # unless you call {#update} again.
       #
-      # @param flag_builder [FlagBuilderV2] a flag configuration builder
-      # @return [TestDataV2] the TestDataV2 instance
+      # @param flag_builder [FlagBuilder] a flag configuration builder
+      # @return [TestData] the TestData instance
       #
       def update(flag_builder)
         @update_lock.synchronize do
           instances_copy = []
           new_flag = nil
           @lock.with_write_lock do
-            flag_key = flag_builder._key.to_sym
+            flag_key = flag_builder.key.to_sym
             old_flag = @current_flags[flag_key]
             old_version = old_flag ? old_flag[:version] : 0
 
             new_flag = flag_builder.build(old_version + 1)
 
             @current_flags[flag_key] = new_flag
-            @flag_builders[flag_builder._key] = flag_builder.clone
+            @flag_builders[flag_builder.key] = flag_builder.clone
 
             # Create a copy of instances while holding the lock to avoid race conditions
             instances_copy = @instances.dup
@@ -160,7 +160,7 @@ module LaunchDarkly
       end
 
       # @api private
-      # @param instance [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] the TestDataSourceV2 instance to remove
+      # @param instance [LaunchDarkly::Impl::Integrations::TestData::TestDataSource] the TestDataSource instance to remove
       def closed_instance(instance)
         @lock.with_write_lock do
           @instances.delete(instance) if @instances.include?(instance)
@@ -172,7 +172,7 @@ module LaunchDarkly
       # Adds an instance and takes the current data in one step. The instance then receives each
       # change that the returned data does not hold, and no change that it holds.
       #
-      # @param instance [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] the TestDataSourceV2 instance to add
+      # @param instance [LaunchDarkly::Impl::Integrations::TestData::TestDataSource] the TestDataSource instance to add
       # @return [Array(Hash, Integer)] the data, in the form of {#make_init_data}, and the next version
       def subscribe(instance)
         @lock.with_write_lock do
@@ -187,12 +187,12 @@ module LaunchDarkly
       # Copies a full feature flag data model object into the test data.
       #
       # It immediately propagates the change to any `LDClient` instance(s) that you have already
-      # configured to use this `TestDataV2`. If no `LDClient` has been started yet, it simply adds
+      # configured to use this `TestData`. If no `LDClient` has been started yet, it simply adds
       # this flag to the test data which will be provided to any LDClient that you subsequently
       # configure.
       #
       # Use this method if you need to use advanced flag configuration properties that are not supported by
-      # the simplified {FlagBuilderV2} API. Otherwise use the regular {#flag}/{#update} mechanism to avoid
+      # the simplified {FlagBuilder} API. Otherwise use the regular {#flag}/{#update} mechanism to avoid
       # dependencies on details of the data model.
       #
       # You cannot make incremental changes with {#flag}/{#update} to a flag that you add in this way.
@@ -206,7 +206,7 @@ module LaunchDarkly
       #
       # @param flag [Hash, String, LaunchDarkly::Impl::Model::FeatureFlag] the flag configuration as a hash
       #   with symbol or string keys, a JSON string, or a FeatureFlag model object.
-      # @return [TestDataV2] the TestDataV2 instance
+      # @return [TestData] the TestData instance
       # @raise [ArgumentError] if the flag is not a valid flag configuration
       #
       def use_preconfigured_flag(flag)
@@ -238,7 +238,7 @@ module LaunchDarkly
       # Copies a full segment data model object into the test data.
       #
       # It immediately propagates the change to any `LDClient` instance(s) that you have already
-      # configured to use this `TestDataV2`. If no `LDClient` has been started yet, it simply adds
+      # configured to use this `TestData`. If no `LDClient` has been started yet, it simply adds
       # this segment to the test data which will be provided to any LDClient that you subsequently
       # configure.
       #
@@ -253,7 +253,7 @@ module LaunchDarkly
       #
       # @param segment [Hash, String, LaunchDarkly::Impl::Model::Segment] the segment configuration as a hash
       #   with symbol or string keys, a JSON string, or a Segment model object.
-      # @return [TestDataV2] the TestDataV2 instance
+      # @return [TestData] the TestData instance
       # @raise [ArgumentError] if the segment is not a valid segment configuration
       #
       def use_preconfigured_segment(segment)
@@ -381,17 +381,17 @@ module LaunchDarkly
       # Returns a builder for creating a data source that can be used with the FDv2 data system
       # as either an initializer or synchronizer.
       #
-      # @return [TestDataV2Builder] a builder for a test data source
+      # @return [TestDataBuilder] a builder for a test data source
       #
       def test_data_ds_builder
-        TestDataV2Builder.new(self)
+        TestDataBuilder.new(self)
       end
     end
 
     #
-    # Builder for TestDataV2 data sources (works for both initializers and synchronizers).
+    # Builder for TestData data sources (works for both initializers and synchronizers).
     #
-    class TestDataV2Builder
+    class TestDataBuilder
       def initialize(test_data)
         @test_data = test_data
       end
@@ -401,10 +401,10 @@ module LaunchDarkly
       #
       # @param sdk_key [String] the SDK key (unused, for interface compatibility)
       # @param config [LaunchDarkly::Config] the SDK configuration (unused, for interface compatibility)
-      # @return [LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2] a test data source
+      # @return [LaunchDarkly::Impl::Integrations::TestData::TestDataSource] a test data source
       #
       def build(sdk_key, config)
-        LaunchDarkly::Impl::Integrations::TestData::TestDataSourceV2.new(@test_data)
+        LaunchDarkly::Impl::Integrations::TestData::TestDataSource.new(@test_data)
       end
     end
   end

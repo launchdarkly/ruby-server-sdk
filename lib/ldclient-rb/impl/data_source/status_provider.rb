@@ -14,7 +14,7 @@ module LaunchDarkly
       # This class implements the {LaunchDarkly::Interfaces::DataSource::StatusProvider} interface.
       # It maintains the current status of the data source and broadcasts status changes to listeners.
       #
-      class StatusProviderV2
+      class StatusProvider
         include LaunchDarkly::Interfaces::DataSource::StatusProvider
 
         extend Forwardable

@@ -8,7 +8,7 @@ require "ldclient-rb/impl/broadcaster"
 module LaunchDarkly
   module Impl
     module DataStore
-      describe FeatureStoreClientWrapperV2 do
+      describe FeatureStoreClientWrapper do
         let(:logger) { double.as_null_object }
         let(:status_sink) { double(update_status: nil) }
 
@@ -62,7 +62,7 @@ module LaunchDarkly
             inner = double("store", stop: nil, monitoring_enabled?: true)
             allow(inner).to receive(:available?).and_return(false, true)
             allow(inner).to receive(:init).and_raise(StandardError.new("init error"))
-            sink = LaunchDarkly::Impl::DataStore::StatusProviderV2.new(inner, broadcaster)
+            sink = LaunchDarkly::Impl::DataStore::StatusProvider.new(inner, broadcaster)
 
             ensure_stop(described_class.new(inner, sink, logger)) do |wrapper|
               ignore_error { wrapper.init({}) }
