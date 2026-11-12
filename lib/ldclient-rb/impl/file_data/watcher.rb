@@ -28,10 +28,15 @@ module LaunchDarkly
       # watches the directory of the link's target for the target's name, so that an edit to the
       # target is reported. The links are resolved again after every reported change, after a retry
       # sets up watches, and when a directory that holds a target is deleted, as happens when a
-      # Kubernetes ConfigMap volume is updated. So a link that comes to point elsewhere is followed.
-      # A link that cannot be resolved, for example because its target's directory does not exist
-      # yet or was deleted, is resolved again once per second until its target is watched, and the
-      # callback then runs once.
+      # Kubernetes ConfigMap volume is updated. A link that cannot be resolved, for example because
+      # its target's directory does not exist yet or was deleted, is resolved again once per second
+      # until its target is watched, and the callback then runs once.
+      #
+      # A change that none of those events reports is not followed: a link further along the chain
+      # that is pointed elsewhere while its old target stays, a configured directory that is itself
+      # a link and is pointed elsewhere, or a configured directory that is renamed and replaced.
+      # Deployments that switch files that way, such as a `current` link to a release directory,
+      # should use polling, which reads every configured path on each interval.
       #
       # @private
       #
@@ -274,7 +279,9 @@ module LaunchDarkly
         # The targets of links that changed are dropped, and a watch that served only such targets
         # is removed. A link that cannot be resolved, for example because its target's directory
         # does not exist yet, or whose target's directory cannot be watched, keeps the retry
-        # running, which resolves the links again. Returns true if it added a watch.
+        # running, which resolves the links again. Returns true if it added a watch or if a link
+        # now leads to a target it did not lead to before, which can be in a directory that is
+        # already watched.
         #
         private def refresh_links
           desired = {}
@@ -292,6 +299,13 @@ module LaunchDarkly
           @lock.synchronize do
             return false if @stopped.value
 
+            # A new target in a directory that is already watched is a change. A directory that is
+            # not watched yet counts once its watch is added below, so a watch that keeps failing
+            # does not report a change on every retry.
+            desired.each do |real_directory, names|
+              entry = @watched[real_directory]
+              added = true if entry && !(names - entry.targets).empty?
+            end
             @watched.each { |real_directory, entry| entry.targets = desired[real_directory] || Set.new }
             @watched.delete_if do |_real_directory, entry|
               next false unless entry.directories.empty? && entry.targets.empty?
