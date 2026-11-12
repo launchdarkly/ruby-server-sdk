@@ -237,12 +237,12 @@
       <pre class="lines">
 
 
-107
 108
-109</pre>
+109
+110</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 107</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 108</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
   <span class='ivar'>@reply</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>Semaphore</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='int'>0</span><span class='rparen'>)</span>
@@ -287,12 +287,12 @@
       <pre class="lines">
 
 
-111
 112
-113</pre>
+113
+114</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 111</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 112</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_completed'>completed</span>
   <span class='ivar'>@reply</span><span class='period'>.</span><span class='id identifier rubyid_release'>release</span>
@@ -330,12 +330,12 @@
       <pre class="lines">
 
 
-115
 116
-117</pre>
+117
+118</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 115</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 116</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_wait_for_completion'>wait_for_completion</span>
   <span class='ivar'>@reply</span><span class='period'>.</span><span class='id identifier rubyid_acquire'>acquire</span>
@@ -350,7 +350,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:53 2026 by
+  Generated on Thu Nov 12 21:42:46 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

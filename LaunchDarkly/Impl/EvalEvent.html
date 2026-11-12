@@ -397,7 +397,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(timestamp, context, key, version = nil, variation = nil, value = nil, reason = nil, default = nil, track_events = false, debug_until = nil, prereq_of = nil, sampling_ratio = nil, exclude_from_summaries = false)  &#x21d2; EvalEvent </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(timestamp, context, key, version = nil, variation = nil, value = nil, reason = nil, default = nil, track_events = false, debug_until = nil, prereq_of = nil, sampling_ratio = nil, exclude_from_summaries = false, override_affected = false)  &#x21d2; EvalEvent </a>
     
 
     
@@ -418,6 +418,28 @@
 </li>
 
       
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#override_affected-instance_method" title="#override_affected (instance method)">#<strong>override_affected</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>True if an override affected the evaluation, directly or through a prerequisite or segment.</p></div></span>
+  
+</li>
+
+      
     </ul>
     
   
@@ -430,7 +452,7 @@
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(timestamp, context, key, version = nil, variation = nil, value = nil, reason = nil, default = nil, track_events = false, debug_until = nil, prereq_of = nil, sampling_ratio = nil, exclude_from_summaries = false)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::EvalEvent (class)">EvalEvent</a></span></tt> 
+    #<strong>initialize</strong>(timestamp, context, key, version = nil, variation = nil, value = nil, reason = nil, default = nil, track_events = false, debug_until = nil, prereq_of = nil, sampling_ratio = nil, exclude_from_summaries = false, override_affected = false)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::Impl::EvalEvent (class)">EvalEvent</a></span></tt> 
   
 
   
@@ -482,13 +504,16 @@
 38
 39
 40
-41</pre>
+41
+42
+43</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 28</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_timestamp'>timestamp</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_version'>version</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_variation'>variation</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_reason'>reason</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='id identifier rubyid_track_events'>track_events</span> <span class='op'>=</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='id identifier rubyid_debug_until'>debug_until</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_prereq_of'>prereq_of</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_sampling_ratio'>sampling_ratio</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_exclude_from_summaries'>exclude_from_summaries</span> <span class='op'>=</span> <span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_track_events'>track_events</span> <span class='op'>=</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='id identifier rubyid_debug_until'>debug_until</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_prereq_of'>prereq_of</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_sampling_ratio'>sampling_ratio</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_exclude_from_summaries'>exclude_from_summaries</span> <span class='op'>=</span> <span class='kw'>false</span><span class='comma'>,</span>
+  <span class='id identifier rubyid_override_affected'>override_affected</span> <span class='op'>=</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='kw'>super</span><span class='lparen'>(</span><span class='id identifier rubyid_timestamp'>timestamp</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_sampling_ratio'>sampling_ratio</span><span class='comma'>,</span> <span class='id identifier rubyid_exclude_from_summaries'>exclude_from_summaries</span><span class='rparen'>)</span>
   <span class='ivar'>@key</span> <span class='op'>=</span> <span class='id identifier rubyid_key'>key</span>
   <span class='ivar'>@version</span> <span class='op'>=</span> <span class='id identifier rubyid_version'>version</span>
@@ -500,6 +525,7 @@
 </span>  <span class='ivar'>@track_events</span> <span class='op'>=</span> <span class='id identifier rubyid_track_events'>track_events</span> <span class='kw'>if</span> <span class='id identifier rubyid_track_events'>track_events</span>
   <span class='ivar'>@debug_until</span> <span class='op'>=</span> <span class='id identifier rubyid_debug_until'>debug_until</span> <span class='kw'>if</span> <span class='id identifier rubyid_debug_until'>debug_until</span>
   <span class='ivar'>@prereq_of</span> <span class='op'>=</span> <span class='id identifier rubyid_prereq_of'>prereq_of</span> <span class='kw'>if</span> <span class='id identifier rubyid_prereq_of'>prereq_of</span>
+  <span class='ivar'>@override_affected</span> <span class='op'>=</span> <span class='kw'>true</span> <span class='kw'>if</span> <span class='id identifier rubyid_override_affected'>override_affected</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -555,12 +581,12 @@
       <pre class="lines">
 
 
-50
-51
-52</pre>
+52
+53
+54</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 50</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 52</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_debug_until'>debug_until</span>
   <span class='ivar'>@debug_until</span>
@@ -614,12 +640,12 @@
       <pre class="lines">
 
 
-48
-49
-50</pre>
+50
+51
+52</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 48</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 50</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default'>default</span>
   <span class='ivar'>@default</span>
@@ -673,12 +699,12 @@
       <pre class="lines">
 
 
-43
-44
-45</pre>
+45
+46
+47</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 43</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 45</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_key'>key</span>
   <span class='ivar'>@key</span>
@@ -732,12 +758,12 @@
       <pre class="lines">
 
 
-51
-52
-53</pre>
+53
+54
+55</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 51</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 53</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_prereq_of'>prereq_of</span>
   <span class='ivar'>@prereq_of</span>
@@ -791,12 +817,12 @@
       <pre class="lines">
 
 
-47
-48
-49</pre>
+49
+50
+51</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 47</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 49</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_reason'>reason</span>
   <span class='ivar'>@reason</span>
@@ -850,12 +876,12 @@
       <pre class="lines">
 
 
-49
-50
-51</pre>
+51
+52
+53</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 49</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 51</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_track_events'>track_events</span>
   <span class='ivar'>@track_events</span>
@@ -909,12 +935,12 @@
       <pre class="lines">
 
 
-46
-47
-48</pre>
+48
+49
+50</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 46</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 48</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_value'>value</span>
   <span class='ivar'>@value</span>
@@ -968,12 +994,12 @@
       <pre class="lines">
 
 
-45
-46
-47</pre>
+47
+48
+49</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 45</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 47</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation'>variation</span>
   <span class='ivar'>@variation</span>
@@ -1027,12 +1053,12 @@
       <pre class="lines">
 
 
-44
-45
-46</pre>
+46
+47
+48</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 44</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 46</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_version'>version</span>
   <span class='ivar'>@version</span>
@@ -1045,10 +1071,88 @@
   </div>
 
 
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="override_affected-instance_method">
+  
+    #<strong>override_affected</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>True if an override affected the evaluation, directly or through a prerequisite or segment.
+Such an evaluation appears only in the summary counters, under a counter that carries the
+override-affected marker. It produces no individual feature event and no debug event.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+59
+60
+61</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_types.rb', line 59</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_override_affected'>override_affected</span>
+  <span class='ivar'>@override_affected</span> <span class='op'>?</span> <span class='kw'>true</span> <span class='op'>:</span> <span class='kw'>false</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:53 2026 by
+  Generated on Thu Nov 12 21:42:47 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

@@ -110,7 +110,10 @@
   <strong>This class is part of a private API.</strong>
   You should avoid using this class if possible, as it may be removed or be changed in the future.
 </p>
-
+<p>The <code>versions</code> member is a hash of hashes: flag version, then variation index, then the
+override-affected marker (a boolean), to an EventSummaryFlagVariationCounter. The marker
+takes part in the key, so override-affected and other evaluations of the same flag,
+variation, and version accumulate into separate counters.</p>
 
   </div>
 </div>
@@ -265,12 +268,12 @@
       <pre class="lines">
 
 
-8
-9
-10</pre>
+12
+13
+14</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_summarizer.rb', line 8</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_summarizer.rb', line 12</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_context_kinds'>context_kinds</span>
   <span class='ivar'>@context_kinds</span>
@@ -322,12 +325,12 @@
       <pre class="lines">
 
 
-8
-9
-10</pre>
+12
+13
+14</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_summarizer.rb', line 8</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_summarizer.rb', line 12</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default'>default</span>
   <span class='ivar'>@default</span>
@@ -379,12 +382,12 @@
       <pre class="lines">
 
 
-8
-9
-10</pre>
+12
+13
+14</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_summarizer.rb', line 8</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/event_summarizer.rb', line 12</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_versions'>versions</span>
   <span class='ivar'>@versions</span>
@@ -400,7 +403,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:53 2026 by
+  Generated on Thu Nov 12 21:42:47 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

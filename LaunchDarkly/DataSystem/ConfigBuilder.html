@@ -257,6 +257,28 @@ and how to interact with a persistent data store.</p>
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#overrides-instance_method" title="#overrides (instance method)">#<strong>overrides</strong>(source)  &#x21d2; ConfigBuilder </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Configures the SDK with an override source.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#synchronizers-instance_method" title="#synchronizers (instance method)">#<strong>synchronizers</strong>(synchronizers)  &#x21d2; ConfigBuilder </a>
     
 
@@ -313,7 +335,8 @@ and how to interact with a persistent data store.</p>
 23
 24
 25
-26</pre>
+26
+27</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 20</span>
@@ -324,6 +347,7 @@ and how to interact with a persistent data store.</p>
   <span class='ivar'>@fdv1_fallback_synchronizer</span> <span class='op'>=</span> <span class='kw'>nil</span>
   <span class='ivar'>@data_store_mode</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Interfaces/DataSystem.html" title="LaunchDarkly::Interfaces::DataSystem (module)">DataSystem</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Interfaces/DataSystem/DataStoreMode.html" title="LaunchDarkly::Interfaces::DataSystem::DataStoreMode (module)">DataStoreMode</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Interfaces/DataSystem/DataStoreMode.html#READ_ONLY-constant" title="LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY (constant)">READ_ONLY</a></span></span>
   <span class='ivar'>@data_store</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='ivar'>@overrides</span> <span class='op'>=</span> <span class='kw'>nil</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -374,18 +398,19 @@ and how to interact with a persistent data store.</p>
       <pre class="lines">
 
 
-93
-94
-95
-96
-97
-98
-99
-100
-101</pre>
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 93</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 126</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_build'>build</span>
   <span class='const'><span class='object_link'><a href="../DataSystemConfig.html" title="LaunchDarkly::DataSystemConfig (class)">DataSystemConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../DataSystemConfig.html#initialize-instance_method" title="LaunchDarkly::DataSystemConfig#initialize (method)">new</a></span></span><span class='lparen'>(</span>
@@ -393,7 +418,8 @@ and how to interact with a persistent data store.</p>
     <span class='label'>synchronizers:</span> <span class='ivar'>@synchronizers</span><span class='comma'>,</span>
     <span class='label'>data_store_mode:</span> <span class='ivar'>@data_store_mode</span><span class='comma'>,</span>
     <span class='label'>data_store:</span> <span class='ivar'>@data_store</span><span class='comma'>,</span>
-    <span class='label'>fdv1_fallback_synchronizer:</span> <span class='ivar'>@fdv1_fallback_synchronizer</span>
+    <span class='label'>fdv1_fallback_synchronizer:</span> <span class='ivar'>@fdv1_fallback_synchronizer</span><span class='comma'>,</span>
+    <span class='label'>overrides:</span> <span class='ivar'>@overrides</span>
   <span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -474,14 +500,14 @@ and how to interact with a persistent data store.</p>
       <pre class="lines">
 
 
-82
 83
 84
 85
-86</pre>
+86
+87</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 82</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 83</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data_store'>data_store</span><span class='lparen'>(</span><span class='id identifier rubyid_data_store'>data_store</span><span class='comma'>,</span> <span class='id identifier rubyid_store_mode'>store_mode</span><span class='rparen'>)</span>
   <span class='ivar'>@data_store</span> <span class='op'>=</span> <span class='id identifier rubyid_data_store'>data_store</span>
@@ -554,13 +580,13 @@ revert to FDv1 protocol. Most users will not need to set this directly.</p>
       <pre class="lines">
 
 
-69
 70
 71
-72</pre>
+72
+73</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 69</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 70</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_fdv1_compatible_synchronizer'>fdv1_compatible_synchronizer</span><span class='lparen'>(</span><span class='id identifier rubyid_fallback'>fallback</span><span class='rparen'>)</span>
   <span class='ivar'>@fdv1_fallback_synchronizer</span> <span class='op'>=</span> <span class='id identifier rubyid_fallback'>fallback</span>
@@ -631,16 +657,113 @@ They are tried in order; if the first one fails, the next is tried, and so on.</
       <pre class="lines">
 
 
-38
 39
 40
-41</pre>
+41
+42</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 38</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 39</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initializers'>initializers</span><span class='lparen'>(</span><span class='id identifier rubyid_initializers'>initializers</span><span class='rparen'>)</span>
   <span class='ivar'>@initializers</span> <span class='op'>=</span> <span class='id identifier rubyid_initializers'>initializers</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="overrides-instance_method">
+  
+    #<strong>overrides</strong>(source)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::DataSystem::ConfigBuilder (class)">ConfigBuilder</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Configures the SDK with an override source. Flag overrides are currently experimental and
+subject to change.</p>
+<p>Overrides are flag and segment definitions that take precedence over data received from
+LaunchDarkly at evaluation time, on a per-key basis. They exist for resilience during an
+incident. Overrides let an operator force one or more flags to a known state on a running
+client, whether or not the client can reach LaunchDarkly. Flags not present in the override
+data are completely unaffected.</p>
+<p>The override source is not a data source. It has no effect on the client's initialization
+status, data availability, or data source status. Without a configured source, or while
+the source supplies no overrides, the SDK behaves as it would without this feature.</p>
+<p>At most one override source can be configured. A later call replaces an earlier one.</p>
+<p>When the client is offline, the source is not built or started: no overrides are served,
+and a configuration error in the source is not reported. The SDK logs a warning instead.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_overrides'>overrides</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Integrations/FileData.html" title="LaunchDarkly::Integrations::FileData (module)">FileData</a></span></span><span class='period'>.</span><span class='id identifier rubyid_override_source'><span class='object_link'><a href="../Integrations/FileData.html#override_source-class_method" title="LaunchDarkly::Integrations::FileData.override_source (method)">override_source</a></span></span><span class='lparen'>(</span><span class='label'>paths:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/etc/launchdarkly/overrides.json</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>data_system_config:</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../DataSystem.html" title="LaunchDarkly::DataSystem (module)">DataSystem</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default'><span class='object_link'><a href="../DataSystem.html#default-class_method" title="LaunchDarkly::DataSystem.default (method)">default</a></span></span><span class='period'>.</span><span class='id identifier rubyid_overrides'>overrides</span><span class='lparen'>(</span><span class='id identifier rubyid_overrides'>overrides</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_build'><span class='object_link'><a href="#build-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#build (method)">build</a></span></span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>source</span>
+      
+      
+        <span class='type'>(<tt>#<span class='object_link'><a href="#build-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#build (method)">build</a></span>(String, <span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span>)</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a builder that responds to build(sdk_key, config)
+and returns a <span class='object_link'><a href="../Interfaces/Overrides/OverrideSource.html" title="LaunchDarkly::Interfaces::Overrides::OverrideSource (module)">Interfaces::Overrides::OverrideSource</a></span>, or nil to remove one</p></div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::DataSystem::ConfigBuilder (class)">ConfigBuilder</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>self for chaining</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+116
+117
+118
+119</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 116</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_overrides'>overrides</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='rparen'>)</span>
+  <span class='ivar'>@overrides</span> <span class='op'>=</span> <span class='id identifier rubyid_source'>source</span>
   <span class='kw'>self</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -709,13 +832,13 @@ takes over.</p>
       <pre class="lines">
 
 
-54
 55
 56
-57</pre>
+57
+58</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 54</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/data_system/config_builder.rb', line 55</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_synchronizers'>synchronizers</span><span class='lparen'>(</span><span class='id identifier rubyid_synchronizers'>synchronizers</span><span class='rparen'>)</span>
   <span class='ivar'>@synchronizers</span> <span class='op'>=</span> <span class='id identifier rubyid_synchronizers'>synchronizers</span>
@@ -731,7 +854,7 @@ takes over.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:53 2026 by
+  Generated on Thu Nov 12 21:42:46 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

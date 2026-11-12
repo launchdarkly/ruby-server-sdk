@@ -229,6 +229,33 @@
       <li class="public ">
   <span class="summary_signature">
     
+      <a href="#overrides-instance_method" title="#overrides (instance method)">#<strong>overrides</strong>  &#x21d2; #build(String, Config)<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The override source builder.</p></div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#synchronizers-instance_method" title="#synchronizers (instance method)">#<strong>synchronizers</strong>  &#x21d2; Array&lt;#build(String, Config)&gt;<sup>?</sup> </a>
     
 
@@ -269,7 +296,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(initializers: nil, synchronizers: nil, data_store_mode: LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil)  &#x21d2; DataSystemConfig </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(initializers: nil, synchronizers: nil, data_store_mode: LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil, overrides: nil)  &#x21d2; DataSystemConfig </a>
     
 
     
@@ -300,7 +327,7 @@
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(initializers: nil, synchronizers: nil, data_store_mode: LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::DataSystemConfig (class)">DataSystemConfig</a></span></tt> 
+    #<strong>initialize</strong>(initializers: nil, synchronizers: nil, data_store_mode: LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY, data_store: nil, fdv1_fallback_synchronizer: nil, overrides: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::DataSystemConfig (class)">DataSystemConfig</a></span></tt> 
   
 
   
@@ -396,6 +423,23 @@
       
     </li>
   
+    <li>
+      
+        <span class='name'>overrides</span>
+      
+      
+        <span class='type'>(<tt>#build(String, <span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span>)</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The (optional) builder for an override source.
+Flag overrides are currently experimental and subject to change.</p></div>
+      
+    </li>
+  
 </ul>
 
 
@@ -405,25 +449,29 @@
       <pre class="lines">
 
 
-740
-741
 742
 743
 744
 745
 746
-747</pre>
+747
+748
+749
+750
+751</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 740</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 742</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>initializers:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>synchronizers:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>data_store_mode:</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/DataSystem.html" title="LaunchDarkly::Interfaces::DataSystem (module)">DataSystem</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/DataSystem/DataStoreMode.html" title="LaunchDarkly::Interfaces::DataSystem::DataStoreMode (module)">DataStoreMode</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/DataSystem/DataStoreMode.html#READ_ONLY-constant" title="LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY (constant)">READ_ONLY</a></span></span><span class='comma'>,</span> <span class='label'>data_store:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>fdv1_fallback_synchronizer:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+               <span class='label'>data_store_mode:</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/DataSystem.html" title="LaunchDarkly::Interfaces::DataSystem (module)">DataSystem</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/DataSystem/DataStoreMode.html" title="LaunchDarkly::Interfaces::DataSystem::DataStoreMode (module)">DataStoreMode</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/DataSystem/DataStoreMode.html#READ_ONLY-constant" title="LaunchDarkly::Interfaces::DataSystem::DataStoreMode::READ_ONLY (constant)">READ_ONLY</a></span></span><span class='comma'>,</span> <span class='label'>data_store:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>fdv1_fallback_synchronizer:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>overrides:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@initializers</span> <span class='op'>=</span> <span class='id identifier rubyid_initializers'>initializers</span>
   <span class='ivar'>@synchronizers</span> <span class='op'>=</span> <span class='id identifier rubyid_synchronizers'>synchronizers</span>
   <span class='ivar'>@data_store_mode</span> <span class='op'>=</span> <span class='id identifier rubyid_data_store_mode'>data_store_mode</span>
   <span class='ivar'>@data_store</span> <span class='op'>=</span> <span class='id identifier rubyid_data_store'>data_store</span>
   <span class='ivar'>@fdv1_fallback_synchronizer</span> <span class='op'>=</span> <span class='id identifier rubyid_fdv1_fallback_synchronizer'>fdv1_fallback_synchronizer</span>
+  <span class='ivar'>@overrides</span> <span class='op'>=</span> <span class='id identifier rubyid_overrides'>overrides</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -474,12 +522,12 @@
       <pre class="lines">
 
 
-763
-764
-765</pre>
+767
+768
+769</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 763</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 767</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data_store'>data_store</span>
   <span class='ivar'>@data_store</span>
@@ -528,12 +576,12 @@
       <pre class="lines">
 
 
-759
-760
-761</pre>
+763
+764
+765</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 759</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 763</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data_store_mode'>data_store_mode</span>
   <span class='ivar'>@data_store_mode</span>
@@ -582,12 +630,12 @@
       <pre class="lines">
 
 
-767
-768
-769</pre>
+771
+772
+773</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 767</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 771</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_fdv1_fallback_synchronizer'>fdv1_fallback_synchronizer</span>
   <span class='ivar'>@fdv1_fallback_synchronizer</span>
@@ -636,15 +684,71 @@
       <pre class="lines">
 
 
-751
-752
-753</pre>
+755
+756
+757</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 751</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 755</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initializers'>initializers</span>
   <span class='ivar'>@initializers</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="overrides-instance_method">
+  
+    #<strong>overrides</strong>  &#x21d2; <tt>#build(String, <span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span>)</tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The override source builder. Responds to build(sdk_key, config) and returns an
+<span class='object_link'><a href="Interfaces/Overrides/OverrideSource.html" title="LaunchDarkly::Interfaces::Overrides::OverrideSource (module)">Interfaces::Overrides::OverrideSource</a></span>. Flag overrides are currently
+experimental and subject to change.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>#build(String, <span class='object_link'><a href="Config.html" title="LaunchDarkly::Config (class)">Config</a></span>)</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+777
+778
+779</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 777</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_overrides'>overrides</span>
+  <span class='ivar'>@overrides</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -690,12 +794,12 @@
       <pre class="lines">
 
 
-755
-756
-757</pre>
+759
+760
+761</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 755</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/config.rb', line 759</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_synchronizers'>synchronizers</span>
   <span class='ivar'>@synchronizers</span>
@@ -711,7 +815,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:52 2026 by
+  Generated on Thu Nov 12 21:42:46 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

@@ -664,7 +664,9 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
 86
 87
 88
-89</pre>
+89
+90
+91</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 60</span>
@@ -696,6 +698,8 @@ an uninitialized state. See <span class='object_link'><a href="#initialized%3F-i
   <span class='comment'># Each flag lets the matching cached-data warning log once per client.
 </span>  <span class='ivar'>@cached_data_evaluation_warned</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>AtomicBoolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
   <span class='ivar'>@cached_data_all_flags_warned</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>AtomicBoolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='comment'># Set after the first warning that all_flags_state returned only override entries before initialization.
+</span>  <span class='ivar'>@all_flags_overrides_only_warned</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>AtomicBoolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_start_up'>start_up</span><span class='lparen'>(</span><span class='id identifier rubyid_wait_for_sec'>wait_for_sec</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
@@ -737,12 +741,12 @@ is (as far as the SDK knows) currently operational and tracking changes in this 
       <pre class="lines">
 
 
-724
-725
-726</pre>
+769
+770
+771</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 724</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 769</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_big_segment_store_status_provider'>big_segment_store_status_provider</span>
   <span class='ivar'>@big_segment_store_status_provider</span>
@@ -800,17 +804,17 @@ is (as far as the SDK knows) currently operational and tracking changes in this 
       <pre class="lines">
 
 
-274
-275
 276
 277
 278
 279
 280
-281</pre>
+281
+282
+283</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 274</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 276</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_hook'>add_hook</span><span class='lparen'>(</span><span class='id identifier rubyid_hook'>hook</span><span class='rparen'>)</span>
   <span class='kw'>unless</span> <span class='id identifier rubyid_hook'>hook</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="Interfaces.html" title="LaunchDarkly::Interfaces (module)">Interfaces</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/Hooks.html" title="LaunchDarkly::Interfaces::Hooks (module)">Hooks</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Interfaces/Hooks/Hook.html" title="LaunchDarkly::Interfaces::Hooks::Hook (module)">Hook</a></span></span><span class='rparen'>)</span>
@@ -959,12 +963,6 @@ of the JSON data if you are passing the flag state to the front end.</p></div>
       <pre class="lines">
 
 
-630
-631
-632
-633
-634
-635
 636
 637
 638
@@ -1021,24 +1019,77 @@ of the JSON data if you are passing the flag state to the front end.</p></div>
 689
 690
 691
-692</pre>
+692
+693
+694
+695
+696
+697
+698
+699
+700
+701
+702
+703
+704
+705
+706
+707
+708
+709
+710
+711
+712
+713
+714
+715
+716
+717
+718
+719
+720
+721
+722
+723
+724
+725
+726
+727
+728
+729
+730
+731
+732
+733
+734
+735
+736
+737</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 630</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 636</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_flags_state'>all_flags_state</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span>
 
   <span class='id identifier rubyid_check_forked'>check_forked</span>
 
+  <span class='id identifier rubyid_override_features'>override_features</span> <span class='op'>=</span> <span class='kw'>nil</span>
   <span class='kw'>unless</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
     <span class='kw'>if</span> <span class='ivar'>@data_system</span><span class='period'>.</span><span class='id identifier rubyid_store'>store</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
       <span class='kw'>if</span> <span class='ivar'>@cached_data_all_flags_warned</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
         <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Called all_flags_state before client initialization; using last known values from data store. This message is logged once.</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
       <span class='kw'>end</span>
     <span class='kw'>else</span>
+      <span class='comment'># No data from LaunchDarkly is available. When the override store holds flags, the state
+</span>      <span class='comment'># contains only those, read from the override store itself: a store that is not
+</span>      <span class='comment'># initialized can still hold LaunchDarkly data, which the state must not include.
+</span>      <span class='comment'># Without override flags the state is invalid, as it is without an override source.
+</span>      <span class='id identifier rubyid_override_features'>override_features</span> <span class='op'>=</span> <span class='ivar'>@data_system</span><span class='period'>.</span><span class='id identifier rubyid_override_items'>override_items</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataStore.html" title="LaunchDarkly::Impl::DataStore (module)">DataStore</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataStore.html#FEATURES-constant" title="LaunchDarkly::Impl::DataStore::FEATURES (constant)">FEATURES</a></span></span><span class='rparen'>)</span>
+      <span class='kw'>if</span> <span class='id identifier rubyid_override_features'>override_features</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
         <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Called all_flags_state before client initialization. Data store not available; returning empty state</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
         <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
+      <span class='kw'>end</span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
 
@@ -1048,14 +1099,28 @@ of the JSON data if you are passing the flag state to the front end.</p></div>
     <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 
-  <span class='kw'>begin</span>
-    <span class='id identifier rubyid_features'>features</span> <span class='op'>=</span> <span class='ivar'>@data_system</span><span class='period'>.</span><span class='id identifier rubyid_store'>store</span><span class='period'>.</span><span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataStore.html" title="LaunchDarkly::Impl::DataStore (module)">DataStore</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataStore.html#FEATURES-constant" title="LaunchDarkly::Impl::DataStore::FEATURES (constant)">FEATURES</a></span></span><span class='rparen'>)</span>
-  <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_exn'>exn</span>
-    <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_log_exception'><span class='object_link'><a href="Impl/Util.html#log_exception-class_method" title="LaunchDarkly::Impl::Util.log_exception (method)">log_exception</a></span></span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Unable to read flags for all_flags_state</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_exn'>exn</span><span class='rparen'>)</span>
-    <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_valid'>valid</span> <span class='op'>=</span> <span class='kw'>true</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_override_features'>override_features</span>
+    <span class='kw'>if</span> <span class='ivar'>@all_flags_overrides_only_warned</span><span class='period'>.</span><span class='id identifier rubyid_make_true'>make_true</span>
+      <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Called all_flags_state before client initialization; returning only flags from the override store. This message is logged once.</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_features'>features</span> <span class='op'>=</span> <span class='id identifier rubyid_override_features'>override_features</span>
+  <span class='kw'>else</span>
+    <span class='kw'>begin</span>
+      <span class='id identifier rubyid_features'>features</span> <span class='op'>=</span> <span class='ivar'>@data_system</span><span class='period'>.</span><span class='id identifier rubyid_store'>store</span><span class='period'>.</span><span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataStore.html" title="LaunchDarkly::Impl::DataStore (module)">DataStore</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataStore.html#FEATURES-constant" title="LaunchDarkly::Impl::DataStore::FEATURES (constant)">FEATURES</a></span></span><span class='rparen'>)</span>
+    <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_exn'>exn</span>
+      <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_log_exception'><span class='object_link'><a href="Impl/Util.html#log_exception-class_method" title="LaunchDarkly::Impl::Util.log_exception (method)">log_exception</a></span></span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Unable to read flags for all_flags_state</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_exn'>exn</span><span class='rparen'>)</span>
+      <span class='comment'># Overrides only add to the state. Without them the state is invalid and empty here, so
+</span>      <span class='comment'># with them it holds the override flags and stays invalid. A client-side SDK bootstrapped
+</span>      <span class='comment'># from the state uses its flags whatever $valid says (js-client-sdk 3.x and the 4.x browser
+</span>      <span class='comment'># SDK only log a warning), so the overridden values still reach it.
+</span>      <span class='id identifier rubyid_features'>features</span> <span class='op'>=</span> <span class='ivar'>@data_system</span><span class='period'>.</span><span class='id identifier rubyid_override_items'>override_items</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataStore.html" title="LaunchDarkly::Impl::DataStore (module)">DataStore</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/DataStore.html#FEATURES-constant" title="LaunchDarkly::Impl::DataStore::FEATURES (constant)">FEATURES</a></span></span><span class='rparen'>)</span>
+      <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_features'>features</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+      <span class='id identifier rubyid_valid'>valid</span> <span class='op'>=</span> <span class='kw'>false</span>
+    <span class='kw'>end</span>
   <span class='kw'>end</span>
 
-  <span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="FeatureFlagsState.html" title="LaunchDarkly::FeatureFlagsState (class)">FeatureFlagsState</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FeatureFlagsState.html#initialize-instance_method" title="LaunchDarkly::FeatureFlagsState#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_valid'>valid</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_client_only'>client_only</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:client_side_only</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='kw'>false</span>
   <span class='id identifier rubyid_with_reasons'>with_reasons</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:with_reasons</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='kw'>false</span>
   <span class='id identifier rubyid_details_only_if_tracked'>details_only_if_tracked</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:details_only_for_tracked_flags</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='kw'>false</span>
@@ -1067,21 +1132,38 @@ of the JSON data if you are passing the flag state to the front end.</p></div>
       <span class='lparen'>(</span><span class='id identifier rubyid_eval_result'>eval_result</span><span class='comma'>,</span> <span class='id identifier rubyid_eval_state'>eval_state</span><span class='rparen'>)</span> <span class='op'>=</span> <span class='ivar'>@evaluator</span><span class='period'>.</span><span class='id identifier rubyid_evaluate'>evaluate</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
       <span class='id identifier rubyid_detail'>detail</span> <span class='op'>=</span> <span class='id identifier rubyid_eval_result'>eval_result</span><span class='period'>.</span><span class='id identifier rubyid_detail'>detail</span>
     <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_exn'>exn</span>
-      <span class='id identifier rubyid_detail'>detail</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="EvaluationDetail.html#initialize-instance_method" title="LaunchDarkly::EvaluationDetail#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='id identifier rubyid_error'><span class='object_link'><a href="EvaluationReason.html#error-class_method" title="LaunchDarkly::EvaluationReason.error (method)">error</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="EvaluationReason.html#ERROR_EXCEPTION-constant" title="LaunchDarkly::EvaluationReason::ERROR_EXCEPTION (constant)">ERROR_EXCEPTION</a></span></span><span class='rparen'>)</span><span class='rparen'>)</span>
+      <span class='comment'># The flag definition was read before the failure, so its own marker decides the marking.
+</span>      <span class='id identifier rubyid_reason'>reason</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='id identifier rubyid_error'><span class='object_link'><a href="EvaluationReason.html#error-class_method" title="LaunchDarkly::EvaluationReason.error (method)">error</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="EvaluationReason.html#ERROR_EXCEPTION-constant" title="LaunchDarkly::EvaluationReason::ERROR_EXCEPTION (constant)">ERROR_EXCEPTION</a></span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_with_override_affected'><span class='object_link'><a href="EvaluationReason.html#with_override_affected-instance_method" title="LaunchDarkly::EvaluationReason#with_override_affected (method)">with_override_affected</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_override_item?'>override_item?</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='rparen'>)</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_detail'>detail</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="EvaluationDetail.html#initialize-instance_method" title="LaunchDarkly::EvaluationDetail#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
       <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Util.html" title="LaunchDarkly::Impl::Util (module)">Util</a></span></span><span class='period'>.</span><span class='id identifier rubyid_log_exception'><span class='object_link'><a href="Impl/Util.html#log_exception-class_method" title="LaunchDarkly::Impl::Util.log_exception (method)">log_exception</a></span></span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Error evaluating flag \&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_k'>k</span><span class='embexpr_end'>}</span><span class='tstring_content'>\&quot; in all_flags_state</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_exn'>exn</span><span class='rparen'>)</span>
     <span class='kw'>end</span>
 
     <span class='id identifier rubyid_requires_experiment_data'>requires_experiment_data</span> <span class='op'>=</span> <span class='id identifier rubyid_experiment?'>experiment?</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='comma'>,</span> <span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_track_events'>track_events</span> <span class='op'>=</span> <span class='id identifier rubyid_f'>f</span><span class='lbracket'>[</span><span class='symbol'>:trackEvents</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='id identifier rubyid_requires_experiment_data'>requires_experiment_data</span>
+    <span class='id identifier rubyid_track_reason'>track_reason</span> <span class='op'>=</span> <span class='id identifier rubyid_requires_experiment_data'>requires_experiment_data</span>
+    <span class='id identifier rubyid_debug_events_until_date'>debug_events_until_date</span> <span class='op'>=</span> <span class='id identifier rubyid_f'>f</span><span class='lbracket'>[</span><span class='symbol'>:debugEventsUntilDate</span><span class='rbracket'>]</span>
+    <span class='comment'># A failed evaluation has no result, so the flag&#39;s own marker decides, as it does for the
+</span>    <span class='comment'># reason.
+</span>    <span class='id identifier rubyid_override_affected'>override_affected</span> <span class='op'>=</span> <span class='id identifier rubyid_eval_result'>eval_result</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='id identifier rubyid_override_item?'>override_item?</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_eval_result'>eval_result</span><span class='period'>.</span><span class='id identifier rubyid_override_affected'>override_affected</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_override_affected'>override_affected</span>
+      <span class='comment'># A consumer of this state sends individual events according to these fields. An
+</span>      <span class='comment'># override-affected evaluation produces no individual events, so the state turns them off
+</span>      <span class='comment'># for this flag. The flag, its value, and its reason stay.
+</span>      <span class='id identifier rubyid_track_events'>track_events</span> <span class='op'>=</span> <span class='kw'>false</span>
+      <span class='id identifier rubyid_track_reason'>track_reason</span> <span class='op'>=</span> <span class='kw'>false</span>
+      <span class='id identifier rubyid_debug_events_until_date'>debug_events_until_date</span> <span class='op'>=</span> <span class='kw'>nil</span>
+    <span class='kw'>end</span>
     <span class='id identifier rubyid_flag_state'>flag_state</span> <span class='op'>=</span> <span class='lbrace'>{</span>
       <span class='label'>key:</span> <span class='id identifier rubyid_f'>f</span><span class='lbracket'>[</span><span class='symbol'>:key</span><span class='rbracket'>]</span><span class='comma'>,</span>
       <span class='label'>value:</span> <span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span>
       <span class='label'>variation:</span> <span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_variation_index'>variation_index</span><span class='comma'>,</span>
       <span class='label'>reason:</span> <span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_reason'>reason</span><span class='comma'>,</span>
-      <span class='label'>prerequisites:</span> <span class='id identifier rubyid_eval_state'>eval_state</span><span class='period'>.</span><span class='id identifier rubyid_prerequisites'>prerequisites</span><span class='comma'>,</span>
+      <span class='comment'># A failed evaluation has no evaluation state, so it reports no prerequisites.
+</span>      <span class='label'>prerequisites:</span> <span class='id identifier rubyid_eval_state'>eval_state</span><span class='op'>&amp;.</span><span class='id identifier rubyid_prerequisites'>prerequisites</span><span class='comma'>,</span>
       <span class='label'>version:</span> <span class='id identifier rubyid_f'>f</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span><span class='comma'>,</span>
-      <span class='label'>trackEvents:</span> <span class='id identifier rubyid_f'>f</span><span class='lbracket'>[</span><span class='symbol'>:trackEvents</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='id identifier rubyid_requires_experiment_data'>requires_experiment_data</span><span class='comma'>,</span>
-      <span class='label'>trackReason:</span> <span class='id identifier rubyid_requires_experiment_data'>requires_experiment_data</span><span class='comma'>,</span>
-      <span class='label'>debugEventsUntilDate:</span> <span class='id identifier rubyid_f'>f</span><span class='lbracket'>[</span><span class='symbol'>:debugEventsUntilDate</span><span class='rbracket'>]</span><span class='comma'>,</span>
+      <span class='label'>trackEvents:</span> <span class='id identifier rubyid_track_events'>track_events</span><span class='comma'>,</span>
+      <span class='label'>trackReason:</span> <span class='id identifier rubyid_track_reason'>track_reason</span><span class='comma'>,</span>
+      <span class='label'>debugEventsUntilDate:</span> <span class='id identifier rubyid_debug_events_until_date'>debug_events_until_date</span><span class='comma'>,</span>
     <span class='rbrace'>}</span>
 
     <span class='id identifier rubyid_state'>state</span><span class='period'>.</span><span class='id identifier rubyid_add_flag'>add_flag</span><span class='lparen'>(</span><span class='id identifier rubyid_flag_state'>flag_state</span><span class='comma'>,</span> <span class='id identifier rubyid_with_reasons'>with_reasons</span><span class='comma'>,</span> <span class='id identifier rubyid_details_only_if_tracked'>details_only_if_tracked</span><span class='rparen'>)</span>
@@ -1118,16 +1200,16 @@ of the JSON data if you are passing the flag state to the front end.</p></div>
       <pre class="lines">
 
 
-710
-711
-712
-713
-714
-715
-716</pre>
+755
+756
+757
+758
+759
+760
+761</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 710</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 755</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1264,12 +1346,12 @@ listener model.</p>
       <pre class="lines">
 
 
-733
-734
-735</pre>
+778
+779
+780</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 733</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 778</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flag_tracker'>flag_tracker</span>
   <span class='ivar'>@flag_tracker</span>
@@ -1304,13 +1386,13 @@ listener model.</p>
       <pre class="lines">
 
 
-701
-702
-703
-704</pre>
+746
+747
+748
+749</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 701</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 746</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flush'>flush</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1369,12 +1451,6 @@ until later; see <span class='object_link'><a href="#flush-instance_method" titl
       <pre class="lines">
 
 
-538
-539
-540
-541
-542
-543
 544
 545
 546
@@ -1383,10 +1459,16 @@ until later; see <span class='object_link'><a href="#flush-instance_method" titl
 549
 550
 551
-552</pre>
+552
+553
+554
+555
+556
+557
+558</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 538</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 544</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_identify'>identify</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1465,14 +1547,14 @@ parameter of <span class='object_link'><a href="#variation-instance_method" titl
       <pre class="lines">
 
 
-319
-320
 321
 322
-323</pre>
+323
+324
+325</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 319</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 321</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='kw'>return</span> <span class='kw'>true</span> <span class='kw'>if</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_offline?'>offline?</span> <span class='op'>||</span> <span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_use_ldd?'>use_ldd?</span>
@@ -1560,8 +1642,6 @@ a valid stage, then a default stage of 'off' will be used instead.</p>
       <pre class="lines">
 
 
-496
-497
 498
 499
 500
@@ -1586,10 +1666,16 @@ a valid stage, then a default stage of 'off' will be used instead.</p>
 519
 520
 521
-522</pre>
+522
+523
+524
+525
+526
+527
+528</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 496</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 498</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_migration_variation'>migration_variation</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1610,7 +1696,11 @@ a valid stage, then a default stage of 'off' will be used instead.</p>
       <span class='kw'>next</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/EvaluationWithHookResult.html" title="LaunchDarkly::Impl::EvaluationWithHookResult (class)">EvaluationWithHookResult</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Impl/EvaluationWithHookResult.html#initialize-instance_method" title="LaunchDarkly::Impl::EvaluationWithHookResult#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_detail'>detail</span><span class='comma'>,</span> <span class='lbrace'>{</span><span class='label'>stage:</span> <span class='id identifier rubyid_stage'>stage</span><span class='comma'>,</span> <span class='label'>tracker:</span> <span class='id identifier rubyid_tracker'>tracker</span><span class='rbrace'>}</span><span class='rparen'>)</span>
     <span class='kw'>end</span>
 
-    <span class='id identifier rubyid_detail'>detail</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Evaluator.html" title="LaunchDarkly::Impl::Evaluator (class)">Evaluator</a></span></span><span class='period'>.</span><span class='id identifier rubyid_error_result'><span class='object_link'><a href="Impl/Evaluator.html#error_result-class_method" title="LaunchDarkly::Impl::Evaluator.error_result (method)">error_result</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="EvaluationReason.html#ERROR_WRONG_TYPE-constant" title="LaunchDarkly::EvaluationReason::ERROR_WRONG_TYPE (constant)">ERROR_WRONG_TYPE</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+    <span class='comment'># The type mismatch replaces the reason. The evaluation read the same definitions, so the new
+</span>    <span class='comment'># reason keeps the override-affected marking.
+</span>    <span class='id identifier rubyid_reason'>reason</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='period'>.</span><span class='id identifier rubyid_error'><span class='object_link'><a href="EvaluationReason.html#error-class_method" title="LaunchDarkly::EvaluationReason.error (method)">error</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="EvaluationReason.html" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="EvaluationReason.html#ERROR_WRONG_TYPE-constant" title="LaunchDarkly::EvaluationReason::ERROR_WRONG_TYPE (constant)">ERROR_WRONG_TYPE</a></span></span><span class='rparen'>)</span>
+      <span class='period'>.</span><span class='id identifier rubyid_with_override_affected'>with_override_affected</span><span class='lparen'>(</span><span class='id identifier rubyid_detail'>detail</span><span class='period'>.</span><span class='id identifier rubyid_reason'>reason</span><span class='period'>.</span><span class='id identifier rubyid_override_affected'>override_affected</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_detail'>detail</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="EvaluationDetail.html" title="LaunchDarkly::EvaluationDetail (class)">EvaluationDetail</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="EvaluationDetail.html#initialize-instance_method" title="LaunchDarkly::EvaluationDetail#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_default_stage'>default_stage</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_tracker'>tracker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Migrations.html" title="LaunchDarkly::Impl::Migrations (module)">Migrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Migrations/OpTracker.html" title="LaunchDarkly::Impl::Migrations::OpTracker (class)">OpTracker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Impl/Migrations/OpTracker.html#initialize-instance_method" title="LaunchDarkly::Impl::Migrations::OpTracker#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='ivar'>@config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_detail'>detail</span><span class='comma'>,</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='rparen'>)</span>
 
     <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/EvaluationWithHookResult.html" title="LaunchDarkly::Impl::EvaluationWithHookResult (class)">EvaluationWithHookResult</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Impl/EvaluationWithHookResult.html#initialize-instance_method" title="LaunchDarkly::Impl::EvaluationWithHookResult#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_detail'>detail</span><span class='comma'>,</span> <span class='lbrace'>{</span><span class='label'>stage:</span> <span class='id identifier rubyid_default_stage'>default_stage</span><span class='comma'>,</span> <span class='label'>tracker:</span> <span class='id identifier rubyid_tracker'>tracker</span><span class='rbrace'>}</span><span class='rparen'>)</span>
@@ -1677,8 +1767,6 @@ method clears that condition for the current process.</p>
       <pre class="lines">
 
 
-112
-113
 114
 115
 116
@@ -1687,10 +1775,12 @@ method clears that condition for the current process.</p>
 119
 120
 121
-122</pre>
+122
+123
+124</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 112</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 114</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_postfork'>postfork</span><span class='lparen'>(</span><span class='id identifier rubyid_wait_for_sec'>wait_for_sec</span> <span class='op'>=</span> <span class='int'>5</span><span class='rparen'>)</span>
   <span class='ivar'>@data_system</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -1764,18 +1854,18 @@ For more information, see <a href="https://docs.launchdarkly.com/sdk/features/se
       <pre class="lines">
 
 
-290
-291
 292
 293
 294
 295
 296
 297
-298</pre>
+298
+299
+300</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 290</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 292</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_secure_mode_hash'>secure_mode_hash</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/Context.html" title="LaunchDarkly::Impl::Context (module)">Context</a></span></span><span class='period'>.</span><span class='id identifier rubyid_make_context'><span class='object_link'><a href="Impl/Context.html#make_context-class_method" title="LaunchDarkly::Impl::Context.make_context (method)">make_context</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
@@ -1889,19 +1979,19 @@ for Data Export.</p></div>
       <pre class="lines">
 
 
-575
-576
-577
-578
-579
-580
 581
 582
 583
-584</pre>
+584
+585
+586
+587
+588
+589
+590</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 575</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 581</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_track'>track</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_metric_value'>metric_value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -1961,12 +2051,6 @@ automatically.</p>
       <pre class="lines">
 
 
-596
-597
-598
-599
-600
-601
 602
 603
 604
@@ -1976,10 +2060,16 @@ automatically.</p>
 608
 609
 610
-611</pre>
+611
+612
+613
+614
+615
+616
+617</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 596</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 602</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_track_migration_op'>track_migration_op</span><span class='lparen'>(</span><span class='id identifier rubyid_tracker'>tracker</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -2090,8 +2180,6 @@ condition making it impossible to find or evaluate the flag</p></div>
       <pre class="lines">
 
 
-336
-337
 338
 339
 340
@@ -2099,10 +2187,12 @@ condition making it impossible to find or evaluate the flag</p></div>
 342
 343
 344
-345</pre>
+345
+346
+347</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 336</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 338</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation'>variation</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -2216,8 +2306,6 @@ condition making it impossible to find or evaluate the flag</p></div>
       <pre class="lines">
 
 
-370
-371
 372
 373
 374
@@ -2225,10 +2313,12 @@ condition making it impossible to find or evaluate the flag</p></div>
 376
 377
 378
-379</pre>
+379
+380
+381</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 370</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/ldclient.rb', line 372</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_variation_detail'>variation_detail</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_check_forked'>check_forked</span>
@@ -2250,7 +2340,7 @@ condition making it impossible to find or evaluate the flag</p></div>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:53 2026 by
+  Generated on Thu Nov 12 21:42:46 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

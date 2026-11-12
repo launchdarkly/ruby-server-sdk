@@ -453,6 +453,33 @@ message will always be logged in this case.</p>
       <li class="public ">
   <span class="summary_signature">
     
+      <a href="#override_affected-instance_method" title="#override_affected (instance method)">#<strong>override_affected</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>True if an override affected this evaluation, directly or transitively.</p></div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#prerequisite_key-instance_method" title="#prerequisite_key (instance method)">#<strong>prerequisite_key</strong>  &#x21d2; String </a>
     
 
@@ -755,7 +782,7 @@ message will always be logged in this case.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(kind, rule_index, rule_id, prerequisite_key, error_kind, in_experiment = nil, big_segments_status = nil)  &#x21d2; EvaluationReason </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(kind, rule_index, rule_id, prerequisite_key, error_kind, in_experiment = nil, big_segments_status = nil, override_affected = false)  &#x21d2; EvaluationReason </a>
     
 
     
@@ -864,6 +891,28 @@ message will always be logged in this case.</p>
 </li>
 
       
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#with_override_affected-instance_method" title="#with_override_affected (instance method)">#<strong>with_override_affected</strong>(override_affected)  &#x21d2; EvaluationReason </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a reason that is the same as this one apart from the <span class='object_link'><a href="#override_affected-instance_method" title="LaunchDarkly::EvaluationReason#override_affected (method)">#override_affected</a></span> indicator.</p></div></span>
+  
+</li>
+
+      
     </ul>
     
   
@@ -874,7 +923,7 @@ message will always be logged in this case.</p>
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(kind, rule_index, rule_id, prerequisite_key, error_kind, in_experiment = nil, big_segments_status = nil)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></tt> 
+    #<strong>initialize</strong>(kind, rule_index, rule_id, prerequisite_key, error_kind, in_experiment = nil, big_segments_status = nil, override_affected = false)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></tt> 
   
 
   
@@ -896,24 +945,25 @@ but should use class methods like #off to avoid creating unnecessary instances.<
       <pre class="lines">
 
 
-329
-330
-331
-332
-333
-334
-335
-336
-337
-338
-339
-340</pre>
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 329</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 361</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_rule_index'>rule_index</span><span class='comma'>,</span> <span class='id identifier rubyid_rule_id'>rule_id</span><span class='comma'>,</span> <span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span><span class='comma'>,</span> <span class='id identifier rubyid_error_kind'>error_kind</span><span class='comma'>,</span> <span class='id identifier rubyid_in_experiment'>in_experiment</span><span class='op'>=</span><span class='kw'>nil</span><span class='comma'>,</span>
-    <span class='id identifier rubyid_big_segments_status'>big_segments_status</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_big_segments_status'>big_segments_status</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_override_affected'>override_affected</span> <span class='op'>=</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='ivar'>@kind</span> <span class='op'>=</span> <span class='id identifier rubyid_kind'>kind</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span>
   <span class='ivar'>@rule_index</span> <span class='op'>=</span> <span class='id identifier rubyid_rule_index'>rule_index</span>
   <span class='ivar'>@rule_id</span> <span class='op'>=</span> <span class='id identifier rubyid_rule_id'>rule_id</span>
@@ -923,6 +973,7 @@ but should use class methods like #off to avoid creating unnecessary instances.<
   <span class='ivar'>@error_kind</span> <span class='op'>=</span> <span class='id identifier rubyid_error_kind'>error_kind</span>
   <span class='ivar'>@in_experiment</span> <span class='op'>=</span> <span class='id identifier rubyid_in_experiment'>in_experiment</span>
   <span class='ivar'>@big_segments_status</span> <span class='op'>=</span> <span class='id identifier rubyid_big_segments_status'>big_segments_status</span>
+  <span class='ivar'>@override_affected</span> <span class='op'>=</span> <span class='op'>!</span><span class='op'>!</span><span class='id identifier rubyid_override_affected'>override_affected</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1150,6 +1201,64 @@ as #OFF.</p>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_kind'>kind</span>
   <span class='ivar'>@kind</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="override_affected-instance_method">
+  
+    #<strong>override_affected</strong>  &#x21d2; <tt>Boolean</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>True if an override affected this evaluation, directly or transitively. It is true when the
+evaluated flag came from the SDK's override store. It is also true when a prerequisite flag at
+any depth, or a segment read during the evaluation, came from the override store. In the JSON
+representation, the <code>overrideAffected</code> property appears only when this is true.</p>
+<p>Flag overrides are currently experimental and subject to change.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+160
+161
+162</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 160</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_override_affected'>override_affected</span>
+  <span class='ivar'>@override_affected</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1399,14 +1508,14 @@ or deleted. If <span class='object_link'><a href="#kind-instance_method" title="
       <pre class="lines">
 
 
-209
-210
-211
-212
-213</pre>
+218
+219
+220
+221
+222</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 209</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 218</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='id identifier rubyid_error_kind'>error_kind</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>error_kind must be a symbol</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_error_kind'>error_kind</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Symbol</span>
@@ -1455,16 +1564,16 @@ or deleted. If <span class='object_link'><a href="#kind-instance_method" title="
       <pre class="lines">
 
 
-161
-162
-163
-164
-165
-166
-167</pre>
+170
+171
+172
+173
+174
+175
+176</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 161</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 170</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_fallthrough'>fallthrough</span><span class='lparen'>(</span><span class='id identifier rubyid_in_experiment'>in_experiment</span><span class='op'>=</span><span class='kw'>false</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_in_experiment'>in_experiment</span>
@@ -1515,12 +1624,12 @@ or deleted. If <span class='object_link'><a href="#kind-instance_method" title="
       <pre class="lines">
 
 
-155
-156
-157</pre>
+164
+165
+166</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 155</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 164</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_off'>off</span>
   <span class='cvar'>@@off</span>
@@ -1601,13 +1710,13 @@ or deleted. If <span class='object_link'><a href="#kind-instance_method" title="
       <pre class="lines">
 
 
-199
-200
-201
-202</pre>
+208
+209
+210
+211</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 199</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 208</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_prerequisite_failed'>prerequisite_failed</span><span class='lparen'>(</span><span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>prerequisite_key must be a string</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>String</span>
@@ -1704,20 +1813,20 @@ the feature flag)</p></div>
       <pre class="lines">
 
 
-182
-183
-184
-185
-186
-187
-188
-189
-190
 191
-192</pre>
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 182</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 191</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_rule_match'>rule_match</span><span class='lparen'>(</span><span class='id identifier rubyid_rule_index'>rule_index</span><span class='comma'>,</span> <span class='id identifier rubyid_rule_id'>rule_id</span><span class='comma'>,</span> <span class='id identifier rubyid_in_experiment'>in_experiment</span><span class='op'>=</span><span class='kw'>false</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rule_index must be a number</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_rule_index'>rule_index</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Numeric</span>
@@ -1772,12 +1881,12 @@ the feature flag)</p></div>
       <pre class="lines">
 
 
-171
-172
-173</pre>
+180
+181
+182</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 171</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 180</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_target_match'>target_match</span>
   <span class='cvar'>@@target_match</span>
@@ -1808,32 +1917,36 @@ the feature flag)</p></div>
       <pre class="lines">
 
 
-215
-216
-217
-218
-219
-220
-221
-222
-223
 224
 225
-226</pre>
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 215</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 224</span>
 
 <span class='kw'>def</span> <span class='op'>==</span><span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span>
     <span class='ivar'>@kind</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_kind'>kind</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@rule_index</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_rule_index'>rule_index</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@rule_id</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_rule_id'>rule_id</span> <span class='op'>&amp;&amp;</span>
       <span class='ivar'>@prerequisite_key</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_prerequisite_key'>prerequisite_key</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@error_kind</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_error_kind'>error_kind</span> <span class='op'>&amp;&amp;</span>
-      <span class='ivar'>@big_segments_status</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_big_segments_status'>big_segments_status</span>
+      <span class='ivar'>@big_segments_status</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_big_segments_status'>big_segments_status</span> <span class='op'>&amp;&amp;</span>
+      <span class='ivar'>@override_affected</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_override_affected'>override_affected</span>
   <span class='kw'>elsif</span> <span class='id identifier rubyid_other'>other</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span> <span class='const'>Hash</span>
     <span class='ivar'>@kind</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='lbracket'>[</span><span class='symbol'>:kind</span><span class='rbracket'>]</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@rule_index</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='lbracket'>[</span><span class='symbol'>:ruleIndex</span><span class='rbracket'>]</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@rule_id</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='lbracket'>[</span><span class='symbol'>:ruleId</span><span class='rbracket'>]</span> <span class='op'>&amp;&amp;</span>
       <span class='ivar'>@prerequisite_key</span> <span class='op'>==</span> <span class='id identifier rubyid_other'>other</span><span class='lbracket'>[</span><span class='symbol'>:prerequisiteKey</span><span class='rbracket'>]</span> <span class='op'>&amp;&amp;</span>
       <span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='lbracket'>[</span><span class='symbol'>:errorKind</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='ivar'>@error_kind</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='ivar'>@error_kind</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span>
-      <span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='lbracket'>[</span><span class='symbol'>:bigSegmentsStatus</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='ivar'>@big_segments_status</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='ivar'>@big_segments_status</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+      <span class='lparen'>(</span><span class='id identifier rubyid_other'>other</span><span class='lbracket'>[</span><span class='symbol'>:bigSegmentsStatus</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='ivar'>@big_segments_status</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='ivar'>@big_segments_status</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span>
+      <span class='op'>!</span><span class='op'>!</span><span class='id identifier rubyid_other'>other</span><span class='lbracket'>[</span><span class='symbol'>:overrideAffected</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='ivar'>@override_affected</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1867,27 +1980,29 @@ instance, if <code>reason.kind</code> is #RULE_MATCH, then <code>reason[:kind]</
       <pre class="lines">
 
 
-301
-302
-303
-304
-305
-306
-307
-308
-309
-310
-311
-312
-313
 314
 315
 316
 317
-318</pre>
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 301</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 314</span>
 
 <span class='kw'>def</span> <span class='op'>[]</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='kw'>case</span> <span class='id identifier rubyid_key'>key</span>
@@ -1903,6 +2018,8 @@ instance, if <code>reason.kind</code> is #RULE_MATCH, then <code>reason[:kind]</
     <span class='ivar'>@error_kind</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='ivar'>@error_kind</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
   <span class='kw'>when</span> <span class='symbol'>:bigSegmentsStatus</span>
     <span class='ivar'>@big_segments_status</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='ivar'>@big_segments_status</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
+  <span class='kw'>when</span> <span class='symbol'>:overrideAffected</span>
+    <span class='ivar'>@override_affected</span>
   <span class='kw'>else</span>
     <span class='kw'>nil</span>
   <span class='kw'>end</span>
@@ -1950,17 +2067,6 @@ in LaunchDarkly analytics events.</p>
       <pre class="lines">
 
 
-260
-261
-262
-263
-264
-265
-266
-267
-268
-269
-270
 271
 272
 273
@@ -1980,10 +2086,23 @@ in LaunchDarkly analytics events.</p>
 287
 288
 289
-290</pre>
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 260</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 271</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_as_json'>as_json</span><span class='lparen'>(</span><span class='op'>*</span><span class='rparen'>)</span> <span class='comment'># parameter is unused, but may be passed if we&#39;re using the json gem
 </span>  <span class='comment'># Note that this implementation is somewhat inefficient; it allocates a new hash every time.
@@ -2014,6 +2133,8 @@ in LaunchDarkly analytics events.</p>
   <span class='kw'>unless</span> <span class='ivar'>@big_segments_status</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
     <span class='id identifier rubyid_ret'>ret</span><span class='lbracket'>[</span><span class='symbol'>:bigSegmentsStatus</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='ivar'>@big_segments_status</span>
   <span class='kw'>end</span>
+  <span class='comment'># The property is written only when true, so the wire format of an ordinary evaluation is unchanged.
+</span>  <span class='id identifier rubyid_ret'>ret</span><span class='lbracket'>[</span><span class='symbol'>:overrideAffected</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='kw'>true</span> <span class='kw'>if</span> <span class='ivar'>@override_affected</span>
   <span class='id identifier rubyid_ret'>ret</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -2060,27 +2181,27 @@ for debugging.</p>
       <pre class="lines">
 
 
-238
-239
-240
-241
-242
-243
-244
-245
-246
-247
-248
 249
 250
 251
 252
 253
 254
-255</pre>
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 238</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 249</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_inspect'>inspect</span>
   <span class='kw'>case</span> <span class='ivar'>@kind</span>
@@ -2142,12 +2263,12 @@ for debugging.</p>
       <pre class="lines">
 
 
-294
-295
-296</pre>
+307
+308
+309</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 294</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 307</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_a'>a</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_as_json'>as_json</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_a'>a</span><span class='rparen'>)</span>
@@ -2194,12 +2315,12 @@ for debugging.</p>
       <pre class="lines">
 
 
-230
-231
-232</pre>
+241
+242
+243</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 230</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 241</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_s'>to_s</span>
   <span class='id identifier rubyid_inspect'>inspect</span>
@@ -2224,17 +2345,94 @@ for debugging.</p>
       <pre class="lines">
 
 
-320
-321
-322
-323</pre>
+335
+336
+337
+338
+339</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 320</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 335</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_with_big_segments_status'>with_big_segments_status</span><span class='lparen'>(</span><span class='id identifier rubyid_big_segments_status'>big_segments_status</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>self</span> <span class='kw'>if</span> <span class='ivar'>@big_segments_status</span> <span class='op'>==</span> <span class='id identifier rubyid_big_segments_status'>big_segments_status</span>
-  <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="LaunchDarkly::EvaluationReason#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='ivar'>@kind</span><span class='comma'>,</span> <span class='ivar'>@rule_index</span><span class='comma'>,</span> <span class='ivar'>@rule_id</span><span class='comma'>,</span> <span class='ivar'>@prerequisite_key</span><span class='comma'>,</span> <span class='ivar'>@error_kind</span><span class='comma'>,</span> <span class='ivar'>@in_experiment</span><span class='comma'>,</span> <span class='id identifier rubyid_big_segments_status'>big_segments_status</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="LaunchDarkly::EvaluationReason#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='ivar'>@kind</span><span class='comma'>,</span> <span class='ivar'>@rule_index</span><span class='comma'>,</span> <span class='ivar'>@rule_id</span><span class='comma'>,</span> <span class='ivar'>@prerequisite_key</span><span class='comma'>,</span> <span class='ivar'>@error_kind</span><span class='comma'>,</span> <span class='ivar'>@in_experiment</span><span class='comma'>,</span>
+    <span class='id identifier rubyid_big_segments_status'>big_segments_status</span><span class='comma'>,</span> <span class='ivar'>@override_affected</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="with_override_affected-instance_method">
+  
+    #<strong>with_override_affected</strong>(override_affected)  &#x21d2; <tt><span class='object_link'><a href="" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a reason that is the same as this one apart from the <span class='object_link'><a href="#override_affected-instance_method" title="LaunchDarkly::EvaluationReason#override_affected (method)">#override_affected</a></span> indicator.
+Returns this instance when the indicator already has the given value.</p>
+<p>Flag overrides are currently experimental and subject to change.</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>override_affected</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+350
+351
+352
+353
+354
+355</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/evaluation_detail.rb', line 350</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_with_override_affected'>with_override_affected</span><span class='lparen'>(</span><span class='id identifier rubyid_override_affected'>override_affected</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_override_affected'>override_affected</span> <span class='op'>=</span> <span class='op'>!</span><span class='op'>!</span><span class='id identifier rubyid_override_affected'>override_affected</span>
+  <span class='kw'>return</span> <span class='kw'>self</span> <span class='kw'>if</span> <span class='ivar'>@override_affected</span> <span class='op'>==</span> <span class='id identifier rubyid_override_affected'>override_affected</span>
+  <span class='const'><span class='object_link'><a href="" title="LaunchDarkly::EvaluationReason (class)">EvaluationReason</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="LaunchDarkly::EvaluationReason#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='ivar'>@kind</span><span class='comma'>,</span> <span class='ivar'>@rule_index</span><span class='comma'>,</span> <span class='ivar'>@rule_id</span><span class='comma'>,</span> <span class='ivar'>@prerequisite_key</span><span class='comma'>,</span> <span class='ivar'>@error_kind</span><span class='comma'>,</span> <span class='ivar'>@in_experiment</span><span class='comma'>,</span>
+    <span class='ivar'>@big_segments_status</span><span class='comma'>,</span> <span class='id identifier rubyid_override_affected'>override_affected</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2246,7 +2444,7 @@ for debugging.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:53 2026 by
+  Generated on Thu Nov 12 21:42:46 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

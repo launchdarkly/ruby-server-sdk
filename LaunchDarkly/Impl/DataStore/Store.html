@@ -157,6 +157,28 @@ forward, calls to get data will serve from the memory store.</p>
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#all-instance_method" title="#all (instance method)">#<strong>all</strong>(kind)  &#x21d2; Hash{Symbol =&gt; Object} </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>Retrieves all items of a kind from the active store.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#apply-instance_method" title="#apply (instance method)">#<strong>apply</strong>(change_set, persist)  &#x21d2; void </a>
     
 
@@ -216,6 +238,28 @@ forward, calls to get data will serve from the memory store.</p>
 
   
     <span class="summary_desc"><div class='inline'><p>Commit persists the data in the memory store to the persistent store, if configured.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#get-instance_method" title="#get (instance method)">#<strong>get</strong>(kind, key)  &#x21d2; Object<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>Retrieves an item from the active store.</p></div></span>
   
 </li>
 
@@ -328,6 +372,28 @@ forward, calls to get data will serve from the memory store.</p>
 
   
     <span class="summary_desc"><div class='inline'><p>Returns a Selector object that defines the criteria for data retrieval.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#set_external_dependencies-instance_method" title="#set_external_dependencies (instance method)">#<strong>set_external_dependencies</strong>(dependencies)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'><p>Registers a second dependency graph whose items may depend on items in this store.</p></div></span>
   
 </li>
 
@@ -479,7 +545,11 @@ forward, calls to get data will serve from the memory store.</p>
 57
 58
 59
-60</pre>
+60
+61
+62
+63
+64</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 32</span>
@@ -496,6 +566,10 @@ forward, calls to get data will serve from the memory store.</p>
   <span class='comment'># Used to track dependencies between items in the store. Items are keyed by string,
 </span>  <span class='comment'># the form in which the data model names prerequisites and segments.
 </span>  <span class='ivar'>@dependency_tracker</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../DependencyTracker.html" title="LaunchDarkly::Impl::DependencyTracker (class)">DependencyTracker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../DependencyTracker.html#initialize-instance_method" title="LaunchDarkly::Impl::DependencyTracker#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
+
+  <span class='comment'># A second dependency graph, such as the override layer&#39;s, whose items may depend on
+</span>  <span class='comment'># items in this store. Set once when the data system is built, before any data.
+</span>  <span class='ivar'>@external_dependencies</span> <span class='op'>=</span> <span class='kw'>nil</span>
 
   <span class='comment'># Broadcasters for events
 </span>  <span class='ivar'>@flag_change_broadcaster</span> <span class='op'>=</span> <span class='id identifier rubyid_flag_change_broadcaster'>flag_change_broadcaster</span>
@@ -526,7 +600,92 @@ forward, calls to get data will serve from the memory store.</p>
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="apply-instance_method">
+  <h3 class="signature first" id="all-instance_method">
+  
+    #<strong>all</strong>(kind)  &#x21d2; <tt>Hash{Symbol =&gt; Object}</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Retrieves all items of a kind from the active store.</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>kind</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="DataKind.html" title="LaunchDarkly::Impl::DataStore::DataKind (class)">LaunchDarkly::Impl::DataStore::DataKind</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash{Symbol =&gt; Object}</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+204
+205
+206</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 204</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_get_active_store'>get_active_store</span><span class='period'>.</span><span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="apply-instance_method">
   
     #<strong>apply</strong>(change_set, persist)  &#x21d2; <tt>void</tt> 
   
@@ -599,10 +758,6 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-116
-117
-118
-119
 120
 121
 122
@@ -620,10 +775,14 @@ forward, calls to get data will serve from the memory store.</p>
 134
 135
 136
-137</pre>
+137
+138
+139
+140
+141</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 116</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 120</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_apply'>apply</span><span class='lparen'>(</span><span class='id identifier rubyid_change_set'>change_set</span><span class='comma'>,</span> <span class='id identifier rubyid_persist'>persist</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_collections'>collections</span> <span class='op'>=</span> <span class='id identifier rubyid_changes_to_store_data'>changes_to_store_data</span><span class='lparen'>(</span><span class='id identifier rubyid_change_set'>change_set</span><span class='period'>.</span><span class='id identifier rubyid_changes'>changes</span><span class='rparen'>)</span>
@@ -710,10 +869,6 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-95
-96
-97
-98
 99
 100
 101
@@ -722,10 +877,14 @@ forward, calls to get data will serve from the memory store.</p>
 104
 105
 106
-107</pre>
+107
+108
+109
+110
+111</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 95</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 99</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -803,10 +962,6 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-144
-145
-146
-147
 148
 149
 150
@@ -820,10 +975,14 @@ forward, calls to get data will serve from the memory store.</p>
 158
 159
 160
-161</pre>
+161
+162
+163
+164
+165</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 144</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 148</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_commit'>commit</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -842,6 +1001,105 @@ forward, calls to get data will serve from the memory store.</p>
   <span class='kw'>end</span>
 
   <span class='kw'>nil</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="get-instance_method">
+  
+    #<strong>get</strong>(kind, key)  &#x21d2; <tt>Object</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p>Retrieves an item from the active store.</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>kind</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="DataKind.html" title="LaunchDarkly::Impl::DataStore::DataKind (class)">LaunchDarkly::Impl::DataStore::DataKind</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the item, or nil if it is unknown or deleted</p></div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+194
+195
+196</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 194</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_get_active_store'>get_active_store</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -906,14 +1164,14 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-168
-169
-170
-171
-172</pre>
+172
+173
+174
+175
+176</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 168</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 172</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_active_store'>get_active_store</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -983,14 +1241,14 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-188
-189
-190
-191
-192</pre>
+227
+228
+229
+230
+231</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 188</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 227</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_data_store_status_provider'>get_data_store_status_provider</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -1057,12 +1315,12 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-179
-180
-181</pre>
+183
+184
+185</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 179</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 183</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='id identifier rubyid_get_active_store'>get_active_store</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
@@ -1127,18 +1385,99 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-84
-85
-86
-87
-88</pre>
+88
+89
+90
+91
+92</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 84</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 88</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_selector'>selector</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
     <span class='ivar'>@selector</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="set_external_dependencies-instance_method">
+  
+    #<strong>set_external_dependencies</strong>(dependencies)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+<p class="note returns_void">This method returns an undefined value.</p><p>Registers a second dependency graph whose items may depend on items in this store. A
+change to an item in this store then also notifies the external items that depend on
+it, directly or through any chain of dependencies in either graph.</p>
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>dependencies</span>
+      
+      
+        <span class='type'>(<tt>#<span class='object_link'>add_affected_items</span></tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a graph answering <code>add_affected_items(items_out, { kind:, key: })</code></p></div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+216
+217
+218
+219
+220</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 216</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_set_external_dependencies'>set_external_dependencies</span><span class='lparen'>(</span><span class='id identifier rubyid_dependencies'>dependencies</span><span class='rparen'>)</span>
+  <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
+    <span class='ivar'>@external_dependencies</span> <span class='op'>=</span> <span class='id identifier rubyid_dependencies'>dependencies</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1252,10 +1591,6 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-70
-71
-72
-73
 74
 75
 76
@@ -1263,10 +1598,14 @@ forward, calls to get data will serve from the memory store.</p>
 78
 79
 80
-81</pre>
+81
+82
+83
+84
+85</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 70</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 74</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_with_persistence'>with_persistence</span><span class='lparen'>(</span><span class='id identifier rubyid_persistent_store'>persistent_store</span><span class='comma'>,</span> <span class='id identifier rubyid_writable'>writable</span><span class='comma'>,</span> <span class='id identifier rubyid_status_provider'>status_provider</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -1290,7 +1629,7 @@ forward, calls to get data will serve from the memory store.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:54 2026 by
+  Generated on Thu Nov 12 21:42:48 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

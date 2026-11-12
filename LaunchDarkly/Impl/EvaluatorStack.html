@@ -304,14 +304,14 @@ is not created until absolutely necessary.</p>
       <pre class="lines">
 
 
-63
-64
-65
-66
-67</pre>
+71
+72
+73
+74
+75</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 63</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 71</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_original'>original</span><span class='rparen'>)</span>
   <span class='ivar'>@original</span> <span class='op'>=</span> <span class='id identifier rubyid_original'>original</span>
@@ -400,15 +400,15 @@ is not created until absolutely necessary.</p>
       <pre class="lines">
 
 
-93
-94
-95
-96
-97
-98</pre>
+101
+102
+103
+104
+105
+106</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 93</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 101</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>true</span> <span class='kw'>if</span> <span class='id identifier rubyid_key'>key</span> <span class='op'>==</span> <span class='ivar'>@original</span>
@@ -463,13 +463,13 @@ is not created until absolutely necessary.</p>
       <pre class="lines">
 
 
-84
-85
-86
-87</pre>
+92
+93
+94
+95</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 84</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 92</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_pop'>pop</span>
   <span class='kw'>return</span> <span class='kw'>if</span> <span class='ivar'>@stack</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='ivar'>@stack</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
@@ -537,22 +537,22 @@ is not created until absolutely necessary.</p>
       <pre class="lines">
 
 
-70
-71
-72
-73
-74
-75
-76
-77
 78
 79
 80
 81
-82</pre>
+82
+83
+84
+85
+86
+87
+88
+89
+90</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 70</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/evaluator.rb', line 78</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_push'>push</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='comment'># No need to store the key if we already have a record in our instance
@@ -577,7 +577,7 @@ is not created until absolutely necessary.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:53 2026 by
+  Generated on Thu Nov 12 21:42:47 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

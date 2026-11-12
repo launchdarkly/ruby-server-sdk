@@ -153,6 +153,10 @@ to have simple values and others to have complex behavior. However, it is an err
 same flag key or segment key more than once, either in a single file or across multiple files.</p>
 <p>If the data source encounters any error in any file-- malformed content, a missing file, or a
 duplicate key-- it will not load flags from any of the files.</p>
+<p>The same file format serves the file-based override source, <span class='object_link'><a href="#override_source-class_method" title="LaunchDarkly::Integrations::FileData.override_source (method)">FileData.override_source</a></span>, which
+supplies flag and segment overrides that take precedence over LaunchDarkly data instead of
+replacing the connection to LaunchDarkly. Flag overrides are currently experimental and subject
+to change.</p>
 
   </div>
 </div>
@@ -214,6 +218,28 @@ duplicate key-- it will not load flags from any of the files.</p>
 
   
     <span class="summary_desc"><div class='inline'><p>Returns a builder for the FDv2-compatible file data source.</p></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#override_source-class_method" title="override_source (class method)">.<strong>override_source</strong>(options = {})  &#x21d2; FileOverrideSourceBuilder </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a builder for a file-based override source.</p></div></span>
   
 </li>
 
@@ -339,13 +365,13 @@ mechanism from 'listen' is not being used. The default value is 1 second.</p></d
       <pre class="lines">
 
 
-103
-104
-105
-106</pre>
+110
+111
+112
+113</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/file_data.rb', line 103</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/file_data.rb', line 110</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_data_source'>data_source</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='op'>=</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
@@ -387,7 +413,7 @@ watches for file changes and automatically updates when files are modified.</p>
 <span class='id identifier rubyid_data_system_config'>data_system_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../DataSystemConfig.html" title="LaunchDarkly::DataSystemConfig (class)">DataSystemConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../DataSystemConfig.html#initialize-instance_method" title="LaunchDarkly::DataSystemConfig#initialize (method)">new</a></span></span><span class='lparen'>(</span>
   <span class='label'>initializers:</span> <span class='lbracket'>[</span><span class='id identifier rubyid_file_source'>file_source</span><span class='rbracket'>]</span>
 <span class='rparen'>)</span>
-<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>data_system:</span> <span class='id identifier rubyid_data_system_config'>data_system_config</span><span class='rparen'>)</span></code></pre>
+<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>data_system_config:</span> <span class='id identifier rubyid_data_system_config'>data_system_config</span><span class='rparen'>)</span></code></pre>
     
       
         <h5 class="example_title"><div class='inline'><p>Using as a synchronizer</p></div></h5>
@@ -396,7 +422,7 @@ watches for file changes and automatically updates when files are modified.</p>
 <span class='id identifier rubyid_data_system_config'>data_system_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../DataSystemConfig.html" title="LaunchDarkly::DataSystemConfig (class)">DataSystemConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../DataSystemConfig.html#initialize-instance_method" title="LaunchDarkly::DataSystemConfig#initialize (method)">new</a></span></span><span class='lparen'>(</span>
   <span class='label'>synchronizers:</span> <span class='lbracket'>[</span><span class='id identifier rubyid_file_source'>file_source</span><span class='rbracket'>]</span>
 <span class='rparen'>)</span>
-<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>data_system:</span> <span class='id identifier rubyid_data_system_config'>data_system_config</span><span class='rparen'>)</span></code></pre>
+<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>data_system_config:</span> <span class='id identifier rubyid_data_system_config'>data_system_config</span><span class='rparen'>)</span></code></pre>
     
       
         <h5 class="example_title"><div class='inline'><p>Using as both initializer and synchronizer</p></div></h5>
@@ -406,7 +432,7 @@ watches for file changes and automatically updates when files are modified.</p>
   <span class='label'>initializers:</span> <span class='lbracket'>[</span><span class='id identifier rubyid_file_source'>file_source</span><span class='rbracket'>]</span><span class='comma'>,</span>
   <span class='label'>synchronizers:</span> <span class='lbracket'>[</span><span class='id identifier rubyid_file_source'>file_source</span><span class='rbracket'>]</span>
 <span class='rparen'>)</span>
-<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>data_system:</span> <span class='id identifier rubyid_data_system_config'>data_system_config</span><span class='rparen'>)</span></code></pre>
+<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>data_system_config:</span> <span class='id identifier rubyid_data_system_config'>data_system_config</span><span class='rparen'>)</span></code></pre>
     
   </div>
 <p class="tag_title">Parameters:</p>
@@ -487,15 +513,15 @@ being used. The default value is 1 second.</p></div>
       <pre class="lines">
 
 
-146
-147
-148
-149
-150
-151</pre>
+153
+154
+155
+156
+157
+158</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/file_data.rb', line 146</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/file_data.rb', line 153</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_data_source_v2'>data_source_v2</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_paths'>paths</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:paths</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
@@ -508,12 +534,201 @@ being used. The default value is 1 second.</p></div>
 </table>
 </div>
     
+      <div class="method_details ">
+  <h3 class="signature " id="override_source-class_method">
+  
+    .<strong>override_source</strong>(options = {})  &#x21d2; <tt><span class='object_link'><a href="FileOverrideSourceBuilder.html" title="LaunchDarkly::Integrations::FileOverrideSourceBuilder (class)">FileOverrideSourceBuilder</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a builder for a file-based override source. Flag overrides are currently experimental
+and subject to change.</p>
+<p>Overrides are flag and segment definitions that take precedence over data received from
+LaunchDarkly at evaluation time, on a per-key basis. They exist for resilience during an
+incident. An operator can force one or more flags to a known state on a running application,
+whether or not the application can reach LaunchDarkly, by writing them to a file. The override
+stays in effect until it is removed from the file. Flags not present in the files are
+completely unaffected.</p>
+<p>The files use the same document format as the file data source: a JSON or YAML document with
+optional <code>flags</code>, <code>flagValues</code>, and <code>segments</code> members. A <code>flagValues</code> entry expands into a
+flag that is on and serves the given value as its fallthrough for every context. Such a flag is
+not available to client-side SDKs, so <code>all_flags_state</code> with <code>client_side_only: true</code> leaves it
+out, even when the flag it overrides is available to them. To override such a flag, define it
+in <code>flags</code> with <code>&quot;clientSide&quot;: true</code>. When several files are configured, their
+entries are combined in the configured order, and the duplicate keys handling decides what
+happens when the same key appears in more than one file.</p>
+<p>A file whose name ends in <code>.yaml</code> or <code>.yml</code>, in any case, is read as YAML, and any other file is
+read as JSON. Files must be UTF-8. Whether a JSON file may contain comments or repeated keys
+depends on the application's version of the <code>json</code> gem.</p>
+<p>A reload replaces the entire set of overrides, so removing an entry from a file removes the
+override. A configured file that does not exist contributes no overrides. It can be created
+later, and deleting a file removes its overrides. A file that exists but cannot be read or
+parsed fails that whole reload. The previously loaded overrides stay in effect, the failure is
+logged, and the source retries after a short delay and recovers on its own once the file is
+readable. A file that contains an entry marked as deleted fails to load, and the overrides in
+effect stay; to remove an override, remove its entry or delete the file. Whenever the set of
+overrides in effect changes, including at startup, the source logs the overrides in effect
+and what each file supplied, at Info level.</p>
+<p>Files can be rewritten in place: if the source finds a file empty while it is being rewritten,
+it keeps the overrides in effect until the new content is written. To remove a file's
+overrides, delete the file or write a document with no entries, such as <code>{}</code>. An empty JSON
+file is not a valid document. For a YAML file, replacing its contents in one operation, such
+as by renaming a fully written temporary file over it, avoids briefly applying a partly
+written file.</p>
+<p>An evaluation that an override affects, directly or through a prerequisite or segment, is
+marked: its reason reports <span class='object_link'><a href="../EvaluationReason.html#override_affected-instance_method" title="LaunchDarkly::EvaluationReason#override_affected (method)">EvaluationReason#override_affected</a></span>, it produces no individual
+analytics event, and it is counted under a separate summary counter.</p>
+<p>Pass the returned builder to <span class='object_link'><a href="../DataSystem/ConfigBuilder.html#overrides-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#overrides (method)">DataSystem::ConfigBuilder#overrides</a></span>. The
+configuration is validated when the client is created, and an invalid configuration raises
+<code>ArgumentError</code> from <code>LDClient.new</code>.</p>
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_overrides'>overrides</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Integrations.html" title="LaunchDarkly::Integrations (module)">Integrations</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="LaunchDarkly::Integrations::FileData (module)">FileData</a></span></span><span class='period'>.</span><span class='id identifier rubyid_override_source'>override_source</span><span class='lparen'>(</span><span class='label'>paths:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/etc/launchdarkly/overrides.json</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Config.html" title="LaunchDarkly::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../Config.html#initialize-instance_method" title="LaunchDarkly::Config#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>data_system_config:</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../DataSystem.html" title="LaunchDarkly::DataSystem (module)">DataSystem</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default'><span class='object_link'><a href="../DataSystem.html#default-class_method" title="LaunchDarkly::DataSystem.default (method)">default</a></span></span><span class='period'>.</span><span class='id identifier rubyid_overrides'><span class='object_link'><a href="../DataSystem/ConfigBuilder.html#overrides-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#overrides (method)">overrides</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_overrides'>overrides</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_build'><span class='object_link'><a href="../DataSystem/ConfigBuilder.html#build-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#build (method)">build</a></span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_client'>client</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LDClient.html" title="LaunchDarkly::LDClient (class)">LDClient</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="../LDClient.html#initialize-instance_method" title="LaunchDarkly::LDClient#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_sdk_key'>sdk_key</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>the configuration options</p></div>
+      
+    </li>
+  
+</ul>
+
+  
+    
+    
+    <p class="tag_title">Options Hash (<tt>options</tt>):</p>
+    <ul class="option">
+      
+        <li>
+          <span class="name">:paths</span>
+          <span class="type">(<tt>Array&lt;String&gt;</tt>, <tt>String</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>One or more files, in precedence order. Required.
+Each path must be a non-empty String, absolute or relative to the current working directory.</p></div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:duplicate_keys_handling</span>
+          <span class="type">(<tt>Symbol</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>What to do when the same key appears in more
+than one file. <code>:fail</code> (the default) treats the reload as failed and keeps the previous
+overrides. <code>:ignore</code> keeps the entry from the first configured file that defines the key.</p></div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:change_detection</span>
+          <span class="type">(<tt>Symbol</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>How the source detects file changes. <code>:polling</code> (the
+default) examines the files on an interval and works on every file system, including network
+mounts and directories whose contents are swapped through symbolic links. <code>:watching</code> uses file
+system change notifications through the <code>listen</code> gem, which the host application must provide.
+Watching follows edits to the configured files and to the targets of configured symbolic links,
+including the update of a mounted Kubernetes ConfigMap. It does not follow a deployment that
+points a link further along the path, or a configured directory, at another location, such as a
+<code>current</code> link to a release directory, or that replaces a configured directory. Use polling for
+such deployments.</p></div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:poll_interval</span>
+          <span class="type">(<tt>Numeric</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'><p>Seconds between examinations of the files in polling
+mode. The default is 1. An interval below 1 is raised to 1 with a warning.</p></div>
+          
+        </li>
+      
+    </ul>
+  
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="FileOverrideSourceBuilder.html" title="LaunchDarkly::Integrations::FileOverrideSourceBuilder (class)">FileOverrideSourceBuilder</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>a builder for <span class='object_link'><a href="../DataSystem/ConfigBuilder.html#overrides-instance_method" title="LaunchDarkly::DataSystem::ConfigBuilder#overrides (method)">DataSystem::ConfigBuilder#overrides</a></span></p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+233
+234
+235</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/integrations/file_data.rb', line 233</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_override_source'>override_source</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="FileOverrideSourceBuilder.html" title="LaunchDarkly::Integrations::FileOverrideSourceBuilder (class)">FileOverrideSourceBuilder</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="FileOverrideSourceBuilder.html#initialize-instance_method" title="LaunchDarkly::Integrations::FileOverrideSourceBuilder#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
   </div>
 
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:52 2026 by
+  Generated on Thu Nov 12 21:42:45 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

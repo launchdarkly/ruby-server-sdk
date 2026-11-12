@@ -348,12 +348,12 @@
       <pre class="lines">
 
 
-489
-490
-491</pre>
+493
+494
+495</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 489</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 493</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
   <span class='ivar'>@context_filter</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../LaunchDarkly.html" title="LaunchDarkly (module)">LaunchDarkly</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl.html" title="LaunchDarkly::Impl (module)">Impl</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Impl/ContextFilter.html" title="LaunchDarkly::Impl::ContextFilter (class)">ContextFilter</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Impl/ContextFilter.html#initialize-instance_method" title="LaunchDarkly::Impl::ContextFilter#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_all_attributes_private'>all_attributes_private</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_private_attributes'>private_attributes</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
@@ -398,16 +398,16 @@
       <pre class="lines">
 
 
-494
-495
-496
-497
 498
 499
-500</pre>
+500
+501
+502
+503
+504</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 494</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 498</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_make_output_events'>make_output_events</span><span class='lparen'>(</span><span class='id identifier rubyid_events'>events</span><span class='comma'>,</span> <span class='id identifier rubyid_summary'>summary</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_events_out'>events_out</span> <span class='op'>=</span> <span class='id identifier rubyid_events'>events</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_e'>e</span><span class='op'>|</span> <span class='id identifier rubyid_make_output_event'>make_output_event</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
@@ -426,7 +426,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:53 2026 by
+  Generated on Thu Nov 12 21:42:46 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>

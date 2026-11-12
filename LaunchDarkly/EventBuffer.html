@@ -299,17 +299,17 @@
       <pre class="lines">
 
 
-437
-438
-439
-440
 441
 442
 443
-444</pre>
+444
+445
+446
+447
+448</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 437</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 441</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_capacity'>capacity</span><span class='comma'>,</span> <span class='id identifier rubyid_logger'>logger</span><span class='rparen'>)</span>
   <span class='ivar'>@capacity</span> <span class='op'>=</span> <span class='id identifier rubyid_capacity'>capacity</span>
@@ -359,10 +359,6 @@
       <pre class="lines">
 
 
-446
-447
-448
-449
 450
 451
 452
@@ -370,10 +366,14 @@
 454
 455
 456
-457</pre>
+457
+458
+459
+460
+461</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 446</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 450</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_event'>add_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='ivar'>@events</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>&lt;</span> <span class='ivar'>@capacity</span>
@@ -420,12 +420,12 @@
       <pre class="lines">
 
 
-459
-460
-461</pre>
+463
+464
+465</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 459</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 463</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_to_summary'>add_to_summary</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
   <span class='ivar'>@summarizer</span><span class='period'>.</span><span class='id identifier rubyid_summarize_event'>summarize_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
@@ -463,13 +463,13 @@
       <pre class="lines">
 
 
-473
-474
-475
-476</pre>
+477
+478
+479
+480</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 473</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 477</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_clear'>clear</span>
   <span class='ivar'>@events</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
@@ -508,14 +508,14 @@
       <pre class="lines">
 
 
-467
-468
-469
-470
-471</pre>
+471
+472
+473
+474
+475</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 467</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 471</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_and_clear_dropped_count'>get_and_clear_dropped_count</span>
   <span class='id identifier rubyid_ret'>ret</span> <span class='op'>=</span> <span class='ivar'>@dropped_events</span>
@@ -555,12 +555,12 @@
       <pre class="lines">
 
 
-463
-464
-465</pre>
+467
+468
+469</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 463</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/events.rb', line 467</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_payload'>get_payload</span>
   <span class='const'><span class='object_link'><a href="FlushPayload.html" title="LaunchDarkly::FlushPayload (class)">FlushPayload</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@events</span><span class='comma'>,</span> <span class='ivar'>@summarizer</span><span class='period'>.</span><span class='id identifier rubyid_snapshot'>snapshot</span><span class='rparen'>)</span>
@@ -575,7 +575,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Oct 23 20:04:53 2026 by
+  Generated on Thu Nov 12 21:42:46 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>
