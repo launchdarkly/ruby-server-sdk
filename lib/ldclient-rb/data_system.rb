@@ -22,17 +22,17 @@ module LaunchDarkly
   #
   #   # Use the default strategy (recommended)
   #   config = LaunchDarkly::Config.new(
-  #     data_system: LaunchDarkly::DataSystem.default
+  #     data_system_config: LaunchDarkly::DataSystem.default.build
   #   )
   #
   #   # Use streaming only
   #   config = LaunchDarkly::Config.new(
-  #     data_system: LaunchDarkly::DataSystem.streaming
+  #     data_system_config: LaunchDarkly::DataSystem.streaming.build
   #   )
   #
   #   # Use polling only
   #   config = LaunchDarkly::Config.new(
-  #     data_system: LaunchDarkly::DataSystem.polling
+  #     data_system_config: LaunchDarkly::DataSystem.polling.build
   #   )
   #
   # == Custom Configurations
@@ -52,7 +52,7 @@ module LaunchDarkly
   #     .initializers([polling])
   #     .synchronizers([streaming, polling])
   #
-  #   config = LaunchDarkly::Config.new(data_system: data_system)
+  #   config = LaunchDarkly::Config.new(data_system_config: data_system.build)
   #
   module DataSystem
     #
