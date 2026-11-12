@@ -2,6 +2,20 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.20.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.19.1...8.20.0) (2026-11-12)
+
+
+### Features
+
+* Add experimental support for flag overrides, read from local JSON or YAML files or supplied by a custom override source ([9e2452c](https://github.com/launchdarkly/ruby-server-sdk/commit/9e2452c7fa99cb0ececc20f2f812aa02e3f7f807))
+* Mark evaluations that a flag override affected with `override_affected` in the evaluation reason, and count them under separate summary counters ([9e2452c](https://github.com/launchdarkly/ruby-server-sdk/commit/9e2452c7fa99cb0ececc20f2f812aa02e3f7f807))
+
+
+### Bug Fixes
+
+* Ignore FDv2 objects with unrecognized kinds ([#468](https://github.com/launchdarkly/ruby-server-sdk/issues/468)) ([168e199](https://github.com/launchdarkly/ruby-server-sdk/commit/168e19960372952bec35564957d94c5e3260e4f6))
+* Make TestData value_for_all return its value when targeting is off ([#490](https://github.com/launchdarkly/ruby-server-sdk/issues/490)) ([dd484bb](https://github.com/launchdarkly/ruby-server-sdk/commit/dd484bb0538fa70df624464ea8d26608458c045f))
+
 ## [8.19.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.19.0...8.19.1) (2026-10-23)
 
 
