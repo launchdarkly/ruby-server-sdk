@@ -116,8 +116,22 @@ module LaunchDarkly
         # @return [void]
         #
         def sync(selector_store)
-          @lock.synchronize do
-            @listener = start_listener unless @closed
+          begin
+            @lock.synchronize do
+              @listener = start_listener unless @closed
+            end
+          rescue => e
+            @logger.error { "[LDClient] Unable to watch data files for changes: #{e.message}" }
+            yield LaunchDarkly::Interfaces::DataSystem::Update.new(
+              state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
+              error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
+                LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN,
+                0,
+                "Unable to watch data files for changes: #{e.message}",
+                Time.now
+              )
+            )
+            return
           end
 
           initial_fetch = fetch(selector_store)
@@ -366,7 +380,7 @@ module LaunchDarkly
         #
         # Start watching files for changes.
         #
-        # @return [Object] auto-updater instance
+        # @return [Object, nil] auto-updater instance, or nil if no path can be watched
         #
         private def start_listener
           resolved_paths = @paths.map do |p|
@@ -377,6 +391,7 @@ module LaunchDarkly
               nil
             end
           end.compact
+          return nil if resolved_paths.empty?
 
           if @@have_listen
             start_listener_with_listen_gem(resolved_paths)

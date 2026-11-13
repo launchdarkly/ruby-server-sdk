@@ -362,7 +362,7 @@ EOF
           end
         end
 
-        it "detects a file change made during the initial fetch" do
+        def expect_change_during_initial_fetch_detected
           file = make_temp_file(flag_only_json)
 
           source = Impl::Integrations::FileDataSourceV2.new(
@@ -403,6 +403,56 @@ EOF
             source.stop
             sync_thread&.join(2)
           end
+        end
+
+        it "detects a file change made during the initial fetch" do
+          expect_change_during_initial_fetch_detected
+        end
+
+        it "detects a file change made during the initial fetch in polling mode" do
+          have_listen = Impl::Integrations::FileDataSourceV2.class_variable_get(:@@have_listen)
+          Impl::Integrations::FileDataSourceV2.class_variable_set(:@@have_listen, false)
+          begin
+            expect_change_during_initial_fetch_detected
+          ensure
+            Impl::Integrations::FileDataSourceV2.class_variable_set(:@@have_listen, have_listen)
+          end
+        end
+
+        def first_sync_update(source)
+          updates = []
+          sync_thread = Thread.new do
+            source.sync(no_selector_store) do |update|
+              updates << update
+              break
+            end
+          end
+          expect(sync_thread.join(5)).not_to be_nil, "sync did not return"
+          updates[0]
+        ensure
+          source.stop
+          sync_thread&.join(2)
+        end
+
+        it "does not watch the working directory when no path exists" do
+          expect(Listen).not_to receive(:to) if defined?(Listen)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [File.join(@tmp_dir, "no-such-file")])
+
+          update = first_sync_update(source)
+
+          expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+        end
+
+        it "reports an error if the file watcher cannot start" do
+          file = make_temp_file(all_properties_json)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          allow(source).to receive(:start_listener).and_raise(StandardError, "watch failure")
+
+          update = first_sync_update(source)
+
+          expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+          expect(update.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN)
+          expect(update.error.message).to include("watch failure")
         end
 
         it "reports error on invalid file update" do
