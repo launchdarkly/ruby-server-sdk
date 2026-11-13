@@ -408,6 +408,7 @@ module LaunchDarkly
             end
           end
 
+          @ready_event.set if @store.memory_initialized?
           false
         end
 
