@@ -22,6 +22,119 @@ module LaunchDarkly
         let(:sdk_key) { "test-sdk-key" }
         let(:config) { LaunchDarkly::Config.new(logger: $null_log) }
 
+        describe "selectorless initialization" do
+          def full_payload(changes = [])
+            types = LaunchDarkly::Interfaces::DataSystem
+            change_set = types::ChangeSet.new(
+              intent_code: types::IntentCode::TRANSFER_FULL,
+              changes: changes,
+              selector: types::Selector.no_selector
+            )
+            basis = types::Basis.new(change_set: change_set, persist: false, environment_id: nil)
+            types::FetchResult.new(result: LaunchDarkly::Result.success(basis))
+          end
+
+          it "signals readiness after initializer exhaustion without waiting for a synchronizer" do
+            types = LaunchDarkly::Interfaces::DataSystem
+            poll = double("selectorless-poll", name: "selectorless-poll")
+            allow(poll).to receive(:fetch).and_return(full_payload)
+            failed_poll = double("failing-poll", name: "failing-poll")
+            stopped = Concurrent::Event.new
+            sync_started = Concurrent::Event.new
+            synchronizer = double("pending-synchronizer", name: "pending-synchronizer")
+            allow(synchronizer).to receive(:sync) do
+              sync_started.set
+              stopped.wait
+            end
+            allow(synchronizer).to receive(:stop) { stopped.set }
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers([MockBuilder.new(poll), MockBuilder.new(failed_poll)])
+              .synchronizers([MockBuilder.new(synchronizer)])
+              .build
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+            ready = fdv2.instance_variable_get(:@ready_event)
+            failed_poll_called = Concurrent::Event.new
+            allow(failed_poll).to receive(:fetch) do
+              expect(ready.set?).to be false
+              failed_poll_called.set
+              types::FetchResult.new(result: LaunchDarkly::Result.fail("poll failed"))
+            end
+
+            fdv2.start
+            begin
+              expect(sync_started.wait(1)).to be true
+              expect(ready.wait(1)).to be true
+              expect(failed_poll_called.set?).to be true
+              expect(fdv2.instance_variable_get(:@store).initialized?).to be true
+            ensure
+              fdv2.stop
+            end
+          end
+
+          it "applies populated selectorless data before signaling readiness" do
+            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td.update(td.flag("flag").on(true))
+            changes = td.test_data_ds_builder.build(sdk_key, config).fetch(nil).result.value.change_set.changes
+            poll = double("selectorless-poll", name: "selectorless-poll")
+            allow(poll).to receive(:fetch).and_return(full_payload(changes))
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers([MockBuilder.new(poll)])
+              .synchronizers([])
+              .build
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+            begin
+              fdv2.send(:run_initializers)
+              expect(fdv2.instance_variable_get(:@ready_event).set?).to be true
+              store = fdv2.instance_variable_get(:@store)
+              expect(store.memory_initialized?).to be true
+              expect(store.get_active_store.get(LaunchDarkly::Impl::DataStore::FEATURES, "flag").key).to eq("flag")
+            ensure
+              fdv2.stop
+            end
+          end
+
+          it "does not signal readiness from previously initialized persistent data" do
+            types = LaunchDarkly::Interfaces::DataSystem
+            persistent_store = LaunchDarkly::InMemoryFeatureStore.new
+            persistent_store.init({})
+            poll = double("failing-poll", name: "failing-poll")
+            allow(poll).to receive(:fetch).and_return(types::FetchResult.new(result: LaunchDarkly::Result.fail("poll failed")))
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers([MockBuilder.new(poll)])
+              .synchronizers([])
+              .data_store(persistent_store, types::DataStoreMode::READ_ONLY)
+              .build
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+            begin
+              fdv2.send(:run_initializers)
+              store = fdv2.instance_variable_get(:@store)
+              expect(store.initialized?).to be true
+              expect(store.memory_initialized?).to be false
+              expect(fdv2.instance_variable_get(:@ready_event).set?).to be false
+            ensure
+              fdv2.stop
+            end
+          end
+
+          it "still stops initialization immediately when a basis is received" do
+            td = LaunchDarkly::Integrations::TestDataV2.data_source
+            td.update(td.flag("flag").on(true))
+            skipped = double("skipped-poll")
+            expect(skipped).not_to receive(:fetch)
+            data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+              .initializers([td.test_data_ds_builder, MockBuilder.new(skipped)])
+              .synchronizers([])
+              .build
+            fdv2 = FDv2.new(sdk_key, config, data_system_config)
+            begin
+              fdv2.send(:run_initializers)
+              expect(fdv2.instance_variable_get(:@ready_event).set?).to be true
+            ensure
+              fdv2.stop
+            end
+          end
+        end
+
         describe "two-phase initialization" do
           it "initializes from initializer then syncs from synchronizer" do
             td_initializer = LaunchDarkly::Integrations::TestDataV2.data_source
