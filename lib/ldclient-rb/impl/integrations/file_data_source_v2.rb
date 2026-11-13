@@ -121,17 +121,7 @@ module LaunchDarkly
               @listener = start_listener unless @closed
             end
           rescue => e
-            @logger.error { "[LDClient] Unable to watch data files for changes: #{e.message}" }
-            yield LaunchDarkly::Interfaces::DataSystem::Update.new(
-              state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
-              error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
-                LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN,
-                0,
-                "Unable to watch data files for changes: #{e.message}",
-                Time.now
-              )
-            )
-            return
+            @logger.error { "[LDClient] Unable to watch data files for changes, so file changes will not be applied: #{e.message}" }
           end
 
           initial_fetch = fetch(selector_store)
@@ -416,7 +406,12 @@ module LaunchDarkly
               on_file_change
             end
           end
-          l.start
+          begin
+            l.start
+          rescue
+            l.stop
+            raise
+          end
           l
         end
       end

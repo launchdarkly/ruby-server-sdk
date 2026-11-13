@@ -443,16 +443,31 @@ EOF
           expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
         end
 
-        it "reports an error if the file watcher cannot start" do
+        it "yields the file data if the file watcher cannot start" do
           file = make_temp_file(all_properties_json)
           source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
           allow(source).to receive(:start_listener).and_raise(StandardError, "watch failure")
 
           update = first_sync_update(source)
 
-          expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
-          expect(update.error.kind).to eq(LaunchDarkly::Interfaces::DataSource::ErrorInfo::UNKNOWN)
-          expect(update.error.message).to include("watch failure")
+          expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+          expect(update.change_set.changes).not_to be_empty
+        end
+
+        it "stops a file watcher that fails part way through its start" do
+          file = make_temp_file(all_properties_json)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          listener = nil
+          allow(Listen).to receive(:to).and_wrap_original do |original, *args, **opts, &block|
+            listener = original.call(*args, **opts, &block)
+            allow(listener).to receive(:start).and_raise(StandardError, "watch failure")
+            listener
+          end
+
+          update = first_sync_update(source)
+
+          expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+          expect(listener.stopped?).to eq(true)
         end
 
         it "reports error on invalid file update" do
