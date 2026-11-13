@@ -95,6 +95,19 @@ module LaunchDarkly
         )
       end
 
+      # Writes the file once, right after the initial load reads the files.
+      def write_after_initial_load(name, content)
+        first = true
+        allow_any_instance_of(Impl::FileData::Reloader).to receive(:reload_now).and_wrap_original do |original, *args|
+          result = original.call(*args)
+          if first
+            first = false
+            File.write(path(name), content)
+          end
+          result
+        end
+      end
+
       def with_source(paths, **options)
         source = make_source(paths, **options)
         sink = RecordingSink.new
@@ -375,6 +388,16 @@ module LaunchDarkly
       end
 
       describe "polling change detection" do
+        it "applies a change made during the initial load" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+          write_after_initial_load("a.json", values_doc({ flag1: "bb" }))
+
+          with_source([a]) do |_source, sink|
+            expect(wait_for { sink.snapshots.length == 2 }).to be true
+            expect(sink.flag_values).to eq({ "flag1" => "bb" })
+          end
+        end
+
         it "applies a changed file" do
           a = write("a.json", values_doc({ flag1: "a" }))
 
@@ -465,6 +488,16 @@ module LaunchDarkly
       describe "watching change detection" do
         before do
           skip "the listen gem is not installed" unless Impl::FileData::Watcher.available?
+        end
+
+        it "applies a change made during the initial load" do
+          a = write("a.json", values_doc({ flag1: "a" }))
+          write_after_initial_load("a.json", values_doc({ flag1: "bb" }))
+
+          with_source([a], change_detection: :watching) do |_source, sink|
+            expect(wait_for { sink.snapshots.length == 2 }).to be true
+            expect(sink.flag_values).to eq({ "flag1" => "bb" })
+          end
         end
 
         it "applies a changed file" do
