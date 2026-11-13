@@ -59,7 +59,12 @@ module LaunchDarkly
 
           @listener = start_listener if @auto_update
 
-          load_all
+          begin
+            load_all
+          rescue
+            stop
+            raise
+          end
 
           ready
         end

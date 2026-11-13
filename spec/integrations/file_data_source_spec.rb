@@ -359,6 +359,48 @@ EOF
         test_reload_of_change_during_first_load({ auto_update: true, force_polling: true, poll_interval: 0.1 })
       end
 
+      def test_reload_of_change_before_first_store_update(options)
+        file = make_temp_file(flag_only_json)
+        options[:paths] = [ file.path ]
+        sink = @config.data_source_update_sink
+
+        with_data_source(options) do |ds|
+          first_init = true
+          allow(sink).to receive(:init).and_wrap_original do |original, data|
+            if first_init
+              first_init = false
+              IO.write(file, all_properties_json)
+              sleep(1.5)
+            end
+            original.call(data)
+          end
+
+          ds.start
+
+          max_time = 10
+          ok = wait_for_condition(max_time) { @store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys == all_segment_keys }
+          expect(ok).to eq(true), "Waited #{max_time}s and the older first load replaced the newer data"
+        end
+      end
+
+      it "keeps a change made before the first load updates the store if auto-update is on" do
+        test_reload_of_change_before_first_store_update({ auto_update: true, poll_interval: 0.1 })
+      end
+
+      it "keeps a change made before the first load updates the store in polling mode" do
+        test_reload_of_change_before_first_store_update({ auto_update: true, force_polling: true, poll_interval: 0.1 })
+      end
+
+      it "stops watching if the first load raises" do
+        file = make_temp_file(flag_only_json)
+        sink = @config.data_source_update_sink
+        allow(sink).to receive(:init).and_raise(StandardError, "store failure")
+        ds = FileData.data_source({ paths: [ file.path ], auto_update: true }).call('', @config)
+
+        expect { ds.start }.to raise_error(StandardError, "store failure")
+        expect(ds.instance_variable_get(:@listener).stopped?).to eq(true)
+      end
+
       it "evaluates simplified flag with client as expected" do
         file = make_temp_file(all_properties_json)
         factory = FileData.data_source({ paths: file.path })
