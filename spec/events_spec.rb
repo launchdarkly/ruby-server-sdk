@@ -473,6 +473,21 @@ module LaunchDarkly
       end
     end
 
+    [Float::NAN, Float::INFINITY, -Float::INFINITY].each do |bad_value|
+      it "drops custom event with non-finite metric value #{bad_value} without losing other events" do
+        with_processor_and_sender(default_config, starting_timestamp) do |ep, sender|
+          ep.record_custom_event(context, 'healthy', nil, 42)
+          ep.record_custom_event(context, 'measurement', nil, bad_value)
+
+          output = flush_and_get_events(ep, sender)
+          expect(output).to contain_exactly(
+            eq(index_event(default_config, context)),
+            eq(custom_event(default_config, context, 'healthy', nil, 42))
+          )
+        end
+      end
+    end
+
     it "filters context in custom event" do
       config = Config.new(default_config_opts.merge(all_attributes_private: true))
       with_processor_and_sender(config, starting_timestamp) do |ep, sender|
