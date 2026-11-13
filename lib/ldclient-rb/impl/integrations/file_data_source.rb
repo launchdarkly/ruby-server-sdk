@@ -70,7 +70,9 @@ module LaunchDarkly
         end
 
         def stop
-          @listener.stop unless @listener.nil?
+          listener = @listener
+          @listener = nil
+          listener&.stop
         end
 
         private
@@ -180,7 +182,12 @@ module LaunchDarkly
               load_all
             end
           end
-          l.start
+          begin
+            l.start
+          rescue
+            l.stop
+            raise
+          end
           l
         end
 
