@@ -192,10 +192,13 @@ module LaunchDarkly
               end
             elsif method == DELETE
               data = JSON.parse(message.data, symbolize_names: true)
+              version = data[:version]
+              # The SSE client restarts the stream when this method raises.
+              raise ArgumentError, "delete event for #{data[:path]} has a version that is not an integer" unless version.is_a?(Integer)
               for kind in [Impl::DataStore::FEATURES, Impl::DataStore::SEGMENTS]
                 key = key_for_path(kind, data[:path])
                 if key
-                  update_sink_or_data_store.delete(kind, key, data[:version])
+                  update_sink_or_data_store.delete(kind, key, version)
                   break
                 end
               end
