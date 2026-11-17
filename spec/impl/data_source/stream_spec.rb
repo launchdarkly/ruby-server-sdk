@@ -49,6 +49,16 @@ module LaunchDarkly
         processor.send(:process_message, delete_seg_message)
         expect(config.feature_store.get(Impl::DataStore::SEGMENTS, "key")).to eq(nil)
       end
+      it "raises for a DELETE whose version is not an integer, and does not apply it" do
+        delete_message = SSE::StreamEvent.new(:delete, '{"path": "/flags/key", "version": "no"}')
+        patch_message = SSE::StreamEvent.new(:patch, '{"path": "/flags/key", "data": {"key": "key", "version": 1}}')
+
+        # Process a delete whose version is a string.
+        expect { processor.send(:process_message, delete_message) }.to raise_error(ArgumentError)
+        # A later patch for the same key is applied.
+        processor.send(:process_message, patch_message)
+        expect(config.feature_store.get(Impl::DataStore::FEATURES, "key")).to eq(Flags.from_hash(key: "key", version: 1))
+      end
       it "will log a warning if the method is not recognized" do
         expect(processor.instance_variable_get(:@config).logger).to receive :warn
         processor.send(:process_message, SSE::StreamEvent.new(type: :get, data: "", id: nil))
