@@ -369,6 +369,7 @@ EOF
           allow(sink).to receive(:init).and_wrap_original do |original, data|
             if first_init
               first_init = false
+              sleep(1)
               IO.write(file, all_properties_json)
               sleep(1.5)
             end
