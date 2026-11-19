@@ -116,12 +116,18 @@ module LaunchDarkly
         # @return [void]
         #
         def sync(selector_store)
+          listener = nil
           begin
-            @lock.synchronize do
-              @listener = start_listener unless @closed
-            end
+            listener = start_listener unless @lock.synchronize { @closed }
           rescue => e
             @logger.error { "[LDClient] Unable to watch data files for changes, so file changes will not be applied: #{e.message}" }
+          end
+          if listener
+            closed = @lock.synchronize do
+              @listener = listener unless @closed
+              @closed
+            end
+            listener.stop if closed
           end
 
           initial_fetch = fetch(selector_store)

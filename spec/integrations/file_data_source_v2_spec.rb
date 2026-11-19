@@ -458,15 +458,38 @@ EOF
           file = make_temp_file(all_properties_json)
           source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
           listener = nil
+          lock_held_at_stop = nil
           allow(Listen).to receive(:to).and_wrap_original do |original, *args, **opts, &block|
             listener = original.call(*args, **opts, &block)
             allow(listener).to receive(:start).and_raise(StandardError, "watch failure")
+            allow(listener).to receive(:stop).and_wrap_original do |stop, *stop_args|
+              lock_held_at_stop = source.instance_variable_get(:@lock).owned?
+              stop.call(*stop_args)
+            end
             listener
           end
 
           update = first_sync_update(source)
 
           expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+          expect(listener.stopped?).to eq(true)
+          expect(lock_held_at_stop).to eq(false)
+        end
+
+        it "stops the file watcher if the source stops while the watcher starts" do
+          file = make_temp_file(all_properties_json)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          listener = nil
+          allow(source).to receive(:start_listener).and_wrap_original do |original|
+            listener = original.call
+            source.stop
+            listener
+          end
+
+          first_sync_update(source)
+
+          expect(listener).not_to be_nil
+          expect(source.instance_variable_get(:@listener)).to be_nil
           expect(listener.stopped?).to eq(true)
         end
 
