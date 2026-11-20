@@ -39,6 +39,7 @@ get '/' do
       'migrations',
       'event-gzip',
       'optional-event-gzip',
+      'diagnostic-events',
       'event-sampling',
       'context-comparison',
       'polling-gzip',
