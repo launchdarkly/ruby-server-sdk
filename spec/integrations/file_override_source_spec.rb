@@ -102,6 +102,7 @@ module LaunchDarkly
           result = original.call(*args)
           if first
             first = false
+            sleep(1)
             File.write(path(name), content)
           end
           result
