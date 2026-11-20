@@ -57,7 +57,13 @@ module LaunchDarkly
           # the difference can be detected by checking "initialized?"
           ready.set
 
-          @listener = start_listener if @auto_update
+          if @auto_update
+            begin
+              @listener = start_listener
+            rescue => e
+              @logger.error { "[LDClient] Unable to watch data files for changes, so file changes will not be applied: #{e.message}" }
+            end
+          end
 
           begin
             load_all

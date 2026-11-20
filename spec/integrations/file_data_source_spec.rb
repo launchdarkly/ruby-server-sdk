@@ -419,6 +419,24 @@ EOF
         end
       end
 
+      it "loads the files if the file watcher cannot start" do
+        file = make_temp_file(all_properties_json)
+
+        with_data_source({ paths: [ file.path ], auto_update: true }) do |ds|
+          allow(ds).to receive(:start_listener).and_raise(StandardError, "watch failure")
+          expect { ds.start }.not_to raise_error
+          expect(@store.initialized?).to eq(true)
+          expect(@store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys).to eq(all_segment_keys)
+        end
+      end
+
+      it "reports a missing file instead of raising if auto-update is on" do
+        with_data_source({ paths: [ bad_file_path ], auto_update: true }) do |ds|
+          expect { ds.start }.not_to raise_error
+          expect(@store.initialized?).to eq(false)
+        end
+      end
+
       it "evaluates simplified flag with client as expected" do
         file = make_temp_file(all_properties_json)
         factory = FileData.data_source({ paths: file.path })
