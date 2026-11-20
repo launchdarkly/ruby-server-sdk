@@ -77,9 +77,12 @@ module LaunchDarkly
           @data_source_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @logger)
           @data_store_broadcaster = LaunchDarkly::Impl::Broadcaster.new(@shared_executor, @logger)
 
+          # The body of a method that define_singleton_method makes runs with the listener as self.
+          # Thus, the listener keeps a reference to the recovery method of this object.
+          recovery = method(:persistent_store_outage_recovery)
           recovery_listener = Object.new
           recovery_listener.define_singleton_method(:update) do |data_store_status|
-            persistent_store_outage_recovery(data_store_status)
+            recovery.call(data_store_status)
           end
           @data_store_broadcaster.add_listener(recovery_listener)
 

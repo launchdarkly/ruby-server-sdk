@@ -49,6 +49,22 @@ module LaunchDarkly
         end
 
         #
+        # Returns all items of a kind, including deleted items. A deleted item is a placeholder
+        # that keeps the version of the deletion.
+        #
+        # @param kind [LaunchDarkly::Impl::DataStore::DataKind] The kind of data
+        # @return [Hash<Symbol, Object>] Hash of keys to items
+        #
+        def all_including_deleted(kind)
+          @lock.with_read_lock do
+            items_of_kind = @items[kind]
+            return {} if items_of_kind.nil?
+
+            items_of_kind.dup
+          end
+        end
+
+        #
         # (see LaunchDarkly::Interfaces::DataSystem::ReadOnlyStore#initialized?)
         #
         def initialized?

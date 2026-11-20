@@ -172,6 +172,43 @@ module LaunchDarkly
           fdv2.stop
         end
 
+        it "writes in-memory store to persistent store when the store status reports a recovery with stale data" do
+          persistent_store = StubFeatureStore.new
+
+          td_synchronizer = LaunchDarkly::Integrations::TestDataV2.data_source
+          td_synchronizer.update(td_synchronizer.flag("flagkey").on(true))
+
+          data_system_config = LaunchDarkly::DataSystem::ConfigBuilder.new
+            .initializers(nil)
+            .synchronizers([td_synchronizer.test_data_ds_builder])
+            .data_store(persistent_store, :read_write)
+            .build
+
+          fdv2 = FDv2.new(sdk_key, config, data_system_config)
+          ready_event = fdv2.start
+
+          expect(ready_event.wait(3)).to be true
+
+          # The persistent store loses its data, as it can during an outage.
+          persistent_store.init({})
+          write_back = Concurrent::Event.new
+          persistent_store.define_singleton_method(:init) do |all_data|
+            super(all_data)
+            write_back.set
+          end
+
+          # Report that the store is available again and that its data can be stale.
+          stale_status = LaunchDarkly::Interfaces::DataStore::Status.new(true, true)
+          fdv2.data_store_status_provider.update_status(stale_status)
+
+          # The data system writes the in-memory data back to the persistent store.
+          expect(write_back.wait(2)).to be true
+          snapshot = persistent_store.get_data_snapshot
+          expect(snapshot[LaunchDarkly::Impl::DataStore::FEATURES]).to have_key(:flagkey)
+
+          fdv2.stop
+        end
+
         it "does not flush when store comes back online without stale data" do
           persistent_store = StubFeatureStore.new
 

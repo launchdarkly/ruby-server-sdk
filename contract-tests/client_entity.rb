@@ -429,7 +429,9 @@ class ClientEntity
               store_config[:redis_url] = persistent_store_config[:store][:dsn]
               LaunchDarkly::Integrations::Redis.new_feature_store(store_config)
             when 'consul'
-              store_config[:url] = persistent_store_config[:store][:url]
+              # The DSN is a bare host:port. The Consul client needs a URL.
+              dsn = persistent_store_config[:store][:dsn]
+              store_config[:url] = dsn.include?('://') ? dsn : "http://#{dsn}" if dsn
               LaunchDarkly::Integrations::Consul.new_feature_store(store_config)
             when 'dynamodb'
               client = Aws::DynamoDB::Client.new(
