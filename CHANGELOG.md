@@ -2,6 +2,15 @@
 
 All notable changes to the LaunchDarkly Ruby SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [8.20.1](https://github.com/launchdarkly/ruby-server-sdk/compare/8.20.0...8.20.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* Prevent a NaN or infinite metric value from discarding all events in a flush ([#498](https://github.com/launchdarkly/ruby-server-sdk/issues/498)) ([2b0f4ef](https://github.com/launchdarkly/ruby-server-sdk/commit/2b0f4efe08a11d48f86bfa0ff1df74ed2733a4ed))
+* Restart the stream when a delete event has a version that is not an integer ([#501](https://github.com/launchdarkly/ruby-server-sdk/issues/501)) ([d060827](https://github.com/launchdarkly/ruby-server-sdk/commit/d0608274bdb2676f9f774328a61033c222131e49))
+* Signal readiness when selectorless initializers are exhausted ([#499](https://github.com/launchdarkly/ruby-server-sdk/issues/499)) ([22fda02](https://github.com/launchdarkly/ruby-server-sdk/commit/22fda028ea8943ddf89191b85d11acbcc597a58f))
+
 ## [8.20.0](https://github.com/launchdarkly/ruby-server-sdk/compare/8.19.1...8.20.0) (2026-11-12)
 
 
