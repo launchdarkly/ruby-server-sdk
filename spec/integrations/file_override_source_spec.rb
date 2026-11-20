@@ -80,6 +80,14 @@ module LaunchDarkly
         true
       end
 
+      # Gives a rewritten file a modification time later than the one it had. Ruby reports file
+      # times in whole seconds on Windows before 3.4, so a rewrite of the same size in the second of
+      # the previous write looks unchanged to the poller.
+      def mark_written(path)
+        stat = File.stat(path)
+        File.utime(stat.atime, stat.mtime + 1, path)
+      end
+
       def build(options)
         FileData.override_source(options).build("sdk-key", config)
       end
@@ -381,6 +389,7 @@ module LaunchDarkly
           with_source([a]) do |_source, sink|
             sleep 0.1
             write("a.json", values_doc({ flag1: "b" }))
+            mark_written(a)
 
             expect(wait_for { sink.snapshots.length == 2 }).to be true
             expect(sink.flag_values).to eq({ "flag1" => "b" })
