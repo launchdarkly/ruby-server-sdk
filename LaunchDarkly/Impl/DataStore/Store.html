@@ -357,6 +357,28 @@ forward, calls to get data will serve from the memory store.</p>
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#memory_initialized%3F-instance_method" title="#memory_initialized? (instance method)">#<strong>memory_initialized?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  <span class="private note title">private</span>
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#selector-instance_method" title="#selector (instance method)">#<strong>selector</strong>  &#x21d2; Selector </a>
     
 
@@ -669,12 +691,12 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-204
-205
-206</pre>
+208
+209
+210</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 204</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 208</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_get_active_store'>get_active_store</span><span class='period'>.</span><span class='id identifier rubyid_all'>all</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='rparen'>)</span>
@@ -1091,12 +1113,12 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-194
-195
-196</pre>
+198
+199
+200</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 194</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 198</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_get_active_store'>get_active_store</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
@@ -1241,14 +1263,14 @@ forward, calls to get data will serve from the memory store.</p>
       <pre class="lines">
 
 
-227
-228
-229
-230
-231</pre>
+231
+232
+233
+234
+235</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 227</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 231</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_data_store_status_provider'>get_data_store_status_provider</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -1324,6 +1346,76 @@ forward, calls to get data will serve from the memory store.</p>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='id identifier rubyid_get_active_store'>get_active_store</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="memory_initialized?-instance_method">
+  
+    #<strong>memory_initialized?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note private">
+  <strong>This method is part of a private API.</strong>
+  You should avoid using this method if possible, as it may be removed or be changed in the future.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'><p>5.5.0</p></div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+187
+188
+189</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 187</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_memory_initialized?'>memory_initialized?</span>
+  <span class='ivar'>@memory_store</span><span class='period'>.</span><span class='id identifier rubyid_initialized?'>initialized?</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1466,14 +1558,14 @@ it, directly or through any chain of dependencies in either graph.</p>
       <pre class="lines">
 
 
-216
-217
-218
-219
-220</pre>
+220
+221
+222
+223
+224</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 216</span>
+      <pre class="code"><span class="info file"># File 'lib/ldclient-rb/impl/data_store/store.rb', line 220</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_set_external_dependencies'>set_external_dependencies</span><span class='lparen'>(</span><span class='id identifier rubyid_dependencies'>dependencies</span><span class='rparen'>)</span>
   <span class='ivar'>@lock</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
@@ -1629,7 +1721,7 @@ it, directly or through any chain of dependencies in either graph.</p>
 </div>
 
       <div id="footer">
-  Generated on Thu Nov 12 21:42:48 2026 by
+  Generated on Fri Nov 20 19:13:17 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-3.2.11).
 </div>
