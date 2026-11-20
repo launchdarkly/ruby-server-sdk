@@ -184,6 +184,10 @@ module LaunchDarkly
           get_active_store.initialized?
         end
 
+        def memory_initialized?
+          @memory_store.initialized?
+        end
+
         #
         # Retrieves an item from the active store.
         #
