@@ -392,23 +392,29 @@ EOF
         test_reload_of_change_before_first_store_update({ auto_update: true, force_polling: true, poll_interval: 0.1 })
       end
 
-      def test_stop_watching_if_first_load_raises(options)
+      def test_stop_watching_if_first_load_raises(options, error_class = StandardError)
         file = make_temp_file(flag_only_json)
         sink = @config.data_source_update_sink
-        allow(sink).to receive(:init).and_raise(StandardError, "store failure")
+        allow(sink).to receive(:init).and_raise(error_class, "store failure")
         ds = FileData.data_source(options.merge(paths: [ file.path ], auto_update: true)).call('', @config)
         listener = nil
         allow(ds).to receive(:start_listener).and_wrap_original do |original|
           listener = original.call
         end
 
-        expect { ds.start }.to raise_error(StandardError, "store failure")
+        expect { ds.start }.to raise_error(error_class, "store failure")
         yield listener
         expect { ds.stop }.not_to raise_error
       end
 
       it "stops watching if the first load raises" do
         test_stop_watching_if_first_load_raises({}) do |listener|
+          expect(listener.stopped?).to eq(true)
+        end
+      end
+
+      it "stops watching if the first load raises an exception that is not a StandardError" do
+        test_stop_watching_if_first_load_raises({}, Interrupt) do |listener|
           expect(listener.stopped?).to eq(true)
         end
       end

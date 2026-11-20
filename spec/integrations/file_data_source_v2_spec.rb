@@ -476,6 +476,25 @@ EOF
           expect(lock_held_at_stop).to eq(false)
         end
 
+        it "stops a file watcher whose start raises an exception that is not a StandardError" do
+          file = make_temp_file(all_properties_json)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          error_class = Interrupt
+          listener = nil
+          allow(Listen).to receive(:to).and_wrap_original do |original, *args, **opts, &block|
+            listener = original.call(*args, **opts, &block)
+            allow(listener).to receive(:start).and_raise(error_class, "watch failure")
+            listener
+          end
+
+          begin
+            expect { source.sync(no_selector_store) { |_update| break } }.to raise_error(error_class)
+            expect(listener.stopped?).to eq(true)
+          ensure
+            source.stop
+          end
+        end
+
         it "stops the file watcher if the source stops while the watcher starts" do
           file = make_temp_file(all_properties_json)
           source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])

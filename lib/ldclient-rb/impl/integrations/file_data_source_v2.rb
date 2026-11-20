@@ -412,11 +412,12 @@ module LaunchDarkly
               on_file_change
             end
           end
+          started = false
           begin
             l.start
-          rescue
-            l.stop
-            raise
+            started = true
+          ensure
+            l.stop unless started
           end
           l
         end

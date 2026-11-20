@@ -65,11 +65,12 @@ module LaunchDarkly
             end
           end
 
+          loaded = false
           begin
             load_all
-          rescue
-            stop
-            raise
+            loaded = true
+          ensure
+            stop unless loaded
           end
 
           ready
@@ -188,11 +189,12 @@ module LaunchDarkly
               load_all
             end
           end
+          started = false
           begin
             l.start
-          rescue
-            l.stop
-            raise
+            started = true
+          ensure
+            l.stop unless started
           end
           l
         end
