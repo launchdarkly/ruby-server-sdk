@@ -190,6 +190,13 @@ module LaunchDarkly
     end
 
     def record_custom_event(context, key, data = nil, metric_value = nil)
+      if metric_value.is_a?(Float) && !metric_value.finite?
+        # NaN and +/-Infinity cannot be serialized to JSON; sending them would make the whole
+        # batch fail to serialize and drop every other event in it.
+        @logger.warn { "[LDClient] Custom event '#{key}' has a non-finite metric value (#{metric_value}); the event will be dropped" }
+        return
+      end
+
       post_to_inbox(LaunchDarkly::Impl::CustomEvent.new(timestamp, context, key, data, metric_value))
     end
 
