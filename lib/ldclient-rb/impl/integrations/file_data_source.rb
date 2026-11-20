@@ -43,6 +43,7 @@ module LaunchDarkly
 
           @version_lock = Mutex.new
           @last_version = 1
+          @load_lock = Mutex.new
         end
 
         def initialized?
@@ -56,24 +57,38 @@ module LaunchDarkly
           # the difference can be detected by checking "initialized?"
           ready.set
 
-          load_all
-
           if @auto_update
-            # If we're going to watch files, then the start event will be set the first time we get
-            # a successful load.
-            @listener = start_listener
+            begin
+              @listener = start_listener
+            rescue => e
+              @logger.error { "[LDClient] Unable to watch data files for changes, so file changes will not be applied: #{e.message}" }
+            end
+          end
+
+          loaded = false
+          begin
+            load_all
+            loaded = true
+          ensure
+            stop unless loaded
           end
 
           ready
         end
 
         def stop
-          @listener.stop unless @listener.nil?
+          listener = @listener
+          @listener = nil
+          listener&.stop
         end
 
         private
 
         def load_all
+          @load_lock.synchronize { load_all_locked }
+        end
+
+        def load_all_locked
           all_data = {
             Impl::DataStore::FEATURES => {},
             Impl::DataStore::SEGMENTS => {},
@@ -174,7 +189,13 @@ module LaunchDarkly
               load_all
             end
           end
-          l.start
+          started = false
+          begin
+            l.start
+            started = true
+          ensure
+            l.stop unless started
+          end
           l
         end
 

@@ -362,6 +362,156 @@ EOF
           end
         end
 
+        def expect_change_during_initial_fetch_detected
+          file = make_temp_file(flag_only_json)
+
+          source = Impl::Integrations::FileDataSourceV2.new(
+            logger,
+            paths: [file.path],
+            poll_interval: 0.1
+          )
+
+          first_load = true
+          allow(source).to receive(:load_all_to_changeset).and_wrap_original do |original|
+            result = original.call
+            if first_load
+              first_load = false
+              sleep 1
+              IO.write(file, segment_only_json)
+            end
+            result
+          end
+
+          updates = []
+          update_received = Concurrent::Event.new
+
+          begin
+            sync_thread = Thread.new do
+              source.sync(no_selector_store) do |update|
+                updates << update
+                update_received.set if updates.length >= 2
+                break if updates.length >= 2
+              end
+            end
+
+            expect(update_received.wait(5)).to eq(true), "Did not receive an update for the change made during the initial fetch"
+            expect(updates[1].state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+
+            segment_changes = updates[1].change_set.changes.select { |c| c.kind == LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT }
+            expect(segment_changes.length).to eq(1)
+          ensure
+            source.stop
+            sync_thread&.join(2)
+          end
+        end
+
+        it "detects a file change made during the initial fetch" do
+          expect_change_during_initial_fetch_detected
+        end
+
+        it "detects a file change made during the initial fetch in polling mode" do
+          have_listen = Impl::Integrations::FileDataSourceV2.class_variable_get(:@@have_listen)
+          Impl::Integrations::FileDataSourceV2.class_variable_set(:@@have_listen, false)
+          begin
+            expect_change_during_initial_fetch_detected
+          ensure
+            Impl::Integrations::FileDataSourceV2.class_variable_set(:@@have_listen, have_listen)
+          end
+        end
+
+        def first_sync_update(source)
+          updates = []
+          sync_thread = Thread.new do
+            source.sync(no_selector_store) do |update|
+              updates << update
+              break
+            end
+          end
+          expect(sync_thread.join(5)).not_to be_nil, "sync did not return"
+          updates[0]
+        ensure
+          source.stop
+          sync_thread&.join(2)
+        end
+
+        it "does not watch the working directory when no path exists" do
+          expect(Listen).not_to receive(:to) if defined?(Listen)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [File.join(@tmp_dir, "no-such-file")])
+
+          update = first_sync_update(source)
+
+          expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::OFF)
+        end
+
+        it "yields the file data if the file watcher cannot start" do
+          file = make_temp_file(all_properties_json)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          allow(source).to receive(:start_listener).and_raise(StandardError, "watch failure")
+
+          update = first_sync_update(source)
+
+          expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+          expect(update.change_set.changes).not_to be_empty
+        end
+
+        it "stops a file watcher that fails part way through its start" do
+          file = make_temp_file(all_properties_json)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          listener = nil
+          lock_held_at_stop = nil
+          allow(Listen).to receive(:to).and_wrap_original do |original, *args, **opts, &block|
+            listener = original.call(*args, **opts, &block)
+            allow(listener).to receive(:start).and_raise(StandardError, "watch failure")
+            allow(listener).to receive(:stop).and_wrap_original do |stop, *stop_args|
+              lock_held_at_stop = source.instance_variable_get(:@lock).owned?
+              stop.call(*stop_args)
+            end
+            listener
+          end
+
+          update = first_sync_update(source)
+
+          expect(update.state).to eq(LaunchDarkly::Interfaces::DataSource::Status::VALID)
+          expect(listener.stopped?).to eq(true)
+          expect(lock_held_at_stop).to eq(false)
+        end
+
+        it "stops a file watcher whose start raises an exception that is not a StandardError" do
+          file = make_temp_file(all_properties_json)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          error_class = Interrupt
+          listener = nil
+          allow(Listen).to receive(:to).and_wrap_original do |original, *args, **opts, &block|
+            listener = original.call(*args, **opts, &block)
+            allow(listener).to receive(:start).and_raise(error_class, "watch failure")
+            listener
+          end
+
+          begin
+            expect { source.sync(no_selector_store) { |_update| break } }.to raise_error(error_class)
+            expect(listener.stopped?).to eq(true)
+          ensure
+            source.stop
+          end
+        end
+
+        it "stops the file watcher if the source stops while the watcher starts" do
+          file = make_temp_file(all_properties_json)
+          source = Impl::Integrations::FileDataSourceV2.new(logger, paths: [file.path])
+          listener = nil
+          allow(source).to receive(:start_listener).and_wrap_original do |original|
+            listener = original.call
+            source.stop
+            listener
+          end
+
+          first_sync_update(source)
+
+          expect(listener).not_to be_nil
+          expect(source.instance_variable_get(:@listener)).to be_nil
+          expect(listener.stopped?).to eq(true)
+        end
+
         it "reports error on invalid file update" do
           file = make_temp_file(flag_only_json)
 

@@ -116,9 +116,23 @@ module LaunchDarkly
         # @return [void]
         #
         def sync(selector_store)
-          # First yield initial data
+          listener = nil
+          begin
+            listener = start_listener unless @lock.synchronize { @closed }
+          rescue => e
+            @logger.error { "[LDClient] Unable to watch data files for changes, so file changes will not be applied: #{e.message}" }
+          end
+          if listener
+            closed = @lock.synchronize do
+              @listener = listener unless @closed
+              @closed
+            end
+            listener.stop if closed
+          end
+
           initial_fetch = fetch(selector_store)
           unless initial_fetch.success?
+            stop_listener
             yield LaunchDarkly::Interfaces::DataSystem::Update.new(
               state: LaunchDarkly::Interfaces::DataSource::Status::OFF,
               error: LaunchDarkly::Interfaces::DataSource::ErrorInfo.new(
@@ -135,11 +149,6 @@ module LaunchDarkly
             state: LaunchDarkly::Interfaces::DataSource::Status::VALID,
             change_set: initial_fetch.value.change_set
           )
-
-          # Start watching for file changes
-          @lock.synchronize do
-            @listener = start_listener unless @closed
-          end
 
           until @closed
             begin
@@ -173,15 +182,20 @@ module LaunchDarkly
           @lock.synchronize do
             return if @closed
             @closed = true
-
-            listener = @listener
-            @listener = nil
-
-            listener&.stop
           end
+          stop_listener
 
           # Signal shutdown to sync generator
           @update_queue.push(nil)
+        end
+
+        private def stop_listener
+          listener = @lock.synchronize do
+            l = @listener
+            @listener = nil
+            l
+          end
+          listener&.stop
         end
 
         #
@@ -362,7 +376,7 @@ module LaunchDarkly
         #
         # Start watching files for changes.
         #
-        # @return [Object] auto-updater instance
+        # @return [Object, nil] auto-updater instance, or nil if no path can be watched
         #
         private def start_listener
           resolved_paths = @paths.map do |p|
@@ -373,6 +387,7 @@ module LaunchDarkly
               nil
             end
           end.compact
+          return nil if resolved_paths.empty?
 
           if @@have_listen
             start_listener_with_listen_gem(resolved_paths)
@@ -397,7 +412,13 @@ module LaunchDarkly
               on_file_change
             end
           end
-          l.start
+          started = false
+          begin
+            l.start
+            started = true
+          ensure
+            l.stop unless started
+          end
           l
         end
       end

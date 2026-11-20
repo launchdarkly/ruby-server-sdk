@@ -328,6 +328,121 @@ EOF
         test_auto_reload({ auto_update: true, force_polling: true, poll_interval: 0.1 })
       end
 
+      def test_reload_of_change_during_first_load(options)
+        file = make_temp_file(flag_only_json)
+        options[:paths] = [ file.path ]
+
+        with_data_source(options) do |ds|
+          first_load = true
+          allow(ds).to receive(:load_all_locked).and_wrap_original do |original|
+            original.call
+            if first_load
+              first_load = false
+              sleep(1)
+              IO.write(file, all_properties_json)
+            end
+          end
+
+          ds.start
+
+          max_time = 10
+          ok = wait_for_condition(max_time) { @store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys == all_segment_keys }
+          expect(ok).to eq(true), "Waited #{max_time}s after modifying file during the first load and it did not reload"
+        end
+      end
+
+      it "reloads a file modified during the first load if auto-update is on" do
+        test_reload_of_change_during_first_load({ auto_update: true })
+      end
+
+      it "reloads a file modified during the first load in polling mode" do
+        test_reload_of_change_during_first_load({ auto_update: true, force_polling: true, poll_interval: 0.1 })
+      end
+
+      def test_reload_of_change_before_first_store_update(options)
+        file = make_temp_file(flag_only_json)
+        options[:paths] = [ file.path ]
+        sink = @config.data_source_update_sink
+
+        with_data_source(options) do |ds|
+          first_init = true
+          allow(sink).to receive(:init).and_wrap_original do |original, data|
+            if first_init
+              first_init = false
+              sleep(1)
+              IO.write(file, all_properties_json)
+              sleep(1.5)
+            end
+            original.call(data)
+          end
+
+          ds.start
+
+          max_time = 10
+          ok = wait_for_condition(max_time) { @store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys == all_segment_keys }
+          expect(ok).to eq(true), "Waited #{max_time}s and the older first load replaced the newer data"
+        end
+      end
+
+      it "keeps a change made before the first load updates the store if auto-update is on" do
+        test_reload_of_change_before_first_store_update({ auto_update: true, poll_interval: 0.1 })
+      end
+
+      it "keeps a change made before the first load updates the store in polling mode" do
+        test_reload_of_change_before_first_store_update({ auto_update: true, force_polling: true, poll_interval: 0.1 })
+      end
+
+      def test_stop_watching_if_first_load_raises(options, error_class = StandardError)
+        file = make_temp_file(flag_only_json)
+        sink = @config.data_source_update_sink
+        allow(sink).to receive(:init).and_raise(error_class, "store failure")
+        ds = FileData.data_source(options.merge(paths: [ file.path ], auto_update: true)).call('', @config)
+        listener = nil
+        allow(ds).to receive(:start_listener).and_wrap_original do |original|
+          listener = original.call
+        end
+
+        expect { ds.start }.to raise_error(error_class, "store failure")
+        yield listener
+        expect { ds.stop }.not_to raise_error
+      end
+
+      it "stops watching if the first load raises" do
+        test_stop_watching_if_first_load_raises({}) do |listener|
+          expect(listener.stopped?).to eq(true)
+        end
+      end
+
+      it "stops watching if the first load raises an exception that is not a StandardError" do
+        test_stop_watching_if_first_load_raises({}, Interrupt) do |listener|
+          expect(listener.stopped?).to eq(true)
+        end
+      end
+
+      it "stops polling if the first load raises" do
+        test_stop_watching_if_first_load_raises({ force_polling: true, poll_interval: 0.1 }) do |listener|
+          expect(listener.instance_variable_get(:@thread).join(2)).not_to be_nil
+        end
+      end
+
+      it "loads the files if the file watcher cannot start" do
+        file = make_temp_file(all_properties_json)
+
+        with_data_source({ paths: [ file.path ], auto_update: true }) do |ds|
+          allow(ds).to receive(:start_listener).and_raise(StandardError, "watch failure")
+          expect { ds.start }.not_to raise_error
+          expect(@store.initialized?).to eq(true)
+          expect(@store.all(LaunchDarkly::Impl::DataStore::SEGMENTS).keys).to eq(all_segment_keys)
+        end
+      end
+
+      it "reports a missing file instead of raising if auto-update is on" do
+        with_data_source({ paths: [ bad_file_path ], auto_update: true }) do |ds|
+          expect { ds.start }.not_to raise_error
+          expect(@store.initialized?).to eq(false)
+        end
+      end
+
       it "evaluates simplified flag with client as expected" do
         file = make_temp_file(all_properties_json)
         factory = FileData.data_source({ paths: file.path })
