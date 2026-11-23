@@ -35,7 +35,7 @@ jobs:
           version: "3.2"
           install-dependencies: false
 
-      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1
+      - uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets/v1
         name: "Get rubygems API key"
         if: ${{ format('{0}', inputs.dry_run) == 'false' }}
         with:
