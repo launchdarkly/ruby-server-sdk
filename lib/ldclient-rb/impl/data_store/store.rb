@@ -150,10 +150,12 @@ module LaunchDarkly
             return nil unless should_persist?
 
             begin
-              # Get all data from memory store and write to persistent store
+              # Get all data from memory store and write to persistent store. Include the deleted
+              # items, so that the persistent store keeps the version of each deletion and an older
+              # update cannot add the item again.
               all_data = {}
               [FEATURES, SEGMENTS].each do |kind|
-                all_data[kind] = @memory_store.all(kind)
+                all_data[kind] = @memory_store.all_including_deleted(kind)
               end
               @persistent_store.init(all_data)
             rescue => e
@@ -365,7 +367,9 @@ module LaunchDarkly
             if change.action == LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT && !change.object.nil?
               all_data[kind][change.key] = change.object
             elsif change.action == LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE
-              all_data[kind][change.key] = { key: change.key, deleted: true, version: change.version }
+              # The key in an item is a string, as in the items that LaunchDarkly sends. A persistent
+              # store compares this key with the keys that it reads back from its database.
+              all_data[kind][change.key] = { key: change.key.to_s, deleted: true, version: change.version }
             end
           end
 

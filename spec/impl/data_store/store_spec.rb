@@ -565,6 +565,71 @@ module LaunchDarkly
               expect(stored_flag[:version]).to eq(1)
             end
 
+            it "writes deleted items to persistent store as tombstones with string keys" do
+              put_changes = [
+                LaunchDarkly::Interfaces::DataSystem::Change.new(
+                  action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT,
+                  kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+                  key: flag_key,
+                  version: 1,
+                  object: flag_data
+                ),
+                LaunchDarkly::Interfaces::DataSystem::Change.new(
+                  action: LaunchDarkly::Interfaces::DataSystem::ChangeType::PUT,
+                  kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
+                  key: segment_key,
+                  version: 1,
+                  object: segment_data
+                ),
+              ]
+              subject.apply(
+                LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+                  intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_FULL,
+                  changes: put_changes,
+                  selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+                ),
+                true
+              )
+
+              delete_changes = [
+                LaunchDarkly::Interfaces::DataSystem::Change.new(
+                  action: LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE,
+                  kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::FLAG,
+                  key: flag_key,
+                  version: 2,
+                  object: nil
+                ),
+                LaunchDarkly::Interfaces::DataSystem::Change.new(
+                  action: LaunchDarkly::Interfaces::DataSystem::ChangeType::DELETE,
+                  kind: LaunchDarkly::Interfaces::DataSystem::ObjectKind::SEGMENT,
+                  key: segment_key,
+                  version: 2,
+                  object: nil
+                ),
+              ]
+              subject.apply(
+                LaunchDarkly::Interfaces::DataSystem::ChangeSet.new(
+                  intent_code: LaunchDarkly::Interfaces::DataSystem::IntentCode::TRANSFER_CHANGES,
+                  changes: delete_changes,
+                  selector: LaunchDarkly::Interfaces::DataSystem::Selector.no_selector
+                ),
+                true
+              )
+
+              # Write the memory store back to the persistent store.
+              error = subject.commit
+
+              # The persistent store holds a tombstone for each deleted item.
+              expect(error).to be_nil
+              [[FEATURES, flag_key], [SEGMENTS, segment_key]].each do |kind, key|
+                tombstone = persistent_store.data[kind][key]
+                expect(tombstone).not_to be_nil
+                expect(tombstone[:deleted]).to be true
+                expect(tombstone[:version]).to eq(2)
+                expect(tombstone[:key]).to eq(key.to_s)
+              end
+            end
+
             it "returns exception when persistent store fails" do
               failing_store = StubPersistentStore.new(should_fail: true)
               subject.with_persistence(failing_store, true, nil)
