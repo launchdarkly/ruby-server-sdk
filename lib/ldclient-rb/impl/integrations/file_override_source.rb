@@ -52,8 +52,8 @@ module LaunchDarkly
         attr_reader :poll_interval
 
         #
-        # Performs the initial load synchronously, so overrides present in the files are in effect
-        # when this method returns, then starts change detection. A file that does not exist yet
+        # Starts change detection, then performs the initial load synchronously, so overrides
+        # present in the files are in effect when this method returns. A file that does not exist yet
         # contributes no overrides. A file that cannot be read or parsed is not fatal: the client
         # runs with the last good overrides, the failure is logged, and the retry plus the change
         # signal recover once the file is readable.
@@ -61,7 +61,7 @@ module LaunchDarkly
         # (see LaunchDarkly::Interfaces::Overrides::OverrideSource#start)
         #
         def start(sink)
-          @lock.synchronize do
+          reloader = @lock.synchronize do
             return if @stopped
 
             @reloader = FileData::Reloader.new(
@@ -77,12 +77,6 @@ module LaunchDarkly
                 log_overrides_in_effect(merged)
               end
             )
-          end
-
-          @reloader.reload_now
-
-          @lock.synchronize do
-            return if @stopped
 
             trigger = @reloader.method(:trigger)
             @change_detector =
@@ -91,7 +85,10 @@ module LaunchDarkly
               else
                 FileData::Poller.new(@paths, @poll_interval, trigger, @logger)
               end
+            @reloader
           end
+
+          reloader.reload_now
         end
 
         # (see LaunchDarkly::Interfaces::Overrides::OverrideSource#stop)

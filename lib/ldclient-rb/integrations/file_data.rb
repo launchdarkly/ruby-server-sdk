@@ -101,7 +101,9 @@ module LaunchDarkly
       #   Note that the default implementation of this feature is based on polling the filesystem,
       #   which may not perform well. If you install the 'listen' gem (not included by default, to
       #   avoid adding unwanted dependencies to the SDK), its native file watching mechanism will be
-      #   used instead.
+      #   used instead. On platforms other than Linux, the 'listen' gem can miss a change that occurs
+      #   while the data source starts. The data source then uses the earlier contents until the
+      #   next change to a file.
       # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
       #   file modifications - used only if auto_update is true, and if the native file-watching
       #   mechanism from 'listen' is not being used. The default value is 1 second.
@@ -125,7 +127,9 @@ module LaunchDarkly
       #   may be absolute paths or relative to the current working directory. (Required)
       # @option options [Float] :poll_interval  The minimum interval, in seconds, between checks for
       #   file modifications - used only if the native file-watching mechanism from 'listen' is not
-      #   being used. The default value is 1 second.
+      #   being used. The default value is 1 second. On platforms other than Linux, the 'listen' gem can miss a change that occurs
+      #   while the data source starts. The data source then uses the earlier contents until the
+      #   next change to a file.
       # @return [FileDataSourceV2Builder] a builder that can be used as an FDv2 initializer or synchronizer
       #
       # @example Using as an initializer
@@ -225,7 +229,8 @@ module LaunchDarkly
       #   including the update of a mounted Kubernetes ConfigMap. It does not follow a deployment that
       #   points a link further along the path, or a configured directory, at another location, such as a
       #   `current` link to a release directory, or that replaces a configured directory. Use polling for
-      #   such deployments.
+      #   such deployments. On platforms other than Linux, watching can miss a change that occurs while
+      #   the source starts. The source then uses the earlier contents until the next change to a file.
       # @option options [Numeric] :poll_interval  Seconds between examinations of the files in polling
       #   mode. The default is 1. An interval below 1 is raised to 1 with a warning.
       # @return [FileOverrideSourceBuilder] a builder for {LaunchDarkly::DataSystem::ConfigBuilder#overrides}
